@@ -44,7 +44,7 @@ export System, update!
 
 ####
 
-import MacroTools: @capture, @q, striplines
+import MacroTools: @capture, @q, striplines, flatten
 
 struct StatevarInfo
     var::Symbol
@@ -87,7 +87,11 @@ function parse_line(line::Union{Expr,Symbol})
     return StatevarInfo(var, alias, args, body, type, tags)
 end
 
-generate_field(i::StatevarInfo) = :($(i.var)::Statevar)
+generate_field(i::StatevarInfo) = begin
+    v = :($(i.var)::Statevar)
+    a = :($(i.alias)::Statevar)
+    isnothing(i.alias) ? v : :($v; $a)
+end
 generate_statevar(i::StatevarInfo; self) = begin
     if isnothing(i.body)
         @assert isempty(i.args)
@@ -98,9 +102,11 @@ generate_statevar(i::StatevarInfo; self) = begin
     end
     type = Symbol(uppercasefirst(string(i.type)))
     name = Meta.quot(Symbol(i.var))
-    args = merge(Dict(:time => :($(self).context.clock.tick)), i.tags)
+    args = merge(Dict(:time => :($self.context.clock.tick)), i.tags)
     args = [:($(esc(k))=$v) for (k, v) in args]
-    :($(self).$(i.var) = Statevar($self, $calc, $type; name=$name, $(args...)))
+    v = :($self.$(i.var) = Statevar($self, $calc, $type; name=$name, $(args...)))
+    a = :($self.$(i.alias) = $self.$(i.var))
+    isnothing(i.alias) ? v : :($v; $a)
 end
 generate_system(name, infos) = begin
     self = gensym(:self)
@@ -123,7 +129,7 @@ generate_system(name, infos) = begin
                 $(self)
             end
         end
-    end
+    end |> flatten
 end
 
 macro system(name, block)
