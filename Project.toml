@@ -1,0 +1,10 @@
+name = "Cropbox"
+uuid = "a904b226-abf1-11e9-2713-059ba252a964"
+authors = ["Kyungdahm Yun <tomyun@gmail.com>"]
+version = "0.0.1"
+
+[deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+TOML = "191fdcea-f9f2-43e0-b922-d33f71e2abc3"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
