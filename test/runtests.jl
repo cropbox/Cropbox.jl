@@ -32,15 +32,15 @@ d(b) = b
     a ~ track(init=1)
     b ~ track
     c ~ track
-    d ~ accumulate
+    d: dd ~ accumulate
 end
 
 @system ASystem begin
     a ~ track
-    b: bb ~ track(time=s.context.clock.tick)
+    b: bb ~ track(time="context.clock.tick")
     ccc(a, b): c => a+b ~ track(unit="cm")
-    cccc(a=1, b=2): c => a+b ~ track(init=0)
-    d(a,b ) => begin
+    cccc(a=1, b=2): cc => a+b ~ track(init=0)
+    d(a, b) => begin
       a + b
     end ~ track(cyclic)
     e(a) => a ~ accumulate(init=0)
