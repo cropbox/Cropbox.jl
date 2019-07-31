@@ -88,6 +88,17 @@ function VarInfo(line::Union{Expr,Symbol})
     VarInfo{eval(type)}(var, alias, args, body, type, tags)
 end
 
+genfield(args::Tuple) = begin
+    if :bare ∉ args
+        @q begin
+            context::System
+            parent::System
+            children::Array{System}
+        end
+    else
+        :(;)
+    end
+end
 genfield(i::VarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
 genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
 genfield(S, var, alias) = begin
@@ -96,6 +107,17 @@ genfield(S, var, alias) = begin
     isnothing(alias) ? v : :($v; $a)
 end
 
+gendecl(args::Tuple; self) = begin
+    if :bare ∉ args
+        @q begin
+            $self.context = context
+            $self.parent = parent
+            $self.children = children
+        end
+    else
+        :(;)
+    end
+end
 gendecl(i::VarInfo{S}; self) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
@@ -120,25 +142,13 @@ end
 
 gensystem(name, infos, args) = begin
     self = gensym(:self)
-    fields = genfield.(infos)
-    decls = gendecl.(infos; self=self)
+    fields = [genfield(args); genfield.(infos)]
+    decls = [gendecl(args; self=self); gendecl.(infos; self=self)]
     system = @q begin
         mutable struct $name <: System
-            $(if :bare ∉ args @q begin
-                context::System
-                parent::System
-                children::Array{System}
-            end else :(;) end)
-
             $(fields...)
-
             function $name(;context, parent, children=System[])
                 $self = new()
-                $(if :bare ∉ args @q begin
-                    $self.context = context
-                    $self.parent = parent
-                    $self.children = children
-                end else :(;) end)
                 $(decls...)
                 $self
             end
