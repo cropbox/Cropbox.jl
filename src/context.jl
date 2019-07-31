@@ -24,7 +24,7 @@ mutable struct Clock <: System
     end
 end
 
-# @system Clock begin
+# @system bare Clock begin
 #     tick => gettime!(s.tick) ~ tock
 #     start => 0 ~ track(init=0, time="tick")
 #     interval: i => 1 ~ track(init=1, time="tick")
@@ -52,7 +52,7 @@ mutable struct Context <: System
         c = new()
         c.clock = Clock()
         c.queue = Queue()
-        configure!(c, config)
+        c.config = Config(config)
 
         c.context = c
         c.parent = c
@@ -61,13 +61,18 @@ mutable struct Context <: System
     end
 end
 
-#configure!(c::Context, config::Nothing) = (c.config = Config())
-configure!(c::Context, config::Dict) = (c.config = config)
+# @system Context begin
+#     clock ~ clock
+#     queue ~ queue
+#     config => Config(config) ~ config(usearg)
+# end
+
+#Config(::Nothing) = Config()
 using TOML
-configure!(c::Context, config::AbstractString) = begin
+Config(config::AbstractString) = begin
     conv(d) = d
     conv(d::Dict) = (Symbol(p.first) => conv(p.second) for p in d) |> collect
-    c.config = TOML.parse(config) |> conv
+    TOML.parse(config) |> conv
 end
 option(c) = c
 option(c, keys...) = nothing

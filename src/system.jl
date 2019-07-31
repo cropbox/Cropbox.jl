@@ -46,7 +46,7 @@ export System, update!
 
 import MacroTools: @capture, @q, striplines, flatten
 
-struct StatevarInfo
+struct StatevarInfo{S}
     var::Symbol
     alias::Union{Symbol,Nothing}
     args::Array
@@ -66,7 +66,7 @@ function show(io::IO, s::StatevarInfo)
     end
 end
 
-function parse_line(line::Union{Expr,Symbol})
+function StatevarInfo(line::Union{Expr,Symbol})
     @capture(line,
         (var_(args__): alias_ => body_ ~ type_(tags__)) |
         (var_(args__): alias_ => body_ ~ type_) |
@@ -78,21 +78,25 @@ function parse_line(line::Union{Expr,Symbol})
         (var_ ~ type_)
     )
     args = isnothing(args) ? [] : args
+    type = Symbol(uppercasefirst(string(type)))
     tags = isnothing(tags) ? [] : tags
     tags = Dict((
         @capture(t, (k_=v_) | k_);
         v = isnothing(v) ? true : v;
         k => v
     ) for t in tags)
-    return StatevarInfo(var, alias, args, body, type, tags)
+    StatevarInfo{eval(type)}(var, alias, args, body, type, tags)
 end
 
-generate_field(i::StatevarInfo) = begin
-    v = :($(i.var)::Statevar)
-    a = :($(i.alias)::Statevar)
-    isnothing(i.alias) ? v : :($v; $a)
+genfield(i::StatevarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
+genfield(i::StatevarInfo{S}) where S = genfield(S, i.var, i.alias)
+genfield(S, var, alias) = begin
+    v = :($var::$S)
+    a = :($alias::$S)
+    isnothing(alias) ? v : :($v; $a)
 end
-generate_statevar(i::StatevarInfo; self) = begin
+
+gendecl(i::StatevarInfo{S}; self) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
         calc = esc(i.var)
@@ -100,18 +104,24 @@ generate_statevar(i::StatevarInfo; self) = begin
         #calc = @q $(Expr(:tuple, i.args...)) -> $(i.body)
         calc = @q function $(i.var)($(Tuple(i.args)...)) $(i.body) end
     end
-    type = Symbol(uppercasefirst(string(i.type)))
     name = Meta.quot(Symbol(i.var))
     args = merge(Dict(:time => :($self.context.clock.tick)), i.tags)
     args = [:($(esc(k))=$v) for (k, v) in args]
-    v = :($self.$(i.var) = Statevar($self, $calc, $type; name=$name, $(args...)))
+    v = :($self.$(i.var) = Statevar($self, $calc, $S; name=$name, $(args...)))
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : :($v; $a)
 end
-generate_system(name, infos) = begin
+gendecl(i::StatevarInfo{S}; self) where {S<:System} = begin
+    :($self.$(i.var) = S())
+end
+gendecl(i::StatevarInfo{Array{S}}; self) where {S<:System} = begin
+    :($self.$(i.var) = Array{S}())
+end
+
+gensystem(name, infos) = begin
     self = gensym(:self)
-    fields = generate_field.(infos)
-    statevars = generate_statevar.(infos; self=self)
+    fields = genfield.(infos)
+    decls = gendecl.(infos; self=self)
     quote
         mutable struct $name <: System
             context::System
@@ -125,7 +135,7 @@ generate_system(name, infos) = begin
                 $(self).context = context
                 $(self).parent = parent
                 $(self).children = children
-                $(statevars...)
+                $(decls...)
                 $(self)
             end
         end
@@ -133,8 +143,8 @@ generate_system(name, infos) = begin
 end
 
 macro system(name, block)
-    infos = [parse_line(line) for line in striplines(block).args]
-    generate_system(name, infos)
+    infos = [StatevarInfo(line) for line in striplines(block).args]
+    gensystem(name, infos)
 end
 
 export @system
