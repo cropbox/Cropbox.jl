@@ -51,10 +51,10 @@ function setvar!(s::Statevar, v)
     poststore!(s.state, v)()
 end
 
-# import Base: convert, promote_rule
-# convert(::Type{Float64}, s::Statevar) = getvar!(s)
-# promote_rule(::Type{Statevar}, ::Type{Float64}) = Float64
-# promote_rule(::Type{Statevar}, ::Type{Int64}) = Float64
+import Base: convert, promote_rule
+convert(T::Type{S}, s::Statevar) where {S<:Statevar} = s
+convert(T::Type{V}, s::Statevar) where {V<:Number} = convert(T, getvar!(s))
+promote_rule(::Type{S}, T::Type{V}) where {S<:Statevar, V<:Number} = T
 
 import Base: show
 show(io::IO, s::Statevar) = print(io, "$(s.system)<$(s.name)> = $(s.state.value)")
