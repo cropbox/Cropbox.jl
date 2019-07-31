@@ -25,7 +25,7 @@ inittime!(s::Statevar, st::Tock; stargs...) = (s.time = s)
 
 (s::Statevar)(args...) = s.calc(args...)
 
-gettime!(s::Statevar{Tock}) = value(s.state)
+gettime!(s::Statevar{Tock}) = value(s.time.state)
 gettime!(s::Statevar) = getvar!(s.time)
 
 function getvar!(s::Statevar)

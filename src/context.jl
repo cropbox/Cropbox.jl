@@ -1,35 +1,12 @@
-mutable struct Clock <: System
-    tick::Statevar
-    #unit::Statevar
-    start::Statevar
-    interval::Statevar
-    time::Statevar
-    #start_datetime::Statevar
-    #datetime::Statevar
-
-    function Clock()
-        s = new()
-        # s.tick = Statevar(s, () -> gettime!(s.tick), Tock())
-        s.tick = Statevar(s, () -> gettime!(s.tick), Tock; name=:tick)
-        #s.unit
-        # s.start = Statevar(s, () -> 0, Track(;init=0), s.tick) # Parameter
-        # s.interval = Statevar(s, () -> 1, Track(;init=1), s.tick) # Parameter
-        # s.time = Statevar(s, (interval) -> interval, Accumulate(init=0), s.tick)
-        s.start = Statevar(s, () -> 0, Track; name=:start, init=0, time=s.tick) # Parameter
-        s.interval = Statevar(s, () -> 1, Track; name=:interval, init=1, time=s.tick) # Parameter
-        s.time = Statevar(s, (interval) -> interval, Accumulate; name=:time, init=0, time=s.tick)
-        #s.start_datetime # Parameter
-        #s.datetime
-        s
-    end
-end
-
-# @system Clock begin
-#     tick => gettime!(s.tick) ~ tock
-#     start => 0 ~ track(init=0, time="tick")
-#     interval: i => 1 ~ track(init=1, time="tick")
-#     time(i) => i ~ accumulate(init=0, time="tick")
-# end bare
+@system Clock begin
+    tick => gettime!(s.tick) ~ tock(time="")
+    #unit
+    start => 0 ~ track(init=0, time="tick") # parameter
+    interval: i => 1 ~ track(init=1, time="tick") # parameter
+    time(i) => i ~ accumulate(init=0, time="tick")
+    #start_datetime ~ parameter
+    #datetime
+end bare
 
 advance!(c::Clock) = advance!(c.tick.state)
 
@@ -38,34 +15,15 @@ advance!(c::Clock) = advance!(c.tick.state)
 const Config = Dict{Symbol,Any}
 const Queue = Dict{Priority,Vector{Function}}
 
-QueueType =
-mutable struct Context <: System
-    clock::System
-    queue::Queue
-    config::Config
+@system Context begin
+    clock ~ clock
+    queue ~ queue
+    config => Config(config) ~ config(usearg)
 
-    context::System
-    parent::System
-    children::Vector{System}
-
-    function Context(; config)
-        c = new()
-        c.clock = Clock()
-        c.queue = Queue()
-        c.config = Config(config)
-
-        c.context = c
-        c.parent = c
-        c.children = System[]
-        c
-    end
-end
-
-# @system Context begin
-#     clock ~ clock
-#     queue ~ queue
-#     config => Config(config) ~ config(usearg)
-# end
+    context ~ system(self)
+    parent ~ system(self)
+    children ~ [system]
+end bare
 
 #Config(::Nothing) = Config()
 using TOML

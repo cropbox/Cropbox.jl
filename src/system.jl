@@ -50,9 +50,9 @@ struct VarInfo{S}
     var::Symbol
     alias::Union{Symbol,Nothing}
     args::Array
-    body::Union{Expr,Symbol,Nothing}
+    body#::Union{Expr,Symbol,Nothing}
     type::Union{Symbol,Expr}
-    tags::Dict
+    tags::Dict{Symbol,Any}
 end
 
 import Base: show
@@ -67,16 +67,12 @@ function show(io::IO, s::VarInfo)
 end
 
 function VarInfo(line::Union{Expr,Symbol})
-    @capture(line,
-        (var_(args__): alias_ => body_ ~ type_(tags__)) |
-        (var_(args__): alias_ => body_ ~ type_) |
-        (var_(args__) => body_ ~ type_(tags__)) |
-        (var_(args__) => body_ ~ type_) |
-        (var_: alias_ ~ type_(tags__)) |
-        (var_: alias_ ~ type_) |
-        (var_ ~ type_(tags__)) |
-        (var_ ~ type_)
-    )
+    # name[(args..)][: alias] [=> body] ~ type[(tags..)]
+    @capture(line, decl_ ~ deco_)
+    @capture(deco, type_(tags__) | type_)
+    @capture(decl, (def1_ => body_) | def1_)
+    @capture(def1, (def2_: alias_) | def2_)
+    @capture(def2, name_(args__) | name_)
     args = isnothing(args) ? [] : args
     symbolify(t) = Symbol(uppercasefirst(string(t)))
     if @capture(type, [elemtype_])
@@ -90,7 +86,7 @@ function VarInfo(line::Union{Expr,Symbol})
         v = isnothing(v) ? true : v;
         k => v
     ) for t in tags)
-    VarInfo{eval(type)}(var, alias, args, body, type, tags)
+    VarInfo{eval(type)}(name, alias, args, body, type, tags)
 end
 
 genfield(i::VarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
@@ -98,7 +94,7 @@ genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
 genfield(S, var, alias) = begin
     v = :($var::$S)
     a = :($alias::$S)
-    isnothing(alias) ? v : :($v; $a)
+    isnothing(alias) ? v : @q begin $v; $a end
 end
 
 genargs(infos::Vector, options) = Tuple(filter(!isnothing, genarg.(infos)))
@@ -121,18 +117,28 @@ gendecl(i::VarInfo{S}; self) where {S<:State} = begin
         calc = @q function $(i.var)($(Tuple(i.args)...)) $(i.body) end
     end
     name = Meta.quot(Symbol(i.var))
-    args = merge(Dict(:time => :($self.context.clock.tick)), i.tags)
+    args = merge(Dict(:time => "context.clock.tick"), i.tags)
+    if !isempty(args[:time])
+        path = [self; Symbol.(split(args[:time], "."))]
+        args[:time] = reduce((a, b) -> :($a.$b), path)
+    end
     args = [:($(esc(k))=$v) for (k, v) in args]
     v = :($self.$(i.var) = Statevar($self, $calc, $S; name=$name, $(args...)))
     a = :($self.$(i.alias) = $self.$(i.var))
-    isnothing(i.alias) ? v : :($v; $a)
+    isnothing(i.alias) ? v : @q begin $v; $a end
 end
 gendecl(i::VarInfo{S}; self) where S = begin
-    if haskey(i.tags, :usearg)
-        :($self.$(i.var) = $(esc(i.var)))
+    if !isnothing(i.body)
+        # @assert isnothing(i.args)
+        decl = esc(i.body)
+    elseif haskey(i.tags, :usearg)
+        decl = esc(i.var)
+    elseif haskey(i.tags, :self)
+        decl = self
     else
-        :($self.$(i.var) = $S())
+        decl = :($S())
     end
+    :($self.$(i.var) = $decl)
 end
 
 gensystem(name, infos, options) = begin
@@ -156,7 +162,7 @@ end
 macro system(name, block, options...)
     if :bare ∉ options
         header = @q begin
-            context ~ system(usearg)
+            context ~ context(usearg)
             parent ~ system(usearg)
             children ~ [system](usearg, usedefault)
         end
