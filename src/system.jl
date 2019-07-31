@@ -46,7 +46,7 @@ export System, update!
 
 import MacroTools: @capture, @q, striplines, flatten
 
-struct StatevarInfo{S}
+struct VarInfo{S}
     var::Symbol
     alias::Union{Symbol,Nothing}
     args::Array
@@ -56,7 +56,7 @@ struct StatevarInfo{S}
 end
 
 import Base: show
-function show(io::IO, s::StatevarInfo)
+function show(io::IO, s::VarInfo)
     println(io, "var: $(s.var)")
     println(io, "alias: $(repr(s.alias))")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
@@ -66,7 +66,7 @@ function show(io::IO, s::StatevarInfo)
     end
 end
 
-function StatevarInfo(line::Union{Expr,Symbol})
+function VarInfo(line::Union{Expr,Symbol})
     @capture(line,
         (var_(args__): alias_ => body_ ~ type_(tags__)) |
         (var_(args__): alias_ => body_ ~ type_) |
@@ -85,18 +85,18 @@ function StatevarInfo(line::Union{Expr,Symbol})
         v = isnothing(v) ? true : v;
         k => v
     ) for t in tags)
-    StatevarInfo{eval(type)}(var, alias, args, body, type, tags)
+    VarInfo{eval(type)}(var, alias, args, body, type, tags)
 end
 
-genfield(i::StatevarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
-genfield(i::StatevarInfo{S}) where S = genfield(S, i.var, i.alias)
+genfield(i::VarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
+genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
 genfield(S, var, alias) = begin
     v = :($var::$S)
     a = :($alias::$S)
     isnothing(alias) ? v : :($v; $a)
 end
 
-gendecl(i::StatevarInfo{S}; self) where {S<:State} = begin
+gendecl(i::VarInfo{S}; self) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
         calc = esc(i.var)
@@ -111,10 +111,10 @@ gendecl(i::StatevarInfo{S}; self) where {S<:State} = begin
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : :($v; $a)
 end
-gendecl(i::StatevarInfo{S}; self) where {S<:System} = begin
+gendecl(i::VarInfo{S}; self) where {S<:System} = begin
     :($self.$(i.var) = S())
 end
-gendecl(i::StatevarInfo{Array{S}}; self) where {S<:System} = begin
+gendecl(i::VarInfo{Array{S}}; self) where {S<:System} = begin
     :($self.$(i.var) = Array{S}())
 end
 
@@ -143,7 +143,7 @@ gensystem(name, infos) = begin
 end
 
 macro system(name, block)
-    infos = [StatevarInfo(line) for line in striplines(block).args]
+    infos = [VarInfo(line) for line in striplines(block).args]
     gensystem(name, infos)
 end
 
