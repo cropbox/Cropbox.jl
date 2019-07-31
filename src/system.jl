@@ -88,8 +88,8 @@ function VarInfo(line::Union{Expr,Symbol})
     VarInfo{eval(type)}(var, alias, args, body, type, tags)
 end
 
-genfield(args::Tuple) = begin
-    if :bare ∉ args
+genfield(options::Tuple) = begin
+    if :bare ∉ options
         @q begin
             context::System
             parent::System
@@ -107,8 +107,8 @@ genfield(S, var, alias) = begin
     isnothing(alias) ? v : :($v; $a)
 end
 
-gendecl(args::Tuple; self) = begin
-    if :bare ∉ args
+gendecl(options::Tuple; self) = begin
+    if :bare ∉ options
         @q begin
             $self.context = context
             $self.parent = parent
@@ -140,10 +140,10 @@ gendecl(i::VarInfo{Array{S}}; self) where {S<:System} = begin
     :($self.$(i.var) = Array{S}())
 end
 
-gensystem(name, infos, args) = begin
+gensystem(name, infos, options) = begin
     self = gensym(:self)
-    fields = [genfield(args); genfield.(infos)]
-    decls = [gendecl(args; self=self); gendecl.(infos; self=self)]
+    fields = [genfield(options); genfield.(infos)]
+    decls = [gendecl(options; self=self); gendecl.(infos; self=self)]
     system = @q begin
         mutable struct $name <: System
             $(fields...)
@@ -157,9 +157,9 @@ gensystem(name, infos, args) = begin
     flatten(system)
 end
 
-macro system(name, block, args...)
+macro system(name, block, options...)
     infos = [VarInfo(line) for line in striplines(block).args]
-    gensystem(name, infos, args)
+    gensystem(name, infos, options)
 end
 
 export @system
