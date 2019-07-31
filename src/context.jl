@@ -36,7 +36,7 @@ advance!(c::Clock) = advance!(c.tick.state)
 @enum Priority default=0 flag=1 accumulate=2 produce=-1
 
 const Config = Dict{Symbol,Any}
-const Queue = Dict{Priority,Array{Function}}
+const Queue = Dict{Priority,Vector{Function}}
 
 QueueType =
 mutable struct Context <: System
@@ -46,7 +46,7 @@ mutable struct Context <: System
 
     context::System
     parent::System
-    children::Array{System}
+    children::Vector{System}
 
     function Context(; config)
         c = new()
@@ -77,7 +77,7 @@ end
 option(c) = c
 option(c, keys...) = nothing
 option(c::Config, key::Symbol, keys...) = option(get(c, k, nothing), keys...)
-option(c::Config, key::Array{Symbol}, keys...) = begin
+option(c::Config, key::Vector{Symbol}, keys...) = begin
     for k in key
         v = option(c, k, keys...)
         !isnothing(v) && return v

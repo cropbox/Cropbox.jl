@@ -15,7 +15,7 @@ import Base: collect
 function collect(s::System; recursive=true, exclude_self=true)
     S = Set()
     visit(s) = begin
-        ST = filter(t -> t.type <: Union{System, Array{System}}, s)
+        ST = filter(t -> t.type <: Union{System, Vector{System}}, s)
         ST = map(t -> Set(getfield(s, t.name)), ST)
         SS = Set()
         foreach(e -> union!(SS, e), ST)
@@ -93,7 +93,7 @@ genfield(options::Tuple) = begin
         @q begin
             context::System
             parent::System
-            children::Array{System}
+            children::Vector{System}
         end
     else
         :(;)
@@ -136,8 +136,8 @@ end
 gendecl(i::VarInfo{S}; self) where {S<:System} = begin
     :($self.$(i.var) = S())
 end
-gendecl(i::VarInfo{Array{S}}; self) where {S<:System} = begin
-    :($self.$(i.var) = Array{S}())
+gendecl(i::VarInfo{Vector{S}}; self) where {S<:System} = begin
+    :($self.$(i.var) = Vector{S}())
 end
 
 gensystem(name, infos, options) = begin

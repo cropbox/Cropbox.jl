@@ -8,7 +8,7 @@ d(b) = b
 # mutable struct MySystem <: System
 #     context::System
 #     parent::System
-#     children::Array{System}
+#     children::Vector{System}
 #
 #     a::Statevar
 #     b::Statevar
