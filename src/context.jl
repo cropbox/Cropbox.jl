@@ -24,12 +24,12 @@ mutable struct Clock <: System
     end
 end
 
-# @system bare Clock begin
+# @system Clock begin
 #     tick => gettime!(s.tick) ~ tock
 #     start => 0 ~ track(init=0, time="tick")
 #     interval: i => 1 ~ track(init=1, time="tick")
 #     time(i) => i ~ accumulate(init=0, time="tick")
-# end
+# end bare
 
 advance!(c::Clock) = advance!(c.tick.state)
 

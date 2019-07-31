@@ -118,33 +118,38 @@ gendecl(i::VarInfo{Array{S}}; self) where {S<:System} = begin
     :($self.$(i.var) = Array{S}())
 end
 
-gensystem(name, infos) = begin
+gensystem(name, infos, args) = begin
     self = gensym(:self)
     fields = genfield.(infos)
     decls = gendecl.(infos; self=self)
-    quote
+    system = @q begin
         mutable struct $name <: System
-            context::System
-            parent::System
-            children::Array{System}
+            $(if :bare ∉ args @q begin
+                context::System
+                parent::System
+                children::Array{System}
+            end else :(;) end)
 
             $(fields...)
 
             function $name(;context, parent, children=System[])
-                $(self) = new()
-                $(self).context = context
-                $(self).parent = parent
-                $(self).children = children
+                $self = new()
+                $(if :bare ∉ args @q begin
+                    $self.context = context
+                    $self.parent = parent
+                    $self.children = children
+                end else :(;) end)
                 $(decls...)
-                $(self)
+                $self
             end
         end
-    end |> flatten
+    end
+    flatten(system)
 end
 
-macro system(name, block)
+macro system(name, block, args...)
     infos = [VarInfo(line) for line in striplines(block).args]
-    gensystem(name, infos)
+    gensystem(name, infos, args)
 end
 
 export @system
