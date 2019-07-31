@@ -44,14 +44,14 @@ export System, update!
 
 ####
 
-import MacroTools: @capture, @q, striplines, flatten
+import MacroTools: @capture, @q, flatten, isexpr, striplines
 
 struct VarInfo{S}
     var::Symbol
     alias::Union{Symbol,Nothing}
     args::Array
-    body
-    type::Symbol
+    body::Union{Expr,Symbol,Nothing}
+    type::Union{Symbol,Expr}
     tags::Dict
 end
 
@@ -78,7 +78,12 @@ function VarInfo(line::Union{Expr,Symbol})
         (var_ ~ type_)
     )
     args = isnothing(args) ? [] : args
-    type = Symbol(uppercasefirst(string(type)))
+    symbolify(t) = Symbol(uppercasefirst(string(t)))
+    if @capture(type, [elemtype_])
+        type = :(Vector{$(symbolify(elemtype))})
+    else
+        type = symbolify(type)
+    end
     tags = isnothing(tags) ? [] : tags
     tags = Dict((
         @capture(t, (k_=v_) | k_);
@@ -88,17 +93,6 @@ function VarInfo(line::Union{Expr,Symbol})
     VarInfo{eval(type)}(var, alias, args, body, type, tags)
 end
 
-genfield(options::Tuple) = begin
-    if :bare ∉ options
-        @q begin
-            context::System
-            parent::System
-            children::Vector{System}
-        end
-    else
-        :(;)
-    end
-end
 genfield(i::VarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
 genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
 genfield(S, var, alias) = begin
@@ -107,17 +101,17 @@ genfield(S, var, alias) = begin
     isnothing(alias) ? v : :($v; $a)
 end
 
-gendecl(options::Tuple; self) = begin
-    if :bare ∉ options
-        @q begin
-            $self.context = context
-            $self.parent = parent
-            $self.children = children
+genargs(infos::Vector, options) = Tuple(filter(!isnothing, genarg.(infos)))
+genarg(i::VarInfo) = begin
+    if haskey(i.tags, :usearg)
+        if haskey(i.tags, :usedefault)
+            Expr(:kw, i.var, :($(i.type)()))
+        else
+            i.var
         end
-    else
-        :(;)
     end
 end
+
 gendecl(i::VarInfo{S}; self) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
@@ -133,21 +127,23 @@ gendecl(i::VarInfo{S}; self) where {S<:State} = begin
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : :($v; $a)
 end
-gendecl(i::VarInfo{S}; self) where {S<:System} = begin
-    :($self.$(i.var) = S())
-end
-gendecl(i::VarInfo{Vector{S}}; self) where {S<:System} = begin
-    :($self.$(i.var) = Vector{S}())
+gendecl(i::VarInfo{S}; self) where S = begin
+    if haskey(i.tags, :usearg)
+        :($self.$(i.var) = $(esc(i.var)))
+    else
+        :($self.$(i.var) = $S())
+    end
 end
 
 gensystem(name, infos, options) = begin
     self = gensym(:self)
-    fields = [genfield(options); genfield.(infos)]
-    decls = [gendecl(options; self=self); gendecl.(infos; self=self)]
+    fields = genfield.(infos)
+    args = genargs(infos, options)
+    decls = gendecl.(infos; self=self)
     system = @q begin
         mutable struct $name <: System
             $(fields...)
-            function $name(;context, parent, children=System[])
+            function $name(; $(args...))
                 $self = new()
                 $(decls...)
                 $self
@@ -158,6 +154,14 @@ gensystem(name, infos, options) = begin
 end
 
 macro system(name, block, options...)
+    if :bare ∉ options
+        header = @q begin
+            context ~ system(usearg)
+            parent ~ system(usearg)
+            children ~ [system](usearg, usedefault)
+        end
+        block = flatten(:($header; $block))
+    end
     infos = [VarInfo(line) for line in striplines(block).args]
     gensystem(name, infos, options)
 end
