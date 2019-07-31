@@ -70,7 +70,7 @@ function instance(SystemType::Type{S}, config=Config()) where {S<:System}
     c = Context(; config=config)
     s = SystemType(; context=c, parent=c)
     push!(c.children, s)
-    update!(c)
+    advance!(c)
     s
 end
 
