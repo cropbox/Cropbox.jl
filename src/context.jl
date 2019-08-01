@@ -11,14 +11,13 @@ end bare
 
 advance!(c::Clock) = advance!(c.tick.state)
 
-@enum Priority default=0 flag=1 accumulate=2 produce=-1
-
 const Config = Dict{Symbol,Any}
-const Queue = Dict{Priority,Vector{Function}}
+import DataStructures: DefaultDict
+const Queue = DefaultDict{Priority,Vector{Function}}
 
 @system Context begin
     clock => Clock(; context=self) ~ clock
-    queue ~ queue
+    queue => Queue(Vector{Function}) ~ queue
     config => Config(config) ~ config(usearg)
 
     context => self ~ system
@@ -46,10 +45,14 @@ end
 #option(c::Config, key::Statevar, keys...) = option(c, expand(key.alias), keys...) #TODO
 option(c::Context, keys...) = option(c.config, keys...)
 
-queue!(c::Context, f::Function, p::Priority=default) = push!(c.queue[p], f)
-flush!(c::Context, cond) = foreach(f -> f(), filter(cond, c.queue) |> values |> Iterators.flatten)
-preflush!(c::Context) = flush!(c, p -> p.first >= default)
-postflush!(c::Context) = flush!(c, p -> p.first < default)
+queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)
+flush!(c::Context, cond) = begin
+    q = filter(cond, c.queue)
+    filter!(!cond, c.queue)
+    foreach(f -> f(), q |> values |> Iterators.flatten)
+end
+preflush!(c::Context) = flush!(c, p -> p.first < default)
+postflush!(c::Context) = flush!(c, p -> p.first >= default)
 
 function update!(c::Context)
     # process pending operations from last timestep (i.e. produce)

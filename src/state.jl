@@ -2,10 +2,13 @@ abstract type State end
 
 check!(s::State, t) = true
 value(s::State) = s.value
-store!(s::State, v) = (!isnothing(v) && (s.value = v))
-store!(s::State, f::Function) = store!(s, f())
-poststore!(s::State, f::Function) = () -> return
+store!(s::State, f::Function) = (v = f(); !isnothing(v) && (s.value = v))
+store!(s::State, v) = store!(s, () -> v)
+poststore!(s::State, f::Function) = nothing
 poststore!(s::State, v) = poststore!(s, () -> v)
+
+@enum Priority default=0 flag=1 accumulate=2 produce=-1
+priority(s::State) = default
 
 # import Base: show
 # function show(io::IO, s::State)
@@ -69,6 +72,10 @@ function poststore!(s::Accumulate, f::Function)
         s.rates[t] = f()
     end
 end
+priority(s::Accumulate) = accumulate
 
-export State, Tock, Track, Accumulate
-export check!, value, store!, poststore!, advance!
+# priority(s::Flag) = flag
+# priority(s::Produce) = produce
+
+export State, Tock, Track, Accumulate, Priority
+export check!, value, store!, poststore!, priority, advance!

@@ -32,23 +32,24 @@ function getvar!(s::Statevar)
     t = gettime!(s)
     #println("check! for $s")
     if check!(s.state, t)
-        #println("checked! let's getvar!")
-        # https://discourse.julialang.org/t/extract-argument-names/862
-        # https://discourse.julialang.org/t/retrieve-default-values-of-keyword-arguments/19320
-        names = Base.uncompressed_ast(methods(s.calc).ms[end]).slotnames[2:end]
-        # https://discourse.julialang.org/t/is-there-a-way-to-get-keyword-argument-names-of-a-method/20454
-        # first.(Base.arg_decl_parts(m)[2][2:end])
-        # Base.kwarg_decl(first(methods(f)), typeof(methods(f).mt.kwsorter))
-        v = s.calc([getvar!(s.system, n) for n in names]...)
-        setvar!(s, v)
+        setvar!(s)
     end
     value(s.state)
 end
 getvar!(s::System, n::Symbol) = getvar!(getfield(s, n))
-function setvar!(s::Statevar, v)
-    store!(s.state, v)
-    #FIXME: implement context.queue
-    poststore!(s.state, v)()
+function setvar!(s::Statevar)
+    #println("checked! let's getvar!")
+    # https://discourse.julialang.org/t/extract-argument-names/862
+    # https://discourse.julialang.org/t/retrieve-default-values-of-keyword-arguments/19320
+    names = Base.uncompressed_ast(methods(s.calc).ms[end]).slotnames[2:end]
+    # https://discourse.julialang.org/t/is-there-a-way-to-get-keyword-argument-names-of-a-method/20454
+    # first.(Base.arg_decl_parts(m)[2][2:end])
+    # Base.kwarg_decl(first(methods(f)), typeof(methods(f).mt.kwsorter))
+    f = () -> s.calc([getvar!(s.system, n) for n in names]...)
+
+    store!(s.state, f)
+    ps = poststore!(s.state, f)
+    !isnothing(ps) && queue!(s.system.context, ps, priority(s.state))
 end
 
 import Base: convert, promote_rule
