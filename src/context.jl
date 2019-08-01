@@ -1,4 +1,5 @@
 @system Clock begin
+    context ~ system(usearg)
     tick => gettime!(s.tick) ~ tock(time="")
     #unit
     start => 0 ~ track(init=0, time="tick") # parameter
@@ -16,12 +17,12 @@ const Config = Dict{Symbol,Any}
 const Queue = Dict{Priority,Vector{Function}}
 
 @system Context begin
-    clock ~ clock
+    clock => Clock(; context=self) ~ clock
     queue ~ queue
     config => Config(config) ~ config(usearg)
 
-    context ~ system(self)
-    parent ~ system(self)
+    context => self ~ system
+    parent => self ~ system
     children ~ [system]
 end bare
 

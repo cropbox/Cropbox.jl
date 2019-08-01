@@ -89,6 +89,8 @@ function VarInfo(line::Union{Expr,Symbol})
     VarInfo{eval(type)}(name, alias, args, body, type, tags)
 end
 
+const self = :($(esc(:self)))
+
 genfield(i::VarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
 genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
 genfield(S, var, alias) = begin
@@ -108,7 +110,7 @@ genarg(i::VarInfo) = begin
     end
 end
 
-gendecl(i::VarInfo{S}; self) where {S<:State} = begin
+gendecl(i::VarInfo{S}) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
         calc = esc(i.var)
@@ -127,14 +129,12 @@ gendecl(i::VarInfo{S}; self) where {S<:State} = begin
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : @q begin $v; $a end
 end
-gendecl(i::VarInfo{S}; self) where S = begin
+gendecl(i::VarInfo{S}) where S = begin
     if !isnothing(i.body)
         # @assert isnothing(i.args)
         decl = esc(i.body)
     elseif haskey(i.tags, :usearg)
         decl = esc(i.var)
-    elseif haskey(i.tags, :self)
-        decl = self
     else
         decl = :($S())
     end
@@ -142,10 +142,9 @@ gendecl(i::VarInfo{S}; self) where S = begin
 end
 
 genstruct(name, infos, options) = begin
-    self = gensym(:self)
     fields = genfield.(infos)
     args = genargs(infos, options)
-    decls = gendecl.(infos; self=self)
+    decls = gendecl.(infos)
     system = @q begin
         mutable struct $name <: System
             $(fields...)
