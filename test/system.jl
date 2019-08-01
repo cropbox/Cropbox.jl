@@ -39,7 +39,7 @@ end
         advance!(c)
         @test s.a == 1 && s.b == 6
     end
-    
+
     @testset "accumulate with cross reference" begin
         s = @testsystem begin
             a(b) => b + 1 ~ accumulate
@@ -54,7 +54,7 @@ end
         advance!(c)
         @test s.a == 7 && s.b == 7
     end
-    
+
     @testset "accumulate with cross reference mirror" begin
         s1 = @testsystem begin
             a(b) => b + 1 ~ accumulate
@@ -73,7 +73,7 @@ end
         advance!(c1); advance!(c2)
         @test s1.a == s2.b && s1.b == s2.a
     end
-    
+
     @testset "accumulate with time" begin
         s = @testsystem begin
             a => 1 ~ track
@@ -89,11 +89,11 @@ end
         advance!(c)
         @test s.a == 1 && s.b == 3
     end
-    
+
     @testset "accumulate transport" begin
         s = @testsystem begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)
-            b(a, b, c) => max(a - b, 0) - max(b - c, 0) ~  accumulate
+            b(a, b, c) => max(a - b, 0) - max(b - c, 0) ~ accumulate
             c(b, c) => max(b - c, 0) ~ accumulate
         end
         c = s.context
@@ -105,7 +105,7 @@ end
         advance!(c)
         @test s.a == 0 && s.b == 0 && s.c == 10
     end
-    
+
     @testset "accumulate distribute" begin
         s = @testsystem begin
             s(x="context.time") => 100x ~ track
