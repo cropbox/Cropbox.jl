@@ -1,4 +1,7 @@
 using Cropbox
+using Test
+
+include("system.jl")
 
 a() = 1
 b(a) = a + 1

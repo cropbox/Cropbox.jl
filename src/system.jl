@@ -141,7 +141,7 @@ gendecl(i::VarInfo{S}; self) where S = begin
     :($self.$(i.var) = $decl)
 end
 
-gensystem(name, infos, options) = begin
+genstruct(name, infos, options) = begin
     self = gensym(:self)
     fields = genfield.(infos)
     args = genargs(infos, options)
@@ -159,7 +159,7 @@ gensystem(name, infos, options) = begin
     flatten(system)
 end
 
-macro system(name, block, options...)
+gensystem(name, block, options...) = begin
     if :bare ∉ options
         header = @q begin
             context ~ context(usearg)
@@ -169,7 +169,11 @@ macro system(name, block, options...)
         block = flatten(:($header; $block))
     end
     infos = [VarInfo(line) for line in striplines(block).args]
-    gensystem(name, infos, options)
+    genstruct(name, infos, options)
+end
+
+macro system(name, block, options...)
+    gensystem(name, block, options...)
 end
 
 export @system
