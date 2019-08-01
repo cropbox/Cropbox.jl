@@ -36,7 +36,7 @@ end
 
 Track(;init=0., _...) = Track(init, Tick(0))
 
-function check!(s::Track, t)
+check!(s::Track, t) = begin
     (update!(s.tick, t) > 0) && (return true)
     #isnothing(s.value) && (s.value = s.initial_value; return true)
     #TODO: regime handling
@@ -58,15 +58,13 @@ Accumulate(v::V, t::Tick{T}) where {V,T} = Accumulate(v, t, OrderedDict{T,V}(), 
 Accumulate(;init=0., _...) = Accumulate(init, Tick(0))
 
 check!(s::Accumulate, t) = (update!(s.tick, t) > 0) && (return true)
-
-function store!(s::Accumulate, v)
+store!(s::Accumulate, f::Function) = begin
     t = s.tick
     T0 = collect(keys(s.rates))
     T1 = [T0; t][2:length(T0)+1]
     s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))
 end
-
-function poststore!(s::Accumulate, f::Function)
+poststore!(s::Accumulate, f::Function) = begin
     t = s.tick
     return function ()
         s.rates[t] = f()
