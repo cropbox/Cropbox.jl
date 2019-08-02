@@ -38,7 +38,8 @@ setvar!(s::Statevar) = begin
     #println("checked! let's getvar!")
     # https://discourse.julialang.org/t/extract-argument-names/862
     # https://discourse.julialang.org/t/retrieve-default-values-of-keyword-arguments/19320
-    names = Base.uncompressed_ast(methods(s.calc).ms[end]).slotnames[2:end]
+    m = methods(s.calc).ms[end]
+    names = Base.method_argnames(m)[2:end]
     # https://discourse.julialang.org/t/is-there-a-way-to-get-keyword-argument-names-of-a-method/20454
     # first.(Base.arg_decl_parts(m)[2][2:end])
     # Base.kwarg_decl(first(methods(f)), typeof(methods(f).mt.kwsorter))
