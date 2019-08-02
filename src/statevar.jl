@@ -28,16 +28,13 @@ inittime!(s::Statevar, st::Tock; stargs...) = (s.time = s)
 gettime!(s::Statevar{Tock}) = value(s.time.state)
 gettime!(s::Statevar) = getvar!(s.time)
 
-function getvar!(s::Statevar)
+getvar!(s::Statevar) = begin
     t = gettime!(s)
-    #println("check! for $s")
-    if check!(s.state, t)
-        setvar!(s)
-    end
+    check!(s.state, t) && setvar!(s)
     value(s.state)
 end
 getvar!(s::System, n::Symbol) = getvar!(getfield(s, n))
-function setvar!(s::Statevar)
+setvar!(s::Statevar) = begin
     #println("checked! let's getvar!")
     # https://discourse.julialang.org/t/extract-argument-names/862
     # https://discourse.julialang.org/t/retrieve-default-values-of-keyword-arguments/19320
