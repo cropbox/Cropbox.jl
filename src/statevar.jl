@@ -57,6 +57,9 @@ convert(T::Type{S}, s::Statevar) where {S<:Statevar} = s
 convert(T::Type{V}, s::Statevar) where {V<:Number} = convert(T, getvar!(s))
 promote_rule(::Type{S}, T::Type{V}) where {S<:Statevar, V<:Number} = T
 
+import Base: ==
+==(s1::Statevar, s2::Statevar) = (value(s1.state) == value(s2.state))
+
 import Base: show
 show(io::IO, s::Statevar) = print(io, "$(s.system)<$(s.name)> = $(s.state.value)")
 
