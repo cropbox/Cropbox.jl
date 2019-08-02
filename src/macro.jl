@@ -1,4 +1,5 @@
-import MacroTools: @capture, @q, flatten, isexpr, striplines
+using MacroTools
+import MacroTools: @q, flatten, striplines
 
 struct VarInfo{S}
     var::Symbol
@@ -64,14 +65,33 @@ genarg(i::VarInfo) = begin
     end
 end
 
+equation(f) = begin
+    fdef = splitdef(f)
+    name = Meta.quot(fdef[:name])
+    key(x::Symbol) = x
+    key(x::Expr) = x.args[1]
+    args = key.(fdef[:args])
+    kwargs = key.(fdef[:kwargs])
+    pair(x::Symbol) = nothing
+    pair(x::Expr) = x.args[1] => x.args[2]
+    default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict
+    :(Equation($f, $name, $args, $kwargs, $default))
+end
+
+macro equation(f)
+    e = eval(equation(f))
+    :($(esc(e.name)) = $e)
+end
+
 gendecl(i::VarInfo{S}) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
         e = esc(i.var)
     else
-        e = @q Equation(function $(i.var)($(Tuple(i.args)...)) $(i.body) end)
+        f = @q function $(i.var)($(Tuple(i.args)...)) $(i.body) end
+        e = equation(f)
     end
-    name = Meta.quot(Symbol(i.var))
+    name = Meta.quot(i.var)
     args = merge(Dict(:time => "context.clock.tick"), i.tags)
     if !isempty(args[:time])
         path = [self; Symbol.(split(args[:time], "."))]
@@ -128,4 +148,4 @@ macro system(name, block, options...)
     gensystem(name, block, options...)
 end
 
-export @system
+export @equation, @system

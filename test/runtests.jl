@@ -3,10 +3,10 @@ using Test
 
 include("system.jl")
 
-a() = 1
-b(a) = a + 1
-c(a, b) = a + b
-d(b) = b
+@equation a() = 1
+@equation b(a) = a + 1
+@equation c(a, b) = a + b
+@equation d(b) = b
 
 # mutable struct MySystem <: System
 #     context::System
