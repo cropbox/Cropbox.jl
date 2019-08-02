@@ -1,15 +1,15 @@
 mutable struct Statevar{S<:State} <: Number
     system::System
-    calc::Function #TODO: parametrise {F<:Function}
+    equation::Equation
     state::S
 
     name::Symbol
     alias::Union{Symbol,Nothing}
     time::Statevar
 
-    Statevar(sy, c, ST::Type{S}; stargs...) where {S<:State} = begin
+    Statevar(sy, e, ST::Type{S}; stargs...) where {S<:State} = begin
         st = S(; stargs...)
-        s = new{S}(sy, c, st)
+        s = new{S}(sy, e, st)
         init!(s, st; stargs...)
     end
 end
@@ -23,7 +23,7 @@ initname!(s::Statevar, st::State; name, alias=nothing, stargs...) = (s.name = na
 inittime!(s::Statevar, st::State; time, stargs...) = (s.time = time)
 inittime!(s::Statevar, st::Tock; stargs...) = (s.time = s)
 
-(s::Statevar)(args...) = s.calc(args...)
+(s::Statevar)(args...; kwargs...) = s.equation(args...; kwargs...)
 
 gettime!(s::Statevar{Tock}) = value(s.time.state)
 gettime!(s::Statevar) = getvar!(s.time)
@@ -35,16 +35,7 @@ getvar!(s::Statevar) = begin
 end
 getvar!(s::System, n::Symbol) = getvar!(getfield(s, n))
 setvar!(s::Statevar) = begin
-    #println("checked! let's getvar!")
-    # https://discourse.julialang.org/t/extract-argument-names/862
-    # https://discourse.julialang.org/t/retrieve-default-values-of-keyword-arguments/19320
-    m = methods(s.calc).ms[end]
-    names = Base.method_argnames(m)[2:end]
-    # https://discourse.julialang.org/t/is-there-a-way-to-get-keyword-argument-names-of-a-method/20454
-    # first.(Base.arg_decl_parts(m)[2][2:end])
-    # Base.kwarg_decl(first(methods(f)), typeof(methods(f).mt.kwsorter))
-    f = () -> s.calc([getvar!(s.system, n) for n in names]...)
-
+    f = () -> s([getvar!(s.system, n) for n in s.equation.args]...)
     store!(s.state, f)
     ps = poststore!(s.state, f)
     !isnothing(ps) && queue!(s.system.context, ps, priority(s.state))

@@ -67,10 +67,9 @@ end
 gendecl(i::VarInfo{S}) where {S<:State} = begin
     if isnothing(i.body)
         @assert isempty(i.args)
-        calc = esc(i.var)
+        e = esc(i.var)
     else
-        #calc = @q $(Expr(:tuple, i.args...)) -> $(i.body)
-        calc = @q function $(i.var)($(Tuple(i.args)...)) $(i.body) end
+        e = @q Equation(function $(i.var)($(Tuple(i.args)...)) $(i.body) end)
     end
     name = Meta.quot(Symbol(i.var))
     args = merge(Dict(:time => "context.clock.tick"), i.tags)
@@ -79,7 +78,7 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
         args[:time] = reduce((a, b) -> :($a.$b), path)
     end
     args = [:($(esc(k))=$v) for (k, v) in args]
-    v = :($self.$(i.var) = Statevar($self, $calc, $S; name=$name, $(args...)))
+    v = :($self.$(i.var) = Statevar($self, $e, $S; name=$name, $(args...)))
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : @q begin $v; $a end
 end
