@@ -92,7 +92,7 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
         e = equation(f)
     end
     name = Meta.quot(i.var)
-    tags = merge(Dict(:time => "context.clock.tick"), i.tags)
+    tags = merge(Dict(:time => "context.clock.time"), i.tags)
     tags = [:($(esc(k))=$v) for (k, v) in tags]
     v = :($self.$(i.var) = Statevar($self, $e, $S; name=$name, $(tags...)))
     a = :($self.$(i.alias) = $self.$(i.var))

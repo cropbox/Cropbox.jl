@@ -23,10 +23,10 @@ include("system.jl")
 #         s.context = context
 #         s.parent = parent
 #         s.children = children
-#         s.a = Statevar(s, a, Track; name=:a, init=1, time=s.context.clock.tick)
-#         s.b = Statevar(s, b, Track; name=:b, time=s.context.clock.tick)
-#         s.c = Statevar(s, c, Track; name=:c, time=s.context.clock.tick)
-#         s.d = Statevar(s, d, Accumulate; name=:d, time=s.context.clock.tick)
+#         s.a = Statevar(s, a, Track; name=:a, init=1, time=s.context.clock.time)
+#         s.b = Statevar(s, b, Track; name=:b, time=s.context.clock.time)
+#         s.c = Statevar(s, c, Track; name=:c, time=s.context.clock.time)
+#         s.d = Statevar(s, d, Accumulate; name=:d, time=s.context.clock.time)
 #         s
 #     end
 # end
@@ -40,7 +40,7 @@ end
 
 @system ASystem begin
     a ~ track
-    b: bb ~ track(time="context.clock.tick")
+    b: bb ~ track(time="context.clock.time")
     ccc(a, b): c => a+b ~ track(unit="cm")
     cccc(a=1, b=2): cc => a+b ~ track(init=0)
     d(a, b) => begin
