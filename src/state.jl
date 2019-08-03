@@ -45,7 +45,7 @@ end
 
 ####
 
-using DataStructures
+import DataStructures: OrderedDict
 
 mutable struct Accumulate{V,T} <: State
     initial_value::V
