@@ -34,7 +34,7 @@ mutable struct Track{V} <: State
     tick::Tick
 end
 
-Track(;init=0., _...) = Track(init, Tick(0))
+Track(;init=0., _...) = Track(init, Tick(0.))
 
 check!(s::Track, t) = begin
     (update!(s.tick, t) > 0) && (return true)
@@ -55,7 +55,7 @@ mutable struct Accumulate{V,T} <: State
 end
 
 Accumulate(v::V, t::Tick{T}) where {V,T} = Accumulate(v, t, OrderedDict{T,V}(), v)
-Accumulate(;init=0., _...) = Accumulate(init, Tick(0))
+Accumulate(;init=0., _...) = Accumulate(init, Tick(0.))
 
 check!(s::Accumulate, t) = (update!(s.tick, t) > 0) && (return true)
 store!(s::Accumulate, f::Function) = begin
