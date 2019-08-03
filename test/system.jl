@@ -115,8 +115,6 @@ end
             d3(s) => 0.5s ~ accumulate
         end
         c = s.context
-        @test c.clock.time == 0 && s.s == 0 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
-        advance!(c)
         @test c.clock.time == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(c)
         @test c.clock.time == 2 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
