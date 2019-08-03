@@ -77,17 +77,18 @@ end
     @testset "accumulate with time" begin
         s = @testsystem begin
             a => 1 ~ track
-            b(a) => a + 1 ~ accumulate(time="t")
-            t(x="context.time") => 0.5x ~ track
+            b(a) => a + 1 ~ accumulate
+            c(a) => a + 1 ~ accumulate(time="t")
+            t(x="context.clock.time") => 0.5x ~ track
         end
         c = s.context
-        @test s.a == 1 && s.b == 0
+        @test s.a == 1 && s.b == 0 && s.c == 0
         advance!(c)
-        @test s.a == 1 && s.b == 1
+        @test s.a == 1 && s.b == 2 && s.c == 1
         advance!(c)
-        @test s.a == 1 && s.b == 2
+        @test s.a == 1 && s.b == 4 && s.c == 2
         advance!(c)
-        @test s.a == 1 && s.b == 3
+        @test s.a == 1 && s.b == 6 && s.c == 3
     end
 
     @testset "accumulate transport" begin
@@ -108,20 +109,20 @@ end
 
     @testset "accumulate distribute" begin
         s = @testsystem begin
-            s(x="context.time") => 100x ~ track
+            s(x="context.clock.time") => 100x ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
         c = s.context
-        @test c.time == 0 && s.s == 0 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.time == 0 && s.s == 0 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(c)
-        @test c.time == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.time == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(c)
-        @test c.time == 2 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
+        @test c.clock.time == 2 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
         advance!(c)
-        @test c.time == 3 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
+        @test c.clock.time == 3 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
         advance!(c)
-        @test c.time == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
+        @test c.clock.time == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 end
