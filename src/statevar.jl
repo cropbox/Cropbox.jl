@@ -5,7 +5,7 @@ mutable struct Statevar{S<:State} <: Number
 
     name::Symbol
     alias::Union{Symbol,Nothing}
-    time::Statevar
+    time::Union{Statevar,String} #TODO: make a formal type for Statevar path
 
     Statevar(sy, e, ST::Type{S}; stargs...) where {S<:State} = begin
         st = S(; stargs...)
@@ -23,19 +23,63 @@ initname!(s::Statevar, st::State; name, alias=nothing, stargs...) = (s.name = na
 inittime!(s::Statevar, st::State; time, stargs...) = (s.time = time)
 inittime!(s::Statevar, st::Tock; stargs...) = (s.time = s)
 
-(s::Statevar)(args...; kwargs...) = s.equation(args...; kwargs...)
+import Base: names
+names(s::Statevar) = filter(!isnothing, [s.name, s.alias])
+
+(s::Statevar)() = begin
+    #TODO: use var path exclusive str (i.e. v_str)
+    #TODO: unit handling (i.e. u_str)
+    interpret(a::String) = getvar(s.system, a)
+    interpret(a) = a
+    resolve(a::Symbol) = begin
+        # 1. external options (i.e. TOML config)
+        v = option(s.system.context, s.system, s, a)
+        !isnothing(v) && return interpret(v)
+
+        # 2. default parameter values
+        v = get(s.equation.default, a, nothing)
+        !isnothing(v) && return interpret(v)
+
+        # 3. statevars from current system
+        isdefined(s.system, a) && return getvar!(s.system, a)
+
+        # 4. argument not found (partial function)
+        nothing
+    end
+    args = resolve.(s.equation.args)
+    kwargs = resolve.(s.equation.kwargs)
+    if length(args) == length(s.equation.args) && length(kwargs) == length(s.equation.kwargs)
+        s.equation(args...; kwargs...)
+    else
+        function (pargs...; pkwargs...)
+            for a in pargs
+                #replace(x -> isnothing(x) ? a : x, args; count=1)
+                i = findfirst(isnothing, args)
+                @assert !isnothing(i)
+                args[i] = a
+            end
+            @assert findfirst(isnothing, args) |> isnothing
+            kwargs = merge(kwargs, pkwargs)
+            s.equation(args...; kwargs...)
+        end
+    end
+end
 
 gettime!(s::Statevar{Tock}) = value(s.time.state)
-gettime!(s::Statevar) = getvar!(s.time)
+gettime!(s::Statevar) = getvar!(s.system, s.time) #getvar!(s.time) #FIXME
+
+getvar(s::System, n::Symbol) = getfield(s, n)
+getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
+getvar(s::System, n::Statevar) = n
 
 getvar!(s::Statevar) = begin
     t = gettime!(s)
     check!(s.state, t) && setvar!(s)
     value(s.state)
 end
-getvar!(s::System, n::Symbol) = getvar!(getfield(s, n))
+getvar!(s::System, n) = getvar!(getvar(s, n))
 setvar!(s::Statevar) = begin
-    f = () -> s([getvar!(s.system, n) for n in s.equation.args]...)
+    f = () -> s()
     store!(s.state, f)
     ps = poststore!(s.state, f)
     !isnothing(ps) && queue!(s.system.context, ps, priority(s.state))

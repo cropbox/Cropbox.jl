@@ -34,7 +34,7 @@ Config(config::AbstractString) = begin
 end
 option(c) = c
 option(c, keys...) = nothing
-option(c::Config, key::Symbol, keys...) = option(get(c, k, nothing), keys...)
+option(c::Config, key::Symbol, keys...) = option(get(c, key, nothing), keys...)
 option(c::Config, key::Vector{Symbol}, keys...) = begin
     for k in key
         v = option(c, k, keys...)
@@ -42,7 +42,8 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     end
     nothing
 end
-#option(c::Config, key::Statevar, keys...) = option(c, expand(key.alias), keys...) #TODO
+option(c::Config, key::System, keys...) = option(c, Symbol(typeof(key)), keys...)
+option(c::Config, key::Statevar, keys...) = option(c, names(key), keys...)
 option(c::Context, keys...) = option(c.config, keys...)
 
 queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)

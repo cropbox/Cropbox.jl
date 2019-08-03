@@ -92,13 +92,9 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
         e = equation(f)
     end
     name = Meta.quot(i.var)
-    args = merge(Dict(:time => "context.clock.tick"), i.tags)
-    if !isempty(args[:time])
-        path = [self; Symbol.(split(args[:time], "."))]
-        args[:time] = reduce((a, b) -> :($a.$b), path)
-    end
-    args = [:($(esc(k))=$v) for (k, v) in args]
-    v = :($self.$(i.var) = Statevar($self, $e, $S; name=$name, $(args...)))
+    tags = merge(Dict(:time => "context.clock.tick"), i.tags)
+    tags = [:($(esc(k))=$v) for (k, v) in tags]
+    v = :($self.$(i.var) = Statevar($self, $e, $S; name=$name, $(tags...)))
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : @q begin $v; $a end
 end
