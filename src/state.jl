@@ -1,6 +1,6 @@
 abstract type State end
 
-check!(s::State, _...) = true
+check!(s::State) = true
 value(s::State) = s.value
 store!(s::State, f::Function) = (v = f(); !isnothing(v) && (s.value = v))
 store!(s::State, v) = store!(s, () -> v)
@@ -29,19 +29,21 @@ Pass(; init=0., _...) = Pass(init)
 const Tock = Pass{Tick}
 Tock(; init=0, _...) = Tock(Tick(init))
 
-check!(s::Tock, t) = false
+check!(s::Tock) = false
 advance!(s::Tock) = (s.value += 1)
 
 ####
 
 mutable struct Track{V} <: State
     value::V
+    time::StatevarArg
     tick::Tick
 end
 
-Track(;init=0., _...) = Track(init, Tick(0.))
+Track(; init=0., time="context.clock.time", tick=Tick(0.), system, _...) = Track(StatevarArg.(system, [init, time, tick])...)
 
-check!(s::Track, t) = begin
+check!(s::Track) = begin
+    t = getvar!(s.time)
     (update!(s.tick, t) > 0) && (return true)
     #isnothing(s.value) && (s.value = s.initial_value; return true)
     #TODO: regime handling
@@ -54,15 +56,16 @@ import DataStructures: OrderedDict
 
 mutable struct Accumulate{V,T} <: State
     initial_value::V
+    time::StatevarArg
     tick::Tick{T}
     rates::OrderedDict{T,V}
     value::V
 end
 
-Accumulate(v::V, t::Tick{T}) where {V,T} = Accumulate(v, t, OrderedDict{T,V}(), v)
-Accumulate(;init=0., _...) = Accumulate(init, Tick(0.))
+Accumulate(v::V, tm, t::Tick{T}) where {V,T} = Accumulate(v, tm, t, OrderedDict{T,V}(), v)
+Accumulate(; init=0., time="context.clock.time", tick=Tick(0.), system, _...) = Accumulate(StatevarArg.(system, [init, time, tick])...)
 
-check!(s::Accumulate, t) = (update!(s.tick, t) > 0) && (return true)
+check!(s::Accumulate) = (update!(s.tick, getvar!(s.time)) > 0) && (return true)
 store!(s::Accumulate, f::Function) = begin
     t = s.tick
     T0 = collect(keys(s.rates))
@@ -86,13 +89,18 @@ priority(s::Accumulate) = accumulate
 
 mutable struct Flag <: State
     value::Bool
-    prob
+    prob::StatevarArg
+    time::StatevarArg
     tick::Tick
 end
 
-Flag(; init=false, prob=1, _...) = Flag(init, prob, Tick(0.))
+Flag(; init=false, prob=1, time="context.clock.time", tick=Tick(0.), system, _...) = Flag(StatevarArg.(system, [init, prob, time, tick])...)
 
-check!(s::Flag, t, p) = (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
+check!(s::Flag) = begin
+    t = getvar!(s.time)
+    p = getvar!(s.prob)
+    (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
+end
 store!(s::Flag, f::Function) = (s.value = f())
 priority(s::Flag) = flag
 

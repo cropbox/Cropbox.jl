@@ -11,6 +11,9 @@ length(::System) = 1
 iterate(s::System) = (s, nothing)
 iterate(s::System, state) = nothing
 
+import Base: broadcastable
+broadcastable(s::System) = Ref(s)
+
 import Base: collect
 function collect(s::System; recursive=true, exclude_self=true)
     S = Set()

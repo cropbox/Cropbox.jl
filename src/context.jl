@@ -1,6 +1,6 @@
 @system Clock begin
     context ~ system(usearg)
-    tick => gettime!(s.tick) ~ tock(time="")
+    tick => gettime!(s.tick) ~ tock
     #unit
     start => 0 ~ track(init=0, time="tick") # parameter
     interval: i => 1 ~ track(init=1, time="tick") # parameter

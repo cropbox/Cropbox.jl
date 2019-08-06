@@ -1,27 +1,16 @@
 mutable struct Statevar{S<:State} <: Number
     system::System
     equation::Equation
-    state::S
-
     name::Symbol
     alias::Union{Symbol,Nothing}
-    time::StatevarPath
+    state::S
 
-    Statevar(sy, e, ST::Type{S}; stargs...) where {S<:State} = begin
-        st = S(; stargs...)
-        s = new{S}(sy, e, st)
-        init!(s, st; stargs...)
+    Statevar(sy, e, ST::Type{S}; name, alias=nothing, stargs...) where {S<:State} = begin
+        s = new{S}(sy, e, name, alias)
+        s.state = S(; system=sy, statevar=s, stargs...)
+        s
     end
 end
-
-init!(s, st; stargs...) = begin
-    initname!(s, st; stargs...)
-    inittime!(s, st; stargs...)
-    s
-end
-initname!(s::Statevar, st::State; name, alias=nothing, stargs...) = (s.name = name; s.alias = alias)
-inittime!(s::Statevar, st::State; time, stargs...) = (s.time = (s, time))
-inittime!(s::Statevar, st::Tock; stargs...) = (s.time = (s, s))
 
 import Base: names
 names(s::Statevar) = filter(!isnothing, [s.name, s.alias])
@@ -65,13 +54,11 @@ names(s::Statevar) = filter(!isnothing, [s.name, s.alias])
     end
 end
 
-checker!(s::Statevar{Tock}) = value(getvar(s.time).state)
-checker!(s::Statevar) = getvar!(s.time)
-
 getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
 
-getvar!(s::Statevar) = (check!(s.state, checker!(s)...) && setvar!(s); value(s.state))
+getvar!(s::Statevar) = (check!(s.state) && setvar!(s); value(s.state))
+getvar!(s) = s
 getvar!(s::System, n) = getvar!(getvar(s, n))
 setvar!(s::Statevar) = begin
     f = () -> s()
@@ -86,6 +73,7 @@ convert(::Type{Vector{Symbol}}, s::Statevar) = [s.name]
 convert(T::Type{S}, s::Statevar) where {S<:Statevar} = s
 convert(T::Type{V}, s::Statevar) where {V<:Number} = convert(T, getvar!(s))
 promote_rule(::Type{S}, T::Type{V}) where {S<:Statevar, V<:Number} = T
+promote_rule(T::Type{Bool}, ::Type{S}) where {S<:Statevar} = T
 
 import Base: ==
 ==(s1::Statevar, s2::Statevar) = (value(s1.state) == value(s2.state))

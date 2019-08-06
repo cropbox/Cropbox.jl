@@ -124,7 +124,7 @@ end
         @test c.clock.time == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
-    @testset "test flag" begin
+    @testset "flag" begin
         s = @testsystem begin
             a => true ~ flag
             b => false ~ flag
