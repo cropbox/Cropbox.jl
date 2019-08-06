@@ -2,11 +2,11 @@ module Cropbox
 
 include("tick.jl")
 include("system.jl")
-include("statevarpath.jl")
+include("varval.jl")
 include("state.jl")
 include("equation.jl")
 include("macro.jl")
-include("statevar.jl")
+include("var.jl")
 include("context.jl")
 
 end
