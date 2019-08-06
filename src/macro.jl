@@ -3,8 +3,8 @@ import MacroTools: @q, flatten, striplines
 
 struct VarInfo{S}
     var::Symbol
-    alias::Union{Symbol,Nothing}
-    args::Array
+    alias::Vector{Symbol}
+    args::Vector
     body#::Union{Expr,Symbol,Nothing}
     type::Union{Symbol,Expr}
     tags::Dict{Symbol,Any}
@@ -13,7 +13,7 @@ end
 import Base: show
 function show(io::IO, s::VarInfo)
     println(io, "var: $(s.var)")
-    println(io, "alias: $(repr(s.alias))")
+    println(io, "alias: $(s.alias)")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
     println(io, "type: $(s.type)")
     for (k, v) in s.tags
@@ -29,6 +29,7 @@ function VarInfo(line::Union{Expr,Symbol})
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__) | name_)
     args = isnothing(args) ? [] : args
+    alias = isnothing(alias) ? [] : alias
     symbolify(t) = Symbol(uppercasefirst(string(t)))
     if @capture(type, [elemtype_])
         type = :(Vector{$(symbolify(elemtype))})
@@ -48,10 +49,9 @@ const self = :($(esc(:self)))
 
 genfield(i::VarInfo{S}) where {S<:State} = genfield(Var, i.var, i.alias)
 genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
-genfield(S, var, alias) = begin
-    v = :($var::$S)
-    a = :($alias::$S)
-    isnothing(alias) ? v : @q begin $v; $a end
+genfield(S, var, alias) = @q begin
+    $var::$S
+    $(@q begin $([:($a::$S) for a in alias]...) end)
 end
 
 genargs(infos::Vector, options) = Tuple(filter(!isnothing, genarg.(infos)))
@@ -93,9 +93,10 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
     end
     name = Meta.quot(i.var)
     tags = [:($(esc(k))=$v) for (k, v) in i.tags]
-    v = :($self.$(i.var) = Var($self, $e, $S; name=$name, $(tags...)))
-    a = :($self.$(i.alias) = $self.$(i.var))
-    isnothing(i.alias) ? v : @q begin $v; $a end
+    @q begin
+        $self.$(i.var) = Var($self, $e, $S; name=$name, $(tags...))
+        $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
+    end
 end
 gendecl(i::VarInfo{S}) where S = begin
     if !isnothing(i.body)

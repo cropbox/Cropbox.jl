@@ -2,10 +2,10 @@ mutable struct Var{S<:State} <: Number
     system::System
     equation::Equation
     name::Symbol
-    alias::Union{Symbol,Nothing}
+    alias::Vector{Symbol}
     state::S
 
-    Var(s, e, ST::Type{S}; name, alias=nothing, stargs...) where {S<:State} = begin
+    Var(s, e, ST::Type{S}; name, alias=Symbol[], stargs...) where {S<:State} = begin
         v = new{S}(s, e, name, alias)
         v.state = S(; system=s, var=v, stargs...)
         v
@@ -13,7 +13,7 @@ mutable struct Var{S<:State} <: Number
 end
 
 import Base: names
-names(x::Var) = filter(!isnothing, [x.name, x.alias])
+names(x::Var) = [[x.name]; x.alias]
 
 (x::Var)() = begin
     s = x.system
