@@ -47,6 +47,7 @@ option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
 option(c::Context, keys...) = option(c.config, keys...)
 
 queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)
+queue!(c::Context, f, p::Priority) = nothing
 flush!(c::Context, cond) = begin
     q = filter(cond, c.queue)
     filter!(!cond, c.queue)

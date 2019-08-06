@@ -61,12 +61,7 @@ getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(spli
 value!(x::Var) = (check!(x.state) && update!(x); value(x.state))
 value!(x) = x
 value!(s::System, n) = value!(getvar(s, n))
-update!(x::Var) = begin
-    f = () -> x()
-    store!(x.state, f)
-    ps = poststore!(x.state, f)
-    !isnothing(ps) && queue!(x.system.context, ps, priority(x.state))
-end
+update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))
 
 import Base: convert, promote_rule
 convert(T::Type{System}, x::Var) = x.system

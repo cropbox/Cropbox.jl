@@ -4,8 +4,6 @@ check!(s::State) = true
 value(s::State) = s.value
 store!(s::State, f::Function) = (v = f(); !isnothing(v) && (s.value = v))
 store!(s::State, v) = store!(s, () -> v)
-poststore!(s::State, f::Function) = nothing
-poststore!(s::State, v) = poststore!(s, () -> v)
 
 @enum Priority default=0 flag=1 accumulate=2 produce=-1
 priority(s::State) = default
@@ -71,12 +69,7 @@ store!(s::Accumulate, f::Function) = begin
     T0 = collect(keys(s.rates))
     T1 = [T0; t][2:length(T0)+1]
     s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))
-end
-poststore!(s::Accumulate, f::Function) = begin
-    t = s.tick
-    return function ()
-        s.rates[t] = f()
-    end
+    () -> (s.rates[t] = f())
 end
 priority(s::Accumulate) = accumulate
 
@@ -113,4 +106,4 @@ end
 # priority(s::Produce) = produce
 
 export State, Pass, Tock, Track, Accumulate, Flag, Priority
-export check!, value, store!, poststore!, priority, advance!
+export check!, value, store!, priority, advance!
