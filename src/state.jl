@@ -18,11 +18,16 @@ priority(s::State) = default
 
 ####
 
-mutable struct Tock <: State
-    value::Tick
+mutable struct Pass{V} <: State
+    value::V
 end
 
-Tock(;_...) = Tock(Tick(0))
+Pass(; init=0., _...) = Pass(init)
+
+####
+
+const Tock = Pass{Tick}
+Tock(; init=0, _...) = Tock(Tick(init))
 
 check!(s::Tock, t) = false
 advance!(s::Tock) = (s.value += 1)
