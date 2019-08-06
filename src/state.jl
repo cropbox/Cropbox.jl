@@ -79,6 +79,11 @@ priority(s::Accumulate) = accumulate
 
 ####
 
+# Difference can be actually Track
+# mutable struct Difference{V,T} <: State end
+
+####
+
 mutable struct Flag <: State
     value::Bool
     prob
