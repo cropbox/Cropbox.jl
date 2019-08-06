@@ -1,3 +1,19 @@
+struct StatevarPath
+    system::System
+    path::Vector{Symbol}
+end
+
+import Base: convert
+convert(::Type{Vector{Symbol}}, s::Symbol) = [s]
+convert(::Type{Vector{Symbol}}, s::String) = Symbol.(split(s, "."))
+
+StatevarPath(s::System, n...) = StatevarPath(s, convert.(Vector{Symbol}, n) |> Iterators.flatten |> collect)
+StatevarPath(n...) = StatevarPath(convert(System, n[1]), n[2:end]...)
+convert(::Type{StatevarPath}, n) = StatevarPath(n...)
+
+getvar(s::StatevarPath) = reduce((a, b) -> getfield(a, b), [s.system; s.path])
+getvar!(s::StatevarPath) = getvar!(getvar(s))
+
 mutable struct Statevar{S<:State} <: Number
     system::System
     equation::Equation
@@ -5,7 +21,7 @@ mutable struct Statevar{S<:State} <: Number
 
     name::Symbol
     alias::Union{Symbol,Nothing}
-    time::Union{Statevar,String} #TODO: make a formal type for Statevar path
+    time::StatevarPath
 
     Statevar(sy, e, ST::Type{S}; stargs...) where {S<:State} = begin
         st = S(; stargs...)
@@ -20,8 +36,8 @@ init!(s, st; stargs...) = begin
     s
 end
 initname!(s::Statevar, st::State; name, alias=nothing, stargs...) = (s.name = name; s.alias = alias)
-inittime!(s::Statevar, st::State; time, stargs...) = (s.time = time)
-inittime!(s::Statevar, st::Tock; stargs...) = (s.time = s)
+inittime!(s::Statevar, st::State; time, stargs...) = (s.time = (s, time))
+inittime!(s::Statevar, st::Tock; stargs...) = (s.time = (s, s))
 
 import Base: names
 names(s::Statevar) = filter(!isnothing, [s.name, s.alias])
@@ -65,12 +81,11 @@ names(s::Statevar) = filter(!isnothing, [s.name, s.alias])
     end
 end
 
-gettime!(s::Statevar{Tock}) = value(s.time.state)
-gettime!(s::Statevar) = getvar!(s.system, s.time) #getvar!(s.time) #FIXME
+gettime!(s::Statevar{Tock}) = value(getvar(s.time).state)
+gettime!(s::Statevar) = getvar!(s.time)
 
 getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
-getvar(s::System, n::Statevar) = n
 
 getvar!(s::Statevar) = begin
     t = gettime!(s)
@@ -86,6 +101,8 @@ setvar!(s::Statevar) = begin
 end
 
 import Base: convert, promote_rule
+convert(T::Type{System}, s::Statevar) = s.system
+convert(::Type{Vector{Symbol}}, s::Statevar) = [s.name]
 convert(T::Type{S}, s::Statevar) where {S<:Statevar} = s
 convert(T::Type{V}, s::Statevar) where {V<:Number} = convert(T, getvar!(s))
 promote_rule(::Type{S}, T::Type{V}) where {S<:Statevar, V<:Number} = T
