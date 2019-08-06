@@ -1,35 +1,36 @@
-macro testsystem(block, options...)
-    name = gensym()
+macro system(name, block, options...)
+    alias = gensym()
     quote
-        $(Cropbox.gensystem(name, block, options...))
-        instance($(esc(name)))
+        $(Cropbox.gensystem(alias, block, options...))
+        $(esc(name)) = $(esc(alias))
     end
 end
 
 @testset "system" begin
     @testset "derive" begin
-        s = @testsystem begin
+        @system S begin
             a => 1 ~ track
             b => 2 ~ track
             c(a, b) => a + b ~ track
         end
+        s = instance(S)
         @test s.a == 1 && s.b == 2 && s.c == 3
     end
 
     @testset "derive with cross reference" begin
-        @test_throws StackOverflowError begin
-            @testsystem begin
-                a(b) => b ~ track
-                b(a) => a ~ track
-            end
+        @system S begin
+            a(b) => b ~ track
+            b(a) => a ~ track
         end
+        @test_throws StackOverflowError instance(S)
     end
 
     @testset "accumulate" begin
-        s = @testsystem begin
+        @system S begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
         end
+        s = instance(S)
         c = s.context
         @test s.a == 1 && s.b == 0
         advance!(c)
@@ -41,10 +42,11 @@ end
     end
 
     @testset "accumulate with cross reference" begin
-        s = @testsystem begin
+        @system S begin
             a(b) => b + 1 ~ accumulate
             b(a) => a + 1 ~ accumulate
         end
+        s = instance(S)
         c = s.context
         @test s.a == 0 && s.b == 0
         advance!(c)
@@ -56,14 +58,15 @@ end
     end
 
     @testset "accumulate with cross reference mirror" begin
-        s1 = @testsystem begin
+        @system S1 begin
             a(b) => b + 1 ~ accumulate
             b(a) => a + 2 ~ accumulate
         end
-        s2 = @testsystem begin
+        @system S2 begin
             a(b) => b + 2 ~ accumulate
             b(a) => a + 1 ~ accumulate
         end
+        s1 = instance(S1); s2 = instance(S2)
         c1 = s1.context; c2 = s2.context
         @test s1.a == s2.b && s1.b == s2.a
         advance!(c1); advance!(c2)
@@ -75,12 +78,13 @@ end
     end
 
     @testset "accumulate with time" begin
-        s = @testsystem begin
+        @system S begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(a) => a + 1 ~ accumulate(time="t")
             t(x="context.clock.time") => 0.5x ~ track
         end
+        s = instance(S)
         c = s.context
         @test s.a == 1 && s.b == 0 && s.c == 0
         advance!(c)
@@ -92,11 +96,12 @@ end
     end
 
     @testset "accumulate transport" begin
-        s = @testsystem begin
+        @system S begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)
             b(a, b, c) => max(a - b, 0) - max(b - c, 0) ~ accumulate
             c(b, c) => max(b - c, 0) ~ accumulate
         end
+        s = instance(S)
         c = s.context
         @test s.a == 10 && s.b == 0 && s.c == 0
         advance!(c)
@@ -108,12 +113,13 @@ end
     end
 
     @testset "accumulate distribute" begin
-        s = @testsystem begin
+        @system S begin
             s(x="context.clock.time") => 100x ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
+        s = instance(S)
         c = s.context
         @test c.clock.time == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(c)
@@ -125,7 +131,7 @@ end
     end
 
     @testset "flag" begin
-        s = @testsystem begin
+        @system S begin
             a => true ~ flag
             b => false ~ flag
             c => true ~ flag(prob=0)
@@ -135,6 +141,7 @@ end
             e => true ~ flag(prob="zero")
             f => false ~ flag(prob="one")
         end
+        s = instance(S)
         @test s.a == true && s.b == false
         @test s.c == false && s.d == false
         @test s.e == false && s.f == false
