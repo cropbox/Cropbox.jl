@@ -1,6 +1,6 @@
 abstract type State end
 
-check!(s::State, t) = true
+check!(s::State, _...) = true
 value(s::State) = s.value
 store!(s::State, f::Function) = (v = f(); !isnothing(v) && (s.value = v))
 store!(s::State, v) = store!(s, () -> v)

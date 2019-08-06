@@ -65,17 +65,13 @@ names(s::Statevar) = filter(!isnothing, [s.name, s.alias])
     end
 end
 
-gettime!(s::Statevar{Tock}) = value(getvar(s.time).state)
-gettime!(s::Statevar) = getvar!(s.time)
+checker!(s::Statevar{Tock}) = value(getvar(s.time).state)
+checker!(s::Statevar) = getvar!(s.time)
 
 getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
 
-getvar!(s::Statevar) = begin
-    t = gettime!(s)
-    check!(s.state, t) && setvar!(s)
-    value(s.state)
-end
+getvar!(s::Statevar) = (check!(s.state, checker!(s)...) && setvar!(s); value(s.state))
 getvar!(s::System, n) = getvar!(getvar(s, n))
 setvar!(s::Statevar) = begin
     f = () -> s()
