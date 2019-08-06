@@ -77,8 +77,27 @@ poststore!(s::Accumulate, f::Function) = begin
 end
 priority(s::Accumulate) = accumulate
 
-# priority(s::Flag) = flag
+####
+
+mutable struct Flag <: State
+    value::Bool
+    prob
+    tick::Tick
+end
+
+Flag(; init=false, prob=1, _...) = Flag(init, prob, Tick(0.))
+
+check!(s::Flag, t, p) = (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
+store!(s::Flag, f::Function) = (s.value = f())
+priority(s::Flag) = flag
+
+####
+
+mutable struct Produce <: State
+
+end
+
 # priority(s::Produce) = produce
 
-export State, Tock, Track, Accumulate, Priority
+export State, Pass, Tock, Track, Accumulate, Flag, Priority
 export check!, value, store!, poststore!, priority, advance!
