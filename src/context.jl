@@ -11,7 +11,7 @@ end bare
 
 advance!(c::Clock) = advance!(c.tick.state)
 
-const Config = Dict{Symbol,Any}
+const Config = Dict #TODO: proper struct?
 import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
@@ -25,13 +25,12 @@ const Queue = DefaultDict{Priority,Vector{Function}}
     children ~ [system]
 end bare
 
-#Config(::Nothing) = Config()
+config(c::Dict) = Dict(Symbol(p.first) => config(p.second) for p in c)
+config(c) = c
 using TOML
-Config(config::AbstractString) = begin
-    conv(d) = d
-    conv(d::Dict) = (Symbol(p.first) => conv(p.second) for p in d) |> collect
-    TOML.parse(config) |> conv
-end
+Config(c::AbstractString) = config(TOML.parse(c))
+Config(c::Dict) = config(c)
+
 option(c) = c
 option(c, keys...) = nothing
 option(c::Config, key::Symbol, keys...) = option(get(c, key, nothing), keys...)
