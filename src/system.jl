@@ -4,7 +4,7 @@ import Base: filter
 const VarTuple = NamedTuple{(:name, :type)}
 filter(f, s::S) where {S<:System} = filter(f, VarTuple.(zip(fieldnames(S), fieldtypes(S))))
 
-update!(s::System) = foreach(t -> getvar!(s, t.name), filter(t -> t.type <: Var, s))
+update!(s::System) = foreach(t -> value!(s, t.name), filter(t -> t.type <: Var, s))
 
 import Base: length, iterate
 length(::System) = 1
@@ -38,7 +38,7 @@ children(s::System) = s.children
 #neighbors(s::System) = Set(parent(s)) ∪ children(s)
 
 # import Base: getproperty
-# getproperty(s::System, n::Symbol) = getvar!(s, n)
+# getproperty(s::System, n::Symbol) = value!(s, n)
 
 import Base: show
 show(io::IO, s::S) where {S<:System} = print(io, "[$(string(S))]")

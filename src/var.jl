@@ -31,7 +31,7 @@ names(x::Var) = filter(!isnothing, [x.name, x.alias])
         !isnothing(v) && return interpret(v)
 
         # 3. state vars from current system
-        isdefined(s, a) && return getvar!(s, a)
+        isdefined(s, a) && return value!(s, a)
 
         # 4. argument not found (partial function)
         nothing
@@ -58,10 +58,10 @@ end
 getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
 
-getvar!(x::Var) = (check!(x.state) && setvar!(x); value(x.state))
-getvar!(x) = x
-getvar!(s::System, n) = getvar!(getvar(s, n))
-setvar!(x::Var) = begin
+value!(x::Var) = (check!(x.state) && update!(x); value(x.state))
+value!(x) = x
+value!(s::System, n) = value!(getvar(s, n))
+update!(x::Var) = begin
     f = () -> x()
     store!(x.state, f)
     ps = poststore!(x.state, f)
@@ -72,7 +72,7 @@ import Base: convert, promote_rule
 convert(T::Type{System}, x::Var) = x.system
 convert(::Type{Vector{Symbol}}, x::Var) = [x.name]
 convert(T::Type{X}, x::Var) where {X<:Var} = x
-convert(T::Type{V}, x::Var) where {V<:Number} = convert(T, getvar!(x))
+convert(T::Type{V}, x::Var) where {V<:Number} = convert(T, value!(x))
 promote_rule(::Type{X}, T::Type{V}) where {X<:Var, V<:Number} = T
 promote_rule(T::Type{Bool}, ::Type{X}) where {X<:Var} = T
 
@@ -82,4 +82,4 @@ import Base: ==
 import Base: show
 show(io::IO, x::Var) = print(io, "$(x.system)<$(x.name)> = $(x.state.value)")
 
-export System, Var, getvar!, setvar!
+export System, Var, value!, update!

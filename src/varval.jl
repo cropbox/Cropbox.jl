@@ -13,7 +13,7 @@ convert(::Type{VarPath}, n) = VarPath(n...)
 convert(::Type{VarPath}, n::VarPath) = n
 
 getvar(p::VarPath) = reduce((a, b) -> getfield(a, b), [p.system; p.path])
-getvar!(p::VarPath) = getvar!(getvar(p))
+value!(p::VarPath) = value!(getvar(p))
 
 const VarVal = Union{VarPath,V} where V
 

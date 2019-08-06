@@ -43,7 +43,7 @@ end
 Track(; init=0., time="context.clock.time", tick=Tick(0.), system, _...) = Track(VarVal.(system, [init, time, tick])...)
 
 check!(s::Track) = begin
-    t = getvar!(s.time)
+    t = value!(s.time)
     (update!(s.tick, t) > 0) && (return true)
     #isnothing(s.value) && (s.value = s.initial_value; return true)
     #TODO: regime handling
@@ -65,7 +65,7 @@ end
 Accumulate(v::V, tm, t::Tick{T}) where {V,T} = Accumulate(v, tm, t, OrderedDict{T,V}(), v)
 Accumulate(; init=0., time="context.clock.time", tick=Tick(0.), system, _...) = Accumulate(VarVal.(system, [init, time, tick])...)
 
-check!(s::Accumulate) = (update!(s.tick, getvar!(s.time)) > 0) && (return true)
+check!(s::Accumulate) = (update!(s.tick, value!(s.time)) > 0) && (return true)
 store!(s::Accumulate, f::Function) = begin
     t = s.tick
     T0 = collect(keys(s.rates))
@@ -97,8 +97,8 @@ end
 Flag(; init=false, prob=1, time="context.clock.time", tick=Tick(0.), system, _...) = Flag(VarVal.(system, [init, prob, time, tick])...)
 
 check!(s::Flag) = begin
-    t = getvar!(s.time)
-    p = getvar!(s.prob)
+    t = value!(s.time)
+    p = value!(s.prob)
     (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
 end
 store!(s::Flag, f::Function) = (s.value = f())
