@@ -43,7 +43,7 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     nothing
 end
 option(c::Config, key::System, keys...) = option(c, Symbol(typeof(key)), keys...)
-option(c::Config, key::Statevar, keys...) = option(c, names(key), keys...)
+option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
 option(c::Context, keys...) = option(c.config, keys...)
 
 queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)

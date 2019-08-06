@@ -46,7 +46,7 @@ end
 
 const self = :($(esc(:self)))
 
-genfield(i::VarInfo{S}) where {S<:State} = genfield(Statevar, i.var, i.alias)
+genfield(i::VarInfo{S}) where {S<:State} = genfield(Var, i.var, i.alias)
 genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
 genfield(S, var, alias) = begin
     v = :($var::$S)
@@ -93,7 +93,7 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
     end
     name = Meta.quot(i.var)
     tags = [:($(esc(k))=$v) for (k, v) in i.tags]
-    v = :($self.$(i.var) = Statevar($self, $e, $S; name=$name, $(tags...)))
+    v = :($self.$(i.var) = Var($self, $e, $S; name=$name, $(tags...)))
     a = :($self.$(i.alias) = $self.$(i.var))
     isnothing(i.alias) ? v : @q begin $v; $a end
 end

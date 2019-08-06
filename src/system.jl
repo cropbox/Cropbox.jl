@@ -1,10 +1,10 @@
 abstract type System end
 
 import Base: filter
-const StatevarTuple = NamedTuple{(:name, :type)}
-filter(f, s::S) where {S<:System} = filter(f, StatevarTuple.(zip(fieldnames(S), fieldtypes(S))))
+const VarTuple = NamedTuple{(:name, :type)}
+filter(f, s::S) where {S<:System} = filter(f, VarTuple.(zip(fieldnames(S), fieldtypes(S))))
 
-update!(s::System) = foreach(t -> getvar!(s, t.name), filter(t -> t.type <: Statevar, s))
+update!(s::System) = foreach(t -> getvar!(s, t.name), filter(t -> t.type <: Var, s))
 
 import Base: length, iterate
 length(::System) = 1

@@ -13,20 +13,20 @@ include("system.jl")
 #     parent::System
 #     children::Vector{System}
 #
-#     a::Statevar
-#     b::Statevar
-#     c::Statevar
-#     d::Statevar
+#     a::Var
+#     b::Var
+#     c::Var
+#     d::Var
 #
 #     function MySystem(;context, parent, children=System[])
 #         s = new()
 #         s.context = context
 #         s.parent = parent
 #         s.children = children
-#         s.a = Statevar(s, a, Track; name=:a, init=1, time=s.context.clock.time)
-#         s.b = Statevar(s, b, Track; name=:b, time=s.context.clock.time)
-#         s.c = Statevar(s, c, Track; name=:c, time=s.context.clock.time)
-#         s.d = Statevar(s, d, Accumulate; name=:d, time=s.context.clock.time)
+#         s.a = Var(s, a, Track; name=:a, init=1, time=s.context.clock.time)
+#         s.b = Var(s, b, Track; name=:b, time=s.context.clock.time)
+#         s.c = Var(s, c, Track; name=:c, time=s.context.clock.time)
+#         s.d = Var(s, d, Accumulate; name=:d, time=s.context.clock.time)
 #         s
 #     end
 # end
@@ -57,5 +57,5 @@ advance!(s.context)
 # print(s.a + 1)
 #
 # import Base: exp
-# exp(v::Statevar) = exp(convert(Float64, v))
+# exp(x::Var) = exp(convert(Float64, x))
 # print(exp(s.a))
