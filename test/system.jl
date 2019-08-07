@@ -130,6 +130,30 @@ end
         @test c.clock.time == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
+    @testset "parameter" begin
+        @system S begin
+            a => 1 ~ pass
+        end
+        s = instance(S)
+        @test s.a == 1
+        advance!(s.context)
+        @test s.a == 1
+    end
+
+    @testset "parameter with config" begin
+        @system S begin
+            a => 1 ~ pass
+            b(a) => a ~ track
+        end
+        config = Dict(S => Dict(:a => 2, :b => Dict(:a => 3)))
+        s = instance(S, config)
+        @test s.a == 2
+        @test s.b == 3
+        advance!(s.context)
+        @test s.a == 2
+        @test s.b == 3
+    end
+
     @testset "flag" begin
         @system S begin
             a => true ~ flag
