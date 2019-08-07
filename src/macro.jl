@@ -94,7 +94,7 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
     name = Meta.quot(i.var)
     tags = [:($(esc(k))=$v) for (k, v) in i.tags]
     @q begin
-        $self.$(i.var) = Var($self, $e, $S; name=$name, $(tags...))
+        $self.$(i.var) = Var($self, $e, $S; name=$name, alias=$(i.alias), $(tags...))
         $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
     end
 end

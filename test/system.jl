@@ -154,6 +154,17 @@ end
         @test s.b == 3
     end
 
+    @testset "parameter with config alias" begin
+        @system S begin
+            a: aa => 1 ~ pass
+            bb: b => 1 ~ pass
+        end
+        config = Dict(S => Dict(:a => 2, :b => 2))
+        s = instance(S, config)
+        @test s.a == 2
+        @test s.b == 2
+    end
+
     @testset "flag" begin
         @system S begin
             a => true ~ flag
