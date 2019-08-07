@@ -16,13 +16,13 @@ import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
 @system Context begin
-    clock => Clock(; context=self) ~ clock
-    queue => Queue(Vector{Function}) ~ queue
-    config => Config(config) ~ config(usearg)
-
     context => self ~ system
     parent => self ~ system
     children ~ [system]
+
+    config => Config(config) ~ config(usearg)
+    queue => Queue(Vector{Function}) ~ queue
+    clock => Clock(; context=self) ~ clock
 end bare
 
 config(c::Dict) = Dict(Symbol(p.first) => config(p.second) for p in c)

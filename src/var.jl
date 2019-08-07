@@ -6,10 +6,30 @@ mutable struct Var{S<:State} <: Number
     state::S
 
     Var(s, e, ST::Type{S}; name, alias=Symbol[], stargs...) where {S<:State} = begin
-        v = new{S}(s, e, name, alias)
-        v.state = S(; system=s, var=v, stargs...)
-        v
+        x = new{S}(s, e, name, alias)
+        x.state = S(; system=s, var=x, stargs...)
+        init!(x)
     end
+end
+
+init!(x::Var) = begin
+    s = x.system
+    e = x.equation
+    c = s.context.config
+    # patch default arguments from config
+    resolve(a::Symbol) = begin
+        # 1. external options (i.e. TOML config)
+        v = option(c, s, x, a)
+        !isnothing(v) && (e.default[a] = v)
+    end
+    resolve.(e.args)
+    # patch state variable from config
+    v = option(c, s, x)
+    #HACK: avoid Dict used for partial argument patch
+    if !isnothing(v) && !(typeof(v) <: Dict)
+        x.equation = Equation(() -> v, e.name, [], [], Dict())
+    end
+    x
 end
 
 import Base: names
@@ -22,10 +42,6 @@ names(x::Var) = [[x.name]; x.alias]
     interpret(v::String) = getvar(s, v)
     interpret(v) = v
     resolve(a::Symbol) = begin
-        # 1. external options (i.e. TOML config)
-        v = option(s.context, s, x, a)
-        !isnothing(v) && return interpret(v)
-
         # 2. default parameter values
         v = get(x.equation.default, a, nothing)
         !isnothing(v) && return interpret(v)
