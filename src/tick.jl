@@ -2,12 +2,13 @@ mutable struct Tick{T} <: Real
     t::T
 end
 
-function update!(tick::Tick, t)
+update!(tick::Tick, t::Tick) = begin
     dt = t - tick
     dt > 0 && (tick.t = t)
     #TODO: make sure dt is not negative
     dt
 end
+update!(tick::Tick, t) = update!(tick, convert(Tick, t))
 
 import Base: convert, promote_rule, -
 convert(::Type{Tick}, tick::Tick) = tick
