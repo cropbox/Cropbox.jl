@@ -2,8 +2,9 @@ abstract type State end
 
 check!(s::State) = true
 value(s::State) = s.value
-store!(s::State, f::Function) = (v = f(); !isnothing(v) && (s.value = v))
-store!(s::State, v) = store!(s, () -> v)
+store!(s::State, f::Function) = store!(s, f())
+store!(s::State, v) = (s.value = v)
+store!(s::State, ::Nothing) = nothing
 
 @enum Priority default=0 flag=1 accumulate=2 produce=-1
 priority(s::State) = default
@@ -94,7 +95,6 @@ check!(s::Flag) = begin
     p = value!(s.prob)
     (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
 end
-store!(s::Flag, f::Function) = (s.value = f())
 priority(s::Flag) = flag
 
 ####
