@@ -16,8 +16,8 @@ getvar(p::VarPath) = reduce((a, b) -> getfield(a, b), [p.system; p.path])
 value!(p::VarPath) = value!(getvar(p))
 
 convert(T::Type{V}, p::VarPath) where {V<:Number} = convert(T, value!(p))
-const VarVal = Union{VarPath,V} where V
+const VarVal = Union{VarPath,Number}
 
 VarVal(s::System, p::Symbol) = VarPath(s, p)
 VarVal(s::System, p::String) = VarPath(s, p)
-VarVal(s::System, p) = p
+VarVal(s::System, p::V) where {V<:Number} = p

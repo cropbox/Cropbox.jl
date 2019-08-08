@@ -35,14 +35,14 @@ advance!(s::Tock) = (s.value += 1)
 
 mutable struct Track{V,T} <: State
     value::V
-    time::VarVal{T}
+    time::VarVal
     tick::Tick{T}
 end
 
 Track(; init=0., time="context.clock.time", tick=Tick(0.), system, _...) = Track(VarVal.(system, [init, time, tick])...)
 
 check!(s::Track) = begin
-    (update!(s.tick, s.time) > 0) && (return true)
+    (update!(s.tick, value!(s.time)) > 0) && (return true)
     #isnothing(s.value) && (s.value = s.initial_value; return true)
     #TODO: regime handling
     return false
@@ -54,7 +54,7 @@ import DataStructures: OrderedDict
 
 mutable struct Accumulate{V,T} <: State
     initial_value::V
-    time::VarVal{T}
+    time::VarVal
     tick::Tick{T}
     rates::OrderedDict{T,V}
     value::V
@@ -63,7 +63,7 @@ end
 Accumulate(v::V, tm, t::Tick{T}) where {V,T} = Accumulate(v, tm, t, OrderedDict{T,V}(), v)
 Accumulate(; init=0., time="context.clock.time", tick=Tick(0.), system, _...) = Accumulate(VarVal.(system, [init, time, tick])...)
 
-check!(s::Accumulate) = (update!(s.tick, s.time) > 0) && (return true)
+check!(s::Accumulate) = (update!(s.tick, value!(s.time)) > 0) && (return true)
 store!(s::Accumulate, f::Function) = begin
     t = s.tick
     T0 = collect(keys(s.rates))
@@ -83,15 +83,16 @@ priority(s::Accumulate) = accumulate
 mutable struct Flag{T} <: State
     value::Bool
     prob::VarVal
-    time::VarVal{T}
+    time::VarVal
     tick::Tick{T}
 end
 
 Flag(; init=false, prob=1, time="context.clock.time", tick=Tick(0.), system, _...) = Flag(VarVal.(system, [init, prob, time, tick])...)
 
 check!(s::Flag) = begin
+    t = value!(s.time)
     p = value!(s.prob)
-    (update!(s.tick, s.time) > 0) && (p >= 1 || rand() <= p) && (return true)
+    (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
 end
 priority(s::Flag) = flag
 
