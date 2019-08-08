@@ -98,11 +98,40 @@ priority(s::Flag) = flag
 
 ####
 
-mutable struct Produce <: State
-
+mutable struct Produce{T} <: State
+    target::VarPath
+    time::VarVal
+    tick::Tick{T}
 end
 
-# priority(s::Produce) = produce
+Produce(; target="children", tick=Tick(0.), system, _...) = Produce(VarVal.(system, [target, time, tick]))
+
+struct Product{S<:System}
+    kwargs::Vector{Pair{Symbol,Any}}
+end
+Product(::Type{S}, kwargs::Vector{Pair{Symbol,Any}}) where {S<:System} = Product{S}(kwargs)
+
+check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
+store!(s::Produce, f::Function) = begin
+    V = Product.(f())
+    produce.(V)
+
+
+    t = s.tick
+    T0 = collect(keys(s.rates))
+    T1 = [T0; t][2:length(T0)+1]
+    s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))
+    () -> (s.rates[t] = f())
+end
+produce(p::Product{S}; target::VarPath) where {S<:System} = begin
+    s = target.system
+    function()
+        S(; context=s.context, parent=s, p.kwargs...)
+        value!(target)
+    end
+end
+
+priority(s::Produce) = produce
 
 export State, Pass, Tock, Track, Accumulate, Flag, Priority
 export check!, value, store!, priority, advance!
