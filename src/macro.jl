@@ -130,7 +130,6 @@ gensystem(name, block, options...) = begin
     if :bare ∉ options
         header = @q begin
             context ~ ::Context(usearg)
-            parent ~ ::System(usearg)
             children ~ ::[System](usearg, usedefault)
         end
         block = flatten(:($header; $block))

@@ -17,7 +17,6 @@ const Queue = DefaultDict{Priority,Vector{Function}}
 
 @system Context begin
     context => self ~ ::System
-    parent => self ~ ::System
     children ~ ::[System]
 
     config => Config(config) ~ ::Config(usearg)
@@ -74,7 +73,7 @@ advance!(c::Context) = (advance!(c.clock); update!(c))
 function instance(SystemType::Type{S}, config=Config()) where {S<:System}
     c = Context(; config=config)
     advance!(c)
-    s = SystemType(; context=c, parent=c)
+    s = SystemType(; context=c)
     push!(c.children, s)
     advance!(c)
     s

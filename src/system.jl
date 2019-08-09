@@ -31,11 +31,8 @@ function collect(s::System; recursive=true, exclude_self=true)
     S
 end
 
-import Base: parent
 context(s::System) = s.context
-parent(s::System) = s.parent
 children(s::System) = s.children
-#neighbors(s::System) = Set(parent(s)) ∪ children(s)
 
 # import Base: getproperty
 # getproperty(s::System, n::Symbol) = value!(s, n)

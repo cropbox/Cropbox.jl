@@ -117,11 +117,7 @@ const Products = Vector{<:Product}
 Produce(; type::Type{S}, time="context.clock.time", tick::Tick{T}=Tick(0.), system, _...) where {S<:System,T} = Produce{S,T}(VarVal.(system, [system, S[], time, tick])...)
 
 check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
-produce(s::Produce{S}, p::Product) where {S<:System} = begin
-    ps = s.system
-    cs = S(; context=ps.context, parent=ps, p...)
-    append!(s.value, cs)
-end
+produce(s::Produce{S}, p::Product) where {S<:System} = append!(s.value, S(; context=s.system.context, p...))
 produce(s::Produce, p::Products) = produce.(s, p)
 produce(s::Produce, ::Nothing) = produce(s, ProductArg[])
 store!(s::Produce, f::Function) = () -> produce(s, f())
