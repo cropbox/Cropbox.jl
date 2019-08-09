@@ -39,7 +39,8 @@ names(x::Var) = [[x.name]; x.alias]
     s = x.system
     #TODO: use var path exclusive str (i.e. v_str)
     #TODO: unit handling (i.e. u_str)
-    interpret(v::String) = getvar(s, v)
+    interpret(v::Symbol) = value!(s, v)
+    interpret(v::String) = value!(s, v)
     interpret(v) = v
     resolve(a::Symbol) = begin
         # 2. default parameter values
@@ -47,7 +48,7 @@ names(x::Var) = [[x.name]; x.alias]
         !isnothing(v) && return interpret(v)
 
         # 3. state vars from current system
-        isdefined(s, a) && return value!(s, a)
+        isdefined(s, a) && return interpret(a)
 
         # 4. argument not found (partial function)
         nothing
