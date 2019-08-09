@@ -6,6 +6,10 @@ store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = v)
 store!(s::State, ::Nothing) = nothing
 
+import Base: getindex, length
+getindex(s::State, i) = s
+length(s::State) = 1
+
 const Priority = Int
 priority(s::State) = 0
 
@@ -119,6 +123,8 @@ end
 produce(s::Produce, p::Products) = produce.(s, p)
 produce(s::Produce, ::Nothing) = produce(s, ProductArg[])
 store!(s::Produce, f::Function) = () -> produce(s, f())
+getindex(s::Produce, i) = getindex(s.value, i)
+length(s::Produce) = length(s.value)
 priority(s::Produce) = -1
 
 export State, Pass, Tock, Track, Accumulate, Flag, Produce

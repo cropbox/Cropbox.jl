@@ -90,6 +90,10 @@ promote_rule(T::Type{Bool}, ::Type{X}) where {X<:Var} = T
 import Base: ==
 ==(a::Var, b::Var) = (value(a.state) == value(b.state))
 
+import Base: getindex, length
+getindex(x::Var, i::Integer) = getindex(x.state, i)
+length(x::Var) = length(x.state)
+
 import Base: show
 show(io::IO, x::Var) = print(io, "$(x.system)<$(x.name)> = $(x.state.value)")
 

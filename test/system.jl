@@ -188,13 +188,13 @@ end
         end
         s = instance(S)
         c = s.context
-        @test length(s.children) == 0
+        @test length(s.a) == 0
         advance!(c)
-        @test length(s.children) == 1
-        @test length(s.children[1].children) == 0
+        @test length(s.a) == 1
+        @test length(s.a[1].a) == 0
         advance!(c)
-        @test length(s.children) == 2
-        @test length(s.children[1].children) == 1
-        @test length(s.children[2].children) == 0
+        @test length(s.a) == 2
+        @test length(s.a[1].a) == 1
+        @test length(s.a[2].a) == 0
     end
 end
