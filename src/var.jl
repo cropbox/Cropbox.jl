@@ -1,4 +1,4 @@
-mutable struct Var{S<:State} <: Number
+mutable struct Var{S<:State}
     system::System
     equation::Equation
     name::Symbol
@@ -89,7 +89,9 @@ promote_rule(::Type{X}, T::Type{V}) where {X<:Var, V<:Number} = T
 promote_rule(T::Type{Bool}, ::Type{X}) where {X<:Var} = T
 
 import Base: ==
-==(a::Var, b::Var) = (value(a.state) == value(b.state))
+==(a::Var, b::Var) = ==(value!(a), value!(b))
+==(a::Var, b::V) where {V<:Number} = ==(promote(a, b)...)
+==(a::V, b::Var) where {V<:Number} = ==(b, a)
 
 import Base: getindex, length
 getindex(x::Var, i::Integer) = getindex(x.state, i)
