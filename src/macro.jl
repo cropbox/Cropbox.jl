@@ -45,7 +45,7 @@ end
 
 const self = :($(esc(:self)))
 
-genfield(i::VarInfo{S}) where {S<:State} = genfield(Var, i.var, i.alias)
+genfield(i::VarInfo{S}) where {S<:State} = genfield(Var{S}, i.var, i.alias)
 genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.var, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
