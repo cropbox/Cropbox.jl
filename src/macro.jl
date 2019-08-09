@@ -6,7 +6,8 @@ struct VarInfo{S}
     alias::Vector{Symbol}
     args::Vector
     body#::Union{Expr,Symbol,Nothing}
-    state::Union{Symbol,Expr}
+    state::Symbol
+    type::Union{Symbol,Expr,Nothing}
     tags::Dict{Symbol,Any}
 end
 
@@ -16,54 +17,52 @@ function show(io::IO, s::VarInfo)
     println(io, "alias: $(s.alias)")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
     println(io, "state: $(s.state)")
+    println(io, "type: $(repr(s.type))")
     for (k, v) in s.tags
         println(io, "tag $k = $v")
     end
 end
 
 function VarInfo(line::Union{Expr,Symbol})
-    # name[(args..)][: alias] [=> body] ~ type[(tags..)]
+    # name[(args..)][: alias] [=> body] ~ [state][::type][(tags..)]
     @capture(line, decl_ ~ deco_)
-    @capture(deco, state_(tags__) | state_)
+    @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__) | name_)
     args = isnothing(args) ? [] : args
     alias = isnothing(alias) ? [] : alias
-    symbolify(t) = Symbol(uppercasefirst(string(t)))
-    if @capture(state, [statetype_])
-        state = :(Vector{$(symbolify(statetype))})
-    else
-        state = symbolify(state)
-    end
+    state = isnothing(state) ? :Nothing : Symbol(uppercasefirst(string(state)))
+    type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
     tags = isnothing(tags) ? [] : tags
     tags = Dict((
         @capture(t, (k_=v_) | k_);
         v = isnothing(v) ? true : v;
         k => v
     ) for t in tags)
-    VarInfo{eval(state)}(name, alias, args, body, state, tags)
+    VarInfo{eval(state)}(name, alias, args, body, state, type, tags)
 end
 
 const self = :($(esc(:self)))
 
 genfield(i::VarInfo{S}) where {S<:State} = genfield(Var, i.var, i.alias)
-genfield(i::VarInfo{S}) where S = genfield(S, i.var, i.alias)
+genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.var, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
     $(@q begin $([:($a::$S) for a in alias]...) end)
 end
 
 genargs(infos::Vector, options) = Tuple(filter(!isnothing, genarg.(infos)))
-genarg(i::VarInfo) = begin
+genarg(i::VarInfo{Nothing}) = begin
     if haskey(i.tags, :usearg)
         if haskey(i.tags, :usedefault)
-            Expr(:kw, i.var, :($(i.state)()))
+            Expr(:kw, i.var, :($(esc(i.type))()))
         else
             i.var
         end
     end
 end
+genarg(i::VarInfo) = nothing
 
 equation(f) = begin
     fdef = splitdef(f)
@@ -94,18 +93,18 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
     name = Meta.quot(i.var)
     tags = [:($(esc(k))=$v) for (k, v) in i.tags]
     @q begin
-        $self.$(i.var) = Var($self, $e, $S; name=$name, alias=$(i.alias), $(tags...))
+        $self.$(i.var) = Var($self, $e, $S; name=$name, alias=$(i.alias), type=$(i.type), $(tags...))
         $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
     end
 end
-gendecl(i::VarInfo{S}) where S = begin
+gendecl(i::VarInfo{Nothing}) = begin
     if !isnothing(i.body)
         # @assert isnothing(i.args)
         decl = esc(i.body)
     elseif haskey(i.tags, :usearg)
         decl = esc(i.var)
     else
-        decl = :($S())
+        decl = :($(esc(i.type))())
     end
     :($self.$(i.var) = $decl)
 end
@@ -130,9 +129,9 @@ end
 gensystem(name, block, options...) = begin
     if :bare ∉ options
         header = @q begin
-            context ~ context(usearg)
-            parent ~ system(usearg)
-            children ~ [system](usearg, usedefault)
+            context ~ ::Context(usearg)
+            parent ~ ::System(usearg)
+            children ~ ::[System](usearg, usedefault)
         end
         block = flatten(:($header; $block))
     end

@@ -184,7 +184,7 @@ end
 
     @testset "produce" begin
         @system S begin
-            a => nothing ~ produce(type=S)
+            a => nothing ~ produce::S
         end
         s = instance(S)
         c = s.context

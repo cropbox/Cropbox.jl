@@ -1,5 +1,5 @@
 @system Clock begin
-    context ~ system(usearg)
+    context ~ ::System(usearg)
     tick => gettime!(s.tick) ~ tock
     #unit
     start => 0 ~ track(init=0, time="tick") # parameter
@@ -16,13 +16,13 @@ import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
 @system Context begin
-    context => self ~ system
-    parent => self ~ system
-    children ~ [system]
+    context => self ~ ::System
+    parent => self ~ ::System
+    children ~ ::[System]
 
-    config => Config(config) ~ config(usearg)
-    queue => Queue(Vector{Function}) ~ queue
-    clock => Clock(; context=self) ~ clock
+    config => Config(config) ~ ::Config(usearg)
+    queue => Queue(Vector{Function}) ~ ::Queue
+    clock => Clock(; context=self) ~ ::Clock
 end bare
 
 config(c::Dict) = Dict(Symbol(p.first) => config(p.second) for p in c)
