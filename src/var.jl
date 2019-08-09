@@ -93,9 +93,11 @@ import Base: ==
 ==(a::Var, b::V) where {V<:Number} = ==(promote(a, b)...)
 ==(a::V, b::Var) where {V<:Number} = ==(b, a)
 
-import Base: getindex, length
+import Base: getindex, length, iterate
 getindex(x::Var, i::Integer) = getindex(x.state, i)
 length(x::Var) = length(x.state)
+iterate(x::Var) = iterate(x.state)
+iterate(x::Var, i) = iterate(x.state, i)
 
 import Base: show
 show(io::IO, x::Var) = print(io, "$(x.system)<$(x.name)> = $(x.state.value)")

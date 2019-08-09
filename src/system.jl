@@ -9,7 +9,7 @@ update!(s::System) = foreach(t -> value!(s, t.name), filter(t -> t.type <: Var, 
 import Base: length, iterate
 length(::System) = 1
 iterate(s::System) = (s, nothing)
-iterate(s::System, state) = nothing
+iterate(s::System, i) = nothing
 
 import Base: broadcastable
 broadcastable(s::System) = Ref(s)
