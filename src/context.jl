@@ -52,8 +52,8 @@ flush!(c::Context, cond) = begin
     filter!(!cond, c.queue)
     foreach(f -> f(), q |> values |> Iterators.flatten)
 end
-preflush!(c::Context) = flush!(c, p -> p.first < default)
-postflush!(c::Context) = flush!(c, p -> p.first >= default)
+preflush!(c::Context) = flush!(c, p -> p.first < 0)
+postflush!(c::Context) = flush!(c, p -> p.first >= 0)
 
 function update!(c::Context)
     # process pending operations from last timestep (i.e. produce)

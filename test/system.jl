@@ -181,4 +181,20 @@ end
         @test s.c == false && s.d == false
         @test s.e == false && s.f == false
     end
+
+    @testset "produce" begin
+        @system S begin
+            a => nothing ~ produce(type=S)
+        end
+        s = instance(S)
+        c = s.context
+        @test length(s.children) == 0
+        advance!(c)
+        @test length(s.children) == 1
+        @test length(s.children[1].children) == 0
+        advance!(c)
+        @test length(s.children) == 2
+        @test length(s.children[1].children) == 1
+        @test length(s.children[2].children) == 0
+    end
 end

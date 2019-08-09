@@ -21,3 +21,4 @@ const VarVal = Union{VarPath,Number}
 VarVal(s::System, p::Symbol) = VarPath(s, p)
 VarVal(s::System, p::String) = VarPath(s, p)
 VarVal(s::System, p::V) where {V<:Number} = p
+VarVal(s::System, p) = p

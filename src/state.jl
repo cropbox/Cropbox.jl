@@ -6,8 +6,8 @@ store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = v)
 store!(s::State, ::Nothing) = nothing
 
-@enum Priority default=0 flag=1 accumulate=2 produce=-1
-priority(s::State) = default
+const Priority = Int
+priority(s::State) = 0
 
 # import Base: show
 # function show(io::IO, s::State)
@@ -71,7 +71,7 @@ store!(s::Accumulate, f::Function) = begin
     s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))
     () -> (s.rates[t] = f())
 end
-priority(s::Accumulate) = accumulate
+priority(s::Accumulate) = 2
 
 ####
 
@@ -94,44 +94,32 @@ check!(s::Flag) = begin
     p = value!(s.prob)
     (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
 end
-priority(s::Flag) = flag
+priority(s::Flag) = 1
 
 ####
 
-mutable struct Produce{T} <: State
-    target::VarPath
+mutable struct Produce{S<:System,T} <: State
+    system::System
+    value::Vector{S}
     time::VarVal
     tick::Tick{T}
 end
+const ProductArg = Pair{Symbol,Any}
+const Product = Vector{<:Pair{Symbol,<:Any}}
+const Products = Vector{<:Product}
 
-Produce(; target="children", tick=Tick(0.), system, _...) = Produce(VarVal.(system, [target, time, tick]))
-
-struct Product{S<:System}
-    kwargs::Vector{Pair{Symbol,Any}}
-end
-Product(::Type{S}, kwargs::Vector{Pair{Symbol,Any}}) where {S<:System} = Product{S}(kwargs)
+Produce(; type::Type{S}, time="context.clock.time", tick::Tick{T}=Tick(0.), system, _...) where {S<:System,T} = Produce{S,T}(VarVal.(system, [system, S[], time, tick])...)
 
 check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
-store!(s::Produce, f::Function) = begin
-    V = Product.(f())
-    produce.(V)
-
-
-    t = s.tick
-    T0 = collect(keys(s.rates))
-    T1 = [T0; t][2:length(T0)+1]
-    s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))
-    () -> (s.rates[t] = f())
+produce(s::Produce{S}, p::Product) where {S<:System} = begin
+    ps = s.system
+    cs = S(; context=ps.context, parent=ps, p...)
+    append!(s.value, cs)
 end
-produce(p::Product{S}; target::VarPath) where {S<:System} = begin
-    s = target.system
-    function()
-        S(; context=s.context, parent=s, p.kwargs...)
-        value!(target)
-    end
-end
+produce(s::Produce, p::Products) = produce.(s, p)
+produce(s::Produce, ::Nothing) = produce(s, ProductArg[])
+store!(s::Produce, f::Function) = () -> produce(s, f())
+priority(s::Produce) = -1
 
-priority(s::Produce) = produce
-
-export State, Pass, Tock, Track, Accumulate, Flag, Priority
+export State, Pass, Tock, Track, Accumulate, Flag, Produce
 export check!, value, store!, priority, advance!
