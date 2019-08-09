@@ -18,7 +18,7 @@ import Base: collect
 function collect(s::System; recursive=true, exclude_self=true)
     S = Set()
     visit(s) = begin
-        ST = filter(t -> t.type <: Union{System, Vector{System}}, s)
+        ST = filter(t -> t.type <: Union{System, Vector{System}, Var{Produce}}, s)
         ST = map(t -> Set(getfield(s, t.name)), ST)
         SS = Set()
         foreach(e -> union!(SS, e), ST)
