@@ -32,7 +32,6 @@ function collect(s::System; recursive=true, exclude_self=true)
 end
 
 context(s::System) = s.context
-children(s::System) = s.children
 
 # import Base: getproperty
 # getproperty(s::System, n::Symbol) = value!(s, n)
