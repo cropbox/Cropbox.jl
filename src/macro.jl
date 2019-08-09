@@ -6,7 +6,7 @@ struct VarInfo{S}
     alias::Vector{Symbol}
     args::Vector
     body#::Union{Expr,Symbol,Nothing}
-    type::Union{Symbol,Expr}
+    state::Union{Symbol,Expr}
     tags::Dict{Symbol,Any}
 end
 
@@ -15,7 +15,7 @@ function show(io::IO, s::VarInfo)
     println(io, "var: $(s.var)")
     println(io, "alias: $(s.alias)")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
-    println(io, "type: $(s.type)")
+    println(io, "state: $(s.state)")
     for (k, v) in s.tags
         println(io, "tag $k = $v")
     end
@@ -24,17 +24,17 @@ end
 function VarInfo(line::Union{Expr,Symbol})
     # name[(args..)][: alias] [=> body] ~ type[(tags..)]
     @capture(line, decl_ ~ deco_)
-    @capture(deco, type_(tags__) | type_)
+    @capture(deco, state_(tags__) | state_)
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__) | name_)
     args = isnothing(args) ? [] : args
     alias = isnothing(alias) ? [] : alias
     symbolify(t) = Symbol(uppercasefirst(string(t)))
-    if @capture(type, [elemtype_])
-        type = :(Vector{$(symbolify(elemtype))})
+    if @capture(state, [statetype_])
+        state = :(Vector{$(symbolify(statetype))})
     else
-        type = symbolify(type)
+        state = symbolify(state)
     end
     tags = isnothing(tags) ? [] : tags
     tags = Dict((
@@ -42,7 +42,7 @@ function VarInfo(line::Union{Expr,Symbol})
         v = isnothing(v) ? true : v;
         k => v
     ) for t in tags)
-    VarInfo{eval(type)}(name, alias, args, body, type, tags)
+    VarInfo{eval(state)}(name, alias, args, body, state, tags)
 end
 
 const self = :($(esc(:self)))
@@ -58,7 +58,7 @@ genargs(infos::Vector, options) = Tuple(filter(!isnothing, genarg.(infos)))
 genarg(i::VarInfo) = begin
     if haskey(i.tags, :usearg)
         if haskey(i.tags, :usedefault)
-            Expr(:kw, i.var, :($(i.type)()))
+            Expr(:kw, i.var, :($(i.state)()))
         else
             i.var
         end
