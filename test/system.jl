@@ -130,6 +130,18 @@ end
         @test c.clock.time == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
+    @testset "preserve" begin
+        @system S begin
+            a => 1 ~ track
+            b(a) => a + 1 ~ accumulate
+            c(b) => b ~ preserve
+        end
+        s = instance(S)
+        @test s.a == 1 && s.b == 0 && s.c == 0
+        advance!(s.context)
+        @test s.a == 1 && s.b == 2 && s.c == 0
+    end
+
     @testset "parameter" begin
         @system S begin
             a => 1 ~ pass

@@ -42,6 +42,16 @@ advance!(s::Tock) = advance!(s.value)
 
 ####
 
+mutable struct Preserve{V} <: State
+    value::Union{V,Missing}
+end
+
+Preserve(; _type=Float64, _...) = Preserve{_type}(missing)
+
+check!(s::Preserve) = ismissing(s.value)
+
+####
+
 mutable struct Track{V,T} <: State
     value::V
     time::VarVal
@@ -129,5 +139,5 @@ length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
 priority(s::Produce) = -1
 
-export State, Pass, Tock, Track, Accumulate, Flag, Produce
+export State, Pass, Tock, Preserve, Track, Accumulate, Flag, Produce
 export check!, value, store!, priority, advance!
