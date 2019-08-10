@@ -191,7 +191,7 @@ end
 
     @testset "produce" begin
         @system S begin
-            a => produce(S) ~ produce::S
+            a => produce(S) ~ produce
         end
         s = instance(S)
         @test length(s.a) == 0
@@ -206,7 +206,7 @@ end
 
     @testset "produce with kwargs" begin
         @system S begin
-            a => produce(S) ~ produce::S
+            a => produce(S) ~ produce
             i(t="context.clock.time") => t ~ preserve
         end
         s = instance(S)

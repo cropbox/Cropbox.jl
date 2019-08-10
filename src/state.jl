@@ -129,7 +129,7 @@ struct Product{S<:System,K,V}
     args::Vector{Pair{K,V}}
 end
 
-Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
+Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}=System, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
 
 check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
 produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))
