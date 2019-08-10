@@ -209,4 +209,22 @@ end
         @test length(s.a[1].a) == 1
         @test length(s.a[2].a) == 0
     end
+
+    @testset "produce with kwargs" begin
+        @system S begin
+            a => nothing ~ produce::S
+            i(t="context.clock.time") => t ~ preserve
+        end
+        s = instance(S)
+        c = s.context
+        @test length(s.a) == 0 && s.i == 1
+        advance!(c)
+        @test length(s.a) == 1 && s.i == 1
+        @test length(s.a[1].a) == 0 && s.a[1].i == 2
+        advance!(c)
+        @test length(s.a) == 2 && s.i == 1
+        @test length(s.a[1].a) == 1 && s.a[1].i == 2
+        @test length(s.a[2].a) == 0 && s.a[2].i == 3
+        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 3
+    end
 end
