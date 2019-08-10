@@ -69,6 +69,7 @@ function update!(c::Context)
 end
 
 advance!(c::Context) = (advance!(c.clock); update!(c))
+advance!(s::System) = advance!(s.context)
 
 function instance(SystemType::Type{S}, config=Config()) where {S<:System}
     c = Context(; config=config)
