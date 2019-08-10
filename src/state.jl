@@ -123,16 +123,19 @@ mutable struct Produce{S<:System,T} <: State
     time::VarVal
     tick::Tick{T}
 end
-const ProductArg = Pair{Symbol,Any}
-const Product = Vector{<:Pair{Symbol,<:Any}}
-const Products = Vector{<:Product}
+
+struct Product{S<:System,K,V}
+    type::Type{S}
+    args::Vector{Pair{K,V}}
+end
 
 Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
 
 check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
-produce(s::Produce{S}, p::Product) where {S<:System} = append!(s.value, S(; context=s.system.context, p...))
-produce(s::Produce, p::Products) = produce.(s, p)
-produce(s::Produce, ::Nothing) = produce(s, ProductArg[])
+produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))
+produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
+produce(s::Produce, p::Vector{Product}) = produce.(s, p)
+produce(s::Produce, ::Nothing) = nothing
 store!(s::Produce, f::Function) = () -> produce(s, f())
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
