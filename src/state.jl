@@ -31,11 +31,14 @@ Pass(; _type=Float64, _...) = Pass(zero(_type))
 
 ####
 
-const Tock = Pass{Tick}
+mutable struct Tock{T} <: State
+    value::Tick{T}
+end
+
 Tock(; _type=Int64, _...) = Tock(Tick(zero(_type)))
 
 check!(s::Tock) = false
-advance!(s::Tock) = (s.value += 1)
+advance!(s::Tock) = advance!(s.value)
 
 ####
 
@@ -71,7 +74,7 @@ Accumulate(; init=0, time="context.clock.time", tick=Tick(0.), _system, _type=Fl
 
 check!(s::Accumulate) = (update!(s.tick, value!(s.time)) > 0) && (return true)
 store!(s::Accumulate, f::Function) = begin
-    t = s.tick
+    t = s.tick.t
     T0 = collect(keys(s.rates))
     T1 = [T0; t][2:length(T0)+1]
     s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))

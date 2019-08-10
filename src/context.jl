@@ -9,7 +9,7 @@
     #datetime
 end bare
 
-advance!(c::Clock) = advance!(c.tick.state)
+advance!(c::Clock) = advance!(c.tick)
 
 const Config = Dict #TODO: proper struct?
 import DataStructures: DefaultDict
