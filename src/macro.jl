@@ -91,10 +91,8 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
         e = equation(f)
     end
     name = Meta.quot(i.var)
+    !isnothing(i.type) && (i.tags[:_type] = i.type)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
-    if !isnothing(i.type)
-        stargs = [:(_type=$(i.type)); stargs]
-    end
     @q begin
         $self.$(i.var) = Var($self, $e, $(i.state); _name=$name, _alias=$(i.alias), $(stargs...))
         $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
