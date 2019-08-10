@@ -96,7 +96,7 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
         stargs = [:(_type=$(i.type)); stargs]
     end
     @q begin
-        $self.$(i.var) = Var($self, $e, $S; _name=$name, _alias=$(i.alias), $(stargs...))
+        $self.$(i.var) = Var($self, $e, $(i.state); _name=$name, _alias=$(i.alias), $(stargs...))
         $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
     end
 end
