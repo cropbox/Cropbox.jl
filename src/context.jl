@@ -2,8 +2,8 @@
     context ~ ::System(usearg)
     tick => gettime!(s.tick) ~ tock
     #unit
-    start => 0 ~ track(init=0, time="tick") # parameter
-    interval: i => 1 ~ track(init=1, time="tick") # parameter
+    start => 0 ~ track(time="tick") # parameter
+    interval: i => 1 ~ track(time="tick") # parameter
     time(i) => i ~ accumulate(init=0, time="tick")
     #start_datetime ~ parameter
     #datetime

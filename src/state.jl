@@ -27,12 +27,12 @@ mutable struct Pass{V} <: State
     value::V
 end
 
-Pass(; init=0., _...) = Pass(init)
+Pass(; _type=Float64, _...) = Pass(zero(_type))
 
 ####
 
 const Tock = Pass{Tick}
-Tock(; init=0, _...) = Tock(Tick(init))
+Tock(; _type=Int64, _...) = Tock(Tick(zero(_type)))
 
 check!(s::Tock) = false
 advance!(s::Tock) = (s.value += 1)
@@ -45,7 +45,7 @@ mutable struct Track{V,T} <: State
     tick::Tick{T}
 end
 
-Track(; init=0., time="context.clock.time", tick=Tick(0.), _system, _...) = Track(VarVal.(_system, [init, time, tick])...)
+Track(; time="context.clock.time", tick=Tick(0.), _system, _type=Float64, _...) = Track(VarVal.(_system, [zero(_type), time, tick])...)
 
 check!(s::Track) = begin
     (update!(s.tick, value!(s.time)) > 0) && (return true)
@@ -67,7 +67,7 @@ mutable struct Accumulate{V,T} <: State
 end
 
 Accumulate(v::V, tm, t::Tick{T}) where {V,T} = Accumulate(v, tm, t, OrderedDict{T,V}(), v)
-Accumulate(; init=0., time="context.clock.time", tick=Tick(0.), _system, _...) = Accumulate(VarVal.(_system, [init, time, tick])...)
+Accumulate(; init=0, time="context.clock.time", tick=Tick(0.), _system, _type=Float64, _...) = Accumulate(VarVal.(_system, [convert(_type, init), time, tick])...)
 
 check!(s::Accumulate) = (update!(s.tick, value!(s.time)) > 0) && (return true)
 store!(s::Accumulate, f::Function) = begin
@@ -93,7 +93,7 @@ mutable struct Flag{T} <: State
     tick::Tick{T}
 end
 
-Flag(; init=false, prob=1, time="context.clock.time", tick=Tick(0.), _system, _...) = Flag(VarVal.(_system, [init, prob, time, tick])...)
+Flag(; prob=1, time="context.clock.time", tick=Tick(0.), _system, _type=Bool, _...) = Flag(VarVal.(_system, [zero(_type), prob, time, tick])...)
 
 check!(s::Flag) = begin
     t = value!(s.time)
@@ -114,7 +114,7 @@ const ProductArg = Pair{Symbol,Any}
 const Product = Vector{<:Pair{Symbol,<:Any}}
 const Products = Vector{<:Product}
 
-Produce(; type::Type{S}, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
+Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
 
 check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
 produce(s::Produce{S}, p::Product) where {S<:System} = append!(s.value, S(; context=s.system.context, p...))

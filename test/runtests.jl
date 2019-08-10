@@ -32,7 +32,7 @@ include("system.jl")
 # end
 
 @system MySystem begin
-    a ~ track(init=1)
+    a ~ track
     b ~ track
     c ~ track
     d: dd ~ accumulate
@@ -42,7 +42,7 @@ end
     a ~ track
     b: bb ~ track(time="context.clock.time")
     ccc(a, b): c => a+b ~ track(unit="cm")
-    cccc(a=1, b=2): cc => a+b ~ track(init=0)
+    cccc(a=1, b=2): cc => a+b ~ track
     d(a, b) => begin
       a + b
     end ~ track(cyclic)

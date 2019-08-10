@@ -5,9 +5,9 @@ mutable struct Var{S<:State}
     alias::Vector{Symbol}
     state::S
 
-    Var(s, e, ST::Type{S}; _name, _alias=Symbol[], _type, stargs...) where {S<:State} = begin
+    Var(s, e, ST::Type{S}; _name, _alias=Symbol[], stargs...) where {S<:State} = begin
         x = new{S}(s, e, _name, _alias)
-        x.state = S(; _system=s, _var=x, _type=_type, stargs...)
+        x.state = S(; _system=s, _var=x, stargs...)
         init!(x)
     end
 end
