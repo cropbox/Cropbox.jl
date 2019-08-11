@@ -220,4 +220,14 @@ end
         @test length(s.a[2].a) == 0 && s.a[2].i == 3
         @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 3
     end
+
+    @testset "produce with nothing" begin
+        @system S begin
+            a => nothing ~ produce
+        end
+        s = instance(S)
+        @test length(s.a) == 0
+        advance!(s)
+        @test length(s.a) == 0
+    end
 end
