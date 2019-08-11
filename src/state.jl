@@ -75,22 +75,24 @@ end
 import DataStructures: OrderedDict
 
 mutable struct Accumulate{V,T} <: State
-    initial_value::V
+    init::VarVal{V}
     time::VarVal
     tick::Tick{T}
     rates::OrderedDict{T,V}
-    value::V
+    value::VarVal{V}
 end
 
-Accumulate(v::V, tm, t::Tick{T}) where {V,T} = Accumulate(v, tm, t, OrderedDict{T,V}(), v)
-Accumulate(; init=0, time="context.clock.time", tick=Tick(0.), _system, _type=Float64, _...) = Accumulate(VarVal.(_system, [convert(_type, init), time, tick])...)
+Accumulate(; init=0, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
+    v = VarVal{_type}(_system, init)
+    Accumulate(v, VarVal.(_system, [time, tick])..., OrderedDict{T,_type}(), v)
+end
 
 check!(s::Accumulate) = checktime!(s)
 store!(s::Accumulate, f::Function) = begin
     t = s.tick.t
     T0 = collect(keys(s.rates))
     T1 = [T0; t][2:length(T0)+1]
-    s.value = s.initial_value + sum((T1 - T0) .* values(s.rates))
+    s.value = value!(s.init) + sum((T1 - T0) .* values(s.rates))
     () -> (s.rates[t] = f())
 end
 priority(s::Accumulate) = 2
