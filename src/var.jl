@@ -89,10 +89,14 @@ convert(T::Type{V}, x::Var) where {V<:Number} = convert(T, value!(x))
 promote_rule(::Type{X}, T::Type{V}) where {X<:Var, V<:Number} = T
 promote_rule(T::Type{Bool}, ::Type{X}) where {X<:Var} = T
 
-import Base: ==
+import Base: ==, isless
 ==(a::Var, b::Var) = ==(value!(a), value!(b))
 ==(a::Var, b::V) where {V<:Number} = ==(promote(a, b)...)
 ==(a::V, b::Var) where {V<:Number} = ==(b, a)
+#TODO: reduce redundant declarations of basic functions (i.e. comparison)
+isless(a::Var, b::Var) = isless(value!(a), value!(b))
+isless(a::Var, b::V) where {V<:Number} = isless(promote(a, b)...)
+isless(a::V, b::Var) where {V<:Number} = isless(b, a)
 
 import Base: getindex, length, iterate
 getindex(x::Var, i::Integer) = getindex(x.state, i)
