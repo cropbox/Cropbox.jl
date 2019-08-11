@@ -1,11 +1,3 @@
-macro system(name, block, options...)
-    alias = gensym()
-    quote
-        $(Cropbox.gensystem(alias, block, options...))
-        $(esc(name)) = $(esc(alias))
-    end
-end
-
 @testset "system" begin
     @testset "derive" begin
         @system S begin

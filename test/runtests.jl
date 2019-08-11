@@ -1,8 +1,18 @@
 using Cropbox
 using Test
 
-include("system.jl")
-include("lotka_volterra.jl")
+macro system(name, block, options...)
+    alias = gensym()
+    quote
+        $(Cropbox.gensystem(alias, block, options...))
+        $(esc(name)) = $(esc(alias))
+    end
+end
+
+@testset "cropbox" begin
+    include("system.jl")
+    include("lotka_volterra.jl")
+end
 
 @equation a() = 1
 @equation b(a) = a + 1
