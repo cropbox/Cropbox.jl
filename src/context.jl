@@ -1,4 +1,5 @@
 @system Clock begin
+    self => self ~ ::System
     context ~ ::System(usearg)
     tick => gettime!(s.tick) ~ tock
     #unit
@@ -16,6 +17,7 @@ import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
 @system Context begin
+    self => self ~ ::System
     context => self ~ ::System
     systems ~ ::[System]
 
