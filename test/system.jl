@@ -183,7 +183,7 @@
 
     @testset "produce" begin
         @system S begin
-            a => produce(S) ~ produce
+            a(self) => produce(typeof(self)) ~ produce
         end
         s = instance(S)
         @test length(s.a) == 0
@@ -198,7 +198,7 @@
 
     @testset "produce with kwargs" begin
         @system S begin
-            a => produce(S) ~ produce
+            a(self) => produce(typeof(self)) ~ produce
             i(t="context.clock.time") => t ~ preserve
         end
         s = instance(S)
