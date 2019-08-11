@@ -143,4 +143,4 @@ iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
 priority(s::Produce) = -1
 
 export State, Pass, Tock, Preserve, Track, Accumulate, Flag, Produce
-export check!, value, store!, priority, advance!
+export check!, value, store!, priority, advance!, produce
