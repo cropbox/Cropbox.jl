@@ -6,8 +6,24 @@
         predator_reproduction_rate: d => 0.75 ~ track
         prey_initial_population: H0 => 10 ~ track
         predator_initial_population: P0 => 5 ~ track
-        prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init="H0")
-        predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init="P0")
+        prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init="H0", time="t")
+        predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init="P0", time="t")
+        timestep(t="context.clock.time"): t => 0.01t ~ track
     end
-    s = instance(S, Dict(:Clock => Dict(:interval => 0.01)))
+    s = instance(S)
+    T = Float64[]
+    H = Float64[]
+    P = Float64[]
+    #TODO: isless() for Var with proper promote_rule
+    while value!(s.t) <= 20.0
+        #println("t = $(s.t): H = $(s.H), P = $(s.P)")
+        push!(T, value!(s.t))
+        push!(H, value!(s.H))
+        push!(P, value!(s.P))
+        advance!(s)
+    end
+    @test value!(s.t) > 20.0
+    using UnicodePlots
+    p = lineplot(T, H, name="Prey", xlabel="Time", ylabel="Population", xlim=[0, T[end]]);
+    lineplot!(p, T, P, name="Predator")
 end
