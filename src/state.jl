@@ -6,6 +6,9 @@ store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = v)
 store!(s::State, ::Nothing) = nothing
 
+checktime!(s::State) = (update!(s.tick, value!(s.time)) > 0)
+checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
+
 import Base: getindex, length, iterate
 getindex(s::State, i) = s
 length(s::State) = 1
@@ -61,7 +64,7 @@ end
 Track(; time="context.clock.time", tick=Tick(0.), _system, _type=Float64, _...) = Track(VarVal.(_system, [zero(_type), time, tick])...)
 
 check!(s::Track) = begin
-    (update!(s.tick, value!(s.time)) > 0) && (return true)
+    checktime!(s) && (return true)
     #isnothing(s.value) && (s.value = s.initial_value; return true)
     #TODO: regime handling
     return false
@@ -82,7 +85,7 @@ end
 Accumulate(v::V, tm, t::Tick{T}) where {V,T} = Accumulate(v, tm, t, OrderedDict{T,V}(), v)
 Accumulate(; init=0, time="context.clock.time", tick=Tick(0.), _system, _type=Float64, _...) = Accumulate(VarVal.(_system, [convert(_type, init), time, tick])...)
 
-check!(s::Accumulate) = (update!(s.tick, value!(s.time)) > 0) && (return true)
+check!(s::Accumulate) = checktime!(s)
 store!(s::Accumulate, f::Function) = begin
     t = s.tick.t
     T0 = collect(keys(s.rates))
@@ -108,11 +111,7 @@ end
 
 Flag(; prob=1, time="context.clock.time", tick=Tick(0.), _system, _type=Bool, _...) = Flag(VarVal.(_system, [zero(_type), prob, time, tick])...)
 
-check!(s::Flag) = begin
-    t = value!(s.time)
-    p = value!(s.prob)
-    (update!(s.tick, t) > 0) && (p >= 1 || rand() <= p) && (return true)
-end
+check!(s::Flag) = checktime!(s) && checkprob!(s)
 priority(s::Flag) = 1
 
 ####
@@ -131,7 +130,7 @@ end
 
 Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}=System, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
 
-check!(s::Produce) = (update!(s.tick, value!(s.time)) > 0) && (return true)
+check!(s::Produce) = checktime!(s)
 produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{Product}) = produce.(s, p)
