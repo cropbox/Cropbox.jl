@@ -2,6 +2,7 @@ using Cropbox
 using Test
 
 include("system.jl")
+include("lotka_volterra.jl")
 
 @equation a() = 1
 @equation b(a) = a + 1
