@@ -74,12 +74,15 @@ equation(f) = begin
     pair(x::Symbol) = nothing
     pair(x::Expr) = x.args[1] => x.args[2]
     default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict
-    :(Equation($f, $name, $args, $kwargs, $default))
+    func = @q function $(gensym())($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
+    :(Equation($func, $name, $args, $kwargs, $default))
 end
 
 macro equation(f)
-    e = eval(equation(f))
-    :($(esc(e.name)) = $e)
+    e = equation(f)
+    #FIXME: redundant call of splitdef() in equation()
+    name = splitdef(f)[:name]
+    :($(esc(name)) = $e)
 end
 
 gendecl(i::VarInfo{S}) where {S<:State} = begin
@@ -99,7 +102,10 @@ gendecl(i::VarInfo{S}) where {S<:State} = begin
     end
 end
 gendecl(i::VarInfo{Nothing}) = begin
-    if !isnothing(i.body)
+    if haskey(i.tags, :override)
+        k = Meta.quot(i.var)
+        decl = @q $(esc(:Base)).haskey(_kwargs, $k) ? _kwargs[$k] : $(esc(i.body))
+    elseif !isnothing(i.body)
         # @assert isnothing(i.args)
         decl = esc(i.body)
     elseif haskey(i.tags, :usearg)
@@ -117,7 +123,7 @@ genstruct(name, infos, options) = begin
     system = @q begin
         mutable struct $name <: System
             $(fields...)
-            function $name(; $(args...))
+            function $name(; $(args...), _kwargs...)
                 $self = new()
                 $(decls...)
                 $self
