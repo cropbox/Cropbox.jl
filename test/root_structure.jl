@@ -1,12 +1,10 @@
 using Distributions
 
 @testset "root structure" begin
-    @equation elongation_rate() = rand(Normal(1, 0.2))
-    @equation branching_angle() = rand(Normal(20, 10))
     @system R begin
         parent => self ~ ::System(override)
-        elongation_rate: r ~ track(unit="cm / 1")
-        branching_angle ~ preserve(unit="deg")
+        elongation_rate: r => rand(Normal(1, 0.2)) ~ track(unit="cm / 1")
+        branching_angle => rand(Normal(20, 10)) ~ preserve(unit="deg")
         branching_interval: i => 3.0 ~ track(unit="cm")
         branching_chance => 0.5 ~ track
         is_branching(l, ll, i) => (l - ll > i) ~ flag(prob="branching_chance")
