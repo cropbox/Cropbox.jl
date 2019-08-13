@@ -12,6 +12,7 @@ end
 @testset "cropbox" begin
     include("system.jl")
     include("lotka_volterra.jl")
+    include("root_structure.jl")
 end
 
 @equation a() = 1
