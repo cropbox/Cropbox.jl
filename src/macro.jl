@@ -52,18 +52,6 @@ genfield(S, var, alias) = @q begin
     $(@q begin $([:($a::$S) for a in alias]...) end)
 end
 
-genargs(infos::Vector, options) = Tuple(filter(!isnothing, genarg.(infos)))
-genarg(i::VarInfo{Nothing}) = begin
-    if haskey(i.tags, :usearg)
-        if haskey(i.tags, :usedefault)
-            Expr(:kw, i.var, :($(esc(i.type))()))
-        else
-            i.var
-        end
-    end
-end
-genarg(i::VarInfo) = nothing
-
 equation(f) = begin
     fdef = splitdef(f)
     name = Meta.quot(fdef[:name])
@@ -108,8 +96,6 @@ gendecl(i::VarInfo{Nothing}) = begin
     elseif !isnothing(i.body)
         # @assert isnothing(i.args)
         decl = esc(i.body)
-    elseif haskey(i.tags, :usearg)
-        decl = esc(i.var)
     else
         decl = :($(esc(i.type))())
     end
@@ -118,12 +104,11 @@ end
 
 genstruct(name, infos, options) = begin
     fields = genfield.(infos)
-    args = genargs(infos, options)
     decls = gendecl.(infos)
     system = @q begin
         mutable struct $name <: System
             $(fields...)
-            function $name(; $(args...), _kwargs...)
+            function $name(; _kwargs...)
                 $self = new()
                 $(decls...)
                 $self
