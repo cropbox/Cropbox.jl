@@ -1,12 +1,12 @@
 using MacroTools
 import MacroTools: @q, flatten, striplines
 
-struct VarInfo{S}
+struct VarInfo{S<:Union{Symbol,Nothing}}
     var::Symbol
     alias::Vector{Symbol}
     args::Vector
     body#::Union{Expr,Symbol,Nothing}
-    state::Symbol
+    state::S
     type::Union{Symbol,Expr,Nothing}
     tags::Dict{Symbol,Any}
 end
@@ -32,7 +32,7 @@ function VarInfo(line::Union{Expr,Symbol})
     @capture(def2, name_(args__) | name_)
     args = isnothing(args) ? [] : args
     alias = isnothing(alias) ? [] : alias
-    state = isnothing(state) ? :Nothing : Symbol(uppercasefirst(string(state)))
+    state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
     tags = isnothing(tags) ? [] : tags
     tags = Dict((
@@ -40,12 +40,12 @@ function VarInfo(line::Union{Expr,Symbol})
         v = isnothing(v) ? true : v;
         k => v
     ) for t in tags)
-    VarInfo{eval(state)}(name, alias, args, body, state, type, tags)
+    VarInfo{typeof(state)}(name, alias, args, body, state, type, tags)
 end
 
 const self = :($(esc(:self)))
 
-genfield(i::VarInfo{S}) where {S<:State} = genfield(Var{S}, i.var, i.alias)
+genfield(i::VarInfo{Symbol}) = genfield(:(Var{$(i.state)}), i.var, i.alias)
 genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.var, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
@@ -85,7 +85,7 @@ macro equation(f)
     :($(esc(name)) = $e)
 end
 
-gendecl(i::VarInfo{S}) where {S<:State} = begin
+gendecl(i::VarInfo{Symbol}) = begin
     if isnothing(i.body)
         @assert isempty(i.args)
         e = esc(i.var)
