@@ -137,7 +137,7 @@ gensystem(name, block, options...) = begin
     if :bare ∉ options
         header = @q begin
             self => self ~ ::System
-            context ~ ::Context(usearg)
+            context ~ ::Context(override)
         end
         block = flatten(:($header; $block))
     end
