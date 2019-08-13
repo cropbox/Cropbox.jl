@@ -21,7 +21,7 @@ const Queue = DefaultDict{Priority,Vector{Function}}
     context => self ~ ::System
     systems ~ ::[System]
 
-    config => Config(config) ~ ::Config(usearg)
+    config => Config() ~ ::Config(override)
     queue => Queue(Vector{Function}) ~ ::Queue
     clock => Clock(; context=self) ~ ::Clock
 end bare
@@ -82,4 +82,4 @@ function instance(SystemType::Type{S}, config=Config()) where {S<:System}
     s
 end
 
-export Clock, Context, Priority, configure!, option, update!, instance
+export Clock, Context, Priority, Config, option, update!, instance
