@@ -1,9 +1,11 @@
+using Unitful
+
 abstract type State end
 
 check!(s::State) = true
 value(s::State) = s.value
 store!(s::State, f::Function) = store!(s, f())
-store!(s::State, v) = (s.value = v)
+store!(s::State, v) = (s.value = v |> unit(s))
 store!(s::State, ::Nothing) = nothing
 
 checktime!(s::State) = (update!(s.tick, value!(s.time)) > 0)
@@ -14,6 +16,11 @@ getindex(s::State, i) = s
 length(s::State) = 1
 iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
+
+import Unitful: unit
+unit(s::State) = NoUnits
+valuetype(T, U::Unitful.DimensionlessUnits) = T
+valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 
 const Priority = Int
 priority(s::State) = 0
@@ -26,42 +33,49 @@ priority(s::State) = 0
 
 ####
 
-mutable struct Pass{V} <: State
+mutable struct Pass{V,U} <: State
     value::V
 end
 
-Pass(; _type=Float64, _...) = Pass(zero(_type))
+Pass(; unit=NoUnits, _type=Float64, _...) = (V = valuetype(_type, unit); Pass{V,unit}(V(0)))
+
+unit(::Pass{V,U}) where {V,U} = U
 
 ####
 
-mutable struct Tock{T} <: State
+mutable struct Tock{T,U} <: State
     value::Tick{T}
 end
 
-Tock(; _type=Int64, _...) = Tock(Tick(zero(_type)))
+Tock(; unit=NoUnits, _type=Int64, _...) = (V = valuetype(_type, unit); Tock{V,unit}(Tick(V(0))))
 
 check!(s::Tock) = false
 advance!(s::Tock) = advance!(s.value)
+unit(::Tock{T,U}) where {T,U} = U
 
 ####
 
-mutable struct Preserve{V} <: State
+mutable struct Preserve{V,U} <: State
     value::Union{V,Missing}
 end
 
-Preserve(; _type=Float64, _...) = Preserve{_type}(missing)
+Preserve(; unit=NoUnits, _type=Float64, _...) = (V = valuetype(_type, unit); Preserve{V,unit}(missing))
 
 check!(s::Preserve) = ismissing(s.value)
+unit(::Preserve{V,U}) where {V,U}  = U
 
 ####
 
-mutable struct Track{V,T} <: State
+mutable struct Track{V,T,U} <: State
     value::V
     time::VarVal
     tick::Tick{T}
 end
 
-Track(; time="context.clock.time", tick=Tick(0.), _system, _type=Float64, _...) = Track(VarVal.(_system, [zero(_type), time, tick])...)
+Track(; unit=NoUnits, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
+    V = valuetype(_type, unit)
+    Track{V,T,unit}(VarVal.(_system, [V(0), time, tick])...)
+end
 
 check!(s::Track) = begin
     checktime!(s) && (return true)
@@ -69,12 +83,13 @@ check!(s::Track) = begin
     #TODO: regime handling
     return false
 end
+unit(::Track{V,T,U}) where {V,T,U}  = U
 
 ####
 
 import DataStructures: OrderedDict
 
-mutable struct Accumulate{V,T} <: State
+mutable struct Accumulate{V,T,U} <: State
     init::VarVal{V}
     time::VarVal
     tick::Tick{T}
@@ -82,9 +97,10 @@ mutable struct Accumulate{V,T} <: State
     value::VarVal{V}
 end
 
-Accumulate(; init=0, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
-    v = VarVal{_type}(_system, init)
-    Accumulate(v, VarVal.(_system, [time, tick])..., OrderedDict{T,_type}(), v)
+Accumulate(; init=0, unit=NoUnits, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
+    V = valuetype(_type, unit)
+    v = VarVal{V}(_system, init)
+    Accumulate{V,T,unit}(v, VarVal.(_system, [time, tick])..., OrderedDict{T,_type}(), v)
 end
 
 check!(s::Accumulate) = checktime!(s)
