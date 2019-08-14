@@ -1,17 +1,18 @@
 using Distributions
+using Unitful
 
 @testset "root structure" begin
     @system R begin
         parent => self ~ ::System(override)
-        elongation_rate: r => rand(Normal(1, 0.2)) ~ track(unit="cm / 1")
-        branching_angle => rand(Normal(20, 10)) ~ preserve(unit="deg")
-        branching_interval: i => 3.0 ~ track(unit="cm")
+        elongation_rate: r => rand(Normal(1, 0.2)) * u"cm" ~ track(unit=u"cm")
+        branching_angle => rand(Normal(20, 10)) * u"°" ~ preserve(unit=u"°")
+        branching_interval: i => 3.0u"cm" ~ track(unit=u"cm")
         branching_chance => 0.5 ~ track
         is_branching(l, ll, i) => (l - ll > i) ~ flag(prob="branching_chance")
-        branched_length(pl="parent.length") => pl ~ preserve(unit="cm")
-        diameter => 0.1 ~ track(unit="cm")
-        length(r): l => r ~ accumulate(unit="cm")
-        last_branching_length(is_branching, l): ll => (is_branching ? l : nothing) ~ track(unit="cm")
+        branched_length(pl="parent.length") => pl ~ preserve(unit=u"cm")
+        diameter => 0.1u"cm" ~ track(unit=u"cm")
+        length(r): l => r ~ accumulate(unit=u"cm")
+        last_branching_length(is_branching, l): ll => (is_branching ? l : nothing) ~ track(unit=u"cm")
         branch(self, is_branching, l) => begin
             if is_branching
                 #println("branch at l = $l")
