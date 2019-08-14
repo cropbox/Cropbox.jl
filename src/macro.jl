@@ -37,7 +37,14 @@ function VarInfo(line::Union{Expr,Symbol})
     tags = isnothing(tags) ? [] : tags
     tags = Dict((
         @capture(t, (k_=v_) | k_);
-        v = isnothing(v) ? true : v;
+        if isnothing(v)
+            if @capture(k, @u_str(v_))
+                v = :@u_str($v)
+                k = :unit
+            else
+                v = true
+            end
+        end;
         k => v
     ) for t in tags)
     VarInfo{typeof(state)}(name, alias, args, body, state, type, tags)
