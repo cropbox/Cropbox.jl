@@ -11,6 +11,7 @@ end
 
 @testset "cropbox" begin
     include("system.jl")
+    include("unit.jl")
     include("lotka_volterra.jl")
     include("root_structure.jl")
 end

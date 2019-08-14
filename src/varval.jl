@@ -15,7 +15,6 @@ convert(::Type{VarPath}, n::VarPath) = n
 getvar(p::VarPath) = reduce((a, b) -> getfield(a, b), [p.system; p.path])
 value!(p::VarPath) = value!(getvar(p))
 
-using Unitful
 convert(T::Type{V}, p::VarPath) where {V<:Number} = convert(T, value!(p))
 convert(T::Type{Q}, p::VarPath) where {Q<:Quantity} = uconvert(unit(T), value!(p))
 

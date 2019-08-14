@@ -1,5 +1,3 @@
-using Unitful
-
 abstract type State end
 
 check!(s::State) = true
