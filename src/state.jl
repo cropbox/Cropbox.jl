@@ -72,7 +72,7 @@ end
 
 Track(; unit=NoUnits, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
     V = valuetype(_type, unit)
-    Track{V,T,unit}(VarVal.(_system, [V(0), time, tick])...)
+    Track{V,T,unit}(V(0), VarVal(_system, time), tick)
 end
 
 check!(s::Track) = begin
@@ -99,7 +99,7 @@ end
 Accumulate(; init=0, unit=NoUnits, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
     V = valuetype(_type, unit)
     v = VarVal{V}(_system, init)
-    Accumulate{V,T,unit}(v, VarVal.(_system, [time, tick])..., OrderedDict{T,_type}(), v, OrderedDict{T,_type}())
+    Accumulate{V,T,unit}(v, VarVal(_system, time), tick, OrderedDict{T,_type}(), v, OrderedDict{T,_type}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -140,7 +140,7 @@ mutable struct Flag{T} <: State
     tick::Tick{T}
 end
 
-Flag(; prob=1, time="context.clock.time", tick=Tick(0.), _system, _type=Bool, _...) = Flag(VarVal.(_system, [zero(_type), prob, time, tick])...)
+Flag(; prob=1, time="context.clock.time", tick=Tick(0.), _system, _type=Bool, _...) = Flag(zero(_type), VarVal(_system, prob), VarVal(_system, time), tick)
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
 priority(s::Flag) = 1
@@ -159,7 +159,7 @@ struct Product{S<:System,K,V}
     args::Vector{Pair{K,V}}
 end
 
-Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}=System, _...) where {S<:System,T} = Produce{S,T}(VarVal.(_system, [_system, S[], time, tick])...)
+Produce(; time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type::Type{S}=System, _...) where {S<:System,T} = Produce{S,T}(_system, S[], VarVal(_system, time), tick)
 
 check!(s::Produce) = checktime!(s)
 produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))

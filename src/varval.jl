@@ -25,7 +25,6 @@ VarVal(s::System, p::V) where {V<:Number} = p
 VarVal{V}(s::System, p::Union{Symbol,String}) where {V<:Number} = VarVal(s, p)
 VarVal{V}(s::System, p) where {V<:Number} = convert(V, p)
 VarVal{Q}(s::System, p) where {Q<:Quantity} = unitfy(p, unit(Q))
-VarVal(s::System, p) = p
 
 convert(::Type{VarVal{V}}, v) where {V<:Number} = convert(V, v)
 convert(::Type{VarVal{V}}, v::VarVal{V}) where {V<:Number} = v
