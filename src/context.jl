@@ -1,7 +1,7 @@
 @system Clock begin
     self => self ~ ::System
     context ~ ::System(override)
-    tick => gettime!(s.tick) ~ tock
+    tick => nothing ~ tock
     #unit
     start => 0 ~ track(time="tick") # parameter
     interval: i => 1 ~ track(time="tick") # parameter
