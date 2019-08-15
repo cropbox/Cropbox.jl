@@ -93,22 +93,35 @@ mutable struct Accumulate{V,T,U} <: State
     tick::Tick{T}
     rates::OrderedDict{T,V}
     value::VarVal{V}
+    cache::OrderedDict{T,V}
 end
 
 Accumulate(; init=0, unit=NoUnits, time="context.clock.time", tick::Tick{T}=Tick(0.), _system, _type=Float64, _...) where T = begin
     V = valuetype(_type, unit)
     v = VarVal{V}(_system, init)
-    Accumulate{V,T,unit}(v, VarVal.(_system, [time, tick])..., OrderedDict{T,_type}(), v)
+    Accumulate{V,T,unit}(v, VarVal.(_system, [time, tick])..., OrderedDict{T,_type}(), v, OrderedDict{T,_type}())
 end
 
 check!(s::Accumulate) = checktime!(s)
 store!(s::Accumulate, f::Function) = begin
+    v = value!(s.init)
+    R = s.rates
+    T0 = collect(keys(R))
+    for t in reverse(T0)
+        if haskey(s.cache, t)
+            v = s.cache[t]
+            R = filter(p -> p.first >= t, R)
+            T0 = collect(keys(R))
+            break
+        end
+    end
     t = s.tick.t
-    T0 = collect(keys(s.rates))
-    T1 = [T0; t][2:length(T0)+1]
-    v = value!(s.init) + sum((T1 - T0) .* values(s.rates))
-    s.value = unitfy(v, unit(s))
-    () -> (s.rates[t] = f())
+    T1 = [T0; t]; T1 = T1[2:end]
+    v += sum((T1 - T0) .* values(R))
+    v = unitfy(v, unit(s))
+    s.value = v
+    s.cache[t] = v
+    () -> (s.rates[t] = f()) # s.cache = filter(p -> p.first == t, s.cache)
 end
 unit(::Accumulate{V,T,U}) where {V,T,U} = U
 priority(s::Accumulate) = 2
