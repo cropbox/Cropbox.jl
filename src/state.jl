@@ -3,7 +3,7 @@ abstract type State end
 check!(s::State) = true
 value(s::State) = s.value
 store!(s::State, f::Function) = store!(s, f())
-store!(s::State, v) = (s.value = v |> unit(s))
+store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 store!(s::State, ::Nothing) = nothing
 
 checktime!(s::State) = (update!(s.tick, value!(s.time)) > 0)
@@ -60,7 +60,7 @@ end
 Preserve(; unit=NoUnits, _type=Float64, _...) = (V = valuetype(_type, unit); Preserve{V,unit}(missing))
 
 check!(s::Preserve) = ismissing(s.value)
-unit(::Preserve{V,U}) where {V,U}  = U
+unit(::Preserve{V,U}) where {V,U} = U
 
 ####
 
@@ -106,9 +106,11 @@ store!(s::Accumulate, f::Function) = begin
     t = s.tick.t
     T0 = collect(keys(s.rates))
     T1 = [T0; t][2:length(T0)+1]
-    s.value = value!(s.init) + sum((T1 - T0) .* values(s.rates))
+    v = value!(s.init) + sum((T1 - T0) .* values(s.rates))
+    s.value = unitfy(v, unit(s))
     () -> (s.rates[t] = f())
 end
+unit(::Accumulate{V,T,U}) where {V,T,U} = U
 priority(s::Accumulate) = 2
 
 ####

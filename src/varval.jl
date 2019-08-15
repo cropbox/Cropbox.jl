@@ -16,7 +16,7 @@ getvar(p::VarPath) = reduce((a, b) -> getfield(a, b), [p.system; p.path])
 value!(p::VarPath) = value!(getvar(p))
 
 convert(T::Type{V}, p::VarPath) where {V<:Number} = convert(T, value!(p))
-convert(T::Type{Q}, p::VarPath) where {Q<:Quantity} = uconvert(unit(T), value!(p))
+convert(T::Type{Q}, p::VarPath) where {Q<:Quantity} = unitfy(value!(p), unit(T))
 
 const VarVal = Union{VarPath,V} where {V<:Number}
 
@@ -24,8 +24,7 @@ VarVal(s::System, p::Union{Symbol,String}) = VarPath(s, p)
 VarVal(s::System, p::V) where {V<:Number} = p
 VarVal{V}(s::System, p::Union{Symbol,String}) where {V<:Number} = VarVal(s, p)
 VarVal{V}(s::System, p) where {V<:Number} = convert(V, p)
-VarVal{Q}(s::System, p::R) where {Q<:Quantity,R<:Number} = Quantity(p, unit(Q))
-VarVal{Q}(s::System, p::R) where {Q<:Quantity,R<:Quantity} = uconvert(unit(Q), p)
+VarVal{Q}(s::System, p) where {Q<:Quantity} = unitfy(p, unit(Q))
 VarVal(s::System, p) = p
 
 convert(::Type{VarVal{V}}, v) where {V<:Number} = convert(V, v)
