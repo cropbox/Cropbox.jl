@@ -5,7 +5,7 @@
     #unit
     start => 0 ~ track(time="tick") # parameter
     interval: i => 1 ~ track(time="tick") # parameter
-    time(i) => i ~ accumulate(init=0, time="tick")
+    time(i) => i ~ accumulate::Int(init=0, time="tick")
     #start_datetime ~ parameter
     #datetime
 end bare
