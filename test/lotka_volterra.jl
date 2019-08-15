@@ -6,8 +6,8 @@
         predator_reproduction_rate: d => 0.75 ~ track
         prey_initial_population: H0 => 10 ~ track
         predator_initial_population: P0 => 5 ~ track
-        prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init="H0", time::Float64="t")
-        predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init="P0", time::Float64="t")
+        prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init="H0", time="t")
+        predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init="P0", time="t")
         timestep(t="context.clock.time"): t => 0.01t ~ track
     end
     s = instance(S)

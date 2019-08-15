@@ -70,7 +70,7 @@ mutable struct Track{V,T,U} <: State
     tick::Tick{T}
 end
 
-Track(; unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Int, _...) = begin
+Track(; unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
     Track{V,T,unit}(V(0), VarVal{T}(_system, time), Tick{T}(0))
@@ -97,7 +97,7 @@ mutable struct Accumulate{V,T,U} <: State
     cache::OrderedDict{T,V}
 end
 
-Accumulate(; init=0, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Int, _...) = begin
+Accumulate(; init=0, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
     Accumulate{V,T,unit}(VarVal{V}(_system, init), VarVal{T}(_system, time), Tick{T}(0), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
@@ -141,7 +141,7 @@ mutable struct Flag{P,T} <: State
     tick::Tick{T}
 end
 
-Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float64, _type_time=Int, _...) = begin
+Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
     V = _type
     P = _type_prob
     T = _type_time
@@ -165,7 +165,7 @@ struct Product{S<:System,K,V}
     args::Vector{Pair{K,V}}
 end
 
-Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Int, _...) where {S<:System} = begin
+Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = _type_time
     Produce{S,T}(_system, S[], VarVal{T}(_system, time), Tick{T}(0))
 end

@@ -70,7 +70,7 @@
         @system S begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
-            c(a) => a + 1 ~ accumulate(time::Float64="t")
+            c(a) => a + 1 ~ accumulate(time="t")
             t(x="context.clock.time") => 0.5x ~ track
         end
         s = instance(S)
