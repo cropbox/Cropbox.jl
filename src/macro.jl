@@ -34,20 +34,29 @@ function VarInfo(line::Union{Expr,Symbol})
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
-    tags = isnothing(tags) ? [] : tags
-    tags = Dict((
-        @capture(t, (k_=v_) | k_);
-        if isnothing(v)
-            if @capture(k, @u_str(v_))
-                v = :@u_str($v)
-                k = :unit
-            else
-                v = true
-            end
-        end;
-        k => v
-    ) for t in tags)
+    tags = parsetags(tags, type)
     VarInfo{typeof(state)}(name, alias, args, body, state, type, tags)
+end
+
+parsetags(::Nothing, type) = parsetags([], type)
+parsetags(tags::Vector, type) = begin
+    d = Dict{Symbol,Any}()
+    for t in tags
+        if @capture(t, k_=v_)
+            if @capture(k, kn_::kt_)
+                d[kn] = v
+                d[Symbol("_type_", kn)] = kt
+            else
+                d[k] = v
+            end
+        elseif @capture(t, @u_str(v_))
+            d[:unit] = :@u_str($v)
+        else
+            d[t] = true
+        end
+    end
+    !isnothing(type) && (d[:_type] = type)
+    d
 end
 
 const self = :($(esc(:self)))
@@ -89,7 +98,6 @@ gendecl(i::VarInfo{Symbol}) = begin
         e = equation(f)
     end
     name = Meta.quot(i.var)
-    !isnothing(i.type) && (i.tags[:_type] = i.type)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
     @q begin
         $self.$(i.var) = Var($self, $e, $(i.state); _name=$name, _alias=$(i.alias), $(stargs...))
