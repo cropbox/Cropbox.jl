@@ -15,16 +15,22 @@ convert(::Type{VarPath}, n::VarPath) = n
 getvar(p::VarPath) = reduce((a, b) -> getfield(a, b), [p.system; p.path])
 value!(p::VarPath) = value!(getvar(p))
 
-convert(T::Type{V}, p::VarPath) where {V<:Number} = convert(T, value!(p))
-convert(T::Type{Q}, p::VarPath) where {Q<:Quantity} = unitfy(value!(p), unit(T))
+convert(::Type{V}, p::VarPath) where {V<:Number} = convert(V, value!(p))
+convert(::Type{V}, p::VarPath) where {V<:Quantity} = convert(V, unitfy(value!(p), unit(V)))
 
-const VarVal = Union{VarPath,V} where {V<:Number}
+struct VarVal{V<:Number}
+    v::Union{VarPath,V}
+end
 
-VarVal(s::System, p::Union{Symbol,String}) = VarPath(s, p)
-VarVal(s::System, p::V) where {V<:Number} = p
-VarVal{V}(s::System, p::Union{Symbol,String}) where {V<:Number} = VarVal(s, p)
-VarVal{V}(s::System, p) where {V<:Number} = convert(V, p)
-VarVal{Q}(s::System, p) where {Q<:Quantity} = unitfy(p, unit(Q))
+VarVal{V}(s::System, p::Union{Symbol,String}) where {V<:Number} = VarVal{V}(VarPath(s, p))
+VarVal{V}(s::System, p) where {V<:Number} = VarVal{V}(convert(V, p))
+VarVal{V}(s::System, p) where {V<:Quantity} = VarVal{V}(convert(V, unitfy(p, unit(V))))
 
-convert(::Type{VarVal{V}}, v) where {V<:Number} = convert(V, v)
-convert(::Type{VarVal{V}}, v::VarVal{V}) where {V<:Number} = v
+value!(v::VarVal) = value!(v.v)
+
+convert(::Type{VarVal{V}}, v) where {V<:Number} = VarVal{V}(convert(V, v))
+convert(::Type{VarVal{V}}, v::VarVal) where {V<:Number} = v
+convert(::Type{V}, v::VarVal) where V = convert(V, v.v)
+
+import Base: promote_rule
+promote_rule(::Type{T}, ::Type{VarVal}) where {T<:Number} = T
