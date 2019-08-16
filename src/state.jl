@@ -13,6 +13,9 @@ struct TimeState{T}
     tocker::Timepiece{Int}
 end
 
+TimeState{T}(system, tick, tock="context.clock.tock") where T =
+    TimeState(VarVal{T}(system, tick), Timepiece{T}(0), VarVal{Int}(system, tock), Timepiece(0))
+
 checktime!(s::TimeState) = begin
     if update!(s.ticker, value!(s.tick))
         reset!(s.tocker)
@@ -89,8 +92,7 @@ end
 Track(; unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
-    ts = TimeState(VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
-    Track{V,T,unit}(V(0), ts)
+    Track{V,T,unit}(V(0), TimeState{T}(_system, time))
 end
 
 check!(s::Track) = begin
@@ -116,8 +118,7 @@ end
 Accumulate(; init=0, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
-    ts = TimeState(VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
-    Accumulate{V,T,unit}(VarVal{V}(_system, init), ts, OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
+    Accumulate{V,T,unit}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -161,8 +162,7 @@ Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float6
     V = _type
     P = _type_prob
     T = _type_time
-    ts = TimeState(VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
-    Flag(zero(V), VarVal{P}(_system, prob), ts)
+    Flag(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
@@ -183,8 +183,7 @@ end
 
 Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = _type_time
-    ts = TimeState(VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
-    Produce{S,T}(_system, S[], ts)
+    Produce{S,T}(_system, S[], TimeState{T}(_system, time))
 end
 
 check!(s::Produce) = checktime!(s)
