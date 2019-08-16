@@ -6,7 +6,14 @@ store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 store!(s::State, ::Nothing) = nothing
 
-checktime!(s::State) = (update!(s.timer, value!(s.time)) > 0)
+checktime!(s::State) = begin
+    if update!(s.timer, value!(s.time))
+        reset!(s.tocker)
+        true
+    else
+        update!(s.tocker, value!(s.tock))
+    end
+end
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
 
 import Base: getindex, length, iterate
