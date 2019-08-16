@@ -6,7 +6,7 @@ store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 store!(s::State, ::Nothing) = nothing
 
-checktime!(s::State) = (update!(s.tick, value!(s.time)) > 0)
+checktime!(s::State) = (update!(s.timer, value!(s.time)) > 0)
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
 
 import Base: getindex, length, iterate
@@ -42,10 +42,10 @@ unit(::Pass{V,U}) where {V,U} = U
 ####
 
 mutable struct Advance{T,U} <: State
-    value::Tick{T}
+    value::Timepiece{T}
 end
 
-Advance(; unit=NoUnits, _type=Int64, _...) = (T = valuetype(_type, unit); Advance{T,unit}(Tick(T(0))))
+Advance(; unit=NoUnits, _type=Int64, _...) = (T = valuetype(_type, unit); Advance{T,unit}(Timepiece(T(0))))
 
 check!(s::Advance) = false
 advance!(s::Advance) = advance!(s.value)
@@ -67,13 +67,13 @@ unit(::Preserve{V,U}) where {V,U} = U
 mutable struct Track{V,T,U} <: State
     value::V
     time::VarVal{T}
-    tick::Tick{T}
+    timer::Timepiece{T}
 end
 
 Track(; unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
-    Track{V,T,unit}(V(0), VarVal{T}(_system, time), Tick{T}(0))
+    Track{V,T,unit}(V(0), VarVal{T}(_system, time), Timepiece{T}(0))
 end
 
 check!(s::Track) = begin
@@ -91,7 +91,7 @@ import DataStructures: OrderedDict
 mutable struct Accumulate{V,T,U} <: State
     init::VarVal{V}
     time::VarVal{T}
-    tick::Tick{T}
+    timer::Timepiece{T}
     rates::OrderedDict{T,V}
     value::V
     cache::OrderedDict{T,V}
@@ -100,7 +100,7 @@ end
 Accumulate(; init=0, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
-    Accumulate{V,T,unit}(VarVal{V}(_system, init), VarVal{T}(_system, time), Tick{T}(0), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
+    Accumulate{V,T,unit}(VarVal{V}(_system, init), VarVal{T}(_system, time), Timepiece{T}(0), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -116,7 +116,7 @@ store!(s::Accumulate, f::Function) = begin
             break
         end
     end
-    t = s.tick.t
+    t = s.timer.t
     T1 = [T0; t]; T1 = T1[2:end]
     v += sum((T1 - T0) .* values(R))
     v = unitfy(v, unit(s))
@@ -138,14 +138,14 @@ mutable struct Flag{P,T} <: State
     value::Bool
     prob::VarVal{P}
     time::VarVal{T}
-    tick::Tick{T}
+    timer::Timepiece{T}
 end
 
 Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
     V = _type
     P = _type_prob
     T = _type_time
-    Flag(zero(V), VarVal{P}(_system, prob), VarVal{T}(_system, time), Tick{T}(0))
+    Flag(zero(V), VarVal{P}(_system, prob), VarVal{T}(_system, time), Timepiece{T}(0))
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
@@ -157,7 +157,7 @@ mutable struct Produce{S<:System,T} <: State
     system::System
     value::Vector{S}
     time::VarVal{T}
-    tick::Tick{T}
+    timer::Timepiece{T}
 end
 
 struct Product{S<:System,K,V}
@@ -167,7 +167,7 @@ end
 
 Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = _type_time
-    Produce{S,T}(_system, S[], VarVal{T}(_system, time), Tick{T}(0))
+    Produce{S,T}(_system, S[], VarVal{T}(_system, time), Timepiece{T}(0))
 end
 
 check!(s::Produce) = checktime!(s)
