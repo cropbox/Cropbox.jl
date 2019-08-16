@@ -61,7 +61,7 @@ end
 
 const self = :($(esc(:self)))
 
-genfield(i::VarInfo{Symbol}) = genfield(:(Var{$(i.state)}), i.var, i.alias)
+genfield(i::VarInfo{Symbol}) = genfield(:($(esc(:Cropbox)).Var{$(esc(:Cropbox)).$(i.state)}), i.var, i.alias)
 genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.var, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
@@ -79,7 +79,7 @@ equation(f) = begin
     pair(x::Expr) = x.args[1] => x.args[2]
     default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict
     func = @q function $(gensym())($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
-    :(Equation($func, $name, $args, $kwargs, $default))
+    :($(esc(:Cropbox)).Equation($func, $name, $args, $kwargs, $default))
 end
 
 macro equation(f)
@@ -100,7 +100,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     name = Meta.quot(i.var)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
     @q begin
-        $self.$(i.var) = Var($self, $e, $(i.state); _name=$name, _alias=$(i.alias), $(stargs...))
+        $self.$(i.var) = $(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), $(stargs...))
         $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
     end
 end
@@ -121,7 +121,7 @@ genstruct(name, infos, options) = begin
     fields = genfield.(infos)
     decls = gendecl.(infos)
     system = @q begin
-        mutable struct $name <: System
+        mutable struct $name <: $(esc(:Cropbox)).System
             $(fields...)
             function $name(; _kwargs...)
                 $self = new()
@@ -136,8 +136,8 @@ end
 gensystem(name, block, options...) = begin
     if :bare ∉ options
         header = @q begin
-            self => self ~ ::System
-            context ~ ::Context(override)
+            self => self ~ ::Cropbox.System
+            context ~ ::Cropbox.Context(override)
         end
         block = flatten(:($header; $block))
     end

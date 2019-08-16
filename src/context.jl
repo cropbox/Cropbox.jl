@@ -65,4 +65,4 @@ instance(SystemType::Type{S}, config=configure()) where {S<:System} = begin
     s
 end
 
-export Clock, Context, update!, advance!, recite!, instance
+export update!, advance!, recite!, instance

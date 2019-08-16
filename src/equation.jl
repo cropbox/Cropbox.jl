@@ -7,5 +7,3 @@ struct Equation
 end
 
 (e::Equation)(args...; kwargs...) = e.func(args...; kwargs...)
-
-export Equation
