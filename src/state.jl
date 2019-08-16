@@ -7,7 +7,7 @@ store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 store!(s::State, ::Nothing) = nothing
 
 checktime!(s::State) = begin
-    if update!(s.timer, value!(s.time))
+    if update!(s.ticker, value!(s.tick))
         reset!(s.tocker)
         true
     else
@@ -74,8 +74,8 @@ unit(::Preserve{V,U}) where {V,U} = U
 
 mutable struct Track{V,T,U} <: State
     value::V
-    time::VarVal{T}
-    timer::Timepiece{T}
+    tick::VarVal{T}
+    ticker::Timepiece{T}
     tock::VarVal{Int}
     tocker::Timepiece{Int}
 end
@@ -100,8 +100,8 @@ import DataStructures: OrderedDict
 
 mutable struct Accumulate{V,T,U} <: State
     init::VarVal{V}
-    time::VarVal{T}
-    timer::Timepiece{T}
+    tick::VarVal{T}
+    ticker::Timepiece{T}
     tock::VarVal{Int}
     tocker::Timepiece{Int}
     rates::OrderedDict{T,V}
@@ -128,7 +128,7 @@ store!(s::Accumulate, f::Function) = begin
             break
         end
     end
-    t = s.timer.t
+    t = s.ticker.t
     T1 = [T0; t]; T1 = T1[2:end]
     v += sum((T1 - T0) .* values(R))
     v = unitfy(v, unit(s))
@@ -149,8 +149,8 @@ priority(s::Accumulate) = 2
 mutable struct Flag{P,T} <: State
     value::Bool
     prob::VarVal{P}
-    time::VarVal{T}
-    timer::Timepiece{T}
+    tick::VarVal{T}
+    ticker::Timepiece{T}
     tock::VarVal{Int}
     tocker::Timepiece{Int}
 end
@@ -170,8 +170,8 @@ priority(s::Flag) = 1
 mutable struct Produce{S<:System,T} <: State
     system::System
     value::Vector{S}
-    time::VarVal{T}
-    timer::Timepiece{T}
+    tick::VarVal{T}
+    ticker::Timepiece{T}
     tock::VarVal{Int}
     tocker::Timepiece{Int}
 end
