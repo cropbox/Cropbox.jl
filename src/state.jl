@@ -82,7 +82,7 @@ check!(s::Track) = begin
     #TODO: regime handling
     return false
 end
-unit(::Track{V,T,U}) where {V,T,U}  = U
+unit(::Track{V,T,U}) where {V,T,U} = U
 
 ####
 
