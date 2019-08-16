@@ -23,7 +23,7 @@
         advance!(s)
     end
     @test value!(s.t) > 20.0
-    using UnicodePlots
-    p = lineplot(T, H, name="Prey", xlabel="Time", ylabel="Population", xlim=[0, T[end]]);
-    lineplot!(p, T, P, name="Predator")
+    using Plots
+    unicodeplots()
+    plot(T, [H P], lab=["Prey" "Predator"], xlab="Time", ylab="Population", xlim=(0, T[end]), ylim=(0, ceil(maximum([H P]))))
 end
