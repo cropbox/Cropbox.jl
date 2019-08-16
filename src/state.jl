@@ -41,15 +41,15 @@ unit(::Pass{V,U}) where {V,U} = U
 
 ####
 
-mutable struct Tock{T,U} <: State
+mutable struct Advance{T,U} <: State
     value::Tick{T}
 end
 
-Tock(; unit=NoUnits, _type=Int64, _...) = (T = valuetype(_type, unit); Tock{T,unit}(Tick(T(0))))
+Advance(; unit=NoUnits, _type=Int64, _...) = (T = valuetype(_type, unit); Advance{T,unit}(Tick(T(0))))
 
-check!(s::Tock) = false
-advance!(s::Tock) = advance!(s.value)
-unit(::Tock{T,U}) where {T,U} = U
+check!(s::Advance) = false
+advance!(s::Advance) = advance!(s.value)
+unit(::Advance{T,U}) where {T,U} = U
 
 ####
 
@@ -181,5 +181,5 @@ length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
 priority(s::Produce) = -1
 
-export State, Pass, Tock, Preserve, Track, Accumulate, Flag, Produce
+export State, Pass, Advance, Preserve, Track, Accumulate, Flag, Produce
 export check!, value, store!, priority, advance!, produce
