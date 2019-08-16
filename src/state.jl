@@ -197,15 +197,7 @@ check!(s::Solve) = checktime!(s) && !s.solving
 using Roots
 store!(s::Solve, f::Function) = begin
     s.solving = true
-    #println("s.clock.time = $(s.clock.time)")
-    cost(x) = begin
-        #println("cost begin x = $x, t = $(s.clock.tock)");
-        store!(s, x);
-        recite!(s.clock);
-        y = f();
-        #println("cost end y = $y");
-        y
-    end
+    cost(x) = (store!(s, x); recite!(s.clock); y = f(); y)
     b = (value!(s.lower), value!(s.upper))
     if nothing in b
         v = find_zero(cost, value(s))
