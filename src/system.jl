@@ -15,7 +15,7 @@ import Base: broadcastable
 broadcastable(s::System) = Ref(s)
 
 import Base: collect
-function collect(s::System; recursive=true, exclude_self=true)
+collect(s::System; recursive=true, exclude_self=true) = begin
     S = Set()
     visit(s) = begin
         ST = filter(t -> t.type <: Union{System, Vector{System}, Var{Produce}}, s)

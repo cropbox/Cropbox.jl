@@ -31,7 +31,7 @@ const Priority = Int
 priority(s::State) = 0
 
 # import Base: show
-# function show(io::IO, s::State)
+# show(io::IO, s::State) = begin
 #     v = value(s)
 #     print(io, "<$(s.name)> = $(isnothing(v) ? "<uninitialized>" : v)")
 # end

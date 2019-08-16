@@ -39,7 +39,7 @@ end
 preflush!(c::Context) = flush!(c, p -> p.first < 0)
 postflush!(c::Context) = flush!(c, p -> p.first >= 0)
 
-function update!(c::Context)
+update!(c::Context) = begin
     # process pending operations from last timestep (i.e. produce)
     preflush!(c)
 
@@ -56,7 +56,7 @@ end
 advance!(c::Context) = (advance!(c.clock); update!(c))
 advance!(s::System) = advance!(s.context)
 
-function instance(SystemType::Type{S}, config=configure()) where {S<:System}
+instance(SystemType::Type{S}, config=configure()) where {S<:System} = begin
     c = Context(; config=config)
     advance!(c)
     s = SystemType(; context=c)

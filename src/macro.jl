@@ -12,7 +12,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
 end
 
 import Base: show
-function show(io::IO, s::VarInfo)
+show(io::IO, s::VarInfo) = begin
     println(io, "var: $(s.var)")
     println(io, "alias: $(s.alias)")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
@@ -23,7 +23,7 @@ function show(io::IO, s::VarInfo)
     end
 end
 
-function VarInfo(line::Union{Expr,Symbol})
+VarInfo(line::Union{Expr,Symbol}) = begin
     # name[(args..)][: alias] [=> body] ~ [state][::type][(tags..)]
     @capture(line, decl_ ~ deco_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
