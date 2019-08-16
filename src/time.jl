@@ -6,9 +6,9 @@ advance!(timer::Timepiece{T}, t=one(T)) where {T<:Number} = (timer.t += t)
 reset!(timer::Timepiece) = (timer.t = 0)
 update!(timer::Timepiece{T}, t::T) where {T<:Number} = begin
     dt = t - timer.t
-    dt > zero(T) && advance!(timer, dt)
+    (updated = dt > zero(T)) && advance!(timer, dt)
     #TODO: make sure dt is not negative
-    dt
+    updated
 end
 update!(timer::Timepiece{T}, t) where {T<:Number} = update!(timer, convert(T, t))
 
