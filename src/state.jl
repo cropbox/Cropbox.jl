@@ -6,26 +6,7 @@ store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 store!(s::State, ::Nothing) = nothing
 
-struct TimeState{T}
-    tick::VarVal{T}
-    ticker::Timepiece{T}
-    tock::VarVal{Int}
-    tocker::Timepiece{Int}
-end
-
-TimeState{T}(system, tick, tock="context.clock.tock") where T =
-    TimeState(VarVal{T}(system, tick), Timepiece{T}(0), VarVal{Int}(system, tock), Timepiece(0))
-
-checktime!(s::TimeState) = begin
-    if update!(s.ticker, value!(s.tick))
-        reset!(s.tocker)
-        true
-    else
-        update!(s.tocker, value!(s.tock))
-    end
-end
-
-checktime!(s::State) = checktime!(s.time)
+checktime!(s::State) = check!(s.time)
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
 
 import Base: getindex, length, iterate

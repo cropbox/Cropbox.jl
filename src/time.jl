@@ -19,4 +19,23 @@ convert(::Type{T}, timer::Timepiece) where {T<:Number} = convert(T, timer.t)
 # promote_rule(::Type{Timepiece{T}}, ::Type{U}) where {T,U} = promote_type(T, U)
 # +(timer::Timepiece, t) = +(promote(timer, t)...)
 
+struct TimeState{T}
+    tick::VarVal{T}
+    ticker::Timepiece{T}
+    tock::VarVal{Int}
+    tocker::Timepiece{Int}
+end
+
+TimeState{T}(system, tick, tock="context.clock.tock") where T =
+    TimeState(VarVal{T}(system, tick), Timepiece{T}(0), VarVal{Int}(system, tock), Timepiece(0))
+
+check!(s::TimeState) = begin
+    if update!(s.ticker, value!(s.tick))
+        reset!(s.tocker)
+        true
+    else
+        update!(s.tocker, value!(s.tock))
+    end
+end
+
 export Timepiece, update!
