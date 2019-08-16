@@ -144,7 +144,7 @@
             a => 1 ~ pass
             b(a) => a ~ track
         end
-        config = Config(Dict(S => Dict(:a => 2, :b => Dict(:a => 3))))
+        config = configure(S => (:a => 2, :b => (:a => 3)))
         s = instance(S, config)
         @test s.a == 2
         @test s.b == 3
@@ -158,7 +158,7 @@
             a: aa => 1 ~ pass
             bb: b => 1 ~ pass
         end
-        config = Config(Dict(S => Dict(:a => 2, :b => 2)))
+        config = configure(S => (:a => 2, :b => 2))
         s = instance(S, config)
         @test s.a == 2
         @test s.b == 2
