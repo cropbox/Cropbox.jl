@@ -176,4 +176,48 @@ length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
 priority(s::Produce) = -1
 
+####
+
+mutable struct Solve{V,T,U} <: State
+    value::V
+    time::TimeState{T}
+    lower::Union{VarVal{V},Nothing}
+    upper::Union{VarVal{V},Nothing}
+    clock::System
+    solving::Bool
+end
+
+Solve(; lower=nothing, upper=nothing, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+    V = valuetype(_type, unit)
+    T = _type_time
+    Solve{V,T,unit}(V(0), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
+end
+
+check!(s::Solve) = checktime!(s) && !s.solving
+using Roots
+store!(s::Solve, f::Function) = begin
+    s.solving = true
+    #println("s.clock.time = $(s.clock.time)")
+    cost(x) = begin
+        #println("cost begin x = $x, t = $(s.clock.tock)");
+        store!(s, x);
+        recite!(s.clock);
+        y = f();
+        #println("cost end y = $y");
+        y
+    end
+    b = (value!(s.lower), value!(s.upper))
+    if nothing in b
+        v = find_zero(cost, value(s))
+    else
+        v = find_zero(cost, b, Roots.AlefeldPotraShi())
+    end
+    #FIXME: no longer needed with regime?
+    #HACK: trigger update with final value
+    cost(v)
+    s.solving = false
+    store!(s, v)
+end
+unit(::Solve{V,T,U}) where {V,T,U} = U
+
 export produce

@@ -1,3 +1,5 @@
+using Unitful
+
 @testset "system" begin
     @testset "derive" begin
         @system S begin
@@ -221,5 +223,29 @@
         @test length(s.a) == 0
         advance!(s)
         @test length(s.a) == 0
+    end
+
+    @testset "solve" begin
+        @system S begin
+            a(x) => 2x ~ track
+            b(x) => x + 1 ~ track
+            x(a, b) => a - b ~ solve(lower=0, upper=2)
+        end
+        s = instance(S)
+        @test s.x == 1
+        @test s.a == 2
+        @test s.b == 2
+    end
+
+    @testset "solve with unit" begin
+        @system S begin
+            a(x) => 2x ~ track(u"m")
+            b(x) => x + u"1m" ~ track(u"m")
+            x(a, b) => a - b ~ solve(lower=u"0m", upper=u"2m", u"m")
+        end
+        s = instance(S)
+        @test s.x == u"1m"
+        @test s.a == u"2m"
+        @test s.b == u"2m"
     end
 end
