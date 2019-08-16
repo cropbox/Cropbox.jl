@@ -84,4 +84,4 @@ function instance(SystemType::Type{S}, config=Config()) where {S<:System}
     s
 end
 
-export Clock, Context, Priority, Config, option, update!, instance
+export Clock, Context, Priority, Config, option, advance!, recite!, instance
