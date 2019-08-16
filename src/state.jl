@@ -49,6 +49,7 @@ Advance(; unit=NoUnits, _type=Int64, _...) = (T = valuetype(_type, unit); Advanc
 
 check!(s::Advance) = false
 advance!(s::Advance) = advance!(s.value)
+reset!(s::Advance) = reset!(s.value)
 unit(::Advance{T,U}) where {T,U} = U
 
 ####
@@ -68,12 +69,14 @@ mutable struct Track{V,T,U} <: State
     value::V
     time::VarVal{T}
     timer::Timepiece{T}
+    tock::VarVal{Int}
+    tocker::Timepiece{Int}
 end
 
 Track(; unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
-    Track{V,T,unit}(V(0), VarVal{T}(_system, time), Timepiece{T}(0))
+    Track{V,T,unit}(V(0), VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
 end
 
 check!(s::Track) = begin
@@ -92,6 +95,8 @@ mutable struct Accumulate{V,T,U} <: State
     init::VarVal{V}
     time::VarVal{T}
     timer::Timepiece{T}
+    tock::VarVal{Int}
+    tocker::Timepiece{Int}
     rates::OrderedDict{T,V}
     value::V
     cache::OrderedDict{T,V}
@@ -100,7 +105,7 @@ end
 Accumulate(; init=0, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
-    Accumulate{V,T,unit}(VarVal{V}(_system, init), VarVal{T}(_system, time), Timepiece{T}(0), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
+    Accumulate{V,T,unit}(VarVal{V}(_system, init), VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -139,13 +144,15 @@ mutable struct Flag{P,T} <: State
     prob::VarVal{P}
     time::VarVal{T}
     timer::Timepiece{T}
+    tock::VarVal{Int}
+    tocker::Timepiece{Int}
 end
 
 Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
     V = _type
     P = _type_prob
     T = _type_time
-    Flag(zero(V), VarVal{P}(_system, prob), VarVal{T}(_system, time), Timepiece{T}(0))
+    Flag(zero(V), VarVal{P}(_system, prob), VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
@@ -158,6 +165,8 @@ mutable struct Produce{S<:System,T} <: State
     value::Vector{S}
     time::VarVal{T}
     timer::Timepiece{T}
+    tock::VarVal{Int}
+    tocker::Timepiece{Int}
 end
 
 struct Product{S<:System,K,V}
@@ -167,7 +176,7 @@ end
 
 Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = _type_time
-    Produce{S,T}(_system, S[], VarVal{T}(_system, time), Timepiece{T}(0))
+    Produce{S,T}(_system, S[], VarVal{T}(_system, time), Timepiece{T}(0), VarVal{Int}(_system, "context.clock.tock"), Timepiece{Int}(0))
 end
 
 check!(s::Produce) = checktime!(s)

@@ -2,6 +2,7 @@
     self => self ~ ::System
     context ~ ::System(override)
     tick => nothing ~ advance
+    tock => nothing ~ advance
     #unit
     start => 0 ~ track(time="tick") # parameter
     interval: i => 1 ~ track(time="tick") # parameter
@@ -10,7 +11,8 @@
     #datetime
 end bare
 
-advance!(c::Clock) = advance!(c.tick)
+advance!(c::Clock) = (advance!(c.tick); reset!(c.tock))
+recite!(c::Clock) = advance!(c.tock)
 
 const Config = Dict #TODO: proper struct?
 import DataStructures: DefaultDict
