@@ -14,7 +14,6 @@ end bare
 advance!(c::Clock) = (advance!(c.tick); reset!(c.tock))
 recite!(c::Clock) = advance!(c.tock)
 
-const Config = Dict{Any,Any}
 import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
@@ -28,26 +27,6 @@ const Queue = DefaultDict{Priority,Vector{Function}}
     clock => Clock(; context=self) ~ ::Clock
 end bare
 
-configure(c::Dict) = Config(Symbol(p.first) => configure(p.second) for p in c)
-configure(c::Tuple) = configure(Config(c))
-configure(c::Pair...) = configure(Config(c...))
-configure(c) = c
-
-using TOML
-loadconfig(c::AbstractString) = configure(TOML.parse(c))
-
-option(c) = c
-option(c, keys...) = nothing
-option(c::Config, key::Symbol, keys...) = option(get(c, key, nothing), keys...)
-option(c::Config, key::Vector{Symbol}, keys...) = begin
-    for k in key
-        v = option(c, k, keys...)
-        !isnothing(v) && return v
-    end
-    nothing
-end
-option(c::Config, key::System, keys...) = option(c, Symbol(typeof(key)), keys...)
-option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
 option(c::Context, keys...) = option(c.config, keys...)
 
 queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)
@@ -86,4 +65,4 @@ function instance(SystemType::Type{S}, config=configure()) where {S<:System}
     s
 end
 
-export Clock, Context, Priority, Config, configure, option, advance!, recite!, instance
+export Clock, Context, Priority, advance!, recite!, instance
