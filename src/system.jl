@@ -39,4 +39,4 @@ context(s::System) = s.context
 import Base: show
 show(io::IO, s::S) where {S<:System} = print(io, "[$(string(S))]")
 
-export System, update!
+export System

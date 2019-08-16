@@ -21,4 +21,4 @@ end
 option(c::Config, key::System, keys...) = option(c, Symbol(typeof(key)), keys...)
 option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
 
-export Config, configure, option
+export configure
