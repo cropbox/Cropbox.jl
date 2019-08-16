@@ -118,9 +118,7 @@ store!(s::Accumulate, f::Function) = begin
     t = s.time.ticker.t
     T1 = [T0; t]; T1 = T1[2:end]
     v += sum((T1 - T0) .* values(R))
-    v = unitfy(v, unit(s))
-    s.value = v
-    s.cache[t] = v
+    s.cache[t] = store!(s, v)
     () -> (s.rates[t] = f()) # s.cache = filter(p -> p.first == t, s.cache)
 end
 unit(::Accumulate{V,T,U}) where {V,T,U} = U
