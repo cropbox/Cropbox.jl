@@ -9,6 +9,7 @@ include("equation.jl")
 include("macro.jl")
 include("var.jl")
 include("config.jl")
+include("clock.jl")
 include("context.jl")
 
 end
