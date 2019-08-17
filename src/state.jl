@@ -16,8 +16,9 @@ iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
 
 import Unitful: unit
-unit(s::State) = NoUnits
-valuetype(T, U::Unitful.DimensionlessUnits) = T
+unit(s::State) = nothing
+valuetype(T, ::Nothing) = T
+valuetype(T, ::Unitful.DimensionlessUnits) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 
 const Priority = Int
@@ -35,7 +36,7 @@ mutable struct Pass{V,U} <: State
     value::V
 end
 
-Pass(; unit=NoUnits, _type=Float64, _...) = (V = valuetype(_type, unit); Pass{V,unit}(V(0)))
+Pass(; unit=nothing, _type=Float64, _...) = (V = valuetype(_type, unit); Pass{V,unit}(V(0)))
 
 unit(::Pass{V,U}) where {V,U} = U
 
@@ -45,7 +46,7 @@ mutable struct Advance{T,U} <: State
     value::Timepiece{T}
 end
 
-Advance(; unit=NoUnits, _type=Int64, _...) = (T = valuetype(_type, unit); Advance{T,unit}(Timepiece(T(0))))
+Advance(; unit=nothing, _type=Int64, _...) = (T = valuetype(_type, unit); Advance{T,unit}(Timepiece(T(0))))
 
 check!(s::Advance) = false
 advance!(s::Advance) = advance!(s.value)
@@ -58,7 +59,7 @@ mutable struct Preserve{V,U} <: State
     value::Union{V,Missing}
 end
 
-Preserve(; unit=NoUnits, _type=Float64, _...) = (V = valuetype(_type, unit); Preserve{V,unit}(missing))
+Preserve(; unit=nothing, _type=Float64, _...) = (V = valuetype(_type, unit); Preserve{V,unit}(missing))
 
 check!(s::Preserve) = ismissing(s.value)
 unit(::Preserve{V,U}) where {V,U} = U
@@ -70,7 +71,7 @@ mutable struct Track{V,T,U} <: State
     time::TimeState{T}
 end
 
-Track(; unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+Track(; unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
     Track{V,T,unit}(V(0), TimeState{T}(_system, time))
@@ -96,7 +97,7 @@ mutable struct Accumulate{V,T,U} <: State
     cache::OrderedDict{T,V}
 end
 
-Accumulate(; init=0, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+Accumulate(; init=0, unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
     Accumulate{V,T,unit}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
@@ -187,7 +188,7 @@ mutable struct Solve{V,T,U} <: State
     solving::Bool
 end
 
-Solve(; lower=nothing, upper=nothing, unit=NoUnits, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
     V = valuetype(_type, unit)
     T = _type_time
     Solve{V,T,unit}(V(0), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
