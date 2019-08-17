@@ -70,10 +70,10 @@ using Unitful
 
     @testset "accumulate with time" begin
         @system S begin
+            t(x="context.clock.time") => 0.5x ~ track
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(a) => a + 1 ~ accumulate(time="t")
-            t(x="context.clock.time") => 0.5x ~ track
         end
         s = instance(S)
         @test s.a == 1 && s.b == 0 && s.c == 0

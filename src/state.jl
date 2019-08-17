@@ -17,9 +17,23 @@ iterate(s::State, i) = nothing
 
 import Unitful: unit
 unit(s::State) = nothing
+
+unittype(::Nothing, _) = nothing
+unittype(U::Unitful.Units, _) = U
+unittype(unit::String, s::System) = value!(VarPath{Any}(s, unit))
+
 valuetype(T, ::Nothing) = T
 valuetype(T, ::Unitful.DimensionlessUnits) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
+
+#HACK: state var referred by `time` tag must have been already declared
+timeunittype(time::String, s::System) = unit(getvar(VarPath{Any}(s, time)).state)
+timetype(time::String, T, s::System) = valuetype(T, timeunittype(time, s))
+
+rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
+rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
+rateunittype(U::Unitful.Units, TU::Nothing) = U
+rateunittype(U::Nothing, TU::Nothing) = nothing
 
 const Priority = Int
 priority(s::State) = 0
@@ -36,7 +50,11 @@ mutable struct Pass{V,U} <: State
     value::V
 end
 
-Pass(; unit=nothing, _type=Float64, _...) = (V = valuetype(_type, unit); Pass{V,unit}(V(0)))
+Pass(; unit=nothing, _type=Float64, _system, _...) = begin
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    Pass{V,U}(V(0))
+end
 
 unit(::Pass{V,U}) where {V,U} = U
 
@@ -46,7 +64,11 @@ mutable struct Advance{T,U} <: State
     value::Timepiece{T}
 end
 
-Advance(; unit=nothing, _type=Int64, _...) = (T = valuetype(_type, unit); Advance{T,unit}(Timepiece(T(0))))
+Advance(; unit=nothing, _type=Int64, _system, _...) = begin
+    U = unittype(unit, _system)
+    T = valuetype(_type, U)
+    Advance{T,U}(Timepiece(T(0)))
+end
 
 check!(s::Advance) = false
 advance!(s::Advance) = advance!(s.value)
@@ -59,7 +81,11 @@ mutable struct Preserve{V,U} <: State
     value::Union{V,Missing}
 end
 
-Preserve(; unit=nothing, _type=Float64, _...) = (V = valuetype(_type, unit); Preserve{V,unit}(missing))
+Preserve(; unit=nothing, _type=Float64, _system, _...) = begin
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    Preserve{V,U}(missing)
+end
 
 check!(s::Preserve) = ismissing(s.value)
 unit(::Preserve{V,U}) where {V,U} = U
@@ -72,9 +98,10 @@ mutable struct Track{V,T,U} <: State
 end
 
 Track(; unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
-    V = valuetype(_type, unit)
-    T = _type_time
-    Track{V,T,unit}(V(0), TimeState{T}(_system, time))
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    T = timetype(time, _type_time, _system)
+    Track{V,T,U}(V(0), TimeState{T}(_system, time))
 end
 
 check!(s::Track) = begin
@@ -89,18 +116,22 @@ unit(::Track{V,T,U}) where {V,T,U} = U
 
 import DataStructures: OrderedDict
 
-mutable struct Accumulate{V,T,U} <: State
+mutable struct Accumulate{V,R,T,U} <: State
     init::VarVal{V}
     time::TimeState{T}
-    rates::OrderedDict{T,V}
+    rates::OrderedDict{T,R}
     value::V
     cache::OrderedDict{T,V}
 end
 
 Accumulate(; init=0, unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
-    V = valuetype(_type, unit)
-    T = _type_time
-    Accumulate{V,T,unit}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,_type}(), V(0), OrderedDict{T,_type}())
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    TU = timeunittype(time, _system)
+    T = valuetype(_type_time, TU)
+    #T = timetype(time, _type_time, _system)
+    R = valuetype(_type, rateunittype(U, TU))
+    Accumulate{V,R,T,U}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), V(0), OrderedDict{T,V}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -122,7 +153,7 @@ store!(s::Accumulate, f::Function) = begin
     s.cache[t] = store!(s, v)
     () -> (s.rates[t] = f()) # s.cache = filter(p -> p.first == t, s.cache)
 end
-unit(::Accumulate{V,T,U}) where {V,T,U} = U
+unit(::Accumulate{V,R,T,U}) where {V,R,T,U} = U
 priority(s::Accumulate) = 2
 
 ####
@@ -141,7 +172,7 @@ end
 Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
     V = _type
     P = _type_prob
-    T = _type_time
+    T = timetype(time, _type_time, _system)
     Flag(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
@@ -162,7 +193,7 @@ struct Product{S<:System,K,V}
 end
 
 Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
-    T = _type_time
+    T = timetype(time, _type_time, _system)
     Produce{S,T}(_system, S[], TimeState{T}(_system, time))
 end
 
@@ -189,9 +220,10 @@ mutable struct Solve{V,T,U} <: State
 end
 
 Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
-    V = valuetype(_type, unit)
-    T = _type_time
-    Solve{V,T,unit}(V(0), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    T = timetype(time, _type_time, _system)
+    Solve{V,T,U}(V(0), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
 end
 
 check!(s::Solve) = checktime!(s) && !s.solving

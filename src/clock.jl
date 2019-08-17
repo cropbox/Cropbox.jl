@@ -3,10 +3,10 @@
     context ~ ::System(override)
     tick => nothing ~ advance
     tock => nothing ~ advance
-    #unit
-    start => 0 ~ track(time="tick") # parameter
-    interval: i => 1 ~ track(time="tick") # parameter
-    time(i) => i ~ accumulate::Int(init=0, time="tick")
+    unit => NoUnits ~ preserve::Unitful.Units # parameter
+    start => 0 ~ preserve(unit="unit") # parameter
+    interval: i => 1 ~ track(time="tick", unit="unit") # parameter
+    time(i) => i ~ accumulate::Int(init="start", time="tick", unit="unit")
     #start_datetime ~ parameter
     #datetime
 end bare
