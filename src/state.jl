@@ -103,7 +103,7 @@ mutable struct Track{V,T,U} <: State
     time::TimeState{T}
 end
 
-Track(; unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+Track(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(time, _type_time, _system)
@@ -130,7 +130,7 @@ mutable struct Accumulate{V,R,T,U} <: State
     cache::OrderedDict{T,V}
 end
 
-Accumulate(; init=0, unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+Accumulate(; init=0, unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     TU = timeunittype(time, _system)
@@ -175,7 +175,7 @@ mutable struct Flag{P,T} <: State
     time::TimeState{T}
 end
 
-Flag(; prob=1, time="context.clock.time", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
+Flag(; prob=1, time="context.clock.tick", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
     V = _type
     P = _type_prob
     T = timetype(time, _type_time, _system)
@@ -198,7 +198,7 @@ struct Product{S<:System,K,V}
     args::Vector{Pair{K,V}}
 end
 
-Produce(; time="context.clock.time", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
+Produce(; time="context.clock.tick", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = timetype(time, _type_time, _system)
     Produce{S,T}(_system, S[], TimeState{T}(_system, time))
 end
@@ -225,7 +225,7 @@ mutable struct Solve{V,T,U} <: State
     solving::Bool
 end
 
-Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.time", _system, _type=Float64, _type_time=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(time, _type_time, _system)

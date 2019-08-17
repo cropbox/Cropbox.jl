@@ -54,11 +54,11 @@ using Unitful
 
     s = instance(R)
     #d = []
-    while value!(s.context.clock.time) <= 30.0
+    while value!(s.context.clock.tick) <= 30.0
         advance!(s)
         #push!(d, (transform(collect(r))))
     end
-    @test value!(s.context.clock.time) > 30.0
+    @test value!(s.context.clock.tick) > 30.0
     #render(r)
     #write(d, tmp_path/'root.json')
 end

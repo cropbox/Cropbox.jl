@@ -70,7 +70,7 @@ using Unitful
 
     @testset "accumulate with time" begin
         @system S begin
-            t(x="context.clock.time") => 0.5x ~ track
+            t(x="context.clock.tick") => 0.5x ~ track
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(a) => a + 1 ~ accumulate(time="t")
@@ -103,20 +103,20 @@ using Unitful
 
     @testset "accumulate distribute" begin
         @system S begin
-            s(x="context.clock.time") => 100*(x-1) ~ track
+            s(x="context.clock.tick") => 100*(x-1) ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
         s = instance(S)
         c = s.context
-        @test c.clock.time == 2 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.tick == 2 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(s)
-        @test c.clock.time == 3 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
+        @test c.clock.tick == 3 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
         advance!(s)
-        @test c.clock.time == 4 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
+        @test c.clock.tick == 4 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
         advance!(s)
-        @test c.clock.time == 5 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
+        @test c.clock.tick == 5 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
     @testset "preserve" begin
@@ -201,7 +201,7 @@ using Unitful
     @testset "produce with kwargs" begin
         @system S begin
             a(self) => produce(typeof(self)) ~ produce
-            i(t="context.clock.time") => t ~ preserve
+            i(t="context.clock.tick") => t ~ preserve
         end
         s = instance(S)
         @test length(s.a) == 0 && s.i == 2

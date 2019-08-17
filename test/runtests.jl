@@ -30,7 +30,7 @@ end
 
 @system ASystem begin
     a ~ track
-    b: bb ~ track(time="context.clock.time")
+    b: bb ~ track(time="context.clock.tick")
     ccc(a, b): c => a+b ~ track(unit=u"cm")
     cccc(a=1, b=2): cc => a+b ~ track
     d(a, b) => begin

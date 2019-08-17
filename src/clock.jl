@@ -6,7 +6,6 @@
     step => 1 ~ preserve(unit="unit", parameter)
     tick => nothing ~ advance(init="init", step="step", unit="unit")
     tock => nothing ~ advance
-    time(tick) => tick ~ pass(unit="unit") # for compatibility
     #start_datetime ~ parameter
     #datetime
 end bare

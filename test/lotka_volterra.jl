@@ -1,6 +1,6 @@
 @testset "lotka volterra" begin
     @system S begin
-        timestep(t="context.clock.time"): t => 0.01t ~ track
+        timestep(t="context.clock.tick"): t => 0.01t ~ track
         prey_birth_rate: a => 1.0 ~ track
         prey_death_rate: b => 0.1 ~ track
         predator_death_rate: c => 1.5 ~ track
