@@ -28,7 +28,7 @@ valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 
 #HACK: state var referred by `time` tag must have been already declared
 timeunittype(time::String, s::System) = unit(getvar(s, time).state)
-timetype(time::String, T, s::System) = valuetype(T, timeunittype(time, s))
+timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
 timevalue(i::String, s::System) = value!(s, i)
 timevalue(i, _) = i
 
@@ -106,7 +106,7 @@ end
 Track(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
-    T = timetype(time, _type_time, _system)
+    T = timetype(_type_time, time, _system)
     Track{V,T,U}(V(0), TimeState{T}(_system, time))
 end
 
@@ -135,7 +135,7 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _system, _type=Flo
     V = valuetype(_type, U)
     TU = timeunittype(time, _system)
     T = valuetype(_type_time, TU)
-    #T = timetype(time, _type_time, _system)
+    #T = timetype(_type_time, time, _system)
     R = valuetype(_type, rateunittype(U, TU))
     Accumulate{V,R,T,U}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), V(0), OrderedDict{T,V}())
 end
@@ -178,7 +178,7 @@ end
 Flag(; prob=1, time="context.clock.tick", _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
     V = _type
     P = _type_prob
-    T = timetype(time, _type_time, _system)
+    T = timetype(_type_time, time, _system)
     Flag(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
@@ -199,7 +199,7 @@ struct Product{S<:System,K,V}
 end
 
 Produce(; time="context.clock.tick", _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
-    T = timetype(time, _type_time, _system)
+    T = timetype(_type_time, time, _system)
     Produce{S,T}(_system, S[], TimeState{T}(_system, time))
 end
 
@@ -228,7 +228,7 @@ end
 Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
-    T = timetype(time, _type_time, _system)
+    T = timetype(_type_time, time, _system)
     Solve{V,T,U}(V(0), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
 end
 
