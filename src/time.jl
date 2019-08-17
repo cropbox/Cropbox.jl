@@ -3,7 +3,7 @@ mutable struct Timepiece{T<:Number}
 end
 
 advance!(timer::Timepiece{T}, t=one(T)) where {T<:Number} = (timer.t += t)
-reset!(timer::Timepiece) = (timer.t = 0)
+reset!(timer::Timepiece{T}) where {T<:Number} = (timer.t = zero(T))
 update!(timer::Timepiece{T}, t::T) where {T<:Number} = begin
     dt = t - timer.t
     (updated = dt > zero(T)) && advance!(timer, dt)
@@ -27,7 +27,7 @@ struct TimeState{T}
 end
 
 TimeState{T}(system, tick, tock="context.clock.tock") where T =
-    TimeState(VarVal{T}(system, tick), Timepiece{T}(0), VarVal{Int}(system, tock), Timepiece(0))
+    TimeState(VarVal{T}(system, tick), Timepiece{T}(zero(T)), VarVal{Int}(system, tock), Timepiece{Int}(zero(Int)))
 
 check!(s::TimeState) = begin
     if update!(s.ticker, value!(s.tick))
