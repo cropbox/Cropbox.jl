@@ -20,14 +20,14 @@ unit(s::State) = nothing
 
 unittype(::Nothing, _) = nothing
 unittype(U::Unitful.Units, _) = U
-unittype(unit::String, s::System) = value!(VarPath(s, unit))
+unittype(unit::String, s::System) = value!(s, unit)
 
 valuetype(T, ::Nothing) = T
 valuetype(T, ::Unitful.DimensionlessUnits) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 
 #HACK: state var referred by `time` tag must have been already declared
-timeunittype(time::String, s::System) = unit(getvar(VarPath(s, time)).state)
+timeunittype(time::String, s::System) = unit(getvar(s, time).state)
 timetype(time::String, T, s::System) = valuetype(T, timeunittype(time, s))
 
 rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
