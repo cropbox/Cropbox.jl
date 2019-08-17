@@ -7,18 +7,9 @@ mutable struct Var{S<:State}
 
     Var(s, e, ::Type{S}; _name, _alias=Symbol[], stargs...) where {S<:State} = begin
         x = new{S}(s, e, _name, _alias)
-        x.state = S(; _system=s, _var=x, prepare(stargs)...)
+        x.state = S(; _system=s, _var=x, stargs...)
         init!(x)
     end
-end
-
-prepare(stargs...) = begin
-    d = Dict{Symbol,Any}(stargs...)
-    #TODO: maybe better use u_str as is, instead allow implicit "unit=" in the macro
-    if haskey(d, :unit)
-        d[:unit] = unitstr(d[:unit])
-    end
-    d
 end
 
 init!(x::Var) = begin
