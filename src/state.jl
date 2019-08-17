@@ -29,8 +29,8 @@ valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 #HACK: state var referred by `time` tag must have been already declared
 timeunittype(time::String, s::System) = unit(getvar(s, time).state)
 timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
-timevalue(i::String, s::System) = value!(s, i)
-timevalue(i, _) = i
+timevalue(t::String, s::System) = value!(s, t)
+timevalue(t, _) = t
 
 rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
 rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
