@@ -1,12 +1,12 @@
 @system Clock begin
     self => self ~ ::System
     context ~ ::System(override)
-    tick => nothing ~ advance
+    unit => NoUnits ~ preserve::Unitful.Units(parameter)
+    init => 0 ~ preserve(unit="unit", parameter)
+    step => 1 ~ preserve(unit="unit", parameter)
+    tick => nothing ~ advance(init="init", step="step", unit="unit")
     tock => nothing ~ advance
-    unit => NoUnits ~ preserve::Unitful.Units # parameter
-    start => 0 ~ preserve(unit="unit") # parameter
-    interval: i => 1 ~ track(time="tick", unit="unit") # parameter
-    time(i) => i ~ accumulate::Int(init="start", time="tick", unit="unit")
+    time(tick) => tick ~ pass(unit="unit") # for compatibility
     #start_datetime ~ parameter
     #datetime
 end bare

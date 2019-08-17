@@ -29,6 +29,8 @@ valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 #HACK: state var referred by `time` tag must have been already declared
 timeunittype(time::String, s::System) = unit(getvar(s, time).state)
 timetype(time::String, T, s::System) = valuetype(T, timeunittype(time, s))
+timevalue(i::String, s::System) = value!(s, i)
+timevalue(i, _) = i
 
 rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
 rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
@@ -64,13 +66,17 @@ mutable struct Advance{T,U} <: State
     value::Timepiece{T}
 end
 
-Advance(; unit=nothing, _type=Int64, _system, _...) = begin
+Advance(; init=nothing, step=nothing, unit=nothing, _type=Int64, _system, _...) = begin
     U = unittype(unit, _system)
     T = valuetype(_type, U)
-    Advance{T,U}(Timepiece(T(0)))
+    t = isnothing(init) ? zero(T) : timevalue(init, _system)
+    dt = isnothing(step) ? oneunit(T) : timevalue(step, _system)
+    T = promote_type(typeof(t), typeof(dt))
+    Advance{T,U}(Timepiece{T}(t, dt))
 end
 
 check!(s::Advance) = false
+value(s::Advance) = s.value.t
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
 unit(::Advance{T,U}) where {T,U} = U

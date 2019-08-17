@@ -1,8 +1,13 @@
 mutable struct Timepiece{T<:Number}
     t::T
+    dt::T
 end
 
-advance!(timer::Timepiece{T}, t=one(T)) where {T<:Number} = (timer.t += t)
+Timepiece{T}(t) where {T<:Number} = Timepiece{T}(t, oneunit(T))
+Timepiece{T}(t, ::Nothing) where {T<:Number} = Timepiece{T}(t)
+
+advance!(timer::Timepiece{T}, t) where {T<:Number} = (timer.t += t)
+advance!(timer::Timepiece{T}) where {T<:Number} = advance!(timer, timer.dt)
 reset!(timer::Timepiece{T}) where {T<:Number} = (timer.t = zero(T))
 update!(timer::Timepiece{T}, t::T) where {T<:Number} = begin
     dt = t - timer.t

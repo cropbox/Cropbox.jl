@@ -103,20 +103,20 @@ using Unitful
 
     @testset "accumulate distribute" begin
         @system S begin
-            s(x="context.clock.time") => 100x ~ track
+            s(x="context.clock.time") => 100*(x-1) ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
         s = instance(S)
         c = s.context
-        @test c.clock.time == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.time == 2 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(s)
-        @test c.clock.time == 2 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
+        @test c.clock.time == 3 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
         advance!(s)
-        @test c.clock.time == 3 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
+        @test c.clock.time == 4 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
         advance!(s)
-        @test c.clock.time == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
+        @test c.clock.time == 5 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
     @testset "preserve" begin
@@ -204,15 +204,15 @@ using Unitful
             i(t="context.clock.time") => t ~ preserve
         end
         s = instance(S)
-        @test length(s.a) == 0 && s.i == 1
+        @test length(s.a) == 0 && s.i == 2
         advance!(s)
-        @test length(s.a) == 1 && s.i == 1
-        @test length(s.a[1].a) == 0 && s.a[1].i == 2
+        @test length(s.a) == 1 && s.i == 2
+        @test length(s.a[1].a) == 0 && s.a[1].i == 3
         advance!(s)
-        @test length(s.a) == 2 && s.i == 1
-        @test length(s.a[1].a) == 1 && s.a[1].i == 2
-        @test length(s.a[2].a) == 0 && s.a[2].i == 3
-        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 3
+        @test length(s.a) == 2 && s.i == 2
+        @test length(s.a[1].a) == 1 && s.a[1].i == 3
+        @test length(s.a[2].a) == 0 && s.a[2].i == 4
+        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 4
     end
 
     @testset "produce with nothing" begin
@@ -247,5 +247,26 @@ using Unitful
         @test s.x == u"1m"
         @test s.a == u"2m"
         @test s.b == u"2m"
+    end
+
+    @testset "clock" begin
+        @system S begin
+        end
+        s = instance(S)
+        # after two advance! in instance()
+        @test s.context.clock.tick == 2
+        advance!(s)
+        @test s.context.clock.tick == 3
+    end
+
+    @testset "clock with config" begin
+        @system S begin
+        end
+        config = configure(:Clock => (#=:init => 5,=# step => 10))
+        s = instance(S, config)
+        # after two advance! in instance()
+        @test s.context.clock.tick == 20
+        advance!(s)
+        @test s.context.clock.tick == 30
     end
 end
