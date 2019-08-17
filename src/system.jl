@@ -6,6 +6,9 @@ filter(f, s::S) where {S<:System} = filter(f, VarTuple.(zip(fieldnames(S), field
 
 update!(s::System) = foreach(t -> value!(s, t.name), filter(t -> t.type <: Var, s))
 
+import Base: names
+names(s::System) = (n = split(String(Symbol(typeof(s))), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
+
 import Base: length, iterate
 length(::System) = 1
 iterate(s::System) = (s, nothing)

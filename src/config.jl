@@ -18,7 +18,7 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     end
     nothing
 end
-option(c::Config, key::System, keys...) = option(c, Symbol(typeof(key)), keys...)
+option(c::Config, key::System, keys...) = option(c, names(key), keys...)
 option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
 
 export configure
