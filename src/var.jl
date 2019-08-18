@@ -106,6 +106,6 @@ iterate(x::Var) = iterate(x.state)
 iterate(x::Var, i) = iterate(x.state, i)
 
 import Base: show
-show(io::IO, x::Var) = print(io, "$(x.system)<$(x.name)> = $(x.state.value)")
+show(io::IO, x::Var) = print(io, "$(x.system)<$(x.name)> = $(x.state)")
 
 export value!

@@ -40,11 +40,8 @@ rateunittype(U::Nothing, TU::Nothing) = nothing
 const Priority = Int
 priority(s::State) = 0
 
-# import Base: show
-# show(io::IO, s::State) = begin
-#     v = value(s)
-#     print(io, "<$(s.name)> = $(isnothing(v) ? "<uninitialized>" : v)")
-# end
+import Base: show
+show(io::IO, s::State) = print(io, "$(repr(value(s)))")
 
 ####
 
