@@ -6,6 +6,7 @@ filter(f, s::S) where {S<:System} = filter(f, VarTuple.(zip(fieldnames(S), field
 
 update!(s::System) = foreach(t -> value!(s, t.name), filter(t -> t.type <: Var, s))
 
+name(s::S) where {S<:System} = string(S)
 import Base: names
 names(s::System) = (n = split(String(Symbol(typeof(s))), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
@@ -40,6 +41,6 @@ context(s::System) = s.context
 # getproperty(s::System, n::Symbol) = value!(s, n)
 
 import Base: show
-show(io::IO, s::S) where {S<:System} = print(io, "[$(string(S))]")
+show(io::IO, s::System) = print(io, "[$(name(s))]")
 
 export System

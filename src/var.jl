@@ -32,6 +32,7 @@ init!(x::Var) = begin
     x
 end
 
+name(x::Var) = x.name
 import Base: names
 names(x::Var) = [[x.name]; x.alias]
 
@@ -109,6 +110,6 @@ iterate(x::Var) = iterate(x.state)
 iterate(x::Var, i) = iterate(x.state, i)
 
 import Base: show
-show(io::IO, x::Var) = print(io, "$(x.system)<$(x.name)> = $(x.state)")
+show(io::IO, x::Var) = print(io, "$(name(x.system))<$(name(x))> = $(x.state)")
 
 export value!
