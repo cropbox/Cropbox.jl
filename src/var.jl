@@ -50,24 +50,29 @@ names(x::Var) = [[x.name]; x.alias]
         # 3. state vars from current system
         isdefined(s, a) && return interpret(a)
 
-        # 4. argument not found (partial function)
-        nothing
+        # 4. argument not found (partial function used by Call State)
+        missing
     end
-    args = resolve.(x.equation.args)
-    kwargs = resolve.(x.equation.kwargs)
-    if length(args) == length(x.equation.args) && length(kwargs) == length(x.equation.kwargs)
+    resolve_pair(a::Symbol) = begin
+        v = resolve(a)
+        ismissing(v) ? v : v => v
+    end
+    args = resolve.(x.equation.args) #|> Vector{Any}
+    kwargs = filter(!ismissing, resolve_pair.(x.equation.kwargs)) #|> Vector{Pair}
+    if length(collect(skipmissing(args))) == length(x.equation.args) && length(kwargs) == length(x.equation.kwargs)
         x.equation(args...; kwargs...)
     else
         function (pargs...; pkwargs...)
+            margs = Vector{Any}(args)
             for a in pargs
-                #replace(x -> isnothing(x) ? a : x, args; count=1)
-                i = findfirst(isnothing, args)
-                @assert !isnothing(i)
-                args[i] = a
+                #replace(x -> ismissing(x) ? a : x, args; count=1)
+                i = findfirst(ismissing, margs)
+                @assert !isnothing(i) "no space left for positional argument: $a"
+                margs[i] = a
             end
-            @assert findfirst(isnothing, args) |> isnothing
-            kwargs = merge(kwargs, pkwargs)
-            x.equation(args...; kwargs...)
+            @assert findfirst(ismissing, margs) |> isnothing
+            mkwargs = merge(Dict.([kwargs, pkwargs])...)
+            x.equation(margs...; mkwargs...)
         end
     end
 end

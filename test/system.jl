@@ -19,6 +19,18 @@ using Unitful
         @test_throws StackOverflowError instance(S)
     end
 
+    @testset "call" begin
+        @system S begin
+            a(x) => x ~ call
+            b(;x) => x ~ call
+            aa(a) => a(1) ~ track
+            bb(b) => b(x=1) ~ track
+        end
+        s = instance(S)
+        @test s.aa == 1
+        @test s.bb == 1
+    end
+
     @testset "accumulate" begin
         @system S begin
             a => 1 ~ track

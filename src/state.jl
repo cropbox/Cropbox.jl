@@ -112,6 +112,30 @@ unit(::Track{V,T,U}) where {V,T,U} = U
 
 ####
 
+mutable struct Call{V,T,U} <: State
+    value::Function
+    time::TimeState{T}
+end
+
+Call(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    T = timetype(_type_time, time, _system)
+    Call{V,T,U}(() -> V(0), TimeState{T}(_system, time))
+end
+
+check!(s::Call) = checktime!(s)
+store!(s::Call, f::Function) = begin
+    s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
+    #HACK: no function should be returned for queueing
+    nothing
+end
+unit(::Call{V,T,U}) where {V,T,U} = U
+#HACK: showing s.value could trigger StackOverflowError
+show(io::IO, s::Call) = print(io, "<call>")
+
+####
+
 import DataStructures: OrderedDict
 
 mutable struct Accumulate{V,R,T,U} <: State
