@@ -57,24 +57,22 @@ names(x::Var) = [[x.name]; x.alias]
         v = resolve(a)
         ismissing(v) ? v : v => v
     end
-    args = resolve.(x.equation.args) #|> Vector{Any}
-    kwargs = filter(!ismissing, resolve_pair.(x.equation.kwargs)) #|> Vector{Pair}
-    if length(collect(skipmissing(args))) == length(x.equation.args) && length(kwargs) == length(x.equation.kwargs)
-        x.equation(args...; kwargs...)
-    else
-        function (pargs...; pkwargs...)
-            margs = Vector{Any}(args)
-            for a in pargs
-                #replace(x -> ismissing(x) ? a : x, args; count=1)
-                i = findfirst(ismissing, margs)
-                @assert !isnothing(i) "no space left for positional argument: $a"
-                margs[i] = a
-            end
-            @assert findfirst(ismissing, margs) |> isnothing
-            mkwargs = merge(Dict.([kwargs, pkwargs])...)
-            x.equation(margs...; mkwargs...)
-        end
+    args = resolve.(x.equation.args)
+    kwargs = filter(!ismissing, resolve_pair.(x.equation.kwargs))
+    call(x, args, kwargs)
+end
+call(x::Var, args, kwargs) = x.equation(args...; kwargs...)
+call(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
+    margs = Vector{Any}(args)
+    for a in pargs
+        #replace(x -> ismissing(x) ? a : x, args; count=1)
+        i = findfirst(ismissing, margs)
+        @assert !isnothing(i) "no space left for positional argument: $a"
+        margs[i] = a
     end
+    @assert findfirst(ismissing, margs) |> isnothing
+    mkwargs = merge(Dict.([kwargs, pkwargs])...)
+    x.equation(margs...; mkwargs...)
 end
 
 getvar(s::System, n::Symbol) = getfield(s, n)
