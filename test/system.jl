@@ -269,4 +269,16 @@ using Unitful
         advance!(s)
         @test s.context.clock.tick == 30
     end
+
+    @testset "alias" begin
+        @system S begin
+            a: aa => 1 ~ track
+            b: [bb, bbb] => 2 ~ track
+            c(a, aa, b, bb, bbb) => a + aa + b + bb + bbb ~ track
+        end
+        s = instance(S)
+        @test s.a == s.aa == 1
+        @test s.b == s.bb == s.bbb == 2
+        @test s.c == 8
+    end
 end

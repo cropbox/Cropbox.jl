@@ -24,11 +24,11 @@ show(io::IO, s::VarInfo) = begin
 end
 
 VarInfo(line::Union{Expr,Symbol}) = begin
-    # name[(args..)][: alias] [=> body] ~ [state][::type][(tags..)]
+    # name[(args..)][: alias | [alias...]] [=> body] ~ [state][::type][(tags..)]
     @capture(line, decl_ ~ deco_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
     @capture(decl, (def1_ => body_) | def1_)
-    @capture(def1, (def2_: alias_) | def2_)
+    @capture(def1, (def2_: [alias__]) | (def2_: alias_) | def2_)
     @capture(def2, name_(args__) | name_)
     args = isnothing(args) ? [] : args
     alias = isnothing(alias) ? [] : alias
