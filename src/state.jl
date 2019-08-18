@@ -107,12 +107,7 @@ Track(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_t
     Track{V,T,U}(V(0), TimeState{T}(_system, time))
 end
 
-check!(s::Track) = begin
-    checktime!(s) && (return true)
-    #isnothing(s.value) && (s.value = s.initial_value; return true)
-    #TODO: regime handling
-    return false
-end
+check!(s::Track) = checktime!(s)
 unit(::Track{V,T,U}) where {V,T,U} = U
 
 ####
