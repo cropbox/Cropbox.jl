@@ -99,10 +99,8 @@ gendecl(i::VarInfo{Symbol}) = begin
     end
     name = Meta.quot(i.var)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
-    @q begin
-        $self.$(i.var) = $(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), $(stargs...))
-        $(@q begin $([:($self.$a = $self.$(i.var)) for a in i.alias]...) end)
-    end
+    decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), $(stargs...)))
+    gendecl(decl, i.var, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
     if haskey(i.tags, :override)
@@ -114,7 +112,11 @@ gendecl(i::VarInfo{Nothing}) = begin
     else
         decl = :($(esc(i.type))())
     end
-    :($self.$(i.var) = $decl)
+    gendecl(decl, i.var, i.alias)
+end
+gendecl(decl, var, alias) = @q begin
+    $self.$var = $decl
+    $(@q begin $([:($self.$a = $self.$var) for a in alias]...) end)
 end
 
 genstruct(name, infos, options) = begin
