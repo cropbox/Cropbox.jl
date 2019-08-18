@@ -14,6 +14,7 @@ end
     include("unit.jl")
     include("lotka_volterra.jl")
     include("root_structure.jl")
+    include("photosynthesis.jl")
 end
 
 @equation a() = 1
