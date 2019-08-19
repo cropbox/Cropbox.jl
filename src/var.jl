@@ -1,22 +1,25 @@
 mutable struct Var{S<:State}
     system::System
+    state::S
     equation::Equation
     name::Symbol
     alias::Vector{Symbol}
     nounit::Vector{Symbol}
-    state::S
 
     Var(s, e, ::Type{S}; _name, _alias=Symbol[], nounit="", stargs...) where {S<:State} = begin
-        #TODO: generalize pre/postprocess like nounit handling
-        x = new{S}(s, e, _name, _alias, Symbol.(split(nounit, ","; keepempty=false)))
-        x.state = S(; _name=_name, _system=s, _var=x, stargs...)
-        init!(x)
+        x = new{S}(s)
+        init_names!(x, _name, _alias)
+        init_nounit!(x, nounit)
+        init_equation!(x, e)
+        init_state!(x, S, _name, stargs...)
+        x
     end
 end
 
-init!(x::Var) = begin
+init_names!(x::Var, name, alias) = (x.name = name; x.alias = alias)
+init_nounit!(x::Var, s::String) = (x.nounit = Symbol.(split(s, ","; keepempty=false)))
+init_equation!(x::Var, e::Equation) = begin
     s = x.system
-    e = x.equation
     c = s.context.config
     # patch default arguments from config
     patch!(a::Symbol) = begin
@@ -30,8 +33,12 @@ init!(x::Var) = begin
     #HACK: avoid Dict used for partial argument patch
     if !isnothing(v) && !(typeof(v) <: Dict)
         x.equation = Equation(v, e.name)
+    else
+        x.equation = e
     end
-    x
+end
+init_state!(x::Var, ::Type{S}, n::Symbol, stargs...) where {S<:State} = begin
+    x.state = S(; _name=n, _system=x.system, _var=x, stargs...)
 end
 
 name(x::Var) = x.name
