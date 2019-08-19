@@ -45,38 +45,36 @@ names(x::Var) = [[x.name]; x.alias]
     interpret(v::Symbol) = value!(s, v)
     interpret(v::String) = value!(s, v)
     interpret(v) = v
-    unite(a) = a in x.nounit ? ustrip : identity
     resolve(a::Symbol) = begin
         # 2. default parameter values
         v = get(x.equation.default, a, nothing)
-        !isnothing(v) && return interpret(v) |> unite(a)
+        !isnothing(v) && return interpret(v)
 
         # 3. state vars from current system
-        isdefined(s, a) && return interpret(a) |> unite(a)
+        isdefined(s, a) && return interpret(a)
 
         # 4. argument not found (partial function used by Call State)
         missing
     end
-    resolve_pair(a::Symbol) = begin
-        v = resolve(a)
-        ismissing(v) ? v : a => v
-    end
-    args = resolve.(x.equation.args)
-    kwargs = filter(!ismissing, resolve_pair.(x.equation.kwargs))
-    call(x, args, kwargs)
+    pair(a::Symbol) = a => resolve(a)
+    args = pair.(x.equation.args)
+    kwargs = filter(!ismissing, pair.(x.equation.kwargs))
+    handle(x, args, kwargs)
 end
-call(x::Var, args, kwargs) = x.equation(args...; kwargs...)
-call(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
-    margs = Vector{Any}(args)
-    for a in pargs
-        #replace(x -> ismissing(x) ? a : x, args; count=1)
-        i = findfirst(ismissing, margs)
-        @assert !isnothing(i) "no space left for positional argument: $a"
-        margs[i] = a
-    end
-    @assert findfirst(ismissing, margs) |> isnothing
-    mkwargs = merge(Dict.([kwargs, pkwargs])...)
-    x.equation(margs...; mkwargs...)
+handle(x::Var, args, kwargs) = call(x, args, kwargs)
+handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
+    vargs = Vector([pargs...])
+    margs = [(ismissing(v) && (v = popfirst!(vargs)); a => v) for (a, v) in args]
+    @assert isempty(vargs) "too many positional arguments: $vargs"
+    mkwargs = merge(Dict.([kwargs, pkwargs])...) |> collect
+    call(x, margs, mkwargs)
+end
+call(x::Var, args, kwargs) = begin
+    nounit(a::Symbol) = a in x.nounit ? ustrip : identity
+    nounit(p::Pair) = nounit(p[1])(p[2])
+    uargs = map(nounit, args)
+    ukwargs = map(p -> p[1] => nounit(p), kwargs)
+    call(x.equation, uargs, ukwargs)
 end
 
 getvar(s::System, n::Symbol) = getfield(s, n)

@@ -30,4 +30,16 @@ using Unitful
         @test s.aa == u"1m"
         @test s.bb == 1
     end
+
+    @testset "nounit with call" begin
+        @system S begin
+            a => 1 ~ track(u"m")
+            b(a,x) => a+x ~ call(nounit="a")
+            c(b) => b(1) ~ track
+        end
+        s = instance(S)
+        @test s.a == u"1m"
+        @test value(s.b)(1) == 2
+        @test s.c == 2
+    end
 end

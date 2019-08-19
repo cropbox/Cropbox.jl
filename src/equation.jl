@@ -7,3 +7,4 @@ struct Equation
 end
 
 (e::Equation)(args...; kwargs...) = e.func(args...; kwargs...)
+call(e::Equation, args, kwargs) = e(args...; kwargs...)
