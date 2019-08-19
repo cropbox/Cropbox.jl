@@ -1,0 +1,30 @@
+using Dates
+using TimeZones
+
+const JULIAN_EPOCH_USDA = 2415078.5 # 1990-03-01
+const JULIAN_EPOCH_UNIX = 2440587.5 # 1970-01-01
+
+datetime_from_julian_day_WEA(year, jday, time, tz::TimeZone) =
+    ZonedDateTime(Date(year) + (Day(jday) - Day(1)) + Time(time), tz)
+datetime_from_julian_day_WEA(year, jday, tz::TimeZone) = datetime_from_julian_day_WEA(year, jday, "00:00", tz)
+
+#julian_day_from_datetime(clock::Dates.AbstractDateTime) = dayofyear(clock)
+
+#round_datetime(clock::Dates.AbstractDateTime) = round(clock, Minute)
+
+datetime_from_julian_day_2DSOIL(jday, jhour=0) = begin
+    d = (jday + jhour) + (JULIAN_EPOCH_USDA - JULIAN_EPOCH_UNIX)
+    #HACK prevent degenerate timestamps due to precision loss
+    t = ZonedDateTime(1970, 1, 1, tz"UTC") + Day(d)
+    round(t, Minute)
+end
+
+julian_day_from_datetime_2DSOIL(clock::ZonedDateTime; hourly=false) = begin
+    s = clock - ZonedDateTime(1970, 1, 1, tz"UTC") |> Second
+    j = s - (JULIAN_EPOCH_USDA - JULIAN_EPOCH_UNIX)
+    #FIXME: type instability
+    hourly ? j : Int(round(j))
+end
+
+julian_hour_from_datetime_2DSOIL(clock::ZonedDateTime) =
+    julian_day_from_datetime_2DSOIL(clock; hourly=true) - julian_day_from_datetime_2DSOIL(clock; hourly=false)
