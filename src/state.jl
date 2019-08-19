@@ -52,10 +52,16 @@ mutable struct Pass{V,U} <: State
     value::V
 end
 
-Pass(; unit=nothing, _type=Float64, _system, _...) = begin
+Pass(; unit=nothing, _value=nothing, _type=Float64, _system, _...) = begin
     U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    Pass{V,U}(V(0))
+    if isnothing(_value)
+        V = valuetype(_type, U)
+        v = default(V)
+    else
+        v = unitfy(_value, U)
+        V = typeof(v)
+    end
+    Pass{V,U}(v)
 end
 
 unit(::Pass{V,U}) where {V,U} = U
@@ -87,10 +93,16 @@ mutable struct Preserve{V,U} <: State
     value::Union{V,Missing}
 end
 
-Preserve(; unit=nothing, _type=Float64, _system, _...) = begin
+Preserve(; unit=nothing, _value=nothing, _type=Float64, _system, _...) = begin
     U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    Preserve{V,U}(missing)
+    if isnothing(_value)
+        V = valuetype(_type, U)
+        v = missing
+    else
+        v = unitfy(_value, U)
+        V = typeof(v)
+    end
+    Preserve{V,U}(v)
 end
 
 check!(s::Preserve) = ismissing(s.value)
@@ -103,11 +115,17 @@ mutable struct Track{V,T,U} <: State
     time::TimeState{T}
 end
 
-Track(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
+Track(; unit=nothing, time="context.clock.tick", _system, _value=nothing, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
-    V = valuetype(_type, U)
+    if isnothing(_value)
+        V = valuetype(_type, U)
+        v = default(V)
+    else
+        v = unitfy(_value, U)
+        V = typeof(v)
+    end
     T = timetype(_type_time, time, _system)
-    Track{V,T,U}(default(V), TimeState{T}(_system, time))
+    Track{V,T,U}(v, TimeState{T}(_system, time))
 end
 
 check!(s::Track) = checktime!(s)

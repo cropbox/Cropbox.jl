@@ -2,7 +2,7 @@ using TimeZones
 using Dates
 
 @system Calendar begin
-    init: t0 => default(ZonedDateTime) ~ preserve::ZonedDateTime(parameter)
+    init: t0 => default(ZonedDateTime) ~ preserve(parameter)
     time(t0, tick="context.clock.tick"): t => t0 + (tick |> u"s" |> ustrip |> Second) ~ track::ZonedDateTime
 end
 
