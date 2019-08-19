@@ -19,17 +19,17 @@ init!(x::Var) = begin
     e = x.equation
     c = s.context.config
     # patch default arguments from config
-    resolve(a::Symbol) = begin
+    patch!(a::Symbol) = begin
         # 1. external options (i.e. TOML config)
         v = option(c, s, x, a)
-        !isnothing(v) && (e.default[a] = v)
+        !isnothing(v) && (default(e)[a] = v)
     end
-    resolve.(e.args)
+    patch!.(getargs(e))
     # patch state variable from config
     v = option(c, s, x)
     #HACK: avoid Dict used for partial argument patch
     if !isnothing(v) && !(typeof(v) <: Dict)
-        x.equation = Equation(() -> v, e.name, [], [], Dict())
+        x.equation = Equation(v, e.name)
     end
     x
 end
@@ -47,7 +47,7 @@ names(x::Var) = [[x.name]; x.alias]
     interpret(v) = v
     resolve(a::Symbol) = begin
         # 2. default parameter values
-        v = get(x.equation.default, a, nothing)
+        v = get(default(x.equation), a, nothing)
         !isnothing(v) && return interpret(v)
 
         # 3. state vars from current system
@@ -57,8 +57,8 @@ names(x::Var) = [[x.name]; x.alias]
         missing
     end
     pair(a::Symbol) = a => resolve(a)
-    args = pair.(x.equation.args)
-    kwargs = filter(!ismissing, pair.(x.equation.kwargs))
+    args = pair.(getargs(x.equation))
+    kwargs = filter(!ismissing, pair.(getkwargs(x.equation)))
     handle(x, args, kwargs)
 end
 handle(x::Var, args, kwargs) = call(x, args, kwargs)
