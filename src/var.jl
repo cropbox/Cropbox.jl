@@ -3,11 +3,13 @@ mutable struct Var{S<:State}
     equation::Equation
     name::Symbol
     alias::Vector{Symbol}
+    nounit::Vector{Symbol}
     state::S
 
-    Var(s, e, ::Type{S}; _name, _alias=Symbol[], stargs...) where {S<:State} = begin
-        x = new{S}(s, e, _name, _alias)
-        x.state = S(; _system=s, _var=x, stargs...)
+    Var(s, e, ::Type{S}; _name, _alias=Symbol[], nounit="", stargs...) where {S<:State} = begin
+        #TODO: generalize pre/postprocess like nounit handling
+        x = new{S}(s, e, _name, _alias, Symbol.(split(nounit, ","; keepempty=false)))
+        x.state = S(; _name=_name, _system=s, _var=x, stargs...)
         init!(x)
     end
 end
@@ -43,13 +45,14 @@ names(x::Var) = [[x.name]; x.alias]
     interpret(v::Symbol) = value!(s, v)
     interpret(v::String) = value!(s, v)
     interpret(v) = v
+    unite(a) = a in x.nounit ? ustrip : identity
     resolve(a::Symbol) = begin
         # 2. default parameter values
         v = get(x.equation.default, a, nothing)
-        !isnothing(v) && return interpret(v)
+        !isnothing(v) && return interpret(v) |> unite(a)
 
         # 3. state vars from current system
-        isdefined(s, a) && return interpret(a)
+        isdefined(s, a) && return interpret(a) |> unite(a)
 
         # 4. argument not found (partial function used by Call State)
         missing
