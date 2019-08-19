@@ -15,6 +15,9 @@ length(s::State) = 1
 iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
 
+default(V::Type{<:Number}) = V(0)
+default(V::Type) = V()
+
 import Unitful: unit
 unit(s::State) = nothing
 
@@ -104,7 +107,7 @@ Track(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_t
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    Track{V,T,U}(V(0), TimeState{T}(_system, time))
+    Track{V,T,U}(default(V), TimeState{T}(_system, time))
 end
 
 check!(s::Track) = checktime!(s)
@@ -123,7 +126,7 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    Drive{V,T,U}(k, V(0), TimeState{T}(_system, time))
+    Drive{V,T,U}(k, default(V), TimeState{T}(_system, time))
 end
 
 check!(s::Drive) = checktime!(s)
@@ -141,7 +144,7 @@ Call(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_ti
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    Call{V,T,U}(() -> V(0), TimeState{T}(_system, time))
+    Call{V,T,U}(() -> default(V), TimeState{T}(_system, time))
 end
 
 check!(s::Call) = checktime!(s)
@@ -173,7 +176,7 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _system, _type=Flo
     T = valuetype(_type_time, TU)
     #T = timetype(_type_time, time, _system)
     R = valuetype(_type, rateunittype(U, TU))
-    Accumulate{V,R,T,U}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), V(0), OrderedDict{T,V}())
+    Accumulate{V,R,T,U}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), default(V), OrderedDict{T,V}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -265,7 +268,7 @@ Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    Solve{V,T,U}(V(0), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
+    Solve{V,T,U}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
 end
 
 check!(s::Solve) = checktime!(s) && !s.solving
