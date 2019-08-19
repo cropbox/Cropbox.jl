@@ -159,8 +159,8 @@ using DataFrames
             a => 1 ~ pass
             b(a) => a ~ track
         end
-        config = configure(S => (:a => 2, :b => (:a => 3)))
-        s = instance(S, config)
+        o = configure(S => (:a => 2, :b => (:a => 3)))
+        s = instance(S; config=o)
         @test s.a == 2
         @test s.b == 3
         advance!(s)
@@ -173,8 +173,8 @@ using DataFrames
             a: aa => 1 ~ pass
             bb: b => 1 ~ pass
         end
-        config = configure(S => (:a => 2, :b => 2))
-        s = instance(S, config)
+        o = configure(S => (:a => 2, :b => 2))
+        s = instance(S; config=o)
         @test s.a == 2
         @test s.b == 2
     end
@@ -304,8 +304,8 @@ using DataFrames
     @testset "clock with config" begin
         @system S begin
         end
-        config = configure(:Clock => (#=:init => 5,=# step => 10))
-        s = instance(S, config)
+        o = configure(:Clock => (#=:init => 5,=# step => 10))
+        s = instance(S; config=o)
         # after two advance! in instance()
         @test s.context.clock.tick == 20
         advance!(s)

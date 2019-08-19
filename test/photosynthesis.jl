@@ -530,6 +530,6 @@ config = configure()
 # """
 
 @testset "photosynthesis" begin
-    ge = instance(GasExchange, config)
+    ge = instance(GasExchange; config=config)
     #write(transform(collect(ge)), tmp_path/"gasexchange.json")
 end

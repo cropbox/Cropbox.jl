@@ -40,13 +40,15 @@ end
 advance!(c::Context) = (advance!(c.clock); update!(c))
 advance!(s::System) = advance!(s.context)
 
-instance(SystemType::Type{S}, config=configure()) where {S<:System} = begin
+instance(Ss::Type{<:System}...; config=configure()) = begin
     c = Context(; config=config)
     advance!(c)
-    s = SystemType(; context=c)
-    push!(c.systems, s)
+    for S in Ss
+        s = S(; context=c)
+        push!(c.systems, s)
+    end
     advance!(c)
-    s
+    c.systems[1]
 end
 
 export update!, advance!, recite!, instance
