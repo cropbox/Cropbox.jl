@@ -98,7 +98,7 @@ gendecl(i::VarInfo{Symbol}) = begin
         e = equation(f)
     end
     name = Meta.quot(i.var)
-    stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
+    stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
     decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), $(stargs...)))
     gendecl(decl, i.var, i.alias)
 end
