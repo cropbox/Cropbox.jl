@@ -82,12 +82,15 @@ end
 getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
 
-value!(x::Var) = (check!(x.state) && update!(x); value(x.state))
+check!(x::Var) = check!(x.state)
+update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))
+value(x::Var) = value(x.state)
+
+value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
 value!(s::System, n) = value!(getvar(s, n))
 advance!(x::Var) = advance!(x.state)
 reset!(x::Var) = reset!(x.state)
-update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))
 
 import Base: convert, promote_rule
 convert(T::Type{System}, x::Var) = x.system
