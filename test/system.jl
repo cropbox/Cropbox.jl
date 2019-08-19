@@ -1,4 +1,5 @@
 using Unitful
+using DataFrames
 
 @testset "system" begin
     @testset "derive" begin
@@ -176,6 +177,35 @@ using Unitful
         s = instance(S, config)
         @test s.a == 2
         @test s.b == 2
+    end
+
+    @testset "drive with dict" begin
+        @system S begin
+            a(t="context.clock.tick") => Dict(:a => 10t) ~ drive
+        end
+        s = instance(S)
+        @test s.context.clock.tick == 2 && s.a == 20
+        advance!(s)
+        @test s.context.clock.tick == 3 && s.a == 30
+    end
+
+    @testset "drive with key" begin
+        @system S begin
+            a => Dict(:b => 1) ~ drive(key="b")
+        end
+        s = instance(S)
+        @test s.a == 1
+    end
+
+    @testset "drive with dataframe" begin
+        @system S begin
+            df => DataFrame(t=0:4, a=0:10:40) ~ preserve::DataFrame
+            a(df, t="context.clock.tick") => df[df.t .== t, :][1, :] ~ drive
+        end
+        s = instance(S)
+        @test s.context.clock.tick == 2 && s.a == 20
+        advance!(s)
+        @test s.context.clock.tick == 3 && s.a == 30
     end
 
     @testset "flag" begin

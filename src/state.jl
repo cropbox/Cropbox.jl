@@ -112,6 +112,26 @@ unit(::Track{V,T,U}) where {V,T,U} = U
 
 ####
 
+mutable struct Drive{V,T,U} <: State
+    key::Symbol
+    value::V
+    time::TimeState{T}
+end
+
+Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+    k = isnothing(key) ? _name : Symbol(key)
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    T = timetype(_type_time, time, _system)
+    Drive{V,T,U}(k, V(0), TimeState{T}(_system, time))
+end
+
+check!(s::Drive) = checktime!(s)
+store!(s::Drive, f::Function) = store!(s, f()[s.key])
+unit(::Drive{V,T,U}) where {V,T,U} = U
+
+####
+
 mutable struct Call{V,T,U} <: State
     value::Function
     time::TimeState{T}
