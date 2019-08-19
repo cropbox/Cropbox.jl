@@ -1,5 +1,6 @@
-using Unitful
 using DataFrames
+using TimeZones
+using Unitful
 
 @testset "system" begin
     @testset "derive" begin
@@ -310,6 +311,17 @@ using DataFrames
         @test s.context.clock.tick == 20
         advance!(s)
         @test s.context.clock.tick == 30
+    end
+
+    @testset "calendar" begin
+        t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
+        o = configure(:Clock => (:unit => u"hr"), :Calendar => (:init => t0))
+        s = instance(Calendar; config=o)
+        # after two advance! in instance()
+        @test value(s.init) == t0
+        @test value(s.time) == ZonedDateTime(2011, 10, 29, 2, tz"Asia/Seoul")
+        advance!(s)
+        @test value(s.time) == ZonedDateTime(2011, 10, 29, 3, tz"Asia/Seoul")
     end
 
     @testset "alias" begin

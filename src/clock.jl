@@ -6,8 +6,6 @@
     step => 1 ~ preserve(unit="unit", parameter)
     tick => nothing ~ advance(init="init", step="step", unit="unit")
     tock => nothing ~ advance
-    #start_datetime ~ parameter
-    #datetime
 end bare
 
 advance!(c::Clock) = (advance!(c.tick); reset!(c.tock))
