@@ -38,7 +38,8 @@ init_equation!(x::Var, e::Equation) = begin
     end
 end
 init_state!(x::Var, ::Type{S}, n::Symbol, stargs...) where {S<:State} = begin
-    x.state = S(; _name=n, _system=x.system, _var=x, stargs...)
+    v = value(x.equation)
+    x.state = S(; _name=n, _system=x.system, _var=x, _value=v, stargs...)
 end
 
 name(x::Var) = x.name

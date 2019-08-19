@@ -1,5 +1,6 @@
 abstract type Equation end
 
+value(e::Equation) = nothing
 getargs(e::Equation) = Symbol[]
 getkwargs(e::Equation) = Symbol[]
 default(e::Equation) = Dict{Symbol,Any}()
@@ -10,7 +11,8 @@ struct StaticEquation{V} <: Equation
     name::Symbol
 end
 
-(e::StaticEquation)() = e.value
+(e::StaticEquation)() = value(e)
+value(e::StaticEquation) = e.value
 
 struct DynamicEquation <: Equation
     func::Function #TODO: parametrise {F<:Function}
