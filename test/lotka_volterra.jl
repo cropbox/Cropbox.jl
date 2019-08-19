@@ -15,14 +15,14 @@
     H = Float64[]
     P = Float64[]
     #TODO: isless() for Var with proper promote_rule
-    while value!(s.t) <= 20.0
+    while value(s.t) <= 20.0
         #println("t = $(s.t): H = $(s.H), P = $(s.P)")
-        push!(T, value!(s.t))
-        push!(H, value!(s.H))
-        push!(P, value!(s.P))
+        push!(T, value(s.t))
+        push!(H, value(s.H))
+        push!(P, value(s.P))
         advance!(s)
     end
-    @test value!(s.t) > 20.0
+    @test value(s.t) > 20.0
     using Plots
     unicodeplots()
     plot(T, [H P], lab=["Prey" "Predator"], xlab="Time", ylab="Population", xlim=(0, T[end]), ylim=(0, ceil(maximum([H P]))))
