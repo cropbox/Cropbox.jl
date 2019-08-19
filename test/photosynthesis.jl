@@ -233,9 +233,9 @@ end
     weather ~ ::System(override)
     soil ~ ::System(override)
 
-    stomata => Stomata(; context=self.context, leaf=self) ~ ::System
-    photosynthesis => C4(; context=self.context, leaf=self) ~ ::System # for maize
-    #photosynthesis => C3(; context=self.context, leaf=self) ~ ::System # for garlic
+    stomata => Stomata(; context=context, leaf=self) ~ ::System
+    photosynthesis => C4(; context=context, leaf=self) ~ ::System # for maize
+    #photosynthesis => C3(; context=context, leaf=self) ~ ::System # for garlic
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -379,7 +379,7 @@ end
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather begin
-    vapor_pressure: vp => VaporPressure(; context=self.context) ~ ::VaporPressure
+    vapor_pressure: vp => VaporPressure(; context=context) ~ ::VaporPressure
 
     PFD => 1500 ~ track # umol m-2 s-1
     CO2 => 400 ~ track # ppm
@@ -402,9 +402,9 @@ end
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
     #TODO: use externally initialized Weather / Soil
-    weather: w => Weather(; context=self.context) ~ ::Weather
-    soil => Soil(; context=self.context) ~ ::Soil
-    leaf => PhotosyntheticLeaf(; context=self.context, weather=self.weather, soil=self.soil) ~ ::PhotosyntheticLeaf
+    weather: w => Weather(; context=context) ~ ::Weather
+    soil => Soil(; context=context) ~ ::Soil
+    leaf => PhotosyntheticLeaf(; context=context, weather=self.weather, soil=self.soil) ~ ::PhotosyntheticLeaf
 
     A_gross(x="leaf.A_gross") => x ~ track
     A_net(x="leaf.A_net") => x ~ track
