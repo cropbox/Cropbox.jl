@@ -56,7 +56,7 @@ names(x::Var) = [[x.name]; x.alias]
     end
     resolve_pair(a::Symbol) = begin
         v = resolve(a)
-        ismissing(v) ? v : v => v
+        ismissing(v) ? v : a => v
     end
     args = resolve.(x.equation.args)
     kwargs = filter(!ismissing, resolve_pair.(x.equation.kwargs))
