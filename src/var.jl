@@ -89,8 +89,9 @@ value(x::Var) = value(x.state)
 value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
 value!(s::System, n) = value!(getvar(s, n))
-advance!(x::Var) = advance!(x.state)
-reset!(x::Var) = reset!(x.state)
+
+advance!(x::Var{Advance}) = advance!(x.state)
+reset!(x::Var{Advance}) = reset!(x.state)
 
 import Base: convert, promote_rule
 convert(T::Type{System}, x::Var) = x.system
