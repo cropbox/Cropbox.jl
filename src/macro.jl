@@ -122,9 +122,10 @@ gendecl(decl, var, alias) = @q begin
     $(@q begin $([:($self.$a = $self.$var) for a in alias]...) end)
 end
 
-genstruct(name, infos, options) = begin
+genstruct(name, infos, options, body) = begin
     fields = genfield.(infos)
     decls = gendecl.(infos)
+    source = striplines(body)
     system = @q begin
         mutable struct $name <: $(esc(:Cropbox)).System
             $(fields...)
@@ -134,24 +135,28 @@ genstruct(name, infos, options) = begin
                 $self
             end
         end
+        $(esc(:source))(::$(esc(:Type)){$(esc(name))}) = $(Meta.quot(source))
     end
     flatten(system)
 end
 
-gensystem(name, block, options...) = begin
-    if :bare ∉ options
-        header = @q begin
-            self => self ~ ::Cropbox.System
-            context ~ ::Cropbox.Context(override, expose)
-        end
-        block = flatten(:($header; $block))
-    end
-    infos = [VarInfo(line) for line in striplines(block).args]
-    genstruct(name, infos, options)
+header(::Type{System}) = @q begin
+    self => self ~ ::Cropbox.System
+    context ~ ::Cropbox.Context(override, expose)
 end
 
-macro system(name, block, options...)
-    gensystem(name, block, options...)
+gensystem(name, body, options...) = begin
+    block = if :bare ∉ options
+        flatten(:($(header(System)); $body))
+    else
+        body
+    end
+    infos = [VarInfo(line) for line in striplines(block).args]
+    genstruct(name, infos, options, body)
+end
+
+macro system(name, body, options...)
+    gensystem(name, body, options...)
 end
 
 export @equation, @system
