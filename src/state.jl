@@ -214,7 +214,8 @@ store!(s::Accumulate, f::Function) = begin
     T1 = [T0; t]; T1 = T1[2:end]
     v += sum((T1 - T0) .* values(R))
     s.cache[t] = store!(s, v)
-    () -> (s.rates[t] = f()) # s.cache = filter(p -> p.first == t, s.cache)
+    r = f()
+    () -> (s.rates[t] = r) # s.cache = filter(p -> p.first == t, s.cache)
 end
 unit(::Accumulate{V,R,T,U}) where {V,R,T,U} = U
 priority(s::Accumulate) = 2
@@ -240,6 +241,7 @@ Flag(; prob=1, time="context.clock.tick", _system, _type=Bool, _type_prob=Float6
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
+store!(s::Flag, f::Function) = (v = f(); () -> store!(s, v))
 priority(s::Flag) = 1
 
 ####
@@ -265,7 +267,7 @@ produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{Product}) = produce.(s, p)
 produce(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::Function) = () -> produce(s, f())
+store!(s::Produce, f::Function) = (p = f(); () -> produce(s, p))
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
