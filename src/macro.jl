@@ -135,27 +135,46 @@ genstruct(name, infos, body, options) = begin
                 $self
             end
         end
-        $(esc(:source))(::$(esc(:Type)){$(esc(name))}) = $(Meta.quot(source))
-        $(esc(:sourceopt))(::$(esc(:Type)){$(esc(name))}) = $options
+        $(esc(:Cropbox)).source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
+        $(esc(:Cropbox)).sourceopt(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $options
+        $(esc(name))
     end
     flatten(system)
 end
 
-header(::Type{System}) = @q begin
+#TODO: maybe need to prevent naming clash by assigning UUID for each System
+source(s::Symbol) = source(Val(s))
+source(::Val{:System}) = @q begin
     self => self ~ ::Cropbox.System
     context ~ ::Cropbox.Context(override, expose)
 end
+sourceopt(s::Symbol) = sourceopt(Val(s))
+sourceopt(::Val{:System}) = []
 
 gensystem(name, body) = gensystem(name, body, [])
 gensystem(name, body, option::Symbol) = gensystem(name, body, [option])
-gensystem(name, body, options::Expr) = gensystem(name, body, options.args)
-gensystem(name, body, options::Vector) = begin
-    block = if :bare ∉ options
-        flatten(:($(header(System)); $body))
+gensystem(name, body, options::Expr) = begin
+    if isexpr(options, :tuple)
+        gensystem(name, body, options.args)
     else
-        body
+        gensystem(name, body, [options])
     end
-    infos = [VarInfo(line) for line in striplines(block).args]
+end
+gensystem(name, body, options::Vector) = begin
+    b = []
+    if :bare ∉ options
+        push!(b, source(:System))
+    end
+    for o in options
+        if @capture(o, include(names__))
+            for n in names
+                push!(b, source(n))
+            end
+        end
+    end
+    push!(b, body)
+    block = striplines(flatten(@q begin $(b...) end))
+    infos = [VarInfo(line) for line in block.args]
     genstruct(name, infos, body, options)
 end
 
