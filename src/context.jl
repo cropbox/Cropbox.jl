@@ -1,7 +1,7 @@
 import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
-@system Context begin
+@system Context bare begin
     self => self ~ ::System
     context => self ~ ::System
     systems ~ ::[System]
@@ -9,7 +9,7 @@ const Queue = DefaultDict{Priority,Vector{Function}}
     config => configure() ~ ::Config(override)
     queue => Queue(Vector{Function}) ~ ::Queue
     clock => Clock(; context=self) ~ ::Clock
-end bare
+end
 
 option(c::Context, keys...) = option(c.config, keys...)
 

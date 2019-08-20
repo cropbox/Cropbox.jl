@@ -1,12 +1,18 @@
 using Cropbox
 using Test
 
-macro system(name, block, options...)
+gensystem(name, args...) = begin
     alias = gensym()
     quote
-        $(Cropbox.gensystem(alias, block, options...))
+        $(Cropbox.gensystem(alias, args...))
         $(esc(name)) = $(esc(alias))
     end
+end
+macro system(name, body)
+    gensystem(name, body)
+end
+macro system(name, options, body)
+    gensystem(name, body, options)
 end
 
 @testset "cropbox" begin

@@ -122,7 +122,7 @@ gendecl(decl, var, alias) = @q begin
     $(@q begin $([:($self.$a = $self.$var) for a in alias]...) end)
 end
 
-genstruct(name, infos, options, body) = begin
+genstruct(name, infos, body, options) = begin
     fields = genfield.(infos)
     decls = gendecl.(infos)
     source = striplines(body)
@@ -136,6 +136,7 @@ genstruct(name, infos, options, body) = begin
             end
         end
         $(esc(:source))(::$(esc(:Type)){$(esc(name))}) = $(Meta.quot(source))
+        $(esc(:sourceopt))(::$(esc(:Type)){$(esc(name))}) = $options
     end
     flatten(system)
 end
@@ -145,18 +146,24 @@ header(::Type{System}) = @q begin
     context ~ ::Cropbox.Context(override, expose)
 end
 
-gensystem(name, body, options...) = begin
+gensystem(name, body) = gensystem(name, body, [])
+gensystem(name, body, option::Symbol) = gensystem(name, body, [option])
+gensystem(name, body, options::Expr) = gensystem(name, body, options.args)
+gensystem(name, body, options::Vector) = begin
     block = if :bare ∉ options
         flatten(:($(header(System)); $body))
     else
         body
     end
     infos = [VarInfo(line) for line in striplines(block).args]
-    genstruct(name, infos, options, body)
+    genstruct(name, infos, body, options)
 end
 
-macro system(name, body, options...)
-    gensystem(name, body, options...)
+macro system(name, body)
+    gensystem(name, body)
+end
+macro system(name, options, body)
+    gensystem(name, body, options)
 end
 
 export @equation, @system
