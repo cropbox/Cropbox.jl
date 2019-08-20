@@ -300,7 +300,7 @@ store!(s::Solve, f::Function) = begin
     if nothing in b
         v = find_zero(cost, value(s))
     else
-        v = find_zero(cost, b, Roots.AlefeldPotraShi())
+        v = find_zero(cost, b)
     end
     #FIXME: no longer needed with regime?
     #HACK: trigger update with final value
