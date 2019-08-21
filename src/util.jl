@@ -1,4 +1,4 @@
-growing_degree_days(T, T_base, T_opt=nothing, T_max=nothing) = begin
+growing_degree_days(T, T_base; T_opt=nothing, T_max=nothing) = begin
     isnothing(T) && return 0
     T = ustrip(unitfy(T, u"°C"))
     T_opt = !isnothing(T_opt) && ustrip(unitfy(T_opt, u"°C"))
