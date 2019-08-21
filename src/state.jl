@@ -178,7 +178,7 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 import DataStructures: OrderedDict
 
-mutable struct Accumulate{V,R,T,U} <: State
+mutable struct Accumulate{V,R,T,U,RU} <: State
     init::VarVal{V}
     time::TimeState{T}
     rates::OrderedDict{T,R}
@@ -192,8 +192,9 @@ Accumulate(; init=0, unit=missing, time="context.clock.tick", _system, _type=Flo
     TU = timeunittype(time, _system)
     T = valuetype(_type_time, TU)
     #T = timetype(_type_time, time, _system)
-    R = valuetype(_type, rateunittype(U, TU))
-    Accumulate{V,R,T,U}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), default(V), OrderedDict{T,V}())
+    RU = rateunittype(U, TU)
+    R = valuetype(_type, RU)
+    Accumulate{V,R,T,U,RU}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), default(V), OrderedDict{T,V}())
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -213,10 +214,11 @@ store!(s::Accumulate, f::Function) = begin
     T1 = [T0; t]; T1 = T1[2:end]
     v += sum((T1 - T0) .* values(R))
     s.cache[t] = store!(s, v)
-    r = f()
+    r = unitfy(f(), rateunit(s))
     () -> (s.rates[t] = r) # s.cache = filter(p -> p.first == t, s.cache)
 end
-unit(::Accumulate{V,R,T,U}) where {V,R,T,U} = U
+unit(::Accumulate{V,R,T,U,RU}) where {V,R,T,U,RU} = U
+rateunit(::Accumulate{V,R,T,U,RU}) where {V,R,T,U,RU} = RU
 priority(s::Accumulate) = 2
 
 ####
