@@ -26,7 +26,6 @@ unittype(U::Unitful.Units, _) = U
 unittype(unit::String, s::System) = value!(s, unit)
 
 valuetype(T, ::Nothing) = T
-valuetype(T, ::Unitful.DimensionlessUnits) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 
 #HACK: state var referred by `time` tag must have been already declared
