@@ -20,7 +20,7 @@
     leaves(initial_leaves, rate) => round(initial_leaves + rate) ~ track::Int
 end
 
-@system LeafInitiationWithStorage include(Stage, LeafInitiation) begin
+@system LeafInitiationWithStorage(Stage, LeafInitiation) begin
     storage_days: SD => 0 ~ preserve(u"d", parameter)
     storage_temperature: ST => 5 ~ preserve(u"°C", parameter)
     initial_leaves_at_harvest: ILN => 4 ~ preserve(parameter)

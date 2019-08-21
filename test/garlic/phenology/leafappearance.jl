@@ -1,4 +1,4 @@
-@system LeafAppearance include(Stage) begin
+@system LeafAppearance(Stage) begin
     maximum_leaf_tip_appearance_rate: R_max => 0.20 ~ preserve(u"d^-1", parameter)
 
     rate(R_max, T, T_opt, T_ceil) => begin

@@ -1,4 +1,4 @@
-@system Clock bare begin
+@system Clock begin
     self => self ~ ::System
     context ~ ::System(override)
     unit => missing ~ preserve(parameter)

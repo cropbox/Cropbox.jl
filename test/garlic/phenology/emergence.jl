@@ -1,4 +1,4 @@
-@system Emergence include(Stage) begin
+@system Emergence(Stage) begin
     #HACK: can't use self.pheno.leaf_appearance.maximum_leaf_tip_appearance_rate due to recursion
     maximum_emergence_rate: R_max => 0.20 ~ preserve(u"d^-1", parameter)
 

@@ -1,4 +1,4 @@
-@system Bulbing include(Stage) begin
+@system Bulbing(Stage) begin
     ready(f="pheno.floral_initiation.ready") => f ~ flag
 
     #HACK bulbing used to begin one phyllochron after floral initiation in bolting cultivars of garlic, see Meredith 2008

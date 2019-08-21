@@ -1,4 +1,4 @@
-@system FloralInitiation include(Stage) begin
+@system FloralInitiation(Stage) begin
     critical_photoperiod: critPPD => 12 ~ preserve(u"hr", parameter)
 
     ready(f="pheno.germination.over") => f ~ flag

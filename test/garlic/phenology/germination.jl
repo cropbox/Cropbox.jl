@@ -1,4 +1,4 @@
-@system Germination include(Stage) begin
+@system Germination(Stage) begin
     maximum_germination_rate: R_max => 0.45 ~ preserve(u"d^-1", parameter)
 
     rate(R_max, T, T_opt, T_ceil, ing) => begin

@@ -1,7 +1,7 @@
 import DataStructures: DefaultDict
 const Queue = DefaultDict{Priority,Vector{Function}}
 
-@system Context bare begin
+@system Context begin
     self => self ~ ::System
     context => self ~ ::System
     systems ~ ::[System]

@@ -1,18 +1,16 @@
 using Cropbox
 using Test
 
-gensystem(name, args...) = begin
+gensystem(head, body) = begin
     alias = gensym()
+    name, incl, excl = Cropbox.parsehead(head)
     quote
-        $(Cropbox.gensystem(alias, args...))
+        $(Cropbox.gensystem(alias, incl, excl, body))
         $(esc(name)) = $(esc(alias))
     end
 end
-macro system(name, body)
-    gensystem(name, body)
-end
-macro system(name, options, body)
-    gensystem(name, body, options)
+macro system(head, body)
+    gensystem(head, body)
 end
 
 @testset "cropbox" begin

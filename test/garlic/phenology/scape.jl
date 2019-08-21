@@ -1,4 +1,4 @@
-@system Scape include(Stage) begin
+@system Scape(Stage) begin
     #HACK use LTAR
     maximum_scaping_rate(LTAR="pheno.leaf_appearance.maximum_leaf_tip_appearance_rate"): R_max => LTAR ~ preserve(u"d^-1", parameter)
 
@@ -12,7 +12,7 @@ end
 
 #TODO: implement @systemproxy for convenience?
 
-@system ScapeAppearance include(Stage) begin
+@system ScapeAppearance(Stage) begin
     scape ~ ::Scape(override)
 
     ready(f="scape.ready") => f ~ flag
@@ -25,7 +25,7 @@ end
     #     print(f"* Scape Tip Visible: time = {self.time}, leaves = {self.pheno.leaves_appeared} / {self.pheno.leaves_initiated}")
 end
 
-@system ScapeRemoval include(Stage) begin
+@system ScapeRemoval(Stage) begin
     scape ~ ::Scape(override)
 
     #FIXME handling default (non-removal) value?
@@ -42,7 +42,7 @@ end
 end
 
 #TODO clean up naming (i.e. remove -ing prefix)
-@system Flowering include(Stage) begin
+@system Flowering(Stage) begin
     scape ~ ::Scape(override)
 
     ready(f="scape.ready") => f ~ flag
@@ -56,7 +56,7 @@ end
 end
 
 #TODO clean up naming (i.e. remove -ing prefix)
-@system Bulbiling include(Stage) begin
+@system Bulbiling(Stage) begin
     scape ~ ::Scape(override)
 
     ready(f="scape.ready") => f ~ flag

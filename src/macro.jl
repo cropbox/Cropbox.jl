@@ -9,6 +9,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
     state::S
     type::Union{Symbol,Expr,Nothing}
     tags::Dict{Symbol,Any}
+    line::Union{Expr,Symbol}
 end
 
 import Base: show
@@ -21,6 +22,7 @@ show(io::IO, s::VarInfo) = begin
     for (k, v) in s.tags
         println(io, "tag $k = $v")
     end
+    println(io, "line: $(s.line)")
 end
 
 VarInfo(line::Union{Expr,Symbol}) = begin
@@ -35,7 +37,7 @@ VarInfo(line::Union{Expr,Symbol}) = begin
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
     tags = parsetags(tags, type)
-    VarInfo{typeof(state)}(name, alias, args, body, state, type, tags)
+    VarInfo{typeof(state)}(name, alias, args, body, state, type, tags, line)
 end
 
 parsetags(::Nothing, type) = parsetags([], type)
@@ -122,10 +124,15 @@ gendecl(decl, var, alias) = @q begin
     $(@q begin $([:($self.$a = $self.$var) for a in alias]...) end)
 end
 
-genstruct(name, infos, body, options) = begin
+gensource(infos) = begin
+    l = [i.line for i in infos]
+    striplines(flatten(@q begin $(l...) end))
+end
+
+genstruct(name, infos) = begin
     fields = genfield.(infos)
     decls = gendecl.(infos)
-    source = striplines(body)
+    source = gensource(infos)
     system = @q begin
         mutable struct $name <: $(esc(:Cropbox)).System
             $(fields...)
@@ -136,7 +143,6 @@ genstruct(name, infos, body, options) = begin
             end
         end
         $(esc(:Cropbox)).source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
-        $(esc(:Cropbox)).sourceopt(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $options
         $(esc(name))
     end
     flatten(system)
@@ -148,44 +154,38 @@ source(::Val{:System}) = @q begin
     self => self ~ ::Cropbox.System
     context ~ ::Cropbox.Context(override, expose)
 end
-sourceopt(s::Symbol) = sourceopt(Val(s))
-sourceopt(::Val{:System}) = []
 
-gensystem(name, body) = gensystem(name, body, [])
-gensystem(name, body, option::Symbol) = gensystem(name, body, [option])
-gensystem(name, body, options::Expr) = begin
-    if isexpr(options, :tuple)
-        gensystem(name, body, options.args)
-    else
-        gensystem(name, body, [options])
-    end
-end
-gensystem(name, body, options::Vector) = begin
-    b = []
-    if :bare ∉ options
-        push!(b, source(:System))
-    end
-    for o in options
-        if @capture(o, include(names__))
-            for n in names
-                push!(b, source(n))
-            end
+parsehead(head) = begin
+    @capture(head, name_(mixins__) | name_)
+    mixins = isnothing(mixins) ? [] : mixins
+    incl = [:System]
+    excl = []
+    for m in mixins
+        if @capture(m, -n_)
+            push!(excl, n)
+        else
+            push!(incl, m)
         end
     end
-    push!(b, body)
-    block = striplines(flatten(@q begin $(b...) end))
-    infos = [VarInfo(line) for line in block.args] |> dedup
-    genstruct(name, infos, body, options)
+    (name, incl, excl)
 end
 
-using DataStructures
-dedup(infos) = OrderedDict(i.name => i for i in infos) |> values |> collect
-
-macro system(name, body)
-    gensystem(name, body)
+import DataStructures: OrderedDict
+gensystem(head, body) = gensystem(parsehead(head)..., body)
+gensystem(name, incl, excl, body) = begin
+    con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args))
+    add!(d, b) = merge!(d, con(b))
+    sub!(d, b) = for (k, v) in con(b) delete!(d, k) end
+    d = OrderedDict{Symbol,VarInfo}()
+    for m in incl add!(d, source(m)) end
+    add!(d, body)
+    for m in excl sub!(d, source(m)) end
+    infos = collect(values(d))
+    genstruct(name, infos)
 end
-macro system(name, options, body)
-    gensystem(name, body, options)
+
+macro system(head, body)
+    gensystem(head, body)
 end
 
 export @equation, @system
