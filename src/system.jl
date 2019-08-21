@@ -18,6 +18,9 @@ iterate(s::System, i) = nothing
 import Base: broadcastable
 broadcastable(s::System) = Ref(s)
 
+import Base: getindex
+getindex(s::System, i) = getproperty(s, i)
+
 import Base: collect
 collect(s::System; recursive=true, exclude_self=true) = begin
     S = Set()
