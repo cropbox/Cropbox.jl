@@ -159,27 +159,22 @@ parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)
     mixins = isnothing(mixins) ? [] : mixins
     incl = [:System]
-    excl = []
     for m in mixins
-        if @capture(m, -n_)
-            push!(excl, n)
-        else
-            push!(incl, m)
-        end
+        push!(incl, m)
     end
-    (name, incl, excl)
+    (name, incl)
 end
 
 import DataStructures: OrderedDict
 gensystem(head, body) = gensystem(parsehead(head)..., body)
-gensystem(name, incl, excl, body) = begin
+gensystem(name, incl, body) = begin
     con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args))
     add!(d, b) = merge!(d, con(b))
-    sub!(d, b) = for (k, v) in con(b) delete!(d, k) end
     d = OrderedDict{Symbol,VarInfo}()
-    for m in incl add!(d, source(m)) end
+    for m in incl
+        add!(d, source(m))
+    end
     add!(d, body)
-    for m in excl sub!(d, source(m)) end
     infos = collect(values(d))
     genstruct(name, infos)
 end

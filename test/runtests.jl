@@ -3,9 +3,9 @@ using Test
 
 gensystem(head, body) = begin
     alias = gensym()
-    name, incl, excl = Cropbox.parsehead(head)
+    name, incl = Cropbox.parsehead(head)
     quote
-        $(Cropbox.gensystem(alias, incl, excl, body))
+        $(Cropbox.gensystem(alias, incl, body))
         $(esc(name)) = $(esc(alias))
     end
 end
