@@ -223,8 +223,34 @@ priority(s::Accumulate) = 2
 
 ####
 
-# Difference can be actually Track
-# mutable struct Difference{V,T} <: State end
+mutable struct Capture{V,R,T,U,RU} <: State
+    time::TimeState{T}
+    rate::R
+    tick::T
+    value::V
+end
+
+Capture(; unit=missing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
+    U = unittype(unit, _system)
+    V = valuetype(_type, U)
+    TU = timeunittype(time, _system)
+    T = valuetype(_type_time, TU)
+    RU = rateunittype(U, TU)
+    R = valuetype(_type, RU)
+    t = TimeState{T}(_system, time)
+    Capture{V,R,T,U,RU}(t, default(R), t.ticker.t, default(V))
+end
+
+check!(s::Capture) = checktime!(s)
+store!(s::Capture, f::Function) = begin
+    t = s.time.ticker.t
+    v = s.rate * (t - s.tick)
+    r = unitfy(f(), rateunit(s))
+    () -> (store!(s, v); s.rate = r; s.tick = t)
+end
+unit(s::Capture{V,R,T,U,RU}) where {V,R,T,U,RU} = U
+rateunit(s::Capture{V,R,T,U,RU}) where {V,R,T,U,RU} = RU
+priority(s::Capture) = 2
 
 ####
 
