@@ -174,9 +174,12 @@ gensystem(name, body, options::Vector) = begin
     end
     push!(b, body)
     block = striplines(flatten(@q begin $(b...) end))
-    infos = [VarInfo(line) for line in block.args]
+    infos = [VarInfo(line) for line in block.args] |> dedup
     genstruct(name, infos, body, options)
 end
+
+using DataStructures
+dedup(infos) = OrderedDict(i.var => i for i in infos) |> values |> collect
 
 macro system(name, body)
     gensystem(name, body)
