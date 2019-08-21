@@ -91,6 +91,11 @@ macro equation(f)
     :($(esc(name)) = $e)
 end
 
+genoverride(name, default) = begin
+    k = Meta.quot(name)
+    @q $(esc(:Base)).haskey(_kwargs, $k) ? _kwargs[$k] : $default
+end
+
 gendecl(i::VarInfo{Symbol}) = begin
     if isnothing(i.body)
         @assert isempty(i.args)
@@ -100,14 +105,14 @@ gendecl(i::VarInfo{Symbol}) = begin
         e = equation(f)
     end
     name = Meta.quot(i.name)
+    value = genoverride(i.name, nothing)
     stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
-    decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), $(stargs...)))
+    decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
     if haskey(i.tags, :override)
-        k = Meta.quot(i.name)
-        decl = @q $(esc(:Base)).haskey(_kwargs, $k) ? _kwargs[$k] : $(esc(i.body))
+        decl = genoverride(i.name, esc(i.body))
     elseif !isnothing(i.body)
         # @assert isnothing(i.args)
         decl = esc(i.body)

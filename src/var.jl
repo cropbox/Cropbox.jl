@@ -6,12 +6,12 @@ mutable struct Var{S<:State}
     alias::Vector{Symbol}
     nounit::Vector{Symbol}
 
-    Var(s, e, ::Type{S}; _name, _alias=Symbol[], nounit="", stargs...) where {S<:State} = begin
+    Var(s, e, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State} = begin
         x = new{S}(s)
         init_names!(x, _name, _alias)
         init_nounit!(x, nounit)
         init_equation!(x, e)
-        init_state!(x, S, _name, stargs...)
+        init_state!(x, S, _name, _value, stargs...)
         x
     end
 end
@@ -37,8 +37,8 @@ init_equation!(x::Var, e::Equation) = begin
         x.equation = e
     end
 end
-init_state!(x::Var, ::Type{S}, n::Symbol, stargs...) where {S<:State} = begin
-    v = value(x.equation)
+init_state!(x::Var, ::Type{S}, n::Symbol, v, stargs...) where {S<:State} = begin
+    v = isnothing(v) ? value(x.equation) : v
     x.state = S(; _name=n, _system=x.system, _var=x, _value=v, stargs...)
 end
 
