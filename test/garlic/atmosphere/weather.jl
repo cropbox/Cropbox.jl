@@ -7,7 +7,7 @@ using CSV
 @system Weather begin
     calendar => Calendar(; context=context) ~ ::Calendar
     vapor_pressure: vp => VaporPressure(; context=context) ~ ::VaporPressure
-    #sun => Sun(; context=context, weather=self) ~ ::Sun
+    sun => Sun(; context=context, weather=self) ~ ::Sun
 
     filename => "" ~ preserve(parameter)
     timezone => tz"UTC" ~ preserve(parameter)
