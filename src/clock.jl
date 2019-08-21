@@ -1,7 +1,7 @@
 @system Clock bare begin
     self => self ~ ::System
     context ~ ::System(override)
-    unit => NoUnits ~ preserve(parameter)
+    unit => missing ~ preserve(parameter)
     init => 0 ~ preserve(unit="unit", parameter)
     step => 1 ~ preserve(unit="unit", parameter)
     tick => nothing ~ advance(init="init", step="step", unit="unit")

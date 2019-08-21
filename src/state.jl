@@ -19,13 +19,13 @@ default(V::Type{<:Number}) = V(0)
 default(V::Type) = V()
 
 import Unitful: unit
-unit(s::State) = nothing
+unit(s::State) = missing
 
-unittype(::Nothing, _) = nothing
+unittype(::Missing, _) = missing
 unittype(U::Unitful.Units, _) = U
 unittype(unit::String, s::System) = value!(s, unit)
 
-valuetype(T, ::Nothing) = T
+valuetype(T, ::Missing) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 
 #HACK: state var referred by `time` tag must have been already declared
@@ -34,10 +34,10 @@ timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
 timevalue(t::String, s::System) = value!(s, t)
 timevalue(t, _) = t
 
-rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
+rateunittype(U::Missing, TU::Unitful.Units) = TU^-1
 rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
-rateunittype(U::Unitful.Units, TU::Nothing) = U
-rateunittype(U::Nothing, TU::Nothing) = nothing
+rateunittype(U::Unitful.Units, TU::Missing) = U
+rateunittype(U::Missing, TU::Missing) = missing
 
 const Priority = Int
 priority(s::State) = 0
@@ -51,7 +51,7 @@ mutable struct Pass{V,U} <: State
     value::V
 end
 
-Pass(; unit=nothing, _value=nothing, _type=Float64, _system, _...) = begin
+Pass(; unit=missing, _value=nothing, _type=Float64, _system, _...) = begin
     U = unittype(unit, _system)
     if isnothing(_value)
         V = valuetype(_type, U)
@@ -71,7 +71,7 @@ mutable struct Advance{T,U} <: State
     value::Timepiece{T}
 end
 
-Advance(; init=nothing, step=nothing, unit=nothing, _type=Int64, _system, _...) = begin
+Advance(; init=nothing, step=nothing, unit=missing, _type=Int64, _system, _...) = begin
     U = unittype(unit, _system)
     T = valuetype(_type, U)
     t = isnothing(init) ? zero(T) : timevalue(init, _system)
@@ -92,7 +92,7 @@ mutable struct Preserve{V,U} <: State
     value::Union{V,Missing}
 end
 
-Preserve(; unit=nothing, _value=nothing, _type=Float64, _system, _...) = begin
+Preserve(; unit=missing, _value=nothing, _type=Float64, _system, _...) = begin
     U = unittype(unit, _system)
     if isnothing(_value)
         V = valuetype(_type, U)
@@ -114,7 +114,7 @@ mutable struct Track{V,T,U} <: State
     time::TimeState{T}
 end
 
-Track(; unit=nothing, time="context.clock.tick", _system, _value=nothing, _type=Float64, _type_time=Float64, _...) = begin
+Track(; unit=missing, time="context.clock.tick", _system, _value=nothing, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     if isnothing(_value)
         V = valuetype(_type, U)
@@ -138,7 +138,7 @@ mutable struct Drive{V,T,U} <: State
     time::TimeState{T}
 end
 
-Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Drive(; key=nothing, unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     k = isnothing(key) ? _name : Symbol(key)
     U = unittype(unit, _system)
     V = valuetype(_type, U)
@@ -157,7 +157,7 @@ mutable struct Call{V,T,U} <: State
     time::TimeState{T}
 end
 
-Call(; unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
+Call(; unit=missing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
@@ -186,7 +186,7 @@ mutable struct Accumulate{V,R,T,U} <: State
     cache::OrderedDict{T,V}
 end
 
-Accumulate(; init=0, unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
+Accumulate(; init=0, unit=missing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     TU = timeunittype(time, _system)
@@ -283,7 +283,7 @@ mutable struct Solve{V,T,U} <: State
     solving::Bool
 end
 
-Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, unit=missing, time="context.clock.tick", _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)

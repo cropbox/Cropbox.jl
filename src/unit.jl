@@ -1,6 +1,6 @@
 using Unitful
 
-unitfy(v, ::Nothing) = v
+unitfy(v, ::Missing) = v
 unitfy(v, u::Unitful.Units) = Quantity(v, u)
 unitfy(v::Quantity, u::Unitful.Units) = uconvert(u, v)
 
