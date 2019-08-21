@@ -2,7 +2,7 @@ using MacroTools
 import MacroTools: @q, flatten, striplines
 
 struct VarInfo{S<:Union{Symbol,Nothing}}
-    var::Symbol
+    name::Symbol
     alias::Vector{Symbol}
     args::Vector
     body#::Union{Expr,Symbol,Nothing}
@@ -13,7 +13,7 @@ end
 
 import Base: show
 show(io::IO, s::VarInfo) = begin
-    println(io, "var: $(s.var)")
+    println(io, "name: $(s.name)")
     println(io, "alias: $(s.alias)")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
     println(io, "state: $(s.state)")
@@ -61,8 +61,8 @@ end
 
 const self = :($(esc(:self)))
 
-genfield(i::VarInfo{Symbol}) = genfield(:($(esc(:Cropbox)).Var{$(esc(:Cropbox)).$(i.state)}), i.var, i.alias)
-genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.var, i.alias)
+genfield(i::VarInfo{Symbol}) = genfield(:($(esc(:Cropbox)).Var{$(esc(:Cropbox)).$(i.state)}), i.name, i.alias)
+genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.name, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
     $(@q begin $([:($a::$S) for a in alias]...) end)
@@ -92,19 +92,19 @@ end
 gendecl(i::VarInfo{Symbol}) = begin
     if isnothing(i.body)
         @assert isempty(i.args)
-        e = esc(i.var)
+        e = esc(i.name)
     else
-        f = @q function $(i.var)($(Tuple(i.args)...)) $(i.body) end
+        f = @q function $(i.name)($(Tuple(i.args)...)) $(i.body) end
         e = equation(f)
     end
-    name = Meta.quot(i.var)
+    name = Meta.quot(i.name)
     stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
     decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), $(stargs...)))
-    gendecl(decl, i.var, i.alias)
+    gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
     if haskey(i.tags, :override)
-        k = Meta.quot(i.var)
+        k = Meta.quot(i.name)
         decl = @q $(esc(:Base)).haskey(_kwargs, $k) ? _kwargs[$k] : $(esc(i.body))
     elseif !isnothing(i.body)
         # @assert isnothing(i.args)
@@ -113,9 +113,9 @@ gendecl(i::VarInfo{Nothing}) = begin
         decl = :($(esc(i.type))())
     end
     if haskey(i.tags, :expose)
-        decl = :($(esc(i.var)) = $decl)
+        decl = :($(esc(i.name)) = $decl)
     end
-    gendecl(decl, i.var, i.alias)
+    gendecl(decl, i.name, i.alias)
 end
 gendecl(decl, var, alias) = @q begin
     $self.$var = $decl
@@ -179,7 +179,7 @@ gensystem(name, body, options::Vector) = begin
 end
 
 using DataStructures
-dedup(infos) = OrderedDict(i.var => i for i in infos) |> values |> collect
+dedup(infos) = OrderedDict(i.name => i for i in infos) |> values |> collect
 
 macro system(name, body)
     gensystem(name, body)
