@@ -106,14 +106,14 @@ gendecl(i::VarInfo{Nothing}) = begin
     if haskey(i.tags, :override)
         k = Meta.quot(i.var)
         decl = @q $(esc(:Base)).haskey(_kwargs, $k) ? _kwargs[$k] : $(esc(i.body))
-        if haskey(i.tags, :expose)
-            decl = :($(esc(i.var)) = $decl)
-        end
     elseif !isnothing(i.body)
         # @assert isnothing(i.args)
         decl = esc(i.body)
     else
         decl = :($(esc(i.type))())
+    end
+    if haskey(i.tags, :expose)
+        decl = :($(esc(i.var)) = $decl)
     end
     gendecl(decl, i.var, i.alias)
 end
