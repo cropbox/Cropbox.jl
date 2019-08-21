@@ -92,7 +92,9 @@ getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(spli
 
 check!(x::Var) = check!(x.state)
 update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))
+
 value(x::Var) = value(x.state)
+value(x) = x
 
 value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
