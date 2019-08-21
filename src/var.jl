@@ -107,12 +107,12 @@ advance!(x::Var{Advance}) = advance!(x.state)
 reset!(x::Var{Advance}) = reset!(x.state)
 
 import Base: convert, promote_rule
-convert(T::Type{System}, x::Var) = x.system
+convert(::Type{System}, x::Var) = x.system
 convert(::Type{Vector{Symbol}}, x::Var) = [x.name]
-convert(T::Type{X}, x::Var) where {X<:Var} = x
-convert(T::Type{V}, x::Var) where {V<:Number} = convert(T, value!(x))
-promote_rule(::Type{X}, T::Type{V}) where {X<:Var, V<:Number} = T
-promote_rule(T::Type{Bool}, ::Type{X}) where {X<:Var} = T
+convert(::Type{X}, x::Var) where {X<:Var} = x
+convert(::Type{V}, x::Var) where {V<:Number} = convert(V, value!(x))
+promote_rule(::Type{X}, ::Type{V}) where {X<:Var, V<:Number} = V
+promote_rule(::Type{Bool}, ::Type{X}) where {X<:Var} = Bool
 
 import Base: ==, isless
 ==(a::Var, b::Var) = ==(value!(a), value!(b))
