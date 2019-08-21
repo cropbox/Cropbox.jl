@@ -96,6 +96,8 @@ value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
 value!(s::System, n) = value!(getvar(s, n))
 
+store!(s::State, x::Var) = store!(s, value!(x))
+
 advance!(x::Var{Advance}) = advance!(x.state)
 reset!(x::Var{Advance}) = reset!(x.state)
 
