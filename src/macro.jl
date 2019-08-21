@@ -91,10 +91,7 @@ macro equation(f)
     :($(esc(name)) = $e)
 end
 
-genoverride(name, default) = begin
-    k = Meta.quot(name)
-    @q $(esc(:Base)).haskey(_kwargs, $k) ? _kwargs[$k] : $default
-end
+genoverride(name, default) = @q $(esc(:Base)).get(_kwargs, $(Meta.quot(name)), $default)
 
 gendecl(i::VarInfo{Symbol}) = begin
     if isnothing(i.body)
