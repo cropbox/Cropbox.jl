@@ -12,5 +12,6 @@ include("config.jl")
 include("clock.jl")
 include("context.jl")
 include("calendar.jl")
+include("util.jl")
 
 end
