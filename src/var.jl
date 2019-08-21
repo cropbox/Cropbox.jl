@@ -95,6 +95,7 @@ update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(
 
 value(x::Var) = value(x.state)
 value(x) = x
+value(s::System, n) = s[n]
 
 value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
