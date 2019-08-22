@@ -25,6 +25,7 @@ VarVal{V}(s::System, p::String) where {V<:Quantity} = VarVal{V}(VarPath(s, p))
 VarVal{V}(s::System, p) where {V<:Number} = VarVal{V}(convert(V, p))
 VarVal{V}(s::System, p) where {V<:Quantity} = VarVal{V}(convert(V, unitfy(p, unit(V))))
 VarVal{V}(s::System, ::Nothing) where {V<:Number} = nothing
+VarVal{V}(s::System, ::Nothing) where {V<:Quantity} = nothing
 
 value(v::VarVal) = value(v.v)
 value!(v::VarVal) = value!(v.v)
