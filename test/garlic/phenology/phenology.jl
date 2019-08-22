@@ -86,7 +86,7 @@ include("scape.jl")
 
     leaves_generic => 10 ~ preserve(parameter)
     leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track
-    leaves_total(leaves_initiated) => leaves_initiated ~ track
+    leaves_total(leaves_initiated) ~ track
     leaves_initiated("leaf_initiation.leaves") ~ track
     leaves_appeared("leaf_appearance.leaves") ~ track
 

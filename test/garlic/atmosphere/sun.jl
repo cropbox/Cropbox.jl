@@ -29,12 +29,12 @@ end
     day(t): d => dayofyear(t) ~ track::Int
     hour(t): h => hour(t) ~ track::Int(u"hr")
 
-    latitude(loc): lat => loc ~ drive(u"°") # DO NOT convert to radians for consistency
-    longitude(loc): long => loc ~ drive(u"°") # leave it as in degrees, used only once for solar noon calculation
-    altitude(loc): alt => loc ~ drive(u"m")
+    latitude(loc): lat ~ drive(u"°") # DO NOT convert to radians for consistency
+    longitude(loc): long ~ drive(u"°") # leave it as in degrees, used only once for solar noon calculation
+    altitude(loc): alt ~ drive(u"m")
 
     #TODO: fix inconsistent naming of PAR vs. PFD
-    photosynthetic_active_radiation(wea): PAR => wea ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
+    photosynthetic_active_radiation(wea): PAR ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
     transmissivity: τ => 0.5 ~ preserve(parameter) # atmospheric transmissivity, Goudriaan and van Laar (1994) p 30
 
     #####################
@@ -43,7 +43,7 @@ end
 
     #HACK always use degrees for consistency and easy tracing
 	#FIXME pascal version of LightEnv uses iqbal()
-    declination_angle(f="declination_angle_spencer"): dec => f ~ track(u"°")
+    declination_angle("declination_angle_spencer"): dec ~ track(u"°")
 
     # Goudriaan 1977
     declination_angle_goudriaan(d) => begin
@@ -247,7 +247,7 @@ end
 	end ~ track
 
     # PARtot: total PAR (umol m-2 s-1) on horizontal surface (PFD)
-    photosynthetic_active_radiation_total(PAR): PARtot => PAR ~ track(u"μmol/m^2/s") # Quanta
+    photosynthetic_active_radiation_total(PAR): PARtot ~ track(u"μmol/m^2/s") # Quanta
 
 	photosynthetic_active_radiation_total2(solar_radiation, PARfr, Q=4.6u"μmol/J"): PARtot2 => begin
 		# conversion factor from W/m2 to PFD (umol m-2 s-1) for PAR waveband (median 550 nm of 400-700 nm) of solar radiation,

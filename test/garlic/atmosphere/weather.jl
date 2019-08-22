@@ -27,19 +27,19 @@ using CSV
     end ~ track::Dict
     #Dict(:SolRad => 1500, :CO2 => 400, :RH => 0.6, :T_air => 25, :wind => 2.0, :P_air => 100)
 
-    photon_flux_density(s): PFD => s ~ drive(key="SolRad", u"μmol/m^2/s") #Quanta
+    photon_flux_density(s): PFD ~ drive(key="SolRad", u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
 
     #TODO: make CO2 parameter?
     CO2 => 400 ~ track(u"μmol/mol")
 
-    relative_humidity(s): RH => s ~ drive(key="RH", u"percent")
+    relative_humidity(s): RH ~ drive(key="RH", u"percent")
     #RH => 0.6 ~ track # 0~1
 
-    air_temperature(s): T_air => s ~ drive(key="Tair", u"°C")
+    air_temperature(s): T_air ~ drive(key="Tair", u"°C")
     #T_air => 25 ~ track # C
 
-    wind_speed(s): wind => s ~ drive(key="Wind", u"m/s")
+    wind_speed(s): wind ~ drive(key="Wind", u"m/s")
     #wind => 2.0 ~ track # meters s-1
 
     #TODO: make P_air parameter?

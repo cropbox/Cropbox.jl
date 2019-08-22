@@ -369,8 +369,10 @@ using Unitful
         @system S begin
             a => 1 ~ track
             b("a") ~ track
+            c(x="a") ~ track
+            d(a) ~ track
         end
         s = instance(S)
-        @test s.a == s.b == 1
+        @test s.a == s.b == s.c == s.d == 1
     end
 end

@@ -6,8 +6,8 @@ using Polynomials
 
     co2_mesophyll(x="leaf.co2_mesophyll"): Cm => clamp(x, 0, x) ~ track
     light(x="leaf.light"): I2 => clamp(x, 0, x) ~ track
-    temperature(x="leaf.temperature"): T => x ~ track # drive?
-    nitrogen(x="leaf.nitrogen"): N => x ~ track # drive?
+    temperature("leaf"): T ~ drive
+    nitrogen("leaf"): N ~ drive
 
     ##############
     # Parameters #
@@ -158,9 +158,9 @@ end
     g0 => 0.017 ~ track(parameter)
     g1 => 4.53 ~ track(parameter)
 
-    A_net(x="leaf.A_net") => x ~ track # proxy?
-    CO2(x="leaf.weather.CO2") => x ~ track # proxy?
-    RH(x="leaf.weather.RH") => x ~ track # proxy?
+    A_net("leaf.A_net") ~ track # proxy?
+    CO2("leaf.weather.CO2") ~ track # proxy?
+    RH("leaf.weather.RH") ~ track # proxy?
 
     boundary_layer_conductance(width="leaf.width", wind="leaf.weather.wind"): gb => begin
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
@@ -285,13 +285,13 @@ end
         (A_net1 - A_net0)^2
     end ~ solve
 
-    dark_respiration(x="photosynthesis.dark_respiration"): Rd => x ~ track
+    dark_respiration("photosynthesis.dark_respiration"): Rd ~ track
 
     gross_photosynthesis(A_net, Rd): A_gross => begin
         max(0, A_net + Rd) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
     end ~ track
 
-    stomatal_conductance(x="stomata.stomatal_conductance"): gs => x ~ track
+    stomatal_conductance("stomata.stomatal_conductance"): gs ~ track
 
     temperature_adjustment(
         gb="stomata.boundary_layer_conductance",
@@ -406,12 +406,12 @@ end
     soil => Soil(; context=context) ~ ::Soil
     leaf => PhotosyntheticLeaf(; context=context, weather=self.weather, soil=self.soil) ~ ::PhotosyntheticLeaf
 
-    A_gross(x="leaf.A_gross") => x ~ track
-    A_net(x="leaf.A_net") => x ~ track
-    ET(x="leaf.ET") => x ~ track
-    T_leaf(x="leaf.temperature") => x ~ track
-    VPD(x="weather.VPD") => x ~ track #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-    gs(x="leaf.stomata.stomatal_conductance") => x ~ track
+    A_gross("leaf.A_gross") ~ track
+    A_net("leaf.A_net") ~ track
+    ET("leaf.ET") ~ track
+    T_leaf("leaf.temperature") ~ track
+    VPD("weather.VPD") ~ track #TODO: use Weather directly, instead of through PhotosyntheticLeaf
+    gs("leaf.stomata.stomatal_conductance") ~ track
 end
 
 config = configure()
