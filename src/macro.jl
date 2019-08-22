@@ -149,7 +149,7 @@ gensource(infos) = begin
     striplines(flatten(@q begin $(l...) end))
 end
 
-genstruct(name, infos) = begin
+genstruct(name, infos, incl) = begin
     fields = genfield.(infos)
     decls = gendecl.(infos)
     source = gensource(infos)
@@ -163,6 +163,7 @@ genstruct(name, infos) = begin
             end
         end
         $(esc(:Cropbox)).source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
+        $(esc(:Cropbox)).mixins(::$(esc(:Type)){$(esc(name))}) = $(esc(:eval)).($incl)
         $(esc(name))
     end
     flatten(system)
@@ -176,6 +177,8 @@ source(::Val{:System}) = @q begin
     self => self ~ ::Cropbox.System
     context ~ ::Cropbox.Context(override, expose)
 end
+mixins(::Type{<:System}) = [System]
+mixins(s::System) = mixins(typeof(s))
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)
@@ -198,7 +201,7 @@ gensystem(name, incl, body) = begin
     end
     add!(d, body)
     infos = collect(values(d))
-    genstruct(name, infos)
+    genstruct(name, infos, incl)
 end
 
 macro system(head, body)
