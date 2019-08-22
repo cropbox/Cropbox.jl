@@ -15,7 +15,7 @@ end
 @system ScapeAppearance(Stage) begin
     scape ~ ::Scape(override)
 
-    ready(f="scape.ready") => f ~ flag
+    ready("scape.ready") ~ flag
 
     over(rate="scape.rate", ro="pheno.scape_removal.over") => begin
         rate >= 3.0 && !ro
@@ -31,7 +31,7 @@ end
     #FIXME handling default (non-removal) value?
     scape_removal_date => nothing ~ preserve(parameter)
 
-    ready(so="pheno.scape_appearance.over") => so ~ flag
+    ready("pheno.scape_appearance.over") ~ flag
 
     over(scape_removal_date, time="pheno.weather.calendar.time") => begin
         ismissing(scape_removal_date) ? false : time >= scape_removal_date
@@ -45,7 +45,7 @@ end
 @system Flowering(Stage) begin
     scape ~ ::Scape(override)
 
-    ready(f="scape.ready") => f ~ flag
+    ready("scape.ready") ~ flag
 
     over(rate="scape.rate", so="pheno.scape_removal.over") => begin
         rate >= 5.0 && !so
@@ -59,7 +59,7 @@ end
 @system Bulbiling(Stage) begin
     scape ~ ::Scape(override)
 
-    ready(f="scape.ready") => f ~ flag
+    ready("scape.ready") ~ flag
 
     over(rate="scape.rate", so="pheno.scape_removal.over") => begin
         rate >= 5.5 && !so

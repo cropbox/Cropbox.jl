@@ -364,4 +364,13 @@ using Unitful
         @test s.b == s.bb == s.bbb == 2
         @test s.c == 8
     end
+
+    @testset "single arg without key" begin
+        @system S begin
+            a => 1 ~ track
+            b("a") ~ track
+        end
+        s = instance(S)
+        @test s.a == s.b == 1
+    end
 end

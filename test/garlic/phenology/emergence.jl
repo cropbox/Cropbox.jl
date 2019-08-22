@@ -9,7 +9,7 @@
         R_max * beta_thermal_func(T, T_opt, T_ceil)
     end ~ accumulate
 
-    ready(f="pheno.germination.over") => f ~ flag
+    ready("pheno.germination.over") ~ flag
 
     over(rate; begin_from_emergence, time="pheno.weather.calendar.time", emergence_date) => begin
         if begin_from_emergence

@@ -95,8 +95,15 @@ genoverride(name, default) = @q $(esc(:Base)).get(_kwargs, $(Meta.quot(name)), $
 
 gendecl(i::VarInfo{Symbol}) = begin
     if isnothing(i.body)
-        @assert isempty(i.args)
-        e = esc(i.name)
+        if isempty(i.args)
+            e = esc(i.name)
+        elseif length(i.args) == 1 && (a = i.args[1]; !(typeof(a) <: Union{Symbol,Expr}))
+            # shorthand syntax for single value arg without key (i.e. `f("a") ~ ...` instead of `f(x="a") => x ~ ...`)
+            f = @q function $(i.name)(x=$a) x end
+            e = equation(f)
+        else
+            @error "Function not provided: $(i.name)"
+        end
     else
         f = @q function $(i.name)($(Tuple(i.args)...)) $(i.body) end
         e = equation(f)

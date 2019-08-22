@@ -87,8 +87,8 @@ include("scape.jl")
     leaves_generic => 10 ~ preserve(parameter)
     leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track
     leaves_total(leaves_initiated) => leaves_initiated ~ track
-    leaves_initiated(l="leaf_initiation.leaves") => l ~ track
-    leaves_appeared(l="leaf_appearance.leaves") => l ~ track
+    leaves_initiated("leaf_initiation.leaves") ~ track
+    leaves_appeared("leaf_appearance.leaves") ~ track
 
     temperature(leaves_appeared, T_air="weather.T_air"): T => begin
         if leaves_appeared < 9
@@ -106,24 +106,24 @@ include("scape.jl")
 
     # common
 
-    germinating(f="germination.ing") => f ~ flag
-    germinated(f="germination.over") => f ~ flag
-    emerging(f="emergence.ing") => f ~ flag
-    emerged(f="emergence.over") => f ~ flag
+    germinating("germination.ing") ~ flag
+    germinated("germination.over") ~ flag
+    emerging("emergence.ing") ~ flag
+    emerged("emergence.over") ~ flag
 
     # garlic
 
-    floral_initiated(f="floral_initiation.over") => f ~ flag
-    scaping(f="scape.ing") => f ~ flag
-    scape_appeared(f="scape_appearance.over") => f ~ flag
-    scape_removed(f="scape_removal.over") => f ~ flag
-    flowered(f="flowering.over") => f ~ flag
+    floral_initiated("floral_initiation.over") ~ flag
+    scaping("scape.ing") ~ flag
+    scape_appeared("scape_appearance.over") ~ flag
+    scape_removed("scape_removal.over") ~ flag
+    flowered("flowering.over") ~ flag
     #FIXME clear definition of bulb maturing
     bulb_maturing(scape_removed, f="bulbiling.over") => (scape_removed || f) ~ flag
 
     # common
 
-    dead(f="death.over") => f ~ flag
+    dead("death.over") ~ flag
 
     # # GDDsum
     # gdd_after_emergence(emerged, r="gdd_recorder.rate") => begin

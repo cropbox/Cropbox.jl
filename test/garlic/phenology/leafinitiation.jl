@@ -9,12 +9,12 @@
 
     #HACK original garlic model assumed leaves are being initiated when the seeds are sown
     #HACK maize model model assumed leaf initiation begins when germination is over
-    ready(f="pheno.germination.over") => f ~ flag
+    ready("pheno.germination.over") ~ flag
 
     # for maize
-    #over(f="pheno.tassel_initiation.over") => f ~ flag
+    #over("pheno.tassel_initiation.over") ~ flag
     # for garlic
-    over(f="pheno.floral_initiation.over") => f ~ flag
+    over("pheno.floral_initiation.over") ~ flag
 
     # no MAX_LEAF_NO implied unlike original model
     leaves(initial_leaves, rate) => round(initial_leaves + rate) ~ track::Int

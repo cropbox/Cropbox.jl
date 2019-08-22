@@ -1,7 +1,7 @@
 @system FloralInitiation(Stage) begin
     critical_photoperiod: critPPD => 12 ~ preserve(u"hr", parameter)
 
-    ready(f="pheno.germination.over") => f ~ flag
+    ready("pheno.germination.over") ~ flag
 
     #FIXME: implement Sun
     over(; day_length="pheno.weather.sun.day_length", critPPD) => begin
