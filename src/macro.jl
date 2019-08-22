@@ -169,6 +169,8 @@ genstruct(name, infos) = begin
 end
 
 #TODO: maybe need to prevent naming clash by assigning UUID for each System
+source(s::System) = source(typeof(s))
+source(S::Type{<:System}) = source(Symbol(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
     self => self ~ ::Cropbox.System
