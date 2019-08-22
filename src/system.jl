@@ -8,7 +8,8 @@ update!(s::System) = foreach(t -> value!(s, t.name), filter(t -> t.type <: Var, 
 
 name(s::S) where {S<:System} = string(S)
 import Base: names
-names(s::System) = (n = split(String(Symbol(typeof(s))), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
+names(s::System) = names(typeof(s))
+names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
 import Base: length, iterate
 length(::System) = 1
