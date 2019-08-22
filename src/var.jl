@@ -1,4 +1,4 @@
-mutable struct Var{S<:State}
+mutable struct Var{S<:State,N}
     system::System
     state::S
     equation::Equation
@@ -7,7 +7,8 @@ mutable struct Var{S<:State}
     nounit::Vector{Symbol}
 
     Var(s, e, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State} = begin
-        x = new{S}(s)
+        N = Symbol("$(name(s))<$_name>")
+        x = new{S,N}(s)
         init_names!(x, _name, _alias)
         init_nounit!(x, nounit)
         init_equation!(x, e)
