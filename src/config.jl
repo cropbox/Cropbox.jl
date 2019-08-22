@@ -18,7 +18,10 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     end
     nothing
 end
-option(c::Config, key::System, keys...) = option(c, names(key), keys...)
+option(c::Config, key::System, keys...) = begin
+    k = names.([mixins(key); key]) |> Iterators.flatten |> collect
+    option(c, k, keys...)
+end
 option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
 
 export configure
