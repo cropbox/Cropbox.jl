@@ -126,10 +126,10 @@ gendecl(i::VarInfo{Symbol}) = begin
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
+    @assert isempty(i.args) "Non-Var `$(i.name)` cannot have arguments: $(i.args)"
     if haskey(i.tags, :override)
         decl = genoverride(i.name, esc(i.body))
     elseif !isnothing(i.body)
-        # @assert isnothing(i.args)
         decl = esc(i.body)
     else
         decl = :($(esc(i.type))())
