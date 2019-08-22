@@ -60,7 +60,7 @@ Pass(; unit=missing, _name, _system, _value=nothing, _type=Float64, _...) = begi
         v = unitfy(_value, U)
         V = typeof(v)
     end
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Pass{V,U,N}(v)
 end
 
@@ -78,7 +78,7 @@ Advance(; init=nothing, step=nothing, unit=missing, _name, _system, _type=Int64,
     t = isnothing(init) ? zero(T) : timevalue(init, _system)
     dt = isnothing(step) ? oneunit(T) : timevalue(step, _system)
     T = promote_type(typeof(t), typeof(dt))
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Advance{T,U,N}(Timepiece{T}(t, dt))
 end
 
@@ -103,7 +103,7 @@ Preserve(; unit=missing, _name, _system, _value=nothing, _type=Float64, _...) = 
         v = unitfy(_value, U)
         V = typeof(v)
     end
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Preserve{V,U,N}(v)
 end
 
@@ -127,7 +127,7 @@ Track(; unit=missing, time="context.clock.tick", _name, _system, _value=nothing,
         V = typeof(v)
     end
     T = timetype(_type_time, time, _system)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Track{V,T,U,N}(v, TimeState{T}(_system, time))
 end
 
@@ -147,7 +147,7 @@ Drive(; key=nothing, unit=missing, time="context.clock.tick", _name, _system, _t
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Drive{V,T,U,N}(k, default(V), TimeState{T}(_system, time))
 end
 
@@ -166,7 +166,7 @@ Call(; unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Call{V,T,U,N}(() -> default(V), TimeState{T}(_system, time))
 end
 
@@ -200,7 +200,7 @@ Accumulate(; init=0, unit=missing, time="context.clock.tick", _name, _system, _t
     #T = timetype(_type_time, time, _system)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Accumulate{V,R,T,U,RU,N}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), default(V), OrderedDict{T,V}())
 end
 
@@ -245,7 +245,7 @@ Capture(; unit=missing, time="context.clock.tick", _name, _system, _type=Float64
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     t = TimeState{T}(_system, time)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Capture{V,R,T,U,RU,N}(t, default(R), t.ticker.t, default(V))
 end
 
@@ -272,7 +272,7 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
     V = _type
     P = _type_prob
     T = timetype(_type_time, time, _system)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Flag{P,T,N}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
@@ -295,7 +295,7 @@ end
 
 Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = timetype(_type_time, time, _system)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Produce{S,T,N}(_system, S[], TimeState{T}(_system, time))
 end
 
@@ -325,7 +325,7 @@ Solve(; lower=nothing, upper=nothing, unit=missing, time="context.clock.tick", _
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
-    N = Val{Symbol("$(name(_system))<$_name>")}
+    N = Symbol("$(name(_system))<$_name>")
     Solve{V,T,U,N}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
 end
 
