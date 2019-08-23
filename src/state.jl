@@ -301,7 +301,7 @@ Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _typ
 end
 
 check!(s::Produce) = checktime!(s)
-produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))
+produce(s::Type{<:System}; args...) = Product(s, collect(args))
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
