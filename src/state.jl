@@ -318,7 +318,7 @@ mutable struct Solve{V,T,U,N} <: State
     time::TimeState{T}
     lower::Union{VarVal{V},Nothing}
     upper::Union{VarVal{V},Nothing}
-    clock::System
+    context::System
     solving::Bool
 end
 
@@ -327,23 +327,23 @@ Solve(; lower=nothing, upper=nothing, unit=missing, time="context.clock.tick", _
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T,U,N}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context.clock, false)
+    Solve{V,T,U,N}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false)
 end
 
 check!(s::Solve) = checktime!(s) && !s.solving
 using Roots
 store!(s::Solve, f::Function) = begin
     s.solving = true
-    cost(x) = (store!(s, x); recite!(s.clock); y = f(); y)
+    cost(x) = (store!(s, x); recite!(s.context); y = f(); y)
     b = (value!(s.lower), value!(s.upper))
     if nothing in b
         v = find_zero(cost, value(s))
     else
         v = find_zero(cost, b)
     end
-    #FIXME: no longer needed with regime?
+    #FIXME: ensure all state vars are updated once and only once (i.e. no duplice produce)
     #HACK: trigger update with final value
-    cost(v)
+    store!(s, v); recite!(s.context); update!(s.context)
     s.solving = false
     store!(s, v)
 end

@@ -15,6 +15,7 @@ option(c::Context, keys...) = option(c.config, keys...)
 
 queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)
 queue!(c::Context, f, p::Priority) = nothing
+dequeue!(c::Context) = empty!(c.queue)
 flush!(c::Context, cond) = begin
     q = filter(cond, c.queue)
     filter!(!cond, c.queue)
@@ -39,6 +40,7 @@ end
 
 advance!(c::Context) = (advance!(c.clock); update!(c))
 advance!(s::System) = advance!(s.context)
+recite!(c::Context) = (dequeue!(c); recite!(c.clock))
 
 instance(Ss::Type{<:System}...; config=configure()) = begin
     c = Context(; config=config)
