@@ -34,7 +34,7 @@ end
     ready("pheno.scape_appearance.over") ~ flag
 
     over(scape_removal_date, time="pheno.weather.calendar.time") => begin
-        ismissing(scape_removal_date) ? false : time >= scape_removal_date
+        isnothing(scape_removal_date) ? false : time >= scape_removal_date
     end ~ flag
 
     # def finish(self):

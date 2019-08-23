@@ -3,7 +3,7 @@
     maximum_emergence_rate: R_max => 0.20 ~ preserve(u"d^-1", parameter)
 
     emergence_date => nothing ~ preserve(parameter)
-    begin_from_emergence(emergence_date) => !ismissing(emergence_date) ~ preserve::Bool
+    begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve::Bool
 
     rate(R_max, T, T_opt, T_ceil) => begin
         R_max * beta_thermal_func(T, T_opt, T_ceil)
