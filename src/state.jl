@@ -4,7 +4,6 @@ check!(s::State) = true
 value(s::State) = s.value
 store!(s::State, f::Function) = store!(s, f())
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
-store!(s::State, ::Nothing) = nothing
 
 checktime!(s::State) = check!(s.time)
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
@@ -307,6 +306,7 @@ produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.con
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
 store!(s::Produce, f::Function) = (p = f(); () -> produce(s, p))
+store!(s::Produce, ::Nothing) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
