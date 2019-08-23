@@ -4,7 +4,7 @@ unitfy(v, ::Missing) = v
 unitfy(v, u::Unitful.Units) = Quantity(v, u)
 unitfy(v::Array, u::Unitful.Units) = Quantity.(v, u)
 unitfy(v::Quantity, u::Unitful.Units) = uconvert(u, v)
-Unitfy(v::Array{<:Quantity}, u::Unitful.Units) = uconvert.(u, v)
+unitfy(v::Array{<:Quantity}, u::Unitful.Units) = uconvert.(u, v)
 
 unitstr(s::String) = @eval @u_str $s
 unitstr(s::Unitful.Units) = s
