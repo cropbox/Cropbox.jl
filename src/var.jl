@@ -39,7 +39,7 @@ init_equation!(x::Var, e::Equation) = begin
     end
 end
 init_state!(x::Var, ::Type{S}, n::Symbol, v, stargs...) where {S<:State} = begin
-    v = isnothing(v) ? value(x.equation) : v
+    v = ismissing(v) ? value(x.equation) : v
     x.state = S(; _name=n, _system=x.system, _var=x, _value=v, stargs...)
 end
 

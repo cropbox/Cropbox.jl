@@ -52,10 +52,10 @@ mutable struct Pass{V,U,N} <: State
     value::V
 end
 
-Pass(; unit=missing, _name, _system, _value=nothing, _type=Float64, _...) = begin
+Pass(; unit=missing, _name, _system, _value=missing, _type=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
-    if isnothing(_value)
+    if ismissing(_value)
         v = default(V)
     else
         v = unitfy(_value, U)
@@ -95,10 +95,11 @@ mutable struct Preserve{V,U,N} <: State
     value::Union{V,Missing}
 end
 
-Preserve(; unit=missing, _name, _system, _value=nothing, _type=Float64, _...) = begin
+# Preserve is the only State that can store value `nothing`
+Preserve(; unit=missing, _name, _system, _value=missing, _type=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
-    if isnothing(_value)
+    if ismissing(_value)
         v = missing
     else
         v = unitfy(_value, U)
@@ -118,10 +119,10 @@ mutable struct Track{V,T,U,N} <: State
     time::TimeState{T}
 end
 
-Track(; unit=missing, time="context.clock.tick", _name, _system, _value=nothing, _type=Float64, _type_time=Float64, _...) = begin
+Track(; unit=missing, time="context.clock.tick", _name, _system, _value=missing, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
-    if isnothing(_value)
+    if ismissing(_value)
         v = default(V)
     else
         v = unitfy(_value, U)

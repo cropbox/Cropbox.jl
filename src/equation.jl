@@ -1,6 +1,6 @@
 abstract type Equation end
 
-value(e::Equation) = nothing
+value(e::Equation) = missing
 getargs(e::Equation) = Symbol[]
 getkwargs(e::Equation) = Symbol[]
 default(e::Equation) = Dict{Symbol,Any}()
