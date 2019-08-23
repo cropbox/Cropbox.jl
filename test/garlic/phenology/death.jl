@@ -1,4 +1,6 @@
 @system Death(Stage) begin
+    ready => true ~ flag
+
     over => begin
         #FIXME implement Count trait equivalent
         #return self.pheno.plant.count.total_dropped_leaves >= self.pheno.leaves_initiated

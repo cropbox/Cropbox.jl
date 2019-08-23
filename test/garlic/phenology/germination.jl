@@ -6,6 +6,8 @@
         ing ? R_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
     end ~ accumulate
 
+    ready => true ~ flag
+
     over(rate, f="pheno.emergence.begin_from_emergence") => (rate >= 0.5 || f) ~ flag
 
     #FIXME postprocess similar to @produce?
