@@ -9,10 +9,14 @@ using Unitful
         branching_interval: i => 3.0 ~ track(u"cm")
         branching_chance => 0.5 ~ track
         is_branching(l, ll, i) => (l - ll > i) ~ flag(prob="branching_chance")
-        branched_length(pl="parent.length") => pl ~ preserve(u"cm")
+        branched_length("parent.length") ~ preserve(u"cm")
         diameter => 0.1 ~ track(u"cm")
-        length(r): l => r ~ accumulate(u"cm")
-        last_branching_length(is_branching, l): ll => (is_branching ? l : nothing) ~ track(u"cm")
+        length(r): l ~ accumulate(u"cm")
+        #TODO: support scaling operators
+        #last_branching_length("branch[end].pl"): ll ~ track(u"cm")
+        last_branching_length(branch): ll => begin
+            isempty(branch) ? 0 : Cropbox.value!(branch[end].branched_length)
+        end~ track(u"cm")
         branch(self, is_branching, l) => begin
             if is_branching
                 #println("branch at l = $l")
