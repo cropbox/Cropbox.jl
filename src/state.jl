@@ -27,6 +27,7 @@ unittype(unit::String, s::System) = value!(s, unit)
 
 valuetype(T, ::Missing) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
+valuetype(::Type{Array{T,N}}, U::Unitful.Units) where {T,N} = Array{valuetype(T, U), N}
 
 #HACK: state var referred by `time` tag must have been already declared
 timeunittype(time::String, s::System) = unit(getvar(s, time).state)
