@@ -54,12 +54,12 @@ end
 
 Pass(; unit=missing, _name, _system, _value=nothing, _type=Float64, _...) = begin
     U = unittype(unit, _system)
+    V = valuetype(_type, U)
     if isnothing(_value)
-        V = valuetype(_type, U)
         v = default(V)
     else
         v = unitfy(_value, U)
-        V = typeof(v)
+        V = promote_type(V, typeof(v))
     end
     N = Symbol("$(name(_system))<$_name>")
     Pass{V,U,N}(v)
@@ -97,12 +97,12 @@ end
 
 Preserve(; unit=missing, _name, _system, _value=nothing, _type=Float64, _...) = begin
     U = unittype(unit, _system)
+    V = valuetype(_type, U)
     if isnothing(_value)
-        V = valuetype(_type, U)
         v = missing
     else
         v = unitfy(_value, U)
-        V = typeof(v)
+        V = promote_type(V, typeof(v))
     end
     N = Symbol("$(name(_system))<$_name>")
     Preserve{V,U,N}(v)
@@ -120,12 +120,12 @@ end
 
 Track(; unit=missing, time="context.clock.tick", _name, _system, _value=nothing, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
+    V = valuetype(_type, U)
     if isnothing(_value)
-        V = valuetype(_type, U)
         v = default(V)
     else
         v = unitfy(_value, U)
-        V = typeof(v)
+        V = promote_type(V, typeof(v))
     end
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
