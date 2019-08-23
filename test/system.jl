@@ -18,7 +18,10 @@ using Unitful
             a(b) => b ~ track
             b(a) => a ~ track
         end
-        @test_throws StackOverflowError instance(S)
+        s = instance(S)
+        @test s.a == s.b == 0
+        advance!(s)
+        @test s.a == s.b == 0
     end
 
     @testset "call" begin
