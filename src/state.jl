@@ -303,7 +303,7 @@ end
 check!(s::Produce) = checktime!(s)
 produce(s::Type{S}; args...) where {S<:System} = Product(s, collect(args))
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
-produce(s::Produce, p::Vector{Product}) = produce.(s, p)
+produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
 store!(s::Produce, f::Function) = (p = f(); () -> produce(s, p))
 getindex(s::Produce, i) = getindex(s.value, i)
