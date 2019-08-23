@@ -32,6 +32,8 @@ Equation(func, name, args, kwargs, default) = begin
     if length(args) == 0 && length(kwargs) == 0
         StaticEquation(func(), name)
     else
-        DynamicEquation(func, name, args, kwargs, default)
+        # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
+        d = Dict(k => eval(v) for (k, v) in default)
+        DynamicEquation(func, name, args, kwargs, d)
     end
 end

@@ -53,8 +53,6 @@ names(x::Var) = [[x.name]; x.alias]
     #TODO: unit handling (i.e. u_str)
     interpret(v::Symbol) = value!(s, v)
     interpret(v::String) = value!(s, v)
-    #FIXME: run eval() only once when setting up Equation
-    interpret(v::Expr) = eval(v)
     interpret(v) = v
     resolve(a::Symbol) = begin
         # 2. default parameter values
