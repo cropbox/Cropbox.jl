@@ -4,7 +4,6 @@ mutable struct Timepiece{T<:Number}
 end
 
 Timepiece{T}(t) where {T<:Number} = Timepiece{T}(t, oneunit(T))
-Timepiece{T}(t, ::Nothing) where {T<:Number} = Timepiece{T}(t)
 
 advance!(timer::Timepiece{T}, t) where {T<:Number} = (timer.t += t)
 advance!(timer::Timepiece{T}) where {T<:Number} = advance!(timer, timer.dt)
