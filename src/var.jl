@@ -1,46 +1,39 @@
-mutable struct Var{S<:State,N}
+mutable struct Var{S<:State,V,N}
     system::System
-    state::S
+    state::State{V}
     equation::Equation
     name::Symbol
     alias::Vector{Symbol}
     nounit::Vector{Symbol}
 
     Var(s, e, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State} = begin
+        e = patch(s, e, [_name; _alias])
+        v = ismissing(_value) ? value(e) : _value
+        st = S(; _name=_name, _system=s, _value=v, stargs...)
+        nu = Symbol.(split(nounit, ","; keepempty=false))
+        V = valuetype(st)
         N = Symbol("$(name(s))<$_name>")
-        x = new{S,N}(s)
-        init_names!(x, _name, _alias)
-        init_nounit!(x, nounit)
-        init_equation!(x, e)
-        init_state!(x, S, _name, _value, stargs...)
-        x
+        x = new{S,V,N}(s, st, e, _name, _alias, nu)
     end
 end
 
-init_names!(x::Var, name, alias) = (x.name = name; x.alias = alias)
-init_nounit!(x::Var, s::String) = (x.nounit = Symbol.(split(s, ","; keepempty=false)))
-init_equation!(x::Var, e::Equation) = begin
-    s = x.system
+patch(s::System, e::Equation, n) = begin
     c = s.context.config
     # patch default arguments from config
     patch!(a::Symbol) = begin
         # 1. external options (i.e. TOML config)
-        v = option(c, s, x, a)
+        v = option(c, s, n, a)
         !isnothing(v) && (default(e)[a] = v)
     end
     patch!.(getargs(e))
     # patch state variable from config
-    v = option(c, s, x)
+    v = option(c, s, n)
     #HACK: avoid Dict used for partial argument patch
     if !isnothing(v) && !(typeof(v) <: Dict)
-        x.equation = Equation(v, e.name)
+        Equation(v, e.name)
     else
-        x.equation = e
+        e
     end
-end
-init_state!(x::Var, ::Type{S}, n::Symbol, v, stargs...) where {S<:State} = begin
-    v = ismissing(v) ? value(x.equation) : v
-    x.state = S(; _name=n, _system=x.system, _var=x, _value=v, stargs...)
 end
 
 name(x::Var) = x.name
