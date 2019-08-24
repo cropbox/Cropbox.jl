@@ -17,7 +17,7 @@ show(io::IO, s::VarInfo) = begin
     println(io, "name: $(s.name)")
     println(io, "alias: $(s.alias)")
     println(io, "func ($(repr(s.args))) = $(repr(s.body))")
-    println(io, "state: $(s.state)")
+    println(io, "state: $(repr(s.state))")
     println(io, "type: $(repr(s.type))")
     for (k, v) in s.tags
         println(io, "tag $k = $v")
