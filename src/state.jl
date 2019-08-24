@@ -287,6 +287,7 @@ mutable struct Produce{S<:System,T,N} <: State
     system::System
     value::Vector{S}
     time::TimeState{T}
+    name::Symbol # used in recurisve collecting in getvar!
 end
 
 struct Product{S<:System,K,V}
@@ -297,7 +298,7 @@ end
 Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Produce{S,T,N}(_system, S[], TimeState{T}(_system, time))
+    Produce{S,T,N}(_system, S[], TimeState{T}(_system, time), _name)
 end
 
 check!(s::Produce) = checktime!(s)

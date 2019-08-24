@@ -90,6 +90,52 @@ getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, l::Vector{Symbol}) = reduce((a, b) -> getvar(a, b), [s; l])
 getvar(s::System, n::String) = getvar(s, Symbol.(split(n, ".")))
 
+getvar!(s::System, n::Symbol) = getvar(s, n)
+getvar!(x::Var{Produce}, n::N) where {N<:AbstractString} = begin
+    m = match(r"(?<ind>[^/]+)(?:/(?<cond>.+))?", n)
+    cond(a) = begin
+        c = m[:cond]
+        isnothing(c) ? a : filter(s -> value!(s, Symbol(c)), a)
+    end
+    ind = m[:ind]
+    v = value!(x)
+    if ind == "*"
+        # collecting children only at the current level
+        v |> cond
+    elseif ind == "**"
+        # collecting all children recursively
+        l = System[]
+        #TODO: possibly reduce overhead by reusing calculated values in child nodes
+        f(v) = (append!(l, v); foreach(s -> f.(value!(s, x.name)), v); l)
+        f(v) |> cond
+    else
+        # indexing by number (negative for backwards)
+        i = tryparse(Int, ind)
+        if !isnothing(i)
+            # should be pre-filtered
+            v = v |> cond
+            n = length(v)
+            i = (i >= 0) ? i : n+i+1
+            (1 <= i <= n) ? [v[i]] : System[]
+        else
+            #TODO: support generic indexing function?
+        end
+    end
+end
+getvar!(s::Vector{<:System}, n::Symbol) = getvar.(s, n)
+getvar!(x::Vector{Var{Produce}}, n::N) where {N<:AbstractString} = value!.(x, n)
+getvar!(s::System, l::Vector) = reduce((a, b) -> getvar!(a, b), [s; l])
+getvar!(s::System, n::N) where {N<:AbstractString} = begin
+    l = split(n, ".")
+    ms = match.(r"(?<key>[^\[\]]+)(?:\[(?<op>.+)\])?", l)
+    f(m) = begin
+        key = Symbol(m[:key])
+        op = m[:op]
+        isnothing(op) ? [key] : [key, op]
+    end
+    getvar!(s, f.(ms) |> Iterators.flatten |> collect)
+end
+
 check!(x::Var) = check!(x.state)
 update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))
 
@@ -99,7 +145,8 @@ value(s::System, n) = s[n]
 
 value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
-value!(s::System, n) = value!(getvar(s, n))
+value!(x::Vector{<:Var}) = value!.(x)
+value!(s::System, n) = value!(getvar!(s, n))
 
 store!(s::State, x::Var) = store!(s, value!(x))
 

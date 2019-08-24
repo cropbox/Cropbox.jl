@@ -300,6 +300,75 @@ using Unitful
         @test length(s.a) == 0
     end
 
+    @testset "produce query index" begin
+        @system S begin
+            p(self) => produce(typeof(self)) ~ produce
+            i(t="context.clock.tick") => (t-2) ~ preserve
+            a(x="p[*].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            b(x="p[**].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x="p[1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x="p[-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+        end
+        s = instance(S)
+        @test length(s.p) == 0
+        advance!(s)
+        @test length(s.p) == 1
+        @test s.a == 1 # (1)
+        @test s.b == 1 # (1)
+        @test s.c == 1 # (1*)
+        @test s.d == 1 # (1*)
+        advance!(s)
+        @test length(s.p) == 2
+        @test s.a == 3 # (1 + 2)
+        @test s.b == 5 # ((1 ~ 2) + 2)
+        @test s.c == 1 # (1* + 2)
+        @test s.d == 2 # (1 + 2*)
+        advance!(s)
+        @test length(s.p) == 3
+        @test s.a == 6 # (1 + 2 + 3)
+        @test s.b == 17 # ((1 ~ ((2 ~ 3) + 3) + (2 ~ 3) + 3)
+        @test s.c == 1 # (1* + 2 + 3)
+        @test s.d == 3 # (1 + 2 + 3*)
+    end
+
+    @testset "produce query condition" begin
+        @system S begin
+            p(self) => produce(typeof(self)) ~ produce
+            i(t="context.clock.tick") => (t-2) ~ preserve::Int
+            f(i) => isodd(i) ~ flag
+            a(x="p[*/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            b(x="p[**/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x="p[1/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x="p[-1/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
+        end
+        s = instance(S)
+        @test length(s.p) == 0
+        advance!(s)
+        @test length(s.p) == 1
+        @test s.a == 0 # (!1)
+        @test s.b == 0 # (!1)
+        @test s.c == 0 # (!1*)
+        @test s.d == 0 # (!1*)
+        advance!(s)
+        @test length(s.p) == 2
+        @test s.a == 1 # (#1 + .2)
+        @test s.b == 1 # (#1 ~ .2) + .2)
+        @test s.c == 1 # (#1* + .2)
+        @test s.d == 1 # (#1* + .2)
+        advance!(s)
+        @test length(s.p) == 3
+        @test s.a == 1 # (#1 + 2 + .3)
+        @test s.b == 1 # ((#1 ~ ((2 ~ .3) + .3) + (2 ~ .3) + .3)
+        @test s.c == 1 # (#1* + 2 + .3)
+        @test s.d == 1 # (#1* + 2 + .3)
+        advance!(s)
+        @test length(s.p) == 4
+        @test s.a == 4 # (#1 + 2 + #3 + 4)
+        @test s.b == 13 # ((#1 ~ (2 ~ (#3 ~ 4)) + (#3 ~ 4) + 4) + (2 ~ (#3 ~ 4)) + (#3 ~ 4) + 4)
+        @test s.c == 1 # (#1* + 2 + #3 + 4)
+        @test s.d == 3 # (#1 + 2 + #3* + 4)
+    end
+
     @testset "solve" begin
         @system S begin
             a(x) => 2x ~ track
