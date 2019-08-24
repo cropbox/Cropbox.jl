@@ -225,6 +225,8 @@ store!(s::Accumulate, f::Function) = begin
     r = unitfy(f(), rateunit(s))
     () -> (s.rates[t] = r) # s.cache = filter(p -> p.first == t, s.cache)
 end
+#TODO special handling of no return value for Accumulate/Capture?
+#store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
 unit(::Accumulate{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = U
 rateunit(::Accumulate{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = RU
 priority(s::Accumulate) = 2
@@ -257,6 +259,8 @@ store!(s::Capture, f::Function) = begin
     r = unitfy(f(), rateunit(s))
     () -> (store!(s, v); s.rate = r; s.tick = t)
 end
+#TODO special handling of no return value for Accumulate/Capture?
+#store!(s::Capture, ::Nothing) = store!(s, () -> 0)
 unit(s::Capture{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = U
 rateunit(s::Capture{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = RU
 priority(s::Capture) = 2
