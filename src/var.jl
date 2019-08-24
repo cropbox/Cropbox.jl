@@ -122,7 +122,7 @@ getvar!(x::Var{Produce}, n::N) where {N<:AbstractString} = begin
         end
     end
 end
-getvar!(s::Vector{<:System}, n::Symbol) = getvar.(s, n)
+getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 getvar!(x::Vector{Var{Produce}}, n::N) where {N<:AbstractString} = value!.(x, n)
 getvar!(s::System, l::Vector) = reduce((a, b) -> getvar!(a, b), [s; l])
 getvar!(s::System, n::N) where {N<:AbstractString} = begin
