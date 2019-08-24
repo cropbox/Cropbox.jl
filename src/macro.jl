@@ -75,11 +75,11 @@ equation(f) = begin
     name = Meta.quot(fdef[:name])
     key(x::Symbol) = x
     key(x::Expr) = x.args[1]
-    args = key.(fdef[:args])
-    kwargs = key.(fdef[:kwargs])
+    args = key.(fdef[:args]) |> Vector{Symbol}
+    kwargs = key.(fdef[:kwargs]) |> Vector{Symbol}
     pair(x::Symbol) = nothing
     pair(x::Expr) = x.args[1] => x.args[2]
-    default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict
+    default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict{Symbol,Any}
     func = @q function $(gensym())($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
     :($(esc(:Cropbox)).Equation($func, $name, $args, $kwargs, $default))
 end

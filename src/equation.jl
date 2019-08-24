@@ -14,8 +14,8 @@ end
 (e::StaticEquation)() = value(e)
 value(e::StaticEquation) = e.value
 
-struct DynamicEquation <: Equation
-    func::Function #TODO: parametrise {F<:Function}
+struct DynamicEquation{F<:Function} <: Equation
+    func::F
     name::Symbol
     args::Vector{Symbol}
     kwargs::Vector{Symbol}
@@ -33,7 +33,7 @@ Equation(func, name, args, kwargs, default) = begin
         StaticEquation(func(), name)
     else
         # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
-        d = Dict(k => eval(v) for (k, v) in default)
+        d = Dict{Symbol,Any}(k => eval(v) for (k, v) in default)
         DynamicEquation(func, name, args, kwargs, d)
     end
 end
