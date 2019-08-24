@@ -290,7 +290,7 @@ priority(s::Flag) = 1
 
 ####
 
-mutable struct Produce{S<:System,T,N} <: State{Vector{S}}
+mutable struct Produce{S<:System,T,N} <: State{S}
     system::System
     value::Vector{S}
     time::TimeState{T}
@@ -309,6 +309,7 @@ Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _typ
 end
 
 check!(s::Produce) = checktime!(s)
+value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
 produce(s::Type{<:System}; args...) = Product(s, collect(args))
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
