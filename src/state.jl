@@ -270,7 +270,7 @@ priority(s::Capture) = 2
 
 ####
 
-mutable struct Flag{P,T,N} <: State{Bool}
+mutable struct Flag{Bool,P,T,N} <: State{Bool}
     value::Bool
     prob::VarVal{P}
     time::TimeState{T}
@@ -281,7 +281,7 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
     P = _type_prob
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Flag{P,T,N}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
+    Flag{V,P,T,N}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
