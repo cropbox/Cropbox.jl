@@ -11,8 +11,8 @@ include("scape.jl")
 
 #TODO make a common class to be shared by Garlic and MAIZSIM
 @system Phenology begin
-    weather => Weather(; context=context) ~ ::Weather
-    soil => Soil(; context=context) ~ ::Soil
+    weather ~ ::Weather(override)
+    soil ~ ::Soil(override)
 
     optimal_temperature: T_opt => 22.28 ~ preserve(u"°C", parameter)
     ceiling_temperature: T_ceil => 34.23 ~ preserve(u"°C", parameter)

@@ -1,0 +1,85 @@
+#TODO move into Leaf class?
+@system Nitrogen(Trait) begin
+    # SK: get N fraction allocated to leaves, this code is just moved from the end of the procedure, this may be taken out to become a separate fn
+
+    # def setup(self):
+    #     # assume nitrogen concentration at the beginning is 3.4% of the total weight of the seed
+    #     # need to check with Yang. This doesn't look correct
+    #     self.set_pool(self.initial_pool)
+    #
+    #     #TODO set up interface
+    #     self.ratio = 0
+    #     self.hourly_soil_uptake = 0
+    #     self.hourly_demand = 0
+    #     self.cumulative_demand = 0
+    #     self.cumulative_soil_uptake = 0
+
+    pool_from_shoot(shoot="p.mass.shoot", pd="p.planting_density", frac=0.063) => begin
+        if shoot * pd <= 100u"g/m^2"
+            # when shoot biomass is lower than 100 g/m2, the maximum [N] allowed is 6.3%
+            # shoot biomass and Nitrogen are in g
+            # need to adjust demand or else there will be mass balance problems
+            #FIXME self.initial_pool or just pool?
+            #pool = min(0.063 * shoot_mass, self.initial_pool)
+            #pool = min(0.063 * shoot_mass, pool)
+            frac * shoot_mass
+        else
+            #FIXME what about other case? should be no cyclic dependency
+            #return pool?
+            @error "pool_from_shoot"
+        end
+    end ~ track(u"g") # Nitrogen
+
+    initial_pool(seed="p.mass.initial_seed", frac=0.034) => begin
+        # assume nitrogen concentration at the beginning is 3.4% of the total weight of the seed
+        frac * seed # 0.275
+    end ~ track(u"g") # Nitrogen
+
+    #FIXME: how to use `initial_pool` when track has no init?
+    pool(ps="pool_from_shoot", us="uptake_from_soil") => begin
+        ps + us
+    end ~ track(u"g") # Nitrogen
+
+    #TODO for 2DSOIL interface
+    uptake_from_soil => 0 ~ track(u"g") # Nitrogen
+
+    #TODO currently not implemented in the original code
+    # def remobilize(self):
+    #     pass
+        #droppedLfArea = (1-greenLeafArea/potentialLeafArea)*potentialLeafArea; //calculated dropped leaf area YY
+        #SK 8/20/10: Changed it to get all non-green leaf area
+        #currentDroppedLfArea = droppedLfArea - previousDroppedlfArea; //leaf dropped at this time step
+        #this->set_N((this->get_N()-(leaf_N/leafArea)*currentDroppedLfArea)); //calculated the total amount of nitrogen after the dropped leaves take some nitrogen out
+        #no nitrogen remobilization from old leaf to young leaf is considered for now YY
+
+    #TODO rename to `leaf_to_plant_ratio`? or just keep it?
+    leaf_fraction(tt="p.pheno.gdd_after_emergence") => begin
+        # Calculate faction of nitrogen in leaves (leaf NFraction) as a function of thermal time from emergence
+        # Equation from Lindquist et al. 2007 YY
+        #SK 08/20/10: TotalNitrogen doesn't seem to be updated at all anywhere else since initialized from the seed content
+        #SK: I see this is set in crop.cpp ln 253 from NUptake from 2dsoil
+        # but this appears to be the amount gained from the soil for the time step; so how does it represent totalNitrogen of a plant?
+        # tt: record thermal time from emergency YY
+        # Calculate faction of nitrogen in leaves (leaf NFraction) as a function of thermal time from emergence
+        # Equation from Lindquist et al. 2007 YY
+        fraction = 0.79688 - 0.00023747tt - 0.000000086145tt^2
+
+        # fraction of leaf n in total shoot n can't be smaller than zero. YY
+        max(0, fraction)
+    end ~ track
+
+    #TODO rename to `leaves`?
+    leaf(leaf_fraction, pool) => begin
+        # calculate total nitrogen amount in the leaves YY units are grams N in all the leaves
+        leaf_fraction * pool
+    end ~ track(u"g") # Nitrogen
+
+    #TODO rename to `unit_leaf`?
+    # Calculate leaf nitrogen content of per unit area
+    leaf_content(leaf, green_leaf="p.area.green_leaf") => begin
+        # defining leaf nitrogen content this way, we did not consider the difference in leaf nitrogen content
+        # of sunlit and shaded leaf yet YY
+        #SK 8/22/10: set avg greenleaf N content before update in g/m2
+        (green_leaf == 0) ? 0 : (leaf / green_leaf)
+    end ~ track(u"g/cm^2") # Nitrogen
+end
