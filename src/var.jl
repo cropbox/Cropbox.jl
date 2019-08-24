@@ -56,8 +56,8 @@ names(x::Var) = [[x.name]; x.alias]
     interpret(v) = v
     resolve(a::Symbol) = begin
         # 2. default parameter values
-        v = get(default(x.equation), a, nothing)
-        !isnothing(v) && return interpret(v)
+        v = get(default(x.equation), a, missing)
+        !ismissing(v) && return interpret(v)
 
         # 3. state vars from current system
         isdefined(s, a) && return interpret(a)
