@@ -27,5 +27,5 @@ VarVal{V}(s::System, p) where {V<:Quantity} = VarVal{V}(convert(V, unitfy(p, uni
 VarVal{V}(s::System, ::Nothing) where {V<:Number} = nothing
 VarVal{V}(s::System, ::Nothing) where {V<:Quantity} = nothing
 
-value(v::VarVal) = value(v.v)
-value!(v::VarVal) = value!(v.v)
+value(v::VarVal{V}) where {V<:Number} = value(v.v)::V
+value!(v::VarVal{V}) where {V<:Number} = value!(v.v)::V
