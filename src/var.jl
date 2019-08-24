@@ -40,6 +40,8 @@ name(x::Var) = x.name
 import Base: names
 names(x::Var) = [[x.name]; x.alias]
 
+state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
+
 (x::Var)() = begin
     s = x.system
     #TODO: use var path exclusive str (i.e. v_str)
@@ -129,10 +131,10 @@ getvar!(s::System, n::N) where {N<:AbstractString} = begin
     getvar!(s, f.(ms) |> Iterators.flatten |> collect)
 end
 
-check!(x::Var) = check!(x.state)
-update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))
+check!(x::Var) = check!(state(x))
+update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, () -> x()), priority(s)))
 
-value(x::Var) = value(x.state)
+value(x::Var) = value(state(x))
 value(x) = x
 value(s::System, n) = s[n]
 
@@ -143,8 +145,8 @@ value!(s::System, n) = value!(getvar!(s, n))
 
 store!(s::State, x::Var) = store!(s, value!(x))
 
-advance!(x::Var{Advance}) = advance!(x.state)
-reset!(x::Var{Advance}) = reset!(x.state)
+advance!(x::Var{Advance}) = advance!(state(x))
+reset!(x::Var{Advance}) = reset!(state(x))
 
 import Base: convert, promote_rule
 convert(::Type{System}, x::Var) = x.system
@@ -164,12 +166,12 @@ isless(a::Var, b::V) where {V<:Number} = isless(promote(a, b)...)
 isless(a::V, b::Var) where {V<:Number} = isless(b, a)
 
 import Base: getindex, length, iterate
-getindex(x::Var, i::Integer) = getindex(x.state, i)
-length(x::Var) = length(x.state)
-iterate(x::Var) = iterate(x.state)
-iterate(x::Var, i) = iterate(x.state, i)
+getindex(x::Var, i::Integer) = getindex(state(x), i)
+length(x::Var) = length(state(x))
+iterate(x::Var) = iterate(state(x))
+iterate(x::Var, i) = iterate(state(x), i)
 
 import Base: show
-show(io::IO, x::Var) = print(io, "$(name(x.system))<$(name(x))> = $(x.state)")
+show(io::IO, x::Var) = print(io, "$(name(x.system))<$(name(x))> = $(state(x))")
 
 export value

@@ -30,7 +30,7 @@ valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 valuetype(::Type{Array{T,N}}, U::Unitful.Units) where {T,N} = Array{valuetype(T, U), N}
 
 #HACK: state var referred by `time` tag must have been already declared
-timeunittype(time::String, s::System) = unit(getvar(s, time).state)
+timeunittype(time::String, s::System) = unit(state(getvar(s, time)))
 timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
 timevalue(t::String, s::System) = value!(s, t)
 timevalue(t, _) = t
