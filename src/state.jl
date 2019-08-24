@@ -3,7 +3,7 @@ abstract type State{V} end
 check!(s::State) = true
 value(s::State{V}) where V = s.value::V
 store!(s::State, f::Function) = store!(s, f())
-store!(s::State, v) = (s.value = unitfy(v, unit(s)))
+store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
 
 checktime!(s::State) = check!(s.time)
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
@@ -224,7 +224,8 @@ store!(s::Accumulate, f::Function) = begin
     t = s.time.ticker.t
     T1 = [T0; t]; T1 = T1[2:end]
     v += sum((T1 - T0) .* values(R))
-    s.cache[t] = store!(s, v)
+    store!(s, v)
+    s.cache[t] = s.value
     r = unitfy(f(), rateunit(s))
     () -> (s.rates[t] = r) # s.cache = filter(p -> p.first == t, s.cache)
 end
