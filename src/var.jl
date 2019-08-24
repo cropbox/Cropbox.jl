@@ -87,7 +87,8 @@ call(x::Var, args, kwargs) = begin
 end
 
 getvar(s::System, n::Symbol) = getfield(s, n)
-getvar(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s; Symbol.(split(n, "."))])
+getvar(s::System, l::Vector{Symbol}) = reduce((a, b) -> getvar(a, b), [s; l])
+getvar(s::System, n::String) = getvar(s, Symbol.(split(n, ".")))
 
 check!(x::Var) = check!(x.state)
 update!(x::Var) = queue!(x.system.context, store!(x.state, () -> x()), priority(x.state))

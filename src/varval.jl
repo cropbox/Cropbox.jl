@@ -9,7 +9,7 @@ convert(::Type{Vector{Symbol}}, s::String) = Symbol.(split(s, "."))
 
 VarPath(s::System, p::Vector) where V = VarPath(s, convert.(Vector{Symbol}, p) |> Iterators.flatten |> collect)
 
-getvar(p::VarPath) = reduce((a, b) -> getfield(a, b), [p.system; p.path])
+getvar(p::VarPath) = getvar(p.system, p.path)
 value(p::VarPath) = value(getvar(p))
 value!(p::VarPath) = value!(getvar(p))
 
