@@ -1,10 +1,6 @@
 abstract type System end
 
-import Base: filter
-const VarTuple = NamedTuple{(:name, :type)}
-filter(f, s::S) where {S<:System} = filter(f, VarTuple.(zip(fieldnames(S), fieldtypes(S))))
-
-update!(s::System) = foreach(t -> value!(s, t.name), filter(t -> t.type <: Var, s))
+update!(s::System) = foreach(n -> value!(s, n), updatable(s))
 
 name(s::S) where {S<:System} = string(S)
 import Base: names
@@ -29,19 +25,36 @@ import Base: collect
 collect(s::System; recursive=true, exclude_self=true) = begin
     S = Set()
     visit(s) = begin
-        # Vector{System} is exclusively for Context.systems
-        ST = filter(t -> t.type <: Union{System, Vector{System}, Var{Produce}}, s)
-        ST = map(t -> Set(getfield(s, t.name)), ST)
         SS = Set()
-        foreach(e -> union!(SS, e), ST)
+        add(f::System) = push!(SS, f)
+        add(f) = union!(SS, f)
+        for n in collectible(s)
+            add(getfield(s, n))
+        end
         filter!(s -> s ∉ S, SS)
         union!(S, SS)
         recursive && foreach(visit, SS)
     end
     visit(s)
-    exclude_self && setdiff!(S, [s])
+    exclude_self && setdiff!(S, (s,))
     S
 end
+
+filtervar(type::Type, ::Type{S}) where {S<:System} = begin
+    d = collect(zip(fieldnames(S), fieldtypes(S)))
+    filter!(p -> p[2] <: type, d)
+    map(p -> p[1], d)::Vector{Symbol}
+end
+@generated collectible(::Type{S}) where {S<:System} = begin
+    v = filtervar(Union{System, Vector{System}, Var{Produce}}, S)
+    :($v)
+end
+collectible(::S) where {S<:System} = collectible(S)
+@generated updatable(::Type{S}) where {S<:System} = begin
+    v = filtervar(Var, S)
+    :($v)
+end
+updatable(::S) where {S<:System} = updatable(S)
 
 context(s::System) = s.context
 
