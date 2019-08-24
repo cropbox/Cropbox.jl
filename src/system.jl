@@ -29,6 +29,7 @@ import Base: collect
 collect(s::System; recursive=true, exclude_self=true) = begin
     S = Set()
     visit(s) = begin
+        # Vector{System} is exclusively for Context.systems
         ST = filter(t -> t.type <: Union{System, Vector{System}, Var{Produce}}, s)
         ST = map(t -> Set(getfield(s, t.name)), ST)
         SS = Set()
