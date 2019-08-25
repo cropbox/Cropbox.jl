@@ -99,14 +99,16 @@ handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
     # kwarg
     dkwargs = Dict{Symbol,Any}(kwargs)
     merge!(dkwargs, pkwargs)
-    mkwargs = dkwargs |> collect
-    call(x, args, mkwargs)
+    call(x, args, dkwargs)
 end
 call(x::Var, args, kwargs) = begin
     nounit(a::Symbol) = a in x.nounit ? ustrip : identity
     nounit(p::Pair) = nounit(p[1])(p[2])
-    uargs = map(nounit, args)
-    ukwargs = map(p -> p[1] => nounit(p), kwargs)
+    uargs = nounit.(args)
+    nounits(p::Pair) = p[1] => nounit(p)
+    nounits(l::Vector) = map!(nounits, l, l)
+    nounits(d::Dict) = nounits(collect(d))
+    ukwargs = nounits(kwargs)
     call(x.equation, uargs, ukwargs)
 end
 
