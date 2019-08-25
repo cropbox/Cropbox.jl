@@ -1,31 +1,32 @@
-mutable struct Var{S<:State,V,N}
-    system::System
+mutable struct Var{S<:State,V,M<:System,E<:Equation,N}
+    system::M
     state::State{V}
-    equation::Equation
+    equation::E
     name::Symbol
     alias::Vector{Symbol}
     nounit::Vector{Symbol}
 
-    Var(s, e, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State} = begin
-        e = patch(s, e, [_name; _alias])
+    Var(s::M, e::E, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State,M<:System,E<:Equation} = begin
+        e = patch!(s, e, [_name; _alias])
+        EE = typeof(e)
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
         nu = Symbol.(split(nounit, ","; keepempty=false))
         V = valuetype(st)
         N = Symbol("$(name(s))<$_name>")
-        x = new{S,V,N}(s, st, e, _name, _alias, nu)
+        x = new{S,V,M,EE,N}(s, st, e, _name, _alias, nu)
     end
 end
 
-patch(s::System, e::Equation, n) = begin
+patch!(s::System, e::Equation, n) = begin
     c = s.context.config
     # patch default arguments from config
-    patch!(a::Symbol) = begin
+    resolve!(a::Symbol) = begin
         # 1. external options (i.e. TOML config)
         v = option(c, s, n, a)
         !isnothing(v) && (default(e)[a] = v)
     end
-    patch!.(getargs(e))
+    resolve!.(getargs(e))
     # patch state variable from config
     v = option(c, s, n)
     #HACK: avoid Dict used for partial argument patch
@@ -44,38 +45,49 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 
 (x::Var)() = begin
     s = x.system
-    #TODO: use var path exclusive str (i.e. v_str)
-    #TODO: unit handling (i.e. u_str)
-    interpret(v::Symbol) = value!(s, v)
-    interpret(v::String) = value!(s, v)
-    interpret(v) = v
-    resolve(a::Symbol) = begin
-        # 2. default parameter values
-        v = get(default(x.equation), a, missing)
-        !ismissing(v) && return interpret(v)
+    e = x.equation
+    pair(args) = begin
+        resolve(a::Symbol) = begin
+            interpret(v::Symbol) = value!(s, v)
+            interpret(v::String) = value!(s, v)
+            interpret(v) = v
 
-        # 3. state vars from current system
-        isdefined(s, a) && return interpret(a)
+            # 2. default parameter values
+            v = get(default(e), a, missing)
+            !ismissing(v) && return interpret(v)
 
-        # 4. argument not found (partial function used by Call State)
-        missing
+            # 3. state vars from current system
+            isdefined(s, a) && return interpret(a)
+
+            # 4. argument not found (partial function used by Call State)
+            missing
+        end
+        l = Pair{Symbol,Any}[]
+        for a in args
+            push!(l, a => resolve(a))
+        end
+        l
     end
-    pair(a::Symbol) = a => resolve(a)
-    args = pair.(getargs(x.equation))
-    kwargs = filter(!ismissing, pair.(getkwargs(x.equation)))
+    args = pair(getargs(e))
+    kwargs = pair(getkwargs(e))
     handle(x, args, kwargs)
 end
 handle(x::Var, args, kwargs) = call(x, args, kwargs)
 handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
     # arg
     i = 1
-    margs = [(ismissing(v) && (v = pargs[i]; i += 1); a => v) for (a, v) in args]
-    @assert i-1 == length(pargs) "too many positional arguments: $vargs"
+    for (j, (k, v)) in enumerate(args)
+        if ismissing(v)
+            args[j] = k => pargs[i]
+            i += 1
+        end
+    end
+    @assert i-1 == length(pargs) "incorrect number of positional arguments: $pargs"
     # kwarg
     dkwargs = Dict{Symbol,Any}(kwargs)
     merge!(dkwargs, pkwargs)
     mkwargs = dkwargs |> collect
-    call(x, margs, mkwargs)
+    call(x, args, mkwargs)
 end
 call(x::Var, args, kwargs) = begin
     nounit(a::Symbol) = a in x.nounit ? ustrip : identity
