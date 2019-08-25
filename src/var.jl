@@ -34,6 +34,7 @@ patch_default!(s::System, e::Equation, n) = begin
         !ismissing(v) && return override!(a, v)
     end
     resolve!.(getargs(e))
+    resolve!.(getkwargs(e))
     # patch state variable from config
     v = option(c, s, n)
     #HACK: avoid Dict used for partial argument patch
