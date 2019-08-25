@@ -36,6 +36,7 @@ update!(c::Context) = begin
     postflush!(c)
 
     #TODO: process aggregate (i.e. transport) operations?
+    nothing
 end
 
 advance!(c::Context) = (advance!(c.clock); update!(c))
