@@ -143,7 +143,7 @@
         #return min(self._elongation_tracker.rate, self.growth_duration)
         #FIXME how to define unit for this?
         if growing
-            beta_thermal_func(T, T_opt, T_ceil)
+            1u"hr/d" * beta_thermal_func(T, T_opt, T_ceil)
         else
             0
         end
@@ -151,8 +151,7 @@
 
     #TODO move to common module (i.e. Organ?)
     beta_growth(; t, c_m, t_e, t_m=nothing, t_b=0u"d", delta=1) => begin
-        #FIXME clipping necessary?
-        #t = clamp(t, 0, t_e)
+        t = clamp(t, 0u"d", t_e)
         t_m = isnothing(t_m) ? t_e / 2 : t_m
         t_et = t_e - t
         t_em = t_e - t_m
