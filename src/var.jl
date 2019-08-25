@@ -148,7 +148,7 @@ getvar!(v::Vector{<:System}, o::VarOpIndex) = begin
     (1 <= i <= n) ? [v[i]] : System[]
 end
 getvar!(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value!(s, Symbol(o.cond)), v)
-getvar!(s::Vector{<:System}, n::Symbol) = getvar.(s, n)
+getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 
 check!(x::Var) = check!(state(x))
 update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, () -> x()), priority(s)))
