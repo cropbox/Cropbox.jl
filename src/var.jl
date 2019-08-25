@@ -67,10 +67,14 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 end
 handle(x::Var, args, kwargs) = call(x, args, kwargs)
 handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
-    vargs = Vector([pargs...])
-    margs = [(ismissing(v) && (v = popfirst!(vargs)); a => v) for (a, v) in args]
-    @assert isempty(vargs) "too many positional arguments: $vargs"
-    mkwargs = merge(Dict.([kwargs, pkwargs])...) |> collect
+    # arg
+    i = 1
+    margs = [(ismissing(v) && (v = pargs[i]; i += 1); a => v) for (a, v) in args]
+    @assert i-1 == length(pargs) "too many positional arguments: $vargs"
+    # kwarg
+    dkwargs = Dict{Symbol,Any}(kwargs)
+    merge!(dkwargs, pkwargs)
+    mkwargs = dkwargs |> collect
     call(x, margs, mkwargs)
 end
 call(x::Var, args, kwargs) = begin
