@@ -188,12 +188,12 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 import DataStructures: OrderedDict
 
-mutable struct Accumulate{V,R,T,U,RU,N} <: State{V}
+mutable struct Accumulate{V,T,R,U,RU,N} <: State{V}
     init::VarVal{V}
     time::TimeState{T}
-    rates::OrderedDict{T,R}
+    tick::Union{T,Missing}
+    rate::R
     value::V
-    cache::OrderedDict{T,V}
 end
 
 Accumulate(; init=0, unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
@@ -205,42 +205,34 @@ Accumulate(; init=0, unit=missing, time="context.clock.tick", _name, _system, _t
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     N = Symbol("$(name(_system))<$_name>")
-    Accumulate{V,R,T,U,RU,N}(VarVal{V}(_system, init), TimeState{T}(_system, time), OrderedDict{T,R}(), default(V), OrderedDict{T,V}())
+    Accumulate{V,T,R,U,RU,N}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
 check!(s::Accumulate) = checktime!(s)
 store!(s::Accumulate, f::Function) = begin
-    v = value!(s.init)
-    R = s.rates
-    T0 = collect(keys(R))
-    for t in reverse(T0)
-        if haskey(s.cache, t)
-            v = s.cache[t]
-            R = filter(p -> p.first >= t, R)
-            T0 = collect(keys(R))
-            break
-        end
-    end
     t = s.time.ticker.t
-    T1 = [T0; t]; T1 = T1[2:end]
-    v += sum((T1 - T0) .* values(R))
+    t0 = s.tick
+    if ismissing(t0)
+        v = value!(s.init)
+    else
+        v = s.value + s.rate * (t - t0)
+    end
     store!(s, v)
-    s.cache[t] = s.value
     r = unitfy(f(), rateunit(s))
-    () -> (s.rates[t] = r) # s.cache = filter(p -> p.first == t, s.cache)
+    () -> (s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
-unit(::Accumulate{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = U
-rateunit(::Accumulate{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = RU
+unit(::Accumulate{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = U
+rateunit(::Accumulate{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = RU
 priority(s::Accumulate) = 2
 
 ####
 
-mutable struct Capture{V,R,T,U,RU,N} <: State{V}
+mutable struct Capture{V,T,R,U,RU,N} <: State{V}
     time::TimeState{T}
+    tick::Union{T,Missing}
     rate::R
-    tick::T
     value::V
 end
 
@@ -251,22 +243,25 @@ Capture(; unit=missing, time="context.clock.tick", _name, _system, _type=Float64
     T = valuetype(_type_time, TU)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    t = TimeState{T}(_system, time)
     N = Symbol("$(name(_system))<$_name>")
-    Capture{V,R,T,U,RU,N}(t, default(R), t.ticker.t, default(V))
+    Capture{V,T,R,U,RU,N}(TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
 check!(s::Capture) = checktime!(s)
 store!(s::Capture, f::Function) = begin
     t = s.time.ticker.t
-    v = s.rate * (t - s.tick)
+    t0 = s.tick
+    if !ismissing(t0)
+        v = s.rate * (t - t0)
+        store!(s, v)
+    end
     r = unitfy(f(), rateunit(s))
-    () -> (store!(s, v); s.rate = r; s.tick = t)
+    () -> (s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Capture, ::Nothing) = store!(s, () -> 0)
-unit(s::Capture{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = U
-rateunit(s::Capture{V,R,T,U,RU,N}) where {V,R,T,U,RU,N} = RU
+unit(s::Capture{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = U
+rateunit(s::Capture{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = RU
 priority(s::Capture) = 2
 
 ####
