@@ -1,19 +1,48 @@
+abstract type VarOp end
+
 struct VarPath
     system::System
-    path::Vector
+    path::Vector{Union{Symbol,VarOp}}
 end
 
-resolvepath(p::Vector) = begin
-    ms = match.(r"(?<key>[^\[\]]+)(?:\[(?<op>.+)\])?", p)
+struct VarOpAll <: VarOp end
+struct VarOpRecursiveAll <: VarOp end
+struct VarOpIndex{I<:Number} <: VarOp
+    index::I
+end
+struct VarOpFilter{S<:AbstractString} <: VarOp
+    cond::S
+end
+resolveop(op::AbstractString) = begin
+    if op == "*"
+        # collecting children only at the current level
+        VarOpAll()
+    elseif op == "**"
+        # collecting all children recursively
+        VarOpRecursiveAll()
+    else
+        i = tryparse(Int, op)
+        if !isnothing(i)
+            VarOpIndex(i)
+        else
+            #TODO: support generic indexing function?
+            VarOpFilter(op)
+        end
+    end
+end
+resolveops(ops::AbstractString) = resolveop.(split(ops, "/"))
+resolveops(::Nothing) = ()
+resolvepath(p::Vector{<:AbstractString}) = begin
+    ms = match.(r"(?<key>[^\[\]]+)(?:\[(?<ops>.+)\])?", p)
     resolve(m) = begin
         key = Symbol(m[:key])
-        op = m[:op]
-        isnothing(op) ? [key] : [key, op]
+        ops = resolveops(m[:ops])
+        (key, ops...)
     end
     resolve.(ms) |> Iterators.flatten |> collect
 end
 
-varpath(s::System, p::Vector) = VarPath(s, resolvepath(p))
+varpath(s::System, p::Vector{<:AbstractString}) = VarPath(s, resolvepath(p))
 varpath(s::System, p::Symbol) = vartpath(s, [p])
 varpath(s::System, n::AbstractString) = varpath(s, split(n, "."))
 

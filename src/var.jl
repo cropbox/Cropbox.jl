@@ -127,39 +127,6 @@ end
 getvar(s::System, n::AbstractString) = getvar(varpath(s, n))
 
 getvar!(s::System, n::Symbol) = getvar(s, n)
-getvar!(x::Var{Produce}, n::AbstractString) = begin
-    m = match(r"(?<ind>[^/]+)(?:/(?<cond>.+))?", n)
-    cond(a) = begin
-        c = m[:cond]
-        isnothing(c) ? a : filter(s -> value!(s, Symbol(c)), a)
-    end
-    ind = m[:ind]
-    v = value!(x)
-    if ind == "*"
-        # collecting children only at the current level
-        v |> cond
-    elseif ind == "**"
-        # collecting all children recursively
-        l = System[]
-        #TODO: possibly reduce overhead by reusing calculated values in child nodes
-        f(v) = (append!(l, v); foreach(s -> f.(value!(s, x.name)), v); l)
-        f(v) |> cond
-    else
-        # indexing by number (negative for backwards)
-        i = tryparse(Int, ind)
-        if !isnothing(i)
-            # should be pre-filtered
-            v = v |> cond
-            n = length(v)
-            i = (i >= 0) ? i : n+i+1
-            (1 <= i <= n) ? [v[i]] : System[]
-        else
-            #TODO: support generic indexing function?
-        end
-    end
-end
-getvar!(s::Vector, n::Symbol) = getvar.(s, n)
-getvar!(x::Vector{Var{Produce}}, n::AbstractString) = value!.(x, n)
 getvar!(s::System, l::Vector) = begin
     #HACK: manual reduction due to memory allocations
     #reduce((a, b) -> getvar!(a, b), [s; l])
@@ -170,6 +137,23 @@ getvar!(s::System, l::Vector) = begin
     a
 end
 getvar!(s::System, n::AbstractString) = getvar!(varpath(s, n))
+
+getvar!(x::Var{Produce}, o::VarOpAll) = value!(x)
+getvar!(x::Var{Produce}, o::VarOpRecursiveAll) = begin
+    v = value!(x)
+    l = System[]
+    #TODO: possibly reduce overhead by reusing calculated values in child nodes
+    f(v) = (append!(l, v); foreach(s -> f.(value!(s, x.name)), v); l)
+    f(v)
+end
+getvar!(v::Vector{<:System}, o::VarOpIndex) = begin
+    n = length(v)
+    i = o.index
+    i = (i >= 0) ? i : n+i+1
+    (1 <= i <= n) ? [v[i]] : System[]
+end
+getvar!(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value!(s, Symbol(o.cond)), v)
+getvar!(s::Vector{<:System}, n::Symbol) = getvar.(s, n)
 
 check!(x::Var) = check!(state(x))
 update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, () -> x()), priority(s)))

@@ -306,8 +306,8 @@ using Unitful
             i(t="context.clock.tick") => (t-2) ~ preserve
             a(x="p[*].i") => (isempty(x) ? 0 : sum(x)) ~ track
             b(x="p[**].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x="p[1].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x="p[-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x="p[*/1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x="p[*/-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
         end
         s = instance(S)
         @test length(s.p) == 0
@@ -338,8 +338,8 @@ using Unitful
             f(i) => isodd(i) ~ track::Bool
             a(x="p[*/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
             b(x="p[**/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x="p[1/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x="p[-1/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x="p[*/f/1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x="p[*/f/-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
         end
         s = instance(S)
         @test length(s.p) == 0
@@ -376,8 +376,8 @@ using Unitful
             f(i) => isodd(i) ~ flag
             a(x="p[*/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
             b(x="p[**/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x="p[1/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x="p[-1/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x="p[*/f/1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x="p[*/f/-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
         end
         s = instance(S)
         @test length(s.p) == 0
