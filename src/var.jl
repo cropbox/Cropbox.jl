@@ -27,14 +27,10 @@ patch_default!(s::System, e::Equation, n) = begin
 
         # 1. external options (i.e. TOML config)
         v = option(c, s, n, a)
-        # @show "external option"
-        # @show v
         !isnothing(v) && return override!(a, v)
 
         # 2. default parameter values
         v = get(default(e), a, missing)
-        # @show "default param"
-        # @show v
         !ismissing(v) && return override!(a, v)
     end
     resolve!.(getargs(e))
@@ -65,7 +61,6 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
     pair!(args) = begin
         resolve!(a::Symbol) = begin
             interpret(v::Symbol) = value!(s, v)
-            interpret(v::String) = error("no string in interpret")
             interpret(v::VarVal) = value!(v)
             interpret(v) = v
 
