@@ -23,9 +23,10 @@ getproperty(s::System, n::String) = getvar(s, n)
 
 import Base: collect
 collect(s::System; recursive=true, exclude_self=true) = begin
-    S = Set()
+    S = Set{System}()
+    SS = Set{System}()
     visit(s) = begin
-        SS = Set()
+        empty!(SS)
         add(f::System) = push!(SS, f)
         add(f) = union!(SS, f)
         for n in collectible(s)
