@@ -24,17 +24,18 @@ getproperty(s::System, n::String) = getvar(s, n)
 import Base: collect
 collect(s::System; recursive=true, exclude_self=true) = begin
     S = Set{System}()
-    SS = Set{System}()
+    T = Set{System}()
     visit(s) = begin
-        empty!(SS)
-        add(f::System) = push!(SS, f)
-        add(f) = union!(SS, f)
+        empty!(T)
+        add(f::System) = push!(T, f)
+        add(f) = union!(T, f)
         for n in collectible(s)
             add(getfield(s, n))
         end
-        filter!(s -> s ∉ S, SS)
-        union!(S, SS)
-        recursive && foreach(visit, SS)
+        filter!(s -> s ∉ S, T)
+        union!(S, T)
+        N = copy(T)
+        recursive && foreach(visit, N)
     end
     visit(s)
     exclude_self && setdiff!(S, (s,))
