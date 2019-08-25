@@ -125,8 +125,8 @@ using Polynomials
         #FIXME: roots() requires no unit attached
         c, b, a = [I2*Jmax, -(I2+Jmax), theta]
         #a = a
-        b = uconvert(u"μmol/m^2/s", b) |> ustrip
-        c = uconvert(u"(μmol/m^2/s)^2", c) |> ustrip
+        b = ustrip(u"μmol/m^2/s", b)
+        c = ustrip(u"(μmol/m^2/s)^2", c)
         #J = roots(Poly([c, b, a])) |> minimum
         pr = roots(Poly([c, b, a]))
         J = minimum(pr) * u"μmol/m^2/s"
@@ -210,9 +210,9 @@ end
         a = m * g1 * A_net / Cs
         b = g0 + gb - (m * g1 * A_net / Cs)
         c = (-RH * gb) - g0
-        a = uconvert(u"mmol/m^2/s", a) |> ustrip
-        b = uconvert(u"mmol/m^2/s", b) |> ustrip
-        c = uconvert(u"mmol/m^2/s", c) |> ustrip
+        a = ustrip(u"mmol/m^2/s", a)
+        b = ustrip(u"mmol/m^2/s", b)
+        c = ustrip(u"mmol/m^2/s", c)
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
         #hs = roots(Poly([c, b, a]))) |> maximum
