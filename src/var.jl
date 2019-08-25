@@ -23,9 +23,19 @@ patch_default!(s::System, e::Equation, n) = begin
     c = s.context.config
     # patch default arguments from config
     resolve!(a::Symbol) = begin
+        override!(a::Symbol, v) = (default(e)[a] = VarVal(s, v))
+
         # 1. external options (i.e. TOML config)
         v = option(c, s, n, a)
-        !isnothing(v) && (default(e)[a] = v)
+        # @show "external option"
+        # @show v
+        !isnothing(v) && return override!(a, v)
+
+        # 2. default parameter values
+        v = get(default(e), a, missing)
+        # @show "default param"
+        # @show v
+        !ismissing(v) && return override!(a, v)
     end
     resolve!.(getargs(e))
     # patch state variable from config
@@ -52,10 +62,11 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 (x::Var)() = begin
     s = x.system
     e = x.equation
-    pair(args) = begin
-        resolve(a::Symbol) = begin
+    pair!(args) = begin
+        resolve!(a::Symbol) = begin
             interpret(v::Symbol) = value!(s, v)
-            interpret(v::String) = value!(s, v)
+            interpret(v::String) = error("no string in interpret")
+            interpret(v::VarVal) = value!(v)
             interpret(v) = v
 
             # 2. default parameter values
@@ -70,12 +81,12 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
         end
         l = Pair{Symbol,Any}[]
         for a in args
-            push!(l, a => resolve(a))
+            push!(l, a => resolve!(a))
         end
         l
     end
-    args = pair(getargs(e))
-    kwargs = pair(getkwargs(e))
+    args = pair!(getargs(e))
+    kwargs = pair!(getkwargs(e))
     handle(x, args, kwargs)
 end
 handle(x::Var, args, kwargs) = call(x, args, kwargs)
@@ -104,7 +115,7 @@ call(x::Var, args, kwargs) = begin
 end
 
 getvar(s::System, n::Symbol) = getfield(s, n)
-getvar(s::System, l::Vector{Symbol}) = begin
+getvar(s::System, l::Vector) = begin
     #HACK: manual reduction due to memory allocations
     #reduce((a, b) -> getvar(a, b), [s; l])
     a = s
@@ -113,10 +124,10 @@ getvar(s::System, l::Vector{Symbol}) = begin
     end
     a
 end
-getvar(s::System, n::String) = getvar(s, Symbol.(split(n, ".")))
+getvar(s::System, n::AbstractString) = getvar(varpath(s, n))
 
 getvar!(s::System, n::Symbol) = getvar(s, n)
-getvar!(x::Var{Produce}, n::N) where {N<:AbstractString} = begin
+getvar!(x::Var{Produce}, n::AbstractString) = begin
     m = match(r"(?<ind>[^/]+)(?:/(?<cond>.+))?", n)
     cond(a) = begin
         c = m[:cond]
@@ -148,7 +159,7 @@ getvar!(x::Var{Produce}, n::N) where {N<:AbstractString} = begin
     end
 end
 getvar!(s::Vector, n::Symbol) = getvar.(s, n)
-getvar!(x::Vector{Var{Produce}}, n::N) where {N<:AbstractString} = value!.(x, n)
+getvar!(x::Vector{Var{Produce}}, n::AbstractString) = value!.(x, n)
 getvar!(s::System, l::Vector) = begin
     #HACK: manual reduction due to memory allocations
     #reduce((a, b) -> getvar!(a, b), [s; l])
@@ -158,16 +169,7 @@ getvar!(s::System, l::Vector) = begin
     end
     a
 end
-getvar!(s::System, n::N) where {N<:AbstractString} = begin
-    l = split(n, ".")
-    ms = match.(r"(?<key>[^\[\]]+)(?:\[(?<op>.+)\])?", l)
-    f(m) = begin
-        key = Symbol(m[:key])
-        op = m[:op]
-        isnothing(op) ? [key] : [key, op]
-    end
-    getvar!(s, f.(ms) |> Iterators.flatten |> collect)
-end
+getvar!(s::System, n::AbstractString) = getvar!(varpath(s, n))
 
 check!(x::Var) = check!(state(x))
 update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, () -> x()), priority(s)))
