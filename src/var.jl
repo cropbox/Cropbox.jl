@@ -86,7 +86,15 @@ call(x::Var, args, kwargs) = begin
 end
 
 getvar(s::System, n::Symbol) = getfield(s, n)
-getvar(s::System, l::Vector{Symbol}) = reduce((a, b) -> getvar(a, b), [s; l])
+getvar(s::System, l::Vector{Symbol}) = begin
+    #HACK: manual reduction due to memory allocations
+    #reduce((a, b) -> getvar(a, b), [s; l])
+    a = s
+    for b in l
+        a = getvar(a, b)
+    end
+    a
+end
 getvar(s::System, n::String) = getvar(s, Symbol.(split(n, ".")))
 
 getvar!(s::System, n::Symbol) = getvar(s, n)
@@ -123,7 +131,15 @@ getvar!(x::Var{Produce}, n::N) where {N<:AbstractString} = begin
 end
 getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 getvar!(x::Vector{Var{Produce}}, n::N) where {N<:AbstractString} = value!.(x, n)
-getvar!(s::System, l::Vector) = reduce((a, b) -> getvar!(a, b), [s; l])
+getvar!(s::System, l::Vector) = begin
+    #HACK: manual reduction due to memory allocations
+    #reduce((a, b) -> getvar!(a, b), [s; l])
+    a = s
+    for b in l
+        a = getvar!(a, b)
+    end
+    a
+end
 getvar!(s::System, n::N) where {N<:AbstractString} = begin
     l = split(n, ".")
     ms = match.(r"(?<key>[^\[\]]+)(?:\[(?<op>.+)\])?", l)
