@@ -24,9 +24,8 @@ getproperty(s::System, n::String) = getvar(s, n)
 import Base: collect
 collect(s::System; recursive=true, exclude_self=true) = begin
     S = Set{System}()
-    T = Set{System}()
     visit(s) = begin
-        empty!(T)
+        T = Set{System}()
         add(f::System) = push!(T, f)
         add(f) = union!(T, f)
         for n in collectible(s)
@@ -34,8 +33,7 @@ collect(s::System; recursive=true, exclude_self=true) = begin
         end
         filter!(s -> s ∉ S, T)
         union!(S, T)
-        N = copy(T)
-        recursive && foreach(visit, N)
+        recursive && foreach(visit, T)
     end
     visit(s)
     exclude_self && setdiff!(S, (s,))
