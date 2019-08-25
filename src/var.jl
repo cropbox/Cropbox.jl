@@ -7,18 +7,19 @@ mutable struct Var{S<:State,V,M<:System,E<:Equation,N}
     nounit::Vector{Symbol}
 
     Var(s::M, e::E, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State,M<:System,E<:Equation} = begin
-        e = patch!(s, e, [_name; _alias])
-        EE = typeof(e)
+        e = patch_default!(s, e, [_name; _alias])
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
         nu = Symbol.(split(nounit, ","; keepempty=false))
         V = valuetype(st)
+        e = patch_valuetype!(s, e, st)
+        EE = typeof(e)
         N = Symbol("$(name(s))<$_name>")
         x = new{S,V,M,EE,N}(s, st, e, _name, _alias, nu)
     end
 end
 
-patch!(s::System, e::Equation, n) = begin
+patch_default!(s::System, e::Equation, n) = begin
     c = s.context.config
     # patch default arguments from config
     resolve!(a::Symbol) = begin
@@ -35,6 +36,11 @@ patch!(s::System, e::Equation, n) = begin
     else
         e
     end
+end
+patch_valuetype!(s::System, e::StaticEquation, st::State) = e
+patch_valuetype!(s::System, e::DynamicEquation, st::State) = begin
+    V = valuetype(st)
+    Equation(e.func, e.name, e.args, e.kwargs, e.default, V)
 end
 
 name(x::Var) = x.name
