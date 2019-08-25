@@ -18,14 +18,14 @@ default(V::Type{<:Number}) = V(0)
 default(V::Type) = V()
 
 import Unitful: unit
-unit(s::State) = missing
+unit(s::State) = nothing
 
-unittype(::Missing, _) = missing
+unittype(::Nothing, _) = nothing
 unittype(U::Unitful.Units, _) = U
 unittype(unit::String, s::System) = value!(s, unit)
 
 valuetype(::State{V}) where V = V
-valuetype(T, ::Missing) = T
+valuetype(T, ::Nothing) = T
 valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
 valuetype(::Type{Array{T,N}}, U::Unitful.Units) where {T,N} = Array{valuetype(T, U), N}
 
@@ -35,10 +35,10 @@ timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
 timevalue(t::String, s::System) = value!(s, t)
 timevalue(t, _) = t
 
-rateunittype(U::Missing, TU::Unitful.Units) = TU^-1
+rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
 rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
-rateunittype(U::Unitful.Units, TU::Missing) = U
-rateunittype(U::Missing, TU::Missing) = missing
+rateunittype(U::Unitful.Units, TU::Nothing) = U
+rateunittype(U::Nothing, TU::Nothing) = nothing
 
 const Priority = Int
 priority(s::State) = 0
@@ -52,7 +52,7 @@ mutable struct Pass{V,U,N} <: State{V}
     value::V
 end
 
-Pass(; unit=missing, _name, _system, _value=missing, _type=Float64, _...) = begin
+Pass(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     if ismissing(_value)
@@ -73,7 +73,7 @@ mutable struct Advance{T,U,N} <: State{T}
     value::Timepiece{T}
 end
 
-Advance(; init=nothing, step=nothing, unit=missing, _name, _system, _type=Int64, _...) = begin
+Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64, _...) = begin
     U = unittype(unit, _system)
     T = valuetype(_type, U)
     t = isnothing(init) ? zero(T) : timevalue(init, _system)
@@ -96,7 +96,7 @@ mutable struct Preserve{V,U,N} <: State{V}
 end
 
 # Preserve is the only State that can store value `nothing`
-Preserve(; unit=missing, _name, _system, _value=missing, _type=Float64, _...) = begin
+Preserve(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     if ismissing(_value)
@@ -120,7 +120,7 @@ mutable struct Track{V,T,U,N} <: State{V}
     time::TimeState{T}
 end
 
-Track(; unit=missing, time="context.clock.tick", _name, _system, _value=missing, _type=Float64, _type_time=Float64, _...) = begin
+Track(; unit=nothing, time="context.clock.tick", _name, _system, _value=missing, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     if ismissing(_value)
@@ -145,7 +145,7 @@ mutable struct Drive{V,T,U,N} <: State{V}
     time::TimeState{T}
 end
 
-Drive(; key=nothing, unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     k = isnothing(key) ? _name : Symbol(key)
     U = unittype(unit, _system)
     V = valuetype(_type, U)
@@ -165,7 +165,7 @@ mutable struct Call{V,T,U,N} <: State{V}
     time::TimeState{T}
 end
 
-Call(; unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
@@ -196,7 +196,7 @@ mutable struct Accumulate{V,T,R,U,RU,N} <: State{V}
     value::V
 end
 
-Accumulate(; init=0, unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     TU = timeunittype(time, _system)
@@ -236,7 +236,7 @@ mutable struct Capture{V,T,R,U,RU,N} <: State{V}
     value::V
 end
 
-Capture(; unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     TU = timeunittype(time, _system)
@@ -328,7 +328,7 @@ mutable struct Solve{V,T,U,N} <: State{V}
     solving::Bool
 end
 
-Solve(; lower=nothing, upper=nothing, unit=missing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
