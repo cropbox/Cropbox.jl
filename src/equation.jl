@@ -4,14 +4,13 @@ value(e::Equation) = missing
 getargs(e::Equation) = Symbol[]
 getkwargs(e::Equation) = Symbol[]
 default(e::Equation) = Dict{Symbol,Any}()
-call(e::Equation, args, kwargs) = e(args...; kwargs...)
 
 struct StaticEquation{V} <: Equation
     value::V
     name::Symbol
 end
 
-(e::StaticEquation)() = value(e)
+call(e::StaticEquation, args, kwargs) = value(e)
 value(e::StaticEquation) = e.value
 
 struct DynamicEquation{F<:Function} <: Equation
@@ -22,7 +21,7 @@ struct DynamicEquation{F<:Function} <: Equation
     default::Dict{Symbol,Any}
 end
 
-(e::DynamicEquation)(args...; kwargs...) = e.func(args...; kwargs...)
+call(e::DynamicEquation, args, kwargs) = e.func(args...; kwargs...)
 getargs(e::DynamicEquation) = e.args
 getkwargs(e::DynamicEquation) = e.kwargs
 default(e::DynamicEquation) = e.default
