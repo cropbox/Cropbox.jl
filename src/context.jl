@@ -1,28 +1,28 @@
-import DataStructures: DefaultDict
-const Queue = DefaultDict{Priority,Vector{Function}}
-
 @system Context begin
     self => self ~ ::System
     context => self ~ ::System
     systems ~ ::[System]
 
     config => configure() ~ ::Config(override)
-    queue => Queue(Vector{Function}) ~ ::Queue
+    prequeue => Function[] ~ ::Vector{Function}
+    postqueue => Function[] ~ ::Vector{Function}
     clock => Clock(; context=self) ~ ::Clock
 end
 
 option(c::Context, keys...) = option(c.config, keys...)
 
-queue!(c::Context, f::Function, p::Priority) = push!(c.queue[p], f)
-queue!(c::Context, f, p::Priority) = nothing
-dequeue!(c::Context) = empty!(c.queue)
-flush!(c::Context, cond) = begin
-    q = filter(cond, c.queue)
-    filter!(!cond, c.queue)
-    foreach(f -> f(), q |> values |> Iterators.flatten)
+queue!(c::Context, f::Function, p::Priority) = begin
+    q = (p >= 0) ? c.postqueue : c.prequeue
+    push!(q, f)
 end
-preflush!(c::Context) = flush!(c, p -> p.first < 0)
-postflush!(c::Context) = flush!(c, p -> p.first >= 0)
+queue!(c::Context, f, p::Priority) = nothing
+dequeue!(c::Context) = (empty!(c.prequeue); empty!(c.postqueue))
+flush!(q::Vector{Function}) = begin
+    foreach(f -> f(), q)
+    empty!(q)
+end
+preflush!(c::Context) = flush!(c.prequeue)
+postflush!(c::Context) = flush!(c.postqueue)
 
 update!(c::Context) = begin
     # process pending operations from last timestep (i.e. produce)
