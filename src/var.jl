@@ -21,6 +21,18 @@ end
 
 patch_default!(s::System, e::Equation, n) = begin
     c = s.context.config
+    # patch state variable from config
+    v = option(c, s, n)
+    #HACK: avoid Dict used for partial argument patch
+    if !isnothing(v) && !(typeof(v) <: Dict)
+        Equation(v, e.name)
+    else
+        patch_default_args!(s, e, n)
+    end
+end
+patch_default_args!(s::System, e::StaticEquation, n) = e
+patch_default_args!(s::System, e::DynamicEquation, n) = begin
+    c = s.context.config
     # patch default arguments from config
     resolve!(a::Symbol) = begin
         override!(a::Symbol, v) = (default(e)[a] = VarVal(s, v))
@@ -33,16 +45,9 @@ patch_default!(s::System, e::Equation, n) = begin
         v = get(default(e), a, missing)
         !ismissing(v) && return override!(a, v)
     end
-    resolve!.(getargs(e))
-    resolve!.(getkwargs(e))
-    # patch state variable from config
-    v = option(c, s, n)
-    #HACK: avoid Dict used for partial argument patch
-    if !isnothing(v) && !(typeof(v) <: Dict)
-        Equation(v, e.name)
-    else
-        e
-    end
+    resolve!.(getargs(e) |> keys)
+    resolve!.(getkwargs(e) |> keys)
+    e
 end
 patch_valuetype!(s::System, e::StaticEquation, st::State) = e
 patch_valuetype!(s::System, e::DynamicEquation, st::State) = begin
@@ -61,11 +66,11 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 handle(x::Var, e::StaticEquation) = value(e)
 handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    args = patch_args!(getdargs(e), x, s, e, getargs(e))
-    kwargs = patch_args!(getdkwargs(e), x, s, e, getkwargs(e))
+    args = patch_args!(getargs(e), x, s, e)
+    kwargs = patch_args!(getkwargs(e), x, s, e)
     handle(x, args, kwargs)
 end
-patch_args!(d, x::Var, s::System, e::DynamicEquation, names) = begin
+patch_args!(d, x::Var, s::System, e::DynamicEquation) = begin
     resolve!(a::Symbol) = begin
         interpret(v::Symbol) = value!(s, v)
         interpret(v::VarVal) = value!(v)
@@ -81,7 +86,7 @@ patch_args!(d, x::Var, s::System, e::DynamicEquation, names) = begin
         # 4. argument not found (partial function used by Call State)
         missing
     end
-    for a in names
+    for a in keys(d)
         d[a] = resolve!(a)
     end
     d
