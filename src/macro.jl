@@ -168,8 +168,8 @@ genstruct(name, infos, incl) = begin
         $(esc(:Cropbox)).source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
         $(esc(:Cropbox)).mixins(::$(esc(:Type)){$(esc(name))}) = $(esc(:eval)).($incl)
         $(esc(:Cropbox)).fieldnamesunique(::$(esc(:Type)){$(esc(name))}) = $(genfieldnamesunique(infos))
-        @generated $(esc(:Cropbox)).collectible(::$(esc(:Type)){$(esc(name))}) = filtervar(Union{System, Vector{System}, Var{Produce}}, $(esc(name)))
-        @generated $(esc(:Cropbox)).updatable(::$(esc(:Type)){$(esc(name))}) = filtervar(Var, $(esc(name)))
+        @generated $(esc(:Cropbox)).collectible(::$(esc(:Type)){$(esc(name))}) = $(esc(:Cropbox)).filtervar(Union{$(esc(:Cropbox)).System, Vector{$(esc(:Cropbox)).System}, $(esc(:Cropbox)).Var{$(esc(:Cropbox)).Produce}}, $(esc(name)))
+        @generated $(esc(:Cropbox)).updatable(::$(esc(:Type)){$(esc(name))}) = $(esc(:Cropbox)).filtervar($(esc(:Cropbox)).Var, $(esc(name)))
         $(esc(name))
     end
     flatten(system)
