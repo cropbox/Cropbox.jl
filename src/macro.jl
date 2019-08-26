@@ -92,7 +92,7 @@ macro equation(f)
     :($(esc(name)) = $e)
 end
 
-genoverride(name, default) = @q $(esc(:Base)).get(_kwargs, $(Meta.quot(name)), $default)
+genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
 gendecl(i::VarInfo{Symbol}) = begin
     if isnothing(i.body)
@@ -154,6 +154,7 @@ end
 genfieldnamesunique(infos) = Tuple(i.name for i in infos)
 
 genstruct(name, infos, incl) = begin
+    S = esc(name)
     fields = genfield.(infos)
     decls = gendecl.(infos)
     source = gensource(infos)
@@ -166,12 +167,12 @@ genstruct(name, infos, incl) = begin
                 $self
             end
         end
-        $C.source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
-        $C.mixins(::$(esc(:Type)){$(esc(name))}) = $(esc(:eval)).($incl)
-        $C.fieldnamesunique(::$(esc(:Type)){$(esc(name))}) = $(genfieldnamesunique(infos))
-        @generated $C.collectible(::$(esc(:Type)){$(esc(name))}) = $C.filtervar(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $(esc(name)))
-        @generated $C.updatable(::$(esc(:Type)){$(esc(name))}) = $C.filtervar($C.Var, $(esc(name)))
-        $(esc(name))
+        $C.source(::Val{Symbol($S)}) = $(Meta.quot(source))
+        $C.mixins(::Type{$S}) = eval.($incl)
+        $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
+        @generated $C.collectible(::Type{$S}) = $C.filtervar(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $S)
+        @generated $C.updatable(::Type{$S}) = $C.filtervar($C.Var, $S)
+        $S
     end
     flatten(system)
 end
