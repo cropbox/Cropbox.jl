@@ -168,7 +168,7 @@ genstruct(name, infos, incl) = begin
             end
         end
         $C.source(::Val{Symbol($S)}) = $(Meta.quot(source))
-        $C.mixins(::Type{$S}) = eval.($incl)
+        $C.mixins(::Type{$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
         @generated $C.collectible(::Type{$S}) = $C.filtervar(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $S)
         @generated $C.updatable(::Type{$S}) = $C.filtervar($C.Var, $S)
