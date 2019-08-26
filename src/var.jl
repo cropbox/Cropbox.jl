@@ -7,7 +7,7 @@ mutable struct Var{S<:State,V,M<:System,E<:Equation,N}
     nounit::Tuple{Vararg{Symbol}}
 
     Var(s::M, e::E, ::Type{S}; _name, _alias=(), _value, nounit="", stargs...) where {S<:State,M<:System,E<:Equation} = begin
-        e = patch_default!(s, e, [_name; _alias])
+        e = patch_default!(s, e, [_name, _alias...])
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
         nu = Tuple(Symbol.(split(nounit, ","; keepempty=false)))
@@ -52,7 +52,7 @@ end
 
 name(x::Var) = x.name
 import Base: names
-names(x::Var) = [[x.name]; x.alias]
+names(x::Var) = [x.name, x.alias...]
 
 state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 
