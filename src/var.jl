@@ -163,7 +163,7 @@ getvar!(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value!(s, Symbol(o.co
 getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 
 check!(x::Var) = check!(state(x))
-update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, () -> x()), priority(s)))
+update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, x), priority(s)))
 
 value(x::Var) = value(state(x))
 value(x) = x
@@ -173,8 +173,6 @@ value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
 value!(x::Vector{<:Var}) = value!.(x)
 value!(s::System, n) = value!(getvar!(s, n))
-
-store!(s::State, x::Var) = store!(s, value!(x))
 
 advance!(x::Var{Advance}) = advance!(state(x))
 reset!(x::Var{Advance}) = reset!(state(x))

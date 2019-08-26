@@ -1,8 +1,9 @@
 abstract type State{V} end
+abstract type AbstractVar{V} end
 
 check!(s::State) = true
 value(s::State{V}) where V = s.value::V
-store!(s::State, f::Function) = store!(s, f())
+store!(s::State, f::AbstractVar) = store!(s, f())
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
 
 checktime!(s::State) = check!(s.time)
@@ -155,7 +156,7 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
 end
 
 check!(s::Drive) = checktime!(s)
-store!(s::Drive, f::Function) = store!(s, f()[s.key])
+store!(s::Drive, f::AbstractVar) = store!(s, value!(f()[s.key])) # value!() for Var
 unit(::Drive{V,T,U,N}) where {V,T,U,N} = U
 
 ####
@@ -175,7 +176,7 @@ end
 
 check!(s::Call) = checktime!(s)
 value(s::Call{V}) where {V} = s.value::Union{V,Function}
-store!(s::Call, f::Function) = begin
+store!(s::Call, f::AbstractVar) = begin
     s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
     #HACK: no function should be returned for queueing
     nothing
@@ -209,7 +210,7 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _t
 end
 
 check!(s::Accumulate) = checktime!(s)
-store!(s::Accumulate, f::Function) = begin
+store!(s::Accumulate, f::AbstractVar) = begin
     t = s.time.ticker.t
     t0 = s.tick
     if ismissing(t0)
@@ -248,7 +249,7 @@ Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64
 end
 
 check!(s::Capture) = checktime!(s)
-store!(s::Capture, f::Function) = begin
+store!(s::Capture, f::AbstractVar) = begin
     t = s.time.ticker.t
     t0 = s.tick
     if !ismissing(t0)
@@ -281,7 +282,7 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
-store!(s::Flag, f::Function) = (v = f(); () -> store!(s, v))
+store!(s::Flag, f::AbstractVar) = (v = f(); () -> store!(s, v))
 priority(s::Flag) = 1
 
 ####
@@ -310,7 +311,7 @@ produce(s::Type{<:System}; args...) = Product(s, args)
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::Function) = (p = f(); () -> produce(s, p))
+store!(s::Produce, f::AbstractVar) = (p = f(); () -> produce(s, p))
 store!(s::Produce, ::Nothing) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -338,7 +339,7 @@ end
 
 check!(s::Solve) = checktime!(s) && !s.solving
 using Roots
-store!(s::Solve, f::Function) = begin
+store!(s::Solve, f::AbstractVar) = begin
     s.solving = true
     cost(x) = (store!(s, x); recite!(s.context); y = f(); y)
     b = (value!(s.lower), value!(s.upper))
