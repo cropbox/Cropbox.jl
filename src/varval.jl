@@ -51,15 +51,46 @@ getvar!(p::VarPath) = getvar!(p.system, p.path)
 value(p::VarPath) = value(getvar(p))
 value!(p::VarPath) = value!(getvar!(p))
 
+#TODO: make it concise
+compact(v::VarPath) = begin
+    s = v.system
+    a = s
+    l = length(v.path)
+    for (i, b) in enumerate(v.path)
+        if typeof(b) <: Symbol
+            try
+                a = getvar(a, b)
+            catch
+                return VarPath(s, v.path[i:end])
+            end
+            if typeof(a) <: System
+                s = a
+            else
+                if i == l
+                    @assert typeof(a) <: Var
+                    return a
+                else
+                    return VarPath(s, v.path[i:end])
+                end
+            end
+        else
+            return VarPath(s, v.path[i:end])
+        end
+    end
+    v
+end
+
 import Base: convert
 convert(::Type{V}, p::VarPath) where {V<:Number} = convert(V, value!(p))
 convert(::Type{V}, p::VarPath) where {V<:Quantity} = convert(V, unitfy(value!(p), unit(V)))
 
+abstract type AbstractVar{V} end
+
 struct VarVal{V}
-    v::Union{VarPath,V}
+    v::Union{VarPath,V,AbstractVar}
 end
 
-VarVal{V}(s::System, p::AbstractString) where V = VarVal{V}(varpath(s, p))
+VarVal{V}(s::System, p::AbstractString) where V = VarVal{V}(varpath(s, p) |> compact)
 VarVal{V}(s::System, p::Number) where {V<:Number} = VarVal{V}(convert(V, p))
 VarVal{V}(s::System, p::Number) where {V<:Quantity} = VarVal{V}(convert(V, unitfy(p, unit(V))))
 VarVal{V}(s::System, ::Nothing) where V = nothing

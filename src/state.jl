@@ -1,5 +1,4 @@
 abstract type State{V} end
-abstract type AbstractVar{V} end
 
 check!(s::State) = true
 value(s::State{V}) where V = s.value::V
