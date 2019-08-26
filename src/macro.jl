@@ -150,6 +150,8 @@ gensource(infos) = begin
     striplines(flatten(@q begin $(l...) end))
 end
 
+genfieldnamesunique(infos) = Tuple(i.name for i in infos)
+
 genstruct(name, infos, incl) = begin
     fields = genfield.(infos)
     decls = gendecl.(infos)
@@ -165,6 +167,9 @@ genstruct(name, infos, incl) = begin
         end
         $(esc(:Cropbox)).source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
         $(esc(:Cropbox)).mixins(::$(esc(:Type)){$(esc(name))}) = $(esc(:eval)).($incl)
+        $(esc(:Cropbox)).fieldnamesunique(::$(esc(:Type)){$(esc(name))}) = $(genfieldnamesunique(infos))
+        @generated $(esc(:Cropbox)).collectible(::$(esc(:Type)){$(esc(name))}) = filtervar(Union{System, Vector{System}, Var{Produce}}, $(esc(name)))
+        @generated $(esc(:Cropbox)).updatable(::$(esc(:Type)){$(esc(name))}) = filtervar(Var, $(esc(name)))
         $(esc(name))
     end
     flatten(system)
@@ -180,6 +185,17 @@ source(::Val{:System}) = @q begin
 end
 mixins(::Type{<:System}) = [System]
 mixins(s::System) = mixins(typeof(s))
+
+fieldnamesunique(::Type{<:System}) = ()
+filtervar(type::Type, ::Type{S}) where {S<:System} = begin
+    d = collect(zip(fieldnames(S), fieldtypes(S)))
+    F = fieldnamesunique(S)
+    filter!(p -> p[1] in F, d)
+    filter!(p -> p[2] <: type, d)
+    map(p -> p[1], d) |> Tuple{Vararg{Symbol}}
+end
+@generated collectible(::Type{S}) where {S<:System} = filtervar(Union{System, Vector{System}, Var{Produce}}, S)
+@generated updatable(::Type{S}) where {S<:System} = filtervar(Var, S)
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)

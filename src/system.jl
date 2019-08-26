@@ -40,20 +40,7 @@ collect(s::System; recursive=true, exclude_self=true) = begin
     S
 end
 
-filtervar(type::Type, ::Type{S}) where {S<:System} = begin
-    d = collect(zip(fieldnames(S), fieldtypes(S)))
-    filter!(p -> p[2] <: type, d)
-    map(p -> p[1], d)::Vector{Symbol}
-end
-@generated collectible(::Type{S}) where {S<:System} = begin
-    v = filtervar(Union{System, Vector{System}, Var{Produce}}, S)
-    :($v)
-end
 collectible(::S) where {S<:System} = collectible(S)
-@generated updatable(::Type{S}) where {S<:System} = begin
-    v = filtervar(Var, S)
-    :($v)
-end
 updatable(::S) where {S<:System} = updatable(S)
 
 context(s::System) = s.context
