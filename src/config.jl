@@ -19,7 +19,7 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     nothing
 end
 option(c::Config, key::System, keys...) = begin
-    k = names.([mixins(key); key]) |> Iterators.flatten |> collect
+    k = names.([mixins(key)..., key]) |> Iterators.flatten |> collect
     option(c, k, keys...)
 end
 option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
