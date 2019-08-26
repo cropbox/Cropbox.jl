@@ -56,60 +56,64 @@ names(x::Var) = [x.name, x.alias...]
 
 state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 
-(x::Var)() = begin
+(x::Var)() = handle(x, x.equation)
+
+handle(x::Var, e::StaticEquation) = value(e)
+handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    e = x.equation
-    pair!(args) = begin
-        resolve!(a::Symbol) = begin
-            interpret(v::Symbol) = value!(s, v)
-            interpret(v::VarVal) = value!(v)
-            interpret(v) = v
-
-            # 2. default parameter values
-            v = get(default(e), a, missing)
-            !ismissing(v) && return interpret(v)
-
-            # 3. state vars from current system
-            isdefined(s, a) && return interpret(a)
-
-            # 4. argument not found (partial function used by Call State)
-            missing
-        end
-        l = Pair{Symbol,Any}[]
-        for a in args
-            push!(l, a => resolve!(a))
-        end
-        l
-    end
-    args = pair!(getargs(e))
-    kwargs = pair!(getkwargs(e))
+    args = patch_args!(getdargs(e), x, s, e, getargs(e))
+    kwargs = patch_args!(getdkwargs(e), x, s, e, getkwargs(e))
     handle(x, args, kwargs)
 end
-handle(x::Var, args, kwargs) = call(x, args, kwargs)
+patch_args!(d, x::Var, s::System, e::DynamicEquation, names) = begin
+    resolve!(a::Symbol) = begin
+        interpret(v::Symbol) = value!(s, v)
+        interpret(v::VarVal) = value!(v)
+        interpret(v) = v
+
+        # 2. default parameter values
+        v = get(default(e), a, missing)
+        !ismissing(v) && return interpret(v)
+
+        # 3. state vars from current system
+        isdefined(s, a) && return interpret(a)
+
+        # 4. argument not found (partial function used by Call State)
+        missing
+    end
+    for a in names
+        d[a] = resolve!(a)
+    end
+    d
+end
+
+handle(x::Var, args, kwargs) = handle(x.equation, x.nounit, args, kwargs)
 handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
     # arg
     i = 1
-    for (j, (k, v)) in enumerate(args)
+    for (k, v) in args
         if ismissing(v)
-            args[j] = k => pargs[i]
+            args[k] = pargs[i]
             i += 1
         end
     end
     @assert i-1 == length(pargs) "incorrect number of positional arguments: $pargs"
     # kwarg
-    dkwargs = Dict{Symbol,Any}(kwargs)
-    merge!(dkwargs, pkwargs)
-    call(x, args, dkwargs)
+    merge!(kwargs, pkwargs)
+    handle(x.equation, x.nounit, args, kwargs)
 end
-call(x::Var, args, kwargs) = begin
-    nounit(a::Symbol) = a in x.nounit ? ustrip : identity
-    nounit(p::Pair) = nounit(p[1])(p[2])
-    uargs = nounit.(args)
-    nounits(p::Pair) = p[1] => nounit(p)
-    nounits(l::Vector) = map!(nounits, l, l)
-    nounits(d::Dict) = nounits(collect(d))
-    ukwargs = nounits(kwargs)
-    call(x.equation, uargs, ukwargs)
+
+handle(e::DynamicEquation, nounit, args, kwargs) = begin
+    process!(d) = begin
+        for (k, v) in d
+            if k in nounit
+                d[k] = ustrip(v)
+            end
+        end
+    end
+    process!(args)
+    process!(kwargs)
+    call(e, values(args), kwargs)
 end
 
 getvar(s::System, n::Symbol) = getfield(s, n)
