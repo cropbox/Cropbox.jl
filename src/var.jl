@@ -1,12 +1,12 @@
-mutable struct Var{S<:State,V,M<:System,E<:Equation,N}
-    system::M
+mutable struct Var{S<:State,V,E<:Equation,N} <: AbstractVar{V}
+    system::System
     state::State{V}
     equation::E
     name::Symbol
     alias::Tuple{Vararg{Symbol}}
     nounit::Tuple{Vararg{Symbol}}
 
-    Var(s::M, e::E, ::Type{S}; _name, _alias=(), _value, nounit="", stargs...) where {S<:State,M<:System,E<:Equation} = begin
+    Var(s::System, e::E, ::Type{S}; _name, _alias=(), _value, nounit="", stargs...) where {S<:State,E<:Equation} = begin
         e = patch_default!(s, e, [_name, _alias...])
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
@@ -15,7 +15,7 @@ mutable struct Var{S<:State,V,M<:System,E<:Equation,N}
         e = patch_valuetype!(s, e, st)
         EE = typeof(e)
         N = Symbol("$(name(s))<$_name>")
-        x = new{S,V,M,EE,N}(s, st, e, _name, _alias, nu)
+        x = new{S,V,EE,N}(s, st, e, _name, _alias, nu)
     end
 end
 
