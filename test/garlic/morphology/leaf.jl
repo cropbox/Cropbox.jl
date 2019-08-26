@@ -359,8 +359,12 @@
         #     r = (1 + (t_e - t) / (t_e - t_m)) * (t / t_e)**(t_e / (t_e - t_m))
         #     return clip(r, 0., 1.)
         # for garlic
-        r = aging_rate * senescence_age / length
-        clamp(r, 0, 1)
+        if iszero(length)
+            0
+        else
+            r = aging_rate * senescence_age / length
+            clamp(r, 0, 1)
+        end
     end ~ track
 
     senescent_area(senescence_ratio, area) => begin
