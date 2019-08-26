@@ -1,4 +1,4 @@
-mutable struct Var{S<:State,V,E<:Equation,N} <: AbstractVar{V}
+struct Var{S<:State,V,E<:Equation,N} <: AbstractVar{V}
     system::System
     state::State{V}
     equation::E
