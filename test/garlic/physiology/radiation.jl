@@ -171,7 +171,7 @@ end
     # rho_cd: canopy reflectance of diffuse irradiance, de Pury and Farquhar (1997) Table A2
     canopy_reflectivity_diffusion(I0_df, angles, rho_cb_at, fdf): rho_cd => begin
         # Probably the eqn A21 in de Pury is missing the integration terms of the angles??
-        (I0_df == 0) ? 0 : fdf(rho_cb_at.(angles))
+        iszero(I0_df) ? 0 : fdf(rho_cb_at.(angles))
     end ~ track
 
     # rho_soil: soil reflectivity for PAR band

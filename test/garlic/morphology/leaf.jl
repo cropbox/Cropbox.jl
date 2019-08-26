@@ -61,7 +61,7 @@
     area_from_length(l) => begin
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
-        (l == 0) ? 0 : 0.639945 + 0.954957l + 0.005920l^2
+        iszero(l) ? 0 : 0.639945 + 0.954957l + 0.005920l^2
     end ~ call(u"cm^2", nounit="l")
 
     area_increase_from_length(length) => begin

@@ -328,7 +328,7 @@ end
         R_abs = (1 - scatt)*PAR + scatt*NIR + 2*(epsilon * sbc * Tk^4)
 
         # debug dt I commented out the changes that yang made for leaf temperature for a test. I don't think they work
-        if Jw == 0
+        if iszero(Jw)
             # eqn 14.6b linearized form using first order approximation of Taylor series
             (psc1 / (VPD_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
         else

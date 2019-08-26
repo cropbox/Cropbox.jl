@@ -119,7 +119,7 @@ end
 
     conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
-        if LAI_sunlit == 0 || LAI_shaded == 0
+        if iszero(LAI_sunlit) || iszero(LAI_shaded)
             0
         else
             # average stomatal conductance Yang

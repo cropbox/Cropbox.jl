@@ -80,6 +80,6 @@
         # defining leaf nitrogen content this way, we did not consider the difference in leaf nitrogen content
         # of sunlit and shaded leaf yet YY
         #SK 8/22/10: set avg greenleaf N content before update in g/m2
-        (green_leaf == 0) ? 0 : (leaf / green_leaf)
+        iszero(green_leaf) ? 0 : (leaf / green_leaf)
     end ~ track(u"g/cm^2") # Nitrogen
 end

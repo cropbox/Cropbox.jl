@@ -165,7 +165,7 @@ end
     optical_air_mass_number(atmospheric_pressure, elevation_angle): m => begin
 		t_s = max(elevation_angle, 0)
 		#FIXME check 101.3 is indeed in kPa
-        #(t_s == 0) ? 0 : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
+        #iszero(t_s) ? 0 : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
 		atmospheric_pressure / (101.3u"kPa" * sin(t_s))
 	end ~ track
 
