@@ -62,8 +62,9 @@ parsetags(tags::Vector, type) = begin
 end
 
 const self = :($(esc(:self)))
+const C = :($(esc(:Cropbox)))
 
-genfield(i::VarInfo{Symbol}) = genfield(:($(esc(:Cropbox)).Var{$(esc(:Cropbox)).$(i.state)}), i.name, i.alias)
+genfield(i::VarInfo{Symbol}) = genfield(:($C.Var{$C.$(i.state)}), i.name, i.alias)
 genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.name, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
@@ -81,7 +82,7 @@ equation(f) = begin
     pair(x::Expr) = x.args[1] => x.args[2]
     default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict{Symbol,Any}
     func = @q function $(gensym())($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
-    :($(esc(:Cropbox)).Equation($func, $name, $args, $kwargs, $default))
+    :($C.Equation($func, $name, $args, $kwargs, $default))
 end
 
 macro equation(f)
@@ -123,7 +124,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     alias = Tuple(i.alias)
     value = haskey(i.tags, :override) ? genoverride(i.name, missing) : missing
     stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
-    decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    decl = :($C.Var($self, $e, $C.$(i.state); _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
@@ -157,7 +158,7 @@ genstruct(name, infos, incl) = begin
     decls = gendecl.(infos)
     source = gensource(infos)
     system = @q begin
-        mutable struct $name <: $(esc(:Cropbox)).System
+        mutable struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
                 $self = new()
@@ -165,11 +166,11 @@ genstruct(name, infos, incl) = begin
                 $self
             end
         end
-        $(esc(:Cropbox)).source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
-        $(esc(:Cropbox)).mixins(::$(esc(:Type)){$(esc(name))}) = $(esc(:eval)).($incl)
-        $(esc(:Cropbox)).fieldnamesunique(::$(esc(:Type)){$(esc(name))}) = $(genfieldnamesunique(infos))
-        @generated $(esc(:Cropbox)).collectible(::$(esc(:Type)){$(esc(name))}) = $(esc(:Cropbox)).filtervar(Union{$(esc(:Cropbox)).System, Vector{$(esc(:Cropbox)).System}, $(esc(:Cropbox)).Var{$(esc(:Cropbox)).Produce}}, $(esc(name)))
-        @generated $(esc(:Cropbox)).updatable(::$(esc(:Type)){$(esc(name))}) = $(esc(:Cropbox)).filtervar($(esc(:Cropbox)).Var, $(esc(name)))
+        $C.source(::$(esc(:Val)){$(esc(:Symbol))($(esc(name)))}) = $(Meta.quot(source))
+        $C.mixins(::$(esc(:Type)){$(esc(name))}) = $(esc(:eval)).($incl)
+        $C.fieldnamesunique(::$(esc(:Type)){$(esc(name))}) = $(genfieldnamesunique(infos))
+        @generated $C.collectible(::$(esc(:Type)){$(esc(name))}) = $C.filtervar(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $(esc(name)))
+        @generated $C.updatable(::$(esc(:Type)){$(esc(name))}) = $C.filtervar($C.Var, $(esc(name)))
         $(esc(name))
     end
     flatten(system)
