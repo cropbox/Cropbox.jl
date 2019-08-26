@@ -1,4 +1,4 @@
-struct Var{S<:State,V,E<:Equation,N} <: AbstractVar{V}
+struct Var{S<:State,V,E<:Equation} <: AbstractVar{V}
     system::System
     state::State{V}
     equation::E
@@ -15,7 +15,7 @@ struct Var{S<:State,V,E<:Equation,N} <: AbstractVar{V}
         e = patch_valuetype!(s, e, st)
         EE = typeof(e)
         N = Symbol("$(name(s))<$_name>")
-        x = new{S,V,EE,N}(s, st, e, _name, _alias, nu)
+        x = new{S,V,EE}(s, st, e, _name, _alias, nu)
     end
 end
 

@@ -48,7 +48,7 @@ show(io::IO, s::State) = print(io, "$(repr(value(s)))")
 
 ####
 
-mutable struct Pass{V,U,N} <: State{V}
+mutable struct Pass{V,U} <: State{V}
     value::V
 end
 
@@ -62,14 +62,14 @@ Pass(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = begi
         V = promote_type(V, typeof(v))
     end
     N = Symbol("$(name(_system))<$_name>")
-    Pass{V,U,N}(v)
+    Pass{V,U}(v)
 end
 
-unit(::Pass{V,U,N}) where {V,U,N} = U
+unit(::Pass{V,U}) where {V,U} = U
 
 ####
 
-mutable struct Advance{T,U,N} <: State{T}
+mutable struct Advance{T,U} <: State{T}
     value::Timepiece{T}
 end
 
@@ -80,18 +80,18 @@ Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64,
     dt = isnothing(step) ? oneunit(T) : timevalue(step, _system)
     T = promote_type(typeof(t), typeof(dt))
     N = Symbol("$(name(_system))<$_name>")
-    Advance{T,U,N}(Timepiece{T}(t, dt))
+    Advance{T,U}(Timepiece{T}(t, dt))
 end
 
 check!(s::Advance) = false
 value(s::Advance) = s.value.t
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
-unit(::Advance{T,U,N}) where {T,U,N} = U
+unit(::Advance{T,U}) where {T,U} = U
 
 ####
 
-mutable struct Preserve{V,U,N} <: State{V}
+mutable struct Preserve{V,U} <: State{V}
     value::Union{V,Missing}
 end
 
@@ -106,16 +106,16 @@ Preserve(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = 
         V = promote_type(V, typeof(v))
     end
     N = Symbol("$(name(_system))<$_name>")
-    Preserve{V,U,N}(v)
+    Preserve{V,U}(v)
 end
 
 check!(s::Preserve) = ismissing(s.value)
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
-unit(::Preserve{V,U,N}) where {V,U,N} = U
+unit(::Preserve{V,U}) where {V,U} = U
 
 ####
 
-mutable struct Track{V,T,U,N} <: State{V}
+mutable struct Track{V,T,U} <: State{V}
     value::V
     time::TimeState{T}
 end
@@ -131,15 +131,15 @@ Track(; unit=nothing, time="context.clock.tick", _name, _system, _value=missing,
     end
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Track{V,T,U,N}(v, TimeState{T}(_system, time))
+    Track{V,T,U}(v, TimeState{T}(_system, time))
 end
 
 check!(s::Track) = checktime!(s)
-unit(::Track{V,T,U,N}) where {V,T,U,N} = U
+unit(::Track{V,T,U}) where {V,T,U} = U
 
 ####
 
-mutable struct Drive{V,T,U,N} <: State{V}
+mutable struct Drive{V,T,U} <: State{V}
     key::Symbol
     value::V
     time::TimeState{T}
@@ -151,16 +151,16 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Drive{V,T,U,N}(k, default(V), TimeState{T}(_system, time))
+    Drive{V,T,U}(k, default(V), TimeState{T}(_system, time))
 end
 
 check!(s::Drive) = checktime!(s)
 store!(s::Drive, f::AbstractVar) = store!(s, value!(f()[s.key])) # value!() for Var
-unit(::Drive{V,T,U,N}) where {V,T,U,N} = U
+unit(::Drive{V,T,U}) where {V,T,U} = U
 
 ####
 
-mutable struct Call{V,T,U,N} <: State{V}
+mutable struct Call{V,T,U} <: State{V}
     value::Union{Function,Missing}
     time::TimeState{T}
 end
@@ -170,7 +170,7 @@ Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Call{V,T,U,N}(missing, TimeState{T}(_system, time))
+    Call{V,T,U}(missing, TimeState{T}(_system, time))
 end
 
 check!(s::Call) = checktime!(s)
@@ -180,7 +180,7 @@ store!(s::Call, f::AbstractVar) = begin
     #HACK: no function should be returned for queueing
     nothing
 end
-unit(::Call{V,T,U,N}) where {V,T,U,N} = U
+unit(::Call{V,T,U}) where {V,T,U} = U
 #HACK: showing s.value could trigger StackOverflowError
 show(io::IO, s::Call) = print(io, "<call>")
 
@@ -188,7 +188,7 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 import DataStructures: OrderedDict
 
-mutable struct Accumulate{V,T,R,U,RU,N} <: State{V}
+mutable struct Accumulate{V,T,R,U,RU} <: State{V}
     init::VarVal{V}
     time::TimeState{T}
     tick::Union{T,Missing}
@@ -205,7 +205,7 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _t
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     N = Symbol("$(name(_system))<$_name>")
-    Accumulate{V,T,R,U,RU,N}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
+    Accumulate{V,T,R,U,RU}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -223,13 +223,13 @@ store!(s::Accumulate, f::AbstractVar) = begin
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
-unit(::Accumulate{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = U
-rateunit(::Accumulate{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = RU
+unit(::Accumulate{V,T,R,U,RU}) where {V,T,R,U,RU} = U
+rateunit(::Accumulate{V,T,R,U,RU}) where {V,T,R,U,RU} = RU
 priority(s::Accumulate) = 2
 
 ####
 
-mutable struct Capture{V,T,R,U,RU,N} <: State{V}
+mutable struct Capture{V,T,R,U,RU} <: State{V}
     time::TimeState{T}
     tick::Union{T,Missing}
     rate::R
@@ -244,7 +244,7 @@ Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     N = Symbol("$(name(_system))<$_name>")
-    Capture{V,T,R,U,RU,N}(TimeState{T}(_system, time), missing, default(R), default(V))
+    Capture{V,T,R,U,RU}(TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
 check!(s::Capture) = checktime!(s)
@@ -260,13 +260,13 @@ store!(s::Capture, f::AbstractVar) = begin
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Capture, ::Nothing) = store!(s, () -> 0)
-unit(s::Capture{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = U
-rateunit(s::Capture{V,T,R,U,RU,N}) where {V,T,R,U,RU,N} = RU
+unit(s::Capture{V,T,R,U,RU}) where {V,T,R,U,RU} = U
+rateunit(s::Capture{V,T,R,U,RU}) where {V,T,R,U,RU} = RU
 priority(s::Capture) = 2
 
 ####
 
-mutable struct Flag{Bool,P,T,N} <: State{Bool}
+mutable struct Flag{Bool,P,T} <: State{Bool}
     value::Bool
     prob::VarVal{P}
     time::TimeState{T}
@@ -277,7 +277,7 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
     P = _type_prob
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Flag{V,P,T,N}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
+    Flag{V,P,T}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
@@ -286,7 +286,7 @@ priority(s::Flag) = 1
 
 ####
 
-mutable struct Produce{S<:System,T,N} <: State{S}
+mutable struct Produce{S<:System,T} <: State{S}
     system::System
     value::Vector{S}
     time::TimeState{T}
@@ -301,7 +301,7 @@ end
 Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Produce{S,T,N}(_system, S[], TimeState{T}(_system, time), _name)
+    Produce{S,T}(_system, S[], TimeState{T}(_system, time), _name)
 end
 
 check!(s::Produce) = checktime!(s)
@@ -319,7 +319,7 @@ priority(s::Produce) = -1
 
 ####
 
-mutable struct Solve{V,T,U,N} <: State{V}
+mutable struct Solve{V,T,U} <: State{V}
     value::V
     time::TimeState{T}
     lower::Union{VarVal{V},Nothing}
@@ -333,7 +333,7 @@ Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T,U,N}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false)
+    Solve{V,T,U}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false)
 end
 
 check!(s::Solve) = checktime!(s) && !s.solving
@@ -353,6 +353,6 @@ store!(s::Solve, f::AbstractVar) = begin
     s.solving = false
     store!(s, v)
 end
-unit(::Solve{V,T,U,N}) where {V,T,U,N} = U
+unit(::Solve{V,T,U}) where {V,T,U} = U
 
 export produce
