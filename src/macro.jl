@@ -75,8 +75,8 @@ equation(f) = begin
     name = Meta.quot(fdef[:name])
     key(x::Symbol) = x
     key(x::Expr) = x.args[1]
-    args = key.(fdef[:args]) |> Vector{Symbol}
-    kwargs = key.(fdef[:kwargs]) |> Vector{Symbol}
+    args = key.(fdef[:args]) |> Tuple{Vararg{Symbol}}
+    kwargs = key.(fdef[:kwargs]) |> Tuple{Vararg{Symbol}}
     pair(x::Symbol) = nothing
     pair(x::Expr) = x.args[1] => x.args[2]
     default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict{Symbol,Any}

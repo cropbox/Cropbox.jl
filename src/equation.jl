@@ -1,8 +1,8 @@
 abstract type Equation{V} end
 
 value(e::Equation) = missing
-getargs(e::Equation) = Symbol[]
-getkwargs(e::Equation) = Symbol[]
+getargs(e::Equation) = ()
+getkwargs(e::Equation) = ()
 default(e::Equation) = Dict{Symbol,Any}()
 
 struct StaticEquation{V} <: Equation{V}
@@ -16,8 +16,8 @@ value(e::StaticEquation) = e.value
 struct DynamicEquation{V,F<:Function} <: Equation{V}
     func::F
     name::Symbol
-    args::Vector{Symbol}
-    kwargs::Vector{Symbol}
+    args::Tuple{Vararg{Symbol}}
+    kwargs::Tuple{Vararg{Symbol}}
     default::Dict{Symbol,Any}
 end
 
