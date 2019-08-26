@@ -3,14 +3,14 @@ mutable struct Var{S<:State,V,M<:System,E<:Equation,N}
     state::State{V}
     equation::E
     name::Symbol
-    alias::Vector{Symbol}
-    nounit::Vector{Symbol}
+    alias::Tuple{Vararg{Symbol}}
+    nounit::Tuple{Vararg{Symbol}}
 
-    Var(s::M, e::E, ::Type{S}; _name, _alias=Symbol[], _value, nounit="", stargs...) where {S<:State,M<:System,E<:Equation} = begin
+    Var(s::M, e::E, ::Type{S}; _name, _alias=(), _value, nounit="", stargs...) where {S<:State,M<:System,E<:Equation} = begin
         e = patch_default!(s, e, [_name; _alias])
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
-        nu = Symbol.(split(nounit, ","; keepempty=false))
+        nu = Tuple(Symbol.(split(nounit, ","; keepempty=false)))
         V = valuetype(st)
         e = patch_valuetype!(s, e, st)
         EE = typeof(e)

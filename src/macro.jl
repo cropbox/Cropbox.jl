@@ -120,9 +120,10 @@ gendecl(i::VarInfo{Symbol}) = begin
         e = equation(f)
     end
     name = Meta.quot(i.name)
+    alias = Tuple(i.alias)
     value = haskey(i.tags, :override) ? genoverride(i.name, missing) : missing
     stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
-    decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$(i.alias), _value=$value, $(stargs...)))
+    decl = :($(esc(:Cropbox)).Var($self, $e, $(esc(:Cropbox)).$(i.state); _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
