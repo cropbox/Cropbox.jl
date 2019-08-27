@@ -14,9 +14,9 @@
 # - added direct and diffuse separation functions according to Weiss and Norman (1985), 3/16/05
 
 @system Location begin
-    latitude => 36 ~ preserve(u"°", parameter)
-    longitude => 128 ~ preserve(u"°", parameter)
-    altitude => 20 ~ preserve(u"m", parameter)
+    latitude => 36u"°" ~ preserve(u"°", parameter)
+    longitude => 128u"°" ~ preserve(u"°", parameter)
+    altitude => 20u"m" ~ preserve(u"m", parameter)
 end
 
 @system Sun begin
@@ -48,38 +48,36 @@ end
     # Goudriaan 1977
     declination_angle_goudriaan(d) => begin
         g = 2pi * (d + 10)/365
-        -23.45 * cos(g)
+        -23.45u"°" * cos(g)
 	end ~ track(u"°")
 
     # Resenberg, blad, verma 1982
     declination_angle_resenberg(d) => begin
         g = 2pi * (d - 172)/365
-        23.5 * cos(g)
+        23.5u"°" * cos(g)
 	end ~ track(u"°")
 
     # Iqbal (1983) Pg 10 Eqn 1.3.3, and sundesign.com
     declination_angle_iqbal(d) => begin
         g = 2pi * (d + 284)/365
-        23.45 * sin(g)
+        23.45u"°" * sin(g)
 	end ~ track(u"°")
 
     # Campbell and Norman, p168
     declination_angle_campbell(d) => begin
         a = deg2rad(356.6 + 0.9856d)
         b = deg2rad(278.97 + 0.9856d + 1.9165sin(a))
-        r = asin(0.39785sin(b))
-        rad2deg(r)
+        asin(0.39785sin(b))
 	end ~ track(u"°")
 
     # Spencer equation, Iqbal (1983) Pg 7 Eqn 1.3.1. Most accurate among all
     declination_angle_spencer(d) => begin
         # gamma: day angle
         g = 2pi * (d - 1)/365
-        r = 0.006918 - 0.399912cos(g) + 0.070257sin(g) - 0.006758cos(2g) + 0.000907sin(2g) -0.002697cos(3g) + 0.00148sin(3g)
-        rad2deg(r)
+        0.006918 - 0.399912cos(g) + 0.070257sin(g) - 0.006758cos(2g) + 0.000907sin(2g) -0.002697cos(3g) + 0.00148sin(3g)
 	end ~ track(u"°")
 
-    degree_per_hour: dph => 360 // 24 ~ preserve(u"°/hr")
+    degree_per_hour: dph => 360u"°" // 24u"hr" ~ preserve(u"°/hr")
 
     # LC is longitude correction for Light noon, Wohlfart et al, 2000; Campbell & Norman 1998
     longitude_correction(long, dph): LC => begin
@@ -94,7 +92,7 @@ end
 	end ~ track(u"hr")
 
     equation_of_time(d): ET => begin
-        f = deg2rad(279.575 + 0.9856d)
+        f = (279.575 + 0.9856d)*u"°"
         (-104.7sin(f) + 596.2sin(2f) + 4.3sin(3f) - 12.7sin(4f) -429.3cos(f) - 2.0cos(2f) + 19.3cos(3f)) / (60 * 60)
 	end ~ track(u"hr")
 
@@ -118,12 +116,12 @@ end
         c = cos_hour_angle(90u"°")
         # in the polar region during the winter, sun does not rise
         if c > 1
-            0
+            0u"°"
         # white nights during the summer in the polar region
         elseif c < -1
-            180
+            180u"°"
         else
-            rad2deg(acos(c))
+            acos(c)
 		end
 	end ~ track(u"°")
 
@@ -138,7 +136,7 @@ end
 
 	elevation_angle(h="hour_angle", d="declination_angle", p="latitude") => begin
         #FIXME When time gets the same as solarnoon, this function fails. 3/11/01 ??
-        asin(cos(h) * cos(d) * cos(p) + sin(d) * sin(p)) |> rad2deg
+        asin(cos(h) * cos(d) * cos(p) + sin(d) * sin(p))
 	end ~ track(u"°")
 
 	zenith_angle(elevation_angle) => (90u"°" - elevation_angle) ~ track(u"°")
@@ -149,7 +147,7 @@ end
 	# See An introduction to solar radiation by Iqbal (1983) p 15-16
 	# Also see https://www.susdesign.com/sunangle/
     azimuth_angle(t_s="elevation_angle", d="declination_angle", p="latitude") => begin
-        acos((sin(d) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p))) |> rad2deg
+        acos((sin(d) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
 	end ~ track(u"°")
 
     ###################

@@ -33,7 +33,8 @@ using CSV
     #TODO: make CO2 parameter?
     CO2 => 400 ~ track(u"μmol/mol")
 
-    relative_humidity(s): RH ~ drive(key="RH", u"percent")
+    #relative_humidity(s): RH ~ drive(key="RH", u"percent")
+    relative_humidity(s): RH => (s[:RH] / 100) ~ track(u"percent")
     #RH => 0.6 ~ track # 0~1
 
     air_temperature(s): T_air ~ drive(key="Tair", u"°C")

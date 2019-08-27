@@ -5,7 +5,7 @@ using Unitful
     @system R begin
         parent => self ~ ::System(override)
         elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"cm")
-        branching_angle => rand(Normal(20, 10)) ~ preserve(u"°")
+        branching_angle => rand(Normal(20, 10))*u"°" ~ preserve(u"°")
         branching_interval: i => 3.0 ~ track(u"cm")
         branching_chance => 0.5 ~ track
         is_branching(l, ll, i) => (l - ll > i) ~ flag(prob="branching_chance")
