@@ -1,3 +1,4 @@
+#FIXME: confusion between PFD vs. PPFD
 @system SunlitWeather(Weather) begin
     radiation ~ ::Radiation(override)
     photosynthetic_photon_flux_density("radiation.irradiance_Q_sunlit"): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)

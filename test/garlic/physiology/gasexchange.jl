@@ -293,7 +293,7 @@ end
     end ~ track(u"μmol/mol" #= CO2 =#)
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
-    light(PFD="weather.PFD"): I2 => begin
+    light(PFD="weather.PPFD"): I2 => begin
         #FIXME make scatt global parameter?
         scatt = 0.15 # leaf reflectance + transmittance
         f = 0.15 # spectral correction
@@ -323,7 +323,7 @@ end
         gb="stomata.boundary_layer_conductance",
         gv="stomata.total_conductance_h2o",
         T_air="weather.T_air",
-        PFD="weather.PFD",
+        PFD="weather.PPFD",
         P_air="weather.P_air",
         VPD="weather.VPD",
         VPD_slope="weather.VPD_slope",
