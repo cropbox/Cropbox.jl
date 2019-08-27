@@ -50,8 +50,8 @@ using CSV
     vapor_pressure_saturation_slope(T_air, P_air, s="vp.s"): VPD_slope => s(T_air, P_air) ~ track(u"K^-1")
 end
 
-import Base: show
-show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
+# import Base: show
+# show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
 
 o = configure(
     :Clock => (:unit => u"hr"),
