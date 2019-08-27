@@ -18,7 +18,8 @@ default(V::Type{<:Number}) = V(0)
 default(V::Type) = V()
 
 import Unitful: unit
-unit(s::State) = nothing
+unit(::State{V}) where V = unittype(V)
+unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
 unittype(::Nothing, _) = nothing
 unittype(U::Unitful.Units, _) = U
@@ -48,7 +49,7 @@ show(io::IO, s::State) = print(io, "$(repr(value(s)))")
 
 ####
 
-mutable struct Pass{V,U} <: State{V}
+mutable struct Pass{V} <: State{V}
     value::V
 end
 
@@ -62,14 +63,12 @@ Pass(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = begi
         V = promote_type(V, typeof(v))
     end
     N = Symbol("$(name(_system))<$_name>")
-    Pass{V,U}(v)
+    Pass{V}(v)
 end
-
-unit(::Pass{V,U}) where {V,U} = U
 
 ####
 
-mutable struct Advance{T,U} <: State{T}
+mutable struct Advance{T} <: State{T}
     value::Timepiece{T}
 end
 
@@ -80,18 +79,17 @@ Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64,
     dt = isnothing(step) ? oneunit(T) : timevalue(step, _system)
     T = promote_type(typeof(t), typeof(dt))
     N = Symbol("$(name(_system))<$_name>")
-    Advance{T,U}(Timepiece{T}(t, dt))
+    Advance{T}(Timepiece{T}(t, dt))
 end
 
 check!(s::Advance) = false
 value(s::Advance) = s.value.t
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
-unit(::Advance{T,U}) where {T,U} = U
 
 ####
 
-mutable struct Preserve{V,U} <: State{V}
+mutable struct Preserve{V} <: State{V}
     value::Union{V,Missing}
 end
 
@@ -106,16 +104,15 @@ Preserve(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = 
         V = promote_type(V, typeof(v))
     end
     N = Symbol("$(name(_system))<$_name>")
-    Preserve{V,U}(v)
+    Preserve{V}(v)
 end
 
 check!(s::Preserve) = ismissing(s.value)
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
-unit(::Preserve{V,U}) where {V,U} = U
 
 ####
 
-mutable struct Track{V,T,U} <: State{V}
+mutable struct Track{V,T} <: State{V}
     value::V
     time::TimeState{T}
 end
@@ -131,15 +128,14 @@ Track(; unit=nothing, time="context.clock.tick", _name, _system, _value=missing,
     end
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Track{V,T,U}(v, TimeState{T}(_system, time))
+    Track{V,T}(v, TimeState{T}(_system, time))
 end
 
 check!(s::Track) = checktime!(s)
-unit(::Track{V,T,U}) where {V,T,U} = U
 
 ####
 
-mutable struct Drive{V,T,U} <: State{V}
+mutable struct Drive{V,T} <: State{V}
     key::Symbol
     value::V
     time::TimeState{T}
@@ -151,16 +147,15 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Drive{V,T,U}(k, default(V), TimeState{T}(_system, time))
+    Drive{V,T}(k, default(V), TimeState{T}(_system, time))
 end
 
 check!(s::Drive) = checktime!(s)
 store!(s::Drive, f::AbstractVar) = store!(s, value!(f()[s.key])) # value!() for Var
-unit(::Drive{V,T,U}) where {V,T,U} = U
 
 ####
 
-mutable struct Call{V,T,U} <: State{V}
+mutable struct Call{V,T} <: State{V}
     value::Union{Function,Missing}
     time::TimeState{T}
 end
@@ -170,7 +165,7 @@ Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Call{V,T,U}(missing, TimeState{T}(_system, time))
+    Call{V,T}(missing, TimeState{T}(_system, time))
 end
 
 check!(s::Call) = checktime!(s)
@@ -180,7 +175,6 @@ store!(s::Call, f::AbstractVar) = begin
     #HACK: no function should be returned for queueing
     nothing
 end
-unit(::Call{V,T,U}) where {V,T,U} = U
 #HACK: showing s.value could trigger StackOverflowError
 show(io::IO, s::Call) = print(io, "<call>")
 
@@ -188,7 +182,7 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 import DataStructures: OrderedDict
 
-mutable struct Accumulate{V,T,R,U,RU} <: State{V}
+mutable struct Accumulate{V,T,R} <: State{V}
     init::VarVal{V}
     time::TimeState{T}
     tick::Union{T,Missing}
@@ -205,7 +199,7 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _t
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     N = Symbol("$(name(_system))<$_name>")
-    Accumulate{V,T,R,U,RU}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
+    Accumulate{V,T,R}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
 check!(s::Accumulate) = checktime!(s)
@@ -223,13 +217,12 @@ store!(s::Accumulate, f::AbstractVar) = begin
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
-unit(::Accumulate{V,T,R,U,RU}) where {V,T,R,U,RU} = U
-rateunit(::Accumulate{V,T,R,U,RU}) where {V,T,R,U,RU} = RU
+rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 priority(s::Accumulate) = 2
 
 ####
 
-mutable struct Capture{V,T,R,U,RU} <: State{V}
+mutable struct Capture{V,T,R} <: State{V}
     time::TimeState{T}
     tick::Union{T,Missing}
     rate::R
@@ -244,7 +237,7 @@ Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     N = Symbol("$(name(_system))<$_name>")
-    Capture{V,T,R,U,RU}(TimeState{T}(_system, time), missing, default(R), default(V))
+    Capture{V,T,R}(TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
 check!(s::Capture) = checktime!(s)
@@ -260,8 +253,7 @@ store!(s::Capture, f::AbstractVar) = begin
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Capture, ::Nothing) = store!(s, () -> 0)
-unit(s::Capture{V,T,R,U,RU}) where {V,T,R,U,RU} = U
-rateunit(s::Capture{V,T,R,U,RU}) where {V,T,R,U,RU} = RU
+rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
 priority(s::Capture) = 2
 
 ####
@@ -312,6 +304,7 @@ produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
 store!(s::Produce, f::AbstractVar) = (p = f(); () -> produce(s, p))
 store!(s::Produce, ::Nothing) = nothing
+unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
@@ -319,7 +312,7 @@ priority(s::Produce) = -1
 
 ####
 
-mutable struct Solve{V,T,U} <: State{V}
+mutable struct Solve{V,T} <: State{V}
     value::V
     time::TimeState{T}
     lower::Union{VarVal{V},Nothing}
@@ -333,7 +326,7 @@ Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T,U}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false)
+    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false)
 end
 
 check!(s::Solve) = checktime!(s) && !s.solving
@@ -353,6 +346,5 @@ store!(s::Solve, f::AbstractVar) = begin
     s.solving = false
     store!(s, v)
 end
-unit(::Solve{V,T,U}) where {V,T,U} = U
 
 export produce
