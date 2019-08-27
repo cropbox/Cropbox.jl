@@ -170,8 +170,10 @@ genstruct(name, infos, incl) = begin
         $C.source(::Val{Symbol($S)}) = $(Meta.quot(source))
         $C.mixins(::Type{$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
-        @generated $C.collectible(::Type{$S}) = $C.filtervar(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $S)
-        @generated $C.updatable(::Type{$S}) = $C.filtervar($C.Var, $S)
+        #HACK: redefine them to avoid world age problem
+        @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $S)
+        @generated $C.updatable(::Type{$S}) = $C.filteredfields($C.Var, $S)
+        @generated $C.updatableordered(::Type{$S}) = $C.filteredvars($S)
         $S
     end
     flatten(system)
@@ -194,10 +196,24 @@ filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     F = fieldnamesunique(S)
     filter!(p -> p[1] in F, d)
     filter!(p -> p[2] <: type, d)
-    map(p -> p[1], d) |> Tuple{Vararg{Symbol}}
 end
-@generated collectible(::Type{S}) where {S<:System} = filtervar(Union{System, Vector{System}, Var{Produce}}, S)
-@generated updatable(::Type{S}) where {S<:System} = filtervar(Var, S)
+filteredfields(type::Type, ::Type{S}) where {S<:System} = begin
+    l = filtervar(type, S)
+    map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
+end
+import DataStructures: DefaultDict
+filteredvars(::Type{S}) where {S<:System} = begin
+    l = filtervar(Var, S)
+    d = DefaultDict{Int,Vector{Symbol}}(Vector{Symbol})
+    for (n, T) in l
+        i = priority(T)
+        push!(d[i], n)
+    end
+    (k => Tuple(v) for (k, v) in d) |> Tuple
+end
+@generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{Produce}}, S)
+@generated updatable(::Type{S}) where {S<:System} = filteredfields(Var, S)
+@generated updatableordered(::Type{S}) where {S<:System} = filteredvars(S)
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)

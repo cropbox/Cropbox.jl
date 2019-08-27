@@ -86,6 +86,7 @@ patch_args!(d, x::Var, s::System, e::DynamicEquation) = begin
         # 4. argument not found (partial function used by Call State)
         missing
     end
+    d = copy(d)
     for a in keys(d)
         d[a] = resolve!(a)
     end
@@ -163,7 +164,7 @@ getvar!(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value!(s, Symbol(o.co
 getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 
 check!(x::Var) = check!(state(x))
-update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, x), priority(s)))
+update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, x), flushorder(s)))
 
 value(x::Var) = value(state(x))
 value(x) = x
@@ -173,6 +174,9 @@ value!(x::Var) = (check!(x) && update!(x); value(x))
 value!(x) = x
 value!(x::Vector{<:Var}) = value!.(x)
 value!(s::System, n) = value!(getvar!(s, n))
+
+priority(::Type{Var{S}}) where {S<:State} = priority(S)
+flushorder(::Type{Var{S}}) where {S<:State} = flushorder(S)
 
 advance!(x::Var{Advance}) = advance!(state(x))
 reset!(x::Var{Advance}) = reset!(state(x))

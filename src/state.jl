@@ -41,8 +41,10 @@ rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
 rateunittype(U::Unitful.Units, TU::Nothing) = U
 rateunittype(U::Nothing, TU::Nothing) = nothing
 
-const Priority = Int
-priority(s::State) = 0
+priority(::S) where {S<:State} = priority(S)
+priority(::Type{<:State}) = 5
+flushorder(::S) where {S<:State} = flushorder(S)
+flushorder(::Type{<:State}) = 1 # post = 1, pre = -1
 
 import Base: show
 show(io::IO, s::State) = print(io, "$(repr(value(s)))")
@@ -86,6 +88,7 @@ check!(s::Advance) = false
 value(s::Advance) = s.value.t
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
+priority(::Type{<:Advance}) = 0
 
 ####
 
@@ -218,7 +221,7 @@ end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
 rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
-priority(s::Accumulate) = 2
+priority(::Type{<:Accumulate}) = 2
 
 ####
 
@@ -254,7 +257,7 @@ end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Capture, ::Nothing) = store!(s, () -> 0)
 rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
-priority(s::Capture) = 2
+priority(::Type{<:Capture}) = 4
 
 ####
 
@@ -274,7 +277,7 @@ end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
 store!(s::Flag, f::AbstractVar) = (v = f(); () -> store!(s, v))
-priority(s::Flag) = 1
+priority(::Type{<:Flag}) = 6
 
 ####
 
@@ -308,7 +311,8 @@ unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
-priority(s::Produce) = -1
+priority(::Type{<:Produce}) = 7
+flushorder(::Type{<:Produce}) = -1
 
 ####
 
@@ -346,5 +350,6 @@ store!(s::Solve, f::AbstractVar) = begin
     s.solving = false
     store!(s, v)
 end
+priority(::Type{<:Solve}) = 1
 
 export produce

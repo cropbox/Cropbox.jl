@@ -1,7 +1,5 @@
 abstract type System end
 
-update!(s::System) = foreach(n -> value!(s, n), updatable(s))
-
 name(s::S) where {S<:System} = string(S)
 import Base: names
 names(s::System) = names(typeof(s))
@@ -22,10 +20,11 @@ import Base: getproperty
 getproperty(s::System, n::String) = getvar(s, n)
 
 import Base: collect
-collect(s::System; recursive=true, exclude_self=true) = begin
-    S = Set{System}()
+import DataStructures: OrderedSet
+collect(s::System; recursive=true, exclude_self=false) = begin
+    S = OrderedSet{System}()
     visit(s) = begin
-        T = Set{System}()
+        T = OrderedSet{System}()
         add(f::System) = push!(T, f)
         add(f) = union!(T, f)
         for n in collectible(s)
@@ -42,6 +41,7 @@ end
 
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
+updatableordered(::S) where {S<:System} = updatableordered(S)
 
 context(s::System) = s.context
 
