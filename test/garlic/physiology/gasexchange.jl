@@ -390,9 +390,9 @@ end
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
     #TODO: use externally initialized Weather / Soil
-    weather: w ~ ::System(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
-    soil ~ ::Soil(override)
-    leaf => PhotosyntheticLeaf(; context=context, weather=self.weather, soil=self.soil) ~ ::PhotosyntheticLeaf
+    weather: w ~ ::System(override, expose) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
+    soil ~ ::Soil(override, expose)
+    leaf => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
 
     A_gross("leaf.A_gross") ~ track(u"μmol/m^2/s" #= CO2 =#)
     A_net("leaf.A_net") ~ track(u"μmol/m^2/s" #= CO2 =#)
