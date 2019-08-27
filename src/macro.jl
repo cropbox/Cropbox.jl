@@ -81,7 +81,7 @@ equation(f) = begin
     pair(x::Symbol) = nothing
     pair(x::Expr) = x.args[1] => x.args[2]
     default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict{Symbol,Any}
-    func = @q function $(gensym())($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
+    func = @q function $(esc(gensym(fdef[:name])))($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
     :($C.Equation($func, $name, $args, $kwargs, $default))
 end
 
