@@ -323,31 +323,73 @@ mutable struct Solve{V,T} <: State{V}
     upper::Union{VarVal{V},Nothing}
     context::System
     solving::Bool
+    error::Float64
+    tol::V
 end
 
-Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false)
+    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false, Inf, V(tol))
 end
 
-check!(s::Solve) = checktime!(s) && !s.solving
+check!(s::Solve) = begin
+    t = value!(s.time.tick)
+    if s.time.ticker.t < t
+        #@show "reset error = Inf since $(s.time.ticker.t) < $t"
+        #@show s.solving
+        s.error = Inf
+    end
+    checktime!(s) && !s.solving
+end
 using Roots
 store!(s::Solve, f::AbstractVar) = begin
+    #@show "begin solve $s"
     s.solving = true
-    cost(x) = (store!(s, x); recite!(s.context); y = f(); y)
+    y = f() |> ustrip
+    if s.error == y
+        #@show "skip solve s.error = $(s.error) == y = $y"
+        check!(s)
+        s.solving = false
+        return
+    elseif s.error < y
+        #@show "error $(s.error) < y = $(y)"
+    end
+    cost(x) = begin
+        store!(s, x)
+        recite!(s.context)
+        y = f() |> ustrip
+        #@show "cost x = $x ~ error = $y"
+        if y < s.error
+            #@show "update error: $(s.error) => $y"
+            s.error = y
+        end
+        y
+    end
     b = (value!(s.lower), value!(s.upper))
     if nothing in b
-        v = find_zero(cost, value(s))
+        try
+            v = find_zero(cost, value(s); xatol=s.tol)
+        catch e
+            #@show "convergence failed: $e"
+            v = value(s)
+            s.error = f() |> ustrip
+            s.solving = false
+        end
     else
         v = find_zero(cost, b)
     end
     #FIXME: ensure all state vars are updated once and only once (i.e. no duplice produce)
     #HACK: trigger update with final value
-    store!(s, v); recite!(s.context); update!(s.context)
+    #store!(s, v); #recite!(s.context); #update!(s.context)
     s.solving = false
+    #@show "end solve $s"
+    check!(s)
+    #@show "$(s.context.clock.tick)"
+    #@show "$(s.context.clock.tock)"
+    #@show "$(s.time)"
     store!(s, v)
 end
 priority(::Type{<:Solve}) = 1
