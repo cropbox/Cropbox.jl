@@ -45,8 +45,8 @@ patch_default_args!(s::System, e::DynamicEquation, n) = begin
         v = get(default(e), a, missing)
         !ismissing(v) && return override!(a, v)
     end
-    resolve!.(getargs(e) |> keys)
-    resolve!.(getkwargs(e) |> keys)
+    resolve!.(argsname(e))
+    resolve!.(kwargsname(e))
     e
 end
 patch_valuetype!(s::System, e::StaticEquation, st::State) = e
@@ -63,14 +63,15 @@ state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 
 (x::Var)() = handle(x, x.equation)
 
+import DataStructures: OrderedDict
 handle(x::Var, e::StaticEquation) = value(e)
 handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    args = patch_args!(getargs(e), x, s, e)
-    kwargs = patch_args!(getkwargs(e), x, s, e)
+    args = resolve(argsname(e), x, s, e; container=OrderedDict)
+    kwargs = resolve(kwargsname(e), x, s, e)
     handle(x, args, kwargs)
 end
-patch_args!(d, x::Var, s::System, e::DynamicEquation) = begin
+resolve(l, x::Var, s::System, e::DynamicEquation; container=Dict) = begin
     resolve!(a::Symbol) = begin
         interpret(v::Symbol) = value!(s, v)
         interpret(v::VarVal) = value!(v)
@@ -86,8 +87,8 @@ patch_args!(d, x::Var, s::System, e::DynamicEquation) = begin
         # 4. argument not found (partial function used by Call State)
         missing
     end
-    d = copy(d)
-    for a in keys(d)
+    d = container{Symbol,Any}()
+    for a in l
         d[a] = resolve!(a)
     end
     d
