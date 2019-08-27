@@ -183,8 +183,6 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 ####
 
-import DataStructures: OrderedDict
-
 mutable struct Accumulate{V,T,R} <: State{V}
     init::VarVal{V}
     time::TimeState{T}
