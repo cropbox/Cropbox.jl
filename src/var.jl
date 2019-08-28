@@ -52,7 +52,7 @@ end
 patch_valuetype!(s::System, e::StaticEquation, st::State) = e
 patch_valuetype!(s::System, e::DynamicEquation, st::State) = begin
     V = valuetype(st)
-    Equation(e.func, e.name, e.args, e.kwargs, e.default, V)
+    Equation{V}(e.func, e.name, e.args, e.kwargs, e.default)
 end
 
 name(x::Var) = x.name
