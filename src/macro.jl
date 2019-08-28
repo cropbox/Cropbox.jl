@@ -193,10 +193,10 @@ mixins(s::System) = mixins(typeof(s))
 
 fieldnamesunique(::Type{<:System}) = ()
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
-    d = collect(zip(fieldnames(S), fieldtypes(S)))
+    l = collect(zip(fieldnames(S), fieldtypes(S)))
     F = fieldnamesunique(S)
-    filter!(p -> p[1] in F, d)
-    filter!(p -> p[2] <: type, d)
+    filter!(p -> p[1] in F, l)
+    filter!(p -> p[2] <: type, l)
 end
 filteredfields(type::Type, ::Type{S}) where {S<:System} = begin
     l = filtervar(type, S)
