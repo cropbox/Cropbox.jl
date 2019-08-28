@@ -42,7 +42,7 @@ rateunittype(U::Unitful.Units, TU::Nothing) = U
 rateunittype(U::Nothing, TU::Nothing) = nothing
 
 priority(::S) where {S<:State} = priority(S)
-priority(::Type{<:State}) = 10 # lower is higher..
+priority(::Type{<:State}) = 0 # low is low
 flushorder(::S) where {S<:State} = flushorder(S)
 flushorder(::Type{<:State}) = 1 # post = 1, pre = -1
 
@@ -88,7 +88,7 @@ check!(s::Advance) = false
 value(s::Advance) = s.value.t
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
-priority(::Type{<:Advance}) = 0
+priority(::Type{<:Advance}) = 10
 
 ####
 
@@ -112,7 +112,7 @@ end
 
 check!(s::Preserve) = ismissing(s.value)
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
-priority(::Type{<:Preserve}) = 9
+priority(::Type{<:Preserve}) = 1
 
 ####
 
@@ -220,7 +220,7 @@ end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
 rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
-priority(::Type{<:Accumulate}) = 2
+priority(::Type{<:Accumulate}) = 8
 
 ####
 
@@ -256,7 +256,7 @@ end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Capture, ::Nothing) = store!(s, () -> 0)
 rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
-priority(::Type{<:Capture}) = 4
+priority(::Type{<:Capture}) = 6
 
 ####
 
@@ -276,7 +276,7 @@ end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
 store!(s::Flag, f::AbstractVar) = (v = f(); () -> store!(s, v))
-priority(::Type{<:Flag}) = 6
+priority(::Type{<:Flag}) = 4
 
 ####
 
@@ -310,7 +310,7 @@ unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
-priority(::Type{<:Produce}) = 7
+priority(::Type{<:Produce}) = 3
 flushorder(::Type{<:Produce}) = -1
 
 ####
@@ -391,6 +391,6 @@ store!(s::Solve, f::AbstractVar) = begin
     #@show "$(s.time)"
     store!(s, v)
 end
-priority(::Type{<:Solve}) = 1
+priority(::Type{<:Solve}) = 9
 
 export produce

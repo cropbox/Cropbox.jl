@@ -54,7 +54,7 @@ collectvar_dd(S::AbstractSet, cond) = begin
             end
         end
     end
-    vcat([d[k] for k in sort(collect(keys(d)))]...)
+    vcat([d[k] for k in sort(collect(keys(d)); rev=true)]...)
 end
 
 import DataStructures: PriorityQueue, enqueue!
@@ -69,7 +69,7 @@ collectvar_pq(S::AbstractSet, cond) = begin
             end
         end
     end
-    q |> collect |> Iterators.reverse |> collect
+    q |> collect
 end
 collectvar(S, cond) = collectvar_pq(S, cond)
 collectvar(S; skip=false) = begin
