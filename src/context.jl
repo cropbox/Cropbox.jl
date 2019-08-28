@@ -46,12 +46,13 @@ update!(c::Context) = begin
     #         end
     #     end
     # end
-    # @show d
-    # for k in sort(collect(keys(d)); rev=true)
-    #     for (s, n) in d[k]
-    #         @show (s, n)
-    #         value!(s, n)
-    #     end
+    # #@show d
+    # l = vcat([d[k] for k in sort(collect(keys(d)))]...)
+    # for i in 1:length(l)
+    #     c.index = i
+    #     (s, n) = l[i]
+    #     #@show (i, (s, n))
+    #     value!(s, n)
     # end
     q = PriorityQueue{Tuple{System,Symbol},Int}(Base.Reverse)
     for s in S
