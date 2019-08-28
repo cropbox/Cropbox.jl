@@ -105,4 +105,4 @@ instance(Ss::Type{<:System}...; config=configure()) = begin
     c.systems[1]
 end
 
-export update!, advance!, recite!, instance
+export advance!, instance
