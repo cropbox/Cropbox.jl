@@ -80,7 +80,9 @@ equation(f) = begin
     kwargs = key.(fdef[:kwargs]) |> Tuple{Vararg{Symbol}}
     pair(x::Symbol) = nothing
     pair(x::Expr) = x.args[1] => x.args[2]
-    default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Dict{Symbol,Any}
+    default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Vector{Pair{Symbol,Any}}
+    # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
+    default = :(Dict{Symbol,Any}(k => $(esc(:eval))(v) for (k, v) in $default))
     func = @q function $(esc(gensym(fdef[:name])))($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
     :($C.Equation($func, $name, $args, $kwargs, $default))
 end

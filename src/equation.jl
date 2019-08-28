@@ -18,10 +18,8 @@ struct DynamicEquation{V,F<:Function} <: Equation{V}
 end
 
 DynamicEquation(func, name, args, kwargs, default, V::Type=Any) = begin
-    # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
-    d = Dict{Symbol,Any}(k => eval(v) for (k, v) in default)
     F = typeof(func)
-    DynamicEquation{V,F}(func, name, args, kwargs, d)
+    DynamicEquation{V,F}(func, name, args, kwargs, default)
 end
 
 call(e::DynamicEquation, args, kwargs) = e.func(args...; kwargs...)
