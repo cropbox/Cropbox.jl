@@ -10,14 +10,36 @@ flush!(q::Queue, cond) = begin
     end
 end
 
+####
+
+mutable struct Index
+    current::Int
+    recital::Int
+end
+
+update!(x::Index, i) = (x.current = i)
+recite!(x::Index) = begin
+    #@show "recite! index = $(x.recital) => $(x.current - 1)"
+    x.recital = x.current - 1
+end
+recital!(x::Index) = begin
+    r = 0
+    if x.recital > 0
+        r = x.recital
+        x.recital = 0
+    end
+    r
+end
+
+####
+
 @system Context begin
     self => self ~ ::System
     context => self ~ ::System
 
     config => configure() ~ ::Config(override)
     queue => Queue(Vector{Function}) ~ ::Queue
-    index => 0 ~ ::Int
-    recite_index => 0 ~ ::Int
+    index => Index(0, 0) ~ ::Index
 
     clock => Clock(; context=self) ~ ::Clock
     systems ~ ::[System]
@@ -39,22 +61,7 @@ update!(c::Context) = begin
     # update state variables recursively
     S = collect(c)
     l = collectvar(S)
-    for i in 1:length(l)
-        c.index = i
-        #(s, n) = l[i] # DefaultDict version
-        ((s, n), p) = l[i] # PriorityQueue version
-        value!(s, n)
-    end
-    while c.recite_index > 0
-        r = c.recite_index-1
-        c.recite_index = 0
-        for i in 1:r
-            c.index = i
-            #(s, n) = l[i] # DefaultDict version
-            ((s, n), p) = l[i] # PriorityQueue version
-            value!(s, n)
-        end
-    end
+    update!(c, l)
 
     # process pending operations from current timestep (i.e. flag, accumulate)
     postflush!(c)
@@ -62,14 +69,29 @@ update!(c::Context) = begin
     #TODO: process aggregate (i.e. transport) operations?
     nothing
 end
+update!(c::Context, l) = begin
+    for i in 1:length(l)
+        update!(c, l, i)
+    end
+    while 0 < (r = recital!(c.index))
+        for i in 1:r
+            update!(c, l, i)
+        end
+    end
+end
+update!(c::Context, l, i) = begin
+    update!(c.index, i)
+    #(s, n) = l[i] # DefaultDict version
+    ((s, n), p) = l[i] # PriorityQueue version
+    value!(s, n)
+end
 
 advance!(c::Context) = (advance!(c.clock); update!(c))
 advance!(s::System) = advance!(s.context)
 recite!(c::Context) = begin
     dequeue!(c)
     recite!(c.clock)
-    #@show "recite! $(c.clock.tock) index = $(c.recite_index) => $(c.index)"
-    c.recite_index = c.index
+    recite!(c.index)
 end
 
 instance(Ss::Type{<:System}...; config=configure()) = begin
