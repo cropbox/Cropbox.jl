@@ -54,13 +54,13 @@ flush!(c::Context, cond) = flush!(c.queue, cond)
 preflush!(c::Context) = flush!(c, o -> o < 0)
 postflush!(c::Context) = flush!(c, o -> o > 0)
 
-update!(c::Context) = begin
+update!(c::Context; skip=false) = begin
     # process pending operations from last timestep (i.e. produce)
     preflush!(c)
 
     # update state variables recursively
     S = collect(c)
-    l = collectvar(S)
+    l = collectvar(S; skip=skip)
     update!(c, l)
 
     # process pending operations from current timestep (i.e. flag, accumulate)
@@ -86,8 +86,14 @@ update!(c::Context, l, i) = begin
     value!(s, n)
 end
 
-advance!(c::Context) = (advance!(c.clock); update!(c))
-advance!(s::System) = advance!(s.context)
+advance!(c::Context; skip) = (advance!(c.clock); update!(c; skip=skip))
+advance!(c::Context, n=1) = begin
+    for i in 1:n-1
+        advance!(c, skip=true)
+    end
+    advance!(c, skip=false)
+end
+advance!(s::System, n=1) = advance!(s.context, n)
 recite!(c::Context) = begin
     dequeue!(c)
     recite!(c.clock)

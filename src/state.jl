@@ -42,7 +42,7 @@ rateunittype(U::Unitful.Units, TU::Nothing) = U
 rateunittype(U::Nothing, TU::Nothing) = nothing
 
 priority(::S) where {S<:State} = priority(S)
-priority(::Type{<:State}) = 5
+priority(::Type{<:State}) = 10 # lower is higher..
 flushorder(::S) where {S<:State} = flushorder(S)
 flushorder(::Type{<:State}) = 1 # post = 1, pre = -1
 
@@ -112,6 +112,7 @@ end
 
 check!(s::Preserve) = ismissing(s.value)
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
+priority(::Type{<:Preserve}) = 9
 
 ####
 
