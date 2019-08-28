@@ -72,7 +72,7 @@ collectvar_pq(S::AbstractSet, cond) = begin
     q |> collect
 end
 collectvar(S, cond) = collectvar_pq(S, cond)
-collectvar(S; skip=false) = begin
+collectvar(S, skip::Bool=false) = begin
     cond = if skip
         #HACK: testing low priority skip
         p -> (p < 10)
