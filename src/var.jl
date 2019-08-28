@@ -191,7 +191,8 @@ promote_rule(::Type{X}, ::Type{V}) where {X<:Var, V<:Number} = V
 promote_rule(::Type{Bool}, ::Type{X}) where {X<:Var} = Bool
 
 import Base: ==, isless
-==(a::Var, b::Var) = ==(value!(a), value!(b))
+#HACK: would make different Vars with same internal value clash for Dict key
+# ==(a::Var, b::Var) = ==(value!(a), value!(b))
 ==(a::Var, b::V) where {V<:Number} = ==(promote(a, b)...)
 ==(a::V, b::Var) where {V<:Number} = ==(b, a)
 #TODO: reduce redundant declarations of basic functions (i.e. comparison)

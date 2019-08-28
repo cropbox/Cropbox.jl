@@ -19,9 +19,11 @@ using Unitful
             b(a) => a ~ track
         end
         s = instance(S)
-        @test s.a == s.b == 0
+        @test s.a == 0
+        @test s.b == 0
         advance!(s)
-        @test s.a == s.b == 0
+        @test s.a == 0
+        @test s.b == 0
     end
 
     @testset "call" begin
@@ -76,13 +78,13 @@ using Unitful
             b(a) => a + 1 ~ accumulate
         end
         s1 = instance(S1); s2 = instance(S2)
-        @test s1.a == s2.b && s1.b == s2.a
+        @test s1.a == 0 == s2.b && s1.b == 0 == s2.a
         advance!(s1); advance!(s2)
-        @test s1.a == s2.b && s1.b == s2.a
+        @test s1.a == 1 == s2.b && s1.b == 2 == s2.a
         advance!(s1); advance!(s2)
-        @test s1.a == s2.b && s1.b == s2.a
+        @test s1.a == 4 == s2.b && s1.b == 5 == s2.a
         advance!(s1); advance!(s2)
-        @test s1.a == s2.b && s1.b == s2.a
+        @test s1.a == 10 == s2.b && s1.b == 11 == s2.a
     end
 
     @testset "accumulate with time" begin
@@ -483,6 +485,9 @@ using Unitful
             d(a) ~ track
         end
         s = instance(S)
-        @test s.a == s.b == s.c == s.d == 1
+        @test s.a == 1
+        @test s.b == 1
+        @test s.c == 1
+        @test s.d == 1
     end
 end
