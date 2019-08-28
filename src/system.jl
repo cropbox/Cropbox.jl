@@ -69,7 +69,7 @@ collectvar_pq(S::AbstractSet, cond) = begin
             end
         end
     end
-    q |> collect
+    collect(keys(q))
 end
 collectvar(S, cond) = collectvar_pq(S, cond)
 collectvar(S, skip::Bool=false) = begin

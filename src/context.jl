@@ -81,8 +81,7 @@ update!(c::Context, l) = begin
 end
 update!(c::Context, l, i) = begin
     update!(c.index, i)
-    #(s, n) = l[i] # DefaultDict version
-    ((s, n), p) = l[i] # PriorityQueue version
+    (s, n) = l[i]
     value!(s, n)
 end
 
