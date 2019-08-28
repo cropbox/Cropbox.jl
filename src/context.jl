@@ -1,10 +1,21 @@
+import DataStructures: DefaultDict
+const Queue = DefaultDict{Int,Vector{Function}}
+
+queue!(q::Queue, f::Function, o) = push!(q[o], f)
+dequeue!(q::Queue) = empty!(q)
+flush!(q::Queue, cond) = begin
+    for (o, l) in filter(p -> cond(p[1]), q)
+        foreach(f -> f(), l)
+        empty!(l)
+    end
+end
+
 @system Context begin
     self => self ~ ::System
     context => self ~ ::System
 
     config => configure() ~ ::Config(override)
-    prequeue => Function[] ~ ::Vector{Function}
-    postqueue => Function[] ~ ::Vector{Function}
+    queue => Queue(Vector{Function}) ~ ::Queue
     index => 0 ~ ::Int
     recite_index => 0 ~ ::Int
 
@@ -14,18 +25,12 @@ end
 
 option(c::Context, keys...) = option(c.config, keys...)
 
-queue!(c::Context, f::Function, p::Int) = begin
-    q = (p >= 0) ? c.postqueue : c.prequeue
-    push!(q, f)
-end
-queue!(c::Context, f, p::Int) = nothing
-dequeue!(c::Context) = (empty!(c.prequeue); empty!(c.postqueue))
-flush!(q::Vector{Function}) = begin
-    foreach(f -> f(), q)
-    empty!(q)
-end
-preflush!(c::Context) = flush!(c.prequeue)
-postflush!(c::Context) = flush!(c.postqueue)
+queue!(c::Context, f::Function, o) = queue!(c.queue, f, o)
+queue!(c::Context, f, o) = nothing
+dequeue!(c::Context) = empty!(c.queue)
+flush!(c::Context, cond) = flush!(c.queue, cond)
+preflush!(c::Context) = flush!(c, o -> o < 0)
+postflush!(c::Context) = flush!(c, o -> o > 0)
 
 import DataStructures: DefaultDict, PriorityQueue, enqueue!
 update!(c::Context) = begin
