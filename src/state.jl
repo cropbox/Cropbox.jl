@@ -323,7 +323,7 @@ mutable struct Solve{V,T} <: State{V}
     context::System
     solving::Bool
     error::Float64
-    tol::V
+    tol::VarVal{V}
 end
 
 Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
@@ -331,7 +331,7 @@ Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.cloc
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false, Inf, V(tol))
+    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false, Inf, VarVal{V}(_system, tol))
 end
 
 check!(s::Solve) = begin
@@ -370,7 +370,7 @@ store!(s::Solve, f::AbstractVar) = begin
     b = (value!(s.lower), value!(s.upper))
     if nothing in b
         try
-            v = find_zero(cost, value(s); xatol=s.tol)
+            v = find_zero(cost, value(s); xatol=value!(s.tol))
         catch e
             #@show "convergence failed: $e"
             v = value(s)
