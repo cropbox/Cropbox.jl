@@ -41,3 +41,5 @@ check!(s::TimeState) = begin
         update!(s.tocker, value!(s.tock))
     end
 end
+
+getvar(s::TimeState) = getvar(s.tick)

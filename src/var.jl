@@ -123,6 +123,8 @@ handle(e::DynamicEquation, nounit, args, kwargs) = begin
     call(e, values(args), kwargs)
 end
 
+getvar(x::Var) = x
+getvar(x) = missing
 getvar(s::System, n::Symbol) = getfield(s, n)
 getvar(s::System, l::Vector) = begin
     #HACK: manual reduction due to memory allocations
@@ -135,6 +137,8 @@ getvar(s::System, l::Vector) = begin
 end
 getvar(s::System, n::AbstractString) = getvar(varpath(s, n))
 
+getvar!(x::Var) = x
+getvar!(x) = missing
 getvar!(s::System, n::Symbol) = getvar(s, n)
 getvar!(s::System, l::Vector) = begin
     #HACK: manual reduction due to memory allocations

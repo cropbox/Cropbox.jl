@@ -97,5 +97,7 @@ VarVal{V}(s::System, ::Nothing) where V = nothing
 VarVal(s::System, p::AbstractString) = VarVal{Any}(s, p)
 VarVal(s::System, p::V) where V = VarVal{V}(s, p)
 
+getvar(v::VarVal) = getvar(v.v)
+getvar!(v::VarVal) = getvar!(v.v)
 value(v::VarVal) = value(v.v)
 value!(v::VarVal) = value!(v.v)
