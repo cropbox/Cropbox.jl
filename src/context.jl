@@ -63,7 +63,7 @@ collectvar_dp(S::AbstractSet, _) = begin
 
     extract(x::Var, s::System) = begin
         eq = extract_eq(x, s, x.equation)
-        par = extract_par(x, s)
+        par = extract_par(x)
         [eq..., par...]
     end
     extract_eq(x::Var, s::System, e::StaticEquation) = Var[]
@@ -96,43 +96,7 @@ collectvar_dp(S::AbstractSet, _) = begin
         end
         l
     end
-    extract_par(x::Var, s::System) = Val[]
-    extract_par(x::Var{Advance}, s::System) = begin
-        #getvar.([x.state.init, x.state.step, x.state.unit])
-        Val[]
-    end
-    extract_par(x::Var{Preserve}, s::System) = begin
-        #getvar.([x.state.unit])
-        Val[]
-    end
-    extract_par(x::Var{Track}, s::System) = begin
-        getvar.([x.state.time])
-    end
-    extract_par(x::Var{Drive}, s::System) = begin
-        #getvar.([x.state.unit, x.state.time])
-        getvar.([x.state.time])
-    end
-    extract_par(x::Var{Call}, s::System) = begin
-        #getvar.([x.state.unit, x.state.time])
-        getvar.([x.state.time])
-    end
-    extract_par(x::Var{Accumulate}, s::System) = begin
-        #getvar.([x.state.init, x.state.unit, x.state.time])
-        getvar.([x.state.init, x.state.time])
-    end
-    extract_par(x::Var{Capture}, s::System) = begin
-        #[getvar(x.state.unit, x.state.time)]
-        getvar.([x.state.time])
-    end
-    extract_par(x::Var{Flag}, s::System) = begin
-        getvar.([x.state.prob, x.state.time])
-    end
-    extract_par(x::Var{Produce}, s::System) = begin
-        getvar.([x.state.time])
-    end
-    extract_par(x::Var{Solve}, s::System) = begin
-        getvar.([x.state.lower, x.state.upper, x.state.tol, x.state.unit, x.state.time])
-    end
+    extract_par(x::Var{S}) where {S<:State} = getvar.(varfields(state(x)))
 
     X = [(s, getvar(s, n)) for (s, n) in L]
     I = Dict(v[2] => k for (k, v) in enumerate(X))

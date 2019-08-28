@@ -46,6 +46,12 @@ priority(::Type{<:State}) = 0 # low is low
 flushorder(::S) where {S<:State} = flushorder(S)
 flushorder(::Type{<:State}) = 1 # post = 1, pre = -1
 
+varfields(s::S) where {S<:State} = begin
+    l = collect(zip(fieldnames(S), fieldtypes(S)))
+    filter!(p -> p[2] <: Union{VarVal,TimeState}, l)
+    map(p -> getfield(s, p[1]), l)
+end
+
 import Base: show
 show(io::IO, s::State) = print(io, "$(repr(value(s)))")
 
