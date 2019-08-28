@@ -32,49 +32,17 @@ flush!(c::Context, cond) = flush!(c.queue, cond)
 preflush!(c::Context) = flush!(c, o -> o < 0)
 postflush!(c::Context) = flush!(c, o -> o > 0)
 
-import DataStructures: DefaultDict, PriorityQueue, enqueue!
 update!(c::Context) = begin
-    #@show "update context begin"
-
     # process pending operations from last timestep (i.e. produce)
-    #@show c.prequeue
     preflush!(c)
 
     # update state variables recursively
     S = collect(c)
-    # d = DefaultDict{Int,Vector{Tuple{System,Symbol}}}(Vector{Tuple{System,Symbol}})
-    # for s in S
-    #     u = updatable(s)
-    #     for (i, t) in u
-    #         for n in t
-    #             push!(d[i], (s, n))
-    #         end
-    #     end
-    # end
-    # #@show d
-    # l = vcat([d[k] for k in sort(collect(keys(d)))]...)
-    # for i in 1:length(l)
-    #     c.index = i
-    #     (s, n) = l[i]
-    #     #@show (i, (s, n))
-    #     value!(s, n)
-    # end
-    q = PriorityQueue{Tuple{System,Symbol},Int}(Base.Reverse)
-    for s in S
-        u = updatable(s)
-        for (i, t) in u
-            for n in t
-                enqueue!(q, (s, n), i)
-            end
-        end
-    end
-    #@show q
-    l = q |> collect |> Iterators.reverse |> collect
-    #@show l
+    l = collectvar(S)
     for i in 1:length(l)
         c.index = i
-        ((s, n), p) = l[i]
-        #@show (i, ((s, n), p))
+        #(s, n) = l[i] # DefaultDict version
+        ((s, n), p) = l[i] # PriorityQueue version
         value!(s, n)
     end
     while c.recite_index > 0
@@ -82,17 +50,14 @@ update!(c::Context) = begin
         c.recite_index = 0
         for i in 1:r
             c.index = i
-            ((s, n), p) = l[i]
-            #@show (i, ((s, n), p))
+            #(s, n) = l[i] # DefaultDict version
+            ((s, n), p) = l[i] # PriorityQueue version
             value!(s, n)
         end
     end
 
     # process pending operations from current timestep (i.e. flag, accumulate)
-    #@show c.postqueue
     postflush!(c)
-
-    #@show "update context end"
 
     #TODO: process aggregate (i.e. transport) operations?
     nothing

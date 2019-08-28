@@ -19,6 +19,9 @@ getindex(s::System, i) = getproperty(s, i)
 import Base: getproperty
 getproperty(s::System, n::String) = getvar(s, n)
 
+collectible(::S) where {S<:System} = collectible(S)
+updatable(::S) where {S<:System} = updatable(S)
+
 import Base: collect
 import DataStructures: OrderedSet
 collect(s::System; recursive=true, exclude_self=false) = begin
@@ -39,8 +42,34 @@ collect(s::System; recursive=true, exclude_self=false) = begin
     S
 end
 
-collectible(::S) where {S<:System} = collectible(S)
-updatable(::S) where {S<:System} = updatable(S)
+import DataStructures: DefaultDict
+collectvar_dd(S::AbstractSet) = begin
+    d = DefaultDict{Int,Vector{Tuple{System,Symbol}}}(Vector{Tuple{System,Symbol}})
+    for s in S
+        u = updatable(s)
+        for (i, t) in u
+            for n in t
+                push!(d[i], (s, n))
+            end
+        end
+    end
+    vcat([d[k] for k in sort(collect(keys(d)))]...)
+end
+
+import DataStructures: PriorityQueue, enqueue!
+collectvar_pq(S::AbstractSet) = begin
+    q = PriorityQueue{Tuple{System,Symbol},Int}(Base.Reverse)
+    for s in S
+        u = updatable(s)
+        for (i, t) in u
+            for n in t
+                enqueue!(q, (s, n), i)
+            end
+        end
+    end
+    q |> collect |> Iterators.reverse |> collect
+end
+collectvar(S) = collectvar_pq(S)
 
 context(s::System) = s.context
 
