@@ -67,18 +67,19 @@ import DataStructures: OrderedDict
 handle(x::Var, e::StaticEquation) = value(e)
 handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    args = resolve(argsname(e), x, s, e; container=OrderedDict)
-    kwargs = resolve(kwargsname(e), x, s, e)
+    d = default(e)
+    args = handle(x, s, d, argsname(e); container=OrderedDict)
+    kwargs = handle(x, s, d, kwargsname(e))
     handle(x, args, kwargs)
 end
-resolve(l, x::Var, s::System, e::DynamicEquation; container=Dict) = begin
+handle(x::Var, s::System, d, n; container=Dict) = begin
     resolve!(a::Symbol) = begin
         interpret(v::Symbol) = value!(s, v)
         interpret(v::VarVal) = value!(v)
         interpret(v) = v
 
         # 2. default parameter values
-        v = get(default(e), a, missing)
+        v = get(d, a, missing)
         !ismissing(v) && return interpret(v)
 
         # 3. state vars from current system
@@ -87,11 +88,11 @@ resolve(l, x::Var, s::System, e::DynamicEquation; container=Dict) = begin
         # 4. argument not found (partial function used by Call State)
         missing
     end
-    d = container{Symbol,Any}()
-    for a in l
-        d[a] = resolve!(a)
+    l = container{Symbol,Any}()
+    for a in n
+        l[a] = resolve!(a)
     end
-    d
+    l
 end
 
 handle(x::Var, args, kwargs) = handle(x.equation, x.nounit, args, kwargs)
