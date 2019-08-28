@@ -39,7 +39,7 @@ update!(c::Context) = begin
     S = collect(c)
     # d = DefaultDict{Int,Vector{Tuple{System,Symbol}}}(Vector{Tuple{System,Symbol}})
     # for s in S
-    #     u = updatableordered(s)
+    #     u = updatable(s)
     #     for (i, t) in u
     #         for n in t
     #             push!(d[i], (s, n))
@@ -56,7 +56,7 @@ update!(c::Context) = begin
     # end
     q = PriorityQueue{Tuple{System,Symbol},Int}(Base.Reverse)
     for s in S
-        u = updatableordered(s)
+        u = updatable(s)
         for (i, t) in u
             for n in t
                 enqueue!(q, (s, n), i)

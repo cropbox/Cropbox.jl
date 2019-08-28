@@ -174,8 +174,7 @@ genstruct(name, infos, incl) = begin
         $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $S)
-        @generated $C.updatable(::Type{$S}) = $C.filteredfields($C.Var, $S)
-        @generated $C.updatableordered(::Type{$S}) = $C.filteredvars($S)
+        @generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
         $S
     end
     flatten(system)
@@ -214,8 +213,7 @@ filteredvars(::Type{S}) where {S<:System} = begin
     (k => Tuple(v) for (k, v) in d) |> Tuple
 end
 @generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{Produce}}, S)
-@generated updatable(::Type{S}) where {S<:System} = filteredfields(Var, S)
-@generated updatableordered(::Type{S}) where {S<:System} = filteredvars(S)
+@generated updatable(::Type{S}) where {S<:System} = filteredvars(S)
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)

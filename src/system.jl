@@ -41,7 +41,6 @@ end
 
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
-updatableordered(::S) where {S<:System} = updatableordered(S)
 
 context(s::System) = s.context
 
