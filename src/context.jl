@@ -54,12 +54,13 @@ flush!(c::Context, cond) = flush!(c.queue, cond)
 preflush!(c::Context) = flush!(c, o -> o < 0)
 postflush!(c::Context) = flush!(c, o -> o > 0)
 
-using LightGraphs
+import LightGraphs: DiGraph, add_vertex!, add_edge!, rem_edge!, topological_sort_by_dfs
 #using TikzGraphs, TikzPictures
 import DataStructures: OrderedDict
-collectvar_dp(S::AbstractSet, _) = begin
+collectvar_dp(S::AbstractSet) = begin
     L = collectvar_pq(S, p -> true)
-    g = SimpleDiGraph(length(L))
+    n = length(L)
+    g = DiGraph()
 
     extract(x::Var, s::System) = begin
         eq = extract_eq(x, s, x.equation)
@@ -92,25 +93,87 @@ collectvar_dp(S::AbstractSet, _) = begin
         l = Var[]
         for a in n
             v = resolve(a)
-            !ismissing(v) && push!(l, v)
+            #@show "$a -> $v"
+            #@show "$(typeof(v))"
+            !ismissing(v) && typeof(v) <: Var && push!(l, v)
         end
         l
     end
-    extract_par(x::Var{S}) where {S<:State} = getvar.(varfields(state(x)))
+    extract_par(x::Var{S}) where {S<:State} = filter!(!ismissing, getvar.(varfields(state(x))))
 
     X = [(s, getvar(s, n)) for (s, n) in L]
-    I = Dict(v[2] => k for (k, v) in enumerate(X))
-    for (s, x) in X
-        d = extract(x, s)
-        for v in d
-            ismissing(v) && continue
-            add_edge!(g, I[v], I[x])
+    V = []
+    #I = Dict(v[2] => k for (k, v) in enumerate(X))
+    #vertex(i) = (i <= n) ? X[i] : PX[i-n]
+    I = Dict{AbstractVar,Int}()
+
+    g_var(v) = begin
+        #@show "g_var $v"
+        if !haskey(I, v)
+            add_vertex!(g)
+            push!(V, v)
+            I[v] = length(V)
+            #@show "new vertex at $(I[v])"
         end
+        #@show "retrieve $(V[I[v]])"
+        V[I[v]]
+    end
+    g_var(v, P) = g_var(P(v))
+    g_prevar(v) = g_var(v, PreVar)
+    g_postvar(v) = g_var(v, PostVar)
+    g_link(v0, v1) = add_edge!(g, I[v0], I[v1])
+
+    g_extract(s, x, v1) = begin
+        #@show "extract $x"
+        l = extract(x, s)
+        #@show "extracted = $l"
+        for x0 in l
+            v0 = g_var(x0)
+            #@show "add edge $v0 ($(I[v0])) => $v1 ($(I[v1]))"
+            add_edge!(g, I[v0], I[v1])
+        end
+    end
+
+    add(x::Var, s::System) = begin
+        v = g_var(x)
+        g_extract(s, x, v)
+    end
+    add(x::Var{Accumulate}, s::System) = begin
+        v0 = g_var(x)
+        v1 = g_postvar(x)
+        g_link(v0, v1)
+        g_extract(s, x, v1)
+    end
+    add(x::Var{Capture}, s::System) = begin
+        v0 = g_var(x)
+        v1 = g_postvar(x)
+        g_link(v0, v1)
+        g_extract(s, x, v1)
+    end
+    add(x::Var{Solve}, s::System) = begin
+        v0 = g_prevar(x)
+        v1 = g_var(x)
+        g_link(v0, v1)
+        g_extract(s, x, v1)
+    end
+    add(x::Var{Flag}, s::System) = begin
+        v0 = g_prevar(x)
+        v1 = g_postvar(x)
+        g_extract(s, x, v1)
+    end
+    add(x::Var{Produce}, s::System) = begin
+        v0 = g_var(x)
+        v1 = g_postvar(x)
+        g_extract(s, x, v1)
+    end
+
+    for (s, x) in X
+        add(x, s)
     end
     # N = ["$(name(s))<$(name(x))>" for (s, x) in X]
     # t = TikzGraphs.plot(g, N)
     # TikzPictures.save(PDF("graph"), t)
-    g
+    g, V, I
 end
 
 update!(c::Context, skip::Bool=false) = begin
@@ -119,8 +182,10 @@ update!(c::Context, skip::Bool=false) = begin
 
     # update state variables recursively
     S = collect(c)
-    l = collectvar(S, skip)
-    update!(c, l)
+    #l = collectvar(S, skip)
+    #update!(c, l)
+    g, V, I = collectvar_dp(S)
+    foreach(i -> value!(V[i]), topological_sort_by_dfs(g))
 
     # process pending operations from current timestep (i.e. flag, accumulate)
     postflush!(c)

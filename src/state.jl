@@ -1,9 +1,35 @@
+struct PreVar{X<:AbstractVar} <: AbstractVar
+   x::X
+end
+
+system(x::PreVar) = system(x.x)
+state(x::PreVar) = state(x.x)
+check!(x::PreVar) = true
+#value!(x::PreVar) = value(state(x))
+(x::PreVar)() = x.x()
+
+####
+
+struct PostVar{X<:AbstractVar} <: AbstractVar
+   x::X
+end
+
+system(x::PostVar) = system(x.x)
+state(x::PostVar) = state(x.x)
+check!(x::PostVar) = true
+#value!(x::PostVar) = (check!(x) && update!(x); value(x))
+(x::PostVar)() = x.x()
+
+####
+
 abstract type State{V} end
 
 check!(s::State) = true
 value(s::State{V}) where V = s.value::V
 store!(s::State, f::AbstractVar) = store!(s, f())
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
+store!(s::State, f::PreVar) = nothing
+store!(s::State, f::PostVar) = nothing
 
 checktime!(s::State) = check!(s.time)
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
@@ -219,9 +245,13 @@ store!(s::Accumulate, f::AbstractVar) = begin
     else
         v = s.value + s.rate * (t - t0)
     end
+    #@show "acc store $v"
     store!(s, v)
+end
+store!(s::Accumulate, f::PostVar) = begin
+    t = s.time.ticker.t
     r = unitfy(f(), rateunit(s))
-    () -> (s.tick = t; s.rate = r)
+    () -> (#= @show "acc poststore $t, $r";=# s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
@@ -256,6 +286,9 @@ store!(s::Capture, f::AbstractVar) = begin
         v = s.rate * (t - t0)
         store!(s, v)
     end
+end
+store!(s::Capture, f::PostVar) = begin
+    t = s.time.ticker.t
     r = unitfy(f(), rateunit(s))
     () -> (s.tick = t; s.rate = r)
 end
@@ -281,7 +314,9 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
-store!(s::Flag, f::AbstractVar) = (v = f(); () -> store!(s, v))
+store!(s::Flag, f::PreVar) = nothing
+store!(s::Flag, f::AbstractVar) = nothing
+store!(s::Flag, f::PostVar) = (v = f(); () -> store!(s, v))
 priority(::Type{<:Flag}) = 4
 
 ####
@@ -310,8 +345,9 @@ produce(s::Type{<:System}; args...) = Product(s, args)
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::AbstractVar) = (p = f(); () -> produce(s, p))
+store!(s::Produce, f::AbstractVar) = nothing
 store!(s::Produce, ::Nothing) = nothing
+store!(s::Produce, f::PostVar) = (p = f(); () -> produce(s, p))
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -349,6 +385,7 @@ check!(s::Solve) = begin
     end
     checktime!(s) && !s.solving
 end
+store!(s::Solve, f::AbstractVar) = nothing
 using Roots
 store!(s::Solve, f::AbstractVar) = begin
     #@show "begin solve $s"
@@ -397,6 +434,7 @@ store!(s::Solve, f::AbstractVar) = begin
     #@show "$(s.time)"
     store!(s, v)
 end
+store!(s::Solve, f::PostVar) = nothing
 priority(::Type{<:Solve}) = 9
 
 export produce

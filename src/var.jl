@@ -1,4 +1,4 @@
-struct Var{S<:State,V} <: AbstractVar{V}
+struct Var{S<:State,V} <: AbstractVar
     system::System
     state::State{V}
     equation::Equation
@@ -59,6 +59,7 @@ name(x::Var) = x.name
 import Base: names
 names(x::Var) = [x.name, x.alias...]
 
+system(x::Var) = x.system
 state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
 
 (x::Var)() = handle(x, x.equation)
@@ -169,14 +170,14 @@ end
 getvar!(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value!(s, Symbol(o.cond)), v)
 getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 
-check!(x::Var) = check!(state(x))
-update!(x::Var) = (s = state(x); queue!(x.system.context, store!(s, x), flushorder(s)))
+check!(x::AbstractVar) = check!(state(x))
+update!(x::AbstractVar) = (s = state(x); queue!(system(x).context, store!(s, x), flushorder(s)))
 
-value(x::Var) = value(state(x))
+value(x::AbstractVar) = value(state(x))
 value(x) = x
 value(s::System, n) = s[n]
 
-value!(x::Var) = (check!(x) && update!(x); value(x))
+value!(x::AbstractVar) = (check!(x) && update!(x); value(x))
 value!(x) = x
 value!(x::Vector{<:Var}) = value!.(x)
 value!(s::System, n) = value!(getvar!(s, n))
