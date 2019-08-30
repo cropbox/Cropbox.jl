@@ -128,7 +128,12 @@ collectvar_dp(S::AbstractSet) = begin
         l = extract(x, s)
         #@show "extracted = $l"
         for x0 in l
-            v0 = g_var(x0)
+            if typeof(x0) <: Var{Solve}
+                @show "extract: Var{Solve} = $x0"
+                v0 = g_prevar(x0)
+            else
+                v0 = g_var(x0)
+            end
             #@show "add edge $v0 ($(I[v0])) => $v1 ($(I[v1]))"
             add_edge!(g, I[v0], I[v1])
         end

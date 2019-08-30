@@ -2,6 +2,7 @@ struct PreVar{X<:AbstractVar} <: AbstractVar
    x::X
 end
 
+name(x::PreVar) = "pre-$(name(x.x))"
 system(x::PreVar) = system(x.x)
 state(x::PreVar) = state(x.x)
 check!(x::PreVar) = true
@@ -14,6 +15,7 @@ struct PostVar{X<:AbstractVar} <: AbstractVar
    x::X
 end
 
+name(x::PostVar) = "post-$(name(x.x))"
 system(x::PostVar) = system(x.x)
 state(x::PostVar) = state(x.x)
 check!(x::PostVar) = true
@@ -385,7 +387,7 @@ check!(s::Solve) = begin
     end
     checktime!(s) && !s.solving
 end
-store!(s::Solve, f::AbstractVar) = nothing
+store!(s::Solve, f::PreVar) = nothing
 using Roots
 store!(s::Solve, f::AbstractVar) = begin
     #@show "begin solve $s"
