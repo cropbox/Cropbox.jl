@@ -79,7 +79,7 @@ prev(n::Node) = begin
     elseif n.step == PostStep()
         Node(n.var, MainStep())
     elseif n.step == PreStep()
-        nothing
+        error("Pre-step node can't have a previous node: $n")
     end
 end
 
