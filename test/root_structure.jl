@@ -7,16 +7,12 @@ using Unitful
         elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"cm")
         branching_angle => rand(Normal(20, 10))*u"°" ~ preserve(u"°")
         branching_interval: i => 3.0 ~ track(u"cm")
-        branching_chance => 0.5 ~ track
-        is_branching(l, ll, i) => (l - ll > i) ~ flag(prob="branching_chance")
-        branched_length("parent.length") ~ preserve(u"cm")
+        branching_chance: p => clamp(rand(Normal(0.5, 0.5)), 0, 1) ~ track
+        is_branching(l, ll, i, p) => (l - ll > i && p > 0.5) ~ flag
+        branched_length("parent.length"): bl ~ preserve(u"cm")
         diameter => 0.1 ~ track(u"cm")
         length(r): l ~ accumulate(u"cm")
-        #TODO: support scaling operators
-        #last_branching_length("branch[end].pl"): ll ~ track(u"cm")
-        last_branching_length(branch): ll => begin
-            isempty(branch) ? 0 : Cropbox.value!(branch[end].branched_length)
-        end~ track(u"cm")
+        last_branching_length(x="branch[*/-1].bl"): ll => (isempty(x) ? 0 : x[1]) ~ track(u"cm")
         branch(self, is_branching, l) => begin
             if is_branching
                 #println("branch at l = $l")
