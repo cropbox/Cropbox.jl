@@ -231,7 +231,6 @@ collect!(o::Order, S) = begin
     # N = label.(o.nodes)
     # t = TikzGraphs.plot(o.graph, N)
     # TikzPictures.save(PDF("graph"), t)
-    #g, V, I = o.graph, o.vars, o.indices
     sort!(o)
 end
 update!(o::Order, S) = begin
