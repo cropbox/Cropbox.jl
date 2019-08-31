@@ -7,11 +7,9 @@ struct PreStep <: Step end
 struct MainStep <: Step end
 struct PostStep <: Step end
 
-#TODO: rename store!(s, f, _) to update!(s, f, _)?
-#store!(s::State, f::AbstractVar) = store!(s, f, MainStep())
-store!(s::State, f::AbstractVar, ::PreStep) = nothing
-store!(s::State, f::AbstractVar, ::MainStep) = store!(s, f())
-store!(s::State, f::AbstractVar, ::PostStep) = nothing
+update!(s::State, f::AbstractVar, ::PreStep) = nothing
+update!(s::State, f::AbstractVar, ::MainStep) = store!(s, f())
+update!(s::State, f::AbstractVar, ::PostStep) = nothing
 
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
 
@@ -110,7 +108,7 @@ Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64,
 end
 
 value(s::Advance) = s.value.t
-store!(s::Advance, f::AbstractVar, ::MainStep) = nothing
+update!(s::Advance, f::AbstractVar, ::MainStep) = nothing
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
 priority(::Type{<:Advance}) = 10
@@ -137,7 +135,7 @@ end
 
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
 #FIXME: make new interface similar to check!?
-store!(s::Preserve, f::AbstractVar, ::MainStep) = ismissing(s.value) ? store!(s, f()) : nothing
+update!(s::Preserve, f::AbstractVar, ::MainStep) = ismissing(s.value) ? store!(s, f()) : nothing
 priority(::Type{<:Preserve}) = 1
 
 ####
@@ -178,7 +176,7 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
     Drive{V,T}(k, default(V), TimeState{T}(_system, time))
 end
 
-store!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value(f()[s.key])) # value() for Var
+update!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value(f()[s.key])) # value() for Var
 
 ####
 
@@ -196,7 +194,7 @@ Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _
 end
 
 value(s::Call{V}) where {V} = s.value::Union{V,Function}
-store!(s::Call, f::AbstractVar, ::MainStep) = begin
+update!(s::Call, f::AbstractVar, ::MainStep) = begin
     s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
     #HACK: no function should be returned for queueing
     nothing
@@ -226,7 +224,7 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _t
     Accumulate{V,T,R}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
-store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
+update!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
     t = value(s.time.tick)
     t0 = s.tick
     if ismissing(t0)
@@ -242,14 +240,14 @@ store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
     @show "acc store $v"
     store!(s, v)
 end
-store!(s::Accumulate, f::AbstractVar, ::PostStep) = begin
+update!(s::Accumulate, f::AbstractVar, ::PostStep) = begin
     @show "accumulate post step!!!!!"
     t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
     () -> (#= @show "acc poststore $t, $r";=# s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
-#store!(s::Accumulate, ::Nothing) = store!(s, () -> 0)
+#store!(s::Accumulate, ::Nothing) = update!(s, () -> 0)
 rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 priority(::Type{<:Accumulate}) = 8
 
@@ -273,7 +271,7 @@ Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64
     Capture{V,T,R}(TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
-store!(s::Capture, f::AbstractVar, ::MainStep) = begin
+update!(s::Capture, f::AbstractVar, ::MainStep) = begin
     t = value(s.time.tick)
     t0 = s.tick
     if !ismissing(t0)
@@ -281,13 +279,13 @@ store!(s::Capture, f::AbstractVar, ::MainStep) = begin
         store!(s, v)
     end
 end
-store!(s::Capture, f::AbstractVar, ::PostStep) = begin
+update!(s::Capture, f::AbstractVar, ::PostStep) = begin
     t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
     () -> (s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
-#store!(s::Capture, ::Nothing) = store!(s, () -> 0)
+#store!(s::Capture, ::Nothing) = update!(s, () -> 0)
 rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
 priority(::Type{<:Capture}) = 6
 
@@ -307,8 +305,8 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
     Flag{V,P,T}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
-store!(s::Flag, f::AbstractVar, ::MainStep) = nothing
-store!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
+update!(s::Flag, f::AbstractVar, ::MainStep) = nothing
+update!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
 priority(::Type{<:Flag}) = 4
 
 ####
@@ -336,9 +334,8 @@ produce(s::Type{<:System}; args...) = Product(s, args)
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::AbstractVar, ::MainStep) = nothing
-store!(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p))
+update!(s::Produce, f::AbstractVar, ::MainStep) = nothing
+update!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p))
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -366,8 +363,8 @@ Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.cloc
 end
 
 using Roots
-store!(s::Solve, f::AbstractVar, ::PreStep) = nothing
-store!(s::Solve, f::AbstractVar, ::MainStep) = begin
+update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
+update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
     cost(x) = begin
         store!(s, x)
