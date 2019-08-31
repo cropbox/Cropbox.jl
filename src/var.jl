@@ -172,7 +172,6 @@ getvars(v::Vector{<:System}, o::VarOpIndex, X) = getvar(v, o)
 getvars(v::Vector{<:System}, o::VarOpFilter, X) = getvar(v, o)
 getvars(s::Vector, n::Symbol, X) = (x = getvar.(s, n); pushvars!(X, x); x)
 
-update!(x::Var) = update!(x, MainStep())
 update!(x::Var, t::Step) = (s = state(x); queue!(system(x).context, store!(s, x, t), flushorder(s)))
 
 value(x::Var) = value(state(x))
