@@ -156,6 +156,22 @@ end
 getvar(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value(s, Symbol(o.cond)), v)
 getvar(s::Vector, n::Symbol) = getvar.(s, n)
 
+pushvars!(X, x::Var) = push!(X, x)
+pushvars!(X, x::Vector{<:Var}) = union!(X, x)
+pushvars!(X, x) = nothing
+
+getvars(x::Var, X) = (pushvars!(X, x); x)
+getvars(x, X) = missing #FIXME: needed?
+getvars(s::System, n::Symbol, X) = (x = getvar(s, n); pushvars!(X, x); x)
+getvars(s::System, l::Vector, X) = reduce((a, b) -> getvars(a, b, X), [s, l...])
+getvars(s::System, n::AbstractString, X) = getvars(varpath(s, n), X) #FIXME: needed?
+
+getvars(x::Var{Produce}, o::VarOpAll, X) = (pushvars!(X, x); getvar(x, o))
+getvars(x::Var{Produce}, o::VarOpRecursiveAll, X) = (pushvars!(X, x); getvar(x, o))
+getvars(v::Vector{<:System}, o::VarOpIndex, X) = getvar(v, o)
+getvars(v::Vector{<:System}, o::VarOpFilter, X) = getvar(v, o)
+getvars(s::Vector, n::Symbol, X) = (x = getvar.(s, n); pushvars!(X, x); x)
+
 check!(x::Var) = check!(state(x))
 update!(x::Var) = update!(x, MainStep())
 update!(x::Var, t::Step) = (s = state(x); queue!(system(x).context, store!(s, x, t), flushorder(s)))

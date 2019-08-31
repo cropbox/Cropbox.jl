@@ -34,9 +34,8 @@ end
 extract_equation(x::Var, d, n) = begin
     s = x.system
     resolve(a::Symbol) = begin
-        interpret(v::Symbol) = getvar(s, v)
-        #TODO: support VarOp query index
-        interpret(v::VarVal) = getvar(v)
+        interpret(v::Symbol) = (X = Set{Var}(); getvars(s, v, X); X)
+        interpret(v::VarVal) = (X = Set{Var}(); getvars(v, X); X)
         interpret(v) = missing
 
         # default parameter values
@@ -54,7 +53,7 @@ extract_equation(x::Var, d, n) = begin
         v = resolve(a)
         #@show "$a -> $v"
         #@show "$(typeof(v))"
-        !ismissing(v) && typeof(v) <: Var && push!(l, v)
+        !ismissing(v) && append!(l, v)
     end
     l
 end
@@ -199,6 +198,7 @@ end
 push!(o::Order, x::Var{Produce}) = begin
     n0 = mainnode!(o, x)
     n1 = postnode!(o, x)
+    inlink!(o, x, n0)
     inlink!(o, x, n1)
 end
 
