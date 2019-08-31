@@ -53,7 +53,9 @@ timevalue(t::String, s::System) = begin
     x = getvar(s, t)
     #FIXME: ensure only access static values on init
     @assert typeof(x.equation) <: StaticEquation
-    value(x.equation)
+    v = value(x.equation)
+    u = timeunittype(t, s)
+    unitfy(v, u)
 end
 timevalue(t, _) = t
 
