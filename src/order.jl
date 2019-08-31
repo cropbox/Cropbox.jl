@@ -219,7 +219,7 @@ end
 
 #using TikzGraphs, TikzPictures
 collect!(o::Order, S) = begin
-    L = collectvar(S, p -> true)
+    L = collectvar(S)
     #TODO: incremental update
     reset!(o)
     X = [getvar(s, n) for (s, n) in L]

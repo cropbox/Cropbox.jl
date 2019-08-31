@@ -42,44 +42,17 @@ collect(s::System; recursive=true, exclude_self=false) = begin
     S
 end
 
-import DataStructures: DefaultDict
-collectvar_dd(S::AbstractSet, cond) = begin
-    d = DefaultDict{Int,Vector{Tuple{System,Symbol}}}(Vector{Tuple{System,Symbol}})
+collectvar(S) = begin
+    d = Set{Tuple{System,Symbol}}()
     for s in S
         u = updatable(s)
         for (p, t) in u
-            !cond(p) && continue
             for n in t
-                push!(d[p], (s, n))
+                push!(d, (s, n))
             end
         end
     end
-    vcat([d[k] for k in sort(collect(keys(d)); rev=true)]...)
-end
-
-import DataStructures: PriorityQueue, enqueue!
-collectvar_pq(S::AbstractSet, cond) = begin
-    q = PriorityQueue{Tuple{System,Symbol},Int}(Base.Reverse)
-    for s in S
-        u = updatable(s)
-        for (p, t) in u
-            !cond(p) && continue
-            for n in t
-                enqueue!(q, (s, n), p)
-            end
-        end
-    end
-    collect(keys(q))
-end
-collectvar(S, cond) = collectvar_pq(S, cond)
-collectvar(S, skip::Bool=false) = begin
-    cond = if skip
-        #HACK: testing low priority skip
-        p -> (p < 10)
-    else
-        p -> true
-    end
-    collectvar(S, cond)
+    d
 end
 
 context(s::System) = s.context
