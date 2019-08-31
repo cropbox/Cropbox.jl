@@ -32,10 +32,4 @@ TimeState{T}(system::System, tick) where T = begin
     TimeState{T}(VarVal{T}(system, tick), Timepiece{T}(zero(T)))
 end
 
-check!(s::TimeState) = begin
-    if update!(s.ticker, value!(s.tick))
-        true
-    end
-end
-
 getvar(s::TimeState) = getvar(s.tick)

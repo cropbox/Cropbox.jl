@@ -67,8 +67,6 @@ struct Node
 end
 
 update!(n::Node) = begin
-    #FIXME remove check!
-    check!(n.var)
     update!(n.var, n.step)
 end
 

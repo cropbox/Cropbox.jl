@@ -1,6 +1,5 @@
 abstract type State{V} end
 
-check!(s::State) = true
 value(s::State{V}) where V = s.value::V
 
 abstract type Step end
@@ -15,9 +14,6 @@ store!(s::State, f::AbstractVar, ::MainStep) = store!(s, f())
 store!(s::State, f::AbstractVar, ::PostStep) = nothing
 
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
-
-checktime!(s::State) = check!(s.time)
-checkprob!(s::State) = (p = value(s.prob); (p >= 1 || rand() <= p))
 
 import Base: getindex, length, iterate
 getindex(s::State, i) = s
@@ -113,7 +109,6 @@ Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64,
     Advance{T}(Timepiece{T}(t, dt))
 end
 
-check!(s::Advance) = false
 value(s::Advance) = s.value.t
 store!(s::Advance, f::AbstractVar, ::MainStep) = nothing
 advance!(s::Advance) = advance!(s.value)
@@ -140,7 +135,6 @@ Preserve(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = 
     Preserve{V}(v)
 end
 
-check!(s::Preserve) = ismissing(s.value)
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
 #FIXME: make new interface similar to check!?
 store!(s::Preserve, f::AbstractVar, ::MainStep) = ismissing(s.value) ? store!(s, f()) : nothing
@@ -167,8 +161,6 @@ Track(; unit=nothing, time="context.clock.tick", _name, _system, _value=missing,
     Track{V,T}(v, TimeState{T}(_system, time))
 end
 
-check!(s::Track) = checktime!(s)
-
 ####
 
 mutable struct Drive{V,T} <: State{V}
@@ -186,7 +178,6 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
     Drive{V,T}(k, default(V), TimeState{T}(_system, time))
 end
 
-check!(s::Drive) = checktime!(s)
 store!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value(f()[s.key])) # value() for Var
 
 ####
@@ -204,7 +195,6 @@ Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _
     Call{V,T}(missing, TimeState{T}(_system, time))
 end
 
-check!(s::Call) = checktime!(s)
 value(s::Call{V}) where {V} = s.value::Union{V,Function}
 store!(s::Call, f::AbstractVar, ::MainStep) = begin
     s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
@@ -236,7 +226,6 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _t
     Accumulate{V,T,R}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
-check!(s::Accumulate) = checktime!(s)
 store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
     t = value(s.time.tick)
     t0 = s.tick
@@ -284,7 +273,6 @@ Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64
     Capture{V,T,R}(TimeState{T}(_system, time), missing, default(R), default(V))
 end
 
-check!(s::Capture) = checktime!(s)
 store!(s::Capture, f::AbstractVar, ::MainStep) = begin
     t = value(s.time.tick)
     t0 = s.tick
@@ -319,7 +307,6 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
     Flag{V,P,T}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
 end
 
-check!(s::Flag) = checktime!(s) && checkprob!(s)
 store!(s::Flag, f::AbstractVar, ::MainStep) = nothing
 store!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
 priority(::Type{<:Flag}) = 4
@@ -344,7 +331,6 @@ Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _typ
     Produce{S,T}(_system, S[], TimeState{T}(_system, time), _name)
 end
 
-check!(s::Produce) = checktime!(s)
 value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
 produce(s::Type{<:System}; args...) = Product(s, args)
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
@@ -381,15 +367,6 @@ Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.cloc
     Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false, Inf, VarVal{V}(_system, tol))
 end
 
-check!(s::Solve) = begin
-    t = value(s.time.tick)
-    if value(s.time.tick) < t
-        #@show "reset error = Inf since $(value(s.time.tick)) < $t"
-        #@show s.solving
-        s.error = Inf
-    end
-    checktime!(s) && !s.solving
-end
 using Roots
 store!(s::Solve, f::AbstractVar, ::PreStep) = nothing
 store!(s::Solve, f::AbstractVar, ::MainStep) = begin
