@@ -71,7 +71,7 @@ genfield(S, var, alias) = @q begin
     $(@q begin $([:($a::$S) for a in alias]...) end)
 end
 
-equation(f) = begin
+equation(f; static=false) = begin
     fdef = splitdef(f)
     name = Meta.quot(fdef[:name])
     key(x::Symbol) = x
@@ -84,7 +84,7 @@ equation(f) = begin
     # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
     default = :(Dict{Symbol,Any}(k => $(esc(:eval))(v) for (k, v) in $default))
     func = @q function $(esc(gensym(fdef[:name])))($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
-    :($C.Equation($func, $name, $args, $kwargs, $default))
+    :($C.Equation($func, $name, $args, $kwargs, $default; static=$static))
 end
 
 macro equation(f)
@@ -97,6 +97,7 @@ end
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
 gendecl(i::VarInfo{Symbol}) = begin
+    static = get(i.tags, :static, false)
     if isnothing(i.body)
         if isempty(i.args)
             # use externally defined equation
@@ -114,13 +115,13 @@ gendecl(i::VarInfo{Symbol}) = begin
                 # `f("a") ~ ...` expands to `f(x="a") => x ~ ...`
                 f = @q function $(i.name)(x=$a) x end
             end
-            e = equation(f)
+            e = equation(f; static=static)
         else
             @error "Function not provided: $(i.name)"
         end
     else
         f = @q function $(i.name)($(Tuple(i.args)...)) $(i.body) end
-        e = equation(f)
+        e = equation(f; static=static)
     end
     name = Meta.quot(i.name)
     alias = Tuple(i.alias)

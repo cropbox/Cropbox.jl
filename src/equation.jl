@@ -22,10 +22,10 @@ argsname(e::DynamicEquation) = e.args
 kwargsname(e::DynamicEquation) = e.kwargs
 default(e::DynamicEquation) = e.default
 
-Equation(v, n) = StaticEquation(v, n)
-Equation(f, n, a, k, d) = Equation{Any}(f, n, a, k, d)
-Equation{V}(f, n, a, k, d) where V = begin
-    if length(a) == 0 && length(k) == 0
+Equation(v, n; kwargs...) = StaticEquation(v, n; kwargs...)
+Equation(f, n, a, k, d; kwargs...) = Equation{Any}(f, n, a, k, d; kwargs...)
+Equation{V}(f, n, a, k, d; static=false) where V = begin
+    if static && length(a) == 0 && length(k) == 0
         StaticEquation(f(), n)
     else
         F = typeof(f)
