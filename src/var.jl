@@ -170,14 +170,16 @@ end
 getvar!(v::Vector{<:System}, o::VarOpFilter) = filter(s -> value!(s, Symbol(o.cond)), v)
 getvar!(s::Vector, n::Symbol) = getvar.(s, n)
 
-check!(x::AbstractVar) = check!(state(x))
-update!(x::AbstractVar) = (s = state(x); queue!(system(x).context, store!(s, x), flushorder(s)))
+check!(x::Var) = check!(state(x))
+update!(x::Var) = update!(x, MainStep())
+update!(x::Var, t::Step) = (s = state(x); queue!(system(x).context, store!(s, x, t), flushorder(s)))
 
-value(x::AbstractVar) = value(state(x))
+value(x::Var) = value(state(x))
 value(x) = x
 value(s::System, n) = s[n]
 
-value!(x::AbstractVar) = (check!(x) && update!(x); value(x))
+value!(x::Var) = value!(x, MainStep())
+value!(x::Var, t::Step) = (check!(x) && update!(x, t); value(x))
 value!(x) = x
 value!(x::Vector{<:Var}) = value!.(x)
 value!(s::System, n) = value!(getvar!(s, n))

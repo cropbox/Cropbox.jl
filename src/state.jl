@@ -1,37 +1,20 @@
-struct PreVar{X<:AbstractVar} <: AbstractVar
-   x::X
-end
-
-name(x::PreVar) = "pre-$(name(x.x))"
-system(x::PreVar) = system(x.x)
-state(x::PreVar) = state(x.x)
-check!(x::PreVar) = true
-#value!(x::PreVar) = value(state(x))
-(x::PreVar)() = x.x()
-
-####
-
-struct PostVar{X<:AbstractVar} <: AbstractVar
-   x::X
-end
-
-name(x::PostVar) = "post-$(name(x.x))"
-system(x::PostVar) = system(x.x)
-state(x::PostVar) = state(x.x)
-check!(x::PostVar) = true
-#value!(x::PostVar) = (check!(x) && update!(x); value(x))
-(x::PostVar)() = x.x()
-
-####
-
 abstract type State{V} end
 
 check!(s::State) = true
 value(s::State{V}) where V = s.value::V
-store!(s::State, f::AbstractVar) = store!(s, f())
+
+abstract type Step end
+struct PreStep <: Step end
+struct MainStep <: Step end
+struct PostStep <: Step end
+
+#TODO: rename store!(s, f, _) to update!(s, f, _)?
+#store!(s::State, f::AbstractVar) = store!(s, f, MainStep())
+store!(s::State, f::AbstractVar, ::PreStep) = nothing
+store!(s::State, f::AbstractVar, ::MainStep) = store!(s, f())
+store!(s::State, f::AbstractVar, ::PostStep) = nothing
+
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
-store!(s::State, f::PreVar) = nothing
-store!(s::State, f::PostVar) = nothing
 
 checktime!(s::State) = check!(s.time)
 checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
@@ -120,6 +103,7 @@ end
 
 check!(s::Advance) = false
 value(s::Advance) = s.value.t
+store!(s::Advance, f::AbstractVar, ::MainStep) = nothing
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
 priority(::Type{<:Advance}) = 10
@@ -146,6 +130,8 @@ end
 
 check!(s::Preserve) = ismissing(s.value)
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
+#FIXME: make new interface similar to check!?
+store!(s::Preserve, f::AbstractVar, ::MainStep) = ismissing(s.value) ? store!(s, f()) : nothing
 priority(::Type{<:Preserve}) = 1
 
 ####
@@ -189,7 +175,7 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
 end
 
 check!(s::Drive) = checktime!(s)
-store!(s::Drive, f::AbstractVar) = store!(s, value!(f()[s.key])) # value!() for Var
+store!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value!(f()[s.key])) # value!() for Var
 
 ####
 
@@ -208,7 +194,7 @@ end
 
 check!(s::Call) = checktime!(s)
 value(s::Call{V}) where {V} = s.value::Union{V,Function}
-store!(s::Call, f::AbstractVar) = begin
+store!(s::Call, f::AbstractVar, ::MainStep) = begin
     s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
     #HACK: no function should be returned for queueing
     nothing
@@ -239,18 +225,24 @@ Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _t
 end
 
 check!(s::Accumulate) = checktime!(s)
-store!(s::Accumulate, f::AbstractVar) = begin
+store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
     t = s.time.ticker.t
     t0 = s.tick
     if ismissing(t0)
+        @show "missing"
         v = value!(s.init)
     else
+        @show "$(s.value)"
+        @show "$(s.rate)"
+        @show "$t"
+        @show "$t0"
         v = s.value + s.rate * (t - t0)
     end
-    #@show "acc store $v"
+    @show "acc store $v"
     store!(s, v)
 end
-store!(s::Accumulate, f::PostVar) = begin
+store!(s::Accumulate, f::AbstractVar, ::PostStep) = begin
+    @show "accumulate post step!!!!!"
     t = s.time.ticker.t
     r = unitfy(f(), rateunit(s))
     () -> (#= @show "acc poststore $t, $r";=# s.tick = t; s.rate = r)
@@ -281,7 +273,7 @@ Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64
 end
 
 check!(s::Capture) = checktime!(s)
-store!(s::Capture, f::AbstractVar) = begin
+store!(s::Capture, f::AbstractVar, ::MainStep) = begin
     t = s.time.ticker.t
     t0 = s.tick
     if !ismissing(t0)
@@ -289,7 +281,7 @@ store!(s::Capture, f::AbstractVar) = begin
         store!(s, v)
     end
 end
-store!(s::Capture, f::PostVar) = begin
+store!(s::Capture, f::AbstractVar, ::PostStep) = begin
     t = s.time.ticker.t
     r = unitfy(f(), rateunit(s))
     () -> (s.tick = t; s.rate = r)
@@ -316,9 +308,8 @@ Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob
 end
 
 check!(s::Flag) = checktime!(s) && checkprob!(s)
-store!(s::Flag, f::PreVar) = nothing
-store!(s::Flag, f::AbstractVar) = nothing
-store!(s::Flag, f::PostVar) = (v = f(); () -> store!(s, v))
+store!(s::Flag, f::AbstractVar, ::MainStep) = nothing
+store!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
 priority(::Type{<:Flag}) = 4
 
 ####
@@ -347,9 +338,9 @@ produce(s::Type{<:System}; args...) = Product(s, args)
 produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
 produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
 produce(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::AbstractVar) = nothing
+store!(s::Produce, f::AbstractVar, ::MainStep) = nothing
 store!(s::Produce, ::Nothing) = nothing
-store!(s::Produce, f::PostVar) = (p = f(); () -> produce(s, p))
+store!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p))
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -387,9 +378,9 @@ check!(s::Solve) = begin
     end
     checktime!(s) && !s.solving
 end
-store!(s::Solve, f::PreVar) = nothing
 using Roots
-store!(s::Solve, f::AbstractVar) = begin
+store!(s::Solve, f::AbstractVar, ::PreStep) = nothing
+store!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
     s.solving = true
     y = f() |> ustrip
@@ -403,7 +394,7 @@ store!(s::Solve, f::AbstractVar) = begin
     end
     cost(x) = begin
         store!(s, x)
-        recite!(s.context)
+        reupdate!(s.context.order)
         y = f() |> ustrip
         #@show "cost x = $x ~ error = $y"
         if y < s.error
@@ -436,7 +427,6 @@ store!(s::Solve, f::AbstractVar) = begin
     #@show "$(s.time)"
     store!(s, v)
 end
-store!(s::Solve, f::PostVar) = nothing
 priority(::Type{<:Solve}) = 9
 
 export produce
