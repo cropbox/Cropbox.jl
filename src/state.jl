@@ -38,7 +38,7 @@ unittype(unit::String, s::System) = begin
     x = getvar(s, unit)
     #FIXME: ensure only access static values on init
     @assert typeof(x.equation) <: StaticEquation
-    value(x)
+    value(x.equation)
 end
 
 valuetype(::State{V}) where V = V
@@ -53,7 +53,7 @@ timevalue(t::String, s::System) = begin
     x = getvar(s, t)
     #FIXME: ensure only access static values on init
     @assert typeof(x.equation) <: StaticEquation
-    value(x)
+    value(x.equation)
 end
 timevalue(t, _) = t
 
