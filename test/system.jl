@@ -247,17 +247,9 @@ using Unitful
         @system S begin
             a => true ~ flag
             b => false ~ flag
-            c => true ~ flag(prob=0)
-            d => false ~ flag(prob=1)
-            zero => 0 ~ track
-            one => 1 ~ track
-            e => true ~ flag(prob="zero")
-            f => false ~ flag(prob="one")
         end
         s = instance(S)
         @test s.a == true && s.b == false
-        @test s.c == false && s.d == false
-        @test s.e == false && s.f == false
     end
 
     @testset "produce" begin
