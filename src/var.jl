@@ -165,12 +165,7 @@ value(x) = x
 #FIXME: do we really need getindex here?
 #value(s::System, n) = s[n]
 value(s::System, n) = value(getvar(s, n))
-
-value!(x::Var) = value!(x, MainStep())
-value!(x::Var, t::Step) = (check!(x) && update!(x, t); value(x))
-value!(x) = x
-value!(x::Vector{<:Var}) = value!.(x)
-value!(s::System, n) = value!(getvar!(s, n))
+value(x::Vector{<:Var}) = value.(x)
 
 priority(::Type{Var{S}}) where {S<:State} = priority(S)
 flushorder(::Type{Var{S}}) where {S<:State} = flushorder(S)
@@ -192,7 +187,7 @@ import Base: ==, isless
 ==(a::Var, b::V) where {V<:Number} = ==(promote(a, b)...)
 ==(a::V, b::Var) where {V<:Number} = ==(b, a)
 #TODO: reduce redundant declarations of basic functions (i.e. comparison)
-isless(a::Var, b::Var) = isless(value!(a), value!(b))
+isless(a::Var, b::Var) = isless(value(a), value(b))
 isless(a::Var, b::V) where {V<:Number} = isless(promote(a, b)...)
 isless(a::V, b::Var) where {V<:Number} = isless(b, a)
 

@@ -85,7 +85,7 @@ end
 context(s::System) = s.context
 
 # import Base: getproperty
-# getproperty(s::System, n::Symbol) = value!(s, n)
+# getproperty(s::System, n::Symbol) = value(s, n)
 
 import Base: show
 show(io::IO, s::System) = print(io, "[$(name(s))]")

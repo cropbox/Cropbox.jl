@@ -60,7 +60,8 @@ end
 update!(c::Context, l, i) = begin
     update!(c.index, i)
     (s, n) = l[i]
-    value!(s, n)
+    #FIXME: value! is no longer available, remove update! here
+    value(s, n)
 end
 
 advance!(c::Context, skip::Bool) = (advance!(c.clock); update!(c, skip))

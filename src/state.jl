@@ -17,7 +17,7 @@ store!(s::State, f::AbstractVar, ::PostStep) = nothing
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
 
 checktime!(s::State) = check!(s.time)
-checkprob!(s::State) = (p = value!(s.prob); (p >= 1 || rand() <= p))
+checkprob!(s::State) = (p = value(s.prob); (p >= 1 || rand() <= p))
 
 import Base: getindex, length, iterate
 getindex(s::State, i) = s

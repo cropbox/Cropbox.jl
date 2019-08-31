@@ -47,9 +47,7 @@ varpath(s::System, p::Symbol) = vartpath(s, [p])
 varpath(s::System, n::AbstractString) = varpath(s, split(n, "."))
 
 getvar(p::VarPath) = getvar(p.system, p.path)
-getvar!(p::VarPath) = getvar!(p.system, p.path)
 value(p::VarPath) = value(getvar(p))
-value!(p::VarPath) = value!(getvar!(p))
 
 #TODO: make it concise
 compact(v::VarPath) = begin
@@ -98,6 +96,4 @@ VarVal(s::System, p::AbstractString) = VarVal{Any}(s, p)
 VarVal(s::System, p::V) where V = VarVal{V}(s, p)
 
 getvar(v::VarVal) = getvar(v.v)
-getvar!(v::VarVal) = getvar!(v.v)
 value(v::VarVal) = value(v.v)
-value!(v::VarVal) = value!(v.v)
