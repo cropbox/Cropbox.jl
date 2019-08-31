@@ -82,6 +82,21 @@ prev(n::Node) = begin
     end
 end
 
+# using LaTeXStrings
+# label(n::Node) = begin
+#     x = n.var
+#     tag = begin
+#         if n.step == PreStep()
+#             "0"
+#         elseif n.step == PostStep()
+#             "1"
+#         else
+#             ""
+#         end
+#     end
+#     latexstring("$(name(x))^{$(name(x.system))}_{$tag}")
+# end
+
 ####
 
 import LightGraphs: DiGraph, add_vertex!, add_edge!, rem_edge!, topological_sort_by_dfs
@@ -213,8 +228,8 @@ collect!(o::Order, S) = begin
     for x in X
         push!(o, x)
     end
-    # N = ["$(name(s))<$(name(x))>" for (s, x) in X]
-    # t = TikzGraphs.plot(g, N)
+    # N = label.(o.nodes)
+    # t = TikzGraphs.plot(o.graph, N)
     # TikzPictures.save(PDF("graph"), t)
     #g, V, I = o.graph, o.vars, o.indices
     sort!(o)
