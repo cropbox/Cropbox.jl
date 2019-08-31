@@ -1,24 +1,3 @@
-mutable struct Index
-    current::Int
-    recital::Int
-end
-
-update!(x::Index, i) = (x.current = i)
-recite!(x::Index) = begin
-    #@show "recite! index = $(x.recital) => $(x.current - 1)"
-    x.recital = x.current - 1
-end
-recital!(x::Index) = begin
-    r = 0
-    if x.recital > 0
-        r = x.recital
-        x.recital = 0
-    end
-    r
-end
-
-####
-
 extract(x::Var; equation=true, var=true) = begin
     eq = equation ? extract_equation(x, x.equation) : ()
     par = var ? extract_var(x) : ()
