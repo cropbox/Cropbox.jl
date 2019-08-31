@@ -45,11 +45,8 @@ end
 collectvar(S) = begin
     d = Set{Tuple{System,Symbol}}()
     for s in S
-        u = updatable(s)
-        for (p, t) in u
-            for n in t
-                push!(d, (s, n))
-            end
+        for n in updatable(s)
+            push!(d, (s, n))
         end
     end
     d

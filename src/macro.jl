@@ -203,15 +203,13 @@ filteredfields(type::Type, ::Type{S}) where {S<:System} = begin
     l = filtervar(type, S)
     map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
 end
-import DataStructures: DefaultDict
 filteredvars(::Type{S}) where {S<:System} = begin
     l = filtervar(Var, S)
-    d = DefaultDict{Int,Vector{Symbol}}(Vector{Symbol})
+    d = Symbol[]
     for (n, T) in l
-        i = priority(T)
-        push!(d[i], n)
+        push!(d, n)
     end
-    (k => Tuple(v) for (k, v) in d) |> Tuple
+    Tuple(d)
 end
 @generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{Produce}}, S)
 @generated updatable(::Type{S}) where {S<:System} = filteredvars(S)
