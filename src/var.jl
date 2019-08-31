@@ -181,7 +181,6 @@ value(x) = x
 value(s::System, n) = value(getvar(s, n))
 value(x::Vector{<:Var}) = value.(x)
 
-priority(::Type{Var{S}}) where {S<:State} = priority(S)
 flushorder(::Type{Var{S}}) where {S<:State} = flushorder(S)
 
 advance!(x::Var{Advance}) = advance!(state(x))

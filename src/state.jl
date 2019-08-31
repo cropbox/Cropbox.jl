@@ -58,8 +58,6 @@ rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
 rateunittype(U::Unitful.Units, TU::Nothing) = U
 rateunittype(U::Nothing, TU::Nothing) = nothing
 
-priority(::S) where {S<:State} = priority(S)
-priority(::Type{<:State}) = 0 # low is low
 flushorder(::S) where {S<:State} = flushorder(S)
 flushorder(::Type{<:State}) = 1 # post = 1, pre = -1
 
@@ -111,7 +109,6 @@ value(s::Advance) = s.value.t
 update!(s::Advance, f::AbstractVar, ::MainStep) = nothing
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
-priority(::Type{<:Advance}) = 10
 
 ####
 
@@ -136,7 +133,6 @@ end
 value(s::Preserve{V}) where V = s.value::Union{V,Missing}
 #FIXME: make new interface similar to check!?
 update!(s::Preserve, f::AbstractVar, ::MainStep) = ismissing(s.value) ? store!(s, f()) : nothing
-priority(::Type{<:Preserve}) = 1
 
 ####
 
@@ -249,7 +245,6 @@ end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Accumulate, ::Nothing) = update!(s, () -> 0)
 rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
-priority(::Type{<:Accumulate}) = 8
 
 ####
 
@@ -287,7 +282,6 @@ end
 #TODO special handling of no return value for Accumulate/Capture?
 #store!(s::Capture, ::Nothing) = update!(s, () -> 0)
 rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
-priority(::Type{<:Capture}) = 6
 
 ####
 
@@ -307,7 +301,6 @@ end
 
 update!(s::Flag, f::AbstractVar, ::MainStep) = nothing
 update!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
-priority(::Type{<:Flag}) = 4
 
 ####
 
@@ -340,7 +333,6 @@ unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
-priority(::Type{<:Produce}) = 3
 flushorder(::Type{<:Produce}) = -1
 
 ####
@@ -386,6 +378,5 @@ update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #HACK: trigger update with final value
     cost(v)
 end
-priority(::Type{<:Solve}) = 9
 
 export produce
