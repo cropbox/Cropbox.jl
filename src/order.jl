@@ -19,9 +19,9 @@ end
 
 ####
 
-extract(x::Var) = begin
-    eq = extract_equation(x, x.equation)
-    par = extract_param(x)
+extract(x::Var; equation=true, var=true) = begin
+    eq = equation ? extract_equation(x, x.equation) : ()
+    par = var ? extract_var(x) : ()
     [eq..., par...]
 end
 extract_equation(x::Var, e::StaticEquation) = Var[]
@@ -58,7 +58,7 @@ extract_equation(x::Var, d, n) = begin
     end
     l
 end
-extract_param(x::Var) = filter!(!ismissing, getvar.(varfields(state(x))))
+extract_var(x::Var) = filter!(!ismissing, getvar.(varfields(state(x))))
 
 ####
 
@@ -152,14 +152,14 @@ link!(o::Order, a::Node, b::Node) = begin
     add_edge!(o.graph, index(o, a), index(o, b))
 end
 
-innodes!(o::Order, x::Var) = begin # node!.(extract(x))
+innodes!(o::Order, x::Var; kwargs...) = begin # node!.(extract(x))
     @show "innodes $x"
-    X = extract(x)
+    X = extract(x; kwargs...)
     @show "extracted = $X"
     [node!(o, x) for x in X]
 end
-inlink!(o::Order, x::Var, n1::Node) = begin
-    for n0 in innodes!(o, x)
+inlink!(o::Order, x::Var, n1::Node; kwargs...) = begin
+    for n0 in innodes!(o, x; kwargs...)
         link!(o, n0, n1)
     end
 end
@@ -173,12 +173,16 @@ push!(o::Order, x::Var{Accumulate}) = begin
     n0 = mainnode!(o, x)
     n1 = postnode!(o, x)
     link!(o, n0, n1)
+    # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
+    inlink!(o, x, n0; equation=false)
     inlink!(o, x, n1)
 end
 push!(o::Order, x::Var{Capture}) = begin
     n0 = mainnode!(o, x)
     n1 = postnode!(o, x)
     link!(o, n0, n1)
+    # Capture same as Accumulate
+    inlink!(o, x, n0; equation=false)
     inlink!(o, x, n1)
 end
 push!(o::Order, x::Var{Solve}) = begin

@@ -236,7 +236,7 @@ end
 
 check!(s::Accumulate) = checktime!(s)
 store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
-    t = s.time.ticker.t
+    t = value(s.time.tick)
     t0 = s.tick
     if ismissing(t0)
         @show "missing"
@@ -253,7 +253,7 @@ store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
 end
 store!(s::Accumulate, f::AbstractVar, ::PostStep) = begin
     @show "accumulate post step!!!!!"
-    t = s.time.ticker.t
+    t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
     () -> (#= @show "acc poststore $t, $r";=# s.tick = t; s.rate = r)
 end
@@ -284,7 +284,7 @@ end
 
 check!(s::Capture) = checktime!(s)
 store!(s::Capture, f::AbstractVar, ::MainStep) = begin
-    t = s.time.ticker.t
+    t = value(s.time.tick)
     t0 = s.tick
     if !ismissing(t0)
         v = s.rate * (t - t0)
@@ -292,7 +292,7 @@ store!(s::Capture, f::AbstractVar, ::MainStep) = begin
     end
 end
 store!(s::Capture, f::AbstractVar, ::PostStep) = begin
-    t = s.time.ticker.t
+    t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
     () -> (s.tick = t; s.rate = r)
 end
@@ -381,8 +381,8 @@ end
 
 check!(s::Solve) = begin
     t = value(s.time.tick)
-    if s.time.ticker.t < t
-        #@show "reset error = Inf since $(s.time.ticker.t) < $t"
+    if value(s.time.tick) < t
+        #@show "reset error = Inf since $(value(s.time.tick)) < $t"
         #@show s.solving
         s.error = Inf
     end
