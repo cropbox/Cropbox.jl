@@ -354,8 +354,6 @@ mutable struct Solve{V,T} <: State{V}
     lower::Union{VarVal{V},Nothing}
     upper::Union{VarVal{V},Nothing}
     context::System
-    solving::Bool
-    error::Float64
     tol::VarVal{V}
 end
 
@@ -364,33 +362,17 @@ Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.cloc
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, false, Inf, VarVal{V}(_system, tol))
+    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, VarVal{V}(_system, tol))
 end
 
 using Roots
 store!(s::Solve, f::AbstractVar, ::PreStep) = nothing
 store!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
-    s.solving = true
-    y = f() |> ustrip
-    if s.error == y
-        #@show "skip solve s.error = $(s.error) == y = $y"
-        #check!(s)
-        s.solving = false
-        return
-    elseif s.error < y
-        #@show "error $(s.error) < y = $(y)"
-    end
     cost(x) = begin
         store!(s, x)
         reupdate!(s.context.order)
-        y = f() |> ustrip
-        #@show "cost x = $x ~ error = $y"
-        if y < s.error
-            #@show "update error: $(s.error) => $y"
-            s.error = y
-        end
-        y
+        f() |> ustrip
     end
     b = (value(s.lower), value(s.upper))
     if nothing in b
@@ -399,22 +381,13 @@ store!(s::Solve, f::AbstractVar, ::MainStep) = begin
         catch e
             #@show "convergence failed: $e"
             v = value(s)
-            s.error = f() |> ustrip
-            s.solving = false
         end
     else
         v = find_zero(cost, b)
     end
     #FIXME: ensure all state vars are updated once and only once (i.e. no duplice produce)
     #HACK: trigger update with final value
-    #store!(s, v); #recite!(s.context); #update!(s.context)
-    s.solving = false
-    #@show "end solve $s"
-    #check!(s)
-    #@show "$(s.context.clock.tick)"
-    #@show "$(s.context.clock.tock)"
-    #@show "$(s.time)"
-    store!(s, v)
+    cost(v)
 end
 priority(::Type{<:Solve}) = 9
 
