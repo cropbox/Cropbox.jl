@@ -47,22 +47,6 @@ update!(c::Context, skip::Bool=false) = begin
     #TODO: process aggregate (i.e. transport) operations?
     nothing
 end
-update!(c::Context, l) = begin
-    for i in 1:length(l)
-        update!(c, l, i)
-    end
-    while 0 < (r = recital!(c.index))
-        for i in 1:r
-            update!(c, l, i)
-        end
-    end
-end
-update!(c::Context, l, i) = begin
-    update!(c.index, i)
-    (s, n) = l[i]
-    #FIXME: value! is no longer available, remove update! here
-    value(s, n)
-end
 
 advance!(c::Context, skip::Bool) = (advance!(c.clock); update!(c, skip))
 advance!(c::Context, n=1) = begin
