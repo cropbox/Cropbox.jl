@@ -185,7 +185,7 @@ Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _t
 end
 
 check!(s::Drive) = checktime!(s)
-store!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value!(f()[s.key])) # value!() for Var
+store!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value(f()[s.key])) # value() for Var
 
 ####
 
