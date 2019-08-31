@@ -91,7 +91,8 @@ mutable struct Order
     vars::Vector{Var}
     nodes::Vector{Node}
     indices::Dict{Node,Int}
-    orderednodes::Vector{Node}
+    sortednodes::Vector{Node}
+    sortedindices::Dict{Node,Int}
     order::Int
 
     Order() = begin
@@ -105,19 +106,23 @@ reset!(o::Order) = begin
     o.vars = Var[]
     o.nodes = Node[]
     o.indices = Dict{Node,Int}()
-    o.orderednodes = Node[]
+    o.sortednodes = Node[]
+    o.sortedindices = Dict{Node,Int}()
     o.order = 0
     o
 end
 
 index(o::Order, n::Node) = o.indices[n]
 node(o::Order, i::Int) = o.nodes[i]
-ordernodes(o::Order) = begin
+
+import Base: sort!
+sort!(o::Order) = begin
     I = topological_sort_by_dfs(o.graph)
     @show I
     @show o.vars
     @show o.nodes
-    [node(o, i) for i in I]
+    o.sortednodes = [node(o, i) for i in I]
+    o.sortedindices = Dict(n => i for (i, n) in enumerate(o.sortednodes))
 end
 
 node!(o::Order, v::Var, t::Step) = begin
@@ -208,27 +213,23 @@ collect!(o::Order, S) = begin
     # t = TikzGraphs.plot(g, N)
     # TikzPictures.save(PDF("graph"), t)
     #g, V, I = o.graph, o.vars, o.indices
-    o.orderednodes = ordernodes(o)
+    sort!(o)
 end
 update!(o::Order, S) = begin
     collect!(o, S)
-    for (i, n) in enumerate(o.orderednodes)
+    for (i, n) in enumerate(o.sortednodes)
         o.order = i
         update!(n)
     end
 end
 reupdate!(o::Order) = begin
     @show "reupdate! to = $(o.order)"
-    n = o.orderednodes[o.order]
+    n = o.sortednodes[o.order]
     pn = prev(n)
-    f(to) = for i in to:-1:1
-        nn = o.orderednodes[i]
-        (nn == pn) && return i
-    end
-    po = f(o.order)
+    po = o.sortedindices[pn]
     @show "reupdate! from = $po"
     for i in (po+1):(o.order-1)
-        n = o.orderednodes[i]
+        n = o.sortednodes[i]
         @show "reupdate! $i -> $(o.order): $n"
         update!(n)
     end
