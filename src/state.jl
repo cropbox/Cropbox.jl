@@ -34,7 +34,12 @@ unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
 unittype(::Nothing, _) = nothing
 unittype(U::Unitful.Units, _) = U
-unittype(unit::String, s::System) = value!(s, unit)
+unittype(unit::String, s::System) = begin
+    x = getvar(s, unit)
+    #FIXME: ensure only access static values on init
+    @assert typeof(x.equation) <: StaticEquation
+    value(x)
+end
 
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
@@ -44,7 +49,12 @@ valuetype(::Type{Array{T,N}}, U::Unitful.Units) where {T,N} = Array{valuetype(T,
 #HACK: state var referred by `time` tag must have been already declared
 timeunittype(time::String, s::System) = unit(state(getvar(s, time)))
 timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
-timevalue(t::String, s::System) = value!(s, t)
+timevalue(t::String, s::System) = begin
+    x = getvar(s, t)
+    #FIXME: ensure only access static values on init
+    @assert typeof(x.equation) <: StaticEquation
+    value(x)
+end
 timevalue(t, _) = t
 
 rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
