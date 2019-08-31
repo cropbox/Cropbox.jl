@@ -18,12 +18,7 @@ using Unitful
             a(b) => b ~ track
             b(a) => a ~ track
         end
-        s = instance(S)
-        @test s.a == 0
-        @test s.b == 0
-        advance!(s)
-        @test s.a == 0
-        @test s.b == 0
+        @test_throws ErrorException instance(S)
     end
 
     @testset "call" begin
