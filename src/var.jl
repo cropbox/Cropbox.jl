@@ -75,8 +75,8 @@ handle(x::Var, e::DynamicEquation) = begin
 end
 handle(x::Var, s::System, d, n; container=Dict) = begin
     resolve!(a::Symbol) = begin
-        interpret(v::Symbol) = value!(s, v)
-        interpret(v::VarVal) = value!(v)
+        interpret(v::Symbol) = value(s, v)
+        interpret(v::VarVal) = value(v)
         interpret(v) = v
 
         # 2. default parameter values
@@ -176,7 +176,9 @@ update!(x::Var, t::Step) = (s = state(x); queue!(system(x).context, store!(s, x,
 
 value(x::Var) = value(state(x))
 value(x) = x
-value(s::System, n) = s[n]
+#FIXME: do we really need getindex here?
+#value(s::System, n) = s[n]
+value(s::System, n) = value(getvar(s, n))
 
 value!(x::Var) = value!(x, MainStep())
 value!(x::Var, t::Step) = (check!(x) && update!(x, t); value(x))
@@ -194,13 +196,13 @@ import Base: convert, promote_rule
 convert(::Type{System}, x::Var) = x.system
 convert(::Type{Vector{Symbol}}, x::Var) = [x.name]
 convert(::Type{X}, x::Var) where {X<:Var} = x
-convert(::Type{V}, x::Var) where {V<:Number} = convert(V, value!(x))
+convert(::Type{V}, x::Var) where {V<:Number} = convert(V, value(x))
 promote_rule(::Type{X}, ::Type{V}) where {X<:Var, V<:Number} = V
 promote_rule(::Type{Bool}, ::Type{X}) where {X<:Var} = Bool
 
 import Base: ==, isless
 #HACK: would make different Vars with same internal value clash for Dict key
-# ==(a::Var, b::Var) = ==(value!(a), value!(b))
+# ==(a::Var, b::Var) = ==(value(a), value(b))
 ==(a::Var, b::V) where {V<:Number} = ==(promote(a, b)...)
 ==(a::V, b::Var) where {V<:Number} = ==(b, a)
 #TODO: reduce redundant declarations of basic functions (i.e. comparison)

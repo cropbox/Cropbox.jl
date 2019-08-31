@@ -81,8 +81,8 @@ compact(v::VarPath) = begin
 end
 
 import Base: convert
-convert(::Type{V}, p::VarPath) where {V<:Number} = convert(V, value!(p))
-convert(::Type{V}, p::VarPath) where {V<:Quantity} = convert(V, unitfy(value!(p), unit(V)))
+convert(::Type{V}, p::VarPath) where {V<:Number} = convert(V, value(p))
+convert(::Type{V}, p::VarPath) where {V<:Quantity} = convert(V, unitfy(value(p), unit(V)))
 
 abstract type AbstractVar end
 

@@ -240,7 +240,7 @@ store!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
     t0 = s.tick
     if ismissing(t0)
         @show "missing"
-        v = value!(s.init)
+        v = value(s.init)
     else
         @show "$(s.value)"
         @show "$(s.rate)"
@@ -380,7 +380,7 @@ Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.cloc
 end
 
 check!(s::Solve) = begin
-    t = value!(s.time.tick)
+    t = value(s.time.tick)
     if s.time.ticker.t < t
         #@show "reset error = Inf since $(s.time.ticker.t) < $t"
         #@show s.solving
@@ -413,10 +413,10 @@ store!(s::Solve, f::AbstractVar, ::MainStep) = begin
         end
         y
     end
-    b = (value!(s.lower), value!(s.upper))
+    b = (value(s.lower), value(s.upper))
     if nothing in b
         try
-            v = find_zero(cost, value(s); xatol=value!(s.tol))
+            v = find_zero(cost, value(s); xatol=value(s.tol))
         catch e
             #@show "convergence failed: $e"
             v = value(s)
