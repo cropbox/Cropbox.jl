@@ -396,7 +396,7 @@ store!(s::Solve, f::AbstractVar, ::MainStep) = begin
     y = f() |> ustrip
     if s.error == y
         #@show "skip solve s.error = $(s.error) == y = $y"
-        check!(s)
+        #check!(s)
         s.solving = false
         return
     elseif s.error < y
@@ -431,7 +431,7 @@ store!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #store!(s, v); #recite!(s.context); #update!(s.context)
     s.solving = false
     #@show "end solve $s"
-    check!(s)
+    #check!(s)
     #@show "$(s.context.clock.tick)"
     #@show "$(s.context.clock.tock)"
     #@show "$(s.time)"
