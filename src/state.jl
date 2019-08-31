@@ -132,7 +132,7 @@ Preserve(; unit=nothing, _name, _system, _value=missing, _type=Float64, _...) = 
         v = missing
     else
         v = unitfy(_value, U)
-        V = promote_type(V, typeof(v))
+        V = typeof(v)
     end
     N = Symbol("$(name(_system))<$_name>")
     Preserve{V}(v)
