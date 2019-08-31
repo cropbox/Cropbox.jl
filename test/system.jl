@@ -234,7 +234,7 @@ using Unitful
 
     @testset "drive with dataframe" begin
         @system S begin
-            df => DataFrame(t=0:4, a=0:10:40) ~ preserve
+            df => DataFrame(t=0:4, a=0:10:40) ~ preserve(static)
             a(df, t="context.clock.tick") => df[df.t .== t, :][1, :] ~ drive
         end
         s = instance(S)
