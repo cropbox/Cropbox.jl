@@ -26,19 +26,15 @@ convert(::Type{T}, timer::Timepiece) where {T<:Number} = convert(T, timer.t)
 struct TimeState{T}
     tick::VarVal{T}
     ticker::Timepiece{T}
-    tock::VarVal{Int}
-    tocker::Timepiece{Int}
 end
 
-TimeState{T}(system, tick, tock="context.clock.tock") where T =
-    TimeState(VarVal{T}(system, tick), Timepiece{T}(zero(T)), VarVal{Int}(system, tock), Timepiece{Int}(zero(Int)))
+TimeState{T}(system::System, tick) where T = begin
+    TimeState{T}(VarVal{T}(system, tick), Timepiece{T}(zero(T)))
+end
 
 check!(s::TimeState) = begin
     if update!(s.ticker, value!(s.tick))
-        reset!(s.tocker)
         true
-    else
-        update!(s.tocker, value!(s.tock))
     end
 end
 
