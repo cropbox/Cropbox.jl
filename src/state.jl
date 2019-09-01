@@ -309,7 +309,7 @@ update!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
 ####
 
 mutable struct Produce{S<:System,T} <: State{S}
-    system::System
+    context::System
     value::Vector{S}
     time::TimeState{T}
     name::Symbol # used in recurisve collecting in getvar!
@@ -323,16 +323,21 @@ end
 Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Produce{S,T}(_system, S[], TimeState{T}(_system, time), _name)
+    Produce{S,T}(_system.context, S[], TimeState{T}(_system, time), _name)
 end
 
 value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
 produce(s::Type{<:System}; args...) = Product(s, args)
-produce(s::Produce, p::Product) = append!(s.value, p.type(; context=s.system.context, p.args...))
-produce(s::Produce, p::Vector{<:Product}) = produce.(Ref(s), p)
-produce(s::Produce, ::Nothing) = nothing
+produce(s::Produce, p::Product, x::AbstractVar) = begin
+    c = s.context
+    k = p.type(; context=c, p.args...)
+    append!(s.value, k)
+    inform!(c.order, x, k)
+end
+produce(s::Produce, p::Vector{<:Product}, x::AbstractVar) = produce.(Ref(s), p, Ref(x))
+produce(s::Produce, ::Nothing, x::AbstractVar) = nothing
 update!(s::Produce, f::AbstractVar, ::MainStep) = nothing
-update!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p))
+update!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p, f))
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -342,11 +347,11 @@ priority(::Type{<:Produce}) = PrePriority()
 ####
 
 mutable struct Solve{V,T} <: State{V}
+    context::System
     value::V
     time::TimeState{T}
     lower::Union{VarVal{V},Nothing}
     upper::Union{VarVal{V},Nothing}
-    context::System
     tol::VarVal{V}
 end
 
@@ -355,7 +360,7 @@ Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.cloc
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T}(default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), _system.context, VarVal{V}(_system, tol))
+    Solve{V,T}(_system.context, default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), VarVal{V}(_system, tol))
 end
 
 using Roots
@@ -378,7 +383,6 @@ update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     else
         v = find_zero(cost, b)
     end
-    #FIXME: ensure all state vars are updated once and only once (i.e. no duplice produce)
     #HACK: trigger update with final value
     cost(v)
 end

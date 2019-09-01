@@ -43,10 +43,10 @@ collect(s::System; recursive=true, exclude_self=false) = begin
 end
 
 collectvar(S) = begin
-    d = Set{Tuple{System,Symbol}}()
+    d = Set{Var}()
     for s in S
         for n in updatable(s)
-            push!(d, (s, n))
+            push!(d, getvar(s, n))
         end
     end
     d

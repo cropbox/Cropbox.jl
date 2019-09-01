@@ -92,6 +92,8 @@ mutable struct Order
 
     graph::DiGraph
     vars::Vector{Var}
+    updatedvars::Set{Var}
+    updatedsystems::Set{System}
     nodes::Vector{Node}
     indices::Dict{Node,Int}
     sortednodes::Vector{Node}
@@ -115,6 +117,8 @@ reset!(o::Order, i) = (reset!(o.prequeue, i); reset!(o.postqueue, i))
 reset!(o::Order) = begin
     o.graph = DiGraph()
     o.vars = Var[]
+    o.updatedvars = Set{Var}()
+    o.updatedsystems = Set{System}()
     o.nodes = Node[]
     o.indices = Dict{Node,Int}()
     o.sortednodes = Node[]
@@ -216,28 +220,42 @@ end
 
 ####
 
+import Base: broadcastable
+broadcastable(o::Order) = Ref(o)
+
 #using TikzGraphs, TikzPictures
-collect!(o::Order, S) = begin
-    L = collectvar(S)
+collect!(o::Order, X, reset::Bool) = begin
     #TODO: incremental update
-    reset!(o)
-    X = [getvar(s, n) for (s, n) in L]
-    for x in X
-        push!(o, x)
+    reset && reset!(o)
+    @show "collect! $X"
+    if !isempty(X)
+        push!.(o, X)
+        sort!(o)
     end
     # N = label.(o.nodes)
     # t = TikzGraphs.plot(o.graph, N)
     # TikzPictures.save(PDF("graph"), t)
-    sort!(o)
 end
 
-update!(o::Order, s::System) = begin
+update!(o::Order, reset=false, X=Set{Var}()) = begin
     # process pending operations from last timestep (i.e. produce)
     flush!(o, PrePriority())
 
     # update state variables recursively
-    S = collect(s)
-    collect!(o, S)
+    if reset
+        @show "update! reset"
+        collect!(o, X, true)
+    else
+        @show "update! incremental"
+        @show o.updatedvars
+        @show collectvar.(o.updatedsystems)
+        X = union(X, o.updatedvars, collectvar.(o.updatedsystems)...)
+        collect!(o, X, false)
+        empty!(o.updatedvars)
+        empty!(o.updatedsystems)
+    end
+
+    # ensure all state vars are updated once and only once (i.e. no duplice produce)
     for (i, n) in enumerate(o.sortednodes)
         o.order = i
         update!(o, n)
@@ -273,4 +291,10 @@ recite!(o::Order) = begin
         @show "recite! $i -> $i1: $n"
         update!(o, n)
     end
+end
+
+inform!(o::Order, x::Var, s::System) = begin
+    @show "inform $x => $s"
+    push!(o.updatedvars, x)
+    push!(o.updatedsystems, s)
 end
