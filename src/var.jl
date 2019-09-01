@@ -169,7 +169,11 @@ getvars(s::System, n::AbstractString, X) = getvars(varpath(s, n), X) #FIXME: nee
 getvars(x::Var{Produce}, o::VarOpAll, X) = (pushvars!(X, x); getvar(x, o))
 getvars(x::Var{Produce}, o::VarOpRecursiveAll, X) = (pushvars!(X, x); getvar(x, o))
 getvars(v::Vector{<:System}, o::VarOpIndex, X) = getvar(v, o)
-getvars(v::Vector{<:System}, o::VarOpFilter, X) = getvar(v, o)
+getvars(v::Vector{<:System}, o::VarOpFilter, X) = begin
+    vx = [getvar(s, Symbol(o.cond)) for s in v]
+    foreach(x -> pushvars!(X, x), vx)
+    getvar(v, o)
+end
 getvars(s::Vector, n::Symbol, X) = (x = getvar.(s, n); pushvars!(X, x); x)
 
 value(x::Var) = value(state(x))
