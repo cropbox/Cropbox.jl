@@ -266,7 +266,7 @@ end
 
     # weighted average absorved diffuse flux over depth of L within canopy
     # accounting for exponential decay, Campbell p261
-    irradiance_Q_dm(LAI; I0_df, s, Kd, Q_dm): Q_dm => begin
+    irradiance_Q_dm(LAI; I0_df, s, Kd): Q_dm => begin
         if LAI > 0
             # Integral Qd / Integral L
             I0_df * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
