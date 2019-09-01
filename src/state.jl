@@ -100,12 +100,26 @@ mutable struct Advance{T} <: State{T}
 end
 
 Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64, _...) = begin
+    @show Symbol("$(name(_system))<$_name>")
     U = unittype(unit, _system)
+    @show U
     T = valuetype(_type, U)
+    @show _type
+    @show T
     t = isnothing(init) ? zero(T) : timevalue(init, _system)
+    @show zero(T)
+    @show timevalue(init, _system)
+    @show timeunittype(init, _system)
+    @show t
     dt = isnothing(step) ? oneunit(T) : timevalue(step, _system)
+    @show oneunit(T)
+    @show timevalue(step, _system)
+    @show timeunittype(step, _system)
+    @show dt
     T = promote_type(typeof(t), typeof(dt))
+    @show T
     N = Symbol("$(name(_system))<$_name>")
+    @show N
     Advance{T}(Timepiece{T}(t, dt))
 end
 
@@ -275,12 +289,17 @@ update!(s::Capture, f::AbstractVar, ::MainStep) = begin
     t0 = s.tick
     if !ismissing(t0)
         v = s.rate * (t - t0)
+        @show "$(s.rate)"
+        @show "$t"
+        @show "$t0"
+        @show "$v"
         store!(s, v)
     end
 end
 update!(s::Capture, f::AbstractVar, ::PostStep) = begin
     t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
+    @show "capture post step!!!!! $t $r"
     () -> (s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
