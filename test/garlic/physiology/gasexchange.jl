@@ -283,14 +283,14 @@ end
     # dynamic properties
 
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
-    co2_mesophyll(A_net, P_air="weather.P_air", CO2="weather.CO2", rvc="stomata.rvc"): [Cm, Ci] => begin
+    co2_atmosphere(CO2="weather.CO2", P_air="weather.P_air"): Ca => (CO2 * P_air / 100u"kPa") ~ track
+    co2_mesophyll_upper_limit(Ca): Cmmax => 2Ca ~ track
+    co2_mesophyll(Ca, A_net, P_air="weather.P_air", CO2="weather.CO2", rvc="stomata.rvc"): [Cm, Ci] => begin
         P = P_air / 100u"kPa"
-        Ca = CO2 * P # conversion to partial pressure
         Cm = Ca - A_net * rvc * P
         #println("+ Cm = $Cm, Ca = $Ca, A_net = $A_net, rvc = $rvc, P = $P")
-        clamp(Cm, 0, 2Ca)
         #Cm
-    end ~ track(u"μmol/mol" #= CO2 =#)
+    end ~ solve(lower=0, upper="Cmmax", u"μmol/mol" #= CO2 =#)
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
     light(PFD="weather.PPFD"): I2 => begin
@@ -302,14 +302,7 @@ end
         Ia * (1 - f) / 2 # useful light absorbed by PSII
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
-    net_photosynthesis(A_net0="A_net", A_net1="photosynthesis.net_photosynthesis"): A_net => begin
-        #I2 = light
-        #println("A_net0 = $A_net0")
-        #Cm0 = co2_mesophyll
-        #Cm1 = co2_mesophyll(A_net1)
-        #print("- I2 = $I2, Cm0 = $Cm0, T_leaf = $T_leaf, A_net0 = $A_net0, A_net1 = $A_net1, Cm1 = $Cm1")
-        (A_net1 - A_net0)^2
-    end ~ solve(u"μmol/m^2/s" #= CO2 =#)
+    net_photosynthesis("photosynthesis.net_photosynthesis"): A_net ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     dark_respiration("photosynthesis.dark_respiration"): Rd ~ track(u"μmol/m^2/s" #= O2 =#)
 

@@ -371,39 +371,37 @@ mutable struct Solve{V,T} <: State{V}
     time::TimeState{T}
     lower::Union{VarVal{V},Nothing}
     upper::Union{VarVal{V},Nothing}
-    tol::VarVal{V}
 end
 
-Solve(; lower=nothing, upper=nothing, tol=1e-3, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
     U = unittype(unit, _system)
     V = valuetype(_type, U)
     T = timetype(_type_time, time, _system)
     N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T}(_system.context, default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper), VarVal{V}(_system, tol))
+    Solve{V,T}(_system.context, default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper))
 end
 
 using Roots
 update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
 update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
-    cost(x) = begin
-        store!(s, x)
-        recite!(s.context.order)
-        f() |> ustrip
-    end
+    trigger(x) = (store!(s, x); recite!(s.context.order))
+    cost(e) = x -> (@show x; trigger(x); ee = e(x) |> ustrip; @show ee; ee)
     b = (value(s.lower), value(s.upper))
     if nothing in b
         try
-            v = find_zero(cost, value(s); xatol=value(s.tol))
+            c = cost(x -> (x - f())^2)
+            v = find_zero(c, value(s))
         catch e
             #@show "convergence failed: $e"
             v = value(s)
         end
     else
-        v = find_zero(cost, b)
+        c = cost(x -> (x - f()))
+        v = find_zero(c, b)
     end
     #HACK: trigger update with final value
-    cost(v)
+    trigger(v)
 end
 
 export produce

@@ -396,28 +396,32 @@ using Unitful
         @test s.d == 3 # (#1 + 2 + #3* + .4)
     end
 
-    @testset "solve" begin
+    @testset "solve bisect" begin
         @system S begin
             a(x) => 2x ~ track
-            b(x) => x + 1 ~ track
-            x(a, b) => a - b ~ solve(lower=0, upper=2)
+            x(a) => a - 1 ~ solve(lower=0, upper=2)
         end
         s = instance(S)
         @test s.x == 1
         @test s.a == 2
-        @test s.b == 2
+    end
+
+    @testset "solve order0" begin
+        @system S begin
+            x(x) => ((x^2 + 1) / 2) ~ solve
+        end
+        s = instance(S)
+        @test isapprox(value(s.x), 1; atol=1e-3)
     end
 
     @testset "solve with unit" begin
         @system S begin
             a(x) => 2x ~ track(u"m")
-            b(x) => x + u"1m" ~ track(u"m")
-            x(a, b) => a - b ~ solve(lower=u"0m", upper=u"2m", u"m")
+            x(a) => a - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
         end
         s = instance(S)
         @test s.x == u"1m"
         @test s.a == u"2m"
-        @test s.b == u"2m"
     end
 
     @testset "clock" begin
