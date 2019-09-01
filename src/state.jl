@@ -364,7 +364,7 @@ update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
     cost(x) = begin
         store!(s, x)
-        reupdate!(s.context.order)
+        recite!(s.context.order)
         f() |> ustrip
     end
     b = (value(s.lower), value(s.upper))

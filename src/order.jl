@@ -260,17 +260,17 @@ update!(o::Order, n::Node) = begin
     queue!(o, f, p, i)
 end
 
-reupdate!(o::Order) = begin
+recite!(o::Order) = begin
     i1 = o.order
-    @show "reupdate! to = $i1"
+    @show "recite! to = $i1"
     n1 = o.sortednodes[i1]
     n0 = prev(n1)
     i0 = o.sortedindices[n0]
-    @show "reupdate! from = $i0"
+    @show "recite! from = $i0"
     reset!(o, i0)
     for i in (i0+1):(i1-1)
         n = o.sortednodes[i]
-        @show "reupdate! $i -> $i1: $n"
+        @show "recite! $i -> $i1: $n"
         update!(o, n)
     end
 end
