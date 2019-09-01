@@ -45,10 +45,6 @@ struct Node
     step::Step
 end
 
-update!(n::Node) = begin
-    update!(n.var, n.step)
-end
-
 prev(n::Node) = begin
     if n.step == MainStep()
         Node(n.var, PreStep())
@@ -76,8 +72,23 @@ end
 
 ####
 
+import DataStructures: DefaultDict
+const Queue = DefaultDict{Int,Vector{Function}}
+
+queue!(q::Queue, f::Function, p) = push!(q[p], f)
+dequeue!(q::Queue) = empty!(q)
+flush!(q::Queue, cond) = begin
+    for (p, l) in filter(pl -> cond(pl[1]), q)
+        foreach(f -> f(), l)
+        empty!(l)
+    end
+end
+
+####
+
 import LightGraphs: DiGraph, add_vertex!, add_edge!, rem_edge!, topological_sort_by_dfs
 mutable struct Order
+    queue::Queue
     graph::DiGraph
     vars::Vector{Var}
     nodes::Vector{Node}
@@ -87,10 +98,17 @@ mutable struct Order
     order::Int
 
     Order() = begin
-        o = new()
+        o = new(Queue(Vector{Function}))
         reset!(o)
     end
 end
+
+queue!(o::Order, f::Function, p) = queue!(o.queue, f, p)
+queue!(o::Order, f, p) = nothing
+dequeue!(o::Order) = empty!(o.queue)
+flush!(o::Order, cond) = flush!(o.queue, cond)
+preflush!(o::Order) = flush!(o.queue, p -> p < 0)
+postflush!(o::Order) = flush!(o.queue, p -> p > 0)
 
 reset!(o::Order) = begin
     o.graph = DiGraph()
@@ -210,13 +228,24 @@ collect!(o::Order, S) = begin
     # TikzPictures.save(PDF("graph"), t)
     sort!(o)
 end
+
 update!(o::Order, S) = begin
     collect!(o, S)
     for (i, n) in enumerate(o.sortednodes)
         o.order = i
-        update!(n)
+        update!(o, n)
     end
 end
+
+update!(o::Order, n::Node) = begin
+    x = n.var
+    t = n.step
+    s = state(x)
+    f = update!(s, x, t)
+    p = priority(s)
+    queue!(o, f, p)
+end
+
 reupdate!(o::Order) = begin
     @show "reupdate! to = $(o.order)"
     n = o.sortednodes[o.order]
@@ -226,6 +255,6 @@ reupdate!(o::Order) = begin
     for i in (po+1):(o.order-1)
         n = o.sortednodes[i]
         @show "reupdate! $i -> $(o.order): $n"
-        update!(n)
+        update!(o, n)
     end
 end

@@ -1,23 +1,8 @@
-import DataStructures: DefaultDict
-const Queue = DefaultDict{Int,Vector{Function}}
-
-queue!(q::Queue, f::Function, o) = push!(q[o], f)
-dequeue!(q::Queue) = empty!(q)
-flush!(q::Queue, cond) = begin
-    for (o, l) in filter(p -> cond(p[1]), q)
-        foreach(f -> f(), l)
-        empty!(l)
-    end
-end
-
-####
-
 @system Context begin
     self => self ~ ::System
     context => self ~ ::System
 
     config => configure() ~ ::Config(override)
-    queue => Queue(Vector{Function}) ~ ::Queue
     order => Order() ~ ::Order
 
     clock => Clock(; context=self) ~ ::Clock
@@ -26,23 +11,16 @@ end
 
 option(c::Context, keys...) = option(c.config, keys...)
 
-queue!(c::Context, f::Function, o) = queue!(c.queue, f, o)
-queue!(c::Context, f, o) = nothing
-dequeue!(c::Context) = empty!(c.queue)
-flush!(c::Context, cond) = flush!(c.queue, cond)
-preflush!(c::Context) = flush!(c, o -> o < 0)
-postflush!(c::Context) = flush!(c, o -> o > 0)
-
 update!(c::Context, skip::Bool=false) = begin
     # process pending operations from last timestep (i.e. produce)
-    preflush!(c)
+    preflush!(c.order)
 
     # update state variables recursively
     S = collect(c)
     update!(c.order, S)
 
     # process pending operations from current timestep (i.e. flag, accumulate)
-    postflush!(c)
+    postflush!(c.order)
 
     #TODO: process aggregate (i.e. transport) operations?
     nothing
