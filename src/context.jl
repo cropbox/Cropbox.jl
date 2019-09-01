@@ -11,21 +11,7 @@ end
 
 option(c::Context, keys...) = option(c.config, keys...)
 
-update!(c::Context, skip::Bool=false) = begin
-    # process pending operations from last timestep (i.e. produce)
-    preflush!(c.order)
-
-    # update state variables recursively
-    S = collect(c)
-    update!(c.order, S)
-
-    # process pending operations from current timestep (i.e. flag, accumulate)
-    postflush!(c.order)
-
-    #TODO: process aggregate (i.e. transport) operations?
-    nothing
-end
-
+update!(c::Context, skip::Bool=false) = update!(c.order, collect(c))
 advance!(c::Context, skip::Bool) = (advance!(c.clock); update!(c, skip))
 advance!(c::Context, n=1) = begin
     for i in 1:n-1
