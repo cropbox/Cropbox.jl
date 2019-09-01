@@ -19,11 +19,6 @@ advance!(c::Context, n=1) = begin
     end
 end
 advance!(s::System, n=1) = advance!(s.context, n)
-recite!(c::Context) = begin
-    dequeue!(c)
-    recite!(c.clock)
-    recite!(c.index)
-end
 
 instance(Ss::Type{<:System}...; config=configure()) = begin
     c = Context(; config=config)
