@@ -12,10 +12,10 @@ end
 option(c::Context, keys...) = option(c.config, keys...)
 
 update!(c::Context) = update!(c.order, c)
-advance!(c::Context) = (advance!(c.clock); update!(c))
 advance!(c::Context, n=1) = begin
     for i in 1:n
-        advance!(c)
+        advance!(c.clock)
+        update!(c)
     end
 end
 advance!(s::System, n=1) = advance!(s.context, n)
