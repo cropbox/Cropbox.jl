@@ -229,11 +229,12 @@ collect!(o::Order, S) = begin
     sort!(o)
 end
 
-update!(o::Order, S) = begin
+update!(o::Order, s::System) = begin
     # process pending operations from last timestep (i.e. produce)
     preflush!(o)
 
     # update state variables recursively
+    S = collect(s)
     collect!(o, S)
     for (i, n) in enumerate(o.sortednodes)
         o.order = i

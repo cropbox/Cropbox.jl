@@ -11,7 +11,7 @@ end
 
 option(c::Context, keys...) = option(c.config, keys...)
 
-update!(c::Context, skip::Bool=false) = update!(c.order, collect(c))
+update!(c::Context, skip::Bool=false) = update!(c.order, c)
 advance!(c::Context, skip::Bool) = (advance!(c.clock); update!(c, skip))
 advance!(c::Context, n=1) = begin
     for i in 1:n-1
