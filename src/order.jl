@@ -72,23 +72,24 @@ end
 
 ####
 
-import DataStructures: DefaultDict
-const Queue = DefaultDict{Int,Vector{Function}}
+import DataStructures: DefaultOrderedDict
+const Queue = DefaultOrderedDict{Int,Vector{Function}}
+queue() = Queue(Vector{Function})
 
-queue!(q::Queue, f::Function, p) = push!(q[p], f)
-dequeue!(q::Queue) = empty!(q)
-flush!(q::Queue, cond) = begin
-    for (p, l) in filter(pl -> cond(pl[1]), q)
-        foreach(f -> f(), l)
-        empty!(l)
-    end
+queue!(q::Queue, f::Function, i) = (push!(q[i], f))
+flush!(q::Queue) = begin
+    foreach(F -> foreach(f -> f(), F), values(q))
+    empty!(q)
 end
+reset!(q::Queue, i) = filter!(p -> p[1] <= i, q)
 
 ####
 
 import LightGraphs: DiGraph, add_vertex!, add_edge!, rem_edge!, topological_sort_by_dfs
 mutable struct Order
-    queue::Queue
+    prequeue::Queue
+    postqueue::Queue
+
     graph::DiGraph
     vars::Vector{Var}
     nodes::Vector{Node}
@@ -98,18 +99,19 @@ mutable struct Order
     order::Int
 
     Order() = begin
-        o = new(Queue(Vector{Function}))
+        o = new(queue(), queue())
         reset!(o)
     end
 end
 
-queue!(o::Order, f::Function, p) = queue!(o.queue, f, p)
-queue!(o::Order, f, p) = nothing
-dequeue!(o::Order) = empty!(o.queue)
-flush!(o::Order, cond) = flush!(o.queue, cond)
-preflush!(o::Order) = flush!(o.queue, p -> p < 0)
-postflush!(o::Order) = flush!(o.queue, p -> p > 0)
+queue!(o::Order, f::Function, ::PrePriority, i) = queue!(o.prequeue, f, i)
+queue!(o::Order, f::Function, ::PostPriority, i) = queue!(o.postqueue, f, i)
+queue!(o::Order, f, p, i) = nothing
+flush!(o::Order, ::PrePriority) = flush!(o.prequeue)
+flush!(o::Order, ::PostPriority) = flush!(o.postqueue)
+reset!(o::Order, i) = (reset!(o.prequeue, i); reset!(o.postqueue, i))
 
+#FIXME: remove reset!
 reset!(o::Order) = begin
     o.graph = DiGraph()
     o.vars = Var[]
@@ -231,7 +233,7 @@ end
 
 update!(o::Order, s::System) = begin
     # process pending operations from last timestep (i.e. produce)
-    preflush!(o)
+    flush!(o, PrePriority())
 
     # update state variables recursively
     S = collect(s)
@@ -242,7 +244,7 @@ update!(o::Order, s::System) = begin
     end
 
     # process pending operations from current timestep (i.e. flag, accumulate)
-    postflush!(o)
+    flush!(o, PostPriority())
 
     #TODO: process aggregate (i.e. transport) operations?
     nothing
@@ -254,18 +256,21 @@ update!(o::Order, n::Node) = begin
     s = state(x)
     f = update!(s, x, t)
     p = priority(s)
-    queue!(o, f, p)
+    i = o.order
+    queue!(o, f, p, i)
 end
 
 reupdate!(o::Order) = begin
-    @show "reupdate! to = $(o.order)"
-    n = o.sortednodes[o.order]
-    pn = prev(n)
-    po = o.sortedindices[pn]
-    @show "reupdate! from = $po"
-    for i in (po+1):(o.order-1)
+    i1 = o.order
+    @show "reupdate! to = $i1"
+    n1 = o.sortednodes[i1]
+    n0 = prev(n1)
+    i0 = o.sortedindices[n0]
+    @show "reupdate! from = $i0"
+    reset!(o, i0)
+    for i in (i0+1):(i1-1)
         n = o.sortednodes[i]
-        @show "reupdate! $i -> $(o.order): $n"
+        @show "reupdate! $i -> $i1: $n"
         update!(o, n)
     end
 end

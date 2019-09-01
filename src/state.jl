@@ -58,8 +58,12 @@ rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
 rateunittype(U::Unitful.Units, TU::Nothing) = U
 rateunittype(U::Nothing, TU::Nothing) = nothing
 
+abstract type Priority end
+struct PrePriority <: Priority end
+struct PostPriority <: Priority end
+
 priority(::S) where {S<:State} = priority(S)
-priority(::Type{<:State}) = 1 # post = 1, pre = -1
+priority(::Type{<:State}) = PostPriority()
 
 varfields(s::S) where {S<:State} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
@@ -333,7 +337,7 @@ unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
-priority(::Type{<:Produce}) = -1
+priority(::Type{<:Produce}) = PrePriority()
 
 ####
 
