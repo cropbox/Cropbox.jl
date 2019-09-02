@@ -402,6 +402,7 @@ update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     end
     #HACK: trigger update with final value
     trigger(v)
+    recitend!(s.context.order, f)
 end
 
 export produce

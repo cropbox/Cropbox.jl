@@ -100,6 +100,7 @@ mutable struct Order
     sortedindices::Dict{Node,Int}
     order::Int
     recites::Dict{Var,Vector{Node}}
+    recitends::Dict{Var,Vector{Node}}
 
     Order() = begin
         o = new(queue(), queue())
@@ -126,6 +127,7 @@ reset!(o::Order) = begin
     o.sortedindices = Dict{Node,Int}()
     o.order = 0
     o.recites = Dict{Var,Vector{Node}}()
+    o.recitends = Dict{Var,Vector{Node}}()
     o
 end
 
@@ -322,11 +324,20 @@ recite!(o::Order, x::Var) = begin
         # for i in (i0+1):(i1-1)
         #     n = o.sortednodes[i]
         o.recites[x] = NX
+        o.recitends[x] = NXR
     end
     for n in NX
         i = o.sortedindices[n]
         update!(o, n)
-        #@show "recited! $i: $(name(n.var))"
+        @show "recited! $i: $(name(n.var))"
+    end
+end
+recitend!(o::Order, x::Var) = begin
+    NX = o.recitends[x]
+    for n in NX
+        i = o.sortedindices[n]
+        update!(o, n)
+        @show "recitend! $i: $(name(n.var))"
     end
 end
 
