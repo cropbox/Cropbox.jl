@@ -57,6 +57,7 @@ parsetags(tags::Vector, type) = begin
             d[t] = true
         end
     end
+    haskey(d, :parameter) && (d[:static] = true)
     !isnothing(type) && (d[:_type] = type)
     d
 end
