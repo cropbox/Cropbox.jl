@@ -111,7 +111,7 @@ end
     end ~ track
 
     # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
-    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve(u"rad")
+    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve(u"rad", static)
 
     diffused_fraction(x, a="angles"): fdf => begin
         # Why multiplied by 2?
