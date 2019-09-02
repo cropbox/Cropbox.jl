@@ -398,7 +398,7 @@ update!(s::Solve, f::AbstractVar, ::MainStep) = begin
         end
     else
         c = cost(x -> (x - f()))
-        v = find_zero(c, b)
+        v = find_zero(c, b, Roots.AlefeldPotraShi())
     end
     #HACK: trigger update with final value
     trigger(v)
