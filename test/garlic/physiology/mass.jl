@@ -25,21 +25,21 @@
 
     # this is the total mass of active leaves that are not entirely dead (e.g., dropped).
     # It would be slightly greather than the green leaf mass because some senesced leaf area is included until they are complely aged (dead), SK
-    active_leaf(NU="p.nodal_units") => begin
-        sum(typeof(0.0u"g")[Cropbox.value!(nu.leaf.mass) for nu in NU if !Cropbox.value!(nu.leaf.dropped)])
+    active_leaf(NU="p.nodal_units", x="p.nodal_units[*].leaf.mass") => begin
+        sum(typeof(0.0u"g")[Cropbox.value(nu.leaf.mass) for nu in NU if !Cropbox.value(nu.leaf.dropped)])
     end ~ track(u"g")
     #TODO: support complex composition (i.e. `!`(leaf.dropped)) in condition syntax?
     #active_leaf(x="p.nodal_units[*/!leaf.dropped].leaf.mass") => (isempty(x) ? 0 : sum(x)) ~ track(u"g")
 
-    dropped_leaf(NU="p.nodal_units") => begin
-        sum(typeof(0.0u"g")[Cropbox.value!(nu.leaf.mass) for nu in NU if Cropbox.value!(nu.leaf.dropped)])
+    dropped_leaf(NU="p.nodal_units", x="p.nodal_units[*].leaf.mass") => begin
+        sum(typeof(0.0u"g")[Cropbox.value(nu.leaf.mass) for nu in NU if Cropbox.value(nu.leaf.dropped)])
     end ~ track(u"g")
     #TODO: support more referencing options (i.e. "leaf.dropped") in condition syntax?
     #dropped_leaf(x="p.nodal_units[*/leaf.dropped].leaf.mass") => (isempty(x) ? 0 : sum(x)) ~ track(u"g")
 
-    total_leaf(NU="p.nodal_units") => begin
+    total_leaf(x="p.nodal_units[*].leaf.mass") => begin
         # this should equal to activeLeafMass + droppedLeafMass
-        sum(typeof(0.0u"g")[Cropbox.value!(nu.leaf.mass) for nu in NU])
+        isempty(x) ? 0 : sum(x)
     end ~ track(u"g")
 
     leaf(total_leaf) => total_leaf ~ track(u"g")
