@@ -99,6 +99,7 @@ mutable struct Order
     sortednodes::Vector{Node}
     sortedindices::Dict{Node,Int}
     order::Int
+    recites::Dict{Var,Vector{Node}}
 
     Order() = begin
         o = new(queue(), queue())
@@ -124,6 +125,7 @@ reset!(o::Order) = begin
     o.sortednodes = Node[]
     o.sortedindices = Dict{Node,Int}()
     o.order = 0
+    o.recites = Dict{Var,Vector{Node}}()
     o
 end
 
@@ -171,7 +173,15 @@ innodes!(o::Order, x::Var; kwargs...) = begin # node!.(extract(x))
     @show "innodes $x"
     X = extract(x; kwargs...)
     @show "extracted = $X"
-    [node!(o, x) for x in X]
+    node(x0) = begin
+        if x == x0
+            #@show "cyclic! prenode $x0"
+            prenode!(o, x0)
+        else
+            node!(o, x0)
+        end
+    end
+    [node(x) for x in X]
 end
 inlink!(o::Order, x::Var, n1::Node; kwargs...) = begin
     for n0 in innodes!(o, x; kwargs...)
@@ -278,18 +288,45 @@ update!(o::Order, n::Node) = begin
     queue!(o, f, p, i)
 end
 
-recite!(o::Order) = begin
-    i1 = o.order
-    @show "recite! to = $i1"
-    n1 = o.sortednodes[i1]
-    n0 = prev(n1)
-    i0 = o.sortedindices[n0]
-    @show "recite! from = $i0"
-    reset!(o, i0)
-    for i in (i0+1):(i1-1)
-        n = o.sortednodes[i]
-        @show "recite! $i -> $i1: $n"
+import LightGraphs: bfs_tree, edges
+recite!(o::Order, x::Var) = begin
+    if haskey(o.recites, x)
+        NX = o.recites[x]
+        #@show "recite! reuse $(length(NX)) for $x"
+    else
+        # i1 = o.order
+        # n1 = o.sortednodes[i1]
+        #HACK: assume recite! called from MainStep
+        n1 = Node(x, MainStep())
+        i1 = o.sortedindices[n1]
+        #@show i1 == o.order
+        #@show "recite! to = $i1 ($n1)"
+        n0 = prev(n1)
+        i0 = o.sortedindices[n0]
+        #@show "recite! from = $i0 ($n0)"
+        reset!(o, i0)
+
+        E = bfs_tree(o.graph, index(o, n1); dir=:in) |> edges
+        #@show E |> collect
+        V = Set([(e.src, e.dst) for e in E] |> Iterators.flatten)
+        #@show V
+        N1 = o.sortednodes[i0+1:i1-1]
+        #@show N1
+        N2 = node.(o, V)
+        #@show N2
+        #@show length(N1)
+        #@show length(N2)
+        NX = intersect(N1, N2)
+        #@show nodesx
+        #@show length(NX)
+        # for i in (i0+1):(i1-1)
+        #     n = o.sortednodes[i]
+        o.recites[x] = NX
+    end
+    for n in NX
+        i = o.sortedindices[n]
         update!(o, n)
+        #@show "recited! $i: $(name(n.var))"
     end
 end
 
