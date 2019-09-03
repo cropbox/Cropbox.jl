@@ -207,7 +207,7 @@ Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _
     Call{V,T}(missing, TimeState{T}(_system, time))
 end
 
-value(s::Call{V}) where {V} = s.value::Union{V,Function}
+value(s::Call{V}) where {V} = s.value::Union{Function,Missing}
 update!(s::Call, f::AbstractVar, ::MainStep) = begin
     s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
     #HACK: no function should be returned for queueing

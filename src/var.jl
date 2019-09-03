@@ -176,7 +176,9 @@ getvars(v::Vector{<:System}, o::VarOpFilter, X) = begin
 end
 getvars(s::Vector, n::Symbol, X) = (x = getvar.(s, n); pushvars!(X, x); x)
 
-value(x::Var) = value(state(x))
+value(x::Var{S,V}) where {S<:State,V} = value(state(x))#::V
+value(x::Var{Call,V}) where V = value(state(x))#::Union{Function,Missing}
+value(x::Var{Produce,V}) where V = value(state(x))#::Vector{V}
 value(x) = x
 #FIXME: do we really need getindex here?
 #value(s::System, n) = s[n]

@@ -98,4 +98,4 @@ VarVal(s::System, p::V) where V = VarVal{V}(s, p)
 
 getvar(v::VarVal) = getvar(v.v)
 getvars(v::VarVal, X) = getvars(v.v, X)
-value(v::VarVal) = value(v.v)
+value(v::VarVal{V}) where V = value(v.v)#::V
