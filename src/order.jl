@@ -67,7 +67,9 @@ end
 #             ""
 #         end
 #     end
-#     latexstring("$(name(x))^{$(name(x.system))}_{$tag}")
+#     s = "$(name(x))^{$(name(x.system))}_{$tag}"
+#     s = replace(s, "_" => "-")
+#     latexstring(s)
 # end
 
 ####
@@ -242,11 +244,12 @@ collect!(o::Order, X, reset::Bool) = begin
     @show "collect! $X"
     if !isempty(X)
         push!.(o, X)
+        # N = label.(o.nodes)
+        # @show N
+        # t = TikzGraphs.plot(o.graph, N)
+        # TikzPictures.save(PDF("graph"), t)
         sort!(o)
     end
-    # N = label.(o.nodes)
-    # t = TikzGraphs.plot(o.graph, N)
-    # TikzPictures.save(PDF("graph"), t)
 end
 
 update!(o::Order, reset=false, X=Set{Var}()) = begin
