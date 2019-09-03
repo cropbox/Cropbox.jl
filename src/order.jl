@@ -296,6 +296,9 @@ update!(o::Order, reset=false, X=Set{Var}()) = begin
         collect!(o, X, false)
         empty!(o.updatedvars)
         empty!(o.updatedsystems)
+        #HACK: clear recite cache
+        empty!(o.recites)
+        empty!(o.recitends)
     end
 
     # ensure all state vars are updated once and only once (i.e. no duplice produce)
