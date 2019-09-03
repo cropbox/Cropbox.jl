@@ -108,7 +108,7 @@ mutable struct Order
 
     Order() = begin
         o = new(queue(), queue())
-        reset!(o)
+        init!(o)
     end
 end
 
@@ -119,8 +119,8 @@ flush!(o::Order, ::PrePriority) = flush!(o.prequeue)
 flush!(o::Order, ::PostPriority) = flush!(o.postqueue)
 reset!(o::Order, i) = (reset!(o.prequeue, i); reset!(o.postqueue, i))
 
-#FIXME: remove reset!
-reset!(o::Order) = begin
+#FIXME: remove init!/reset!?
+init!(o::Order) = begin
     o.graph = DiGraph()
     o.vars = Var[]
     o.updatedvars = Set{Var}()
@@ -132,6 +132,21 @@ reset!(o::Order) = begin
     o.order = 0
     o.recites = Dict{Var,Vector{Node}}()
     o.recitends = Dict{Var,Vector{Node}}()
+    o
+end
+
+reset!(o::Order) = begin
+    o.graph = DiGraph()
+    empty!(o.vars)
+    empty!(o.updatedvars)
+    empty!(o.updatedsystems)
+    empty!(o.nodes)
+    empty!(o.indices)
+    empty!(o.sortednodes)
+    empty!(o.sortedindices)
+    o.order = 0
+    empty!(o.recites)
+    empty!(o.recitends)
     o
 end
 
