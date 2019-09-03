@@ -61,14 +61,13 @@ patch_default!(s::S, x::Var, e::DynamicEquation) where {S<:System} = begin
     for ea in (e.args, e.kwargs)
         l = ea.tmpl
         for n in ea.names
-            # 3. state vars from current system
             if hasfield(S, n)
+                # 3. state vars from current system
                 l[n] = getvar(s, n)
-                continue
+            else
+                # 4. argument not found (partial function used by Call State)
+                l[n] = missing
             end
-
-            # 4. argument not found (partial function used by Call State)
-            l[n] = missing
         end
     end
 end
