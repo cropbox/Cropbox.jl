@@ -305,7 +305,7 @@ update!(o::Order, reset=false, X=Set{Var}()) = begin
     for (i, n) in enumerate(o.sortednodes)
         o.order = i
         update!(o, n)
-        #@show "updated! $n"
+        #@show "updated! $i: $(name(n.var))"
     end
 
     # process pending operations from current timestep (i.e. flag, accumulate)
@@ -329,7 +329,8 @@ import LightGraphs: bfs_tree, edges
 recite!(o::Order, x::Var) = begin
     if haskey(o.recites, x)
         NX = o.recites[x]
-        #@show "recite! reuse $(length(NX)) for $x"
+        #NXR = o.recitends[x]
+        #@show "recite! reuse $(length(NX)) + $(length(NXR)) for $x"
         n0 = NX[1]
         i0 = o.sortedindices[n0]
         #@show "recite! from = $i0 ($n0)"
@@ -340,7 +341,7 @@ recite!(o::Order, x::Var) = begin
         #HACK: assume recite! called from MainStep
         n1 = Node(x, MainStep())
         i1 = o.sortedindices[n1]
-        #@show i1 == o.order
+        @assert i1 == o.order
         #@show "recite! to = $i1 ($n1)"
         n0 = prev(n1)
         i0 = o.sortedindices[n0]
