@@ -10,15 +10,15 @@ end
 value(e::StaticEquation) = e.value
 
 import DataStructures: OrderedDict
-mutable struct EquationArg
+mutable struct EquationArg{T<:AbstractDict}
     names::Tuple{Vararg{Symbol}}
-    tmpl::OrderedDict{Symbol,Any}
-    work::OrderedDict{Symbol,Any}
+    tmpl::T
+    work::T
     overridden::Bool
 end
 
-EquationArg(n) = EquationArg(n, OrderedDict{Symbol,Any}(), OrderedDict{Symbol,Any}(), false)
-EquationArg(a::EquationArg) = a
+EquationArg{T}(n) where {T<:AbstractDict} = EquationArg{T}(n, T(), T(), false)
+EquationArg{T}(a::EquationArg{T}) where {T<:AbstractDict} = a
 
 struct DynamicEquation{V,F<:Function} <: Equation{V}
     func::F
@@ -37,6 +37,8 @@ Equation{V}(f, n, a, k, d; static=false) where V = begin
         StaticEquation(f(), n)
     else
         F = typeof(f)
-        DynamicEquation{V,F}(f, n, EquationArg(a), EquationArg(k), d)
+        eaa = EquationArg{OrderedDict{Symbol,Any}}(a)
+        eak = EquationArg{Dict{Symbol,Any}}(k)
+        DynamicEquation{V,F}(f, n, eaa, eak, d)
     end
 end
