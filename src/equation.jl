@@ -17,7 +17,7 @@ struct DynamicEquation{V,F<:Function} <: Equation{V}
     default::Dict{Symbol,Any}
 end
 
-call(e::DynamicEquation, args, kwargs) = e.func(args...; kwargs...)
+call(e::DynamicEquation, args::Vararg{Any,N}; kwargs...) where N = e.func(args...; kwargs...)
 argsname(e::DynamicEquation) = e.args
 kwargsname(e::DynamicEquation) = e.kwargs
 default(e::DynamicEquation) = e.default

@@ -122,7 +122,7 @@ handle(e::DynamicEquation, nounit, args, kwargs) = begin
     end
     process!(args)
     process!(kwargs)
-    call(e, values(args), kwargs)
+    call(e, values(args)...; kwargs...)
 end
 
 getvar(x::Var) = x
