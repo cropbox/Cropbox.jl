@@ -61,20 +61,7 @@ patch_default!(s::S, x::Var, e::DynamicEquation) where {S<:System} = begin
     for ea in (e.args, e.kwargs)
         l = ea.tmpl
         for n in ea.names
-            # # 2. default parameter values
-            # v = get(d, n, missing)
-            # if !ismissing(v)
-            #     if isa(v, VarVal{Any})
-            #         v = VarVal(v)
-            #         d[n] = v
-            #         #@show "overriden! d[$n] = $v"
-            #     end
-            #     l[n] = v
-            #     continue
-            # end
-
             # 3. state vars from current system
-            #if !haskey(l, n) && hasfield(S, n)
             if hasfield(S, n)
                 l[n] = getvar(s, n)
                 continue
@@ -84,28 +71,6 @@ patch_default!(s::S, x::Var, e::DynamicEquation) where {S<:System} = begin
             l[n] = missing
         end
     end
-    # n = [x.name, x.alias...]
-    #
-    # c = s.context.config
-    # # patch default arguments from config
-    # resolve!(a::Symbol) = begin
-    #     override!(a::Symbol, v::VarVal) = (e.default[a] = VarVal(v))
-    #     override!(a::Symbol, v::Var) = nothing
-    #     override!(a::Symbol, v) = (e.default[a] = VarVal(s, v))
-    #
-    #     # 1. external options (i.e. TOML config)
-    #     v = option(c, s, n, a)
-    #     !isnothing(v) && return override!(a, v)
-    #
-    #     # 2. default parameter values
-    #     v = get(e.default, a, missing)
-    #     !ismissing(v) && return override!(a, v)
-    # end
-    # resolve!.(argsname(e))
-    # resolve!.(kwargsname(e))
-    # e
-
-    #@show e.default
 end
 
 name(x::Var) = x.name
@@ -123,20 +88,16 @@ import DataStructures: OrderedDict
 handle(x::Var, e::StaticEquation) = value(e)
 handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    # d = e.default
-    # args = handle2!(x, s, e, d, argsname(e), e.largs)
-    # kwargs = handle2!(x, s, e, d, kwargsname(e), e.lkwargs)
     args = handle2!(e.args, e.default)
     kwargs = handle2!(e.kwargs, e.default)
     handle3(x, args, kwargs)
 end
-#handle2!(x::Var, s::System, e::DynamicEquation, d, n, l) = begin
 handle2!(ea::EquationArg, d) = begin
     l = ea.tmpl
     if !ea.overridden
         overriding = 0
         for n in ea.names
-            # 2. default parameter values
+            # 5. default parameter values with more concrete type
             v = get(d, n, missing)
             if !ismissing(v)
                 if isa(v, VarVal{Any})
@@ -147,9 +108,6 @@ handle2!(ea::EquationArg, d) = begin
                 end
                 l[n] = v
             end
-
-            # # 4. argument not found (partial function used by Call State)
-            # l[a] = missing
         end
         if overriding == 0
             #@show "overridden finish $ea"
