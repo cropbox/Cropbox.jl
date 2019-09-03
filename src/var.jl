@@ -7,7 +7,7 @@ struct Var{S<:State,V} <: AbstractVar
     nounit::Tuple{Vararg{Symbol}}
 
     Var(s::System, e::E, ::Type{S}; _name, _alias=(), _value, nounit="", stargs...) where {S<:State,E<:Equation} = begin
-        e = patch_default!(s, e, [_name, _alias...])
+        e = patch_config!(s, e, [_name, _alias...])
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
         nu = Tuple(Symbol.(split(nounit, ","; keepempty=false)))
@@ -19,7 +19,7 @@ struct Var{S<:State,V} <: AbstractVar
     end
 end
 
-patch_default!(s::System, e::Equation, n) = begin
+patch_config!(s::System, e::Equation, n) = begin
     c = s.context.config
     # patch state variable from config
     v = option(c, s, n)
@@ -27,11 +27,11 @@ patch_default!(s::System, e::Equation, n) = begin
     if !isnothing(v) && !(typeof(v) <: Dict)
         Equation(v, e.name)
     else
-        patch_default_args!(s, e, n)
+        patch_config_args!(s, e, n)
     end
 end
-patch_default_args!(s::System, e::StaticEquation, n) = e
-patch_default_args!(s::System, e::DynamicEquation, n) = begin
+patch_config_args!(s::System, e::StaticEquation, n) = e
+patch_config_args!(s::System, e::DynamicEquation, n) = begin
     c = s.context.config
     # patch default arguments from config
     resolve!(a::Symbol) = begin
