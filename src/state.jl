@@ -75,7 +75,7 @@ end
 import Base: show
 show(io::IO, s::S) where {S<:State} = begin
     r = repr(value(s))
-    r = length(r) > 20 ? "<..>" : r
+    r = length(r) > 40 ? "<..>" : r
     print(io, r)
 end
 
