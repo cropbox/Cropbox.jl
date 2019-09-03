@@ -84,7 +84,7 @@ flush!(q::Queue) = begin
     foreach(F -> foreach(f -> f(), F), values(q))
     empty!(q)
 end
-reset!(q::Queue, i) = filter!(p -> p[1] <= i, q)
+reset!(q::Queue, i) = filter!(p -> p[1] < i, q)
 
 ####
 
@@ -309,6 +309,10 @@ recite!(o::Order, x::Var) = begin
     if haskey(o.recites, x)
         NX = o.recites[x]
         #@show "recite! reuse $(length(NX)) for $x"
+        n0 = NX[1]
+        i0 = o.sortedindices[n0]
+        #@show "recite! from = $i0 ($n0)"
+        reset!(o, i0)
     else
         # i1 = o.order
         # n1 = o.sortednodes[i1]
@@ -326,7 +330,7 @@ recite!(o::Order, x::Var) = begin
         #@show E |> collect
         V = Set([(e.src, e.dst) for e in E] |> Iterators.flatten)
         #@show V
-        N1 = o.sortednodes[i0+1:i1-1]
+        N1 = o.sortednodes[i0:i1-1]
         #@show N1
         N2 = node.(o, V)
         #@show N2
