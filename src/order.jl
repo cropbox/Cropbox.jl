@@ -288,17 +288,21 @@ update!(o::Order, reset=false, X=Set{Var}()) = begin
         collect!(o, X, true)
     else
         #@show "update! incremental"
-        #@show o.updatedvars
-        #@show o.updatedsystems
-        S = collect.(o.updatedsystems) |> Iterators.flatten
-        #@show S
-        X = union(X, o.updatedvars, collectvar.(S)...)
-        collect!(o, X, false)
-        empty!(o.updatedvars)
-        empty!(o.updatedsystems)
-        #HACK: clear recite cache
-        empty!(o.recites)
-        empty!(o.recitends)
+        uv = o.updatedvars
+        us = o.updatedsystems
+        #@show uv
+        #@show us
+        if !(isempty(uv) && isempty(us))
+            S = collect.(us) |> Iterators.flatten
+            #@show S
+            X = union(X, uv, collectvar.(S)...)
+            collect!(o, X, false)
+            empty!(uv)
+            empty!(us)
+            #HACK: clear recite cache
+            empty!(o.recites)
+            empty!(o.recitends)
+        end
     end
 
     # ensure all state vars are updated once and only once (i.e. no duplice produce)
