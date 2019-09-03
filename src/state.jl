@@ -73,7 +73,11 @@ varfields(s::S) where {S<:State} = begin
 end
 
 import Base: show
-show(io::IO, s::State) = print(io, "$(repr(value(s)))")
+show(io::IO, s::S) where {S<:State} = begin
+    r = repr(value(s))
+    r = length(r) > 20 ? "<..>" : r
+    print(io, r)
+end
 
 ####
 
