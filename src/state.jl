@@ -385,7 +385,7 @@ using Roots
 update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
 update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
-    trigger(x) = (store!(s, x); recite!(s.context.order))
+    trigger(x) = (store!(s, x); recite!(s.context.order, f))
     cost(e) = x -> (@show x; trigger(x); ee = e(x) |> ustrip; @show ee; ee)
     b = (value(s.lower), value(s.upper))
     if nothing in b
