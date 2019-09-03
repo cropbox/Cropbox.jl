@@ -273,8 +273,10 @@ update!(o::Order, reset=false, X=Set{Var}()) = begin
     else
         #@show "update! incremental"
         #@show o.updatedvars
-        #@show collectvar.(o.updatedsystems)
-        X = union(X, o.updatedvars, collectvar.(o.updatedsystems)...)
+        #@show o.updatedsystems
+        S = collect.(o.updatedsystems) |> Iterators.flatten
+        #@show S
+        X = union(X, o.updatedvars, collectvar.(S)...)
         collect!(o, X, false)
         empty!(o.updatedvars)
         empty!(o.updatedsystems)
