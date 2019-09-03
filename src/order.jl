@@ -5,9 +5,9 @@ extract(x::Var; equation=true, var=true) = begin
 end
 extract_equation(x::Var, e::StaticEquation) = Var[]
 extract_equation(x::Var, e::DynamicEquation) = begin
-    d = default(e)
-    args = extract_equation(x, d, argsname(e))
-    kwargs = extract_equation(x, d, kwargsname(e))
+    d = e.default
+    args = extract_equation(x, d, e.args.names)
+    kwargs = extract_equation(x, d, e.kwargs.names)
     [args..., kwargs...]
 end
 extract_equation(x::Var, d, n) = begin

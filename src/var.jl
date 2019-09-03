@@ -32,7 +32,7 @@ patch_config_args!(s::System, e::StaticEquation, n) = e
 patch_config_args!(s::System, e::DynamicEquation, n) = begin
     c = s.context.config
     # patch default arguments from config
-    d = default(e)
+    d = e.default
     resolve!(a::Symbol) = begin
         override!(a::Symbol, v) = (d[a] = VarVal(s, v))
 
@@ -89,16 +89,16 @@ patch_default!(s::S, x::Var, e::DynamicEquation) where {S<:System} = begin
     # c = s.context.config
     # # patch default arguments from config
     # resolve!(a::Symbol) = begin
-    #     override!(a::Symbol, v::VarVal) = (default(e)[a] = VarVal(v))
+    #     override!(a::Symbol, v::VarVal) = (e.default[a] = VarVal(v))
     #     override!(a::Symbol, v::Var) = nothing
-    #     override!(a::Symbol, v) = (default(e)[a] = VarVal(s, v))
+    #     override!(a::Symbol, v) = (e.default[a] = VarVal(s, v))
     #
     #     # 1. external options (i.e. TOML config)
     #     v = option(c, s, n, a)
     #     !isnothing(v) && return override!(a, v)
     #
     #     # 2. default parameter values
-    #     v = get(default(e), a, missing)
+    #     v = get(e.default, a, missing)
     #     !ismissing(v) && return override!(a, v)
     # end
     # resolve!.(argsname(e))
@@ -123,7 +123,7 @@ import DataStructures: OrderedDict
 handle(x::Var, e::StaticEquation) = value(e)
 handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    # d = default(e)
+    # d = e.default
     # args = handle2!(x, s, e, d, argsname(e), e.largs)
     # kwargs = handle2!(x, s, e, d, kwargsname(e), e.lkwargs)
     args = handle2!(e.args, e.default)
