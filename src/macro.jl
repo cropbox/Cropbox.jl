@@ -168,6 +168,7 @@ genstruct(name, infos, incl) = begin
             function $name(; _kwargs...)
                 $self = new()
                 $(decls...)
+                $C.init!($self)
                 $self
             end
         end

@@ -100,26 +100,26 @@ mutable struct Advance{T} <: State{T}
 end
 
 Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64, _...) = begin
-    @show Symbol("$(name(_system))<$_name>")
+    #@show Symbol("$(name(_system))<$_name>")
     U = unittype(unit, _system)
-    @show U
+    #@show U
     T = valuetype(_type, U)
-    @show _type
-    @show T
+    #@show _type
+    #@show T
     t = isnothing(init) ? zero(T) : timevalue(init, _system)
-    @show zero(T)
-    @show timevalue(init, _system)
-    @show timeunittype(init, _system)
-    @show t
+    #@show zero(T)
+    #@show timevalue(init, _system)
+    #@show timeunittype(init, _system)
+    #@show t
     dt = isnothing(step) ? oneunit(T) : timevalue(step, _system)
-    @show oneunit(T)
-    @show timevalue(step, _system)
-    @show timeunittype(step, _system)
-    @show dt
+    #@show oneunit(T)
+    #@show timevalue(step, _system)
+    #@show timeunittype(step, _system)
+    #@show dt
     T = promote_type(typeof(t), typeof(dt))
-    @show T
+    #@show T
     N = Symbol("$(name(_system))<$_name>")
-    @show N
+    #@show N
     Advance{T}(Timepiece{T}(t, dt))
 end
 
@@ -207,7 +207,7 @@ Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _
     Call{V,T}(missing, TimeState{T}(_system, time))
 end
 
-value(s::Call{V}) where {V} = s.value::Union{Function,Missing}
+value(s::Call{V}) where {V} = s.value::Union{V,Function}
 update!(s::Call, f::AbstractVar, ::MainStep) = begin
     s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
     #HACK: no function should be returned for queueing
@@ -242,20 +242,20 @@ update!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
     t = value(s.time.tick)
     t0 = s.tick
     if ismissing(t0)
-        @show "missing"
+        #@show "missing"
         v = value(s.init)
     else
-        @show "$(s.value)"
-        @show "$(s.rate)"
-        @show "$t"
-        @show "$t0"
+        #@show "$(s.value)"
+        #@show "$(s.rate)"
+        #@show "$t"
+        #@show "$t0"
         v = s.value + s.rate * (t - t0)
     end
-    @show "acc store $v"
+    #@show "acc store $v"
     store!(s, v)
 end
 update!(s::Accumulate, f::AbstractVar, ::PostStep) = begin
-    @show "accumulate post step!!!!!"
+    #@show "accumulate post step!!!!!"
     t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
     () -> (#= @show "acc poststore $t, $r";=# s.tick = t; s.rate = r)
@@ -289,17 +289,17 @@ update!(s::Capture, f::AbstractVar, ::MainStep) = begin
     t0 = s.tick
     if !ismissing(t0)
         v = s.rate * (t - t0)
-        @show "$(s.rate)"
-        @show "$t"
-        @show "$t0"
-        @show "$v"
+        #@show "$(s.rate)"
+        #@show "$t"
+        #@show "$t0"
+        #@show "$v"
         store!(s, v)
     end
 end
 update!(s::Capture, f::AbstractVar, ::PostStep) = begin
     t = value(s.time.tick)
     r = unitfy(f(), rateunit(s))
-    @show "capture post step!!!!! $t $r"
+    #@show "capture post step!!!!! $t $r"
     () -> (s.tick = t; s.rate = r)
 end
 #TODO special handling of no return value for Accumulate/Capture?
@@ -386,7 +386,7 @@ update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
 update!(s::Solve, f::AbstractVar, ::MainStep) = begin
     #@show "begin solve $s"
     trigger(x) = (store!(s, x); recite!(s.context.order, f))
-    cost(e) = x -> (@show x; trigger(x); ee = e(x) |> ustrip; @show ee; ee)
+    cost(e) = x -> (trigger(x); e(x) |> ustrip)
     b = (value(s.lower), value(s.upper))
     if nothing in b
         try

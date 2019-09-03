@@ -24,7 +24,7 @@ patch_config!(s::System, e::Equation, n) = begin
     # patch state variable from config
     v = option(c, s, n)
     #HACK: avoid Dict used for partial argument patch
-    if !isnothing(v) && !(typeof(v) <: Dict)
+    if !isnothing(v) && !(isa(v, AbstractDict))
         Equation(v, e.name)
     else
         patch_config_args!(s, e, n)
@@ -34,19 +34,20 @@ patch_config_args!(s::System, e::StaticEquation, n) = e
 patch_config_args!(s::System, e::DynamicEquation, n) = begin
     c = s.context.config
     # patch default arguments from config
+    d = default(e)
     resolve!(a::Symbol) = begin
-        override!(a::Symbol, v) = (default(e)[a] = VarVal(s, v))
+        override!(a::Symbol, v) = (d[a] = VarVal(s, v))
 
         # 1. external options (i.e. TOML config)
         v = option(c, s, n, a)
         !isnothing(v) && return override!(a, v)
 
         # 2. default parameter values
-        v = get(default(e), a, missing)
+        v = get(d, a, missing)
         !ismissing(v) && return override!(a, v)
     end
-    resolve!.(argsname(e))
-    resolve!.(kwargsname(e))
+    resolve!.(e.args.names)
+    resolve!.(e.kwargs.names)
     e
 end
 patch_valuetype!(s::System, e::StaticEquation, st::State) = e
@@ -55,12 +56,68 @@ patch_valuetype!(s::System, e::DynamicEquation, st::State) = begin
     Equation{V}(e.func, e.name, e.args, e.kwargs, e.default)
 end
 
+#TODO: incorporate patch_config_* here
+patch_default!(s::System, x::Var, e::StaticEquation) = e
+patch_default!(s::S, x::Var, e::DynamicEquation) where {S<:System} = begin
+    d = e.default
+    for ea in (e.args, e.kwargs)
+        l = ea.tmpl
+        for n in ea.names
+            # # 2. default parameter values
+            # v = get(d, n, missing)
+            # if !ismissing(v)
+            #     if isa(v, VarVal{Any})
+            #         v = VarVal(v)
+            #         d[n] = v
+            #         #@show "overriden! d[$n] = $v"
+            #     end
+            #     l[n] = v
+            #     continue
+            # end
+
+            # 3. state vars from current system
+            #if !haskey(l, n) && hasfield(S, n)
+            if hasfield(S, n)
+                l[n] = getvar(s, n)
+                continue
+            end
+
+            # 4. argument not found (partial function used by Call State)
+            l[n] = missing
+        end
+    end
+    # n = [x.name, x.alias...]
+    #
+    # c = s.context.config
+    # # patch default arguments from config
+    # resolve!(a::Symbol) = begin
+    #     override!(a::Symbol, v::VarVal) = (default(e)[a] = VarVal(v))
+    #     override!(a::Symbol, v::Var) = nothing
+    #     override!(a::Symbol, v) = (default(e)[a] = VarVal(s, v))
+    #
+    #     # 1. external options (i.e. TOML config)
+    #     v = option(c, s, n, a)
+    #     !isnothing(v) && return override!(a, v)
+    #
+    #     # 2. default parameter values
+    #     v = get(default(e), a, missing)
+    #     !ismissing(v) && return override!(a, v)
+    # end
+    # resolve!.(argsname(e))
+    # resolve!.(kwargsname(e))
+    # e
+
+    #@show e.default
+end
+
 name(x::Var) = x.name
 import Base: names
 names(x::Var) = [x.name, x.alias...]
 
 system(x::Var) = x.system
 state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
+statetype(::Var{S,V}) where {S<:State,V} = S
+valuetype(::Var{S,V}) where {S<:State,V} = V
 
 (x::Var)() = handle(x, x.equation)
 
@@ -68,36 +125,48 @@ import DataStructures: OrderedDict
 handle(x::Var, e::StaticEquation) = value(e)
 handle(x::Var, e::DynamicEquation) = begin
     s = x.system
-    d = default(e)
-    args = handle(x, s, d, argsname(e); container=OrderedDict)
-    kwargs = handle(x, s, d, kwargsname(e))
-    handle(x, args, kwargs)
+    # d = default(e)
+    # args = handle2!(x, s, e, d, argsname(e), e.largs)
+    # kwargs = handle2!(x, s, e, d, kwargsname(e), e.lkwargs)
+    args = handle2!(e.args, e.default)
+    kwargs = handle2!(e.kwargs, e.default)
+    handle3(x, args, kwargs)
 end
-handle(x::Var, s::System, d, n; container=Dict) = begin
-    resolve!(a::Symbol) = begin
-        interpret(v::Symbol) = value(s, v)
-        interpret(v::VarVal) = value(v)
-        interpret(v) = v
+#handle2!(x::Var, s::System, e::DynamicEquation, d, n, l) = begin
+handle2!(ea::EquationArg, d) = begin
+    l = ea.tmpl
+    if !ea.overridden
+        overriding = 0
+        for n in ea.names
+            # 2. default parameter values
+            v = get(d, n, missing)
+            if !ismissing(v)
+                if isa(v, VarVal{Any})
+                    v = VarVal(v)
+                    d[n] = v
+                    #@show "overriden! d[$n] = $v"
+                    overriding += 1
+                end
+                l[n] = v
+            end
 
-        # 2. default parameter values
-        v = get(d, a, missing)
-        !ismissing(v) && return interpret(v)
-
-        # 3. state vars from current system
-        isdefined(s, a) && return interpret(a)
-
-        # 4. argument not found (partial function used by Call State)
-        missing
+            # # 4. argument not found (partial function used by Call State)
+            # l[a] = missing
+        end
+        if overriding == 0
+            #@show "overridden finish $ea"
+            ea.overridden = true
+        end
     end
-    l = container{Symbol,Any}()
-    for a in n
-        l[a] = resolve!(a)
+    w = ea.work
+    for (k, v) in l
+        w[k] = value(v)
     end
-    l
+    w
 end
 
-handle(x::Var, args, kwargs) = handle(x.equation, x.nounit, args, kwargs)
-handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
+handle3(x::Var, args, kwargs) = handle4(x.equation, x.nounit, args, kwargs)
+handle3(x::Var{Call}, args, kwargs) where V = function (pargs...; pkwargs...)
     # arg
     i = 1
     for (k, v) in args
@@ -109,10 +178,10 @@ handle(x::Var{Call}, args, kwargs) = function (pargs...; pkwargs...)
     @assert i-1 == length(pargs) "incorrect number of positional arguments: $pargs"
     # kwarg
     merge!(kwargs, pkwargs)
-    handle(x.equation, x.nounit, args, kwargs)
+    handle4(x.equation, x.nounit, args, kwargs)
 end
 
-handle(e::DynamicEquation, nounit, args, kwargs) = begin
+handle4(e::DynamicEquation, nounit, args, kwargs) = begin
     process!(d) = begin
         for (k, v) in d
             if k in nounit

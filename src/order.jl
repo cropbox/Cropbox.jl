@@ -15,6 +15,7 @@ extract_equation(x::Var, d, n) = begin
     resolve(a::Symbol) = begin
         interpret(v::Symbol) = (X = Set{Var}(); getvars(s, v, X); X)
         interpret(v::VarVal) = (X = Set{Var}(); getvars(v, X); X)
+        interpret(v::Var) = Set{Var}([v])
         interpret(v) = missing
 
         # default parameter values
@@ -137,11 +138,20 @@ index(o::Order, n::Node) = o.indices[n]
 node(o::Order, i::Int) = o.nodes[i]
 
 import Base: sort!
+import LightGraphs: simplecycles
 sort!(o::Order) = begin
+    #@assert isempty(simplecycles(o.graph))
+    #@show simplecycles(o.graph)
+    # for cy in simplecycles(o.graph)
+    #     for i in cy
+    #         n = node(o, i)
+    #         @show n
+    #     end
+    # end
     I = topological_sort_by_dfs(o.graph)
-    @show I
-    @show o.vars
-    @show o.nodes
+    #@show I
+    #@show o.vars
+    #@show o.nodes
     o.sortednodes = [node(o, i) for i in I]
     o.sortedindices = Dict(n => i for (i, n) in enumerate(o.sortednodes))
 end
@@ -165,18 +175,18 @@ mainnode!(o::Order, x::Var) = node!(o, x, MainStep())
 postnode!(o::Order, x::Var) = node!(o, x, PostStep())
 node!(o::Order, x::Var) = mainnode!(o, x)
 node!(o::Order, x::Var{Solve}) = begin
-    @show "innodes: Var{Solve} = $x"
+    #@show "innodes: Var{Solve} = $x"
     prenode!(o, x)
 end
 link!(o::Order, a::Node, b::Node) = begin
-    @show "link: add edge $a ($(index(o, a))) => $b ($(index(o, b)))"
+    #@show "link: add edge $a ($(index(o, a))) => $b ($(index(o, b)))"
     add_edge!(o.graph, index(o, a), index(o, b))
 end
 
 innodes!(o::Order, x::Var; kwargs...) = begin # node!.(extract(x))
-    @show "innodes $x"
+    #@show "innodes $x"
     X = extract(x; kwargs...)
-    @show "extracted = $X"
+    #@show "extracted = $X"
     node(x0) = begin
         if x == x0
             #@show "cyclic! prenode $x0"
@@ -241,7 +251,7 @@ broadcastable(o::Order) = Ref(o)
 collect!(o::Order, X, reset::Bool) = begin
     #TODO: incremental update
     reset && reset!(o)
-    @show "collect! $X"
+    #@show "collect! $X"
     if !isempty(X)
         push!.(o, X)
         # N = label.(o.nodes)
@@ -258,12 +268,12 @@ update!(o::Order, reset=false, X=Set{Var}()) = begin
 
     # update state variables recursively
     if reset
-        @show "update! reset"
+        #@show "update! reset"
         collect!(o, X, true)
     else
-        @show "update! incremental"
-        @show o.updatedvars
-        @show collectvar.(o.updatedsystems)
+        #@show "update! incremental"
+        #@show o.updatedvars
+        #@show collectvar.(o.updatedsystems)
         X = union(X, o.updatedvars, collectvar.(o.updatedsystems)...)
         collect!(o, X, false)
         empty!(o.updatedvars)
@@ -274,6 +284,7 @@ update!(o::Order, reset=false, X=Set{Var}()) = begin
     for (i, n) in enumerate(o.sortednodes)
         o.order = i
         update!(o, n)
+        #@show "updated! $n"
     end
 
     # process pending operations from current timestep (i.e. flag, accumulate)
@@ -322,8 +333,11 @@ recite!(o::Order, x::Var) = begin
         #@show length(N1)
         #@show length(N2)
         NX = intersect(N1, N2)
-        #@show nodesx
+        NXR = setdiff(N1, NX)
+        #@show NX
+        #@show NXR
         #@show length(NX)
+        #@show length(NXR)
         # for i in (i0+1):(i1-1)
         #     n = o.sortednodes[i]
         o.recites[x] = NX
@@ -332,7 +346,7 @@ recite!(o::Order, x::Var) = begin
     for n in NX
         i = o.sortedindices[n]
         update!(o, n)
-        @show "recited! $i: $(name(n.var))"
+        #@show "recited! $i: $(name(n.var))"
     end
 end
 recitend!(o::Order, x::Var) = begin
@@ -340,12 +354,12 @@ recitend!(o::Order, x::Var) = begin
     for n in NX
         i = o.sortedindices[n]
         update!(o, n)
-        @show "recitend! $i: $(name(n.var))"
+        #@show "recitend! $i: $(name(n.var))"
     end
 end
 
 inform!(o::Order, x::Var, s::System) = begin
-    @show "inform $x => $s"
+    #@show "inform $x => $s"
     push!(o.updatedvars, x)
     push!(o.updatedsystems, s)
 end

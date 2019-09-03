@@ -95,6 +95,26 @@ VarVal{V}(s::System, p::Number) where {V<:Quantity} = VarVal{V}(convert(V, unitf
 VarVal{V}(s::System, ::Nothing) where V = nothing
 VarVal(s::System, p::AbstractString) = VarVal{Any}(s, p)
 VarVal(s::System, p::V) where V = VarVal{V}(s, p)
+VarVal(v::VarVal{V}) where V = begin
+    x = try getvar(v) catch; v end
+    X = typeof(x)
+    if X <: Var
+        x
+    elseif X <: System
+        VarVal{X}(v.v)
+    elseif X <: Vector
+        v
+    elseif X <: VarVal # exception
+        v
+    else
+        VT = valuetype(x)
+        if V != VT
+            VarVal{VT}(v.v)
+        else
+            v
+        end
+    end
+end
 
 getvar(v::VarVal) = getvar(v.v)
 getvars(v::VarVal, X) = getvars(v.v, X)
