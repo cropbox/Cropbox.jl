@@ -61,13 +61,15 @@
     area_from_length(l) => begin
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
+        @nounit l
         iszero(l) ? 0 : 0.639945 + 0.954957l + 0.005920l^2
-    end ~ call(u"cm^2", nounit="l")
+    end ~ call(u"cm^2")
 
     area_increase_from_length(length) => begin
         # for garlic, see JH's thesis
+        @nounit length
         0.954957 + 2*0.005920length
-    end ~ track(u"cm^2", nounit="length")
+    end ~ track(u"cm^2")
 
     #TODO better name, shared by growth_duration and pontential_area
     #TODO should be a plant parameter not leaf (?)

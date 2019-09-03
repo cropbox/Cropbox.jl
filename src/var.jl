@@ -4,18 +4,16 @@ struct Var{S<:State,V} <: AbstractVar
     equation::Equation
     name::Symbol
     alias::Tuple{Vararg{Symbol}}
-    nounit::Tuple{Vararg{Symbol}}
 
-    Var(s::System, e::E, ::Type{S}; _name, _alias=(), _value, nounit="", stargs...) where {S<:State,E<:Equation} = begin
+    Var(s::System, e::E, ::Type{S}; _name, _alias=(), _value, stargs...) where {S<:State,E<:Equation} = begin
         e = patch_config!(s, e, [_name, _alias...])
         v = ismissing(_value) ? value(e) : _value
         st = S(; _name=_name, _system=s, _value=v, stargs...)
-        nu = Tuple(Symbol.(split(nounit, ","; keepempty=false)))
         V = valuetype(st)
         e = patch_valuetype!(s, e, st)
         EE = typeof(e)
         N = Symbol("$(name(s))<$_name>")
-        x = new{S,V}(s, st, e, _name, _alias, nu)
+        x = new{S,V}(s, st, e, _name, _alias)
     end
 end
 
@@ -165,7 +163,7 @@ handle2!(ea::EquationArg, d) = begin
     w
 end
 
-handle3(x::Var, args, kwargs) = handle4(x.equation, x.nounit, args, kwargs)
+handle3(x::Var, args, kwargs) = handle4(x.equation, args, kwargs)
 handle3(x::Var{Call}, args, kwargs) where V = function (pargs...; pkwargs...)
     # arg
     i = 1
@@ -178,21 +176,10 @@ handle3(x::Var{Call}, args, kwargs) where V = function (pargs...; pkwargs...)
     @assert i-1 == length(pargs) "incorrect number of positional arguments: $pargs"
     # kwarg
     merge!(kwargs, pkwargs)
-    handle4(x.equation, x.nounit, args, kwargs)
+    handle4(x.equation, args, kwargs)
 end
 
-handle4(e::DynamicEquation, nounit, args, kwargs) = begin
-    process!(d) = begin
-        for (k, v) in d
-            if k in nounit
-                d[k] = ustrip(v)
-            end
-        end
-    end
-    process!(args)
-    process!(kwargs)
-    call(e, values(args)...; kwargs...)
-end
+handle4(e::DynamicEquation, args, kwargs) = call(e, values(args)...; kwargs...)
 
 getvar(x::Var) = x
 getvar(x) = missing

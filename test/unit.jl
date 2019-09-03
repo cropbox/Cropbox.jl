@@ -14,7 +14,7 @@ using Unitful
     @testset "nounit" begin
         @system S begin
             a => 1 ~ track(u"m")
-            b(a) => a ~ track(nounit="a")
+            b(a) => (@nounit a; a) ~ track
         end
         s = instance(S)
         @test s.a == u"1m"
@@ -24,7 +24,7 @@ using Unitful
     @testset "nounit with alias" begin
         @system S begin
             a: aa => 1 ~ track(u"m")
-            b(aa): bb => aa ~ track(nounit="aa")
+            b(aa): bb => (@nounit aa; aa) ~ track
         end
         s = instance(S)
         @test s.aa == u"1m"
@@ -34,7 +34,7 @@ using Unitful
     @testset "nounit with call" begin
         @system S begin
             a => 1 ~ track(u"m")
-            b(a,x) => a+x ~ call(nounit="a")
+            b(a,x) => (@nounit a; a+x) ~ call
             c(b) => b(1) ~ track
         end
         s = instance(S)
