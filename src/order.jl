@@ -76,8 +76,9 @@ end
 ####
 
 import DataStructures: DefaultOrderedDict
-const Queue = DefaultOrderedDict{Int,Vector{Function}}
-queue() = Queue(Vector{Function})
+#HACK: Any seems to be faster than Function
+const Queue = DefaultOrderedDict{Int,Vector{Any}}
+queue() = Queue(Vector{Any})
 
 queue!(q::Queue, f::Function, i) = (push!(q[i], f))
 flush!(q::Queue) = begin
