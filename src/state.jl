@@ -67,7 +67,8 @@ priority(::Type{<:State}) = PostPriority()
 
 varfields(s::S) where {S<:State} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
-    filter!(p -> p[2] <: Union{VarVal,TimeState}, l)
+    # contravariant for including i.e. Union{VarVal,Nothing}
+    filter!(p -> p[2] <: Union{>:VarVal,TimeState}, l)
     map(p -> getfield(s, p[1]), l)
 end
 
