@@ -124,19 +124,8 @@ handle2!(ea::EquationArg, d) = begin
 end
 
 handle3(x::Var, args, kwargs) = handle4(x.equation, args, kwargs)
-handle3(x::Var{Call}, args, kwargs) where V = function (pargs...; pkwargs...)
-    # arg
-    i = 1
-    for (k, v) in args
-        if ismissing(v)
-            args[k] = pargs[i]
-            i += 1
-        end
-    end
-    @assert i-1 == length(pargs) "incorrect number of positional arguments: $pargs"
-    # kwarg
-    merge!(kwargs, pkwargs)
-    handle4(x.equation, args, kwargs)
+handle3(x::Var{<:Call}, args, kwargs) where V = function (; k...)
+    handle4(x.equation, args, merge(kwargs, k))
 end
 
 handle4(e::DynamicEquation, args, kwargs) = call(e, args...; kwargs...)

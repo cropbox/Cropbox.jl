@@ -34,12 +34,12 @@ using Unitful
     @testset "nounit with call" begin
         @system S begin
             a => 1 ~ track(u"m")
-            b(a,x) => (@nounit a; a+x) ~ call
-            c(b) => b(1) ~ track
+            b(a; x) => (@nounit a; a+x) ~ call
+            c(b) => b(x=1) ~ track
         end
         s = instance(S)
         @test s.a == u"1m"
-        @test value(s.b)(1) == 2
+        @test value(s.b)(x=1) == 2
         @test s.c == 2
     end
 end
