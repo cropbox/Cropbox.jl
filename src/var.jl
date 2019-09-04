@@ -81,6 +81,7 @@ state(x::Var{S,V}) where {S<:State,V} = x.state#::S{V}
 statetype(::Var{S,V}) where {S<:State,V} = S
 valuetype(::Var{S,V}) where {S<:State,V} = V
 valuetype(::Var{<:Call}) = Function
+valuetype(::Var{<:Produce,V}) where V = Vector{V}
 valuetype(::Missing) = Missing
 valuetype(::S) where {S<:System} = S
 
