@@ -80,7 +80,7 @@ end
     # Leaf angle stuff?
 
     #TODO better name?
-    leaf_angle_coeff(zenith_angle; leaf_angle, leaf_angle_factor) => begin
+    leaf_angle_coeff(leaf_angle, leaf_angle_factor; zenith_angle) => begin
         elevation_angle = 90u"°" - zenith_angle
         #FIXME need to prevent zero like sin_beta / cot_beta?
         a = elevation_angle
@@ -102,18 +102,18 @@ end
     # Kb: Campbell, p 253, Ratio of projected area to hemi-surface area for an ellisoid
     #TODO rename to extinction_coeff?
     # extiction coefficient assuming spherical leaf dist
-    projection_ratio_at(zenith_angle; leaf_angle_coeff, clumping): Kb_at => begin
-        leaf_angle_coeff(zenith_angle) * clumping
+    projection_ratio_at(leaf_angle_coeff, clumping; zenith_angle): Kb_at => begin
+        leaf_angle_coeff(zenith_angle=zenith_angle) * clumping
     end ~ call
 
     projection_ratio(current_zenith_angle; Kb_at): Kb => begin
-        Kb_at(current_zenith_angle)
+        Kb_at(zenith_angle=current_zenith_angle)
     end ~ track
 
     # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
     angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve(u"rad", static)
 
-    diffused_fraction(x, a="angles"): fdf => begin
+    diffused_fraction(a="angles"; x): fdf => begin
         # Why multiplied by 2?
         df = WEIGHT3 * ((π/4) * (2x .* sin.(a) .* cos.(a)))
         #FIXME better way to handling 1-element array value?
@@ -122,8 +122,8 @@ end
 
     # Kd: K for diffuse light, the same literature as above
     diffusion_ratio(LAI, angles, leaf_angle_coeff, fdf, clumping): Kd => begin
-        coeffs = leaf_angle_coeff.(angles)
-        F = fdf(exp.(-coeffs * LAI))
+        coeffs = [leaf_angle_coeff(zenith_angle=a) for a in angles]
+        F = fdf(x=exp.(-coeffs * LAI))
         K = -log(F) / LAI
         K * clumping
     end ~ track
@@ -159,19 +159,19 @@ end
 
     #TODO make consistent interface with siblings
     # rho_cb: canopy reflectance of beam irradiance for uniform leaf angle distribution, de Pury and Farquhar (1997)
-    canopy_reflectivity_uniform_leaf_at(zenith_angle; rho_h, Kb_at): rho_cb_at => begin
-        Kb = Kb_at(zenith_angle)
+    canopy_reflectivity_uniform_leaf_at(rho_h, Kb_at; zenith_angle): rho_cb_at => begin
+        Kb = Kb_at(zenith_angle=zenith_angle)
         1 - exp(-2rho_h * Kb / (1 + Kb))
     end ~ call
 
     canopy_reflectivity_uniform_leaf(current_zenith_angle, rho_cb_at): rho_cb => begin
-        rho_cb_at(current_zenith_angle)
+        rho_cb_at(zenith_angle=current_zenith_angle)
     end ~ track
 
     # rho_cd: canopy reflectance of diffuse irradiance, de Pury and Farquhar (1997) Table A2
     canopy_reflectivity_diffusion(I0_df, angles, rho_cb_at, fdf): rho_cd => begin
         # Probably the eqn A21 in de Pury is missing the integration terms of the angles??
-        iszero(I0_df) ? 0 : fdf(rho_cb_at.(angles))
+        iszero(I0_df) ? 0 : fdf(x=[rho_cb_at(zenith_angle=a) for a in angles])
     end ~ track
 
     # rho_soil: soil reflectivity for PAR band
@@ -182,32 +182,32 @@ end
     #######################
 
     # I_lb: dePury (1997) eqn A3
-    irradiance_lb(L; I0_dr, rho_cb, Kb1): I_lb => begin
+    irradiance_lb(I0_dr, rho_cb, Kb1; L): I_lb => begin
         I0_dr * (1 - rho_cb) * Kb1 * exp(-Kb1 * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_ld: dePury (1997) eqn A5
-    irradiance_ld(L; I0_df, rho_cb, Kd1): I_ld => begin
+    irradiance_ld(I0_df, rho_cb, Kd1; L): I_ld => begin
         I0_df * (1 - rho_cb) * Kd1 * exp(-Kd1 * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_l: dePury (1997) eqn A5
-    irradiance_l(L): I_l => (I_lb(L) + I_ld(L)) ~ call(u"μmol/m^2/s" #= Quanta =#)
+    irradiance_l(L): I_l => (I_lb(L=L) + I_ld(L=L)) ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lbSun: dePury (1997) eqn A5
-    irradiance_l_sunlit(L; I0_dr, s, Kb, I_lSh): I_lbSun => begin
+    irradiance_l_sunlit(I0_dr, s, Kb, I_lSh; L): I_lbSun => begin
         I_lb_sunlit = I0_dr * (1 - s) * Kb
         #TODO: check name I_lbSun vs. I_l_sunlit?
         I_l_sunlit = I_lb_sunlit + I_lSh(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lSh: dePury (1997) eqn A5
-    irradiance_l_shaded(L; I_ld, I_lbs): I_lSh => begin
-        I_ld(L) + I_lbs(L)
+    irradiance_l_shaded(I_ld, I_lbs; L): I_lSh => begin
+        I_ld(L=L) + I_lbs(L=L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lbs: dePury (1997) eqn A5
-    irradiance_lbs(L; I0_dr, rho_cb, s, Kb1, Kb) => begin
+    irradiance_lbs(I0_dr, rho_cb, s, Kb1, Kb; L) => begin
         I0_dr * ((1 - rho_cb) * Kb1 * exp(-Kb1 * L) - (1 - s) * Kb * exp(-Kb * L))
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -250,23 +250,23 @@ end
     # shaded_photon_flux_density(_shaded_Q) ~ track
 
     # Qtot: total irradiance (dir + dif) at depth L, simple empirical approach
-    irradiance_Q_tot(L; I0_tot, s, Kb, Kd): Q_tot => begin
+    irradiance_Q_tot(I0_tot, s, Kb, Kd; L): Q_tot => begin
         I0_tot * exp(-sqrt(1 - s) * ((Kb + Kd) / 2) * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # Qbt: total beam radiation at depth L
-    irradiance_Q_bt(L; I0_dr, s, Kb): Q_bt => begin
+    irradiance_Q_bt(I0_dr, s, Kb; L): Q_bt => begin
         I0_dr * exp(-sqrt(1 - s) * Kb * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # net diffuse flux at depth of L within canopy
-    irradiance_Q_d(L; I0_dr, s, Kd): Q_d => begin
+    irradiance_Q_d(I0_dr, s, Kd; L): Q_d => begin
         I0_df * exp(-sqrt(1 - s) * Kd * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # weighted average absorved diffuse flux over depth of L within canopy
     # accounting for exponential decay, Campbell p261
-    irradiance_Q_dm(LAI; I0_df, s, Kd): Q_dm => begin
+    irradiance_Q_dm(LAI, I0_df, s, Kd): Q_dm => begin
         if LAI > 0
             # Integral Qd / Integral L
             I0_df * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
@@ -276,7 +276,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # unintercepted beam (direct beam) flux at depth of L within canopy
-    irradinace_Q_b(L; I0_dr, Kb): Q_b => begin
+    irradinace_Q_b(I0_dr, Kb; L): Q_b => begin
         I0_dr * exp(-Kb * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -286,8 +286,8 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # flux density on sunlit leaves at delpth L
-    irradiance_Q_sunlit_at(L; I0_dr, Kb) => begin
-        I0_dr * Kb + Q_sh_at(L)
+    irradiance_Q_sunlit_at(I0_dr, Kb; L) => begin
+        I0_dr * Kb + Q_sh_at(L=L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # mean flux density on shaded leaves over LAI
@@ -297,9 +297,9 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # diffuse flux density on shaded leaves at depth L
-    irradiance_Q_shaded_at(L; Q_d, Q_sc): Q_sh_at => begin
+    irradiance_Q_shaded_at(Q_d, Q_sc; L): Q_sh_at => begin
         # It does not include soil reflection
-        Q_d(L) + Q_sc(L)
+        Q_d(L=L) + Q_sc(L=L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # weighted average of Soil reflectance over canopy accounting for exponential decay
@@ -326,7 +326,7 @@ end
             nonscattered_beam = I0_dr * (1 - exp(-Kb * LAI)) / Kb
             (total_beam - nonscattered_beam) / LAI
             # Campbell and Norman (1998) p 261, Average between top (where scattering is 0) and bottom.
-            #(self.Q_bt(LAI) - Q_b(LAI)) / 2
+            #(self.Q_bt(L=LAI) - Q_b(L=LAI)) / 2
         else
             0
         end
@@ -335,11 +335,11 @@ end
     # scattered radiation at depth L in the canopy
     irradiance_Q_sc(L; Q_bt, Q_b): Q_sc => begin
         # total beam - nonscattered beam at depth L
-        Q_bt(L) - Q_b(L)
+        Q_bt(L=L) - Q_b(L=L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # total PFD at the soil sufrace under the canopy
-    irradiance_Q_soil(LAI, Q_tot): Q_soil => Q_tot(LAI) ~ track(u"μmol/m^2/s" #= Quanta =#)
+    irradiance_Q_soil(LAI, Q_tot): Q_soil => Q_tot(L=LAI) ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     ###################
     # Leaf Area Index #
@@ -360,11 +360,11 @@ end
     end~ track(u"cm^2/m^2")
 
     # sunlit fraction of current layer
-    sunlit_fraction(L; sunrisen, Kb) => begin
+    sunlit_fraction(sunrisen, Kb; L) => begin
         sunrisen ? exp(-Kb * L) : 0
     end ~ call
 
-    shaded_fraction(L; sunlit_fraction) => begin
-        1 - sunlit_fraction(L)
+    shaded_fraction(sunlit_fraction; L) => begin
+        1 - sunlit_fraction(L=L)
     end ~ call
 end

@@ -99,7 +99,7 @@ end
     solar_noon(LC, ET) => 12u"hr" - LC - ET ~ track(u"hr")
 
 	# w_s: zenith angle
-    cos_hour_angle(w_s; p="latitude", d="declination_angle") => begin
+    cos_hour_angle(p="latitude", d="declination_angle"; w_s) => begin
         # this value should never become negative because -90 <= latitude <= 90 and -23.45 < decl < 23.45
         #HACK is this really needed for crop models?
         # preventing division by zero for N and S poles
@@ -113,7 +113,7 @@ end
 	end ~ call
 
     hour_angle_at_horizon(cos_hour_angle) => begin
-        c = cos_hour_angle(90u"°")
+        c = cos_hour_angle(w_s=90u"°")
         # in the polar region during the winter, sun does not rise
         if c > 1
             0u"°"
@@ -169,7 +169,7 @@ end
 
     # Campbell and Norman's global solar radiation, this approach is used here
     #TODO rename to insolation? (W/m2)
-    solar_radiation(elevation_angle, d; SC=1370u"W/m^2") => begin
+    solar_radiation(elevation_angle, d, SC=1370u"W/m^2") => begin
 		# solar constant, Iqbal (1983)
 		#FIXME better to be 1361 or 1362 W/m-2?
         t_s = max(elevation_angle, 0)

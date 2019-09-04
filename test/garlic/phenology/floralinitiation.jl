@@ -4,7 +4,7 @@
     ready("pheno.germination.over") ~ flag
 
     #FIXME: implement Sun
-    over(; day_length="pheno.weather.sun.day_length", critPPD) => begin
+    over(critPPD, day_length="pheno.weather.sun.day_length") => begin
         #FIXME solstice consideration is broken (flag turns false after solstice) and maybe unnecessary
         # w = self.pheno.weather
         # solstice = w.time.tz.localize(datetime.datetime(w.time.year, 6, 21))

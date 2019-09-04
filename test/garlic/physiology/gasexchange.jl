@@ -25,7 +25,7 @@ using Polynomials
     # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     # Arrhenius equation
-    temperature_dependence_rate(Ea, T, Tb=25u"°C"): T_dep => begin
+    temperature_dependence_rate(T, Tb=25u"°C"; Ea): T_dep => begin
         R = 8.314u"J/K/mol" # universal gas constant (J K-1 mol-1)
         #HACK handle too low temperature values during optimization
         Tk = max(T |> u"K", 0u"K")
@@ -41,7 +41,7 @@ using Polynomials
 
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     dark_respiration(T_dep, Rd25=2u"μmol/m^2/s" #= O2 =#, Ear=39800u"J/mol"): Rd => begin
-        Rd25 * T_dep(Ear)
+        Rd25 * T_dep(Ea=Ear)
     end ~ track(u"μmol/m^2/s")
 
     Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
@@ -61,7 +61,7 @@ using Polynomials
 
         r = Jm25 * begin
             N_dep *
-            T_dep(Eaj) *
+            T_dep(Ea=Eaj) *
             (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
             (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
         end
@@ -80,12 +80,12 @@ using Polynomials
 
     # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
     Kc(T_dep, Kc25=650u"μbar", Eac=59400u"J/mol") => begin
-        Kc25 * T_dep(Eac)
+        Kc25 * T_dep(Ea=Eac)
     end ~ track(u"μbar")
 
     # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
     Ko(T_dep, Ko25=450u"mbar", Eao=36000u"J/mol") => begin
-        Ko25 * T_dep(Eao)
+        Ko25 * T_dep(Ea=Eao)
     end ~ track(u"mbar")
 
     Km(Kc, Om, Ko) => begin
@@ -94,7 +94,7 @@ using Polynomials
     end ~ track(u"μbar")
 
     Vpmax(N_dep, T_dep, Vpm25=70u"μmol/m^2/s" #= CO2 =#, EaVp=75100u"J/mol") => begin
-        Vpm25 * N_dep * T_dep(EaVp)
+        Vpm25 * N_dep * T_dep(Ea=EaVp)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     Vp(Vpmax, Cm, Kp) => begin
@@ -106,7 +106,7 @@ using Polynomials
 
     # EaVc: Sage (2002) JXB
     Vcmax(N_dep, T_dep, Vcm25=50u"μmol/m^2/s" #= CO2 =#, EaVc=55900u"J/mol") => begin
-        Vcm25 * N_dep * T_dep(EaVc)
+        Vcm25 * N_dep * T_dep(Ea=EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     enzyme_limited_photosynthesis_rate(Vp, gbs, Cm, Rm, Vcmax, Rd): Ac => begin
@@ -225,7 +225,7 @@ end
 
         #FIXME unused?
         #T_leaf = l.temperature
-        #es = w.vp.saturation(T_leaf)
+        #es = w.vp.saturation(T=T_leaf)
         #Ds = (1 - hs) * es # VPD at leaf surface
         #Ds = w.vp.deficit(T_leaf, hs)
 
@@ -373,8 +373,8 @@ end
         ambient="weather.vp.ambient",
         saturation="weather.vp.saturation"
     ): ET => begin
-        ea = ambient(T_air, RH)
-        es_leaf = saturation(T)
+        ea = ambient(T=T_air, RH=RH)
+        es_leaf = saturation(T=T)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0u"μmol/m^2/s", ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"μmol/m^2/s" #= H2O =#)

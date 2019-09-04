@@ -46,8 +46,8 @@ using CSV
     #TODO: make P_air parameter?
     air_pressure: P_air => 100 ~ track(u"kPa")
 
-    vapor_pressure_deficit(T_air, RH, D="vp.D"): VPD => D(T_air, RH) ~ track(u"kPa")
-    vapor_pressure_saturation_slope(T_air, P_air, s="vp.s"): VPD_slope => s(T_air, P_air) ~ track(u"K^-1")
+    vapor_pressure_deficit(T_air, RH, D="vp.D"): VPD => D(T=T_air, RH=RH) ~ track(u"kPa")
+    vapor_pressure_saturation_slope(T_air, P_air, s="vp.s"): VPD_slope => s(T=T_air, P=P_air) ~ track(u"K^-1")
 end
 
 # import Base: show

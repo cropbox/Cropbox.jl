@@ -58,7 +58,7 @@
         l * w * r
     end ~ track(u"cm^2")
 
-    area_from_length(l) => begin
+    area_from_length(; l) => begin
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
         @nounit l
@@ -130,7 +130,7 @@
         # PotentialArea potential final area of a leaf with rank "n". YY
         #return self.maximum_area * self.leaf_number_effect * self.rank_effect(weight=1)
         # for garlic
-        area_from_length(potential_length)
+        area_from_length(l=potential_length)
     end ~ track(u"cm^2")
 
     green_ratio(senescence_ratio) => (1 - senescence_ratio) ~ track
@@ -152,7 +152,7 @@
     end ~ accumulate(u"d")
 
     #TODO move to common module (i.e. Organ?)
-    beta_growth(; t, c_m, t_e, t_m=nothing, t_b=0u"d", delta=1) => begin
+    beta_growth(t_m=nothing, t_b=0u"d", delta=1; t, c_m, t_e) => begin
         t = clamp(t, 0u"d", t_e)
         t_m = isnothing(t_m) ? t_e / 2 : t_m
         t_et = t_e - t
@@ -218,7 +218,7 @@
             # for garlic
             #TODO need common framework dealing with derivatives
             #area_increase_from_length(actual_length_increase)
-            area_from_length(length + actual_length_increase) - area
+            area_from_length(l=length+actual_length_increase) - area
         else
             0u"cm^2"
         end
@@ -227,7 +227,7 @@
     # create a function which simulates the reducing in leaf expansion rate
     # when predawn leaf water potential decreases. Parameterization of rf_psil
     # and rf_sensitivity are done with the data from Boyer (1970) and Tanguilig et al (1987) YY
-    water_potential_effect_func(psi_predawn, psi_th) => begin
+    water_potential_effect_func(; psi_predawn, psi_th) => begin
         #psi_predawn = self.p.soil.WP_leaf_predawn
         # psi_th: threshold wp below which stress effect shows up
 
@@ -240,9 +240,9 @@
         min(e, 1)
     end ~ call
 
-    water_potential_effect(threshold) => begin
+    water_potential_effect(; threshold) => begin
         # for MAIZSIM
-        #water_potential_effect_func(soil.WP_leaf_predawn, threshold)
+        #water_potential_effect_func(psi_predawn=soil.WP_leaf_predawn, psi_th=threshold)
         # for garlic
         1.0
     end ~ call
@@ -261,7 +261,7 @@
     # actual area
     area(water_potential_effect, carbon_effect, temperature_effect, area_from_length, length) => begin
         # See Kim et al. (2012) Agro J. for more information on how this relationship has been derermined basned on multiple studies and is applicable across environments
-        we = water_potential_effect(-0.8657)
+        we = water_potential_effect(threshold=-0.8657)
 
         # place holder
         ce = carbon_effect
@@ -269,7 +269,7 @@
 
         # growth temperature effect is now included here, outside of potential area increase calculation
         #TODO water and carbon effects are not multiplicative?
-        return min(we, ce) * te * area_from_length(length)
+        return min(we, ce) * te * area_from_length(l=length)
     end ~ track(u"cm^2")
 
     #TODO remove if unnecessary
@@ -295,7 +295,7 @@
             # One day of cumulative severe water stress (i.e., water_effect = 0.0 around -4MPa) would result in a reduction of leaf lifespan in relation staygreeness and growthDuration, SK
             # if scale is 1.0, one day of severe water stress shortens one day of stayGreenDuration
             #TODO remove WaterStress and use general Accumulator with a lambda function?
-            scale * (1 - water_potential_effect(threshold))
+            scale * (1 - water_potential_effect(threshold=threshold))
         else
             0
         end
@@ -325,7 +325,7 @@
     senescence_water_stress_duration(aging, water_potential_effect, scale=0.5, threshold=-4.0) => begin
         if aging
             # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
-            scale * (1 - water_potential_effect(threshold))
+            scale * (1 - water_potential_effect(threshold=threshold))
         else
             0
         end

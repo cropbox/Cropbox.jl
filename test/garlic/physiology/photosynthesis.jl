@@ -50,7 +50,7 @@ end
 
     shaded_leaf_area_index("radiation.shaded_leaf_area_index"): LAI_shaded  ~ track(u"cm^2/m^2")
 
-    weighted(array, LAI_sunlit, LAI_shaded) => begin
+    weighted(LAI_sunlit, LAI_shaded; array) => begin
         v = [LAI_sunlit LAI_shaded] * array
         #FIXME better way to handling 1-element array value?
         v[1]
@@ -65,7 +65,7 @@ end
     #temperature_array(a="sunlit.T_leaf", b="shaded.T_leaf") => [a, b] ~ track::Vector{Float64}(u"°C")
     conductance_array(a="sunlit.gs", b="shaded.gs") => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
 
-    gross_CO2_umol_per_m2_s(weighted, gross_array): A_gross => weighted(gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    gross_CO2_umol_per_m2_s(weighted, gross_array): A_gross => weighted(array=gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # plantsPerMeterSquare units are umol CO2 m-2 ground s-1
     # in the following we convert to g C plant-1 per hour
@@ -73,7 +73,7 @@ end
 
     net_CO2_umol_per_m2_s(weighted, net_array): A_net => begin
         # grams CO2 per plant per hour
-        weighted(net_array)
+        weighted(array=net_array)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     transpiration_H2O_mol_per_m2_s(weighted, evapotranspiration_array): ET => begin
@@ -82,7 +82,7 @@ end
         #self.transpiration_old = self.transpiration
         #FIXME need to check if LAIs are negative?
         #transpiration = sunlit.ET * max(0, sunlit_LAI) + shaded.ET * max(0, shaded_LAI)
-        weighted(evapotranspiration_array)
+        weighted(array=evapotranspiration_array)
     end ~ track(u"μmol/m^2/s" #= H2O =#)
 
     # final values
@@ -111,7 +111,7 @@ end
     end ~ capture(u"g")
 
     #FIXME: no sense to weight two temperature values here?
-    #temperature(weighted, temperature_array) => weighted(temperature_array) ~ track(u"°C")
+    #temperature(weighted, temperature_array) => weighted(array=temperature_array) ~ track(u"°C")
 
     vapor_pressure_deficit(VPD="sunlit.VPD") => begin
         #HACK only use sunlit leaves?
@@ -124,7 +124,7 @@ end
             0
         else
             # average stomatal conductance Yang
-            weighted(conductance_array) / LAI
+            weighted(array=conductance_array) / LAI
             #c = max(0, c)
             #isinf(c) ? 0 : c
         end

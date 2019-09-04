@@ -11,7 +11,7 @@
 
     ready("pheno.germination.over") ~ flag
 
-    over(rate; begin_from_emergence, time="pheno.weather.calendar.time", emergence_date) => begin
+    over(rate, begin_from_emergence, emergence_date, time="pheno.weather.calendar.time") => begin
         if begin_from_emergence
             time >= emergence_date
         else
