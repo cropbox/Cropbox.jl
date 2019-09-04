@@ -111,16 +111,16 @@ handle2!(ea::EquationArg, d) = begin
                 l[n] = v
             end
         end
+        N = ea.names
+        T = valuetype.(values(l))
+        ea.tupletype = isempty(N) ? NamedTuple : NamedTuple{N,Tuple{T...}}
         if overriding == 0
             #@show "overridden finish $ea"
             ea.overridden = true
         end
     end
-    w = ea.work
-    for (k, v) in l
-        w[k] = value(v)
-    end
-    w
+    v = Tuple(value(v) for v in values(l))
+    isempty(v) ? ea.tupletype() : ea.tupletype(v)
 end
 
 handle3(x::Var, args, kwargs) = handle4(x.equation, args, kwargs)
@@ -139,7 +139,7 @@ handle3(x::Var{Call}, args, kwargs) where V = function (pargs...; pkwargs...)
     handle4(x.equation, args, kwargs)
 end
 
-handle4(e::DynamicEquation, args, kwargs) = call(e, values(args)...; kwargs...)
+handle4(e::DynamicEquation, args, kwargs) = call(e, args...; kwargs...)
 
 getvar(x::Var) = x
 getvar(x) = missing

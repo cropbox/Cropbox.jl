@@ -13,11 +13,11 @@ import DataStructures: OrderedDict
 mutable struct EquationArg{T<:AbstractDict}
     names::Tuple{Vararg{Symbol}}
     tmpl::T
-    work::T
     overridden::Bool
+    tupletype::Type
 end
 
-EquationArg{T}(n) where {T<:AbstractDict} = EquationArg{T}(n, T(), T(), false)
+EquationArg{T}(n) where {T<:AbstractDict} = EquationArg{T}(n, T(), false, NamedTuple)
 EquationArg{T}(a::EquationArg{T}) where {T<:AbstractDict} = a
 
 struct DynamicEquation{V,F<:Function} <: Equation{V}
