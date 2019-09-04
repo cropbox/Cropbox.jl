@@ -190,8 +190,8 @@ prenode!(o::Order, x::Var) = node!(o, x, PreStep())
 mainnode!(o::Order, x::Var) = node!(o, x, MainStep())
 postnode!(o::Order, x::Var) = node!(o, x, PostStep())
 node!(o::Order, x::Var) = mainnode!(o, x)
-node!(o::Order, x::Var{Solve}) = begin
-    #@show "innodes: Var{Solve} = $x"
+node!(o::Order, x::Var{<:Solve}) = begin
+    #@show "innodes: Var{<:Solve} = $x"
     prenode!(o, x)
 end
 link!(o::Order, a::Node, b::Node) = begin
@@ -224,7 +224,7 @@ push!(o::Order, x::Var) = begin
     n = mainnode!(o, x)
     inlink!(o, x, n)
 end
-push!(o::Order, x::Var{Accumulate}) = begin
+push!(o::Order, x::Var{<:Accumulate}) = begin
     n0 = mainnode!(o, x)
     n1 = postnode!(o, x)
     link!(o, n0, n1)
@@ -232,7 +232,7 @@ push!(o::Order, x::Var{Accumulate}) = begin
     inlink!(o, x, n0; equation=false)
     inlink!(o, x, n1)
 end
-push!(o::Order, x::Var{Capture}) = begin
+push!(o::Order, x::Var{<:Capture}) = begin
     n0 = mainnode!(o, x)
     n1 = postnode!(o, x)
     link!(o, n0, n1)
@@ -240,18 +240,18 @@ push!(o::Order, x::Var{Capture}) = begin
     inlink!(o, x, n0; equation=false)
     inlink!(o, x, n1)
 end
-push!(o::Order, x::Var{Solve}) = begin
+push!(o::Order, x::Var{<:Solve}) = begin
     n0 = prenode!(o, x)
     n1 = mainnode!(o, x)
     link!(o, n0, n1)
     inlink!(o, x, n1)
 end
-push!(o::Order, x::Var{Flag}) = begin
+push!(o::Order, x::Var{<:Flag}) = begin
     n0 = prenode!(o, x)
     n1 = postnode!(o, x)
     inlink!(o, x, n1)
 end
-push!(o::Order, x::Var{Produce}) = begin
+push!(o::Order, x::Var{<:Produce}) = begin
     n0 = mainnode!(o, x)
     n1 = postnode!(o, x)
     inlink!(o, x, n0)

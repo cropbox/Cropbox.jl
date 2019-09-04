@@ -119,3 +119,4 @@ end
 getvar(v::VarVal) = getvar(v.v)
 getvars(v::VarVal, X) = getvars(v.v, X)
 value(v::VarVal{V}) where V = value(v.v)#::V
+valuetype(v::VarVal{V}) where V = V

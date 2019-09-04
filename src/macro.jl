@@ -65,7 +65,7 @@ end
 const self = :($(esc(:self)))
 const C = :($(esc(:Cropbox)))
 
-genfield(i::VarInfo{Symbol}) = genfield(:($C.Var{$C.$(i.state)}), i.name, i.alias)
+genfield(i::VarInfo{Symbol}) = genfield(:($C.Var), i.name, i.alias)
 genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.name, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S

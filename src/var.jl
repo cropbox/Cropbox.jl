@@ -1,6 +1,6 @@
 struct Var{S<:State,V} <: AbstractVar
     system::System
-    state::State{V}
+    state::S
     equation::Equation
     name::Symbol
     alias::Tuple{Vararg{Symbol}}
@@ -13,7 +13,7 @@ struct Var{S<:State,V} <: AbstractVar
         e = patch_valuetype!(s, e, st)
         EE = typeof(e)
         N = Symbol("$(name(s))<$_name>")
-        x = new{S,V}(s, st, e, _name, _alias)
+        x = new{typeof(st),V}(s, st, e, _name, _alias)
     end
 end
 
@@ -77,9 +77,12 @@ import Base: names
 names(x::Var) = [x.name, x.alias...]
 
 system(x::Var) = x.system
-state(x::Var{S,V}) where {S<:State,V} = x.state::S{V}
+state(x::Var{S,V}) where {S<:State,V} = x.state#::S{V}
 statetype(::Var{S,V}) where {S<:State,V} = S
 valuetype(::Var{S,V}) where {S<:State,V} = V
+valuetype(::Var{<:Call}) = Function
+valuetype(::Missing) = Missing
+valuetype(::S) where {S<:System} = S
 
 (x::Var)() = handle(x, x.equation)
 
@@ -152,8 +155,8 @@ getvar(s::System, l::Vector) = begin
 end
 getvar(s::System, n::AbstractString) = getvar(varpath(s, n))
 
-getvar(x::Var{Produce}, o::VarOpAll) = value(x)
-getvar(x::Var{Produce}, o::VarOpRecursiveAll) = begin
+getvar(x::Var{<:Produce}, o::VarOpAll) = value(x)
+getvar(x::Var{<:Produce}, o::VarOpRecursiveAll) = begin
     v = value(x)
     l = System[]
     #TODO: possibly reduce overhead by reusing calculated values in child nodes
@@ -179,8 +182,8 @@ getvars(s::System, n::Symbol, X) = (x = getvar(s, n); pushvars!(X, x); x)
 getvars(s::System, l::Vector, X) = reduce((a, b) -> getvars(a, b, X), [s, l...])
 getvars(s::System, n::AbstractString, X) = getvars(varpath(s, n), X) #FIXME: needed?
 
-getvars(x::Var{Produce}, o::VarOpAll, X) = (pushvars!(X, x); getvar(x, o))
-getvars(x::Var{Produce}, o::VarOpRecursiveAll, X) = (pushvars!(X, x); getvar(x, o))
+getvars(x::Var{<:Produce}, o::VarOpAll, X) = (pushvars!(X, x); getvar(x, o))
+getvars(x::Var{<:Produce}, o::VarOpRecursiveAll, X) = (pushvars!(X, x); getvar(x, o))
 getvars(v::Vector{<:System}, o::VarOpIndex, X) = getvar(v, o)
 getvars(v::Vector{<:System}, o::VarOpFilter, X) = begin
     vx = [getvar(s, Symbol(o.cond)) for s in v]
@@ -190,8 +193,8 @@ end
 getvars(s::Vector, n::Symbol, X) = (x = getvar.(s, n); pushvars!(X, x); x)
 
 value(x::Var{S,V}) where {S<:State,V} = value(state(x))#::V
-value(x::Var{Call,V}) where V = value(state(x))#::Union{Function,Missing}
-value(x::Var{Produce,V}) where V = value(state(x))#::Vector{V}
+value(x::Var{<:Call,V}) where V = value(state(x))#::Union{Function,Missing}
+value(x::Var{<:Produce,V}) where V = value(state(x))#::Vector{V}
 value(x) = x
 #FIXME: do we really need getindex here?
 #value(s::System, n) = s[n]
@@ -200,8 +203,8 @@ value(x::Vector{<:Var}) = value.(x)
 
 priority(::Type{Var{S}}) where {S<:State} = priority(S)
 
-advance!(x::Var{Advance}) = advance!(state(x))
-reset!(x::Var{Advance}) = reset!(state(x))
+advance!(x::Var{<:Advance}) = advance!(state(x))
+reset!(x::Var{<:Advance}) = reset!(state(x))
 
 import Base: convert, promote_rule
 convert(::Type{System}, x::Var) = x.system
