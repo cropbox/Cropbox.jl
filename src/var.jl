@@ -84,6 +84,7 @@ valuetype(::Var{<:Call}) = Function
 valuetype(::Var{<:Produce,V}) where V = Vector{V}
 valuetype(::Missing) = Missing
 valuetype(::S) where {S<:System} = S
+valuetype(::V) where V = V
 
 (x::Var)() = handle(x, x.equation)
 
