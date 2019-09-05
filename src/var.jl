@@ -51,7 +51,7 @@ end
 patch_valuetype!(s::System, e::StaticEquation, st::State) = e
 patch_valuetype!(s::System, e::DynamicEquation, st::State) = begin
     V = valuetype(st)
-    Equation{V}(e.func, e.name, e.args, e.kwargs, e.default)
+    Equation{V}(e.func, e.name, e.args, e.kwargs, e.default, e.body)
 end
 
 #TODO: incorporate patch_config_* here

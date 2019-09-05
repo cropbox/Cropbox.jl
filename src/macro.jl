@@ -84,8 +84,9 @@ equation(f; static=false) = begin
     default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Vector{Pair{Symbol,Any}}
     # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
     default = :(Dict{Symbol,Any}(k => $(esc(:eval))(v) for (k, v) in $default))
+    body = Meta.quot(fdef[:body])
     func = @q function $(esc(gensym(fdef[:name])))($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
-    :($C.Equation($func, $name, $args, $kwargs, $default; static=$static))
+    :($C.Equation($func, $name, $args, $kwargs, $default, $body; static=$static))
 end
 
 macro equation(f)

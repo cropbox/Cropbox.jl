@@ -26,19 +26,20 @@ struct DynamicEquation{V,F<:Function} <: Equation{V}
     args::EquationArg
     kwargs::EquationArg
     default::Dict{Symbol,Any}
+    body
 end
 
 call(e::DynamicEquation, args::Vararg{Any,N}; kwargs...) where N = e.func(args...; kwargs...)
 
 Equation(v, n; kwargs...) = StaticEquation(v, n; kwargs...)
-Equation(f, n, a, k, d; kwargs...) = Equation{Any}(f, n, a, k, d; kwargs...)
-Equation{V}(f, n, a, k, d; static=false) where V = begin
+Equation(f, n, a, k, d, b; kwargs...) = Equation{Any}(f, n, a, k, d, b; kwargs...)
+Equation{V}(f, n, a, k, d, b; static=false) where V = begin
     if static && length(a) == 0 && length(k) == 0
         StaticEquation(f(), n)
     else
         F = typeof(f)
         eaa = EquationArg{OrderedDict{Symbol,Any}}(a)
         eak = EquationArg{Dict{Symbol,Any}}(k)
-        DynamicEquation{V,F}(f, n, eaa, eak, d)
+        DynamicEquation{V,F}(f, n, eaa, eak, d, b)
     end
 end
