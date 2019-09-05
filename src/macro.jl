@@ -65,7 +65,7 @@ end
 const self = :($(esc(:self)))
 const C = :($(esc(:Cropbox)))
 
-genfield(i::VarInfo{Symbol}) = genfield(:($C.Var), i.name, i.alias)
+genfield(i::VarInfo{Symbol}) = genfield(:($C.Var{<:$C.$(i.state)}), i.name, i.alias)
 genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.name, i.alias)
 genfield(S, var, alias) = @q begin
     $var::$S
@@ -176,7 +176,7 @@ genstruct(name, infos, incl) = begin
         $C.mixins(::Type{$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
         #HACK: redefine them to avoid world age problem
-        @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Var{$C.Produce}}, $S)
+        @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Var{<:$C.Produce}}, $S)
         @generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
         $S
     end
@@ -213,7 +213,7 @@ filteredvars(::Type{S}) where {S<:System} = begin
     end
     Tuple(d)
 end
-@generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{Produce}}, S)
+@generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{<:Produce}}, S)
 @generated updatable(::Type{S}) where {S<:System} = filteredvars(S)
 
 parsehead(head) = begin
