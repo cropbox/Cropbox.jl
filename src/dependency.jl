@@ -1,3 +1,5 @@
+using LightGraphs
+
 struct Dependency{T,U}
     g::DiGraph
     V::Vector{T}

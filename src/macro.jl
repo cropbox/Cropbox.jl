@@ -310,15 +310,7 @@ prev(n::VarNode) = begin
     end
 end
 
-using LightGraphs
 nodes(infos) = begin
-    # graph = DiGraph()
-    # vars = VarInfo[]
-    # nodes = VarNode[]
-    # indices = Dict{VarNode,Int}()
-    # sortednodes = VarNode[]
-    # sortedindices = Dict{VarNode,Int}()
-
     M = Dict{Symbol,VarInfo}()
     for v in infos
         M[v.name] = v
@@ -327,127 +319,6 @@ nodes(infos) = begin
         end
     end
     d = Dependency{VarNode}(M)
-
-    # varinfo(a::Symbol) = begin
-    #     for v in infos
-    #         if a == v.name || a in v.alias
-    #             @show "node! $a => $v"
-    #             return v
-    #         end
-    #     end
-    #     @show "node! $a => nothing"
-    # end
-
-    # node!(v::VarInfo, t::Step) = begin
-    #     n = VarNode(v, t)
-    #     @show "node $n"
-    #     if !haskey(indices, n)
-    #         add_vertex!(graph)
-    #         push!(vars, v)
-    #         #@assert nv(graph) == length(vars)
-    #         i = length(vars)
-    #         push!(nodes, n)
-    #         indices[n] = i
-    #         @show "new node at $(indices[n])"
-    #     end
-    #     n
-    # end
-    # prenode!(v) = node!(v, PreStep())
-    # mainnode!(v) = node!(v, MainStep())
-    # postnode!(v) = node!(v, PostStep())
-    # node!(a::Symbol) = node!(varinfo(a))
-    # node!(v::VarInfo) = begin
-    #     if isnothing(v.state)
-    #         nothing
-    #     elseif v.state == :Solve
-    #         @show "innodes: Var{<:Solve} = $v"
-    #         prenode!(v)
-    #     else
-    #         mainnode!(v)
-    #     end
-    # end
-
-    # link!(a::VarNode, b::VarNode) = begin
-    #     @show "link: add edge $a ($(indices[a])) => $b ($(indices[b]))"
-    #     add_edge!(graph, indices[a], indices[b])
-    # end
-
-    # innodes!(v::VarInfo; kwargs...) = begin # node!.(extract(x))
-    #     @show "innodes $v"
-    #     A = extract(v; kwargs...)
-    #     @show "extracted = $A"
-    #     innode(a) = begin
-    #         v0 = varinfo(a)
-    #         @show v0
-    #         if v0 == v
-    #             @show "cyclic! prenode $a"
-    #             prenode!(v)
-    #         else
-    #             node!(v0)
-    #         end
-    #     end
-    #     filter(!isnothing, innode.(A))
-    # end
-
-    # inlink!(v::VarInfo, n1::VarNode; kwargs...) = begin
-    #     @show "inlink! v = $v to n1 = $n1"
-    #     for n0 in innodes!(v; kwargs...)
-    #         link!(n0, n1)
-    #     end
-    # end
-
-    # add!(v::VarInfo) = begin
-    #     @show "add!"
-    #     @show v
-    #     if v.state in (:Accumulate, :Capture)
-    #         n0 = mainnode!(v)
-    #         n1 = postnode!(v)
-    #         link!(n0, n1)
-    #         # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
-    #         inlink!(v, n0; equation=false)
-    #         inlink!(v, n1)
-    #     elseif v.state == :Solve
-    #         n0 = prenode!(v)
-    #         n1 = mainnode!(v)
-    #         link!(n0, n1)
-    #         inlink!(v, n1)
-    #     elseif v.state == :Flag
-    #         n0 = prenode!(v)
-    #         n1 = postnode!(v)
-    #         inlink!(v, n1)
-    #     elseif v.state == :Produce
-    #         n0 = mainnode!(v)
-    #         n1 = postnode!(v)
-    #         inlink!(v, n0)
-    #         inlink!(v, n1)
-    #     elseif !isnothing(v.state)
-    #         n = mainnode!(v)
-    #         inlink!(v, n)
-    #     end
-    # end
-
-    # sort!() = begin
-    #     @assert isempty(simplecycles(graph))
-    #     #@show simplecycles(graph)
-    #     # for cy in simplecycles(graph)
-    #     #     for i in cy
-    #     #         n = nodes[i]
-    #     #         @show n
-    #     #     end
-    #     # end
-    #     I = topological_sort_by_dfs(graph)
-    #     #@show I
-    #     #@show vars
-    #     #@show nodes
-    #     sortednodes = [nodes[i] for i in I]
-    #     sortedindices = Dict(n => i for (i, n) in enumerate(sortednodes))
-    # end
-
-    # @show infos
-    # add!.(infos)
-    # sort!()
-    # sortednodes
-
     add!(d, infos)
     sort(d)
 end
@@ -456,11 +327,7 @@ node!(d::Dependency{VarNode}, v::VarInfo, t::Step) = vertex!(d, VarNode(v, t))
 prenode!(d::Dependency{VarNode}, v) = node!(d, v, PreStep())
 mainnode!(d::Dependency{VarNode}, v) = node!(d, v, MainStep())
 postnode!(d::Dependency{VarNode}, v) = node!(d, v, PostStep())
-#node!(d::Dependency{VarNode}, a::Symbol) = node!(d, d.M[a])
 node!(d::Dependency{VarNode}, v::VarInfo) = begin
-    # if isnothing(v.state)
-    #     nothing
-    # elseif v.state == :Solve
     if v.state == :Solve
         @show "innodes: Var{<:Solve} = $v"
         prenode!(d, v)
@@ -468,8 +335,7 @@ node!(d::Dependency{VarNode}, v::VarInfo) = begin
         mainnode!(d, v)
     end
 end
-
-invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin # node!.(extract(x))
+invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
     @show "innodes $v"
     A = extract(v; kwargs...)
     @show "extracted = $A"
@@ -483,10 +349,8 @@ invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin # node!.(extr
             node!(d, v0)
         end
     end
-    #filter(!isnothing, f.(A))
     f.(A)
 end
-
 add!(d::Dependency{VarNode}, v::VarInfo) = begin
     @show "add! $v"
     if v.state in (:Accumulate, :Capture)
