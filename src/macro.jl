@@ -13,16 +13,16 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
 end
 
 import Base: show
-show(io::IO, s::VarInfo) = begin
-    println(io, "name: $(s.name)")
-    println(io, "alias: $(s.alias)")
-    println(io, "func ($(repr(s.args))) = $(repr(s.body))")
-    println(io, "state: $(repr(s.state))")
-    println(io, "type: $(repr(s.type))")
-    for (k, v) in s.tags
+show(io::IO, i::VarInfo) = begin
+    println(io, "name: $(i.name)")
+    println(io, "alias: $(i.alias)")
+    println(io, "func ($(repr(i.args))) = $(repr(i.body))")
+    println(io, "state: $(repr(i.state))")
+    println(io, "type: $(repr(i.type))")
+    for (k, v) in i.tags
         println(io, "tag $k = $v")
     end
-    println(io, "line: $(s.line)")
+    println(io, "line: $(i.line)")
 end
 
 VarInfo(line::Union{Expr,Symbol}) = begin
@@ -36,12 +36,12 @@ VarInfo(line::Union{Expr,Symbol}) = begin
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
-    tags = parsetags(tags, type)
+    tags = parsetags(tags, type, state)
     VarInfo{typeof(state)}(name, alias, args, body, state, type, tags, line)
 end
 
-parsetags(::Nothing, type) = parsetags([], type)
-parsetags(tags::Vector, type) = begin
+parsetags(::Nothing, type, state) = parsetags([], type, state)
+parsetags(tags::Vector, type, state) = begin
     d = Dict{Symbol,Any}()
     for t in tags
         if @capture(t, k_=v_)
@@ -58,6 +58,7 @@ parsetags(tags::Vector, type) = begin
         end
     end
     haskey(d, :parameter) && (d[:static] = true)
+    !isnothing(state) && !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     !isnothing(type) && (d[:_type] = type)
     d
 end
@@ -129,7 +130,8 @@ gendecl(i::VarInfo{Symbol}) = begin
     alias = Tuple(i.alias)
     value = haskey(i.tags, :override) ? genoverride(i.name, missing) : missing
     stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
-    decl = :($C.Var($self, $e, $C.$(i.state); _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    #decl = :($C.Var($self, $e, $C.$(i.state); _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
@@ -179,6 +181,7 @@ genstruct(name, infos, incl) = begin
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Var{<:$C.Produce}}, $S)
         @generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
+        $C.updatestatic!($(esc(:_system))::$S) = $(genupdate(infos))
         $S
     end
     flatten(system)
@@ -216,6 +219,7 @@ filteredvars(::Type{S}) where {S<:System} = begin
 end
 @generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{<:Produce}}, S)
 @generated updatable(::Type{S}) where {S<:System} = filteredvars(S)
+@generated updatestatic!(::System) = nothing
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)
@@ -227,9 +231,10 @@ parsehead(head) = begin
     (name, incl)
 end
 
-import DataStructures: OrderedDict
+import DataStructures: OrderedDict, OrderedSet
 gensystem(head, body) = gensystem(parsehead(head)..., body)
-gensystem(name, incl, body) = begin
+gensystem(name, incl, body) = genstruct(name, geninfos(body, incl) |> sortinfos, incl)
+geninfos(body, incl) = begin
     con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args))
     add!(d, b) = merge!(d, con(b))
     d = OrderedDict{Symbol,VarInfo}()
@@ -237,12 +242,563 @@ gensystem(name, incl, body) = begin
         add!(d, source(m))
     end
     add!(d, body)
-    infos = collect(values(d))
-    genstruct(name, infos, incl)
+    collect(values(d))
 end
+sortinfos(infos) = begin
+    M = Dict{Symbol,VarInfo}()
+    for v in infos
+        M[v.name] = v
+        for a in v.alias
+            M[a] = v
+        end
+    end
+    d = Dependency{VarInfo}(M)
+    add!(d, infos)
+    sort(d)
+end
+invertices!(d::Dependency{VarInfo}, v::VarInfo; _...) = map(a -> vertex!(d, a), extract(v; equation=false, tag=true))
 
 macro system(head, body)
     gensystem(head, body)
 end
 
+macro infos(head, body)
+    geninfos(body, parsehead(head)[2])
+end
+
 export @equation, @system
+
+####
+
+extract(i::VarInfo; equation=true, tag=true) = begin
+    parse(v::Expr) = parse(v.args[1])
+    parse(v::Symbol) = v
+    parse(v) = nothing
+    pick(a) = @capture(a, k_=v_) ? parse(v) : parse(a)
+    pack(A) = filter(!isnothing, pick.(A)) |> Tuple
+    eq = equation ? pack(i.args) : ()
+    @show eq
+    #HACK: exclude internal tags (i.e. _type)
+    tags = filter(p -> !startswith(String(p[1]), "_"), i.tags)
+    @show tags
+    par = tag ? pack(values(tags)) : ()
+    @show par
+    Set([eq..., par...]) |> collect
+end
+
+abstract type Step end
+struct PreStep <: Step end
+struct MainStep <: Step end
+struct PostStep <: Step end
+
+suffix(::PreStep) = "_pre"
+suffix(::MainStep) = "_main"
+suffix(::PostStep) = "_post"
+
+struct VarNode
+    info::VarInfo
+    step::Step #TODO: rename to VarStep?
+end
+
+prev(n::VarNode) = begin
+    if n.step == MainStep()
+        VarNode(n.info, PreStep())
+    elseif n.step == PostStep()
+        VarNode(n.info, MainStep())
+    elseif n.step == PreStep()
+        error("Pre-step node can't have a previous node: $n")
+    end
+end
+
+using LightGraphs
+nodes(infos) = begin
+    # graph = DiGraph()
+    # vars = VarInfo[]
+    # nodes = VarNode[]
+    # indices = Dict{VarNode,Int}()
+    # sortednodes = VarNode[]
+    # sortedindices = Dict{VarNode,Int}()
+
+    M = Dict{Symbol,VarInfo}()
+    for v in infos
+        M[v.name] = v
+        for a in v.alias
+            M[a] = v
+        end
+    end
+    d = Dependency{VarNode}(M)
+
+    # varinfo(a::Symbol) = begin
+    #     for v in infos
+    #         if a == v.name || a in v.alias
+    #             @show "node! $a => $v"
+    #             return v
+    #         end
+    #     end
+    #     @show "node! $a => nothing"
+    # end
+
+    # node!(v::VarInfo, t::Step) = begin
+    #     n = VarNode(v, t)
+    #     @show "node $n"
+    #     if !haskey(indices, n)
+    #         add_vertex!(graph)
+    #         push!(vars, v)
+    #         #@assert nv(graph) == length(vars)
+    #         i = length(vars)
+    #         push!(nodes, n)
+    #         indices[n] = i
+    #         @show "new node at $(indices[n])"
+    #     end
+    #     n
+    # end
+    # prenode!(v) = node!(v, PreStep())
+    # mainnode!(v) = node!(v, MainStep())
+    # postnode!(v) = node!(v, PostStep())
+    # node!(a::Symbol) = node!(varinfo(a))
+    # node!(v::VarInfo) = begin
+    #     if isnothing(v.state)
+    #         nothing
+    #     elseif v.state == :Solve
+    #         @show "innodes: Var{<:Solve} = $v"
+    #         prenode!(v)
+    #     else
+    #         mainnode!(v)
+    #     end
+    # end
+
+    # link!(a::VarNode, b::VarNode) = begin
+    #     @show "link: add edge $a ($(indices[a])) => $b ($(indices[b]))"
+    #     add_edge!(graph, indices[a], indices[b])
+    # end
+
+    # innodes!(v::VarInfo; kwargs...) = begin # node!.(extract(x))
+    #     @show "innodes $v"
+    #     A = extract(v; kwargs...)
+    #     @show "extracted = $A"
+    #     innode(a) = begin
+    #         v0 = varinfo(a)
+    #         @show v0
+    #         if v0 == v
+    #             @show "cyclic! prenode $a"
+    #             prenode!(v)
+    #         else
+    #             node!(v0)
+    #         end
+    #     end
+    #     filter(!isnothing, innode.(A))
+    # end
+
+    # inlink!(v::VarInfo, n1::VarNode; kwargs...) = begin
+    #     @show "inlink! v = $v to n1 = $n1"
+    #     for n0 in innodes!(v; kwargs...)
+    #         link!(n0, n1)
+    #     end
+    # end
+
+    # add!(v::VarInfo) = begin
+    #     @show "add!"
+    #     @show v
+    #     if v.state in (:Accumulate, :Capture)
+    #         n0 = mainnode!(v)
+    #         n1 = postnode!(v)
+    #         link!(n0, n1)
+    #         # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
+    #         inlink!(v, n0; equation=false)
+    #         inlink!(v, n1)
+    #     elseif v.state == :Solve
+    #         n0 = prenode!(v)
+    #         n1 = mainnode!(v)
+    #         link!(n0, n1)
+    #         inlink!(v, n1)
+    #     elseif v.state == :Flag
+    #         n0 = prenode!(v)
+    #         n1 = postnode!(v)
+    #         inlink!(v, n1)
+    #     elseif v.state == :Produce
+    #         n0 = mainnode!(v)
+    #         n1 = postnode!(v)
+    #         inlink!(v, n0)
+    #         inlink!(v, n1)
+    #     elseif !isnothing(v.state)
+    #         n = mainnode!(v)
+    #         inlink!(v, n)
+    #     end
+    # end
+
+    # sort!() = begin
+    #     @assert isempty(simplecycles(graph))
+    #     #@show simplecycles(graph)
+    #     # for cy in simplecycles(graph)
+    #     #     for i in cy
+    #     #         n = nodes[i]
+    #     #         @show n
+    #     #     end
+    #     # end
+    #     I = topological_sort_by_dfs(graph)
+    #     #@show I
+    #     #@show vars
+    #     #@show nodes
+    #     sortednodes = [nodes[i] for i in I]
+    #     sortedindices = Dict(n => i for (i, n) in enumerate(sortednodes))
+    # end
+
+    # @show infos
+    # add!.(infos)
+    # sort!()
+    # sortednodes
+
+    add!(d, infos)
+    sort(d)
+end
+
+node!(d::Dependency{VarNode}, v::VarInfo, t::Step) = vertex!(d, VarNode(v, t))
+prenode!(d::Dependency{VarNode}, v) = node!(d, v, PreStep())
+mainnode!(d::Dependency{VarNode}, v) = node!(d, v, MainStep())
+postnode!(d::Dependency{VarNode}, v) = node!(d, v, PostStep())
+#node!(d::Dependency{VarNode}, a::Symbol) = node!(d, d.M[a])
+node!(d::Dependency{VarNode}, v::VarInfo) = begin
+    # if isnothing(v.state)
+    #     nothing
+    # elseif v.state == :Solve
+    if v.state == :Solve
+        @show "innodes: Var{<:Solve} = $v"
+        prenode!(d, v)
+    else
+        mainnode!(d, v)
+    end
+end
+
+invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin # node!.(extract(x))
+    @show "innodes $v"
+    A = extract(v; kwargs...)
+    @show "extracted = $A"
+    f(a::Symbol) = f(d.M[a])
+    f(v0::VarInfo) = begin
+        @show v0
+        if v0 == v
+            @show "cyclic! prenode $v"
+            prenode!(d, v0)
+        else
+            node!(d, v0)
+        end
+    end
+    #filter(!isnothing, f.(A))
+    f.(A)
+end
+
+add!(d::Dependency{VarNode}, v::VarInfo) = begin
+    @show "add! $v"
+    if v.state in (:Accumulate, :Capture)
+        n0 = mainnode!(d, v)
+        n1 = postnode!(d, v)
+        link!(d, n0, n1)
+        # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
+        inlink!(d, v, n0; equation=false)
+        inlink!(d, v, n1)
+    elseif v.state == :Solve
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        link!(d, n0, n1)
+        inlink!(d, v, n1)
+    elseif v.state == :Flag
+        n0 = prenode!(d, v)
+        n1 = postnode!(d, v)
+        inlink!(d, v, n1)
+    elseif v.state == :Produce
+        n0 = mainnode!(d, v)
+        n1 = postnode!(d, v)
+        inlink!(d, v, n0)
+        inlink!(d, v, n1)
+    elseif !isnothing(v.state)
+        n = mainnode!(d, v)
+        inlink!(d, v, n)
+    end
+end
+
+####
+
+#=
+# _predator_population_var / pre
+predator_population = _predator_population_state.value
+P = predator_population
+
+# _predator_reproduction_rate_var / main
+#v# = let
+    0.75
+end
+predator_reproductaion_rate = let s=_predator_reproduction_rate_var.state
+    store!(_predator_reproduction_rate_state, #v#)
+    s.value
+end
+d = predator_reproduction_rate
+
+# _timestep_var / main
+#v# = let t=resolve(s, "context.clock.tick")
+    0.01t
+end
+timestep = let s=_timestep_var.state
+    store!(s, #v#) # track
+    s.value
+end
+t = timestep
+
+# _predator_population_var / main
+predator_population = let s=_predator_population_state
+    t = value(s.time.tick)
+    t0 = s.tick
+    if ismissing(t0)
+        v = value(s.init)
+    else
+        v = s.value + s.rate * (t - t0)
+    end
+    store!(s, v)
+    s.value
+end
+
+# _predator_population_var / post
+#v# = let
+  d*b*H*P - c*P
+end
+let s=_predator_population_state
+    t = value(s.time.tick)
+    r = unitfy(#v#, rateunit(s))
+    f = () -> (s.tick = t; s.rate = r)
+    p = priority(s)
+    i = o.order #FIXME: should no longer be needed?
+    queue!(order, f, p, i)
+end
+
+=#
+
+genupdate(infos) = begin
+    N = nodes(infos)
+    @q begin
+        _context = _system.context
+        $([geninit(n) for n in N]...)
+        $([genupdate(n) for n in N]...)
+    end
+end
+
+symvar(v::VarInfo) = Symbol("_$(v.name)_var")
+symstate(v::VarInfo) = Symbol("_$(v.name)_state")
+symlabel(v::VarInfo, t::Step) = @q @label $(Symbol(v.name, suffix(t)))
+
+geninit(n::VarNode) = begin
+    v = n.info
+    sv = symvar(v)
+    ss = symstate(v)
+    @q begin
+        $sv = _system.$(v.name)
+        $ss = $sv.state
+    end
+end
+
+genupdate(n::VarNode) = genupdate(n.info, n.step)
+genupdate(v::VarInfo, t::Step) = @q begin
+    $(symlabel(v, t))
+    $(v.name) = $(genupdate(v, Val(v.state), t))
+    $([:($a = $(v.name)) for a in v.alias]...)
+end
+genupdate(v::VarInfo, t::PostStep) = @q begin
+    $(symlabel(v, t))
+    #FIXME: remove order index in queue!
+    $C.queue!(_context.order, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)), 0)
+end
+
+genvalue(v::VarInfo) = :($C.value($(symstate(v))))
+genstore(v::VarInfo) = begin
+    @q let s = $(symstate(v))
+        f = $(genfunc(v))
+        $C.store!(s, f)
+        #TODO: make store! return value
+        $C.value(s)
+    end
+end
+
+genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = nothing
+
+genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
+genupdate(v::VarInfo, ::Val, ::MainStep) = genstore(v)
+genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
+
+genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = nothing
+
+genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
+    s = symstate(v)
+    :(ismissing($s.value) && $(genstore(v)))
+end
+
+genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
+    @q let s = $(symstate(v))
+        f = $(genfunc(v))
+        v = $C.value(f[s.key])
+        $C.store!(s, v)
+        #TODO: make store! return value
+        $C.value(s)
+    end # value() for Var
+end
+
+genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
+    s = symstate(v)
+    f = genfunc(v)
+    #FIXME: need to patch function arguments here
+    :($s.value = (a...; k...) -> $C.unitfy($f()(a...; k...), $C.unit($s)))
+end
+
+genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
+    @q let s = $(symstate(v))
+        t = v.tags[:time] #$C.value(s.time.tick)
+        t0 = s.tick
+        if ismissing(t0)
+            a = $C.value(s.init)
+        else
+            a = s.value + s.rate * (t - t0)
+        end
+        $C.store!(s, a)
+        #TODO: make store! return value
+        $C.value(s)
+    end
+end
+genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
+    @q let s = $(symstate(v))
+        t = $C.value(s.time.tick)
+        f = $(genfunc(v))
+        r = $C.unitfy(f, $C.rateunit(s))
+        () -> (@show t,r; s.tick = t; s.rate = r)
+    end
+end
+
+genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
+    @q let s = $(symstate(v))
+        t = $C.value(s.time.tick)
+        t0 = s.tick
+        if !ismissing(t0)
+            d = s.rate * (t - t0)
+        end
+        $C.store!(s, d)
+    end
+end
+genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
+    @q let s = $(symstate(v))
+        t = $C.value(s.time.tick)
+        f = $(genfunc(v))
+        r = $C.unitfy(f, $C.rateunit(s))
+        () -> (s.tick = t; s.rate = r)
+    end
+end
+
+genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
+    @q let s = $(symstate(v))
+        f = $(genfunc(v))
+        () -> $C.store!(s, f)
+    end
+end
+
+genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
+    @q let s = $(symstate(v)), x = $(symvar(v))
+        p = $(genfunc(v))
+        () -> $C.produce(s, p, x)
+    end
+end
+
+genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+    @q let s = $(symstate(v))
+        p = $(genfunc(v))
+        #TODO
+        @goto $(symlabel(v, PreStep()))
+    end
+end
+#
+#
+# update!(s::Solve, f::AbstractVar, ::MainStep) = begin
+#     #@show "begin solve $s"
+#     trigger(x) = (store!(s, x); recite!(s.context.order, f))
+#     cost(e) = x -> (trigger(x); e(x) |> ustrip)
+#     b = (value(s.lower), value(s.upper))
+#     if nothing in b
+#         try
+#             c = cost(x -> (x - f())^2)
+#             v = find_zero(c, value(s))
+#         catch e
+#             #@show "convergence failed: $e"
+#             v = value(s)
+#         end
+#     else
+#         c = cost(x -> (x - f()))
+#         v = find_zero(c, b, Roots.AlefeldPotraShi())
+#     end
+#     #HACK: trigger update with final value
+#     trigger(v)
+#     recitend!(s.context.order, f)
+# end
+
+
+genfunc(v::VarInfo) = begin
+    parse(v) = isa(v, String) ? :($C.value($(esc(:_system)), $v)) : v
+    pair(a) = let k, v; @capture(a, k_=v_) ? k => parse(v) : a => parse(a) end
+    args = @q begin $([(p = pair(a); :($(esc(p[1])) = $(p[2]))) for a in v.args]...) end
+    flatten(@q let $args; $(esc(v.body)) end)
+end
+
+
+
+
+
+
+# genupdate(s::S) where {S<:System} = begin
+#     o = Order()
+#     collect!(o, collectvar([s]), true)
+#     #o.sortednodes
+#     @q begin
+#
+#     end
+#     f = @q begin
+#         function update!(o::Cropbox.Order, s::$S)
+#
+#         end
+#     end
+#     @show f
+#     eval(f)
+# end
+# gencode(s::System, x::Var) = begin
+#     e = gencode(s, x.equation)
+#     @q begin
+#         $(x.name) = $e
+#         $([:($a = $(x.name)) for a in x.alias]...)
+#     end
+# end
+# gencode(s::System, e::StaticEquation) = :($(e.value))
+# gencode(s::System, e::DynamicEquation) = begin
+#     d = e.default
+#     @show d
+#     resolve(a) = begin
+#         v = get(d, a, missing)
+#         a => ismissing(v) ? a : :($(esc(:Cropbox)).value(s, v))
+#     end
+#     a = resolve.(e.args.names)
+#     k = resolve.(e.kwargs.names)
+#     vars = @q begin $([:($k = $v) for (k, v) in [a..., k...]]...) end
+#     flatten(:(let $vars; $(e.body) end))
+# end
+#
+# symvar(x::Var) = Symbol("_$(x.name)_var")
+# symstate(x::Var) = :($(symvar(x)).state)
+#
+# gencode(s::State, x::Var, ::PreStep) = nothing
+# gencode(s::State, x::Var, ::MainStep) = begin
+#     ss = symstate(x)
+#     v = gencode(x)
+#     :(store!($ss, $v))
+# end
+# gencode(s::State, x::Var, ::PostStep) = nothing
+#
+# gencode(s::Preserve, x::Var, t::MainStep) = begin
+#     ss = symstate(x)
+#     @show ss
+#     v = gencode(s, x, t)
+#     @show v
+#     :(ismissing($ss.value) ? $v : nothing)
+# end

@@ -49,6 +49,38 @@ collect(s::System; recursive=true, exclude_self=false) = begin
     S
 end
 
+using LightGraphs
+collectstatic(s::System; recursive=true) = begin
+    g = DiGraph()
+    V = System[]
+    I = Dict{System,Int}()
+    S = Set{System}()
+    visit(s::System) = begin
+        @show "visit $s"
+        add(d::System) = begin
+            v = get(I, d, nothing)
+            if isnothing(v)
+                add_vertex!(g)
+                push!(V, d)
+                I[d] = length(V)
+            end
+            add_edge!(g, I[s], I[d])
+        end
+        add(d::Vector{<:System}) = add.(d)
+        D = [getfield(s, n) for n in collectible(s)]
+        @show "collectible $D"
+        foreach(add, D)
+        push!(S, s)
+        filter!(d -> d ∉ S, D)
+        @show "collectible filtered $D"
+        recursive && foreach(visit, D)
+    end
+    visit(s::Vector{<:System}) = visit.(s)
+    visit(s)
+    J = topological_sort_by_dfs(g)
+    [V[i] for i in J]
+end
+
 collectvar(S) = begin
     d = Set{Var}()
     for s in S
