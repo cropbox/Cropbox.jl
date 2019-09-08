@@ -378,7 +378,7 @@ add!(d::Dependency{VarNode}, v::VarInfo) = begin
         link!(d, n0, n1)
         inlink!(d, v, n1)
     elseif v.state == :Flag
-        n0 = prenode!(d, v)
+        n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
         inlink!(d, v, n1)
     elseif v.state == :Produce
