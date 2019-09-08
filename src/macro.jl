@@ -66,6 +66,24 @@ end
 
 names(i::VarInfo) = [i.name, i.alias...]
 
+####
+
+abstract type Step end
+struct PreStep <: Step end
+struct MainStep <: Step end
+struct PostStep <: Step end
+
+suffix(::PreStep) = "_pre"
+suffix(::MainStep) = "_main"
+suffix(::PostStep) = "_post"
+
+struct VarNode
+    info::VarInfo
+    step::Step #TODO: rename to VarStep?
+end
+
+####
+
 const self = :($(esc(:self)))
 const C = :($(esc(:Cropbox)))
 
@@ -102,6 +120,7 @@ end
 
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
+gendecl(n::VarNode) = (n.step == MainStep()) ? gendecl(n.info) : nothing
 gendecl(i::VarInfo{Symbol}) = begin
     static = get(i.tags, :static, false)
     if isnothing(i.body)
@@ -166,8 +185,9 @@ genfieldnamesunique(infos) = Tuple(i.name for i in infos)
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
+    nodes = sortednodes(infos)
     fields = genfield.(infos)
-    decls = gendecl.(sortinfos(infos))
+    decls = gendecl.(nodes)
     source = gensource(infos)
     system = @q begin
         mutable struct $name <: $C.System
@@ -185,7 +205,7 @@ genstruct(name, infos, incl) = begin
         #HACK: redefine them to avoid world age problem
         #@generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
         #@generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
-        $C.updatestatic!($(esc(:_system))::$S) = $(genupdate(infos))
+        $C.updatestatic!($(esc(:_system))::$S) = $(genupdate(nodes))
         $S
     end
     flatten(system)
@@ -290,19 +310,7 @@ extract(i::VarInfo; equation=true, tag=true) = begin
     Set([eq..., par...]) |> collect
 end
 
-abstract type Step end
-struct PreStep <: Step end
-struct MainStep <: Step end
-struct PostStep <: Step end
-
-suffix(::PreStep) = "_pre"
-suffix(::MainStep) = "_main"
-suffix(::PostStep) = "_post"
-
-struct VarNode
-    info::VarInfo
-    step::Step #TODO: rename to VarStep?
-end
+####
 
 prev(n::VarNode) = begin
     if n.step == MainStep()
@@ -314,7 +322,7 @@ prev(n::VarNode) = begin
     end
 end
 
-nodes(infos) = begin
+sortednodes(infos) = begin
     M = Dict{Symbol,VarInfo}()
     for v in infos
         M[v.name] = v
@@ -439,7 +447,16 @@ end
 
 =#
 
-geninit(v::VarInfo) = geninit(v, Val(v.state))
+geninit(v::VarInfo) = begin
+    if get(v.tags, :parameter, false)
+        @q let self=$(esc(:self)), config=$(esc(:config))
+            v = option(config, self, $(names(v)))
+            isnothing(v) ? $(geninit(v, Val(v.state))) : v
+        end
+    else
+        geninit(v, Val(v.state))
+    end
+end
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(esc(v.tags[:unit]))))
 geninit(v::VarInfo, ::Val{:Advance}) = missing
 geninit(v::VarInfo, ::Val{:Drive}) = @q $C.value($(genfunc(v))[$(esc(get(v.tags, :key, v.name)))])
@@ -451,12 +468,11 @@ geninit(v::VarInfo, ::Val{:Produce}) = nothing
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
 ####
 
-genupdate(infos) = begin
-    N = nodes(infos)
+genupdate(nodes) = begin
     @q begin
         _context = _system.context
-        $([genupdateinit(n) for n in N]...)
-        $([genupdate(n) for n in N]...)
+        $([genupdateinit(n) for n in nodes]...)
+        $([genupdate(n) for n in nodes]...)
         nothing
     end
 end
