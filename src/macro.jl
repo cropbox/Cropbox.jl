@@ -212,10 +212,10 @@ genstruct(name, infos, incl) = begin
         $C.mixins(::Type{$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
         #HACK: redefine them to avoid world age problem
-        #@generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
-        #@generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
-        $C.collectible(::Type{$S}) = $(gencollectible(infos))
-        $C.updatable(::Type{$S}) = $(genupdatable(infos))
+        @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
+        @generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
+        # $C.collectible(::Type{$S}) = $(gencollectible(infos))
+        # $C.updatable(::Type{$S}) = $(genupdatable(infos))
         $C.updatestatic!($(esc(:_system))::$S) = $(genupdate(nodes))
         $S
     end
@@ -233,15 +233,15 @@ end
 mixins(::Type{<:System}) = [System]
 mixins(s::System) = mixins(typeof(s))
 
-gencollectible(infos) = begin
-    I = filter(i -> i.type in (:(Cropbox.System), :System, :(Vector{Cropbox.System}), :(Vector{System}), :(Cropbox.Produce), :Produce), infos)
-    filter!(i -> !haskey(i.tags, :override), I)
-    map(i -> i.name, I) |> Tuple
-end
-genupdatable(infos) = begin
-    I = filter(i -> isnothing(i.type), infos)
-    map(i -> i.name, I) |> Tuple
-end
+# gencollectible(infos) = begin
+#     I = filter(i -> i.type in (:(Cropbox.System), :System, :(Vector{Cropbox.System}), :(Vector{System}), :(Cropbox.Produce), :Produce), infos)
+#     filter!(i -> !haskey(i.tags, :override), I)
+#     map(i -> i.name, I) |> Tuple
+# end
+# genupdatable(infos) = begin
+#     I = filter(i -> isnothing(i.type), infos)
+#     map(i -> i.name, I) |> Tuple
+# end
 
 fieldnamesunique(::Type{<:System}) = ()
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
@@ -427,8 +427,7 @@ genupdate(v::VarInfo, t::Step) = begin
 end
 genupdate(v::VarInfo, t::PostStep) = @q begin
     $(symlabel(v, t))
-    #FIXME: remove order index in queue!
-    $C.queue!(context.order, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)), 0)
+    $C.queue!(context.queue, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)))
 end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
@@ -481,11 +480,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @q let s = $(symstate(v))
         t = $C.value(s.time) # $C.value($(v.tags[:time]))
         t0 = s.tick
-        if ismissing(t0)
-            a = $C.value(s.init) # $C.value($(v.tags[:init]))
-        else
-            a = s.value + s.rate * (t - t0)
-        end
+        a = s.value + s.rate * (t - t0)
         $C.store!(s, a)
         #TODO: make store! return value
         $C.value(s)
@@ -504,9 +499,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     @q let s = $(symstate(v))
         t = $C.value(s.time) # $C.value($(v.tags[:time]))
         t0 = s.tick
-        if !ismissing(t0)
-            d = s.rate * (t - t0)
-        end
+        d = s.rate * (t - t0)
         $C.store!(s, d)
     end
 end

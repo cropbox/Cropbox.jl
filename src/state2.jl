@@ -151,7 +151,6 @@ show(io::IO, s::Call) = print(io, "<call>")
 ####
 
 mutable struct Accumulate{V,T,R} <: State{V}
-    init::V
     value::V
     time::State{T}
     tick::T
@@ -170,7 +169,7 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Accumulate{V,T,R}(_value, zero(V), time, t, zero(R))
+    Accumulate{V,T,R}(_value, time, t, zero(R))
 end
 
 @generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)

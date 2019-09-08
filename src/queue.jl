@@ -16,8 +16,8 @@ queue!(q::Queue, f::Function, p::PrePriority) = queue!(current(q, p), f)
 queue!(q::Queue, f::Function, p::PostPriority) = queue!(current(q, p), f)
 queue!(q::Vector, f::Function) = push!(q, f)
 
-flush!(q::Queue, ::PrePriority) = flush!(current(q, p))
-flush!(q::Queue, ::PostPriority) = flush!(current(q, p))
+flush!(q::Queue, p::PrePriority) = flush!(current(q, p))
+flush!(q::Queue, p::PostPriority) = flush!(current(q, p))
 flush!(q::Vector) = (foreach(f -> f(), q); empty!(q))
 
 preflush!(q::Queue) = flush!(q, PrePriority())

@@ -5,8 +5,8 @@
         prey_death_rate: b => 0.1 ~ track
         predator_death_rate: c => 1.5 ~ track
         predator_reproduction_rate: d => 0.75 ~ track
-        prey_initial_population: H0 => 10 ~ track
-        predator_initial_population: P0 => 5 ~ track
+        prey_initial_population: H0 => 10.0 ~ track
+        predator_initial_population: P0 => 5.0 ~ track
         prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init=H0, time=t)
         predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init=P0, time=t)
     end

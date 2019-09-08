@@ -50,7 +50,6 @@ collect(s::System; recursive=true, exclude_self=false) = begin
 end
 
 using LightGraphs
-#TODO: save VarInfo in each System to figure out dependency
 collectstatic(s::System; recursive=true) = begin
     g = DiGraph()
     V = System[]
@@ -76,7 +75,9 @@ collectstatic(s::System; recursive=true) = begin
             add_edge!(g, I[s], I[d])
         end
         link(d::Vector{<:System}) = link.(d)
-        D = [getfield(s, n) for n in collectible(s)]
+        #HACK: use VarInfo tags to figure out dependency
+        vars = Dict(i.name => i for i in VarInfo.(source(s).args))
+        D = [getfield(s, n) for n in collectible(s) if !get(vars[n].tags, :override, false)]
         @show "collectible $D"
         foreach(link, D)
 
@@ -88,7 +89,7 @@ collectstatic(s::System; recursive=true) = begin
     visit(s::Vector{<:System}) = visit.(s)
     visit(s)
     J = topological_sort_by_dfs(g)
-    [V[i] for i in J]
+    [V[i] for i in reverse(J)]
 end
 
 collectvar(S) = begin

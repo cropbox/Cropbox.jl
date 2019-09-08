@@ -13,7 +13,12 @@ option(c::Context, keys...) = option(c.config, keys...)
 
 advance!(c::Context, n=1) = begin
     for i in 1:n
-        updatestatic!(c)
+		S = collectstatic(c)
+		preflush!(c.queue)
+		for s in S
+        	updatestatic!(s)
+		end
+		postflush!(c.queue)
     end
 end
 advance!(s::System, n=1) = advance!(s.context, n)
