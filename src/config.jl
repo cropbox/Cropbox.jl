@@ -22,6 +22,7 @@ option(c::Config, key::System, keys...) = begin
     k = names.([mixins(key)..., key]) |> Iterators.flatten |> collect
     option(c, k, keys...)
 end
-option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
+#option(c::Config, key::Var, keys...) = option(c, names(key), keys...)
+option(c::Config, key::VarInfo, keys...) = option(c, names(key), keys...)
 
 export configure

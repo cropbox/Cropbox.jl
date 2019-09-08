@@ -1,5 +1,6 @@
 abstract type State{V} end
 
+value(v) = v
 value(s::State{V}) where V = s.value::V
 
 import Base: getindex, length, iterate
@@ -8,17 +9,18 @@ length(s::State) = 1
 iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
 
-# default(V::Type{<:Number}) = V(0)
+# default(V::Type{<:Number}) = zero(V)
 # default(V::Type) = V()
 
-# import Unitful: unit
-# unit(::State{V}) where V = unittype(V)
-# unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
+import Unitful: unit
+unit(::State{V}) where V = unittype(V)
+unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
+import Unitful: Units
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
-valuetype(T, U::Unitful.Units) = Quantity{T, dimension(U), typeof(U)}
-valuetype(::Type{Array{T,N}}, U::Unitful.Units) where {T,N} = Array{valuetype(T, U), N}
+valuetype(T, U::Units) = Quantity{T, dimension(U), typeof(U)}
+valuetype(::Type{Array{T,N}}, U::Units) where {T,N} = Array{valuetype(T, U), N}
 
 # #HACK: state var referred by `time` tag must have been already declared
 # timeunittype(time::String, s::System) = unit(state(getvar(s, time)))
@@ -33,10 +35,10 @@ valuetype(::Type{Array{T,N}}, U::Unitful.Units) where {T,N} = Array{valuetype(T,
 # end
 # timevalue(t, _) = t
 #
-# rateunittype(U::Nothing, TU::Unitful.Units) = TU^-1
-# rateunittype(U::Unitful.Units, TU::Unitful.Units) = U/TU
-# rateunittype(U::Unitful.Units, TU::Nothing) = U
-# rateunittype(U::Nothing, TU::Nothing) = nothing
+rateunittype(U::Nothing, T::Units) = T^-1
+rateunittype(U::Units, T::Units) = U/T
+rateunittype(U::Units, T::Nothing) = U
+rateunittype(U::Nothing, T::Nothing) = nothing
 
 abstract type Priority end
 struct PrePriority <: Priority end
@@ -58,15 +60,9 @@ mutable struct Pass{V} <: State{V}
     value::V
 end
 
-Pass(; unit=nothing, _name, _system, _value, _type=nothing, _...) = begin
-    V = valuetype(_type, unit)
-    if ismissing(_value)
-        v = default(V)
-    else
-        v = unitfy(_value, unit)
-        V = promote_type(V, typeof(v))
-    end
-    #N = Symbol("$(name(_system))<$_name>")
+Pass(; unit, _value, _type=nothing, _...) = begin
+    v = unitfy(_value, value(unit))
+    V = typeof(v)
     Pass{V}(v)
 end
 
@@ -76,12 +72,11 @@ mutable struct Advance{T} <: State{T}
     value::Timepiece{T}
 end
 
-Advance(; init=nothing, step=nothing, unit=nothing, _name, _system, _type=Int64, _...) = begin
-    T = valuetype(_type, unit)
-    t = isnothing(init) ? zero(T) : init
-    dt = isnothing(step) ? oneunit(T) : step
+Advance(; init=nothing, step=nothing, unit, _type=Int64, _...) = begin
+    T = valuetype(_type, value(unit))
+    t = isnothing(init) ? zero(T) : value(init)
+    dt = isnothing(step) ? oneunit(T) : value(step)
     T = promote_type(typeof(t), typeof(dt))
-    #N = Symbol("$(name(_system))<$_name>")
     Advance{T}(Timepiece{T}(t, dt))
 end
 
@@ -96,223 +91,152 @@ mutable struct Preserve{V} <: State{V}
 end
 
 # Preserve is the only State that can store value `nothing`
-Preserve(; unit=nothing, _name, _system, _value, _type=nothing, _...) = begin
-    V = valuetype(_type, unit)
-    if ismissing(_value)
-        v = missing
-    else
-        v = unitfy(_value, unit)
-        V = typeof(v)
-    end
-    #N = Symbol("$(name(_system))<$_name>")
+Preserve(; unit, _value, _type=nothing, _...) = begin
+    v = unitfy(_value, value(unit))
+    V = typeof(v)
     Preserve{V}(v)
 end
 
 ####
 
-mutable struct Track{V,T} <: State{V}
+mutable struct Track{V} <: State{V}
     value::V
-    time::TimeState{T}
 end
 
-Track(; unit=nothing, time, _name, _system, _value=missing, _type=Float64, _type_time=Float64, _...) = begin
-    V = valuetype(_type, unit)
-    if ismissing(_value)
-        v = default(V)
-    else
-        v = unitfy(_value, unit)
-        V = promote_type(V, typeof(v))
-    end
-    #T = timetype(_type_time, time, _system)
-    T = typeof(time)
-    N = Symbol("$(name(_system))<$_name>")
-    Track{V,T}(v, TimeState{T}(_system, time))
+Track(; unit, _value, _type=Float64, _...) = begin
+    U = value(unit)
+    #V = valuetype(_type, u)
+    v = unitfy(_value, U)
+    #V = promote_type(V, typeof(v))
+    V = typeof(v)
+    #T = typeof(value(time))
+    Track{V}(v)
 end
 
 ####
 
 mutable struct Drive{V,T} <: State{V}
-    key::Symbol
     value::V
-    time::TimeState{T}
+    key::Symbol
 end
 
-Drive(; key=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
+Drive(; key=nothing, unit, _name, _value, _type=Float64, _...) = begin
     k = isnothing(key) ? _name : Symbol(key)
-    U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    T = timetype(_type_time, time, _system)
-    N = Symbol("$(name(_system))<$_name>")
-    Drive{V,T}(k, default(V), TimeState{T}(_system, time))
+    #V = valuetype(_type, value(unit))
+    V = typeof(_value)
+    #T = typeof(value(time))
+    Drive{V}(_value, k)
 end
-
-update!(s::Drive, f::AbstractVar, ::MainStep) = store!(s, value(f()[s.key])) # value() for Var
 
 ####
 
-mutable struct Call{V,T} <: State{V}
-    value::Union{Function,Missing}
-    time::TimeState{T}
+mutable struct Call{V} <: State{V}
+    value::Function
 end
 
-Call(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
-    U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    T = timetype(_type_time, time, _system)
-    N = Symbol("$(name(_system))<$_name>")
-    Call{V,T}(missing, TimeState{T}(_system, time))
+Call(; unit, _value, _type=Float64, _...) = begin
+    V = valuetype(_type, value(unit))
+    Call{V}(_value)
 end
 
-value(s::Call{V}) where {V} = s.value::Union{V,Function}
-update!(s::Call, f::AbstractVar, ::MainStep) = begin
-    s.value = (a...; k...) -> unitfy(f()(a...; k...), unit(s))
-    #HACK: no function should be returned for queueing
-    nothing
-end
+#value(s::Call{V}) where {V} = s.value::Union{V,Function}
 #HACK: showing s.value could trigger StackOverflowError
 show(io::IO, s::Call) = print(io, "<call>")
 
 ####
 
 mutable struct Accumulate{V,T,R} <: State{V}
-    init::VarVal{V}
-    time::TimeState{T}
-    tick::Union{T,Missing}
-    rate::R
+    init::V
     value::V
+    time::State{T}
+    tick::T
+    rate::R
 end
 
-Accumulate(; init=0, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
-    U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    TU = timeunittype(time, _system)
-    T = valuetype(_type_time, TU)
+Accumulate(; unit, time, _value, _type=Float64, _...) = begin
+    U = value(unit)
+    #V = valuetype(_type, U)
+    V = typeof(_value)
+    #TU = timeunittype(time, _system)
+    #T = valuetype(_type_time, TU)
     #T = timetype(_type_time, time, _system)
+    t = value(time)
+    T = typeof(t)
+    TU = unit(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    N = Symbol("$(name(_system))<$_name>")
-    Accumulate{V,T,R}(VarVal{V}(_system, init), TimeState{T}(_system, time), missing, default(R), default(V))
+    Accumulate{V,T,R}(_value, zero(V), time, t, zero(R))
 end
 
-update!(s::Accumulate, f::AbstractVar, ::MainStep) = begin
-    t = value(s.time.tick)
-    t0 = s.tick
-    if ismissing(t0)
-        #@show "missing"
-        v = value(s.init)
-    else
-        #@show "$(s.value)"
-        #@show "$(s.rate)"
-        #@show "$t"
-        #@show "$t0"
-        v = s.value + s.rate * (t - t0)
-    end
-    #@show "acc store $v"
-    store!(s, v)
-end
-update!(s::Accumulate, f::AbstractVar, ::PostStep) = begin
-    #@show "accumulate post step!!!!!"
-    t = value(s.time.tick)
-    r = unitfy(f(), rateunit(s))
-    () -> (#= @show "acc poststore $t, $r";=# s.tick = t; s.rate = r)
-end
-#TODO special handling of no return value for Accumulate/Capture?
-#store!(s::Accumulate, ::Nothing) = update!(s, () -> 0)
-rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
+@generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 
 ####
 
 mutable struct Capture{V,T,R} <: State{V}
-    time::TimeState{T}
-    tick::Union{T,Missing}
-    rate::R
     value::V
+    time::State{T}
+    tick::T
+    rate::R
 end
 
-Capture(; unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
-    U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    TU = timeunittype(time, _system)
-    T = valuetype(_type_time, TU)
+Capture(; unit, time, _value, _type=Float64, _...) = begin
+    U = value(unit)
+    #V = valuetype(_type, U)
+    #TU = timeunittype(time, _system)
+    #T = valuetype(_type_time, TU)
+    t = value(time)
+    T = typeof(t)
+    TU = unit(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    N = Symbol("$(name(_system))<$_name>")
-    Capture{V,T,R}(TimeState{T}(_system, time), missing, default(R), default(V))
+    Capture{V,T,R}(zero(V), time, t, zero(R))
 end
 
-update!(s::Capture, f::AbstractVar, ::MainStep) = begin
-    t = value(s.time.tick)
-    t0 = s.tick
-    if !ismissing(t0)
-        v = s.rate * (t - t0)
-        #@show "$(s.rate)"
-        #@show "$t"
-        #@show "$t0"
-        #@show "$v"
-        store!(s, v)
-    end
-end
-update!(s::Capture, f::AbstractVar, ::PostStep) = begin
-    t = value(s.time.tick)
-    r = unitfy(f(), rateunit(s))
-    #@show "capture post step!!!!! $t $r"
-    () -> (s.tick = t; s.rate = r)
-end
-#TODO special handling of no return value for Accumulate/Capture?
-#store!(s::Capture, ::Nothing) = update!(s, () -> 0)
-rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
+@generated rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
 
 ####
 
-mutable struct Flag{Bool,P,T} <: State{Bool}
+mutable struct Flag{Bool} <: State{Bool}
     value::Bool
-    prob::VarVal{P}
-    time::TimeState{T}
 end
 
-Flag(; prob=1, time="context.clock.tick", _name, _system, _type=Bool, _type_prob=Float64, _type_time=Float64, _...) = begin
-    V = _type
-    P = _type_prob
-    T = timetype(_type_time, time, _system)
-    N = Symbol("$(name(_system))<$_name>")
-    Flag{V,P,T}(zero(V), VarVal{P}(_system, prob), TimeState{T}(_system, time))
+Flag(; _value, _type=Bool, _...) = begin
+    V = typeof(_value)
+    Flag{V}(_value)
 end
-
-update!(s::Flag, f::AbstractVar, ::MainStep) = nothing
-update!(s::Flag, f::AbstractVar, ::PostStep) = (v = f(); () -> store!(s, v))
 
 ####
 
 mutable struct Produce{S<:System,T} <: State{S}
-    context::System
     value::Vector{S}
-    time::TimeState{T}
+    context::System
     name::Symbol # used in recurisve collecting in getvar!
 end
 
-struct Product{S<:System,A}
+struct Product{S<:System}
     type::Type{S}
-    args::A
+    args
 end
+iterate(p::Product) = (p, nothing)
 
-Produce(; time="context.clock.tick", _name, _system, _type::Type{S}=System, _type_time=Float64, _...) where {S<:System} = begin
-    T = timetype(_type_time, time, _system)
-    N = Symbol("$(name(_system))<$_name>")
-    Produce{S,T}(_system.context, S[], TimeState{T}(_system, time), _name)
+Produce(; _name, _system, _type::Type{S}=System, _...) where {S<:System} = begin
+    Produce{S}(S[], _system.context, _name)
 end
 
 value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
 produce(s::Type{<:System}; args...) = Product(s, args)
-produce(s::Produce, p::Product, x::AbstractVar) = begin
-    c = s.context
-    k = p.type(; context=c, p.args...)
-    append!(s.value, k)
-    inform!(c.order, x, k)
-end
-produce(s::Produce, p::Vector{<:Product}, x::AbstractVar) = produce.(Ref(s), p, Ref(x))
-produce(s::Produce, ::Nothing, x::AbstractVar) = nothing
-update!(s::Produce, f::AbstractVar, ::MainStep) = nothing
-update!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p, f))
+
+# produce(s::Produce, p::Product, x::AbstractVar) = begin
+#     c = s.context
+#     k = p.type(; context=c, p.args...)
+#     append!(s.value, k)
+#     inform!(c.order, x, k)
+# end
+# produce(s::Produce, p::Vector{<:Product}, x::AbstractVar) = produce.(Ref(s), p, Ref(x))
+# produce(s::Produce, ::Nothing, x::AbstractVar) = nothing
+# update!(s::Produce, f::AbstractVar, ::MainStep) = nothing
+# update!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p, f))
+
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -322,43 +246,40 @@ priority(::Type{<:Produce}) = PrePriority()
 ####
 
 mutable struct Solve{V,T} <: State{V}
-    context::System
     value::V
-    time::TimeState{T}
-    lower::Union{VarVal{V},Nothing}
-    upper::Union{VarVal{V},Nothing}
+    lower::Union{State{V},V,Nothing}
+    upper::Union{State{V},V,Nothing}
+    context::System
 end
 
-Solve(; lower=nothing, upper=nothing, unit=nothing, time="context.clock.tick", _name, _system, _type=Float64, _type_time=Float64, _...) = begin
-    U = unittype(unit, _system)
-    V = valuetype(_type, U)
-    T = timetype(_type_time, time, _system)
-    N = Symbol("$(name(_system))<$_name>")
-    Solve{V,T}(_system.context, default(V), TimeState{T}(_system, time), VarVal{V}(_system, lower), VarVal{V}(_system, upper))
+#TODO: reimplement Solve
+Solve(; lower=nothing, upper=nothing, unit, _system, _type=Float64, _...) = begin
+    V = valuetype(_type, value(unit))
+    Solve{V,T}(zero(V), lower, upper, _system.context)
 end
 
 using Roots
-update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
-update!(s::Solve, f::AbstractVar, ::MainStep) = begin
-    #@show "begin solve $s"
-    trigger(x) = (store!(s, x); recite!(s.context.order, f))
-    cost(e) = x -> (trigger(x); e(x) |> ustrip)
-    b = (value(s.lower), value(s.upper))
-    if nothing in b
-        try
-            c = cost(x -> (x - f())^2)
-            v = find_zero(c, value(s))
-        catch e
-            #@show "convergence failed: $e"
-            v = value(s)
-        end
-    else
-        c = cost(x -> (x - f()))
-        v = find_zero(c, b, Roots.AlefeldPotraShi())
-    end
-    #HACK: trigger update with final value
-    trigger(v)
-    recitend!(s.context.order, f)
-end
+# update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
+# update!(s::Solve, f::AbstractVar, ::MainStep) = begin
+#     #@show "begin solve $s"
+#     trigger(x) = (store!(s, x); recite!(s.context.order, f))
+#     cost(e) = x -> (trigger(x); e(x) |> ustrip)
+#     b = (value(s.lower), value(s.upper))
+#     if nothing in b
+#         try
+#             c = cost(x -> (x - f())^2)
+#             v = find_zero(c, value(s))
+#         catch e
+#             #@show "convergence failed: $e"
+#             v = value(s)
+#         end
+#     else
+#         c = cost(x -> (x - f()))
+#         v = find_zero(c, b, Roots.AlefeldPotraShi())
+#     end
+#     #HACK: trigger update with final value
+#     trigger(v)
+#     recitend!(s.context.order, f)
+# end
 
 export produce

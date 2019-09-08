@@ -3,9 +3,9 @@
     context => self ~ ::System
 
     config => configure() ~ ::Config(override)
-    order => Order() ~ ::Order
+    #order => Order() ~ ::Order
 
-    clock => Clock(; context=self) ~ ::Clock
+    clock => Clock(; config=config) ~ ::Clock(config)
     systems ~ ::[System]
 end
 
