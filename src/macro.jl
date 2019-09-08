@@ -386,7 +386,7 @@ add!(d::Dependency{VarNode}, v::VarInfo) = begin
         n1 = postnode!(d, v)
         inlink!(d, v, n0)
         inlink!(d, v, n1)
-    elseif !isnothing(v.state)
+    else
         n = mainnode!(d, v)
         inlink!(d, v, n)
     end
