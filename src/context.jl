@@ -5,7 +5,7 @@
     config => configure() ~ ::Config(override)
     #order => Order() ~ ::Order
 
-    clock => Clock(; config=config) ~ ::Clock(config)
+    clock(config) => Clock(; config=config) ~ ::Clock
     systems ~ ::[System]
 end
 

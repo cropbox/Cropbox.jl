@@ -36,12 +36,12 @@ VarInfo(line::Union{Expr,Symbol}) = begin
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
-    tags = parsetags(tags, type, state)
+    tags = parsetags(tags, type, state, args)
     VarInfo{typeof(state)}(name, alias, args, body, state, type, tags, line)
 end
 
-parsetags(::Nothing, type, state) = parsetags([], type, state)
-parsetags(tags::Vector, type, state) = begin
+parsetags(::Nothing, type, state, args) = parsetags([], type, state, args)
+parsetags(tags::Vector, type, state, args) = begin
     d = Dict{Symbol,Any}()
     for t in tags
         if @capture(t, k_=v_)
@@ -57,7 +57,7 @@ parsetags(tags::Vector, type, state) = begin
             d[t] = true
         end
     end
-    haskey(d, :parameter) && (d[:static] = true)
+    haskey(d, :parameter) && (d[:static] = true; push!(args, :config))
     !haskey(d, :unit) && (d[:unit] = nothing)
     (state in (:Accumulate, :Capture)) && !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     !isnothing(type) && (d[:_type] = type)
@@ -156,7 +156,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
-    @assert isempty(i.args) "Non-Var `$(i.name)` cannot have arguments: $(i.args)"
+    #@assert isempty(i.args) "Non-Var `$(i.name)` cannot have arguments: $(i.args)"
     if haskey(i.tags, :override)
         decl = genoverride(i.name, esc(i.body))
     elseif !isnothing(i.body)
