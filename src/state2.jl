@@ -16,7 +16,7 @@ import Unitful: unit
 unit(::State{V}) where V = unittype(V)
 unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
-import Unitful: Units
+import Unitful: Units, dimension
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
 valuetype(T, U::Units) = Quantity{T, dimension(U), typeof(U)}
