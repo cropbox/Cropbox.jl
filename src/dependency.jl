@@ -48,3 +48,81 @@ sort(d::Dependency) = begin
     J = topological_sort_by_dfs(d.g)
     [d.V[i] for i in J]
 end
+
+####
+
+extract(i::VarInfo; equation=true, tag=true) = begin
+    parse(v::Expr) = parse(v.args[1])
+    parse(v::Symbol) = v
+    parse(v) = nothing
+    pick(a) = @capture(a, k_=v_) ? parse(v) : parse(a)
+    pack(A) = filter(!isnothing, pick.(A)) |> Tuple
+    eq = equation ? pack(i.args) : ()
+    @show eq
+    #HACK: exclude internal tags (i.e. _type)
+    tags = filter(p -> !startswith(String(p[1]), "_"), i.tags)
+    @show tags
+    par = tag ? pack(values(tags)) : ()
+    @show par
+    Set([eq..., par...]) |> collect
+end
+
+####
+
+node!(d::Dependency{VarNode}, v::VarInfo, t::Step) = vertex!(d, VarNode(v, t))
+prenode!(d::Dependency{VarNode}, v) = node!(d, v, PreStep())
+mainnode!(d::Dependency{VarNode}, v) = node!(d, v, MainStep())
+postnode!(d::Dependency{VarNode}, v) = node!(d, v, PostStep())
+node!(d::Dependency{VarNode}, v::VarInfo) = begin
+    if v.state == :Solve
+        @show "innodes: Var{<:Solve} = $v"
+        prenode!(d, v)
+    else
+        mainnode!(d, v)
+    end
+end
+invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
+    @show "innodes $v"
+    A = extract(v; kwargs...)
+    @show "extracted = $A"
+    f(a::Symbol) = f(d.M[a])
+    f(v0::VarInfo) = begin
+        @show v0
+        if v0 == v
+            @show "cyclic! prenode $v"
+            prenode!(d, v0)
+        else
+            node!(d, v0)
+        end
+    end
+    f.(A)
+end
+
+add!(d::Dependency{VarNode}, v::VarInfo) = begin
+    @show "add! $v"
+    if v.state in (:Accumulate, :Capture)
+        n0 = mainnode!(d, v)
+        n1 = postnode!(d, v)
+        link!(d, n0, n1)
+        # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
+        inlink!(d, v, n0; equation=false)
+        inlink!(d, v, n1)
+    elseif v.state == :Solve
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        link!(d, n0, n1)
+        inlink!(d, v, n1)
+    elseif v.state == :Flag
+        n0 = mainnode!(d, v)
+        n1 = postnode!(d, v)
+        inlink!(d, v, n1)
+    elseif v.state == :Produce
+        n0 = mainnode!(d, v)
+        n1 = postnode!(d, v)
+        inlink!(d, v, n0)
+        inlink!(d, v, n1)
+    else
+        n = mainnode!(d, v)
+        inlink!(d, v, n)
+    end
+end

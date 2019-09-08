@@ -82,6 +82,16 @@ struct VarNode
     step::Step #TODO: rename to VarStep?
 end
 
+prev(n::VarNode) = begin
+    if n.step == MainStep()
+        VarNode(n.info, PreStep())
+    elseif n.step == PostStep()
+        VarNode(n.info, MainStep())
+    elseif n.step == PreStep()
+        error("Pre-step node can't have a previous node: $n")
+    end
+end
+
 ####
 
 const self = :($(esc(:self)))
@@ -268,19 +278,19 @@ geninfos(body, incl) = begin
     add!(d, body)
     collect(values(d))
 end
-sortinfos(infos) = begin
+
+include("dependency.jl")
+sortednodes(infos) = begin
     M = Dict{Symbol,VarInfo}()
     for v in infos
-        M[v.name] = v
-        for a in v.alias
-            M[a] = v
+        for n in names(v)
+            M[n] = v
         end
     end
-    d = Dependency{VarInfo}(M)
+    d = Dependency{VarNode}(M)
     add!(d, infos)
     sort(d)
 end
-invertices!(d::Dependency{VarInfo}, v::VarInfo; _...) = map(a -> vertex!(d, a), extract(v; equation=false, tag=true))
 
 macro system(head, body)
     gensystem(head, body)
@@ -291,106 +301,6 @@ macro infos(head, body)
 end
 
 export @equation, @system
-
-####
-
-extract(i::VarInfo; equation=true, tag=true) = begin
-    parse(v::Expr) = parse(v.args[1])
-    parse(v::Symbol) = v
-    parse(v) = nothing
-    pick(a) = @capture(a, k_=v_) ? parse(v) : parse(a)
-    pack(A) = filter(!isnothing, pick.(A)) |> Tuple
-    eq = equation ? pack(i.args) : ()
-    @show eq
-    #HACK: exclude internal tags (i.e. _type)
-    tags = filter(p -> !startswith(String(p[1]), "_"), i.tags)
-    @show tags
-    par = tag ? pack(values(tags)) : ()
-    @show par
-    Set([eq..., par...]) |> collect
-end
-
-####
-
-prev(n::VarNode) = begin
-    if n.step == MainStep()
-        VarNode(n.info, PreStep())
-    elseif n.step == PostStep()
-        VarNode(n.info, MainStep())
-    elseif n.step == PreStep()
-        error("Pre-step node can't have a previous node: $n")
-    end
-end
-
-sortednodes(infos) = begin
-    M = Dict{Symbol,VarInfo}()
-    for v in infos
-        M[v.name] = v
-        for a in v.alias
-            M[a] = v
-        end
-    end
-    d = Dependency{VarNode}(M)
-    add!(d, infos)
-    sort(d)
-end
-
-node!(d::Dependency{VarNode}, v::VarInfo, t::Step) = vertex!(d, VarNode(v, t))
-prenode!(d::Dependency{VarNode}, v) = node!(d, v, PreStep())
-mainnode!(d::Dependency{VarNode}, v) = node!(d, v, MainStep())
-postnode!(d::Dependency{VarNode}, v) = node!(d, v, PostStep())
-node!(d::Dependency{VarNode}, v::VarInfo) = begin
-    if v.state == :Solve
-        @show "innodes: Var{<:Solve} = $v"
-        prenode!(d, v)
-    else
-        mainnode!(d, v)
-    end
-end
-invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
-    @show "innodes $v"
-    A = extract(v; kwargs...)
-    @show "extracted = $A"
-    f(a::Symbol) = f(d.M[a])
-    f(v0::VarInfo) = begin
-        @show v0
-        if v0 == v
-            @show "cyclic! prenode $v"
-            prenode!(d, v0)
-        else
-            node!(d, v0)
-        end
-    end
-    f.(A)
-end
-add!(d::Dependency{VarNode}, v::VarInfo) = begin
-    @show "add! $v"
-    if v.state in (:Accumulate, :Capture)
-        n0 = mainnode!(d, v)
-        n1 = postnode!(d, v)
-        link!(d, n0, n1)
-        # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
-        inlink!(d, v, n0; equation=false)
-        inlink!(d, v, n1)
-    elseif v.state == :Solve
-        n0 = prenode!(d, v)
-        n1 = mainnode!(d, v)
-        link!(d, n0, n1)
-        inlink!(d, v, n1)
-    elseif v.state == :Flag
-        n0 = mainnode!(d, v)
-        n1 = postnode!(d, v)
-        inlink!(d, v, n1)
-    elseif v.state == :Produce
-        n0 = mainnode!(d, v)
-        n1 = postnode!(d, v)
-        inlink!(d, v, n0)
-        inlink!(d, v, n1)
-    else
-        n = mainnode!(d, v)
-        inlink!(d, v, n)
-    end
-end
 
 ####
 
