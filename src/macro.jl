@@ -94,7 +94,6 @@ end
 
 ####
 
-const self = :($(esc(:self)))
 const C = :($(esc(:Cropbox)))
 
 genfield(i::VarInfo{Symbol}) = genfield(:($C.$(i.state)), i.name, i.alias)
@@ -161,7 +160,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     name = Meta.quot(i.name)
     alias = Tuple(i.alias)
     value = haskey(i.tags, :override) ? genoverride(i.name, missing) : geninit(i)
-    stargs = [:($(esc(k))=$(esc(v))) for (k, v) in i.tags]
+    stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
     decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
@@ -180,10 +179,10 @@ gendecl(i::VarInfo{Nothing}) = begin
     gendecl(decl, i.name, i.alias)
 end
 gendecl(decl, var, alias) = @q begin
-    $self.$var = $decl
-    $(@q begin $([:($self.$a = $self.$var) for a in alias]...) end)
-    $(esc(var)) = $self.$var
-    $(@q begin $([:($(esc(a)) = $var) for a in alias]...) end)
+    self.$var = $decl
+    $(@q begin $([:(self.$a = self.$var) for a in alias]...) end)
+    $var = self.$var
+    $(@q begin $([:($a = $var) for a in alias]...) end)
 end
 
 gensource(infos) = begin
@@ -203,10 +202,10 @@ genstruct(name, infos, incl) = begin
         mutable struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
-                $self = new()
+                self = $(esc(:self)) = new()
                 $(decls...)
-                #$C.init!($self)
-                $self
+                #$C.init!(self)
+                self
             end
         end
         $C.source(::Val{Symbol($S)}) = $(Meta.quot(source))
@@ -215,6 +214,8 @@ genstruct(name, infos, incl) = begin
         #HACK: redefine them to avoid world age problem
         #@generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
         #@generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
+        $C.collectible(::Type{$S}) = $(gencollectible(infos))
+        $C.updatable(::Type{$S}) = $(genupdatable(infos))
         $C.updatestatic!($(esc(:_system))::$S) = $(genupdate(nodes))
         $S
     end
@@ -232,6 +233,16 @@ end
 mixins(::Type{<:System}) = [System]
 mixins(s::System) = mixins(typeof(s))
 
+gencollectible(infos) = begin
+    I = filter(i -> i.type in (:(Cropbox.System), :System, :(Vector{Cropbox.System}), :(Vector{System}), :(Cropbox.Produce), :Produce), infos)
+    filter!(i -> !haskey(i.tags, :override), I)
+    map(i -> i.name, I) |> Tuple
+end
+genupdatable(infos) = begin
+    I = filter(i -> isnothing(i.type), infos)
+    map(i -> i.name, I) |> Tuple
+end
+
 fieldnamesunique(::Type{<:System}) = ()
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
@@ -244,7 +255,7 @@ filteredfields(type::Type, ::Type{S}) where {S<:System} = begin
     map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
 end
 filteredvars(::Type{S}) where {S<:System} = begin
-    l = filtervar(Var, S)
+    l = filtervar(State, S)
     d = Symbol[]
     for (n, T) in l
         push!(d, n)
@@ -359,7 +370,7 @@ end
 
 geninit(v::VarInfo) = begin
     if get(v.tags, :parameter, false)
-        @q let self=$(esc(:self)), config=$(esc(:config))
+        @q let
             v = option(config, self, $(names(v)))
             isnothing(v) ? $(geninit(v, Val(v.state))) : v
         end
@@ -367,12 +378,12 @@ geninit(v::VarInfo) = begin
         geninit(v, Val(v.state))
     end
 end
-geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(esc(v.tags[:unit]))))
+geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Advance}) = missing
-geninit(v::VarInfo, ::Val{:Drive}) = @q $C.value($(genfunc(v))[$(esc(get(v.tags, :key, v.name)))])
+geninit(v::VarInfo, ::Val{:Drive}) = @q $C.value($(genfunc(v))[$(get(v.tags, :key, v.name))])
 geninit(v::VarInfo, ::Val{:Call}) = missing
-geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(esc(get(v.tags, :init, 0)))), $C.value($(esc(v.tags[:unit]))))
-geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy(0, $C.value($(esc(v.tags[:unit]))))
+geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, 0))), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy(0, $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Flag}) = false
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
@@ -380,7 +391,6 @@ geninit(v::VarInfo, ::Val{:Solve}) = nothing
 
 genupdate(nodes) = begin
     @q begin
-        _context = _system.context
         $([genupdateinit(n) for n in nodes]...)
         $([genupdate(n) for n in nodes]...)
         nothing
@@ -393,19 +403,32 @@ symlabel(v::VarInfo, t::Step) = @q @label $(Symbol(v.name, suffix(t)))
 genupdateinit(n::VarNode) = begin
     v = n.info
     s = symstate(v)
-    @q $s = _system.$(v.name)
+    @show v
+    if haskey(v.tags, :expose)
+        @q $s = $(v.name) = _system.$(v.name)
+    else
+        @q $s = _system.$(v.name)
+    end
 end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
-genupdate(v::VarInfo, t::Step) = @q begin
-    $(symlabel(v, t))
-    $(v.name) = $(genupdate(v, Val(v.state), t))
-    $([:($a = $(v.name)) for a in v.alias]...)
+genupdate(v::VarInfo, t::Step) = begin
+    u = genupdate(v, Val(v.state), t)
+    l = symlabel(v, t)
+    if isnothing(u)
+        @q $l
+    else
+        @q begin
+            $l
+            $(v.name) = $u
+            $([:($a = $(v.name)) for a in v.alias]...)
+        end
+    end
 end
 genupdate(v::VarInfo, t::PostStep) = @q begin
     $(symlabel(v, t))
     #FIXME: remove order index in queue!
-    $C.queue!(_context.order, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)), 0)
+    $C.queue!(context.order, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)), 0)
 end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
@@ -456,7 +479,7 @@ end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @q let s = $(symstate(v))
-        t = $C.value(s.time.tick) # $C.value($(v.tags[:time]))
+        t = $C.value(s.time) # $C.value($(v.tags[:time]))
         t0 = s.tick
         if ismissing(t0)
             a = $C.value(s.init) # $C.value($(v.tags[:init]))
@@ -470,7 +493,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
 end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
     @q let s = $(symstate(v))
-        t = $C.value(s.time.tick) # $C.value($(v.tags[:time]))
+        t = $C.value(s.time) # $C.value($(v.tags[:time]))
         f = $(genfunc(v))
         r = $C.unitfy(f, $C.rateunit(s))
         () -> (@show t,r; s.tick = t; s.rate = r)
@@ -479,7 +502,7 @@ end
 
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     @q let s = $(symstate(v))
-        t = $C.value(s.time.tick) # $C.value($(v.tags[:time]))
+        t = $C.value(s.time) # $C.value($(v.tags[:time]))
         t0 = s.tick
         if !ismissing(t0)
             d = s.rate * (t - t0)
@@ -489,7 +512,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
 end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
     @q let s = $(symstate(v))
-        t = $C.value(s.time.tick) # $C.value($(v.tags[:time]))
+        t = $C.value(s.time) # $C.value($(v.tags[:time]))
         f = $(genfunc(v))
         r = $C.unitfy(f, $C.rateunit(s))
         () -> (s.tick = t; s.rate = r)
@@ -511,7 +534,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
         #() -> $C.produce(s, p, x)
         !isnothing(P) && function ()
             for p in P
-                b = p.type(; context=_context, p.args...)
+                b = p.type(; context=context, p.args...)
                 append!(s.value, b)
                 #FIXME: need to reimplement inform!
                 #$C.inform!(c.order, x, b)
@@ -552,8 +575,7 @@ end
 # end
 
 genfunc(v::VarInfo) = begin
-    parse(v) = isa(v, String) ? :($C.value($(esc(:_system)), $v)) : v
-    pair(a) = let k, v; @capture(a, k_=v_) ? k => parse(v) : a => parse(a) end
-    args = @q begin $([(p = pair(a); :($(esc(p[1])) = $(p[2]))) for a in v.args]...) end
+    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
+    args = @q begin $([(p = pair(a); :($(esc(p[1])) = value($(p[2])))) for a in v.args]...) end
     flatten(@q let $args; $(esc(v.body)) end)
 end

@@ -3,6 +3,8 @@ abstract type State{V} end
 value(v) = v
 value(s::State{V}) where V = s.value::V
 
+store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
+
 import Base: getindex, length, iterate
 getindex(s::State, i) = s
 length(s::State) = 1
@@ -92,6 +94,9 @@ end
 
 # Preserve is the only State that can store value `nothing`
 Preserve(; unit, _value, _type=nothing, _...) = begin
+    @show _value
+    @show unit
+    @show value(unit)
     v = unitfy(_value, value(unit))
     V = typeof(v)
     Preserve{V}(v)
@@ -162,7 +167,7 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     #T = timetype(_type_time, time, _system)
     t = value(time)
     T = typeof(t)
-    TU = unit(T)
+    TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     Accumulate{V,T,R}(_value, zero(V), time, t, zero(R))
@@ -186,7 +191,7 @@ Capture(; unit, time, _value, _type=Float64, _...) = begin
     #T = valuetype(_type_time, TU)
     t = value(time)
     T = typeof(t)
-    TU = unit(T)
+    TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     Capture{V,T,R}(zero(V), time, t, zero(R))
