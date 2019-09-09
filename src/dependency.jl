@@ -57,7 +57,7 @@ extract(i::VarInfo; equation=true, tag=true) = begin
             @show v
             a = v.args[1]
             @show a
-            isexpr(a) ? f(a) : isexpr(v, :.) ? a : nothing
+            isexpr(a) ? f(a) : isexpr(v, :., :ref) ? a : nothing
         end
         f(v)
     end

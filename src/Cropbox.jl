@@ -5,6 +5,7 @@ include("unit.jl")
 include("macro.jl")
 include("time2.jl")
 include("state2.jl")
+include("bundle.jl")
 
 include("config.jl")
 include("order2.jl")

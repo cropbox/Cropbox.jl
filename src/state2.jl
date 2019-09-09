@@ -2,6 +2,7 @@ abstract type State{V} end
 
 value(v) = v
 value(s::State{V}) where V = s.value::V
+value(S::Vector{<:State}) = value.(S)
 
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
 
