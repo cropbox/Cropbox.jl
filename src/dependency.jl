@@ -52,7 +52,15 @@ end
 ####
 
 extract(i::VarInfo; equation=true, tag=true) = begin
-    parse(v::Expr) = parse(v.args[1])
+    parse(v::Expr) = begin
+        f(v) = begin
+            @show v
+            a = v.args[1]
+            @show a
+            isexpr(a) ? f(a) : isexpr(v, :.) ? a : nothing
+        end
+        f(v)
+    end
     parse(v::Symbol) = v
     parse(v) = nothing
     pick(a) = @capture(a, k_=v_) ? parse(v) : parse(a)
@@ -60,9 +68,8 @@ extract(i::VarInfo; equation=true, tag=true) = begin
     eq = equation ? pack(i.args) : ()
     @show eq
     #HACK: exclude internal tags (i.e. _type)
-    tags = filter(p -> !startswith(String(p[1]), "_"), i.tags)
-    @show tags
-    par = tag ? pack(values(tags)) : ()
+    tags = filter(!isnothing, [parse(p[2]) for p in i.tags if !startswith(String(p[1]), "_")]) |> Tuple
+    par = tag ? tags : ()
     @show par
     Set([eq..., par...]) |> collect
 end
