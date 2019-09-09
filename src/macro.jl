@@ -579,7 +579,7 @@ end
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
-    @gensym s
+    @gensym s f
     @q let $s = $(symstate(v)),
            $f = $(genfunc(v))
         () -> $C.store!($s, $f)
