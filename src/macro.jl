@@ -622,13 +622,13 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             $C.store!($s, $d[:a])
             @goto $l
         elseif $d[:step] == :a
-            $d[:fa] = $C.value(s) - $(genfunc(v))
+            $d[:fa] = $C.value($s) - $(genfunc(v))
             @show "solve: $($d[:a]) => $($d[:fa])"
             $d[:step] = :b
             $C.store!($s, $d[:b])
             @goto $l
         elseif $d[:step] == :b
-            $d[:fb] = $C.value(s) - $(genfunc(v))
+            $d[:fb] = $C.value($s) - $(genfunc(v))
             @show "solve: $($d[:b]) => $($d[:fb])"
             @assert sign($d[:fa]) != sign($d[:fb])
             $d[:N] = 1
@@ -637,7 +637,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             $d[:step] = :c
             @goto $l
         elseif $d[:step] == :c
-            $d[:fc] = $C.value(s) - $(genfunc(v))
+            $d[:fc] = $C.value($s) - $(genfunc(v))
             @show "solve: $($d[:c]) => $($d[:fc])"
             if $d[:fc] ≈ $zero || ($d[:b] - $d[:a]) < $tol
                 empty!($d)
@@ -658,7 +658,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
                     @show "solve: b <- $($d[:c])"
                 end
                 $d[:c] = ($d[:a] + $d[:b]) / 2
-                $C.store!(s, $d[:c])
+                $C.store!($s, $d[:c])
                 @goto $l
             end
         end
