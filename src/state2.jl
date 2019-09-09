@@ -120,7 +120,7 @@ end
 
 ####
 
-mutable struct Drive{V,T} <: State{V}
+mutable struct Drive{V} <: State{V}
     value::V
     key::Symbol
 end
@@ -252,7 +252,7 @@ priority(::Type{<:Produce}) = PrePriority()
 
 ####
 
-mutable struct Solve{V,T} <: State{V}
+mutable struct Solve{V} <: State{V}
     value::V
     lower::Union{State{V},V,Nothing}
     upper::Union{State{V},V,Nothing}
@@ -262,7 +262,7 @@ end
 #TODO: reimplement Solve
 Solve(; lower=nothing, upper=nothing, unit, _system, _type=Float64, _...) = begin
     V = valuetype(_type, value(unit))
-    Solve{V,T}(zero(V), lower, upper, _system.context)
+    Solve{V}(zero(V), lower, upper, _system.context)
 end
 
 using Roots
