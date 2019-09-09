@@ -561,9 +561,8 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
         !isnothing(P) && function ()
             for p in P
                 append!(s.value, p.type(; context=context, p.args...))
-                #FIXME: need to reimplement inform!
-                #$C.inform!(c.order, x, b)
             end
+            $C.inform!(context.order)
         end
     end
 end
