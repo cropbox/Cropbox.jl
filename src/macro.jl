@@ -701,5 +701,13 @@ genfunc(v::VarInfo) = begin
         @q $(esc(p[1])) = $u
     end
     args = @q begin $(emit.(v.args)...) end
-    flatten(@q let $args; $(esc(v.body)) end)
+    body = if isnothing(v.body) && length(v.args) == 1
+        # shorthand syntax for single value arg without key
+        a = v.args[1]
+        @capture(a, k_=_) ? :($k) : :($a)
+    else
+        v.body
+    end
+    body = esc(body)
+    flatten(@q let $args; $body end)
 end
