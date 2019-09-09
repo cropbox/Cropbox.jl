@@ -494,8 +494,15 @@ genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
-    s = symstate(v)
-    :(ismissing($s.value) && $(genstore(v)))
+    @gensym s p
+    @q let $s = $(symstate(v))
+        $p = $C.value($s)
+        if ismissing($p)
+            $(genstore(v))
+        else
+            $p
+        end
+    end
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
