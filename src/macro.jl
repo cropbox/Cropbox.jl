@@ -163,7 +163,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     alias = Tuple(i.alias)
     value = haskey(i.tags, :override) ? genoverride(i.name, missing) : geninit(i)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
-    decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _system=self, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
@@ -229,7 +229,7 @@ source(s::System) = source(typeof(s))
 source(S::Type{<:System}) = source(Symbol(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    self => self ~ ::Cropbox.System
+    self => self ~ ::Cropbox.System(expose)
     context ~ ::Cropbox.Context(override, expose)
 end
 mixins(::Type{<:System}) = [System]
