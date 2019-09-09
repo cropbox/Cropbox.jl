@@ -392,7 +392,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
     # args = [key(a) for a in v.args]
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    args = @q begin $([(p = pair(a); :($(esc(p[1])) = value($(p[2])))) for a in v.args]...) end
+    args = @q begin $([(p = pair(a); :($(esc(p[1])) = $C.value($(p[2])))) for a in v.args]...) end
     @show args
 
     flatten(@q let $args; $(esc(v.body)) end)
@@ -455,7 +455,7 @@ genupdate(v::VarInfo, t::Step) = begin
 end
 genupdate(v::VarInfo, t::PostStep) = @q begin
     @label $(symlabel(v, t))
-    $C.queue!(context.queue, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)))
+    $C.queue!(context.queue, $(genupdate(v, Val(v.state), t)), $C.priority($C.$(v.state)))
 end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
@@ -657,6 +657,6 @@ end
 
 genfunc(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    args = @q begin $([(p = pair(a); :($(esc(p[1])) = value($(p[2])))) for a in v.args]...) end
+    args = @q begin $([(p = pair(a); :($(esc(p[1])) = $C.value($(p[2])))) for a in v.args]...) end
     flatten(@q let $args; $(esc(v.body)) end)
 end
