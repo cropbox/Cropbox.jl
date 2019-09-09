@@ -42,7 +42,7 @@ getproperty(b::Bundle, p::Symbol) = begin
 end
 
 import Base: collect
-collect(b::Bundle) = reduce((a, b) -> collect(a, b), [getfield(b, :root), getfield(b, :ops)...])
+collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
 collect(p::Produce, ::BundleAll) = value(p)
 collect(p::Produce, ::BundleRecursiveAll) = begin
     S = value(p)
