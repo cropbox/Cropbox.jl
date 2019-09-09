@@ -395,27 +395,9 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
     @q $C.value($(genfunc(v))[$k])
 end
 geninit(v::VarInfo, ::Val{:Call}) = begin
-    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
-    # args = [key(a) for a in v.args]
-    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    args = @q begin $([(p = pair(a); :($(esc(p[1])) = $C.value($(p[2])))) for a in v.args]...) end
-    @show args
-
-    flatten(@q let $args; $(esc(v.body)) end)
-
+    args = genfuncargs(v)
     kwargs = @q begin $([:($(esc(a))) for a in v.kwargs]...) end
-    @show kwargs
-
-    #FIXME unit
-    #unit = v.tags[:unit]
-    unit = nothing
-    flatten(@q let $args;
-        #FIXME: need to patch function arguments here
-        #s.value = (a...; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
-        #(; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
-        #(; $(esc(:k))...) -> ($(args...); $(esc(:k))...) -> $C.unitfy($(genfunc(v)), $unit)
-        (; $kwargs) -> $C.unitfy($(genfunc(v)), $unit)
-    end)
+    flatten(@q let $args; (; $kwargs) -> $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit]))) end)
 end
 geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
