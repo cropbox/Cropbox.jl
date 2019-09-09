@@ -213,7 +213,7 @@ end
 
 ####
 
-mutable struct Produce{S<:System,T} <: State{S}
+mutable struct Produce{S<:System} <: State{S}
     value::Vector{S}
     context::System
     name::Symbol # used in recurisve collecting in getvar!
