@@ -39,15 +39,13 @@ end
 
 instance(Ss::Type{<:System}...; config=configure()) = begin
     c = Context(; config=config)
-    advance!(c, 1)
     for S in Ss
         s = S(; context=c)
         push!(c.systems, s)
 		#FIXME: better integration with Order?
 		c.order.outdated = true
     end
-    #FIXME: avoid redundant reset
-    advance!(c, 1)
+    advance!(c)
     c.systems[1]
 end
 
