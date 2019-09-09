@@ -2,7 +2,7 @@ abstract type System end
 
 name(s::S) where {S<:System} = string(S)
 import Base: names
-names(s::System) = names(typeof(s))
+names(s::S) where {S<:System} = names(S)
 names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
 import Base: length, iterate

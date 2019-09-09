@@ -235,7 +235,7 @@ source(::Val{:System}) = @q begin
     config(context) => context.config ~ ::Cropbox.Config(expose)
 end
 mixins(::Type{<:System}) = [System]
-mixins(s::System) = mixins(typeof(s))
+mixins(s::S) where {S<:System} = mixins(S)
 
 # gencollectible(infos) = begin
 #     I = filter(i -> i.type in (:(Cropbox.System), :System, :(Vector{Cropbox.System}), :(Vector{System}), :(Cropbox.Produce), :Produce), infos)

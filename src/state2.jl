@@ -22,7 +22,7 @@ unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 import Unitful: Units, dimension
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
-valuetype(T, U::Units) = Quantity{T, dimension(U), typeof(U)}
+valuetype(T, U::UU) where {UU<:Units} = Quantity{T, dimension(U), UU}
 valuetype(::Type{Array{T,N}}, U::Units) where {T,N} = Array{valuetype(T, U), N}
 
 # #HACK: state var referred by `time` tag must have been already declared
