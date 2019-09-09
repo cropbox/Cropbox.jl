@@ -688,7 +688,7 @@ end
 #     recitend!(s.context.order, f)
 # end
 
-genfunc(v::VarInfo) = begin
+genfuncargs(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
     emit(a) = begin
         p = pair(a)
@@ -700,7 +700,10 @@ genfunc(v::VarInfo) = begin
         end
         @q $(esc(p[1])) = $u
     end
-    args = @q begin $(emit.(v.args)...) end
+    @q begin $(emit.(v.args)...) end
+end
+genfunc(v::VarInfo) = begin
+    args = genfuncargs(v)
     body = if isnothing(v.body) && length(v.args) == 1
         # shorthand syntax for single value arg without key
         a = v.args[1]
