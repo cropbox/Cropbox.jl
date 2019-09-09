@@ -551,7 +551,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     @q let s = $(symstate(v)),
            f = $(genfunc(v))
