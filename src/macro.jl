@@ -574,10 +574,61 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+    N_MAX = 20
+    TOL = 0.0001
+    l = symlabel(v, PreStep())
     @q let s = $(symstate(v)),
-           p = $(genfunc(v))
-        #TODO
-        @goto $(symlabel(v, PreStep()))
+           d = s.data,
+           zero = $C.unitfy(0, $C.unit(s))
+           tol = $C.unitfy($TOL, $C.unit(s))
+        if isempty(d)
+            d[:N] = 0
+            d[:a] = $C.value(s.lower)
+            d[:b] = $C.value(s.upper)
+            d[:step] = :a
+            $C.store!(s, d[:a])
+            @goto $l
+        elseif d[:step] == :a
+            d[:fa] = $C.value(s) - $(genfunc(v))
+            @show "solve: $(d[:a]) => $(d[:fa])"
+            d[:step] = :b
+            $C.store!(s, d[:b])
+            @goto $l
+        elseif d[:step] == :b
+            d[:fb] = $C.value(s) - $(genfunc(v))
+            @show "solve: $(d[:b]) => $(d[:fb])"
+            @assert sign(d[:fa]) != sign(d[:fb])
+            d[:N] = 1
+            d[:c] = (d[:a] + d[:b]) / 2
+            $C.store!(s, d[:c])
+            d[:step] = :c
+            @goto $l
+        elseif d[:step] == :c
+            d[:fc] = $C.value(s) - $(genfunc(v))
+            @show "solve: $(d[:c]) => $(d[:fc])"
+            if d[:fc] ≈ zero || (d[:b] - d[:a]) < tol
+                empty!(d)
+                @show "solve: finished! $($C.value(s))"
+            else
+                d[:N] += 1
+                if d[:N] > $N_MAX
+                    @error "solve: convergence failed!"
+                    empty!(d)
+                end
+                if sign(d[:fc]) == sign(d[:fa])
+                    d[:a] = d[:c]
+                    d[:fa] = d[:fc]
+                    @show "solve: a <- $(d[:c])"
+                else
+                    d[:b] = d[:c]
+                    d[:fb] = d[:fc]
+                    @show "solve: b <- $(d[:c])"
+                end
+                d[:c] = (d[:a] + d[:b]) / 2
+                $C.store!(s, d[:c])
+                @goto $l
+            end
+        end
     end
 end
 
