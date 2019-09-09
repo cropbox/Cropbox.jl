@@ -14,7 +14,7 @@ using Unitful
     end
 
     @testset "derive with cross reference" begin
-        @test_throws LoadError @system S begin
+        @test_throws LoadError @eval @system S begin
             a(b) => b ~ track
             b(a) => a ~ track
         end
@@ -113,20 +113,20 @@ using Unitful
 
     @testset "accumulate distribute" begin
         @system S begin
-            s(x=context.clock.tick) => 100*(x-1) ~ track
+            s(x=context.clock.tick) => 100x ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
         s = instance(S)
         c = s.context
-        @test c.clock.tick == 2 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.tick == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(s)
-        @test c.clock.tick == 3 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
+        @test c.clock.tick == 2 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
         advance!(s)
-        @test c.clock.tick == 4 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
+        @test c.clock.tick == 3 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
         advance!(s)
-        @test c.clock.tick == 5 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
+        @test c.clock.tick == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
     @testset "capture" begin
@@ -172,7 +172,7 @@ using Unitful
 
     @testset "parameter" begin
         @system S begin
-            a => 1 ~ pass
+            a => 1 ~ pass(parameter)
         end
         s = instance(S)
         @test s.a == 1
@@ -182,8 +182,8 @@ using Unitful
 
     @testset "parameter with config" begin
         @system S begin
-            a => 1 ~ pass
-            b(a) => a ~ track
+            a => 1 ~ pass(parameter)
+            b(a) => a ~ track(parameter)
         end
         o = configure(S => (:a => 2, :b => (:a => 3)))
         s = instance(S; config=o)
@@ -196,8 +196,8 @@ using Unitful
 
     @testset "parameter with config alias" begin
         @system S begin
-            a: aa => 1 ~ pass
-            bb: b => 1 ~ pass
+            a: aa => 1 ~ pass(parameter)
+            bb: b => 1 ~ pass(parameter)
         end
         o = configure(S => (:a => 2, :b => 2))
         s = instance(S; config=o)
@@ -210,9 +210,9 @@ using Unitful
             a(t=context.clock.tick) => Dict(:a => 10t) ~ drive
         end
         s = instance(S)
-        @test s.context.clock.tick == 2 && s.a == 20
+        @test s.context.clock.tick == 1 && s.a == 10
         advance!(s)
-        @test s.context.clock.tick == 3 && s.a == 30
+        @test s.context.clock.tick == 2 && s.a == 20
     end
 
     @testset "drive with key" begin
@@ -229,9 +229,9 @@ using Unitful
             a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
         s = instance(S)
-        @test s.context.clock.tick == 2 && s.a == 20
+        @test s.context.clock.tick == 1 && s.a == 10
         advance!(s)
-        @test s.context.clock.tick == 3 && s.a == 30
+        @test s.context.clock.tick == 2 && s.a == 20
     end
 
     @testset "flag" begin
@@ -264,15 +264,15 @@ using Unitful
             i(t=context.clock.tick) => t ~ preserve
         end
         s = instance(S)
-        @test length(s.a) == 0 && s.i == 2
+        @test length(s.a) == 0 && s.i == 0
         advance!(s)
-        @test length(s.a) == 1 && s.i == 2
-        @test length(s.a[1].a) == 0 && s.a[1].i == 3
+        @test length(s.a) == 1 && s.i == 0
+        @test length(s.a[1].a) == 0 && s.a[1].i == 1
         advance!(s)
-        @test length(s.a) == 2 && s.i == 2
-        @test length(s.a[1].a) == 1 && s.a[1].i == 3
-        @test length(s.a[2].a) == 0 && s.a[2].i == 4
-        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 4
+        @test length(s.a) == 2 && s.i == 0
+        @test length(s.a[1].a) == 1 && s.a[1].i == 1
+        @test length(s.a[2].a) == 0 && s.a[2].i == 2
+        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 2
     end
 
     @testset "produce with nothing" begin
@@ -288,7 +288,7 @@ using Unitful
     @testset "produce query index" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t=context.clock.tick) => (t-2) ~ preserve
+            i(t=context.clock.tick) => t ~ preserve
             a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             c(x=p["*/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -319,7 +319,7 @@ using Unitful
     @testset "produce query condition with track bool" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t=context.clock.tick) => (t-2) ~ preserve::Int
+            i(t=context.clock.tick) => t ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -357,12 +357,12 @@ using Unitful
     @testset "produce query condition with flag" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t=context.clock.tick) => (t-2) ~ preserve::Int
+            i(t=context.clock.tick) => t ~ preserve::Int
             f(i) => isodd(i) ~ flag
-            a(x="p[*/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            b(x="p[**/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x="p[*/f/1].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x="p[*/f/-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x=p["*/f/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x=p["*/f/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
         end
         s = instance(S)
         @test length(s.p) == 0
@@ -407,7 +407,7 @@ using Unitful
             x(x) => ((x^2 + 1) / 2) ~ solve
         end
         s = instance(S)
-        @test isapprox(value(s.x), 1; atol=1e-3)
+        @test isapprox(Cropbox.value(s.x), 1; atol=1e-3)
     end
 
     @testset "solve with unit" begin
@@ -424,10 +424,10 @@ using Unitful
         @system S begin
         end
         s = instance(S)
-        # after two advance! in instance()
-        @test s.context.clock.tick == 2
+        # after one advance! in instance()
+        @test s.context.clock.tick == 1
         advance!(s)
-        @test s.context.clock.tick == 3
+        @test s.context.clock.tick == 2
     end
 
     @testset "clock with config" begin
@@ -435,21 +435,21 @@ using Unitful
         end
         o = configure(:Clock => (#=:init => 5,=# step => 10))
         s = instance(S; config=o)
-        # after two advance! in instance()
-        @test s.context.clock.tick == 20
+        # after one advance! in instance()
+        @test s.context.clock.tick == 10
         advance!(s)
-        @test s.context.clock.tick == 30
+        @test s.context.clock.tick == 20
     end
 
     @testset "calendar" begin
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         o = configure(:Clock => (:unit => u"hr"), :Calendar => (:init => t0))
         s = instance(Calendar; config=o)
-        # after two advance! in instance()
-        @test value(s.init) == t0
-        @test value(s.time) == ZonedDateTime(2011, 10, 29, 2, tz"Asia/Seoul")
+        # after one advance! in instance()
+        @test s.init == t0
+        @test s.time == ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")
         advance!(s)
-        @test value(s.time) == ZonedDateTime(2011, 10, 29, 3, tz"Asia/Seoul")
+        @test s.time == ZonedDateTime(2011, 10, 29, 2, tz"Asia/Seoul")
     end
 
     @testset "alias" begin
@@ -459,8 +459,8 @@ using Unitful
             c(a, aa, b, bb, bbb) => a + aa + b + bb + bbb ~ track
         end
         s = instance(S)
-        @test s.a == s.aa == 1
-        @test s.b == s.bb == s.bbb == 2
+        @test s.a == 1 == s.aa
+        @test s.b == 2 == s.bb == 2 == s.bbb
         @test s.c == 8
     end
 
