@@ -135,16 +135,17 @@ end
 
 ####
 
-mutable struct Call{V} <: State{V}
-    value::Function
+mutable struct Call{V,F<:Function} <: State{V}
+    value::F
 end
 
 Call(; unit, _value, _type=Float64, _...) = begin
     V = valuetype(_type, value(unit))
-    Call{V}(_value)
+    F = typeof(_value)
+    Call{V,F}(_value)
 end
 
-#value(s::Call{V}) where {V} = s.value::Union{V,Function}
+value(s::Call{V,F}) where {V,F} = s.value::F
 #HACK: showing s.value could trigger StackOverflowError
 show(io::IO, s::Call) = print(io, "<call>")
 

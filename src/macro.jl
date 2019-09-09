@@ -5,6 +5,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
     name::Symbol
     alias::Vector{Symbol}
     args::Vector
+    kwargs::Vector
     body#::Union{Expr,Symbol,Nothing}
     state::S
     type::Union{Symbol,Expr,Nothing}
@@ -16,7 +17,7 @@ import Base: show
 show(io::IO, i::VarInfo) = begin
     println(io, "name: $(i.name)")
     println(io, "alias: $(i.alias)")
-    println(io, "func ($(repr(i.args))) = $(repr(i.body))")
+    println(io, "func ($(repr(i.args)); $(repr(i.kwargs))) = $(repr(i.body))")
     println(io, "state: $(repr(i.state))")
     println(io, "type: $(repr(i.type))")
     for (k, v) in i.tags
@@ -26,18 +27,19 @@ show(io::IO, i::VarInfo) = begin
 end
 
 VarInfo(line::Union{Expr,Symbol}) = begin
-    # name[(args..)][: alias | [alias...]] [=> body] ~ [state][::type][(tags..)]
+    # name[(args..; kwargs..)][: alias | [alias...]] [=> body] ~ [state][::type][(tags..)]
     @capture(line, decl_ ~ deco_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: [alias__]) | (def2_: alias__) | def2_)
-    @capture(def2, name_(args__) | name_)
+    @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
     args = isnothing(args) ? [] : args
+    kwargs = isnothing(kwargs) ? [] : kwargs
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
     tags = parsetags(tags, type, state, args)
-    VarInfo{typeof(state)}(name, alias, args, body, state, type, tags, line)
+    VarInfo{typeof(state)}(name, alias, args, kwargs, body, state, type, tags, line)
 end
 
 parsetags(::Nothing, type, state, args) = parsetags([], type, state, args)
@@ -380,7 +382,29 @@ end
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Advance}) = missing
 geninit(v::VarInfo, ::Val{:Drive}) = @q $C.value($(genfunc(v))[$(get(v.tags, :key, v.name))])
-geninit(v::VarInfo, ::Val{:Call}) = missing
+geninit(v::VarInfo, ::Val{:Call}) = begin
+    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
+    # args = [key(a) for a in v.args]
+    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
+    args = @q begin $([(p = pair(a); :($(esc(p[1])) = value($(p[2])))) for a in v.args]...) end
+    @show args
+
+    flatten(@q let $args; $(esc(v.body)) end)
+
+    kwargs = @q begin $([:($(esc(a))) for a in v.kwargs]...) end
+    @show kwargs
+
+    #FIXME unit
+    #unit = v.tags[:unit]
+    unit = nothing
+    flatten(@q let $args;
+        #FIXME: need to patch function arguments here
+        #s.value = (a...; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
+        #(; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
+        #(; $(esc(:k))...) -> ($(args...); $(esc(:k))...) -> $C.unitfy($(genfunc(v)), $unit)
+        (; $kwargs) -> $C.unitfy($(genfunc(v)), $unit)
+    end)
+end
 geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy(0, $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Flag}) = false
@@ -402,7 +426,6 @@ symlabel(v::VarInfo, t::Step) = @q @label $(Symbol(v.name, suffix(t)))
 genupdateinit(n::VarNode) = begin
     v = n.info
     s = symstate(v)
-    @show v
     if haskey(v.tags, :expose)
         @q $s = $(v.name) = _system.$(v.name)
     else
@@ -467,13 +490,24 @@ genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
-    @q let s = $(symstate(v)),
-           f = $(genfunc(v))
-        #FIXME: need to patch function arguments here
-        #s.value = (a...; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
-        (; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
+    @q let s = $(symstate(v))
+        $C.value(s)
     end
 end
+# begin
+#     key(a) = let k, v; @capture(a, k_=v_) ? k : a end
+#     args = [key(a) for a in v.args]
+#     @show args
+#     @q let s = $(symstate(v)),
+#            k = $(gensym(:k))
+#         #FIXME: need to patch function arguments here
+#         #s.value = (a...; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
+#         #(; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
+#         (; k...) -> function ($(args...); k...)
+#             $C.unitfy($(genfunc(v)), $C.unit(s))
+#         end
+#     end
+# end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @q let s = $(symstate(v)),
