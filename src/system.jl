@@ -65,6 +65,6 @@ context(s::System) = s.context
 # getproperty(s::System, n::Symbol) = value(s, n)
 
 import Base: show
-show(io::IO, s::System) = print(io, "[$(name(s))]")
+show(io::IO, s::System) = print(io, "<$(name(s))>")
 
 export System
