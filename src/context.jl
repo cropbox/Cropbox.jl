@@ -3,6 +3,7 @@
     context => self ~ ::System
 
     config => configure() ~ ::Config(override, expose)
+	order => Order() ~ ::Order
 	queue => Queue() ~ ::Queue
 
     clock(config) => Clock(; config=config) ~ ::Clock
@@ -13,8 +14,8 @@ option(c::Context, keys...) = option(c.config, keys...)
 
 advance!(c::Context, n=1) = begin
     for i in 1:n
-		S = collectstatic(c)
 		preflush!(c.queue)
+		S = collect!(c.order, c)
 		for s in S
         	updatestatic!(s)
 		end
@@ -42,6 +43,8 @@ instance(Ss::Type{<:System}...; config=configure()) = begin
     for S in Ss
         s = S(; context=c)
         push!(c.systems, s)
+		#FIXME: better integration with Order?
+		c.order.outdated = true
     end
     #FIXME: avoid redundant reset
     advance!(c, 1)

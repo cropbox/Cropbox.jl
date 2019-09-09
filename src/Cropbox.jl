@@ -7,6 +7,7 @@ include("time2.jl")
 include("state2.jl")
 
 include("config.jl")
+include("order2.jl")
 include("queue.jl")
 include("clock.jl")
 include("context.jl")
