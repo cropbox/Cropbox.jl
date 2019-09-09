@@ -211,7 +211,7 @@ genstruct(name, infos, incl) = begin
                 self
             end
         end
-        $C.source(::Val{Symbol($S)}) = $(Meta.quot(source))
+        $C.source(::Val{$(Meta.quot(name))}) = $(Meta.quot(source))
         $C.mixins(::Type{$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
         #HACK: redefine them to avoid world age problem
@@ -226,8 +226,8 @@ genstruct(name, infos, incl) = begin
 end
 
 #TODO: maybe need to prevent naming clash by assigning UUID for each System
-source(s::System) = source(typeof(s))
-source(S::Type{<:System}) = source(Symbol(S))
+source(s::S) where {S<:System} = source(S)
+source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
     self => self ~ ::Cropbox.System(expose)
