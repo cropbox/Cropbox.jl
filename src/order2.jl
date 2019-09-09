@@ -39,7 +39,7 @@ collect!(s::System; recursive=true) = begin
             @show "add edge $s ($(I[s])) -> $d ($(I[d]))"
             add_edge!(g, I[s], I[d])
         end
-        link(d::Vector{<:System}) = link.(d)
+        link(d) = link.(d)
         #HACK: use VarInfo tags to figure out dependency
         vars = Dict(i.name => i for i in VarInfo.(source(s).args))
         D = [getfield(s, n) for n in collectible(s) if !get(vars[n].tags, :override, false)]
@@ -51,7 +51,7 @@ collect!(s::System; recursive=true) = begin
         @show "collectible filtered $D"
         recursive && foreach(visit, D)
     end
-    visit(s::Vector{<:System}) = visit.(s)
+    visit(s) = visit.(s)
     visit(s)
     J = topological_sort_by_dfs(g)
     [V[i] for i in reverse(J)]
