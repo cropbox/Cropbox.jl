@@ -224,6 +224,7 @@ struct Product{S<:System}
     args
 end
 iterate(p::Product) = (p, nothing)
+iterate(p::Product, ::Nothing) = nothing
 
 Produce(; _name, _system, _type::Type{S}=System, _...) where {S<:System} = begin
     Produce{S}(S[], _system.context, _name)
