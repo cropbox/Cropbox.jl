@@ -421,7 +421,7 @@ genupdate(nodes) = begin
 end
 
 symstate(v::VarInfo) = Symbol("_state_$(v.name)")
-symlabel(v::VarInfo, t::Step) = @q @label $(Symbol(v.name, suffix(t)))
+symlabel(v::VarInfo, t::Step) = Symbol(v.name, suffix(t))
 
 genupdateinit(n::VarNode) = begin
     v = n.info
@@ -438,17 +438,17 @@ genupdate(v::VarInfo, t::Step) = begin
     u = genupdate(v, Val(v.state), t)
     l = symlabel(v, t)
     if isnothing(u)
-        @q $l
+        @q @label $l
     else
         @q begin
-            $l
+            @label $l
             $(v.name) = $u
             $([:($a = $(v.name)) for a in v.alias]...)
         end
     end
 end
 genupdate(v::VarInfo, t::PostStep) = @q begin
-    $(symlabel(v, t))
+    @label $(symlabel(v, t))
     $C.queue!(context.queue, $(genupdate(v, Val(v.state), t)), $C.priority($(v.state)))
 end
 
