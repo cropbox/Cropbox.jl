@@ -14,11 +14,10 @@ using Unitful
     end
 
     @testset "derive with cross reference" begin
-        @system S begin
+        @test_throws LoadError @system S begin
             a(b) => b ~ track
             b(a) => a ~ track
         end
-        @test_throws ErrorException instance(S)
     end
 
     @testset "call" begin
@@ -81,10 +80,10 @@ using Unitful
 
     @testset "accumulate with time" begin
         @system S begin
-            t(x="context.clock.tick") => 0.5x ~ track
+            t(x=context.clock.tick) => 0.5x ~ track
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
-            c(a) => a + 1 ~ accumulate(time="t")
+            c(a) => a + 1 ~ accumulate(time=t)
         end
         s = instance(S)
         @test s.a == 1 && s.b == 0 && s.c == 0
@@ -114,7 +113,7 @@ using Unitful
 
     @testset "accumulate distribute" begin
         @system S begin
-            s(x="context.clock.tick") => 100*(x-1) ~ track
+            s(x=context.clock.tick) => 100*(x-1) ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
@@ -146,10 +145,10 @@ using Unitful
 
     @testset "capture with time" begin
         @system S begin
-            t(x="context.clock.tick") => 2x ~ track
+            t(x=context.clock.tick) => 2x ~ track
             a => 1 ~ track
-            b(a) => a + 1 ~ capture(time="t")
-            c(a) => a + 1 ~ accumulate(time="t")
+            b(a) => a + 1 ~ capture(time=t)
+            c(a) => a + 1 ~ accumulate(time=t)
         end
         s = instance(S)
         @test s.b == 0 && s.c == 0
@@ -208,7 +207,7 @@ using Unitful
 
     @testset "drive with dict" begin
         @system S begin
-            a(t="context.clock.tick") => Dict(:a => 10t) ~ drive
+            a(t=context.clock.tick) => Dict(:a => 10t) ~ drive
         end
         s = instance(S)
         @test s.context.clock.tick == 2 && s.a == 20
@@ -218,7 +217,7 @@ using Unitful
 
     @testset "drive with key" begin
         @system S begin
-            a => Dict(:b => 1) ~ drive(key="b")
+            a => Dict(:b => 1) ~ drive(key=:b)
         end
         s = instance(S)
         @test s.a == 1
@@ -227,7 +226,7 @@ using Unitful
     @testset "drive with dataframe" begin
         @system S begin
             df => DataFrame(t=0:4, a=0:10:40) ~ preserve(static)
-            a(df, t="context.clock.tick") => df[df.t .== t, :][1, :] ~ drive
+            a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
         s = instance(S)
         @test s.context.clock.tick == 2 && s.a == 20
@@ -262,7 +261,7 @@ using Unitful
     @testset "produce with kwargs" begin
         @system S begin
             a(self) => produce(typeof(self)) ~ produce
-            i(t="context.clock.tick") => t ~ preserve
+            i(t=context.clock.tick) => t ~ preserve
         end
         s = instance(S)
         @test length(s.a) == 0 && s.i == 2
@@ -289,11 +288,11 @@ using Unitful
     @testset "produce query index" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t="context.clock.tick") => (t-2) ~ preserve
-            a(x="p[*].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            b(x="p[**].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x="p[*/1].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x="p[*/-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            i(t=context.clock.tick) => (t-2) ~ preserve
+            a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x=p["*/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x=p["*/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
         end
         s = instance(S)
         @test length(s.p) == 0
@@ -320,12 +319,12 @@ using Unitful
     @testset "produce query condition with track bool" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t="context.clock.tick") => (t-2) ~ preserve::Int
+            i(t=context.clock.tick) => (t-2) ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
-            a(x="p[*/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            b(x="p[**/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x="p[*/f/1].i") => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x="p[*/f/-1].i") => (isempty(x) ? 0 : sum(x)) ~ track
+            a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            c(x=p["*/f/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            d(x=p["*/f/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
         end
         s = instance(S)
         @test length(s.p) == 0
@@ -358,7 +357,7 @@ using Unitful
     @testset "produce query condition with flag" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t="context.clock.tick") => (t-2) ~ preserve::Int
+            i(t=context.clock.tick) => (t-2) ~ preserve::Int
             f(i) => isodd(i) ~ flag
             a(x="p[*/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
             b(x="p[**/f].i") => (isempty(x) ? 0 : sum(x)) ~ track
@@ -468,14 +467,12 @@ using Unitful
     @testset "single arg without key" begin
         @system S begin
             a => 1 ~ track
-            b("a") ~ track
-            c(x="a") ~ track
-            d(a) ~ track
+            b(a) ~ track
+            c(x=a) ~ track
         end
         s = instance(S)
         @test s.a == 1
         @test s.b == 1
         @test s.c == 1
-        @test s.d == 1
     end
 end
