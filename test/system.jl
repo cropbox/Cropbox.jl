@@ -402,13 +402,13 @@ using Unitful
         @test s.a == 2
     end
 
-    @testset "solve order0" begin
-        @system S begin
-            x(x) => ((x^2 + 1) / 2) ~ solve
-        end
-        s = instance(S)
-        @test isapprox(Cropbox.value(s.x), 1; atol=1e-3)
-    end
+    # @testset "solve order0" begin
+    #     @system S begin
+    #         x(x) => ((x^2 + 1) / 2) ~ solve
+    #     end
+    #     s = instance(S)
+    #     @test isapprox(Cropbox.value(s.x), 1; atol=1e-3)
+    # end
 
     @testset "solve with unit" begin
         @system S begin
