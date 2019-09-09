@@ -1,5 +1,5 @@
 @system Context begin
-    self => self ~ ::System
+    self => self ~ ::System(expose)
     context => self ~ ::System
 
     config => configure() ~ ::Config(override, expose)

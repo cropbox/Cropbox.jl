@@ -232,6 +232,7 @@ source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
     self => self ~ ::Cropbox.System(expose)
     context ~ ::Cropbox.Context(override, expose)
+    config(context) => context.config ~ ::Cropbox.Config(expose)
 end
 mixins(::Type{<:System}) = [System]
 mixins(s::System) = mixins(typeof(s))
@@ -378,8 +379,8 @@ end
 
 geninit(v::VarInfo) = begin
     if get(v.tags, :parameter, false)
-        @q let v = option(config, self, $(names(v)))
-            isnothing(v) ? $(geninit(v, Val(v.state))) : v
+        @q let v = $C.option(config, self, $(names(v)))
+            isnothing(v) || isa(v, AbstractDict) ? $(geninit(v, Val(v.state))) : v
         end
     else
         geninit(v, Val(v.state))
@@ -446,6 +447,11 @@ genupdate(v::VarInfo, t::Step) = begin
     if isnothing(u)
         @q @label $l
     else
+        if get(v.tags, :parameter, false)
+            u = @q let v = $C.option(config, self, $(names(v)))
+                isnothing(v) || isa(v, AbstractDict) ? $u : v
+            end
+        end
         @q begin
             @label $l
             $(v.name) = $u
@@ -668,6 +674,16 @@ end
 
 genfunc(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    args = @q begin $([(p = pair(a); :($(esc(p[1])) = $C.value($(p[2])))) for a in v.args]...) end
+    emit(a) = begin
+        p = pair(a)
+        u = @q $C.value($(p[2]))
+        if get(v.tags, :parameter, false)
+            u = @q let v = $C.option(config, self, $(names(v)), $(Meta.quot(p[1])))
+                isnothing(v) ? $u : v
+            end
+        end
+        @q $(esc(p[1])) = $u
+    end
+    args = @q begin $(emit.(v.args)...) end
     flatten(@q let $args; $(esc(v.body)) end)
 end
