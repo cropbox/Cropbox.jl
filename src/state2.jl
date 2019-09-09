@@ -95,9 +95,6 @@ end
 
 # Preserve is the only State that can store value `nothing`
 Preserve(; unit, _value, _type=nothing, _...) = begin
-    @show _value
-    @show unit
-    @show value(unit)
     v = unitfy(_value, value(unit))
     V = typeof(v)
     Preserve{V}(v)
