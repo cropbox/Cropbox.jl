@@ -35,11 +35,7 @@ getindex(s::Produce, ops::AbstractString) = begin
     end
     Bundle(s, resolve.(split(ops, "/")))
 end
-getproperty(b::Bundle, p::Symbol) = begin
-    l = map(s -> getproperty(s, p), collect(b))
-    @show l
-    l
-end
+getproperty(b::Bundle, p::Symbol) = map(s -> getproperty(s, p), collect(b))
 
 import Base: collect
 collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
