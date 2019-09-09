@@ -1,4 +1,5 @@
-import Unitful: DimensionlessUnits, Quantity, Units, uconvert, unit, ustrip, @u_str
+using Unitful
+import Unitful: DimensionlessUnits, Units
 
 unitfy(v, ::Nothing) = v
 unitfy(v, u::Units) = Quantity(v, u)
