@@ -107,11 +107,20 @@ end
 
 add!(d::Dependency{VarNode}, v::VarInfo) = begin
     @show "add! $v"
-    if v.state in (:Accumulate, :Capture)
+    if v.state == :Accumulate
+        # split pre/main nodes to handle self dependency
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        n2 = postnode!(d, v)
+        link!(d, n0, n1)
+        link!(d, n1, n2)
+        # needs `time` tags update, but equation args should be excluded due to cyclic dependency
+        inlink!(d, v, n0; equation=false)
+        inlink!(d, v, n2)
+    elseif v.state == :Capture
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
         link!(d, n0, n1)
-        # Accumulate MainStep needs `time` update, but equation args should be excluded due to cyclic dependency
         inlink!(d, v, n0; equation=false)
         inlink!(d, v, n1)
     elseif v.state == :Solve
