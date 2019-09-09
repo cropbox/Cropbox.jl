@@ -39,10 +39,14 @@ collect!(s::System; recursive=true) = begin
             @show "add edge $s ($(I[s])) -> $d ($(I[d]))"
             add_edge!(g, I[s], I[d])
         end
-        link(d) = link.(d)
         #HACK: use VarInfo tags to figure out dependency
         vars = Dict(i.name => i for i in VarInfo.(source(s).args))
-        D = [getfield(s, n) for n in collectible(s) if !get(vars[n].tags, :override, false)]
+        D = System[]
+        for n in collectible(s)
+            if !get(vars[n].tags, :override, false)
+                append!(D, getfield(s, n))
+            end
+        end
         @show "collectible $D"
         foreach(link, D)
 
