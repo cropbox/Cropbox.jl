@@ -370,8 +370,7 @@ end
 
 geninit(v::VarInfo) = begin
     if get(v.tags, :parameter, false)
-        @q let
-            v = option(config, self, $(names(v)))
+        @q let v = option(config, self, $(names(v)))
             isnothing(v) ? $(geninit(v, Val(v.state))) : v
         end
     else
@@ -432,8 +431,8 @@ end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
 genstore(v::VarInfo) = begin
-    @q let s = $(symstate(v))
-        f = $(genfunc(v))
+    @q let s = $(symstate(v)),
+           f = $(genfunc(v))
         $C.store!(s, f)
         #TODO: make store! return value
         $C.value(s)
@@ -458,9 +457,9 @@ genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        f = $(genfunc(v))
-        v = $C.value(f[s.key])
+    @q let s = $(symstate(v)),
+           f = $(genfunc(v)),
+           v = $C.value(f[s.key]),
         $C.store!(s, v)
         #TODO: make store! return value
         $C.value(s)
@@ -468,8 +467,8 @@ genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        f = $(genfunc(v))
+    @q let s = $(symstate(v)),
+           f = $(genfunc(v))
         #FIXME: need to patch function arguments here
         #s.value = (a...; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
         (; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
@@ -477,58 +476,57 @@ genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        t = $C.value(s.time) # $C.value($(v.tags[:time]))
-        t0 = s.tick
-        a = s.value + s.rate * (t - t0)
+    @q let s = $(symstate(v)),
+           t = $C.value(s.time), # $C.value($(v.tags[:time]))
+           t0 = s.tick,
+           a = s.value + s.rate * (t - t0)
         $C.store!(s, a)
         #TODO: make store! return value
         $C.value(s)
     end
 end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
-    @q let s = $(symstate(v))
-        t = $C.value(s.time) # $C.value($(v.tags[:time]))
-        f = $(genfunc(v))
-        r = $C.unitfy(f, $C.rateunit(s))
-        () -> (@show t,r; s.tick = t; s.rate = r)
+    @q let s = $(symstate(v)),
+           t = $C.value(s.time), # $C.value($(v.tags[:time]))
+           f = $(genfunc(v)),
+           r = $C.unitfy(f, $C.rateunit(s))
+        () -> (s.tick = t; s.rate = r)
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        t = $C.value(s.time) # $C.value($(v.tags[:time]))
-        t0 = s.tick
-        d = s.rate * (t - t0)
+    @q let s = $(symstate(v)),
+           t = $C.value(s.time), # $C.value($(v.tags[:time]))
+           t0 = s.tick,
+           d = s.rate * (t - t0)
         $C.store!(s, d)
     end
 end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
-    @q let s = $(symstate(v))
-        t = $C.value(s.time) # $C.value($(v.tags[:time]))
-        f = $(genfunc(v))
-        r = $C.unitfy(f, $C.rateunit(s))
+    @q let s = $(symstate(v)),
+           t = $C.value(s.time), # $C.value($(v.tags[:time]))
+           f = $(genfunc(v)),
+           r = $C.unitfy(f, $C.rateunit(s))
         () -> (s.tick = t; s.rate = r)
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
-    @q let s = $(symstate(v))
-        f = $(genfunc(v))
+    @q let s = $(symstate(v)),
+           f = $(genfunc(v))
         () -> $C.store!(s, f)
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = nothing
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
-    @q let s = $(symstate(v))
-        P = $(genfunc(v))
+    @q let s = $(symstate(v)),
+           P = $(genfunc(v))
         #() -> $C.produce(s, p, x)
         !isnothing(P) && function ()
             for p in P
-                b = p.type(; context=context, p.args...)
-                append!(s.value, b)
+                append!(s.value, p.type(; context=context, p.args...))
                 #FIXME: need to reimplement inform!
                 #$C.inform!(c.order, x, b)
             end
@@ -537,8 +535,8 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        p = $(genfunc(v))
+    @q let s = $(symstate(v)),
+           p = $(genfunc(v))
         #TODO
         @goto $(symlabel(v, PreStep()))
     end
