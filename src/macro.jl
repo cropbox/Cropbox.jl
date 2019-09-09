@@ -460,11 +460,12 @@ end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
 genstore(v::VarInfo) = begin
-    @q let s = $(symstate(v)),
-           f = $(genfunc(v))
-        $C.store!(s, f)
+    @gensym s f
+    @q let $s = $(symstate(v)),
+           $f = $(genfunc(v))
+        $C.store!($s, $f)
         #TODO: make store! return value
-        $C.value(s)
+        $C.value($s)
     end
 end
 
@@ -475,8 +476,9 @@ genupdate(v::VarInfo, ::Val, ::MainStep) = genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
 genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        $C.advance!(s)
+    @gensym s
+    @q let $s = $(symstate(v))
+        $C.advance!($s)
     end
 end
 
@@ -486,18 +488,20 @@ genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    @q let s = $(symstate(v)),
-           f = $(genfunc(v)),
-           v = $C.value(f[s.key]),
-        $C.store!(s, v)
+    @gensym s f v
+    @q let $s = $(symstate(v)),
+           $f = $(genfunc(v)),
+           $v = $C.value(f[$s.key]),
+        $C.store!($s, $v)
         #TODO: make store! return value
-        $C.value(s)
+        $C.value($s)
     end # value() for Var
 end
 
 genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
-    @q let s = $(symstate(v))
-        $C.value(s)
+    @gensym s
+    @q let $s = $(symstate(v))
+        $C.value($s)
     end
 end
 # begin
@@ -516,57 +520,63 @@ end
 # end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
-    @q let s = $(symstate(v)),
-           t = $C.value(s.time), # $C.value($(v.tags[:time]))
-           t0 = s.tick,
-           a = s.value + s.rate * (t - t0)
-        $C.store!(s, a)
+    @gensym s t t0 a
+    @q let $s = $(symstate(v)),
+           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $t0 = $s.tick,
+           $a = $s.value + $s.rate * ($t - $t0)
+        $C.store!($s, $a)
         #TODO: make store! return value
-        $C.value(s)
+        $C.value($s)
     end
 end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
-    @q let s = $(symstate(v)),
-           t = $C.value(s.time), # $C.value($(v.tags[:time]))
-           f = $(genfunc(v)),
-           r = $C.unitfy(f, $C.rateunit(s))
-        () -> (s.tick = t; s.rate = r)
+    @gensym s t f r
+    @q let $s = $(symstate(v)),
+           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $f = $(genfunc(v)),
+           $r = $C.unitfy($f, $C.rateunit($s))
+        () -> ($s.tick = $t; $s.rate = $r)
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
-    @q let s = $(symstate(v)),
-           t = $C.value(s.time), # $C.value($(v.tags[:time]))
-           t0 = s.tick,
-           d = s.rate * (t - t0)
-        $C.store!(s, d)
+    @gensym s t t0 d
+    @q let $s = $(symstate(v)),
+           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $t0 = $s.tick,
+           $d = $s.rate * ($t - $t0)
+        $C.store!($s, $d)
     end
 end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
-    @q let s = $(symstate(v)),
-           t = $C.value(s.time), # $C.value($(v.tags[:time]))
-           f = $(genfunc(v)),
-           r = $C.unitfy(f, $C.rateunit(s))
-        () -> (s.tick = t; s.rate = r)
+    @gensym s t f r
+    @q let $s = $(symstate(v)),
+           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $f = $(genfunc(v)),
+           $r = $C.unitfy($f, $C.rateunit($s))
+        () -> ($s.tick = $t; $s.rate = $r)
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
-    @q let s = $(symstate(v)),
-           f = $(genfunc(v))
-        () -> $C.store!(s, f)
+    @gensym s
+    @q let $s = $(symstate(v)),
+           $f = $(genfunc(v))
+        () -> $C.store!($s, $f)
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = symstate(v)
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
-    @q let s = $(symstate(v)),
-           P = $(genfunc(v))
+    @gensym s P
+    @q let $s = $(symstate(v)),
+           $P = $(genfunc(v))
         #() -> $C.produce(s, p, x)
-        !isnothing(P) && function ()
-            for p in P
-                append!(s.value, p.type(; context=context, p.args...))
+        !isnothing($P) && function ()
+            for p in $P
+                append!($s.value, p.type(; context=context, p.args...))
             end
             $C.inform!(context.order)
         end
@@ -577,55 +587,56 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     N_MAX = 20
     TOL = 0.0001
     l = symlabel(v, PreStep())
-    @q let s = $(symstate(v)),
-           d = s.data,
-           zero = $C.unitfy(0, $C.unit(s))
-           tol = $C.unitfy($TOL, $C.unit(s))
-        if isempty(d)
-            d[:N] = 0
-            d[:a] = $C.value(s.lower)
-            d[:b] = $C.value(s.upper)
-            d[:step] = :a
-            $C.store!(s, d[:a])
+    @gensym s d zero tol
+    @q let $s = $(symstate(v)),
+           $d = $s.data,
+           $zero = $C.unitfy(0, $C.unit($s))
+           $tol = $C.unitfy($TOL, $C.unit($s))
+        if isempty($d)
+            $d[:N] = 0
+            $d[:a] = $C.value($s.lower)
+            $d[:b] = $C.value($s.upper)
+            $d[:step] = :a
+            $C.store!($s, $d[:a])
             @goto $l
-        elseif d[:step] == :a
-            d[:fa] = $C.value(s) - $(genfunc(v))
-            @show "solve: $(d[:a]) => $(d[:fa])"
-            d[:step] = :b
-            $C.store!(s, d[:b])
+        elseif $d[:step] == :a
+            $d[:fa] = $C.value(s) - $(genfunc(v))
+            @show "solve: $($d[:a]) => $($d[:fa])"
+            $d[:step] = :b
+            $C.store!($s, $d[:b])
             @goto $l
-        elseif d[:step] == :b
-            d[:fb] = $C.value(s) - $(genfunc(v))
-            @show "solve: $(d[:b]) => $(d[:fb])"
-            @assert sign(d[:fa]) != sign(d[:fb])
-            d[:N] = 1
-            d[:c] = (d[:a] + d[:b]) / 2
-            $C.store!(s, d[:c])
-            d[:step] = :c
+        elseif $d[:step] == :b
+            $d[:fb] = $C.value(s) - $(genfunc(v))
+            @show "solve: $($d[:b]) => $($d[:fb])"
+            @assert sign($d[:fa]) != sign($d[:fb])
+            $d[:N] = 1
+            $d[:c] = ($d[:a] + $d[:b]) / 2
+            $C.store!($s, $d[:c])
+            $d[:step] = :c
             @goto $l
-        elseif d[:step] == :c
-            d[:fc] = $C.value(s) - $(genfunc(v))
-            @show "solve: $(d[:c]) => $(d[:fc])"
-            if d[:fc] ≈ zero || (d[:b] - d[:a]) < tol
-                empty!(d)
-                @show "solve: finished! $($C.value(s))"
+        elseif $d[:step] == :c
+            $d[:fc] = $C.value(s) - $(genfunc(v))
+            @show "solve: $($d[:c]) => $($d[:fc])"
+            if $d[:fc] ≈ $zero || ($d[:b] - $d[:a]) < $tol
+                empty!($d)
+                @show "solve: finished! $($C.value($s))"
             else
-                d[:N] += 1
-                if d[:N] > $N_MAX
+                $d[:N] += 1
+                if $d[:N] > $N_MAX
                     @error "solve: convergence failed!"
-                    empty!(d)
+                    empty!($d)
                 end
-                if sign(d[:fc]) == sign(d[:fa])
-                    d[:a] = d[:c]
-                    d[:fa] = d[:fc]
-                    @show "solve: a <- $(d[:c])"
+                if sign($d[:fc]) == sign($d[:fa])
+                    $d[:a] = $d[:c]
+                    $d[:fa] = $d[:fc]
+                    @show "solve: a <- $($d[:c])"
                 else
-                    d[:b] = d[:c]
-                    d[:fb] = d[:fc]
-                    @show "solve: b <- $(d[:c])"
+                    $d[:b] = $d[:c]
+                    $d[:fb] = $d[:fc]
+                    @show "solve: b <- $($d[:c])"
                 end
-                d[:c] = (d[:a] + d[:b]) / 2
-                $C.store!(s, d[:c])
+                $d[:c] = ($d[:a] + $d[:b]) / 2
+                $C.store!(s, $d[:c])
                 @goto $l
             end
         end
