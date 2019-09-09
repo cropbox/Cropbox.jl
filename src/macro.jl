@@ -388,7 +388,12 @@ geninit(v::VarInfo) = begin
 end
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Advance}) = missing
-geninit(v::VarInfo, ::Val{:Drive}) = @q $C.value($(genfunc(v))[$(get(v.tags, :key, v.name))])
+geninit(v::VarInfo, ::Val{:Drive}) = begin
+    k = get(v.tags, :key, v.name)
+    #HACK: needs quot if key is a symbol from VarInfo name
+    k = isa(k, QuoteNode) ? k : Meta.quot(k)
+    @q $C.value($(genfunc(v))[$k])
+end
 geninit(v::VarInfo, ::Val{:Call}) = begin
     # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
     # args = [key(a) for a in v.args]
@@ -494,11 +499,11 @@ genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    @gensym s f v
+    @gensym s f d
     @q let $s = $(symstate(v)),
            $f = $(genfunc(v)),
-           $v = $C.value(f[$s.key]),
-        $C.store!($s, $v)
+           $d = $C.value($f[$s.key])
+        $C.store!($s, $d)
         #TODO: make store! return value
         $C.value($s)
     end # value() for Var
