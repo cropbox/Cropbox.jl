@@ -39,7 +39,7 @@ using Unitful
         end
         s = instance(S)
         @test s.a == u"1m"
-        @test value(s.b)(x=1) == 2
+        @test Cropbox.value(s.b)(x=1) == 2
         @test s.c == 2
     end
 end
