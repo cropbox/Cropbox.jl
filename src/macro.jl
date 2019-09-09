@@ -131,7 +131,8 @@ end
 
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
-gendecl(n::VarNode) = (n.step == MainStep()) ? gendecl(n.info) : nothing
+import DataStructures: OrderedSet
+gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(i::VarInfo{Symbol}) = begin
     static = get(i.tags, :static, false)
     if isnothing(i.body)
@@ -198,7 +199,7 @@ genstruct(name, infos, incl) = begin
     S = esc(name)
     nodes = sortednodes(infos)
     fields = genfield.(infos)
-    decls = gendecl.(nodes)
+    decls = gendecl(nodes)
     source = gensource(infos)
     system = @q begin
         mutable struct $name <: $C.System
@@ -302,7 +303,12 @@ sortednodes(infos) = begin
     end
     d = Dependency{VarNode}(M)
     add!(d, infos)
-    sort(d)
+    N = sort(d)
+    #HACK: sort again for vars/non-vars
+    S = empty(N)
+    foreach(n -> isnothing(n.info.state) && push!(S, n), N)
+    foreach(n -> !isnothing(n.info.state) && push!(S, n), N)
+    S
 end
 
 macro system(head, body)
