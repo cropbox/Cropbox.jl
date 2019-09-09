@@ -412,7 +412,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     end)
 end
 geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
-geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy(0, $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Flag}) = false
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
