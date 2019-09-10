@@ -412,6 +412,8 @@ geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy($C.value($(get(v.tags, :init
 geninit(v::VarInfo, ::Val{:Flag}) = false
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
+geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
+
 ####
 
 genupdate(nodes) = begin

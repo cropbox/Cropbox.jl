@@ -25,10 +25,10 @@ link!(d::Dependency{T}, a::T, b::T) where T = begin
     add_edge!(d.g, d.I[a], d.I[b])
 end
 invertices!(d::Dependency{T}, v; _...) where T = ()
-inlink!(d::Dependency{T}, v, v1::T; kwargs...) where T = begin
+inlink!(d::Dependency{T}, v, v1::T; reverse=false, kwargs...) where T = begin
     @show "inlink! v = $v to v1 = $v1"
     for v0 in invertices!(d, v; kwargs...)
-        link!(d, v0, v1)
+        reverse ? link!(d, v1, v0) : link!(d, v0, v1)
     end
 end
 
@@ -98,16 +98,14 @@ node!(d::Dependency{VarNode}, v::VarInfo, t::Step) = vertex!(d, VarNode(v, t))
 prenode!(d::Dependency{VarNode}, v) = node!(d, v, PreStep())
 mainnode!(d::Dependency{VarNode}, v) = node!(d, v, MainStep())
 postnode!(d::Dependency{VarNode}, v) = node!(d, v, PostStep())
-node!(d::Dependency{VarNode}, v::VarInfo) = begin
-    if v.state == :Solve
-        @show "innodes: Var{<:Solve} = $v"
+node!(d::Dependency{VarNode}, v::VarInfo; presolve=true) = begin
+    if presolve && v.state in (:Solve, :Resolve)
         prenode!(d, v)
     else
         mainnode!(d, v)
     end
 end
-invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
-    @show "innodes $v"
+invertices!(d::Dependency{VarNode}, v::VarInfo; presolve=true, kwargs...) = begin
     A = extract(v; kwargs...)
     @show "extracted = $A"
     f(a::Symbol) = f(d.M[a])
@@ -117,7 +115,7 @@ invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
             @show "cyclic! prenode $v"
             prenode!(d, v0)
         else
-            node!(d, v0)
+            node!(d, v0; presolve=presolve)
         end
     end
     f.(A)
@@ -145,6 +143,16 @@ add!(d::Dependency{VarNode}, v::VarInfo) = begin
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         link!(d, n0, n1)
+        # inlink!(d, v, n0; reverse=true, equation=false)
+        # inlink!(d, v, n1)
+        # inlink!(d, v, n1; presolve=false, equation=false)
+        inlink!(d, v, n0; equation=false)
+        inlink!(d, v, n1)
+    elseif v.state == :Resolve
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        link!(d, n0, n1)
+        inlink!(d, v, n0; equation=false)
         inlink!(d, v, n1)
     elseif v.state == :Flag
         n0 = mainnode!(d, v)
