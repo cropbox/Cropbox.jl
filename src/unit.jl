@@ -1,9 +1,10 @@
 using Unitful
 import Unitful: DimensionlessUnits, Units
 
-unitfy(v, ::Nothing) = v
-unitfy(v, u::Units) = Quantity(v, u)
-unitfy(v, u::DimensionlessUnits) = u(v)
+unitfy(::Nothing, u) = nothing
+unitfy(v::Number, ::Nothing) = v
+unitfy(v::Number, u::Units) = Quantity(v, u)
+unitfy(v::Number, u::DimensionlessUnits) = u(v)
 unitfy(v::Array, u::Units) = Quantity.(v, u)
 unitfy(v::Array, u::DimensionlessUnits) = u.(v)
 unitfy(v::Quantity, u::Units) = uconvert(u, v)
