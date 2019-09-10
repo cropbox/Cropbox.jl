@@ -404,8 +404,8 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
 end
 geninit(v::VarInfo, ::Val{:Call}) = begin
     args = genfuncargs(v)
-    kwargs = @q begin $([:($(esc(a))) for a in v.kwargs]...) end
-    flatten(@q let $args; (; $kwargs) -> $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit]))) end)
+    kwargs = [:($(esc(a))) for a in v.kwargs]
+    flatten(@q let $args; (; $(kwargs...)) -> $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit]))) end)
 end
 geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
