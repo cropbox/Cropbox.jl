@@ -429,7 +429,10 @@ genupdateinit(n::VarNode) = begin
     v = n.info
     s = symstate(v)
     if haskey(v.tags, :expose)
-        @q $s = $(v.name) = _system.$(v.name)
+        @q begin
+            $s = $(v.name) = _system.$(v.name)
+            $([:($a = $s) for a in v.alias]...)
+        end
     else
         @q $s = _system.$(v.name)
     end
