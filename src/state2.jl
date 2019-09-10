@@ -239,19 +239,6 @@ end
 
 ####
 
-mutable struct Cycle{V} <: State{V}
-    value::V
-end
-
-Cycle(; unit, _value, _type=Float64, _...) = begin
-    U = value(unit)
-    isnothing(_value) && (_value = zero(_type))
-    V = typeof(_value)
-    Cycle{V}(_value)
-end
-
-####
-
 mutable struct Produce{S<:System} <: State{S}
     value::Vector{S}
     context::System
@@ -330,16 +317,5 @@ using Roots
 # end
 
 ####
-
-mutable struct Resolve{V} <: State{V}
-    value::V
-end
-
-Resolve(; unit, _value, _type=Float64, _...) = begin
-    U = value(unit)
-    v = unitfy(_value, U)
-    V = typeof(v)
-    Resolve{V}(v)
-end
 
 export produce
