@@ -394,12 +394,10 @@ using Unitful
 
     @testset "solve bisect" begin
         @system S begin
-            a(x) => 2x ~ track
-            x(a) => a - 1 ~ solve(lower=0, upper=2)
+            x(x) => 2x - 1 ~ solve(lower=0, upper=2)
         end
         s = instance(S)
         @test s.x == 1
-        @test s.a == 2
     end
 
     # @testset "solve order0" begin
