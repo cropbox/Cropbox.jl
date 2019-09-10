@@ -76,6 +76,15 @@ end
 
 ####
 
+mutable struct Hold{Nothing} <: State{Nothing}
+end
+
+Hold(; unit, _value, _type=nothing, _...) = begin
+    Hold{Nothing}()
+end
+
+####
+
 mutable struct Pass{V} <: State{V}
     value::V
 end

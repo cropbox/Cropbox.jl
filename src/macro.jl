@@ -284,7 +284,7 @@ import DataStructures: OrderedDict, OrderedSet
 gensystem(head, body) = gensystem(parsehead(head)..., body)
 gensystem(name, incl, body) = genstruct(name, geninfos(body, incl), incl)
 geninfos(body, incl) = begin
-    con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args))
+    con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args) if i.state != :hold)
     add!(d, b) = merge!(d, con(b))
     d = OrderedDict{Symbol,VarInfo}()
     for m in incl
@@ -387,6 +387,7 @@ geninit(v::VarInfo) = begin
     end
 end
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Hold}) = nothing
 geninit(v::VarInfo, ::Val{:Advance}) = missing
 geninit(v::VarInfo, ::Val{:Drive}) = begin
     k = get(v.tags, :key, v.name)
