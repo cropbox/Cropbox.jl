@@ -638,8 +638,9 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             else
                 $d[:N] += 1
                 if $d[:N] > $N_MAX
-                    @error "solve: convergence failed!"
+                    @show #= @error =# "solve: convergence failed!"
                     empty!($d)
+                    return
                 end
                 if sign($d[:fc]) == sign($d[:fa])
                     $d[:a] = $d[:c]
