@@ -9,10 +9,10 @@ using Unitful
         branching_interval: i => 3.0 ~ track(u"cm")
         branching_chance: p => clamp(rand(Normal(0.5, 0.5)), 0, 1) ~ track
         is_branching(l, ll, i, p) => (l - ll > i && p > 0.5) ~ flag
-        branched_length("parent.length"): bl ~ preserve(u"cm")
+        branched_length(pl=parent.length, l): bl => pl ~ preserve(u"cm")
         diameter => 0.1 ~ track(u"cm")
         length(r): l ~ accumulate(u"cm")
-        last_branching_length(x="branch[*/-1].bl"): ll => (isempty(x) ? 0 : x[1]) ~ track(u"cm")
+        last_branching_length(x=branch["*/-1"].bl): ll => (isempty(x) ? 0. : x[1]) ~ track(u"cm")
         branch(self, is_branching, l) => begin
             if is_branching
                 #println("branch at l = $l")
