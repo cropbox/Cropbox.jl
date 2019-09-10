@@ -284,8 +284,13 @@ import DataStructures: OrderedDict, OrderedSet
 gensystem(head, body) = gensystem(parsehead(head)..., body)
 gensystem(name, incl, body) = genstruct(name, geninfos(body, incl), incl)
 geninfos(body, incl) = begin
-    con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args) if i.state != :hold)
-    add!(d, b) = merge!(d, con(b))
+    con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args))
+    add!(d, b) = begin
+        for (n, i) in con(b)
+            (i.state == :Hold) && haskey(d, n) && continue
+            d[n] = i
+        end
+    end
     d = OrderedDict{Symbol,VarInfo}()
     for m in incl
         add!(d, source(m))
