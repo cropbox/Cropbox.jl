@@ -185,7 +185,7 @@ end
 Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     U = value(unit)
     #V = valuetype(_type, U)
-    isnothing(_value) && (_value = zero(_type))
+    isnothing(_value) && (_value = unitfy(zero(_type), U))
     V = typeof(_value)
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
@@ -212,7 +212,7 @@ end
 Capture(; unit, time, _value, _type=Float64, _...) = begin
     U = value(unit)
     #V = valuetype(_type, U)
-    isnothing(_value) && (_value = zero(_type))
+    isnothing(_value) && (_value = unitfy(zero(_type), U))
     V = typeof(_value)
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
