@@ -49,6 +49,24 @@ sort(d::Dependency) = begin
     [d.V[i] for i in J]
 end
 
+using LaTeXStrings
+label(n::VarNode) = begin
+    v = n.info
+    name = replace(String(isempty(v.alias) ? v.name : v.alias[1]), "_" => "")
+    tag = begin
+        if n.step == PreStep()
+            "0"
+        elseif n.step == PostStep()
+            "1"
+        else
+            ""
+        end
+    end
+    latexstring("$(name)_{$tag}")
+end
+using TikzGraphs, TikzPictures
+save(d::Dependency, name) = TikzPictures.save(PDF(String(name)), TikzGraphs.plot(d.g, label.(d.V)))
+
 ####
 
 extract(i::VarInfo; equation=true, tag=true) = begin

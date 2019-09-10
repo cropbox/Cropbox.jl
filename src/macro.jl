@@ -197,7 +197,7 @@ genfieldnamesunique(infos) = Tuple(i.name for i in infos)
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
-    nodes = sortednodes(infos)
+    nodes = sortednodes(name, infos)
     fields = genfield.(infos)
     decls = gendecl(nodes)
     source = gensource(infos)
@@ -300,7 +300,7 @@ geninfos(body, incl) = begin
 end
 
 include("dependency.jl")
-sortednodes(infos) = begin
+sortednodes(name, infos) = begin
     M = Dict{Symbol,VarInfo}()
     for v in infos
         for n in names(v)
@@ -309,6 +309,8 @@ sortednodes(infos) = begin
     end
     d = Dependency{VarNode}(M)
     add!(d, infos)
+    #HACK: for debugging
+    save(d, name)
     N = sort(d)
     #HACK: sort again for vars/non-vars
     S = empty(N)
