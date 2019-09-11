@@ -21,7 +21,7 @@ collect!(s::System; recursive=true) = begin
     I = Dict{System,Int}()
     S = Set{System}()
     visit(s::System) = begin
-        @show "visit $s"
+        #@show "visit $s"
         add(d::System) = begin
             i = get(I, d, nothing)
             if isnothing(i)
@@ -36,7 +36,7 @@ collect!(s::System; recursive=true) = begin
         link(d::System) = begin
             (s == d) && return
             add(d)
-            @show "add edge $s ($(I[s])) -> $d ($(I[d]))"
+            #@show "add edge $s ($(I[s])) -> $d ($(I[d]))"
             add_edge!(g, I[s], I[d])
         end
         #HACK: use VarInfo tags to figure out dependency
@@ -47,12 +47,12 @@ collect!(s::System; recursive=true) = begin
                 append!(D, getfield(s, n))
             end
         end
-        @show "collectible $D"
+        #@show "collectible $D"
         foreach(link, D)
 
         push!(S, s)
         filter!(d -> d ∉ S, D)
-        @show "collectible filtered $D"
+        #@show "collectible filtered $D"
         recursive && foreach(visit, D)
     end
     visit(s) = visit.(s)

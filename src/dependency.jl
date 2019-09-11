@@ -14,26 +14,26 @@ vertex!(d::Dependency{T}, v::T) where T = begin
         add_vertex!(d.g)
         push!(d.V, v)
         d.I[v] = length(d.V)
-        @show "new vertex at $(d.I[v])"
+        #@show "new vertex at $(d.I[v])"
     end
     v
 end
 vertex!(d::Dependency, a::Symbol) = vertex!(d, d.M[a])
 
 link!(d::Dependency{T}, a::T, b::T) where T = begin
-    @show "link: add edge $a ($(d.I[a])) => $b ($(d.I[b]))"
+    #@show "link: add edge $(a.info.name) ($(d.I[a])) => $(b.info.name) ($(d.I[b]))"
     add_edge!(d.g, d.I[a], d.I[b])
 end
 invertices!(d::Dependency{T}, v; _...) where T = ()
 inlink!(d::Dependency{T}, v, v1::T; kwargs...) where T = begin
-    @show "inlink! v = $v to v1 = $v1"
+    #@show "inlink! v = $v to v1 = $v1"
     for v0 in invertices!(d, v; kwargs...)
         link!(d, v0, v1)
     end
 end
 
 add!(d::Dependency, v) = begin
-    @show "add! $(v.name)"
+    #@show "add! $(v.name)"
     vertex!(d, v)
     inlink!(d, v, v)
 end
@@ -72,9 +72,9 @@ save(d::Dependency, name) = TikzPictures.save(PDF(String(name)), TikzGraphs.plot
 extract(i::VarInfo; equation=true, tag=true) = begin
     parse(v::Expr) = begin
         f(v) = begin
-            @show v
+            #@show v
             a = v.args[1]
-            @show a
+            #@show a
             isexpr(a) ? f(a) : isexpr(v, :., :ref) ? a : nothing
         end
         f(v)
@@ -84,11 +84,11 @@ extract(i::VarInfo; equation=true, tag=true) = begin
     pick(a) = @capture(a, k_=v_) ? parse(v) : parse(a)
     pack(A) = filter(!isnothing, pick.(A)) |> Tuple
     eq = equation ? pack(i.args) : ()
-    @show eq
+    #@show eq
     #HACK: exclude internal tags (i.e. _type)
     tags = filter(!isnothing, [parse(p[2]) for p in i.tags if !startswith(String(p[1]), "_")]) |> Tuple
     par = tag ? tags : ()
-    @show par
+    #@show par
     Set([eq..., par...]) |> collect
 end
 
@@ -106,13 +106,14 @@ node!(d::Dependency{VarNode}, v::VarInfo) = begin
     end
 end
 invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
+    #@show "innodes $v"
     A = extract(v; kwargs...)
-    @show "extracted = $A"
+    #@show "extracted = $A"
     f(a::Symbol) = f(d.M[a])
     f(v0::VarInfo) = begin
-        @show v0
+        #@show v0
         if v0 == v
-            @show "cyclic! prenode $v"
+            #@show "cyclic! prenode $v"
             prenode!(d, v0)
         else
             node!(d, v0)
@@ -122,7 +123,7 @@ invertices!(d::Dependency{VarNode}, v::VarInfo; kwargs...) = begin
 end
 
 add!(d::Dependency{VarNode}, v::VarInfo) = begin
-    @show "add! $v"
+    #@show "add! $v"
     if v.state == :Accumulate
         # split pre/main nodes to handle self dependency
         n0 = prenode!(d, v)
