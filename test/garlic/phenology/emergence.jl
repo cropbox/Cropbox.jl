@@ -1,23 +1,23 @@
-@system Emergence(Stage) begin
+@system Emergence(Stage, Germination) begin
     #HACK: can't use self.pheno.leaf_appearance.maximum_leaf_tip_appearance_rate due to recursion
-    maximum_emergence_rate: R_max => 0.20 ~ preserve(u"d^-1", parameter)
+    maximum_emergence_rate: ER_max => 0.20 ~ preserve(u"d^-1", parameter)
 
     emergence_date => nothing ~ preserve(parameter)
     begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve::Bool
 
-    rate(R_max, T, T_opt, T_ceil) => begin
-        R_max * beta_thermal_func(T, T_opt, T_ceil)
+    emergence(ER_max, T, T_opt, T_ceil, emerging) => begin
+        emerging ? ER_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
     end ~ accumulate
 
-    ready(x=pheno.germination.over) ~ flag
-
-    over(rate, begin_from_emergence, emergence_date, time=pheno.weather.calendar.time) => begin
+    emergeable(germinated) ~ flag
+    emerged(emergence, begin_from_emergence, emergence_date, t=weather.calendar.time) => begin
         if begin_from_emergence
-            time >= emergence_date
+            t >= emergence_date
         else
-            rate >= 1.0
+            emergence >= 1.0
         end
     end ~ flag
+    emerging(a=emergeable, b=emerged) => (a && !b) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

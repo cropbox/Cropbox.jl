@@ -1,8 +1,10 @@
-@system Bulbing(Stage) begin
-    ready(x=pheno.floral_initiation.ready) ~ flag
+@system BulbAppearance(Stage, FloralInitiation) begin
+    bulb_appearable(floral_initiateable) ~ flag
 
     #HACK bulbing used to begin one phyllochron after floral initiation in bolting cultivars of garlic, see Meredith 2008
-    over(x=pheno.floral_initiation.over) ~ flag
+    bulb_appeared(floral_initiated) ~ flag
+
+    bulb_appearing(a=bulb_appearable, b=bulb_appeared) => (a && !b) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

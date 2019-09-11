@@ -1,11 +1,11 @@
 @system Death(Stage) begin
-    ready => true ~ flag
-
-    over => begin
+    dieable => true ~ flag
+    dead => begin
         #FIXME implement Count trait equivalent
         #return self.pheno.plant.count.total_dropped_leaves >= self.pheno.leaves_initiated
         false
     end ~ flag
+    dying(a=dieable, b=dead) => (a && !b) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):
