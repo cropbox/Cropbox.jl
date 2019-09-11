@@ -313,12 +313,10 @@ end
         else
             (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
         end
-    end ~ track #TODO: use solve
+    end ~ solve(lower=-10, upper=10)
 
-    #temperature(T_adj, T_air=weather.T_air): T => begin
-    temperature(T_air=weather.T_air): T => begin
-        #T_leaf = T_air + T_adj
-        T_leaf = T_air
+    temperature(T_adj, T_air=weather.T_air): T => begin
+        T_leaf = T_air + T_adj
     end ~ track
 
     #TODO: expand @optimize decorator to support both cost function and variable definition
