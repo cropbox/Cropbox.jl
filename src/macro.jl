@@ -182,6 +182,7 @@ gendecl(i::VarInfo{Nothing}) = begin
     gendecl(decl, i.name, i.alias)
 end
 gendecl(decl, var, alias) = @q begin
+    $(LineNumberNode(0, "gendecl/$var"))
     self.$var = $decl
     $(@q begin $([:(self.$a = self.$var) for a in alias]...) end)
     $var = self.$var
@@ -453,6 +454,7 @@ genupdate(v::VarInfo, t::Step) = begin
             end
         end
         @q begin
+            $(LineNumberNode(0, "genupdate/$(v.name)"))
             @label $l
             $(v.name) = $u
             $([:($a = $(v.name)) for a in v.alias]...)
