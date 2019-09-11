@@ -59,7 +59,7 @@ parsetags(tags::Vector, type, state, args) = begin
             d[t] = true
         end
     end
-    haskey(d, :parameter) && (d[:static] = true; push!(args, :config))
+    get(d, :parameter, false) && (d[:static] = true; push!(args, :config))
     !haskey(d, :unit) && (d[:unit] = nothing)
     (state in (:Accumulate, :Capture)) && !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     !isnothing(type) && (d[:_type] = esc(type))
@@ -162,14 +162,14 @@ gendecl(i::VarInfo{Symbol}) = begin
     end
     name = Meta.quot(i.name)
     alias = Tuple(i.alias)
-    value = haskey(i.tags, :override) ? genoverride(i.name, missing) : geninit(i)
+    value = get(i.tags, :override, false) ? genoverride(i.name, missing) : geninit(i)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
     decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _system=self, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
     #@assert isempty(i.args) "Non-Var `$(i.name)` cannot have arguments: $(i.args)"
-    if haskey(i.tags, :override)
+    if get(i.tags, :override, false)
         decl = genoverride(i.name, esc(i.body))
     elseif !isnothing(i.body)
         decl = esc(i.body)
@@ -239,7 +239,7 @@ mixins(s::S) where {S<:System} = mixins(S)
 
 # gencollectible(infos) = begin
 #     I = filter(i -> i.type in (:(Cropbox.System), :System, :(Vector{Cropbox.System}), :(Vector{System}), :(Cropbox.Produce), :Produce), infos)
-#     filter!(i -> !haskey(i.tags, :override), I)
+#     filter!(i -> !get(i.tags, :override, false), I)
 #     map(i -> i.name, I) |> Tuple
 # end
 # genupdatable(infos) = begin
