@@ -5,9 +5,9 @@ using CSV
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather begin
-    calendar => Calendar(; context=context) ~ ::Calendar
-    vapor_pressure: vp => VaporPressure(; context=context) ~ ::VaporPressure
-    sun => Sun(; context=context, weather=self) ~ ::Sun
+    calendar(context) => Calendar(; context=context) ~ ::Calendar(expose)
+    vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure(expose)
+    sun(context, calendar, PFD) => Sun(; context=context, calendar=calendar, weather=self) ~ ::Sun
 
     filename => "" ~ preserve(parameter)
     timezone => tz"UTC" ~ preserve(parameter)
@@ -20,14 +20,14 @@ using CSV
         end
         df
     end ~ preserve::DataFrame
-    key(t="calendar.time") => t ~ track::ZonedDateTime
+    key(t=calendar.time) => t ~ track::ZonedDateTime
     store(df, index, key): s => begin
         r = df[df[!, index] .== key, :][1, :]
         Dict{Symbol,Any}(pairs(r))
     end ~ track::Dict
     #Dict(:SolRad => 1500, :CO2 => 400, :RH => 0.6, :T_air => 25, :wind => 2.0, :P_air => 100)
 
-    photon_flux_density(s): PFD ~ drive(key="SolRad", u"μmol/m^2/s") #Quanta
+    photon_flux_density(s): PFD ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
 
     #TODO: make CO2 parameter?
@@ -37,17 +37,17 @@ using CSV
     relative_humidity(s): RH => (s[:RH] / 100) ~ track(u"percent")
     #RH => 0.6 ~ track # 0~1
 
-    air_temperature(s): T_air ~ drive(key="Tair", u"°C")
+    air_temperature(s): T_air ~ drive(key=:Tair, u"°C")
     #T_air => 25 ~ track # C
 
-    wind_speed(s): wind ~ drive(key="Wind", u"m/s")
+    wind_speed(s): wind ~ drive(key=:Wind, u"m/s")
     #wind => 2.0 ~ track # meters s-1
 
     #TODO: make P_air parameter?
     air_pressure: P_air => 100 ~ track(u"kPa")
 
-    vapor_pressure_deficit(T_air, RH, D="vp.D"): VPD => D(T=T_air, RH=RH) ~ track(u"kPa")
-    vapor_pressure_saturation_slope(T_air, P_air, s="vp.s"): VPD_slope => s(T=T_air, P=P_air) ~ track(u"K^-1")
+    vapor_pressure_deficit(T_air, RH, D=vp.D): VPD => D(T=T_air, RH=RH) ~ track(u"kPa")
+    vapor_pressure_saturation_slope(T_air, P_air, s=vp.s): VPD_slope => s(T=T_air, P=P_air) ~ track(u"K^-1")
 end
 
 # import Base: show

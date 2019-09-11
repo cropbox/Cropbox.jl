@@ -19,13 +19,16 @@
     altitude => 20u"m" ~ preserve(u"m", parameter)
 end
 
+import Dates: dayofyear, hour
+
 @system Sun begin
     #TODO make Location external
-    location: loc => Location(; context=context) ~ ::Location #(override)
-    weather: wea ~ ::System(override)
+    location(context): loc => Location(; context=context) ~ ::Location(expose) #(override)
+    calendar ~ ::System(override, expose)
+    weather ~ ::System(override, expose)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
-    datetime(t="weather.calendar.time"): t => t ~ track::ZonedDateTime
+    datetime(t=calendar.time): t => t ~ track::ZonedDateTime
     day(t): d => dayofyear(t) ~ track::Int
     hour(t): h => hour(t) ~ track::Int(u"hr")
 
@@ -34,7 +37,7 @@ end
     altitude(loc): alt ~ drive(u"m")
 
     #TODO: fix inconsistent naming of PAR vs. PFD
-    photosynthetic_active_radiation(wea): PAR ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
+    photosynthetic_active_radiation(weather): PAR ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
     transmissivity: τ => 0.5 ~ preserve(parameter) # atmospheric transmissivity, Goudriaan and van Laar (1994) p 30
 
     #####################
@@ -43,7 +46,7 @@ end
 
     #HACK always use degrees for consistency and easy tracing
 	#FIXME pascal version of LightEnv uses iqbal()
-    declination_angle("declination_angle_spencer"): dec ~ track(u"°")
+    declination_angle(declination_angle_spencer): dec ~ track(u"°")
 
     # Goudriaan 1977
     declination_angle_goudriaan(d) => begin
@@ -99,7 +102,7 @@ end
     solar_noon(LC, ET) => 12u"hr" - LC - ET ~ track(u"hr")
 
 	# w_s: zenith angle
-    cos_hour_angle(p="latitude", d="declination_angle"; w_s) => begin
+    cos_hour_angle(p=latitude, d=declination_angle; w_s) => begin
         # this value should never become negative because -90 <= latitude <= 90 and -23.45 < decl < 23.45
         #HACK is this really needed for crop models?
         # preventing division by zero for N and S poles
@@ -134,7 +137,7 @@ end
 
     hour_angle(h, solar_noon, dph) => ((h - solar_noon) * dph) ~ track(u"°")
 
-	elevation_angle(h="hour_angle", d="declination_angle", p="latitude") => begin
+	elevation_angle(h=hour_angle, d=declination_angle, p=latitude) => begin
         #FIXME When time gets the same as solarnoon, this function fails. 3/11/01 ??
         asin(cos(h) * cos(d) * cos(p) + sin(d) * sin(p))
 	end ~ track(u"°")
@@ -146,7 +149,7 @@ end
     # View point from south, morning: +, afternoon: -
 	# See An introduction to solar radiation by Iqbal (1983) p 15-16
 	# Also see https://www.susdesign.com/sunangle/
-    azimuth_angle(t_s="elevation_angle", d="declination_angle", p="latitude") => begin
+    azimuth_angle(t_s=elevation_angle, d=declination_angle, p=latitude) => begin
         acos((sin(d) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
 	end ~ track(u"°")
 
