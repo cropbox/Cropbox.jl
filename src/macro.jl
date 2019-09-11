@@ -395,7 +395,7 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
     k = get(v.tags, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
     k = isa(k, QuoteNode) ? k : Meta.quot(k)
-    @q $C.value($(genfunc(v))[$k])
+    @q $C.unitfy($C.value($(genfunc(v))[$k]), $C.value($(v.tags[:unit])))
 end
 geninit(v::VarInfo, ::Val{:Call}) = begin
     args = genfuncargs(v)
@@ -568,9 +568,16 @@ end
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     @gensym s f
-    @q let $s = $(symstate(v)),
-           $f = $(genfunc(v))
-        () -> $C.store!($s, $f)
+    if get(v.tags, :oneway, false)
+        @q let $s = $(symstate(v)),
+               $f = $(genfunc(v))
+            !$C.value($s) ? () -> $C.store!($s, $f) : nothing
+        end
+    else
+        @q let $s = $(symstate(v)),
+               $f = $(genfunc(v))
+            () -> $C.store!($s, $f)
+        end
     end
 end
 
