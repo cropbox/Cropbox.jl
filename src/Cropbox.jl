@@ -14,6 +14,8 @@ include("clock.jl")
 include("context.jl")
 include("calendar.jl")
 
+include("util.jl")
+
 # include("system.jl")
 # include("unit.jl")
 # include("varval.jl")
