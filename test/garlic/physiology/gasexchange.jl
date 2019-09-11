@@ -1,13 +1,10 @@
 using Polynomials
 
 @system C4 begin
-    #TODO: more robust interface to connect Systems (i.e. type check, automatic prop defines)
-    leaf ~ ::System(override)
-
-    co2_mesophyll(x="leaf.co2_mesophyll"): Cm => max(x, 0u"μmol/mol") ~ track(u"μmol/mol" #= CO2 =#)
-    light(x="leaf.light"): I2 => max(x, 0u"μmol/m^2/s") ~ track(u"μmol/m^2/s" #= Quanta =#)
-    temperature("leaf"): T ~ drive(u"°C")
-    nitrogen("leaf"): N ~ drive
+    co2_mesophyll: Cm ~ hold
+    light: I2 ~ hold
+    temperature: T ~ hold
+    nitrogen: N ~ hold
 
     ##############
     # Parameters #
@@ -165,20 +162,19 @@ using Polynomials
 end
 
 @system Stomata begin
-    leaf ~ ::System(override)
+    weather ~ hold
+    soil ~ hold
+    width ~ hold
+    net_photosynthesis: A_net ~ hold
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
     g0 => 0.017 ~ track(u"mmol/m^2/s" #= H2O =#, parameter)
     g1 => 4.53 ~ track(parameter)
 
-    A_net("leaf.A_net") ~ track(u"μmol/m^2/s" #= CO2 =#)
-    CO2("leaf.weather.CO2") ~ track(u"μmol/mol")
-    RH("leaf.weather.RH") ~ track(u"percent")
-
     diffusivity_ratio_boundary_layer: drb => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
     diffusivity_ratio_air: dra => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
 
-    boundary_layer_conductance(width="leaf.width", wind="leaf.weather.wind"): gb => begin
+    boundary_layer_conductance(width, wind=weather.wind): gb => begin
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
         #sr = 1.0
         # switchgrass adaxial : abaxial (Awada 2002)
@@ -233,7 +229,7 @@ end
         max(gs, g0)
     end ~ track(u"mol/m^2/s" #= H2O =#) #(init="g0")
 
-    leafp_effect(LWP="leaf.soil.WP_leaf", sf=2.3u"MPa^-1", phyf=-2.0u"MPa"): m => begin
+    leafp_effect(LWP=soil.WP_leaf, sf=2.3u"MPa^-1", phyf=-2.0u"MPa"): m => begin
         (1 + exp(sf * phyf)) / (1 + exp(sf * (phyf - LWP)))
     end ~ track
 
@@ -254,13 +250,10 @@ end
     end ~ track(u"m^2*s/mol")
 end
 
-@system PhotosyntheticLeaf begin
+# C4 for maize, C3 for garlic
+@system PhotosyntheticLeaf(Stomata, C4) begin
     weather ~ ::System(override)
     soil ~ ::System(override)
-
-    stomata => Stomata(; context=context, leaf=self) ~ ::System
-    photosynthesis => C4(; context=context, leaf=self) ~ ::System # for maize
-    #photosynthesis => C3(; context=context, leaf=self) ~ ::System # for garlic
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -271,29 +264,29 @@ end
     ###########
 
     # static properties
-    nitrogen => 2.0 ~ track(parameter)
+    nitrogen: N => 2.0 ~ track(parameter)
 
     # geometry
     width => 10 // 100 ~ track(u"m", parameter)
 
     # soil?
     # actual water uptake rate (mol H2O m-2 s-1)
-    ET_supply => 0 ~ track(u"mol/m^2/s" #= H2O =#, parameter)
+    ET_supply: Jw => 0 ~ track(u"mol/m^2/s" #= H2O =#, parameter)
 
     # dynamic properties
 
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
-    co2_atmosphere(CO2="weather.CO2", P_air="weather.P_air"): Ca => (CO2 * P_air / 100u"kPa") ~ track
+    co2_atmosphere(CO2=weather.CO2, P_air=weather.P_air): Ca => (CO2 * P_air / 100u"kPa") ~ track
     co2_mesophyll_upper_limit(Ca): Cmmax => 2Ca ~ track
-    co2_mesophyll(Ca, A_net, P_air="weather.P_air", CO2="weather.CO2", rvc="stomata.rvc"): [Cm, Ci] => begin
+    co2_mesophyll(Ca, A_net, P_air=weather.P_air, CO2=weather.CO2, rvc): [Cm, Ci] => begin
         P = P_air / 100u"kPa"
         Cm = Ca - A_net * rvc * P
         #println("+ Cm = $Cm, Ca = $Ca, A_net = $A_net, rvc = $rvc, P = $P")
         #Cm
-    end ~ solve(lower=0, upper="Cmmax", u"μmol/mol" #= CO2 =#)
+    end ~ solve(lower=0, upper=Cmmax, u"μmol/mol" #= CO2 =#)
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
-    light(PFD="weather.PPFD"): I2 => begin
+    light(PFD=weather.PPFD): I2 => begin
         #FIXME make scatt global parameter?
         scatt = 0.15 # leaf reflectance + transmittance
         f = 0.15 # spectral correction
@@ -302,25 +295,17 @@ end
         Ia * (1 - f) / 2 # useful light absorbed by PSII
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
-    net_photosynthesis("photosynthesis.net_photosynthesis"): A_net ~ track(u"μmol/m^2/s" #= CO2 =#)
-
-    dark_respiration("photosynthesis.dark_respiration"): Rd ~ track(u"μmol/m^2/s" #= O2 =#)
-
     gross_photosynthesis(A_net, Rd): A_gross => begin
         max(0u"μmol/m^2/s", A_net + Rd) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    stomatal_conductance("stomata.stomatal_conductance"): gs ~ track(u"μmol/m^2/s" #= H2O =#)
-
     temperature_adjustment(
-        gb="stomata.boundary_layer_conductance",
-        gv="stomata.total_conductance_h2o",
-        T_air="weather.T_air",
-        PFD="weather.PPFD",
-        P_air="weather.P_air",
-        VPD="weather.VPD",
-        VPD_slope="weather.VPD_slope",
-        Jw="ET_supply",
+        gb, gv, Jw
+        T_air=weather.T_air,
+        PFD=weather.PPFD,
+        P_air=weather.P_air,
+        VPD=weather.VPD,
+        VPD_slope=weather.VPD_slope,
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
@@ -353,9 +338,9 @@ end
         else
             (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
         end
-    end ~ track(u"K") #TODO: use solve
+    end ~ solve(lower=-10u"K", upper=10u"K", u"K")
 
-    temperature(T_adj, T_air="weather.T_air"): T => begin
+    temperature(T_adj, T_air=weather.T_air): T => begin
         T_leaf = T_air + T_adj
     end ~ track(u"°C")
 
@@ -365,13 +350,12 @@ end
     #     return (self.temperature - self.new_temperature)^2
 
     evapotranspiration(
-        gv="stomata.total_conductance_h2o",
-        T_air="weather.T_air",
-        T="temperature",
-        RH="weather.RH",
-        P_air="weather.P_air",
-        ambient="weather.vp.ambient",
-        saturation="weather.vp.saturation"
+        gv, T,
+        T_air=weather.T_air,
+        RH=weather.RH,
+        P_air=weather.P_air,
+        ambient=weather.vp.ambient,
+        saturation=weather.vp.saturation
     ): ET => begin
         ea = ambient(T=T_air, RH=RH)
         es_leaf = saturation(T=T)
@@ -382,17 +366,16 @@ end
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
-    #TODO: use externally initialized Weather / Soil
     weather: w ~ ::System(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
     soil ~ ::Soil(override)
-    leaf => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
+    leaf(context, weather, soil) => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
 
-    A_gross("leaf.A_gross") ~ track(u"μmol/m^2/s" #= CO2 =#)
-    A_net("leaf.A_net") ~ track(u"μmol/m^2/s" #= CO2 =#)
-    ET("leaf.ET") ~ track(u"μmol/m^2/s" #= H2O =#)
-    T_leaf("leaf.temperature") ~ track(u"°C")
-    VPD("weather.VPD") ~ track(u"kPa") #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-    gs("leaf.stomata.stomatal_conductance") ~ track(u"mol/m^2/s" #= H2O =#)
+    A_gross(x=leaf.A_gross) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    A_net(x=leaf.A_net) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    ET(x=leaf.ET) ~ track(u"μmol/m^2/s" #= H2O =#)
+    T_leaf(x=leaf.temperature) ~ track(u"°C")
+    VPD(x=weather.VPD) ~ track(u"kPa") #TODO: use Weather directly, instead of through PhotosyntheticLeaf
+    gs(x=leaf.stomatal_conductance) ~ track(u"mol/m^2/s" #= H2O =#)
 end
 
 config = configure()

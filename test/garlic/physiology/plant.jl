@@ -1,9 +1,9 @@
 @system Plant begin
-    weather => Weather(; context=context) ~ ::Weather
-    soil => Soil(; context=context) ~ ::Soil
+    weather(context) => Weather(; context=context) ~ ::Weather
+    soil(context) => Soil(; context=context) ~ ::Soil
 
-    phenology: pheno => Phenology(; context=context, plant=self, weather=weather, soil=soil) ~ ::Phenology
-    photosynthesis => Photosynthesis(; context=context, plant=self) ~ ::Photosynthesis
+    phenology(context, weather, soil): pheno => Phenology(; context=context, plant=self, weather=weather, soil=soil) ~ ::Phenology
+    photosynthesis(context) => Photosynthesis(; context=context, plant=self) ~ ::Photosynthesis
 
     mass => Mass(; context=context, plant=self) ~ ::Mass
     area => Area(; context=context, plant=self) ~ ::Area
@@ -21,7 +21,7 @@
 
     scape => begin end ~ produce
 
-    root(root, emerging="pheno.emerging") => begin
+    root(root, emerging=pheno.emerging) => begin
         if isempty(root)
             if emerging
                 #TODO import_carbohydrate(soil.total_root_weight)
@@ -31,7 +31,7 @@
     end ~ produce
 
     #TODO pass PRIMORDIA as initial_leaves
-    nodal_units(nu, primordia, germinating="pheno.germinating", dead="pheno.dead", l="pheno.leaves_initiated"): nu => begin
+    nodal_units(nu, primordia, germinating=pheno.germinating, dead=pheno.dead, l=pheno.leaves_initiated): nu => begin
         if isempty(nu)
             nodal_units_products = [produce(NodalUnit, plant=self, rank=i) for i in 1:primordia]
         elseif !(germinating || dead)

@@ -72,7 +72,7 @@ end
     # Forward from Sun
 
     #TODO better name to make it drive?
-    current_zenith_angle("sun.zenith_angle") ~ track(u"°")
+    current_zenith_angle(x=sun.zenith_angle) ~ track(u"°")
     elevation_angle(sun) ~ drive(u"°")
     directional_photosynthetic_radiation(sun): I0_dr ~ drive(u"μmol/m^2/s" #= Quanta =#)
     diffusive_photosynthetic_radiation(sun): I0_df ~ drive(u"μmol/m^2/s" #= Quanta =#)
@@ -113,7 +113,7 @@ end
     # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
     angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve(u"rad", static)
 
-    diffused_fraction(a="angles"; x): fdf => begin
+    diffused_fraction(a=angles; x): fdf => begin
         # Why multiplied by 2?
         df = WEIGHT3 * ((π/4) * (2x .* sin.(a) .* cos.(a)))
         #FIXME better way to handling 1-element array value?

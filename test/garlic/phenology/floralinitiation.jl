@@ -1,10 +1,10 @@
 @system FloralInitiation(Stage) begin
     critical_photoperiod: critPPD => 12 ~ preserve(u"hr", parameter)
 
-    ready("pheno.germination.over") ~ flag
+    ready(x=pheno.germination.over) ~ flag
 
     #FIXME: implement Sun
-    over(critPPD, day_length="pheno.weather.sun.day_length") => begin
+    over(critPPD, day_length=pheno.weather.sun.day_length) => begin
         #FIXME solstice consideration is broken (flag turns false after solstice) and maybe unnecessary
         # w = self.pheno.weather
         # solstice = w.time.tz.localize(datetime.datetime(w.time.year, 6, 21))

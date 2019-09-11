@@ -87,10 +87,10 @@ include("scape.jl")
     leaves_generic => 10 ~ preserve(parameter)
     leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track
     leaves_total(leaves_initiated) ~ track
-    leaves_initiated("leaf_initiation.leaves") ~ track
-    leaves_appeared("leaf_appearance.leaves") ~ track
+    leaves_initiated(x=leaf_initiation.leaves) ~ track
+    leaves_appeared(x=leaf_appearance.leaves) ~ track
 
-    temperature(leaves_appeared, T_air="weather.T_air"): T => begin
+    temperature(leaves_appeared, T_air=weather.T_air): T => begin
         if leaves_appeared < 9
             #FIXME soil module is not implemented yet
             #T = T_soil
@@ -106,27 +106,27 @@ include("scape.jl")
 
     # common
 
-    germinating("germination.ing") ~ flag
-    germinated("germination.over") ~ flag
-    emerging("emergence.ing") ~ flag
-    emerged("emergence.over") ~ flag
+    germinating(x=germination.ing) ~ flag
+    germinated(x=germination.over) ~ flag
+    emerging(x=emergence.ing) ~ flag
+    emerged(x=emergence.over) ~ flag
 
     # garlic
 
-    floral_initiated("floral_initiation.over") ~ flag
-    scaping("scape.ing") ~ flag
-    scape_appeared("scape_appearance.over") ~ flag
-    scape_removed("scape_removal.over") ~ flag
-    flowered("flowering.over") ~ flag
+    floral_initiated(x=floral_initiation.over) ~ flag
+    scaping(x=scape.ing) ~ flag
+    scape_appeared(x=scape_appearance.over) ~ flag
+    scape_removed(x=scape_removal.over) ~ flag
+    flowered(x=flowering.over) ~ flag
     #FIXME clear definition of bulb maturing
-    bulb_maturing(scape_removed, f="bulbiling.over") => (scape_removed || f) ~ flag
+    bulb_maturing(scape_removed, f=bulbiling.over) => (scape_removed || f) ~ flag
 
     # common
 
-    dead("death.over") ~ flag
+    dead(x=death.over) ~ flag
 
     # # GDDsum
-    # gdd_after_emergence(emerged, r="gdd_recorder.rate") => begin
+    # gdd_after_emergence(emerged, r=gdd_recorder.rate) => begin
     #     #HACK tracker is reset when emergence is over
     #     emerged ? r : 0
     # end ~ track

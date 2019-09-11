@@ -1,7 +1,7 @@
 @system Leaf(Organ) begin
     nodal_unit: nu ~ ::System(override)
 
-    rank("nu.rank") ~ track::Int
+    rank(x=nu.rank) ~ track::Int
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
     # This is the "potential" elongation rate with no water stress Yang
@@ -37,10 +37,10 @@
     #############
 
     #FIXME
-    potential_leaves("pheno.leaves_potential") ~ track
+    potential_leaves(x=pheno.leaves_potential) ~ track
 
     #FIXME
-    extra_leaves(np="potential_leaves", ng="pheno.leaves_generic") => (np - ng) ~ track
+    extra_leaves(np=potential_leaves, ng=pheno.leaves_generic) => (np - ng) ~ track
 
     maximum_length_of_longest_leaf(LM_min, extra_leaves, k=0u"cm^2"): maximum_length => begin
         # no length adjustment necessary for garlic, unlike MAIZE (KY, 2016-10-12)
@@ -48,12 +48,12 @@
         sqrt(LM_min^2 + k * extra_leaves)
     end ~ track(u"cm")
 
-    maximum_width(l="maximum_length", r="length_to_width_ratio") => begin
+    maximum_width(l=maximum_length, r=length_to_width_ratio) => begin
         # Fournier and Andrieu(1998) Pg242 YY
         l * r
     end ~ track(u"cm")
 
-    maximum_area(l="maximum_length", w="maximum_width", r="area_ratio") => begin
+    maximum_area(l=maximum_length, w=maximum_width, r=area_ratio) => begin
         # daughtry and hollinger (1984) Fournier and Andrieu(1998) Pg242 YY
         l * w * r
     end ~ track(u"cm^2")
@@ -73,7 +73,7 @@
 
     #TODO better name, shared by growth_duration and pontential_area
     #TODO should be a plant parameter not leaf (?)
-    rank_effect(rank, n="potential_leaves", weight=1) => begin
+    rank_effect(rank, n=potential_leaves, weight=1) => begin
         n_m = 5.93 + 0.33n # the rank of the largest leaf. YY
         a = (-10.61 + 0.25n) * weight
         b = (-5.99 + 0.27n) * weight
@@ -85,7 +85,7 @@
         exp(a * scale^2 + b * scale^3)
     end ~ track
 
-    potential_length(maximum_length, rank, np="potential_leaves", ng="pheno.leaves_generic") => begin
+    potential_length(maximum_length, rank, np=potential_leaves, ng=pheno.leaves_generic) => begin
         # for MAIZSIM
         #return self.maximum_length * self.rank_effect(weight=0.5)
         # for beta fn calibrated from JH's thesis for SP and KM varieties, 8/10/15, SK
@@ -137,7 +137,7 @@
 
     green_area(green_ratio, area) => (green_ratio * area) ~ track(u"cm^2")
 
-    elongation_age(growing, T="pheno.T", T_opt="pheno.T_opt", T_ceil="pheno.T_ceil") => begin #TODO add dt in the args?
+    elongation_age(growing, T=pheno.T, T_opt=pheno.T_opt, T_ceil=pheno.T_ceil) => begin #TODO add dt in the args?
         #TODO implement Parent and Tardieu (2011, 2012) approach for leaf elongation in response to T and VPD, and normalized at 20C, SK, Nov 2012
         # elongAge indicates where it is now along the elongation stage or duration.
         # duration is determined by totallengh/maxElongRate which gives the shortest duration to reach full elongation in the unit of days.
@@ -192,7 +192,7 @@
         1.0 # for garlic
     end ~ track
 
-    potential_expansion_rate(t="elongation_age", t_e="GD", w_max="potential_area") => begin
+    potential_expansion_rate(t=elongation_age, t_e=GD, w_max=potential_area) => begin
         # t_e = 1.5 * w_max / c_m
         t = min(t, t_e)
         #FIXME can we introduce new w_max here when w_max in t_e (growth duration) supposed to be potential length?
@@ -252,11 +252,11 @@
     length(potential_elongation_rate) => begin
         #TODO: incorporate stress effects as done in actual_area_increase()
         potential_elongation_rate
-    end ~ accumulate(u"cm", time="elongation_age")
+    end ~ accumulate(u"cm", time=elongation_age)
 
     actual_length_increase(potential_elongation_rate) => begin
         potential_elongation_rate
-    end ~ capture(u"cm", time="elongation_age")
+    end ~ capture(u"cm", time=elongation_age)
 
     # actual area
     area(water_potential_effect, carbon_effect, temperature_effect, area_from_length, length) => begin
@@ -307,7 +307,7 @@
         max(SG * GD - stay_green_water_stress_duration, 0u"d")
     end ~ track(u"d")
 
-    active_age(mature, aging, T="pheno.T", T_opt="pheno.T_opt") => begin
+    active_age(mature, aging, T=pheno.T, T_opt=pheno.T_opt) => begin
         # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
         # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
         # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
@@ -337,7 +337,7 @@
     end ~ track(u"d")
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
-    senescence_age(aging, dead, T="pheno.T", T_opt="pheno.T_opt") => begin
+    senescence_age(aging, dead, T=pheno.T, T_opt=pheno.T_opt) => begin
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
         #return min(self._senescence_tracker.rate, self.senescence_duration)
@@ -384,7 +384,7 @@
 
     # Maturity
 
-    maturity(emerged="pheno.emerged", mature="mature", T="pheno.T") => begin
+    maturity(emerged=pheno.emerged, mature, T=pheno.T) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         if emerged && !mature
             growing_degree_days(T, 4; T_max=40)
@@ -414,7 +414,7 @@
         true
     end ~ flag
 
-    appeared(rank, l="pheno.leaves_appeared") => (rank <= l) ~ flag
+    appeared(rank, l=pheno.leaves_appeared) => (rank <= l) ~ flag
 
     growing(appeared, mature) => (appeared && !mature) ~ flag
 

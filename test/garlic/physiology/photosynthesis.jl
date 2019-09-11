@@ -1,26 +1,26 @@
 #FIXME: confusion between PFD vs. PPFD
 @system SunlitWeather(Weather) begin
     radiation ~ ::Radiation(override)
-    photosynthetic_photon_flux_density("radiation.irradiance_Q_sunlit"): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
+    photosynthetic_photon_flux_density(x=radiation.irradiance_Q_sunlit): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
 end
 
 @system ShadedWeather(Weather) begin
     radiation ~ ::Radiation(override)
-    photosynthetic_photon_flux_density("radiation.irradiance_Q_shaded"): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
+    photosynthetic_photon_flux_density(x=radiation.irradiance_Q_shaded): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
 end
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis(Trait) begin
     #FIXME remove dep to Photosynthesis
-    radiation => Radiation(; context=context, sun=plant.weather.sun, photosynthesis=self) ~ ::Radiation
+    radiation(context, plant) => Radiation(; context=context, sun=plant.weather.sun, photosynthesis=self) ~ ::Radiation
 
-    sunlit_weather => SunlitWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::SunlitWeather
-    shaded_weather => ShadedWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::ShadedWeather
+    sunlit_weather(context, plant, radiation) => SunlitWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::SunlitWeather
+    shaded_weather(context, plant, radiation) => ShadedWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::ShadedWeather
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use self.p.nitrogen.leaf_content, leaf_width, ET_supply
-    sunlit => GasExchange(; context=context, soil=plant.soil, name="Sunlit", weather=sunlit_weather) ~ ::GasExchange
-    shaded => GasExchange(; context=context, soil=plant.soil, name="Shaded", weather=shaded_weather) ~ ::GasExchange
+    sunlit(context, plant, sunlit_weather) => GasExchange(; context=context, soil=plant.soil, name="Sunlit", weather=sunlit_weather) ~ ::GasExchange
+    shaded(context, plant, shaded_waether) => GasExchange(; context=context, soil=plant.soil, name="Shaded", weather=shaded_weather) ~ ::GasExchange
 
     leaf_width => begin
         # to be calculated when implemented for individal leaves
@@ -28,14 +28,14 @@ end
         1.5 # for garlic
     end ~ preserve(u"cm", parameter)
 
-    leaf_area_index("p.area.leaf_area_index"): LAI ~ track(u"cm^2/m^2")
+    leaf_area_index(x=p.area.leaf_area_index): LAI ~ track(u"cm^2/m^2")
 
     #TODO how do we get LeafWP and ET_supply?
-    leaf_water_potential("p.soil.WP_leaf"): LWP ~ track(u"MPa")
+    leaf_water_potential(x=p.soil.WP_leaf): LWP ~ track(u"MPa")
 
-    planting_density("p.planting_density"): D ~ track(u"m^-2")
+    planting_density(x=p.planting_density): D ~ track(u"m^-2")
 
-    evapotranspiration_supply(LAI, D, ws="p.water.supply", ww="p.weight.H2O") => begin
+    evapotranspiration_supply(LAI, D, ws=p.water.supply, ww=p.weight.H2O) => begin
         #TODO common handling logic for zero LAI
         #FIXME check unit conversion (w.r.t p.water.supply)
         # ? * (1/m^2) / (3600s/hour) / (g/umol) / (cm^2/m^2) = mol/m^2/s H2O
@@ -46,9 +46,9 @@ end
         isinf(s) ? 0 : s
     end ~ track(u"mol/m^2/s" #= H2O =#)
 
-    sunlit_leaf_area_index("radiation.sunlit_leaf_area_index"): LAI_sunlit ~ track(u"cm^2/m^2")
+    sunlit_leaf_area_index(x=radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
 
-    shaded_leaf_area_index("radiation.shaded_leaf_area_index"): LAI_shaded  ~ track(u"cm^2/m^2")
+    shaded_leaf_area_index(x=radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"cm^2/m^2")
 
     weighted(LAI_sunlit, LAI_shaded; array) => begin
         v = [LAI_sunlit LAI_shaded] * array
@@ -56,14 +56,14 @@ end
         v[1]
     end ~ call
 
-    sunlit_irradiance("radiation.irradiance_Q_sunlit") ~ track(u"μmol/m^2/s" #= Quanta =#)
-    shaded_irradiance("radiation.irradiance_Q_shaded") ~ track(u"μmol/m^2/s" #= Quanta =#)
+    sunlit_irradiance(x=radiation.irradiance_Q_sunlit) ~ track(u"μmol/m^2/s" #= Quanta =#)
+    shaded_irradiance(x=radiation.irradiance_Q_shaded) ~ track(u"μmol/m^2/s" #= Quanta =#)
 
-    gross_array(a="sunlit.A_gross", b="shaded.A_gross") => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
-    net_array(a="sunlit.A_net", b="shaded.A_net") => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
-    evapotranspiration_array(a="sunlit.ET", b="shaded.ET") => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
-    #temperature_array(a="sunlit.T_leaf", b="shaded.T_leaf") => [a, b] ~ track::Vector{Float64}(u"°C")
-    conductance_array(a="sunlit.gs", b="shaded.gs") => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
+    gross_array(a=sunlit.A_gross, b=shaded.A_gross) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
+    net_array(a=sunlit.A_net, b=shaded.A_net) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
+    evapotranspiration_array(a=sunlit.ET, b=shaded.ET) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
+    #temperature_array(a=sunlit.T_leaf, b=shaded.T_leaf) => [a, b] ~ track::Vector{Float64}(u"°C")
+    conductance_array(a=sunlit.gs, b=shaded.gs) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
 
     gross_CO2_umol_per_m2_s(weighted, gross_array): A_gross => weighted(array=gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
 
@@ -87,24 +87,24 @@ end
 
     # final values
     #TODO check final units
-    assimilation(A_gross, D, w="p.weight.CO2") => begin
+    assimilation(A_gross, D, w=p.weight.CO2) => begin
         # grams CO2 per plant per hour
         A_gross / D * w
     end ~ capture(u"g")
 
-    gross(A_gross, D, w="p.weight.CH2O") => begin
+    gross(A_gross, D, w=p.weight.CH2O) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_gross / D * w
     end ~ capture(u"g")
 
-    net(A_net, D, w="p.weight.CH2O") => begin
+    net(A_net, D, w=p.weight.CH2O) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_net / D * w
     end ~ capture(u"g")
 
-    transpiration(ET, D, w="p.weight.H2O") => begin
+    transpiration(ET, D, w=p.weight.H2O) => begin
         # Units of Transpiration from sunlit->ET are mol m-2 (leaf area) s-1
         # Calculation of transpiration from ET involves the conversion to gr per plant per hour
         ET / D * w
@@ -113,7 +113,7 @@ end
     #FIXME: no sense to weight two temperature values here?
     #temperature(weighted, temperature_array) => weighted(array=temperature_array) ~ track(u"°C")
 
-    vapor_pressure_deficit(VPD="sunlit.VPD") => begin
+    vapor_pressure_deficit(VPD=sunlit.VPD) => begin
         #HACK only use sunlit leaves?
         max(0u"kPa", VPD)
     end ~ track(u"kPa")

@@ -1,6 +1,6 @@
 @system Organ begin
     plant: p ~ ::System(override)
-    pheno => plant.pheno ~ ::System
+    pheno(plant) => plant.pheno ~ ::System
 
     # organ temperature, C
     temperature(pheno): T ~ drive(u"°C")
@@ -16,7 +16,7 @@
     end ~ accumulate(u"g") # Nitrogen
 
     # physiological age accounting for temperature effect (in reference to endGrowth and lifeSpan, days)
-    physiological_age(T, e="pheno.emerged") => begin
+    physiological_age(T, e=pheno.emerged) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         if e
             #TODO support species/cultivar specific temperature parameters

@@ -8,7 +8,7 @@
 
     ready => true ~ flag
 
-    over(rate, f="pheno.emergence.begin_from_emergence") => (rate >= 0.5 || f) ~ flag
+    over(rate, f=pheno.emergence.begin_from_emergence) => (rate >= 0.5 || f) ~ flag
 
     #FIXME postprocess similar to @produce?
     # finish(GDD_sum="pheno.gdd_recorder.rate", t="context.clock.tick", dt="context.clock.step") => begin

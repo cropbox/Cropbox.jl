@@ -14,7 +14,7 @@
     #     self.cumulative_demand = 0
     #     self.cumulative_soil_uptake = 0
 
-    pool_from_shoot(shoot="p.mass.shoot", pd="p.planting_density", frac=0.063) => begin
+    pool_from_shoot(shoot=p.mass.shoot, pd=p.planting_density, frac=0.063) => begin
         if shoot * pd <= 100u"g/m^2"
             # when shoot biomass is lower than 100 g/m2, the maximum [N] allowed is 6.3%
             # shoot biomass and Nitrogen are in g
@@ -30,13 +30,13 @@
         end
     end ~ track(u"g") # Nitrogen
 
-    initial_pool(seed="p.mass.initial_seed", frac=0.034) => begin
+    initial_pool(seed=p.mass.initial_seed, frac=0.034) => begin
         # assume nitrogen concentration at the beginning is 3.4% of the total weight of the seed
         frac * seed # 0.275
     end ~ track(u"g") # Nitrogen
 
     #FIXME: how to use `initial_pool` when track has no init?
-    pool(ps="pool_from_shoot", us="uptake_from_soil") => begin
+    pool(ps=pool_from_shoot, us=uptake_from_soil) => begin
         ps + us
     end ~ track(u"g") # Nitrogen
 
@@ -53,7 +53,7 @@
         #no nitrogen remobilization from old leaf to young leaf is considered for now YY
 
     #TODO rename to `leaf_to_plant_ratio`? or just keep it?
-    leaf_fraction(tt="p.pheno.gdd_after_emergence") => begin
+    leaf_fraction(tt=p.pheno.gdd_after_emergence) => begin
         # Calculate faction of nitrogen in leaves (leaf NFraction) as a function of thermal time from emergence
         # Equation from Lindquist et al. 2007 YY
         #SK 08/20/10: TotalNitrogen doesn't seem to be updated at all anywhere else since initialized from the seed content
@@ -76,7 +76,7 @@
 
     #TODO rename to `unit_leaf`?
     # Calculate leaf nitrogen content of per unit area
-    leaf_content(leaf, green_leaf="p.area.green_leaf") => begin
+    leaf_content(leaf, green_leaf=p.area.green_leaf) => begin
         # defining leaf nitrogen content this way, we did not consider the difference in leaf nitrogen content
         # of sunlit and shaded leaf yet YY
         #SK 8/22/10: set avg greenleaf N content before update in g/m2
