@@ -145,6 +145,8 @@ add!(d::Dependency{VarNode}, v::VarInfo) = begin
         link!(d, n0, n1)
         inlink!(d, v, n0; equation=false)
         inlink!(d, v, n1)
+        # needs access to context in Solve constructor
+        link!(d, node!(d, d.M[:context]), n0)
     elseif v.state == :Flag
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
@@ -156,6 +158,8 @@ add!(d::Dependency{VarNode}, v::VarInfo) = begin
         link!(d, n0, n1)
         inlink!(d, v, n0)
         inlink!(d, v, n1)
+        # needs access to context in Produce constructor
+        link!(d, node!(d, d.M[:context]), n0)
     else
         n = mainnode!(d, v)
         inlink!(d, v, n)
