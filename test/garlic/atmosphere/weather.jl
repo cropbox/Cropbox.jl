@@ -5,8 +5,8 @@ using CSV
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather begin
-    calendar(context) => Calendar(; context=context) ~ ::Calendar(expose)
-    vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure(expose)
+    calendar(context) => Calendar(; context=context) ~ ::Calendar
+    vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure
     sun(context, calendar, PFD) => Sun(; context=context, calendar=calendar, weather=self) ~ ::Sun
 
     filename => "" ~ preserve(parameter)

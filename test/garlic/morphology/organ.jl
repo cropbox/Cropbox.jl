@@ -1,5 +1,5 @@
 @system Organ begin
-    plant: p ~ ::System(override, expose)
+    plant: p ~ ::System(override)
     pheno => plant.pheno ~ ::System
 
     # organ temperature, C

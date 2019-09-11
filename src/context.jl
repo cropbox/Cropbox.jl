@@ -1,8 +1,8 @@
 @system Context begin
-    self => self ~ ::System(expose)
+    self => self ~ ::System
     context => self ~ ::System
 
-    config => configure() ~ ::Config(override, expose)
+    config => configure() ~ ::Config(override)
 	order => Order() ~ ::Order
 	queue => Queue() ~ ::Queue
 

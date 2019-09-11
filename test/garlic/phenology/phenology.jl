@@ -73,7 +73,7 @@ include("scape.jl")
     leaf_appearance => LeafAppearance(; context=context, phenology=self) ~ ::System
     floral_initiation => FloralInitiation(; context=context, phenology=self) ~ ::System
     bulbing => Bulbing(; context=context, phenology=self) ~ ::System
-    scape => Scape(; context=context, phenology=self) ~ ::System(expose)
+    scape => Scape(; context=context, phenology=self) ~ ::System
     scape_appearance => ScapeAppearance(; context=context, phenology=self, scape=scape) ~ ::System
     scape_removal => ScapeRemoval(; context=context, phenology=self, scape=scape) ~ ::System
     flowering => Flowering(; context=context, phenology=self, scape=scape) ~ ::System

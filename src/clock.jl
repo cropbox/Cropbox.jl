@@ -1,7 +1,7 @@
 @system Clock begin
-    self => self ~ ::System(expose)
+    self => self ~ ::System
     context => nothing ~ ::Nothing
-    config ~ ::Config(override, expose)
+    config ~ ::Config(override)
     unit => nothing ~ preserve(parameter)
     init => 0 ~ preserve(unit=unit, parameter)
     step => 1 ~ preserve(unit=unit, parameter)

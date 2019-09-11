@@ -176,9 +176,8 @@ gendecl(i::VarInfo{Nothing}) = begin
     else
         decl = :($(esc(i.type))())
     end
-    if haskey(i.tags, :expose)
-        decl = :($(esc(i.name)) = $decl)
-    end
+    # implicit :expose
+    decl = :($(esc(i.name)) = $decl)
     gendecl(decl, i.name, i.alias)
 end
 gendecl(decl, var, alias) = @q begin
@@ -231,9 +230,9 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    self => self ~ ::Cropbox.System(expose)
-    context ~ ::Cropbox.Context(override, expose)
-    config(context) => context.config ~ ::Cropbox.Config(expose)
+    self => self ~ ::Cropbox.System
+    context ~ ::Cropbox.Context(override)
+    config(context) => context.config ~ ::Cropbox.Config
 end
 mixins(::Type{<:System}) = [System]
 mixins(s::S) where {S<:System} = mixins(S)
@@ -426,13 +425,10 @@ symlabel(v::VarInfo, t::Step) = Symbol(v.name, suffix(t))
 genupdateinit(n::VarNode) = begin
     v = n.info
     s = symstate(v)
-    if haskey(v.tags, :expose)
-        @q begin
-            $s = $(v.name) = _system.$(v.name)
-            $([:($a = $s) for a in v.alias]...)
-        end
-    else
-        @q $s = _system.$(v.name)
+    # implicit :expose
+    @q begin
+        $s = $(v.name) = _system.$(v.name)
+        $([:($a = $s) for a in v.alias]...)
     end
 end
 

@@ -23,9 +23,9 @@ import Dates: dayofyear, hour
 
 @system Sun begin
     #TODO make Location external
-    location(context): loc => Location(; context=context) ~ ::Location(expose) #(override)
-    calendar ~ ::System(override, expose)
-    weather ~ ::System(override, expose)
+    location(context): loc => Location(; context=context) ~ ::Location #(override)
+    calendar ~ ::System(override)
+    weather ~ ::System(override)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
     datetime(t=calendar.time): t => t ~ track::ZonedDateTime

@@ -12,10 +12,10 @@ end
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis(Trait) begin
     #FIXME remove dep to Photosynthesis
-    radiation => Radiation(; context=context, sun=plant.weather.sun, photosynthesis=self) ~ ::Radiation(expose)
+    radiation => Radiation(; context=context, sun=plant.weather.sun, photosynthesis=self) ~ ::Radiation
 
-    sunlit_weather => SunlitWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::SunlitWeather(expose)
-    shaded_weather => ShadedWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::ShadedWeather(expose)
+    sunlit_weather => SunlitWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::SunlitWeather
+    shaded_weather => ShadedWeather(; context=context, weather=plant.weather, radiation=radiation) ~ ::ShadedWeather
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use self.p.nitrogen.leaf_content, leaf_width, ET_supply

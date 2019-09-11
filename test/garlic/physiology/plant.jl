@@ -1,6 +1,6 @@
 @system Plant begin
-    weather => Weather(; context=context) ~ ::Weather(expose)
-    soil => Soil(; context=context) ~ ::Soil(expose)
+    weather => Weather(; context=context) ~ ::Weather
+    soil => Soil(; context=context) ~ ::Soil
 
     phenology: pheno => Phenology(; context=context, plant=self, weather=weather, soil=soil) ~ ::Phenology
     photosynthesis => Photosynthesis(; context=context, plant=self) ~ ::Photosynthesis
