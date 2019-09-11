@@ -594,7 +594,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
-    N_MAX = 20
+    N_MAX = 100
     TOL = 0.0001
     l = symlabel(v, PreStep())
     @gensym s d zero tol
