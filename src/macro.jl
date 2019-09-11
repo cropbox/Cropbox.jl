@@ -312,12 +312,7 @@ sortednodes(name, infos) = begin
     add!(d, infos)
     #HACK: for debugging
     save(d, name)
-    N = sort(d)
-    #HACK: sort again for vars/non-vars
-    S = empty(N)
-    foreach(n -> isnothing(n.info.state) && push!(S, n), N)
-    foreach(n -> !isnothing(n.info.state) && push!(S, n), N)
-    S
+    sort(d)
 end
 
 macro system(head, body)
