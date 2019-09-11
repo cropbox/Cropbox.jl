@@ -2,7 +2,8 @@ using Unitful
 import Unitful: DimensionlessUnits, Units
 
 unitfy(::Nothing, u) = nothing
-unitfy(v::Number, ::Nothing) = v
+unitfy(::Nothing, ::Nothing) = nothing
+unitfy(v, ::Nothing) = v
 unitfy(v::Number, u::Units) = Quantity(v, u)
 unitfy(v::Number, u::DimensionlessUnits) = u(v)
 unitfy(v::Array, u::Units) = Quantity.(v, u)
