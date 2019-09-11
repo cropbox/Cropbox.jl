@@ -49,7 +49,7 @@ sort(d::Dependency) = begin
     [d.V[i] for i in J]
 end
 
-using LaTeXStrings
+#using LaTeXStrings
 label(n::VarNode) = begin
     v = n.info
     name = replace(String(isempty(v.alias) ? v.name : v.alias[1]), "_" => "")
@@ -64,8 +64,9 @@ label(n::VarNode) = begin
     end
     latexstring("$(name)_{$tag}")
 end
-using TikzGraphs, TikzPictures
-save(d::Dependency, name) = TikzPictures.save(PDF(String(name)), TikzGraphs.plot(d.g, label.(d.V)))
+#using TikzGraphs, TikzPictures
+#save(d::Dependency, name) = TikzPictures.save(PDF(String(name)), TikzGraphs.plot(d.g, label.(d.V)))
+save(d::Dependency, name) = nothing
 
 ####
 
