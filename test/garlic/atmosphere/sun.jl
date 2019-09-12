@@ -19,7 +19,7 @@
     altitude => 20u"m" ~ preserve(u"m", parameter)
 end
 
-import Dates: dayofyear, hour
+import Dates
 
 @system Sun begin
     #TODO make Location external
@@ -29,8 +29,8 @@ import Dates: dayofyear, hour
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
     datetime(t=calendar.time): t => t ~ track::ZonedDateTime
-    day(t): d => dayofyear(t) ~ track::Int
-    hour(t): h => hour(t) ~ track::Int(u"hr")
+    day(t): d => Dates.dayofyear(t) ~ track::Int
+    hour(t): h => Dates.hour(t) ~ track::Int(u"hr")
 
     latitude(loc): lat ~ drive(u"°") # DO NOT convert to radians for consistency
     longitude(loc): long ~ drive(u"°") # leave it as in degrees, used only once for solar noon calculation
