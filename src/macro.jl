@@ -59,7 +59,6 @@ parsetags(tags::Vector, type, state, args) = begin
             d[t] = true
         end
     end
-    get(d, :parameter, false) && (d[:static] = true; push!(args, :config))
     !haskey(d, :unit) && (d[:unit] = nothing)
     (state in (:Accumulate, :Capture)) && !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     !isnothing(type) && (d[:_type] = esc(type))
