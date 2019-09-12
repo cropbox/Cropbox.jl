@@ -408,14 +408,12 @@ using Unitful
     #     @test isapprox(Cropbox.value(s.x), 1; atol=1e-3)
     # end
 
-    @testset "solve with unit" begin
+    @testset "solve bisect with unit" begin
         @system S begin
-            a(x) => 2x ~ track(u"m")
-            x(a) => a - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
+            x(x) => 2x - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
         end
         s = instance(S)
         @test s.x == u"1m"
-        @test s.a == u"2m"
     end
 
     @testset "clock" begin
