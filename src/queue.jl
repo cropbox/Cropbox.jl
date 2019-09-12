@@ -14,7 +14,7 @@ current(q::Queue, ::PostPriority) = (q.pending ? q.postpending : q.post)
 
 queue!(q::Queue, f, p::PrePriority) = queue!(current(q, p), f)
 queue!(q::Queue, f, p::PostPriority) = queue!(current(q, p), f)
-queue!(q::Vector, f::Function) = push!(q, f)
+queue!(q::Vector, f) = push!(q, f)
 queue!(q::Vector, ::Nothing) = nothing
 
 flush!(q::Queue, p::PrePriority) = flush!(current(q, p))
