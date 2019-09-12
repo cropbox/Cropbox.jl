@@ -106,12 +106,10 @@ add!(d::Dependency, v::VarInfo) = begin
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         link!(d, n0, n1)
-        inlink!(d, v, n0; equation=false)
         inlink!(d, v, n1)
         # needs access to context in Solve constructor
         c = mainnode!(d, :context)
-        n = firstnode(d, v)
-        link!(d, c, n)
+        link!(d, c, n0)
     elseif v.state == :Flag
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
