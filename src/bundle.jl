@@ -14,7 +14,7 @@ struct Bundle
     ops::Vector{BundleOperator}
 end
 
-import Base: getindex, getproperty
+import Base: getindex
 getindex(s::Produce, ops::AbstractString) = begin
     resolve(op::AbstractString) = begin
         if op == "*"
@@ -35,10 +35,19 @@ getindex(s::Produce, ops::AbstractString) = begin
     end
     Bundle(s, resolve.(split(ops, "/")))
 end
-getproperty(b::Bundle, p::Symbol) = map(s -> getproperty(s, p), collect(b))
+
+struct Bunch
+    list::Vector
+end
+
+import Base: getproperty
+getproperty(b::Bundle, p::Symbol) = map(s -> getproperty(s, p), collect(b)) |> Bunch
+getproperty(b::Bunch, p::Symbol) = map(s -> getproperty(s, p), collect(b)) |> Bunch
+value(b::Bunch) = value.(collect(b))
 
 import Base: collect
 collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
+collect(b::Bunch) = getfield(b, :list)
 collect(p::Produce, ::BundleAll) = value(p)
 collect(p::Produce, ::BundleRecursiveAll) = begin
     S = value(p)
