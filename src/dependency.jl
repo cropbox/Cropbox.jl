@@ -40,7 +40,7 @@ invertices!(d::Dependency, v::VarInfo; kwargs...) = begin
     f(a::Symbol) = f(d.M[a])
     f(v0::VarInfo) = begin
         #@show v0
-        if v0 == v || v.state == :Solve
+        if v0 == v || v0.state == :Solve
             prenode!(d, v0)
         else
             mainnode!(d, v0)
