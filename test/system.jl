@@ -172,7 +172,7 @@ using Unitful
 
     @testset "parameter" begin
         @system S begin
-            a => 1 ~ pass(parameter)
+            a => 1 ~ preserve(parameter)
         end
         s = instance(S)
         @test s.a == 1
@@ -182,7 +182,7 @@ using Unitful
 
     @testset "parameter with config" begin
         @system S begin
-            a => 1 ~ pass(parameter)
+            a => 1 ~ preserve(parameter)
             b(a) => a ~ track(parameter)
         end
         o = configure(S => (:a => 2, :b => (:a => 3)))
@@ -196,8 +196,8 @@ using Unitful
 
     @testset "parameter with config alias" begin
         @system S begin
-            a: aa => 1 ~ pass(parameter)
-            bb: b => 1 ~ pass(parameter)
+            a: aa => 1 ~ preserve(parameter)
+            bb: b => 1 ~ preserve(parameter)
         end
         o = configure(S => (:a => 2, :b => 2))
         s = instance(S; config=o)

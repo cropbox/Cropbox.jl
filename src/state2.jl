@@ -85,18 +85,6 @@ end
 
 ####
 
-mutable struct Pass{V} <: State{V}
-    value::V
-end
-
-Pass(; unit, _value, _type=nothing, _...) = begin
-    v = unitfy(_value, value(unit))
-    V = typeof(v)
-    Pass{V}(v)
-end
-
-####
-
 mutable struct Advance{T} <: State{T}
     value::Timepiece{T}
 end
