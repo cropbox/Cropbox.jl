@@ -585,10 +585,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     @gensym s P
     @q let $s = $(symstate(v)),
            $P = $(genfunc(v))
-        #() -> $C.produce(s, p, x)
-        if isnothing($P)
-            $P
-        else
+        if !(isnothing($P) || isempty($P))
             function ()
                 for p in $P
                     append!($s.value, p.type(; context=context, p.args...))
