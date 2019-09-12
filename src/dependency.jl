@@ -116,15 +116,16 @@ add!(d::Dependency, v::VarInfo) = begin
         link!(d, n0, n1)
         inlink!(d, v, n1)
     elseif v.state == :Produce
-        n0 = mainnode!(d, v)
-        n1 = postnode!(d, v)
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        n2 = postnode!(d, v)
         link!(d, n0, n1)
-        inlink!(d, v, n0)
+        link!(d, n1, n2)
         inlink!(d, v, n1)
+        inlink!(d, v, n2)
         # needs access to context in Produce constructor
         c = mainnode!(d, :context)
-        n = firstnode(d, v)
-        link!(d, c, n)
+        link!(d, c, n0)
     else
         n = mainnode!(d, v)
         inlink!(d, v, n)
