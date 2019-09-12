@@ -307,7 +307,7 @@ sortednodes(name, infos) = begin
             M[n] = v
         end
     end
-    d = Dependency{VarNode}(M)
+    d = Dependency(M)
     add!(d, infos)
     #HACK: for debugging
     save(d, name)
