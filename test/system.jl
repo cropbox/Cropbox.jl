@@ -319,7 +319,7 @@ using Unitful
     @testset "produce query condition with track bool" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t=context.clock.tick) => t ~ preserve::Int
+            i(t=context.clock.tick) => t ~ preserve
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -357,7 +357,7 @@ using Unitful
     @testset "produce query condition with flag" begin
         @system S begin
             p(self) => produce(typeof(self)) ~ produce
-            i(t=context.clock.tick) => t ~ preserve::Int
+            i(t=context.clock.tick) => t ~ preserve
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track

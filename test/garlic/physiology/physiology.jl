@@ -1,5 +1,3 @@
-include("trait.jl")
-
 include("area.jl")
 include("count.jl")
 include("mass.jl")

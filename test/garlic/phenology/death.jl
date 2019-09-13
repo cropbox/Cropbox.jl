@@ -2,7 +2,7 @@
     dieable => true ~ flag
     dead => begin
         #FIXME implement Count trait equivalent
-        #return self.pheno.plant.count.total_dropped_leaves >= self.pheno.leaves_initiated
+        #self.pheno.plant.count.dropped_leaves >= self.pheno.leaves_initiated
         false
     end ~ flag
     dying(a=dieable, b=dead) => (a && !b) ~ flag

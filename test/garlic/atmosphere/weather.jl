@@ -19,7 +19,7 @@ using CSV
             datetime_from_julian_day_WEA(r.year, r.jday, r.time, timezone)
         end
         df
-    end ~ preserve::DataFrame
+    end ~ preserve
     key(t=calendar.time) => t ~ track::ZonedDateTime
     store(df, index, key): s => begin
         r = df[df[!, index] .== key, :][1, :]
@@ -53,9 +53,9 @@ end
 # import Base: show
 # show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
 
-o = configure(
-    :Clock => (:unit => u"hr"),
-    :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
-    :Weather => (:filename => "test/garlic/data/2007.wea"),
-)
+# o = configure(
+#     :Clock => (:unit => u"hr"),
+#     :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
+#     :Weather => (:filename => "test/garlic/data/2007.wea"),
+# )
 #w = instance(Weather; config=o)

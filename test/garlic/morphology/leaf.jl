@@ -1,7 +1,5 @@
 @system Leaf(Organ) begin
-    nodal_unit: nu ~ ::System(override)
-
-    rank(x=nu.rank) ~ track::Int
+    rank ~ ::Int(override) # preserve
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
     # This is the "potential" elongation rate with no water stress Yang
@@ -9,7 +7,7 @@
 
     # max elongation rate (cm per day) at optipmal temperature
     # (Topt: 31C with Tbase = 9.8C using 0.564 cm/dd rate from Fournier 1998 paper above
-    maximum_elongation_rate: LER => 12 ~ preserve(u"cm/d", parameter)
+    maximum_elongation_rate: LER_max => 12 ~ preserve(u"cm/d", parameter)
 
     minimum_length_of_longest_leaf: LM_min => 60 ~ preserve(u"cm", parameter)
 
@@ -30,7 +28,7 @@
     # Once fully grown, the clock works differently so that the hotter it is quicker it ages
     stay_green: SG => 3.5 ~ preserve(parameter)
 
-    aging_rate(LER) ~ preserve(u"cm/d", parameter)
+    maximum_aging_rate(LER_max) => LER_max ~ preserve(u"cm/d", parameter)
 
     #############
     # Variables #
@@ -87,7 +85,7 @@
 
     potential_length(maximum_length, rank, np=potential_leaves, ng=pheno.leaves_generic) => begin
         # for MAIZSIM
-        #return self.maximum_length * self.rank_effect(weight=0.5)
+        #self.maximum_length * self.rank_effect(weight=0.5)
         # for beta fn calibrated from JH's thesis for SP and KM varieties, 8/10/15, SK
         #FIXME: leaves_potential is already max(leaves_generic, leaves_total)?
         n = max(np, ng)
@@ -105,9 +103,9 @@
     # the unit of k is cm^2 (Fournier and Andrieu 1998 Pg239). YY
     # L_max is the length of the largest leaf when grown at T_peak. Here we assume LM_min is determined at growing Topt with minmal (generic) leaf no, SK 8/2011
     # If this routine runs before TI, totalLeaves = genericLeafNo, and needs to be run with each update until TI and total leaves are finalized, SK
-    growth_duration(potential_length, LER): GD => begin
+    growth_duration(potential_length, LER_max): GD => begin
         # shortest possible linear phase duration in physiological time (days instead of GDD) modified
-        days = potential_length / LER
+        days = potential_length / LER_max
         # for garlic
         1.5days
     end ~ track(u"d")
@@ -128,7 +126,7 @@
         # equa 6. Fournier and Andrieu(1998) multiplied by Birch et al. (1998) leaf no effect
         # LA_max the area of the largest leaf
         # PotentialArea potential final area of a leaf with rank "n". YY
-        #return self.maximum_area * self.leaf_number_effect * self.rank_effect(weight=1)
+        #self.maximum_area * self.leaf_number_effect * self.rank_effect(weight=1)
         # for garlic
         area_from_length(l=potential_length)
     end ~ track(u"cm^2")
@@ -142,7 +140,7 @@
         # elongAge indicates where it is now along the elongation stage or duration.
         # duration is determined by totallengh/maxElongRate which gives the shortest duration to reach full elongation in the unit of days.
         #FIXME no need to check here, as it will be compared against duration later anyways
-        #return min(self._elongation_tracker.rate, self.growth_duration)
+        #min(self._elongation_tracker.rate, self.growth_duration)
         #FIXME how to define unit for this?
         if growing
             1u"hr/d" * beta_thermal_func(T, T_opt, T_ceil)
@@ -152,7 +150,7 @@
     end ~ accumulate(u"d")
 
     #TODO move to common module (i.e. Organ?)
-    beta_growth(t_m=nothing, t_b=0u"d", delta=1; t, c_m, t_e) => begin
+    beta_growth(t_b=0u"d", delta=1; t, t_m=nothing, c_m, t_e) => begin
         t = clamp(t, 0u"d", t_e)
         t_m = isnothing(t_m) ? t_e / 2 : t_m
         t_et = t_e - t
@@ -162,10 +160,10 @@
         c_m * ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
     end ~ call(u"cm/d")
 
-    potential_elongation_rate(growing, beta_growth, elongation_age, LER, GD) => begin
+    potential_elongation_rate(growing, beta_growth, elongation_age, LER_max, GD) => begin
         if growing
             #TODO proper integration with scipy.integrate
-            beta_growth(t=elongation_age, c_m=LER, t_e=GD)
+            beta_growth(t=elongation_age, c_m=LER_max, t_e=GD)
         else
             0u"cm/d"
         end
@@ -185,9 +183,9 @@
     end ~ call
 
     temperature_effect => begin
-        #return temperature_effect_func(T_grow=self.p.pheno.growing_temperature, T_peak=18.7, T_base=8.0) # for MAIZSIM
+        #temperature_effect_func(T_grow=self.p.pheno.growing_temperature, T_peak=18.7, T_base=8.0) # for MAIZSIM
         #FIXME garlic model uses current temperature, not average growing temperature
-        #return temperature_effect_func(T_grow=self.p.pheno.temperature, T_peak=self.p.pheno.optimal_temperature, T_base=0) # for garlic
+        #temperature_effect_func(T_grow=self.p.pheno.temperature, T_peak=self.p.pheno.optimal_temperature, T_base=0) # for garlic
         #FIXME garlic model does not actually use tempeature effect on final leaf size calculation
         1.0 # for garlic
     end ~ track
@@ -211,7 +209,7 @@
         ##area = max(0, water_effect * T_effect * self.potential_area * (1 + (t_e - self.elongation_age) / (t_e - t_m)) * (self.elongation_age / t_e)**(t_e / (t_e - t_m)))
         #maximum_expansion_rate = T_effect * self.potential_area * (2*t_e - t_m) / (t_e * (t_e - t_m)) * (t_m / t_e)**(t_m / (t_e - t_m))
         # potential leaf area increase without any limitations
-        #return max(0, maximum_expansion_rate * max(0, (t_e - self.elongation_age) / (t_e - t_m) * (self.elongation_age / t_m)**(t_m / (t_e - t_m))) * self.timestep)
+        #max(0, maximum_expansion_rate * max(0, (t_e - self.elongation_age) / (t_e - t_m) * (self.elongation_age / t_m)**(t_m / (t_e - t_m))) * self.timestep)
         if growing
             # for MAIZSIM
             #self.potential_expansion_rate * self.timestep
@@ -269,7 +267,7 @@
 
         # growth temperature effect is now included here, outside of potential area increase calculation
         #TODO water and carbon effects are not multiplicative?
-        return min(we, ce) * te * area_from_length(l=length)
+        min(we, ce) * te * area_from_length(l=length)
     end ~ track(u"cm^2")
 
     #TODO remove if unnecessary
@@ -282,13 +280,13 @@
     # def relative_area_increase(self):
     #     #HACK meaning changed from 'relative to other leaves' (spatial) to 'relative to previous state' (temporal)
     #     # adapted from CPlant::calcPerLeafRelativeAreaIncrease()
-    #     #return self.potential_area_increase / self.nodal_unit.plant.area.potential_leaf_increase
+    #     #self.potential_area_increase / self.nodal_unit.plant.area.potential_leaf_increase
     #     da = self.actual_area_increase
     #     a = self.area - da
     #     if a > 0:
-    #         return da / a
+    #         da / a
     #     else:
-    #         return 0
+    #         0
 
     stay_green_water_stress_duration(mature, water_potential_effect, scale=0.5, threshold=-4.0) => begin
         if mature
@@ -313,7 +311,7 @@
         # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
-        #return min(self._aging_tracker.rate, self.stay_green_duration)
+        #min(self._aging_tracker.rate, self.stay_green_duration)
         if mature && !aging
             #TODO only for MAIZSIM
             q10_thermal_func(T, T_opt)
@@ -340,7 +338,7 @@
     senescence_age(aging, dead, T=pheno.T, T_opt=pheno.T_opt) => begin
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
-        #return min(self._senescence_tracker.rate, self.senescence_duration)
+        #min(self._senescence_tracker.rate, self.senescence_duration)
         #FIXME need to remove dependency cycle? (senescence_age -> senescence_ratio -> dead -> senescence_age)
         if aging && !dead
             q10_thermal_func(T, T_opt)
@@ -350,21 +348,21 @@
     end ~ accumulate(u"d")
 
     #TODO confirm if it really means the senescence ratio, not rate
-    senescence_ratio(aging_rate, senescence_age, length) => begin
+    senescence_ratio(maximum_aging_rate, senescence_age, length) => begin
         # for MAIZSIM
         # t = self.senescence_age
         # t_e = self.senescence_duration
         # if t >= t_e:
-        #     return 1
+        #     1
         # else:
         #     t_m = t_e / 2
         #     r = (1 + (t_e - t) / (t_e - t_m)) * (t / t_e)**(t_e / (t_e - t_m))
-        #     return clip(r, 0., 1.)
+        #     clip(r, 0., 1.)
         # for garlic
         if iszero(length)
             0
         else
-            r = aging_rate * senescence_age / length
+            r = maximum_aging_rate * senescence_age / length
             clamp(r, 0, 1)
         end
     end ~ track
@@ -372,7 +370,7 @@
     senescent_area(senescence_ratio, area) => begin
         # Leaf senescence accelerates with drought and heat. see http://www.agry.purdue.edu/ext/corn/news/timeless/TopLeafDeath.html
         # rate = self._growth_rate(self.senescence_age, self.senescence_duration)
-        # return rate * self.timestep * self.area
+        # rate * self.timestep * self.area
         senescence_ratio * area
     end ~ track(u"cm^2")
 

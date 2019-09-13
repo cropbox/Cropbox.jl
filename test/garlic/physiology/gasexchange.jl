@@ -28,7 +28,7 @@ using Polynomials
         Tk = max(T |> u"K", 0u"K")
         Tbk = max(Tb |> u"K", 0u"K")
         r = exp(Ea * (T - Tb) / (Tbk * R * Tk))
-        #isinf(r) ? 0 : r
+        #isinf(r) ? 0. : r
         r
     end ~ call
 
@@ -186,7 +186,7 @@ end
         d = 0.72width
 
         #FIXME: check units, remove ustrip
-        #return 1.42 # total BLC (both sides) for LI6400 leaf chamber
+        #1.42 # total BLC (both sides) for LI6400 leaf chamber
         1.4 * 0.147 * ustrip(max(0.1u"m/s", wind) / d)^0.5 * ratio
         # (1.4 * 1.1 * 6.62 * (wind / d)^0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
@@ -199,7 +199,7 @@ end
     # stomatal conductance for water vapor in mol m-2 s-1
     # gamma: 10.0 for C4 maize
     #FIXME T_leaf not used
-    stomatal_conductance(g0, g1, gb, m, A_net, CO2, RH, drb, gamma=10u"μmol/mol"): gs => begin
+    stomatal_conductance(g0, g1, gb, m, A_net, CO2=weather.CO2, RH=weather.RH, drb, gamma=10u"μmol/mol"): gs => begin
         Cs = CO2 - (drb * A_net / gb) # surface CO2 in mole fraction
         Cs = max(Cs, gamma)
 
@@ -296,11 +296,11 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     gross_photosynthesis(A_net, Rd): A_gross => begin
-        max(0u"μmol/m^2/s", A_net + Rd) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
+        max(0.0u"μmol/m^2/s", A_net + Rd) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     temperature_adjustment(
-        gb, gv, Jw
+        gb, gv, Jw,
         T_air=weather.T_air,
         PFD=weather.PPFD,
         P_air=weather.P_air,
@@ -323,7 +323,8 @@ end
         psc = Cp / lamda # psychrometric constant (C-1) ~ 6.66e-4
         psc1 = psc * ghr / gv # apparent psychrometer constant
 
-        PAR = (ustrip(PFD) / 4.55) * u"J/m^2/s" # W m-2
+        @nounit PFD
+        PAR = (PFD / 4.55) * u"J/m^2/s" # W m-2
         # If total solar radiation unavailable, assume NIR the same energy as PAR waveband
         NIR = PAR
         scatt = 0.15
@@ -347,7 +348,7 @@ end
     #TODO: expand @optimize decorator to support both cost function and variable definition
     # @temperature.optimize or minimize?
     # def temperature(self):
-    #     return (self.temperature - self.new_temperature)^2
+    #     (self.temperature - self.new_temperature)^2
 
     evapotranspiration(
         gv, T,
@@ -360,7 +361,7 @@ end
         ea = ambient(T=T_air, RH=RH)
         es_leaf = saturation(T=T)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
-        max(0u"μmol/m^2/s", ET) # 04/27/2011 dt took out the 1000 everything is moles now
+        max(0.0u"μmol/m^2/s", ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"μmol/m^2/s" #= H2O =#)
 end
 

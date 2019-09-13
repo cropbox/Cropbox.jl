@@ -47,7 +47,7 @@ end
     # cumulative LAI at the layer
     leaf_area_index(photosynthesis): LAI ~ drive(u"cm^2/m^2")
 
-    leaf_angle => ellipsoidal ~ preserve::LeafAngle(parameter)
+    leaf_angle => ellipsoidal ~ preserve(parameter)
 
     # ratio of horizontal to vertical axis of an ellipsoid
     leaf_angle_factor: LAF => begin
@@ -58,7 +58,7 @@ end
         0.7
     end ~ preserve(parameter)
 
-    wave_band => photothetically_active_radiation ~ preserve::WaveBand(parameter)
+    wave_band => photothetically_active_radiation ~ preserve(parameter)
 
     # scattering coefficient (reflectance + transmittance)
     scattering: s => 0.15 ~ preserve(parameter)
@@ -106,7 +106,7 @@ end
         leaf_angle_coeff(zenith_angle=zenith_angle) * clumping
     end ~ call
 
-    projection_ratio(current_zenith_angle; Kb_at): Kb => begin
+    projection_ratio(Kb_at, current_zenith_angle): Kb => begin
         Kb_at(zenith_angle=current_zenith_angle)
     end ~ track
 
@@ -164,14 +164,14 @@ end
         1 - exp(-2rho_h * Kb / (1 + Kb))
     end ~ call
 
-    canopy_reflectivity_uniform_leaf(current_zenith_angle, rho_cb_at): rho_cb => begin
+    canopy_reflectivity_uniform_leaf(rho_cb_at, current_zenith_angle): rho_cb => begin
         rho_cb_at(zenith_angle=current_zenith_angle)
     end ~ track
 
     # rho_cd: canopy reflectance of diffuse irradiance, de Pury and Farquhar (1997) Table A2
     canopy_reflectivity_diffusion(I0_df, angles, rho_cb_at, fdf): rho_cd => begin
         # Probably the eqn A21 in de Pury is missing the integration terms of the angles??
-        iszero(I0_df) ? 0 : fdf(x=[rho_cb_at(zenith_angle=a) for a in angles])
+        iszero(I0_df) ? 0. : fdf(x=[rho_cb_at(zenith_angle=a) for a in angles])
     end ~ track
 
     # rho_soil: soil reflectivity for PAR band
@@ -192,7 +192,7 @@ end
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_l: dePury (1997) eqn A5
-    irradiance_l(L): I_l => (I_lb(L=L) + I_ld(L=L)) ~ call(u"μmol/m^2/s" #= Quanta =#)
+    irradiance_l(; L): I_l => (I_lb(L=L) + I_ld(L=L)) ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lbSun: dePury (1997) eqn A5
     irradiance_l_sunlit(I0_dr, s, Kb, I_lSh; L): I_lbSun => begin
@@ -207,7 +207,8 @@ end
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lbs: dePury (1997) eqn A5
-    irradiance_lbs(I0_dr, rho_cb, s, Kb1, Kb; L) => begin
+    #FIXME: check name I_lbs vs. I_lbSun
+    irradiance_lbs(I0_dr, rho_cb, s, Kb1, Kb; L): I_lbs => begin
         I0_dr * ((1 - rho_cb) * Kb1 * exp(-Kb1 * L) - (1 - s) * Kb * exp(-Kb * L))
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -333,7 +334,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # scattered radiation at depth L in the canopy
-    irradiance_Q_sc(L; Q_bt, Q_b): Q_sc => begin
+    irradiance_Q_sc(Q_bt, Q_b; L): Q_sc => begin
         # total beam - nonscattered beam at depth L
         Q_bt(L=L) - Q_b(L=L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)

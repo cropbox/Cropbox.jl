@@ -31,7 +31,7 @@ using Polynomials
         Tk = max(0, T + K)
         Tbk = max(0, Tb + K)
         r = exp(Ea * (T - Tb) / (Tbk * R * Tk))
-        isinf(r) ? 0 : r
+        isinf(r) ? 0. : r
     end ~ call
 
     nitrogen_limited_rate(N, s=2.9, N0=0.25): N_dep => begin
@@ -171,7 +171,7 @@ end
         # characteristic dimension of a leaf, leaf width in m
         d = width * 0.72
 
-        #return 1.42 # total BLC (both sides) for LI6400 leaf chamber
+        #1.42 # total BLC (both sides) for LI6400 leaf chamber
         1.4 * 0.147 * (max(0.1, wind) / d)^0.5 * ratio
         # (1.4 * 1.1 * 6.62 * (wind / d)^0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
@@ -322,7 +322,7 @@ end
     #TODO: expand @optimize decorator to support both cost function and variable definition
     # @temperature.optimize or minimize?
     # def temperature(self):
-    #     return (self.temperature - self.new_temperature)^2
+    #     (self.temperature - self.new_temperature)^2
 
     evapotranspiration(
         gv, T,

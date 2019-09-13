@@ -111,7 +111,7 @@ import Dates
         #TODO need to deal with lat_bound to prevent tan(90)?
         #lat_bound = radians(68)? radians(85)?
         # cos(h0) at cos(theta_s) = 0 (solar zenith angle = 90 deg == elevation angle = 0 deg)
-        #return -tan(latitude) * tan(declination_angle)
+        #-tan(latitude) * tan(declination_angle)
         (cos(w_s) - sin(p) * sin(d)) / (cos(p) * cos(d))
 	end ~ call
 
@@ -166,7 +166,7 @@ import Dates
     optical_air_mass_number(atmospheric_pressure, elevation_angle): m => begin
 		t_s = max(elevation_angle, 0)
 		#FIXME check 101.3 is indeed in kPa
-        #iszero(t_s) ? 0 : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
+        #iszero(t_s) ? 0. : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
 		atmospheric_pressure / (101.3u"kPa" * sin(t_s))
 	end ~ track
 
@@ -229,7 +229,7 @@ import Dates
     #TODO better naming: extinction? transmitted_fraction?
     photosynthetic_coeff(τ): PARfr => begin
         #if self.elevation_angle <= 0:
-        #    return 0
+        #    0
         #TODO: implement Weiss and Norman (1985), 3/16/05
         weiss() = nothing
         # Goudriaan and van Laar (1994)

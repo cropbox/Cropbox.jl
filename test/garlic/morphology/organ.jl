@@ -1,6 +1,5 @@
 @system Organ begin
-    plant: p ~ ::System(override)
-    pheno(plant) => plant.pheno ~ ::System
+    phenology: pheno ~ ::System(override)
 
     # organ temperature, C
     temperature(pheno): T ~ drive(u"°C")
@@ -28,14 +27,14 @@
     end ~ accumulate
 
     # chronological age of an organ, days
-    chronological_age(1) ~ accumulate(u"d")
+    chronological_age => 1 ~ accumulate(u"d")
 
     # biomass, g
     # @derive
     # def mass(self):
     #     #FIXME isn't it just the amount of carbohydrate?
-    #     #return self._carbohydrate / Weight.CH2O * Weight.C / Weight.C_to_CH2O_ratio
-    #     return self._carbohydrate
+    #     #self._carbohydrate / Weight.CH2O * Weight.C / Weight.C_to_CH2O_ratio
+    #     self._carbohydrate
     #FIXME need unit conversion from CH2O?
     mass(C) ~ track(u"g") # CH2O
 

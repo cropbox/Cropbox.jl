@@ -1,5 +1,12 @@
 #TODO move into Leaf class?
-@system Nitrogen(Trait) begin
+@system Nitrogen begin
+    pheno ~ hold
+    planting_density ~ hold
+
+    initial_seed_mass ~ hold
+    shoot_mass ~ hold
+    green_leaf_area ~ hold
+
     # SK: get N fraction allocated to leaves, this code is just moved from the end of the procedure, this may be taken out to become a separate fn
 
     # def setup(self):
@@ -14,8 +21,8 @@
     #     self.cumulative_demand = 0
     #     self.cumulative_soil_uptake = 0
 
-    pool_from_shoot(shoot=p.mass.shoot, pd=p.planting_density, frac=0.063) => begin
-        if shoot * pd <= 100u"g/m^2"
+    nitrogen_pool_from_shoot(shoot_mass, planting_density, frac=0.063) => begin
+        if shoot_mass * planting_density <= 100u"g/m^2"
             # when shoot biomass is lower than 100 g/m2, the maximum [N] allowed is 6.3%
             # shoot biomass and Nitrogen are in g
             # need to adjust demand or else there will be mass balance problems
@@ -30,21 +37,21 @@
         end
     end ~ track(u"g") # Nitrogen
 
-    initial_pool(seed=p.mass.initial_seed, frac=0.034) => begin
+    initial_nitrogen_pool(initial_seed_mass, frac=0.034) => begin
         # assume nitrogen concentration at the beginning is 3.4% of the total weight of the seed
-        frac * seed # 0.275
+        frac * initial_seed_mass # 0.275
     end ~ track(u"g") # Nitrogen
 
     #FIXME: how to use `initial_pool` when track has no init?
-    pool(ps=pool_from_shoot, us=uptake_from_soil) => begin
-        ps + us
+    nitrogen_pool(nitrogen_pool_from_shoot, nitrogen_uptake_from_soil) => begin
+        nitrogen_pool_from_shoot + nitrogen_uptake_from_soil
     end ~ track(u"g") # Nitrogen
 
     #TODO for 2DSOIL interface
-    uptake_from_soil => 0 ~ track(u"g") # Nitrogen
+    nitrogen_uptake_from_soil => 0 ~ track(u"g") # Nitrogen
 
     #TODO currently not implemented in the original code
-    # def remobilize(self):
+    # def nitrogen_remobilize(self):
     #     pass
         #droppedLfArea = (1-greenLeafArea/potentialLeafArea)*potentialLeafArea; //calculated dropped leaf area YY
         #SK 8/20/10: Changed it to get all non-green leaf area
@@ -53,7 +60,7 @@
         #no nitrogen remobilization from old leaf to young leaf is considered for now YY
 
     #TODO rename to `leaf_to_plant_ratio`? or just keep it?
-    leaf_fraction(tt=p.pheno.gdd_after_emergence) => begin
+    leaf_nitrogen_fraction(tt=pheno.gdd_after_emergence) => begin
         # Calculate faction of nitrogen in leaves (leaf NFraction) as a function of thermal time from emergence
         # Equation from Lindquist et al. 2007 YY
         #SK 08/20/10: TotalNitrogen doesn't seem to be updated at all anywhere else since initialized from the seed content
@@ -69,17 +76,17 @@
     end ~ track
 
     #TODO rename to `leaves`?
-    leaf(leaf_fraction, pool) => begin
+    leaf_nitrogen(leaf_nitrogen_fraction, nitrogen_pool) => begin
         # calculate total nitrogen amount in the leaves YY units are grams N in all the leaves
-        leaf_fraction * pool
+        leaf_nitrogen_fraction * nitrogen_pool
     end ~ track(u"g") # Nitrogen
 
     #TODO rename to `unit_leaf`?
     # Calculate leaf nitrogen content of per unit area
-    leaf_content(leaf, green_leaf=p.area.green_leaf) => begin
+    leaf_nitrogen_content(leaf_nitrogen, green_leaf_area) => begin
         # defining leaf nitrogen content this way, we did not consider the difference in leaf nitrogen content
         # of sunlit and shaded leaf yet YY
         #SK 8/22/10: set avg greenleaf N content before update in g/m2
-        iszero(green_leaf) ? 0 : (leaf / green_leaf)
+        iszero(green_leaf_area) ? 0. : (leaf_nitrogen / green_leaf_area)
     end ~ track(u"g/cm^2") # Nitrogen
 end

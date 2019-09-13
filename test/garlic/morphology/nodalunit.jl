@@ -1,7 +1,7 @@
 @system NodalUnit(Organ) begin
-    rank => 0 ~ preserve::Int(override)
-    leaf(context, plant) => Leaf(; context=context, plant=plant, nodal_unit=self) ~ ::System
-    sheath(context, plant) => Sheath(; context=context, plant=plant, nodal_unit=self) ~ ::System
+    rank ~ ::Int(override) # preserve
+    leaf(context, phenology, rank) => Leaf(; context=context, phenology=phenology, rank=rank) ~ ::System
+    sheath(context, phenology, rank) => Sheath(; context=context, phenology=phenology, rank=rank) ~ ::System
 
     mass(l=leaf.mass, s=sheath.mass) => (l + s) ~ track(u"g")
 end
