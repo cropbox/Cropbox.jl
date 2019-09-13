@@ -402,7 +402,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     flatten(@q let $args; (; $(kwargs...)) -> $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit]))) end)
 end
 geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
-geninit(v::VarInfo, ::Val{:Capture}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Capture}) = nothing
 geninit(v::VarInfo, ::Val{:Flag}) = false
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 geninit(v::VarInfo, ::Val{:Solve}) = nothing

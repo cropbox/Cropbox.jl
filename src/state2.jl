@@ -108,7 +108,7 @@ mutable struct Preserve{V} <: State{V}
 end
 
 # Preserve is the only State that can store value `nothing`
-Preserve(; unit, _value, _type=nothing, _...) = begin
+Preserve(; unit, _value, _...) = begin
     v = unitfy(_value, value(unit))
     V = typeof(v)
     Preserve{V}(v)
@@ -122,10 +122,9 @@ end
 
 Track(; unit, _value, _type=Float64, _...) = begin
     U = value(unit)
-    #V = valuetype(_type, u)
+    V = valuetype(_type, U)
     v = unitfy(_value, U)
-    #V = promote_type(V, typeof(v))
-    V = typeof(v)
+    V = promote_type(V, typeof(v))
     #T = typeof(value(time))
     Track{V}(v)
 end
@@ -139,10 +138,12 @@ end
 
 Drive(; key=nothing, unit, _name, _value, _type=Float64, _...) = begin
     k = isnothing(key) ? _name : Symbol(key)
-    #V = valuetype(_type, value(unit))
-    V = typeof(_value)
+    U = value(unit)
+    V = valuetype(_type, U)
+    v = unitfy(_value, U)
+    V = promote_type(V, typeof(v))
     #T = typeof(value(time))
-    Drive{V}(_value, k)
+    Drive{V}(v, k)
 end
 
 ####
@@ -172,9 +173,9 @@ end
 
 Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     U = value(unit)
-    #V = valuetype(_type, U)
-    isnothing(_value) && (_value = unitfy(zero(_type), U))
-    V = typeof(_value)
+    V = valuetype(_type, U)
+    v = isnothing(_value) ? unitfy(zero(_type), U) : unitfy(_value, U)
+    V = promote_type(V, typeof(v))
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
     #T = timetype(_type_time, time, _system)
@@ -183,7 +184,7 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Accumulate{V,T,R}(_value, time, t, zero(R))
+    Accumulate{V,T,R}(v, time, t, zero(R))
 end
 
 @generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
@@ -197,11 +198,11 @@ mutable struct Capture{V,T,R} <: State{V}
     rate::R
 end
 
-Capture(; unit, time, _value, _type=Float64, _...) = begin
+Capture(; unit, time, _type=Float64, _...) = begin
     U = value(unit)
-    #V = valuetype(_type, U)
-    isnothing(_value) && (_value = unitfy(zero(_type), U))
-    V = typeof(_value)
+    V = valuetype(_type, U)
+    v = unitfy(zero(_type), U)
+    V = promote_type(V, typeof(v))
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
     t = value(time)
@@ -209,7 +210,7 @@ Capture(; unit, time, _value, _type=Float64, _...) = begin
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Capture{V,T,R}(zero(V), time, t, zero(R))
+    Capture{V,T,R}(v, time, t, zero(R))
 end
 
 @generated rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
@@ -221,8 +222,7 @@ mutable struct Flag{Bool} <: State{Bool}
 end
 
 Flag(; _value, _type=Bool, _...) = begin
-    V = typeof(_value)
-    Flag{V}(_value)
+    Flag{Bool}(_value)
 end
 
 ####
