@@ -183,15 +183,10 @@ using Unitful
     @testset "parameter with config" begin
         @system S begin
             a => 1 ~ preserve(parameter)
-            b(a) => a ~ track(parameter)
         end
-        o = configure(S => (:a => 2, :b => (:a => 3)))
+        o = configure(S => (:a => 2))
         s = instance(S; config=o)
         @test s.a == 2
-        @test s.b == 3
-        advance!(s)
-        @test s.a == 2
-        @test s.b == 3
     end
 
     @testset "parameter with config alias" begin

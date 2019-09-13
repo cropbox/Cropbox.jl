@@ -20,8 +20,8 @@ using Polynomials
     # lambda_l => 1.0e-12
     # K_max => 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
 
-    gbs => 0.003 ~ track(parameter) # bundle sheath conductance to CO2, mol m-2 s-1
-    # gi => 1.0 ~ track(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
+    gbs => 0.003 ~ preserve(parameter) # bundle sheath conductance to CO2, mol m-2 s-1
+    # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     # Arrhenius equation
     temperature_dependence_rate(T, Tb=25; Ea): T_dep => begin
@@ -65,7 +65,7 @@ using Polynomials
     Om => begin
         # mesophyll O2 partial pressure
         O = 210 # gas units are mbar
-    end ~ track(parameter)
+    end ~ preserve(parameter)
 
     # Kp25: Michaelis constant for PEP caboxylase for CO2
     Kp(Kp25=80) => begin
@@ -157,8 +157,8 @@ end
     net_photosynthesis: A_net ~ hold
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
-    g0 => 0.017 ~ track(parameter)
-    g1 => 4.53 ~ track(parameter)
+    g0 => 0.017 ~ preserve(parameter)
+    g1 => 4.53 ~ preserve(parameter)
 
     boundary_layer_conductance(width, wind=weather.wind): gb => begin
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
@@ -241,13 +241,13 @@ end
     ###########
 
     # static properties
-    nitrogen: N => 2.0 ~ track(parameter)
+    nitrogen: N => 2.0 ~ preserve(parameter)
 
     # geometry
-    width => 10 // 100 ~ track(parameter) # meters
+    width => 10 // 100 ~ preserve(parameter) # meters
 
     # soil?
-    ET_supply: Jw => 0 ~ track(parameter)
+    ET_supply: Jw => 0 ~ preserve(parameter)
 
     # dynamic properties
 

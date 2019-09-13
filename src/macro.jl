@@ -378,18 +378,21 @@ end
 
 =#
 
-geninit(v::VarInfo) = begin
-    if get(v.tags, :parameter, false)
-        @q let v = $C.option(config, self, $(names(v)))
-            isnothing(v) || isa(v, AbstractDict) ? $(geninit(v, Val(v.state))) : v
-        end
-    else
-        geninit(v, Val(v.state))
-    end
-end
+geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Hold}) = nothing
 geninit(v::VarInfo, ::Val{:Advance}) = missing
+geninit(v::VarInfo, ::Val{:Preserve}) = begin
+    i = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
+    if get(v.tags, :parameter, false)
+        @gensym o
+        @q let $o = $C.option(config, self, $(names(v)))
+            isnothing($o) ? $i : $o
+        end
+    else
+        i
+    end
+end
 geninit(v::VarInfo, ::Val{:Drive}) = begin
     k = get(v.tags, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
@@ -438,11 +441,6 @@ genupdate(v::VarInfo, t::Step) = begin
     if isnothing(u)
         @q @label $l
     else
-        if get(v.tags, :parameter, false)
-            u = @q let v = $C.option(config, self, $(names(v)))
-                isnothing(v) || isa(v, AbstractDict) ? $u : v
-            end
-        end
         @q begin
             $(LineNumberNode(0, "genupdate/$(v.name)"))
             @label $l
@@ -481,13 +479,27 @@ genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
-    @gensym s p
-    @q let $s = $(symstate(v))
-        $p = $C.value($s)
-        if ismissing($p)
-            $(genstore(v))
-        else
-            $p
+    if get(v.tags, :parameter, false)
+        @gensym s p o
+        @q let $s = $(symstate(v))
+            $p = $C.value($s)
+            if ismissing($p)
+                let $o = $C.option(config, self, $(names(v)))
+                    isnothing($o) ? $(genstore(v)) : $o
+                end
+            else
+                $p
+            end
+        end
+    else
+        @gensym s p
+        @q let $s = $(symstate(v))
+            $p = $C.value($s)
+            if ismissing($p)
+                $(genstore(v))
+            else
+                $p
+            end
         end
     end
 end
@@ -684,13 +696,7 @@ genfuncargs(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
     emit(a) = begin
         p = pair(a)
-        u = @q $C.value($(p[2]))
-        if get(v.tags, :parameter, false)
-            u = @q let v = $C.option(config, self, $(names(v)), $(Meta.quot(p[1])))
-                isnothing(v) ? $u : v
-            end
-        end
-        @q $(esc(p[1])) = $u
+        @q $(esc(p[1])) = $C.value($(p[2]))
     end
     @q begin $(emit.(v.args)...) end
 end

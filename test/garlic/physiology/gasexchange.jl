@@ -168,8 +168,8 @@ end
     net_photosynthesis: A_net ~ hold
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
-    g0 => 0.017 ~ track(u"mmol/m^2/s" #= H2O =#, parameter)
-    g1 => 4.53 ~ track(parameter)
+    g0 => 0.017 ~ preserve(u"mmol/m^2/s" #= H2O =#, parameter)
+    g1 => 4.53 ~ preserve(parameter)
 
     diffusivity_ratio_boundary_layer: drb => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
     diffusivity_ratio_air: dra => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
@@ -264,14 +264,14 @@ end
     ###########
 
     # static properties
-    nitrogen: N => 2.0 ~ track(parameter)
+    nitrogen: N => 2.0 ~ preserve(parameter)
 
     # geometry
-    width => 10 // 100 ~ track(u"m", parameter)
+    width => 10 // 100 ~ preserve(u"m", parameter)
 
     # soil?
     # actual water uptake rate (mol H2O m-2 s-1)
-    ET_supply: Jw => 0 ~ track(u"mol/m^2/s" #= H2O =#, parameter)
+    ET_supply: Jw => 0 ~ preserve(u"mol/m^2/s" #= H2O =#, parameter)
 
     # dynamic properties
 
