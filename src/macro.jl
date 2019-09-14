@@ -299,7 +299,7 @@ genstruct(name, infos, incl) = begin
         $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         #HACK: redefine them to avoid world age problem
-        @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
+        @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce{<:Any}}, $S)
         @generated $C.updatable(::Type{<:$S}) = $C.filteredvars($S)
         # $C.collectible(::Type{<:$S}) = $(gencollectible(infos))
         # $C.updatable(::Type{<:$S}) = $(genupdatable(infos))
