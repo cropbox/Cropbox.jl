@@ -1,5 +1,5 @@
 @testset "lotka volterra" begin
-    @system S begin
+    @system LotkaVolterra begin
         timestep(t=context.clock.tick): t => 0.01t ~ track
         prey_birth_rate: a => 1.0 ~ track
         prey_death_rate: b => 0.1 ~ track
@@ -10,7 +10,7 @@
         prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init=H0, time=t)
         predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init=P0, time=t)
     end
-    s = instance(S)
+    s = instance(LotkaVolterra)
     T = Float64[]
     H = Float64[]
     P = Float64[]

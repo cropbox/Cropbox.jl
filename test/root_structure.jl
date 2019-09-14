@@ -2,7 +2,7 @@ using Distributions
 using Unitful
 
 @testset "root structure" begin
-    @system R begin
+    @system RootSegment begin
         parent => self ~ ::System(override)
         elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"cm")
         branching_angle => rand(Normal(20, 10))*u"°" ~ preserve(u"°")
@@ -16,12 +16,12 @@ using Unitful
         branch(self, is_branching, l) => begin
             if is_branching
                 #println("branch at l = $l")
-                produce(typeof(self), parent=self)
+                produce(RootSegment, parent=self)
             end
         end ~ produce
     end
 
-    render(r::R) = begin
+    render(r::RootSegment) = begin
         # s = trimesh.scene.scene.Scene()
         # #TODO: make System's own walker method?
         # def visit(r, pn=None):
@@ -52,7 +52,7 @@ using Unitful
         # s
     end
 
-    s = instance(R)
+    s = instance(RootSegment)
     #d = []
     while Cropbox.value(s.context.clock.tick) <= 30.0
         advance!(s)

@@ -4,37 +4,37 @@ using Unitful
 
 @testset "system" begin
     @testset "derive" begin
-        @system S begin
+        @system SDerive begin
             a => 1 ~ track
             b => 2 ~ track
             c(a, b) => a + b ~ track
         end
-        s = instance(S)
+        s = instance(SDerive)
         @test s.a == 1 && s.b == 2 && s.c == 3
     end
 
     @testset "derive with cross reference" begin
-        @test_throws LoadError @eval @system S begin
+        @test_throws LoadError @eval @system SDeriveXRef begin
             a(b) => b ~ track
             b(a) => a ~ track
         end
     end
 
     @testset "call" begin
-        @system S begin
+        @system SCall begin
             a(; x) => x ~ call
             aa(a) => a(x=1) ~ track
         end
-        s = instance(S)
+        s = instance(SCall)
         @test s.aa == 1
     end
 
     @testset "accumulate" begin
-        @system S begin
+        @system SAccumulate begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
         end
-        s = instance(S)
+        s = instance(SAccumulate)
         @test s.a == 1 && s.b == 0
         advance!(s)
         @test s.a == 1 && s.b == 2
@@ -45,11 +45,11 @@ using Unitful
     end
 
     @testset "accumulate with cross reference" begin
-        @system S begin
+        @system SAccumulateXRef begin
             a(b) => b + 1 ~ accumulate
             b(a) => a + 1 ~ accumulate
         end
-        s = instance(S)
+        s = instance(SAccumulateXRef)
         @test s.a == 0 && s.b == 0
         advance!(s)
         @test s.a == 1 && s.b == 1
@@ -60,15 +60,15 @@ using Unitful
     end
 
     @testset "accumulate with cross reference mirror" begin
-        @system S1 begin
+        @system SAccumulateXrefMirror1 begin
             a(b) => b + 1 ~ accumulate
             b(a) => a + 2 ~ accumulate
         end
-        @system S2 begin
+        @system SAccumulateXrefMirror2 begin
             a(b) => b + 2 ~ accumulate
             b(a) => a + 1 ~ accumulate
         end
-        s1 = instance(S1); s2 = instance(S2)
+        s1 = instance(SAccumulateXrefMirror1); s2 = instance(SAccumulateXrefMirror2)
         @test s1.a == 0 == s2.b && s1.b == 0 == s2.a
         advance!(s1); advance!(s2)
         @test s1.a == 1 == s2.b && s1.b == 2 == s2.a
@@ -79,13 +79,13 @@ using Unitful
     end
 
     @testset "accumulate with time" begin
-        @system S begin
+        @system SAccumulateTime begin
             t(x=context.clock.tick) => 0.5x ~ track
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(a) => a + 1 ~ accumulate(time=t)
         end
-        s = instance(S)
+        s = instance(SAccumulateTime)
         @test s.a == 1 && s.b == 0 && s.c == 0
         advance!(s)
         @test s.a == 1 && s.b == 2 && s.c == 1
@@ -96,12 +96,12 @@ using Unitful
     end
 
     @testset "accumulate transport" begin
-        @system S begin
+        @system SAccumulateTransport begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)
             b(a, b, c) => max(a - b, 0) - max(b - c, 0) ~ accumulate
             c(b, c) => max(b - c, 0) ~ accumulate
         end
-        s = instance(S)
+        s = instance(SAccumulateTransport)
         @test s.a == 10 && s.b == 0 && s.c == 0
         advance!(s)
         @test s.a == 0 && s.b == 10 && s.c == 0
@@ -112,13 +112,13 @@ using Unitful
     end
 
     @testset "accumulate distribute" begin
-        @system S begin
+        @system SAccumulateDistribute begin
             s(x=context.clock.tick) => 100x ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
-        s = instance(S)
+        s = instance(SAccumulateDistribute)
         c = s.context
         @test c.clock.tick == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(s)
@@ -130,12 +130,12 @@ using Unitful
     end
 
     @testset "capture" begin
-        @system S begin
+        @system SCapture begin
             a => 1 ~ track
             b(a) => a + 1 ~ capture
             c(a) => a + 1 ~ accumulate
         end
-        s = instance(S)
+        s = instance(SCapture)
         @test s.b == 0 && s.c == 0
         advance!(s)
         @test s.b == 2 && s.c == 2
@@ -144,13 +144,13 @@ using Unitful
     end
 
     @testset "capture with time" begin
-        @system S begin
+        @system SCaptureTime begin
             t(x=context.clock.tick) => 2x ~ track
             a => 1 ~ track
             b(a) => a + 1 ~ capture(time=t)
             c(a) => a + 1 ~ accumulate(time=t)
         end
-        s = instance(S)
+        s = instance(SCaptureTime)
         @test s.b == 0 && s.c == 0
         advance!(s)
         @test s.b == 4 && s.c == 4
@@ -159,90 +159,90 @@ using Unitful
     end
 
     @testset "preserve" begin
-        @system S begin
+        @system SPreserve begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(b) => b ~ preserve
         end
-        s = instance(S)
+        s = instance(SPreserve)
         @test s.a == 1 && s.b == 0 && s.c == 0
         advance!(s)
         @test s.a == 1 && s.b == 2 && s.c == 0
     end
 
     @testset "parameter" begin
-        @system S begin
+        @system SParameter begin
             a => 1 ~ preserve(parameter)
         end
-        s = instance(S)
+        s = instance(SParameter)
         @test s.a == 1
         advance!(s)
         @test s.a == 1
     end
 
     @testset "parameter with config" begin
-        @system S begin
+        @system SParameterConfig begin
             a => 1 ~ preserve(parameter)
         end
-        o = configure(S => (:a => 2))
-        s = instance(S; config=o)
+        o = configure(SParameterConfig => (:a => 2))
+        s = instance(SParameterConfig; config=o)
         @test s.a == 2
     end
 
     @testset "parameter with config alias" begin
-        @system S begin
+        @system SParameterConfigAlias begin
             a: aa => 1 ~ preserve(parameter)
             bb: b => 1 ~ preserve(parameter)
         end
-        o = configure(S => (:a => 2, :b => 2))
-        s = instance(S; config=o)
+        o = configure(SParameterConfigAlias => (:a => 2, :b => 2))
+        s = instance(SParameterConfigAlias; config=o)
         @test s.a == 2
         @test s.b == 2
     end
 
     @testset "drive with dict" begin
-        @system S begin
+        @system SDriveDict begin
             a(t=context.clock.tick) => Dict(:a => 10t) ~ drive
         end
-        s = instance(S)
+        s = instance(SDriveDict)
         @test s.context.clock.tick == 1 && s.a == 10
         advance!(s)
         @test s.context.clock.tick == 2 && s.a == 20
     end
 
     @testset "drive with key" begin
-        @system S begin
+        @system SDriveKey begin
             a => Dict(:b => 1) ~ drive(key=:b)
         end
-        s = instance(S)
+        s = instance(SDriveKey)
         @test s.a == 1
     end
 
     @testset "drive with dataframe" begin
-        @system S begin
+        @system SDriveDataFrame begin
             df => DataFrame(t=0:4, a=0:10:40) ~ preserve::DataFrame(static)
             a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
-        s = instance(S)
+        s = instance(SDriveDataFrame)
         @test s.context.clock.tick == 1 && s.a == 10
         advance!(s)
         @test s.context.clock.tick == 2 && s.a == 20
     end
 
     @testset "flag" begin
-        @system S begin
+        @system SFlag begin
             a => true ~ flag
             b => false ~ flag
         end
-        s = instance(S)
+        s = instance(SFlag)
         @test s.a == true && s.b == false
     end
 
     @testset "produce" begin
-        @system S begin
-            a => produce(typeof(self).name) ~ produce
+        @system SProduce begin
+            a => produce(SProduce) ~ produce
         end
-        s = instance(S)
+        s = instance(SProduce)
         @test length(s.a) == 0
         advance!(s)
         @test length(s.a) == 1
@@ -254,11 +254,11 @@ using Unitful
     end
 
     @testset "produce with kwargs" begin
-        @system S begin
-            a => produce(typeof(self).name) ~ produce
+        @system SProduceKwargs begin
+            a => produce(SProduceKwargs) ~ produce
             i(t=context.clock.tick) => t ~ preserve
         end
-        s = instance(S)
+        s = instance(SProduceKwargs)
         @test length(s.a) == 0 && s.i == 0
         advance!(s)
         @test length(s.a) == 1 && s.i == 0
@@ -271,25 +271,25 @@ using Unitful
     end
 
     @testset "produce with nothing" begin
-        @system S begin
+        @system SProduceNothing begin
             a => nothing ~ produce
         end
-        s = instance(S)
+        s = instance(SProduceNothing)
         @test length(s.a) == 0
         advance!(s)
         @test length(s.a) == 0
     end
 
     @testset "produce query index" begin
-        @system S begin
-            p => produce(typeof(self).name) ~ produce
+        @system SProduceQueryIndex begin
+            p => produce(SProduceQueryIndex) ~ produce
             i(t=context.clock.tick) => t ~ preserve
             a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             c(x=p["*/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             d(x=p["*/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
         end
-        s = instance(S)
+        s = instance(SProduceQueryIndex)
         @test length(s.p) == 0
         advance!(s)
         @test length(s.p) == 1
@@ -312,8 +312,8 @@ using Unitful
     end
 
     @testset "produce query condition with track bool" begin
-        @system S begin
-            p => produce(typeof(self).name) ~ produce
+        @system SProduceQueryConditionTrackBool begin
+            p => produce(SProduceQueryConditionTrackBool) ~ produce
             i(t=context.clock.tick) => t ~ preserve
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -321,7 +321,7 @@ using Unitful
             c(x=p["*/f/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             d(x=p["*/f/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
         end
-        s = instance(S)
+        s = instance(SProduceQueryConditionTrackBool)
         @test length(s.p) == 0
         advance!(s)
         @test length(s.p) == 1
@@ -350,8 +350,8 @@ using Unitful
     end
 
     @testset "produce query condition with flag" begin
-        @system S begin
-            p => produce(typeof(self).name) ~ produce
+        @system SProduceQueryConditionFlag begin
+            p => produce(SProduceQueryConditionFlag) ~ produce
             i(t=context.clock.tick) => t ~ preserve
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -359,7 +359,7 @@ using Unitful
             c(x=p["*/f/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             d(x=p["*/f/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
         end
-        s = instance(S)
+        s = instance(SProduceQueryConditionFlag)
         @test length(s.p) == 0
         advance!(s)
         @test length(s.p) == 1
@@ -388,33 +388,33 @@ using Unitful
     end
 
     @testset "solve bisect" begin
-        @system S begin
+        @system SolveBisect begin
             x(x) => 2x - 1 ~ solve(lower=0, upper=2)
         end
-        s = instance(S)
+        s = instance(SolveBisect)
         @test s.x == 1
     end
 
     # @testset "solve order0" begin
-    #     @system S begin
+    #     @system SolveOrder0 begin
     #         x(x) => ((x^2 + 1) / 2) ~ solve
     #     end
-    #     s = instance(S)
+    #     s = instance(SolveOrder0)
     #     @test isapprox(Cropbox.value(s.x), 1; atol=1e-3)
     # end
 
     @testset "solve bisect with unit" begin
-        @system S begin
+        @system SolveBisectUnit begin
             x(x) => 2x - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
         end
-        s = instance(S)
+        s = instance(SolveBisectUnit)
         @test s.x == u"1m"
     end
 
     @testset "clock" begin
-        @system S begin
+        @system SClock begin
         end
-        s = instance(S)
+        s = instance(SClock)
         # after one advance! in instance()
         @test s.context.clock.tick == 1
         advance!(s)
@@ -422,10 +422,10 @@ using Unitful
     end
 
     @testset "clock with config" begin
-        @system S begin
+        @system SClockConfig begin
         end
         o = configure(:Clock => (#=:init => 5,=# step => 10))
-        s = instance(S; config=o)
+        s = instance(SClockConfig; config=o)
         # after one advance! in instance()
         @test s.context.clock.tick == 10
         advance!(s)
@@ -444,24 +444,24 @@ using Unitful
     end
 
     @testset "alias" begin
-        @system S begin
+        @system SAlias begin
             a: aa => 1 ~ track
             b: [bb, bbb] => 2 ~ track
             c(a, aa, b, bb, bbb) => a + aa + b + bb + bbb ~ track
         end
-        s = instance(S)
+        s = instance(SAlias)
         @test s.a == 1 == s.aa
         @test s.b == 2 == s.bb == 2 == s.bbb
         @test s.c == 8
     end
 
     @testset "single arg without key" begin
-        @system S begin
+        @system SSingleArgWithoutKey begin
             a => 1 ~ track
             b(a) ~ track
             c(x=a) ~ track
         end
-        s = instance(S)
+        s = instance(SSingleArgWithoutKey)
         @test s.a == 1
         @test s.b == 1
         @test s.c == 1
