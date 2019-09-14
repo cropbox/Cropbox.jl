@@ -275,12 +275,9 @@ genstruct(name, infos, incl) = begin
     S = esc(name)
     nodes = sortednodes(name, infos)
     params = posedparams(infos)
-    @show params
     types = [:($(esc(t))) for t in values(params)]
     baseparams = posedbaseparams(infos)
-    @show baseparams
     headertypes = [genheadertype(t, baseparams) for t in values(params)]
-    @show headertypes
     fields = genfields(infos, params)
     decls = gendecl(nodes)
     paramdecls = genparamdecls(infos, params)
