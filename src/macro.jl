@@ -289,7 +289,7 @@ genstruct(name, infos, incl) = begin
         struct $name{$(headertypes...)} <: $C.System
             $(fields...)
             function $name(; _kwargs...)
-                self = Symbol($name)
+                _names = $C.names($name)
                 $(decls...)
                 $(paramdecls...)
                 new{$(types...)}($(vars...))
@@ -470,7 +470,7 @@ geninit(v::VarInfo, ::Val{:Preserve}) = begin
     i = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
     if get(v.tags, :parameter, false)
         @gensym o
-        @q let $o = $C.option(config, self, $(names(v)))
+        @q let $o = $C.option(config, _names, $(names(v)))
             isnothing($o) ? $i : $o
         end
     else
@@ -572,7 +572,7 @@ genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
         @q let $s = $(symstate(v))
             $p = $C.value($s)
             if ismissing($p)
-                let $o = $C.option(config, self, $(names(v)))
+                let $o = $C.option(config, _names, $(names(v)))
                     isnothing($o) ? $(genstore(v)) : $o
                 end
             else
