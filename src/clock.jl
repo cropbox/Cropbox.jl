@@ -1,5 +1,4 @@
 @system Clock begin
-    self => self ~ ::System
     context => nothing ~ ::Nothing
     config ~ ::Config(override)
     unit => nothing ~ preserve(parameter)

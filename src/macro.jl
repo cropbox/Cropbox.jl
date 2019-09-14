@@ -97,12 +97,90 @@ end
 
 const C = :($(esc(:Cropbox)))
 
-genfield(i::VarInfo{Symbol}) = genfield(:($C.$(i.state)), i.name, i.alias)
-genfield(i::VarInfo{Nothing}) = genfield(esc(i.type), i.name, i.alias)
-genfield(S, var, alias) = @q begin
-    $var::$S
-    $(@q begin $([:($a::$S) for a in alias]...) end)
+posedparams(infos) = begin
+    K = union(Set.(vartype.(infos))...) |> collect
+    V = [Symbol(string(hash(k); base=62)) for k in K]
+    Dict(zip(K, V))
 end
+genvartype(i::VarInfo, params) = begin
+    P = vartype(i)
+    if isnothing(i.state)
+        @assert length(P) == 1
+        :($(esc(params[P[1]])))
+    else
+        :($C.$(i.state){$([:($(esc(params[p]))) for p in P]...)})
+    end
+end
+
+vartype(i::VarInfo{Nothing}) = (i.name,) # ()
+vartype(i::VarInfo{Symbol}) = vartype(i, Val(i.state))
+vartype(i::VarInfo, ::Val{:Hold}) = (Any,)
+vartype(i::VarInfo, ::Val{:Advance}) = ((isnothing(i.type) ? Int64 : i.type, get(i.tags, :unit, nothing)),)
+vartype(i::VarInfo, ::Union{Val{:Preserve},Val{:Track},Val{:Drive}}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
+vartype(i::VarInfo, ::Val{:Call}) = begin
+    V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
+    F = i.name
+    (V, F)
+end
+vartype(i::VarInfo, ::Union{Val{:Accumulate},Val{:Capture}}) = begin
+    V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
+    T = get(i.tags, :time, nothing)
+    ST = (:State, T)
+    R = (V, T)
+    (V, ST, T, R)
+end
+vartype(i::VarInfo, ::Val{:Flag}) = (Bool,)
+vartype(i::VarInfo, ::Val{:Produce}) = (:System,)
+vartype(i::VarInfo, ::Val{:Solve}) = begin
+    V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
+    L = get(i.tags, :lower, nothing)
+    U = get(i.tags, :upper, nothing)
+    (V, L, U)
+end
+
+posedbaseparams(infos) = begin
+    d = Dict{Symbol,Any}()
+    for i in infos
+        if isnothing(i.state)
+            P = vartype(i)
+            p = P[1]
+            k = Symbol(string(hash(p); base=62))
+            v = varbasetype(i)
+            !isnothing(v) && (d[k] = v)
+        end
+    end
+    d
+end
+varbasetype(i::VarInfo{Nothing}) = i.type
+varbasetype(i::VarInfo{Symbol}) = nothing
+
+genheadertype(t, baseparams) = begin
+    b = get(baseparams, t, nothing)
+    if isnothing(b)
+        :($(esc(t)))
+    else
+        :($(esc(t)) <: $(esc(b)))
+    end
+end
+
+posedvars(infos) = names.(infos) |> Iterators.flatten |> collect
+
+genfield(i::VarInfo, params) = genfield(genvartype(i, params), i.name, i.alias)
+genfield(type, name, alias) = @q begin
+    $name::$type
+    $(@q begin $([:($a::$type) for a in alias]...) end)
+end
+genfields(infos, params) = [genfield(i, params) for i in infos]
+
+genparamdecl(i::VarInfo, params) = begin
+    P = vartype(i)
+    if isnothing(i.state)
+        @q $(esc(params[P[1]])) = typeof($(i.name))
+    else
+        @q ($([esc(params[p]) for p in P]...),) = typeof($(i.name)).parameters
+    end
+end
+genparamdecls(infos, params) = [genparamdecl(i, params) for i in infos]
 
 equation(f; static=false) = begin
     fdef = splitdef(f)
@@ -163,7 +241,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     alias = Tuple(i.alias)
     value = get(i.tags, :override, false) ? genoverride(i.name, missing) : geninit(i)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
-    decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _system=self, _value=$value, $(stargs...)))
+    decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
@@ -181,9 +259,7 @@ gendecl(i::VarInfo{Nothing}) = begin
 end
 gendecl(decl, var, alias) = @q begin
     $(LineNumberNode(0, "gendecl/$var"))
-    self.$var = $decl
-    $(@q begin $([:(self.$a = self.$var) for a in alias]...) end)
-    $var = self.$var
+    $var = $decl
     $(@q begin $([:($a = $var) for a in alias]...) end)
 end
 
@@ -197,28 +273,37 @@ genfieldnamesunique(infos) = Tuple(i.name for i in infos)
 genstruct(name, infos, incl) = begin
     S = esc(name)
     nodes = sortednodes(name, infos)
-    fields = genfield.(infos)
+    params = posedparams(infos)
+    @show params
+    types = [:($(esc(t))) for t in values(params)]
+    baseparams = posedbaseparams(infos)
+    @show baseparams
+    headertypes = [genheadertype(t, baseparams) for t in values(params)]
+    @show headertypes
+    fields = genfields(infos, params)
     decls = gendecl(nodes)
+    paramdecls = genparamdecls(infos, params)
+    vars = posedvars(infos)
     source = gensource(infos)
     system = @q begin
-        mutable struct $name <: $C.System
+        struct $name{$(headertypes...)} <: $C.System
             $(fields...)
             function $name(; _kwargs...)
-                self = $(esc(:self)) = new()
+                self = Symbol($name)
                 $(decls...)
-                #$C.init!(self)
-                self
+                $(paramdecls...)
+                new{$(types...)}($(vars...))
             end
         end
         $C.source(::Val{$(Meta.quot(name))}) = $(Meta.quot(source))
-        $C.mixins(::Type{$S}) = Tuple($(esc(:eval)).($incl))
-        $C.fieldnamesunique(::Type{$S}) = $(genfieldnamesunique(infos))
+        $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
+        $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         #HACK: redefine them to avoid world age problem
-        @generated $C.collectible(::Type{$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
-        @generated $C.updatable(::Type{$S}) = $C.filteredvars($S)
-        # $C.collectible(::Type{$S}) = $(gencollectible(infos))
-        # $C.updatable(::Type{$S}) = $(genupdatable(infos))
-        $C.updatestatic!($(esc(:_system))::$S) = $(genupdate(nodes))
+        @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce}, $S)
+        @generated $C.updatable(::Type{<:$S}) = $C.filteredvars($S)
+        # $C.collectible(::Type{<:$S}) = $(gencollectible(infos))
+        # $C.updatable(::Type{<:$S}) = $(genupdatable(infos))
+        $C.updatestatic!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
     flatten(system)
@@ -229,7 +314,6 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    self => self ~ ::Cropbox.System
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
@@ -427,10 +511,14 @@ symlabel(v::VarInfo, t::Step) = Symbol(v.name, suffix(t))
 genupdateinit(n::VarNode) = begin
     v = n.info
     s = symstate(v)
-    # implicit :expose
-    @q begin
-        $s = $(v.name) = _system.$(v.name)
-        $([:($a = $s) for a in v.alias]...)
+    if isnothing(v.state)
+        # implicit :expose
+        @q begin
+            $s = $(v.name) = self.$(v.name)
+            $([:($a = $s) for a in v.alias]...)
+        end
+    else
+        @q $s = self.$(v.name)
     end
 end
 

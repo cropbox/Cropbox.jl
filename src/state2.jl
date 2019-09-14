@@ -1,7 +1,7 @@
 abstract type State{V} end
 
 value(v) = v
-value(s::State{V}) where V = s.value::V
+value(s::State) = s.value
 value(S::Vector{<:State}) = value.(S)
 
 store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
@@ -76,11 +76,11 @@ end
 
 ####
 
-mutable struct Hold{Nothing} <: State{Nothing}
+mutable struct Hold{Any} <: State{Any}
 end
 
-Hold(; unit, _value, _type=nothing, _...) = begin
-    Hold{Nothing}()
+Hold(; _...) = begin
+    Hold{Any}()
 end
 
 ####
@@ -164,9 +164,9 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 ####
 
-mutable struct Accumulate{V,T,R} <: State{V}
+mutable struct Accumulate{V,ST,T,R} <: State{V}
     value::V
-    time::State{T}
+    time::ST
     tick::T
     rate::R
 end
@@ -179,21 +179,22 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
     #T = timetype(_type_time, time, _system)
+    ST = typeof(time)
     t = value(time)
     T = typeof(t)
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Accumulate{V,T,R}(v, time, t, zero(R))
+    Accumulate{V,ST,T,R}(v, time, t, zero(R))
 end
 
 @generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 
 ####
 
-mutable struct Capture{V,T,R} <: State{V}
+mutable struct Capture{V,ST,T,R} <: State{V}
     value::V
-    time::State{T}
+    time::ST
     tick::T
     rate::R
 end
@@ -205,6 +206,7 @@ Capture(; unit, time, _type=Float64, _...) = begin
     V = promote_type(V, typeof(v))
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
+    ST = typeof(time)
     t = value(time)
     T = typeof(t)
     TU = unittype(T)
@@ -229,7 +231,6 @@ end
 
 mutable struct Produce{S<:System} <: State{S}
     value::Vector{S}
-    context::System
     name::Symbol # used in recurisve collecting in getvar!
 end
 
@@ -240,8 +241,8 @@ end
 iterate(p::Product) = (p, nothing)
 iterate(p::Product, ::Nothing) = nothing
 
-Produce(; _name, _system, _type::Type{S}=System, _...) where {S<:System} = begin
-    Produce{S}(S[], _system.context, _name)
+Produce(; _name, _type::Type{S}=System, _...) where {S<:System} = begin
+    Produce{S}(S[], _name)
 end
 
 value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
@@ -270,14 +271,13 @@ mutable struct Solve{V,L,U} <: State{V}
     value::V
     lower::L
     upper::U
-    context::System
     data::Dict
 end
 
 #TODO: reimplement Solve
-Solve(; lower::L=nothing, upper::U=nothing, unit, _system, _type=Float64, _...) where {L,U} = begin
+Solve(; lower::L=nothing, upper::U=nothing, unit, _type=Float64, _...) where {L,U} = begin
     V = valuetype(_type, value(unit))
-    Solve{V,L,U}(zero(V), lower, upper, _system.context, Dict())
+    Solve{V,L,U}(zero(V), lower, upper, Dict())
 end
 
 using Roots

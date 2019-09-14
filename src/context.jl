@@ -1,6 +1,5 @@
 @system Context begin
-    self => self ~ ::System
-    context => self ~ ::System
+    context => nothing ~ ::Nothing
 
     config => configure() ~ ::Config(override)
 	order => Order() ~ ::Order

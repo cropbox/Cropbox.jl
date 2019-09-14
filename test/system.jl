@@ -240,7 +240,7 @@ using Unitful
 
     @testset "produce" begin
         @system S begin
-            a(self) => produce(typeof(self)) ~ produce
+            a => produce(typeof(self)) ~ produce
         end
         s = instance(S)
         @test length(s.a) == 0
@@ -255,7 +255,7 @@ using Unitful
 
     @testset "produce with kwargs" begin
         @system S begin
-            a(self) => produce(typeof(self)) ~ produce
+            a => produce(typeof(self)) ~ produce
             i(t=context.clock.tick) => t ~ preserve
         end
         s = instance(S)
@@ -282,7 +282,7 @@ using Unitful
 
     @testset "produce query index" begin
         @system S begin
-            p(self) => produce(typeof(self)) ~ produce
+            p => produce(typeof(self)) ~ produce
             i(t=context.clock.tick) => t ~ preserve
             a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -313,7 +313,7 @@ using Unitful
 
     @testset "produce query condition with track bool" begin
         @system S begin
-            p(self) => produce(typeof(self)) ~ produce
+            p => produce(typeof(self)) ~ produce
             i(t=context.clock.tick) => t ~ preserve
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -351,7 +351,7 @@ using Unitful
 
     @testset "produce query condition with flag" begin
         @system S begin
-            p(self) => produce(typeof(self)) ~ produce
+            p => produce(typeof(self)) ~ produce
             i(t=context.clock.tick) => t ~ preserve
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
