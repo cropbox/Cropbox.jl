@@ -188,7 +188,7 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     Accumulate{V,ST,T,R}(v, time, t, zero(R))
 end
 
-@generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
+@generated rateunit(::Accumulate{V,ST,T,R}) where {V,ST,T,R} = unittype(R)
 
 ####
 
@@ -212,10 +212,10 @@ Capture(; unit, time, _type=Float64, _...) = begin
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Capture{V,T,R}(v, time, t, zero(R))
+    Capture{V,ST,T,R}(v, time, t, zero(R))
 end
 
-@generated rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
+@generated rateunit(s::Capture{V,ST,T,R}) where {V,ST,T,R} = unittype(R)
 
 ####
 
