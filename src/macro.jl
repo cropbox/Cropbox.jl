@@ -240,7 +240,7 @@ gendecl(i::VarInfo{Symbol}) = begin
     end
     name = Meta.quot(i.name)
     alias = Tuple(i.alias)
-    value = get(i.tags, :override, false) ? genoverride(i.name, missing) : geninit(i)
+    value = get(i.tags, :override, false) ? genoverride(i.name, geninit(i)) : geninit(i)
     stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
     decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, i.name, i.alias)
