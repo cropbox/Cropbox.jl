@@ -132,12 +132,7 @@ vartype(i::VarInfo, ::Union{Val{:Accumulate},Val{:Capture}}) = begin
 end
 vartype(i::VarInfo, ::Val{:Flag}) = (Bool,)
 vartype(i::VarInfo, ::Val{:Produce}) = (:System,)
-vartype(i::VarInfo, ::Val{:Solve}) = begin
-    V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
-    L = get(i.tags, :lower, nothing)
-    U = get(i.tags, :upper, nothing)
-    (V, L, U)
-end
+vartype(i::VarInfo, ::Val{:Solve}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
 
 posedbaseparams(infos) = begin
     d = Dict{Symbol,Any}()
@@ -676,55 +671,54 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     l = symlabel(v, PreStep())
     @gensym s d zero tol
     @q let $s = $(symstate(v)),
-           $d = $s.data,
            $zero = $C.unitfy(0, $C.unit($s))
            $tol = $C.unitfy($TOL, $C.unit($s))
-        if isempty($d)
-            $d[:N] = 0
-            $d[:a] = $C.value($s.lower)
-            $d[:b] = $C.value($s.upper)
-            $d[:step] = :a
-            $C.store!($s, $d[:a])
+        if $s.step == :z
+            $s.N = 0
+            $s.a = $C.value($s.lower)
+            $s.b = $C.value($s.upper)
+            $s.step = :a
+            $C.store!($s, $s.a)
             @goto $l
-        elseif $d[:step] == :a
-            $d[:fa] = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($d[:a]) => $($d[:fa])"
-            $d[:step] = :b
-            $C.store!($s, $d[:b])
+        elseif $s.step == :a
+            $s.fa = $C.value($s) - $(genfunc(v))
+            #@show "solve: $($s.a) => $($s.fa)"
+            $s.step = :b
+            $C.store!($s, $s.b)
             @goto $l
-        elseif $d[:step] == :b
-            $d[:fb] = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($d[:b]) => $($d[:fb])"
-            @assert sign($d[:fa]) != sign($d[:fb])
-            $d[:N] = 1
-            $d[:c] = ($d[:a] + $d[:b]) / 2
-            $C.store!($s, $d[:c])
-            $d[:step] = :c
+        elseif $s.step == :b
+            $s.fb = $C.value($s) - $(genfunc(v))
+            #@show "solve: $($s.b) => $($s.fb)"
+            @assert sign($s.fa) != sign($s.fb)
+            $s.N = 1
+            $s.c = ($s.a + $s.b) / 2
+            $C.store!($s, $s.c)
+            $s.step = :c
             @goto $l
-        elseif $d[:step] == :c
-            $d[:fc] = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($d[:c]) => $($d[:fc])"
-            if $d[:fc] ≈ $zero || ($d[:b] - $d[:a]) < $tol
-                empty!($d)
+        elseif $s.step == :c
+            $s.fc = $C.value($s) - $(genfunc(v))
+            #@show "solve: $($s.c) => $($s.fc)"
+            if $s.fc ≈ $zero || ($s.b - $s.a) < $tol
+                $s.step = :z
                 #@show "solve: finished! $($C.value($s))"
             else
-                $d[:N] += 1
-                if $d[:N] > $N_MAX
+                $s.N += 1
+                if $s.N > $N_MAX
                     @show #= @error =# "solve: convergence failed!"
-                    empty!($d)
+                    $s.step = :z
                     return
                 end
-                if sign($d[:fc]) == sign($d[:fa])
-                    $d[:a] = $d[:c]
-                    $d[:fa] = $d[:fc]
-                    #@show "solve: a <- $($d[:c])"
+                if sign($s.fc) == sign($s.fa)
+                    $s.a = $s.c
+                    $s.fa = $s.fc
+                    #@show "solve: a <- $($s.c)"
                 else
-                    $d[:b] = $d[:c]
-                    $d[:fb] = $d[:fc]
-                    #@show "solve: b <- $($d[:c])"
+                    $s.b = $s.c
+                    $s.fb = $s.fc
+                    #@show "solve: b <- $($s.c)"
                 end
-                $d[:c] = ($d[:a] + $d[:b]) / 2
-                $C.store!($s, $d[:c])
+                $s.c = ($s.a + $s.b) / 2
+                $C.store!($s, $s.c)
                 @goto $l
             end
         end

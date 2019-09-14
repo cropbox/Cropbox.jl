@@ -267,17 +267,25 @@ priority(::Type{<:Produce}) = PrePriority()
 
 ####
 
-mutable struct Solve{V,L,U} <: State{V}
+mutable struct Solve{V} <: State{V}
     value::V
-    lower::L
-    upper::U
-    data::Dict
+    lower::V
+    upper::V
+    step::Symbol
+    N::Int
+    a::V
+    b::V
+    c::V
+    fa::V
+    fb::V
+    fc::V
 end
 
 #TODO: reimplement Solve
-Solve(; lower::L=nothing, upper::U=nothing, unit, _type=Float64, _...) where {L,U} = begin
+Solve(; lower=nothing, upper=nothing, unit, _type=Float64, _...) = begin
     V = valuetype(_type, value(unit))
-    Solve{V,L,U}(zero(V), lower, upper, Dict())
+    v = zero(V)
+    Solve{V}(v, lower, upper, :z, 0, v, v, v, v, v, v)
 end
 
 using Roots
