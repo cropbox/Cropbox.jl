@@ -1,10 +1,10 @@
 quadratic_solve_upper(a, b, c) = begin
-    (a == 0) && return 0
+    (a == 0) && return 0.
     v = b^2 - 4a*c
     (v < 0) ? -b/a : (-b + sqrt(v)) / 2a
 end
 quadratic_solve_lower(a, b, c) = begin
-    (a == 0) && return 0
+    (a == 0) && return 0.
     v = b^2 - 4a*c
     (v < 0) ? -b/a : (-b - sqrt(v)) / 2a
 end
