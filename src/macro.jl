@@ -567,31 +567,7 @@ genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = begin
-    if get(v.tags, :parameter, false)
-        @gensym s p o
-        @q let $s = $(symstate(v))
-            $p = $C.value($s)
-            if ismissing($p)
-                let $o = $C.option(config, _names, $(names(v)))
-                    isnothing($o) ? $(genstore(v)) : $o
-                end
-            else
-                $p
-            end
-        end
-    else
-        @gensym s p
-        @q let $s = $(symstate(v))
-            $p = $C.value($s)
-            if ismissing($p)
-                $(genstore(v))
-            else
-                $p
-            end
-        end
-    end
-end
+genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = genvalue(v)
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
     @gensym s f d

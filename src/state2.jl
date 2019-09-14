@@ -104,7 +104,7 @@ reset!(s::Advance) = reset!(s.value)
 ####
 
 mutable struct Preserve{V} <: State{V}
-    value::Union{V,Missing}
+    value::V
 end
 
 # Preserve is the only State that can store value `nothing`
