@@ -1,4 +1,13 @@
-using Polynomials
+quadratic_solve_upper(a, b, c) = begin
+    (a == 0) && return 0
+    v = b^2 - 4a*c
+    (v < 0) ? -b/a : (-b + sqrt(v)) / 2a
+end
+quadratic_solve_lower(a, b, c) = begin
+    (a == 0) && return 0
+    v = b^2 - 4a*c
+    (v < 0) ? -b/a : (-b - sqrt(v)) / 2a
+end
 
 @system C4 begin
     #TODO: more robust interface to connect Systems (i.e. type check, automatic prop defines)
@@ -116,7 +125,8 @@ using Polynomials
     # theta: sharpness of transition from light limitation to light saturation
     # x: Partitioning factor of J, yield maximal J at this value
     transport_limited_photosynthesis_rate(T, Jmax, Rd, Rm, I2, gbs, Cm, theta=0.5, x=0.4): Aj => begin
-        J = roots(Poly([I2*Jmax, -(I2+Jmax), theta])) |> minimum
+        #J = roots(Poly([I2*Jmax, -(I2+Jmax), theta])) |> minimum
+        J = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
         #println("Jmax = $Jmax, J = $J")
         Aj1 = x * J/2 - Rm + gbs*Cm
         Aj2 = (1-x) * J/3 - Rd
@@ -193,7 +203,8 @@ end
         c = (-RH * gb) - g0
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
-        hs = roots(Poly([c, b, a])) |> maximum
+        #hs = roots(Poly([c, b, a])) |> maximum
+        hs = quadratic_solve_upper(a, b, c)
         #hs = clamp(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
 
         #FIXME unused?
