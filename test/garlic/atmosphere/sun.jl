@@ -117,15 +117,10 @@ import Dates
 
     hour_angle_at_horizon(cos_hour_angle) => begin
         c = cos_hour_angle(w_s=90u"°")
-        # in the polar region during the winter, sun does not rise
-        if c > 1
-            0u"°"
-        # white nights during the summer in the polar region
-        elseif c < -1
-            180u"°"
-        else
-            acos(c)
-		end
+        # c > 1: in the polar region during the winter, sun does not rise
+        # c < -1: white nights during the summer in the polar region
+        c = clamp(c, -1, 1)
+        acos(c)
 	end ~ track(u"°")
 
 	# from Iqbal (1983) p 16
