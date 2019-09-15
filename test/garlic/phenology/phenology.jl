@@ -31,8 +31,8 @@ include("death.jl")
 	planting_date => nothing ~ preserve(parameter)
 
     leaves_generic => 10 ~ preserve(parameter)
-    leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track
-    leaves_total(leaves_initiated) ~ track
+    leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track::Int
+    leaves_total(leaves_initiated) ~ track::Int
 
     temperature(leaves_appeared, T_air=weather.T_air): T => begin
         if leaves_appeared < 9
