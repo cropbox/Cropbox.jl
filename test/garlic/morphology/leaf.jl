@@ -60,7 +60,7 @@
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
         @nounit l
-        iszero(l) ? 0 : 0.639945 + 0.954957l + 0.005920l^2
+        iszero(l) ? l : 0.639945 + 0.954957l + 0.005920l^2
     end ~ call(u"cm^2")
 
     area_increase_from_length(length) => begin
@@ -142,7 +142,7 @@
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._elongation_tracker.rate, self.growth_duration)
         #FIXME how to define unit for this?
-        r = 1u"hr/d"
+        r = 1.0u"hr/d"
         growing ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate(u"d")
 
