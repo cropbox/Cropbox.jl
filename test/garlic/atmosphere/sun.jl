@@ -164,7 +164,7 @@ import Dates
 	end ~ track(u"kPa")
 
     optical_air_mass_number(atmospheric_pressure, elevation_angle): m => begin
-		t_s = max(elevation_angle, 0)
+		t_s = max(elevation_angle, zero(elevation_angle))
 		#FIXME check 101.3 is indeed in kPa
         #iszero(t_s) ? 0. : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
 		atmospheric_pressure / (101.3u"kPa" * sin(t_s))
@@ -175,7 +175,7 @@ import Dates
     solar_radiation(elevation_angle, d, SC=1370u"W/m^2") => begin
 		# solar constant, Iqbal (1983)
 		#FIXME better to be 1361 or 1362 W/m-2?
-        t_s = max(elevation_angle, 0)
+        t_s = max(elevation_angle, zero(elevation_angle))
         g = 2pi * (d - 10)/365
         SC * sin(t_s) * (1 + 0.033cos(g))
 	end ~ track(u"W/m^2")
