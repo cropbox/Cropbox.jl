@@ -655,15 +655,17 @@ end
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = symstate(v)
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
-    @gensym s P
+    @gensym s P c o
     @q let $s = $(symstate(v)),
-           $P = $(genfunc(v))
+           $P = $(genfunc(v)),
+           $c = context,
+           $o = context.order
         if !(isnothing($P) || isempty($P))
             function ()
                 for p in $P
-                    append!($s.value, p.type(; context=context, p.args...))
+                    append!($s.value, p.type(; context=$c, p.args...))
                 end
-                $C.inform!(context.order)
+                $C.inform!($o)
             end
         end
     end
