@@ -282,7 +282,7 @@ genstruct(name, infos, incl) = begin
         struct $name{$(headertypes...)} <: $C.System
             $(fields...)
             function $name(; _kwargs...)
-                _names = $C.names($name)
+                _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
                 $(decls...)
                 $(paramdecls...)
                 new{$(types...)}($(vars...))
