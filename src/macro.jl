@@ -126,9 +126,8 @@ end
 vartype(i::VarInfo, ::Union{Val{:Accumulate},Val{:Capture}}) = begin
     V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
     T = get(i.tags, :time, nothing)
-    ST = (:State, T)
     R = (V, T)
-    (V, ST, T, R)
+    (V, T, R)
 end
 vartype(i::VarInfo, ::Val{:Flag}) = (Bool,)
 vartype(i::VarInfo, ::Val{:Produce}) = (:System,)
@@ -599,7 +598,7 @@ end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @gensym s t t0 a
     @q let $s = $(symstate(v)),
-           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $t = $C.value($(v.tags[:time])),
            $t0 = $s.tick,
            $a = $s.value + $s.rate * ($t - $t0)
         $C.store!($s, $a)
@@ -610,7 +609,7 @@ end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
     @gensym s t f r
     @q let $s = $(symstate(v)),
-           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s))
         () -> ($s.tick = $t; $s.rate = $r)
@@ -620,7 +619,7 @@ end
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     @gensym s t t0 d
     @q let $s = $(symstate(v)),
-           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $t = $C.value($(v.tags[:time])),
            $t0 = $s.tick,
            $d = $s.rate * ($t - $t0)
         $C.store!($s, $d)
@@ -631,7 +630,7 @@ end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
     @gensym s t f r
     @q let $s = $(symstate(v)),
-           $t = $C.value($s.time), # $C.value($(v.tags[:time]))
+           $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s))
         () -> ($s.tick = $t; $s.rate = $r)

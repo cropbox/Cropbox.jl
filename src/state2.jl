@@ -162,9 +162,8 @@ show(io::IO, s::Call) = print(io, "<call>")
 
 ####
 
-mutable struct Accumulate{V,ST,T,R} <: State{V}
+mutable struct Accumulate{V,T,R} <: State{V}
     value::V
-    time::ST
     tick::T
     rate::R
 end
@@ -177,22 +176,21 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
     #T = timetype(_type_time, time, _system)
-    ST = typeof(time)
+    #ST = typeof(time)
     t = value(time)
     T = typeof(t)
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Accumulate{V,ST,T,R}(v, time, t, zero(R))
+    Accumulate{V,T,R}(v, t, zero(R))
 end
 
-@generated rateunit(::Accumulate{V,ST,T,R}) where {V,ST,T,R} = unittype(R)
+@generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 
 ####
 
-mutable struct Capture{V,ST,T,R} <: State{V}
+mutable struct Capture{V,T,R} <: State{V}
     value::V
-    time::ST
     tick::T
     rate::R
 end
@@ -204,16 +202,16 @@ Capture(; unit, time, _type=Float64, _...) = begin
     V = promote_type(V, typeof(v))
     #TU = timeunittype(time, _system)
     #T = valuetype(_type_time, TU)
-    ST = typeof(time)
+    #ST = typeof(time)
     t = value(time)
     T = typeof(t)
     TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
-    Capture{V,ST,T,R}(v, time, t, zero(R))
+    Capture{V,T,R}(v, t, zero(R))
 end
 
-@generated rateunit(s::Capture{V,ST,T,R}) where {V,ST,T,R} = unittype(R)
+@generated rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
 
 ####
 
