@@ -19,7 +19,9 @@
     leaf_initiating(a=leaf_initiateable, b=leaf_initiated) => (a && !b) ~ flag
 
     # no MAX_LEAF_NO implied unlike original model
-    leaves_initiated(initial_leaves, leaf_initiation) => round(initial_leaves + leaf_initiation) ~ track::Int
+    leaves_initiated(initial_leaves, leaf_initiation) => begin
+        floor(initial_leaves + leaf_initiation) |> Int
+    end ~ track::Int
 end
 
 @system LeafInitiationWithoutStorage(LeafInitiation) begin
