@@ -133,17 +133,15 @@ end
 
 mutable struct Drive{V} <: State{V}
     value::V
-    key::Symbol
 end
 
-Drive(; key=nothing, unit, _name, _value, _type=Float64, _...) = begin
-    k = isnothing(key) ? _name : Symbol(key)
+Drive(; unit, _name, _value, _type=Float64, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = unitfy(_value, U)
     V = promote_type(V, typeof(v))
     #T = typeof(value(time))
-    Drive{V}(v, k)
+    Drive{V}(v)
 end
 
 ####

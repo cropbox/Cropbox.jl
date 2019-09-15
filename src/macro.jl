@@ -562,10 +562,13 @@ end
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = genvalue(v)
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
+    k = get(v.tags, :key, v.name)
+    #HACK: needs quot if key is a symbol from VarInfo name
+    k = isa(k, QuoteNode) ? k : Meta.quot(k)
     @gensym s f d
     @q let $s = $(symstate(v)),
            $f = $(genfunc(v)),
-           $d = $C.value($f[$s.key])
+           $d = $C.value($f[$k])
         $C.store!($s, $d)
         #TODO: make store! return value
         $C.value($s)::$C.valuetype($s)
