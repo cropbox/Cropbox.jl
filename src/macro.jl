@@ -621,6 +621,8 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
            $t0 = $s.tick,
            $d = $s.rate * ($t - $t0)
         $C.store!($s, $d)
+        #TODO: make store! return value
+        $C.value($s)
     end
 end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
