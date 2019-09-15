@@ -1,9 +1,13 @@
 growing_degree_days(T, T_base; T_opt=nothing, T_max=nothing) = begin
     T = ustrip(unitfy(T, u"°C"))
-    T_opt = !isnothing(T_opt) && ustrip(unitfy(T_opt, u"°C"))
-    T_max = !isnothing(T_max) && ustrip(unitfy(T_max, u"°C"))
-    !isnothing(T_opt) && (T = min(T, T_opt))
-    !isnothing(T_max) && (T = T >= T_max ? T_base : T)
+    if !isnothing(T_opt)
+        T_opt = ustrip(unitfy(T_opt, u"°C"))
+        T = min(T, T_opt)
+    end
+    if !isnothing(T_max)
+        T_max = ustrip(unitfy(T_max, u"°C"))
+        T = T >= T_max ? T_base : T
+    end
     max(T - T_base, 0) |> float
 end
 
