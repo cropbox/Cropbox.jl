@@ -158,9 +158,8 @@
     end ~ call(u"cm/d")
 
     potential_elongation_rate(growing, beta_growth, elongation_age, LER_max, GD) => begin
-        r = 1u"cm/d"
         #TODO proper integration with scipy.integrate?
-        growing ? r * beta_growth(t=elongation_age, c_m=LER_max, t_e=GD) : zero(r)
+        growing ? beta_growth(t=elongation_age, c_m=LER_max, t_e=GD) : 0.0u"cm/d"
     end ~ track(u"cm/d")
 
     temperature_effect_func(; T_grow, T_peak, T_base) => begin
