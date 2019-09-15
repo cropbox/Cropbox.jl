@@ -44,7 +44,7 @@ include("death.jl")
             T = T_air
         end
         #FIXME T_cur doesn't go below zero, but is it fair assumption?
-        max(T, 0u"°C")
+        #max(T, 0.0u"°C")
     end ~ track(u"°C")
     #growing_temperature(r="gst_recorder.rate") => r ~ track
 	optimal_temperature: T_opt => 22.28 ~ preserve(u"°C", parameter)
