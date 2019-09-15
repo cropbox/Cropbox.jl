@@ -275,15 +275,20 @@ plot_sun(v) = begin
 		:Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
 		:Weather => (:filename => "test/garlic/data/2007.wea"),
 	)
-	w = instance(Weather; config=o)
-	c = w.context
-	s = w.sun
-	T = typeof(value(c.clock.tick))[]
-	V = typeof(value(s[v]))[]
-	while value(c.clock.tick) <= 3u"d"
+	c = Cropbox.Context(; config=o)
+	l = Cropbox.Calendar(; context=c)
+	w = Weather(; context=c, calendar=l)
+	s = Sun(; context=c, calendar=l, weather=w)
+	append!(c.systems, [r, w, s])
+	c.order.outdated = true
+	advance!(c)
+
+	T = typeof(Cropbox.value(c.clock.tick))[]
+	V = typeof(Cropbox.value(s[v]))[]
+	while Cropbox.value(c.clock.tick) <= 3u"d"
 		#println("t = $(c.clock.tick): v = $(s[v])")
-		push!(T, value(c.clock.tick))
-		push!(V, value(s[v]))
+		push!(T, Cropbox.value(c.clock.tick))
+		push!(V, Cropbox.value(s[v]))
 		advance!(s)
 	end
 	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))

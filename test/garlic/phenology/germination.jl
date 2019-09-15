@@ -10,7 +10,7 @@
         germinating ? GR_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
     end ~ accumulate
 
-    germinateable(planting_date, t=weather.calendar.time) => (t >= planting_date) ~ flag
+    germinateable(planting_date, t=calendar.time) => (t >= planting_date) ~ flag
     germinated(germination, begin_from_emergence) => (germination >= 0.5 || begin_from_emergence) ~ flag
     germinating(a=germinateable, b=germinated) => (a && !b) ~ flag
 

@@ -23,7 +23,9 @@ include("death.jl")
 	BulbilAppearance,
 	Death
 ) begin
+    calendar ~ ::Calendar(override)
     weather ~ ::Weather(override)
+	sun ~ ::Sun(override)
     soil ~ ::Soil(override)
 
 	planting_date => nothing ~ preserve(parameter)
@@ -101,13 +103,15 @@ init_pheno() = begin
 	#s = instance(Phenology; config=o)
 	#c = s.context
 	c = Cropbox.Context(; config=o)
-    w = Weather(; context=c)
+	l = Cropbox.Calendar(; context=c)
+    w = Weather(; context=c, calendar=l)
+	s = Sun(; context=c, calendar=l, weather=w)
 	r = Soil(; context=c)
-	s = Phenology(; context=c, weather=w, soil=r)
-	append!(c.systems, [w, r, s])
+	p = Phenology(; context=c, calendar=l, weather=w, sun=s, soil=r)
+	append!(c.systems, [l, w, s, r, p])
 	c.order.outdated = true
     advance!(c)
-	s
+	p
 end
 
 plot_pheno(v) = begin

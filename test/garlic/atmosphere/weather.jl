@@ -5,9 +5,9 @@ using CSV
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather begin
-    calendar(context) => Calendar(; context=context) ~ ::Calendar
+    calendar(context) ~ ::Calendar(override)
+
     vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure
-    sun(context, calendar, PFD) => Sun(; context=context, calendar=calendar, weather=self) ~ ::Sun
 
     filename => "" ~ preserve(parameter)
     timezone => tz"UTC" ~ preserve(parameter)

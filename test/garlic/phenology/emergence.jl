@@ -10,7 +10,7 @@
     end ~ accumulate
 
     emergeable(germinated) ~ flag
-    emerged(emergence, begin_from_emergence, emergence_date, t=weather.calendar.time) => begin
+    emerged(emergence, begin_from_emergence, emergence_date, t=calendar.time) => begin
         if begin_from_emergence
             t >= emergence_date
         else

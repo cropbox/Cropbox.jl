@@ -1,6 +1,4 @@
 @system FloralInitiation(Stage, Germination) begin
-    sun(weather) => weather.sun ~ ::Sun
-
     critical_photoperiod: critPPD => 12.5 ~ preserve(u"hr", parameter)
 
     floral_initiateable(germinated) ~ flag

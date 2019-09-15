@@ -1,4 +1,13 @@
-using Polynomials
+quadratic_solve_upper(a, b, c) = begin
+    (a == 0) && return 0.
+    v = b^2 - 4a*c
+    (v < 0) ? -b/a : (-b + sqrt(v)) / 2a
+end
+quadratic_solve_lower(a, b, c) = begin
+    (a == 0) && return 0.
+    v = b^2 - 4a*c
+    (v < 0) ? -b/a : (-b - sqrt(v)) / 2a
+end
 
 @system C4 begin
     co2_mesophyll: Cm ~ hold
@@ -125,7 +134,8 @@ using Polynomials
         b = ustrip(u"μmol/m^2/s", b)
         c = ustrip(u"(μmol/m^2/s)^2", c)
         #J = roots(Poly([c, b, a])) |> minimum
-        pr = roots(Poly([c, b, a]))
+        #pr = roots(Poly([c, b, a]))
+        pr = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
         J = minimum(pr) * u"μmol/m^2/s"
         #println("Jmax = $Jmax, J = $J")
         Aj1 = x * J/2 - Rm + gbs*Cm
@@ -212,7 +222,8 @@ end
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
         #hs = roots(Poly([c, b, a]))) |> maximum
-        pr = roots(Poly([c, b, a]))
+        #pr = roots(Poly([c, b, a]))
+        pr = quadratic_solve_upper(a, b, c)
         hss = filter(x -> 0 < x < 1, pr)
         hs = isempty(hss) ? 0.1 : maximum(hss)
         #FIXME: check unit

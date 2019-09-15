@@ -41,11 +41,9 @@ end
 @system Radiation begin
     sun ~ ::Sun(override)
 
-    #FIXME: chance to remove ref here? only LAI is used
-    photosynthesis ~ ::System(override)
-
-    # cumulative LAI at the layer
-    leaf_area_index(photosynthesis): LAI ~ drive(u"cm^2/m^2")
+    # to access cumulative LAI at the layer
+    development ~ ::Development(override)
+    leaf_area_index(development): LAI ~ drive(u"cm^2/m^2")
 
     leaf_angle => ellipsoidal ~ preserve(parameter)
 

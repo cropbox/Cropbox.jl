@@ -11,23 +11,18 @@ end
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis begin
+    calendar ~ hold
     weather ~ hold
+    sun ~ hold
     soil ~ hold
+    development: dev ~ hold
+    radiation ~ hold
 
-    leaf_area_index: LAI ~ hold
-    planting_density: PD ~ hold
+    irradiance_Q_sunlit(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
+    irradiance_Q_shaded(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
 
-    water_supply ~ hold
-
-    CO2_weight ~ hold
-    CH2O_weight ~ hold
-    H2O_weight ~ hold
-
-    #FIXME remove dep to Photosynthesis
-    radiation(context, weather, LAI) => Radiation(; context=context, sun=weather.sun, photosynthesis=self) ~ ::Radiation
-
-    sunlit_weather(context, weather, radiation) => SunlitWeather(; context=context, weather=weather, radiation=radiation) ~ ::SunlitWeather
-    shaded_weather(context, weather, radiation) => ShadedWeather(; context=context, weather=weather, radiation=radiation) ~ ::ShadedWeather
+    sunlit_weather(context, calendar, radiation) => SunlitWeather(; context=context, calendar=calendar, radiation=radiation) ~ ::SunlitWeather
+    shaded_weather(context, calendar, radiation) => ShadedWeather(; context=context, calendar=calendar, radiation=radiation) ~ ::ShadedWeather
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use leaf_nitrogen_content, leaf_width, ET_supply
@@ -43,7 +38,7 @@ end
     #TODO how do we get LeafWP and ET_supply?
     leaf_water_potential(x=soil.WP_leaf): LWP ~ track(u"MPa")
 
-    evapotranspiration_supply(LAI, PD, ws=water_supply, ww=H2O_weight) => begin
+    evapotranspiration_supply(LAI=dev.LAI, PD=dev.PD, ws=dev.water_supply, ww=dev.H2O_weight) => begin
         #TODO common handling logic for zero LAI
         #FIXME check unit conversion (w.r.t water_supply)
         # ? * (1/m^2) / (3600s/hour) / (g/umol) / (cm^2/m^2) = mol/m^2/s H2O
@@ -94,24 +89,24 @@ end
 
     # final values
     #TODO check final units
-    assimilation(A_gross, PD, w=CO2_weight) => begin
+    assimilation(A_gross, PD=dev.PD, w=dev.CO2_weight) => begin
         # grams CO2 per plant per hour
         A_gross / PD * w
     end ~ capture(u"g")
 
-    gross_assimilation(A_gross, PD, w=CH2O_weight) => begin
+    gross_assimilation(A_gross, PD=dev.PD, w=dev.CH2O_weight) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_gross / PD * w
     end ~ capture(u"g")
 
-    net_assimilation(A_net, PD, w=CH2O_weight) => begin
+    net_assimilation(A_net, PD=dev.PD, w=dev.CH2O_weight) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_net / PD * w
     end ~ capture(u"g")
 
-    transpiration(ET, PD, w=H2O_weight) => begin
+    transpiration(ET, PD=dev.PD, w=dev.H2O_weight) => begin
         # Units of Transpiration from sunlit->ET are mol m-2 (leaf area) s-1
         # Calculation of transpiration from ET involves the conversion to gr per plant per hour
         ET / PD * w
@@ -125,7 +120,7 @@ end
         max(0.0u"kPa", VPD)
     end ~ track(u"kPa")
 
-    conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI) => begin
+    conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI=dev.LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
         if iszero(LAI_sunlit) || iszero(LAI_shaded)
             0.
