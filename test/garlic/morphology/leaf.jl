@@ -113,7 +113,7 @@
     phase1_delay(rank) => begin
         # not used in MAIZSIM because LTAR is used to initiate leaf growth.
         # Fournier's value : -5.16+1.94*rank;equa 11 Fournier and Andrieu(1998) YY, This is in plastochron unit
-        max(-5.16 + 1.94rank, 0)
+        max(-5.16 + 1.94rank, 0.)
     end ~ track
 
     leaf_number_effect(potential_leaves) => begin
