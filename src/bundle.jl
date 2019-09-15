@@ -9,13 +9,13 @@ struct BundleFilter{S<:AbstractString} <: BundleOperator
     cond::S
 end
 
-struct Bundle
-    root::Produce
+struct Bundle{S<:System}
+    root::Produce{S}
     ops::Vector{BundleOperator}
 end
 
 import Base: getindex
-getindex(s::Produce, ops::AbstractString) = begin
+getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = begin
     resolve(op::AbstractString) = begin
         if op == "*"
             # collecting children only at the current level
@@ -33,11 +33,11 @@ getindex(s::Produce, ops::AbstractString) = begin
             end
         end
     end
-    Bundle(s, resolve.(split(ops, "/")))
+    Bundle{S}(s, resolve.(split(ops, "/")))
 end
 
-struct Bunch
-    list::Vector
+struct Bunch{S}
+    list::Vector{S}
 end
 
 import Base: getproperty
