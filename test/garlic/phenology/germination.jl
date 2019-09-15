@@ -5,9 +5,9 @@
 
     maximum_germination_rate: GR_max => 0.45 ~ preserve(u"d^-1", parameter)
 
-    germination(GR_max, T, T_opt, T_ceil, germinating) => begin
+    germination(r=GR_max, T, T_opt, T_ceil, germinating) => begin
         #FIXME prevent extra accumulation after it's `over`
-        germinating ? GR_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
+        germinating ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate
 
     germinateable(planting_date, t=calendar.time) => (t >= planting_date) ~ flag

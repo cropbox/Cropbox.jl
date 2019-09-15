@@ -40,7 +40,7 @@ end
         Tk = max(0, T + K)
         Tbk = max(0, Tb + K)
         r = exp(Ea * (T - Tb) / (Tbk * R * Tk))
-        isinf(r) ? 0. : r
+        isinf(r) ? zero(r) : r
     end ~ call
 
     nitrogen_limited_rate(N, s=2.9, N0=0.25): N_dep => begin
@@ -135,7 +135,7 @@ end
 
     net_photosynthesis(Ac, Aj, beta=0.99): A_net => begin
         # smooting the transition between Ac and Aj
-        A_net = ((Ac+Aj) - ((Ac+Aj)^2 - 4*beta*Ac*Aj)^0.5) / (2*beta)
+        A_net = ((Ac+Aj) - sqrt((Ac+Aj)^2 - 4*beta*Ac*Aj)) / (2*beta)
         #println("Ac = $Ac, Aj = $Aj, A_net = $A_net")
         A_net
     end ~ track # solve(target=Cm, lower=0, upper=Cmmax)
@@ -182,8 +182,8 @@ end
         d = width * 0.72
 
         #1.42 # total BLC (both sides) for LI6400 leaf chamber
-        1.4 * 0.147 * (max(0.1, wind) / d)^0.5 * ratio
-        # (1.4 * 1.1 * 6.62 * (wind / d)^0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
+        1.4 * 0.147 * sqrt(max(0.1, wind) / d) * ratio
+        # (1.4 * 1.1 * 6.62 * sqrt(wind / d) * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
         # 6.62 is for laminar forced convection of air over flat plates on projected area basis
         # when all conversion is done for each surface it becomes close to 0.147 as given in Norman and Campbell

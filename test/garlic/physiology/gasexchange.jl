@@ -135,7 +135,7 @@ end
         c = ustrip(u"(μmol/m^2/s)^2", c)
         #J = roots(Poly([c, b, a])) |> minimum
         #pr = roots(Poly([c, b, a]))
-        pr = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
+        pr = quadratic_solve_lower(a, b, c)
         J = minimum(pr) * u"μmol/m^2/s"
         #println("Jmax = $Jmax, J = $J")
         Aj1 = x * J/2 - Rm + gbs*Cm
@@ -145,7 +145,7 @@ end
 
     net_photosynthesis(Ac, Aj, beta=0.99): A_net => begin
         # smooting the transition between Ac and Aj
-        A_net = ((Ac+Aj) - ((Ac+Aj)^2 - 4beta*Ac*Aj)^0.5) / (2beta)
+        A_net = ((Ac+Aj) - sqrt((Ac+Aj)^2 - 4beta*Ac*Aj)) / (2beta)
         #println("Ac = $Ac, Aj = $Aj, A_net = $A_net")
         A_net
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
@@ -197,8 +197,8 @@ end
 
         #FIXME: check units, remove ustrip
         #1.42 # total BLC (both sides) for LI6400 leaf chamber
-        1.4 * 0.147 * ustrip(max(0.1u"m/s", wind) / d)^0.5 * ratio
-        # (1.4 * 1.1 * 6.62 * (wind / d)^0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
+        1.4 * 0.147 * sqrt(ustrip(max(0.1u"m/s", wind) / d)) * ratio
+        # (1.4 * 1.1 * 6.62 * sqrt(wind / d) * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
         # 6.62 is for laminar forced convection of air over flat plates on projected area basis
         # when all conversion is done for each surface it becomes close to 0.147 as given in Norman and Campbell
@@ -223,9 +223,9 @@ end
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
         #hs = roots(Poly([c, b, a]))) |> maximum
         #pr = roots(Poly([c, b, a]))
-        pr = quadratic_solve_upper(a, b, c)
-        hss = filter(x -> 0 < x < 1, pr)
-        hs = isempty(hss) ? 0.1 : maximum(hss)
+        #hss = filter(x -> 0 < x < 1, pr)
+        #hs = isempty(hss) ? 0.1 : maximum(hss)
+        hs = quadratic_solve_upper(a, b, c)
         #FIXME: check unit
         hs = hs*u"mol/mol"
         #hs = clamp(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize

@@ -1,8 +1,8 @@
 @system LeafAppearance(Stage, Germination, Emergence, LeafInitiation) begin
     maximum_leaf_tip_appearance_rate: LTAR_max => 0.20 ~ preserve(u"d^-1", parameter)
 
-    leaf_tip_appearance(LTAR_max, T, T_opt, T_ceil, leaf_appearing) => begin
-        leaf_appearing ? LTAR_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
+    leaf_tip_appearance(r=LTAR_max, T, T_opt, T_ceil, leaf_appearing) => begin
+        leaf_appearing ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate
 
     leaf_appearable(emerged) ~ flag

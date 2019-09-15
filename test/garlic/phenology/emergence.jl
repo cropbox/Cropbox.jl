@@ -5,8 +5,8 @@
     emergence_date => nothing ~ preserve(parameter)
     begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve
 
-    emergence(ER_max, T, T_opt, T_ceil, emerging) => begin
-        emerging ? ER_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
+    emergence(r=ER_max, T, T_opt, T_ceil, emerging) => begin
+        emerging ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate
 
     emergeable(germinated) ~ flag

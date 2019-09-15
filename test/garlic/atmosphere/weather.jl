@@ -22,9 +22,8 @@ using CSV
     end ~ preserve
     key(t=calendar.time) => t ~ track::ZonedDateTime
     store(df, index, key): s => begin
-        r = df[df[!, index] .== key, :][1, :]
-        Dict{Symbol,Any}(pairs(r))
-    end ~ track::Dict
+        df[df[!, index] .== key, :][1, :]
+    end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
     #Dict(:SolRad => 1500, :CO2 => 400, :RH => 0.6, :T_air => 25, :wind => 2.0, :P_air => 100)
 
     photon_flux_density(s): PFD ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta

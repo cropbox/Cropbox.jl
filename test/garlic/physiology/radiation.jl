@@ -78,22 +78,29 @@ end
     # Leaf angle stuff?
 
     #TODO better name?
-    leaf_angle_coeff(leaf_angle, leaf_angle_factor; zenith_angle) => begin
+    leaf_angle_coeff(a=leaf_angle, leaf_angle_factor; zenith_angle) => begin
         elevation_angle = 90u"°" - zenith_angle
         #FIXME need to prevent zero like sin_beta / cot_beta?
         a = elevation_angle
         t = zenith_angle
         # leaf angle distribution parameter
         x = leaf_angle_factor
-        Dict(
+        if a == spherical
             # When Lt accounts for total path length, division by sin(elev) isn't necessary
-            spherical => 1 / (2sin(a)),
-            horizontal => 1,
-            vertical => 1 / (tan(a) * π/2),
-            empirical => 0.667,
-            diaheliotropic => 1 / sin(a),
-            ellipsoidal => sqrt(x^2 + tan(t)^2) / (x + 1.774 * (x+1.182)^-0.733),
-        )[leaf_angle]
+            1 / (2sin(a))
+        elseif a == horizontal
+            1.
+        elseif a == vertical
+            1 / (tan(a) * π/2)
+        elseif a == empirical
+            0.667
+        elseif a == diaheliotropic
+            1 / sin(a)
+        elseif a == ellipsoidal
+            sqrt(x^2 + tan(t)^2) / (x + 1.774 * (x+1.182)^-0.733)
+        else
+            1.
+        end
     end ~ call
 
     #TODO make it @property if arg is not needed
@@ -266,12 +273,9 @@ end
     # weighted average absorved diffuse flux over depth of L within canopy
     # accounting for exponential decay, Campbell p261
     irradiance_Q_dm(LAI, I0_df, s, Kd): Q_dm => begin
-        if LAI > 0
-            # Integral Qd / Integral L
-            I0_df * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
-        else
-            0
-        end
+        # Integral Qd / Integral L
+        Q = I0_df * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
+        isinf(Q) ? zero(Q) : Q
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # unintercepted beam (direct beam) flux at depth of L within canopy
@@ -303,32 +307,23 @@ end
 
     # weighted average of Soil reflectance over canopy accounting for exponential decay
     irradiance_Q_soilm(LAI, rho_soil, s, Kd, Q_soil): Q_soilm => begin
-        if LAI > 0
-            # Integral Qd / Integral L
-            Q_soil * rho_soil * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
-        else
-            0
-        end
+        # Integral Qd / Integral L
+        Q = Q_soil * rho_soil * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
+        isinf(Q) ? zero(Q) : Q
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # weighted average scattered radiation within canopy
-    irradiance_Q_scm(LAI, rho_soil, s, Kd, Q_soil, Q_soilm, I0_dr, Kb): Q_scm => begin
-        if LAI > 0
-            # Integral Qd / Integral L
-            Q_soilm = Q_soil * rho_soil * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
-
-            # total beam including scattered absorbed by canopy
-            #FIXME should the last part be multiplied by LAI like others?
-            #TODO simplify by using existing variables (i.e. Q_bt, Q_b)
-            total_beam = I0_dr * (1 - exp(-sqrt(1 - s) * Kb * LAI)) / (sqrt(1 - s) * Kb)
-            # non scattered beam absorbed by canopy
-            nonscattered_beam = I0_dr * (1 - exp(-Kb * LAI)) / Kb
-            (total_beam - nonscattered_beam) / LAI
-            # Campbell and Norman (1998) p 261, Average between top (where scattering is 0) and bottom.
-            #(self.Q_bt(L=LAI) - Q_b(L=LAI)) / 2
-        else
-            0
-        end
+    irradiance_Q_scm(LAI, I0_dr, s, Kb): Q_scm => begin
+        # total beam including scattered absorbed by canopy
+        #FIXME should the last part be multiplied by LAI like others?
+        #TODO simplify by using existing variables (i.e. Q_bt, Q_b)
+        total_beam = I0_dr * (1 - exp(-sqrt(1 - s) * Kb * LAI)) / (sqrt(1 - s) * Kb)
+        # non scattered beam absorbed by canopy
+        nonscattered_beam = I0_dr * (1 - exp(-Kb * LAI)) / Kb
+        Q = (total_beam - nonscattered_beam) / LAI
+        # Campbell and Norman (1998) p 261, Average between top (where scattering is 0) and bottom.
+        #(self.Q_bt(L=LAI) - Q_b(L=LAI)) / 2
+        isinf(Q) ? zero(Q) : Q
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # scattered radiation at depth L in the canopy
@@ -350,7 +345,7 @@ end
 
     # sunlit LAI assuming closed canopy; thus not accurate for row or isolated canopy
     sunlit_leaf_area_index(sunrisen, Kb, LAI): LAI_sunlit => begin
-        sunrisen ? (1 - exp(-Kb * LAI)) / Kb : 0
+        sunrisen ? (1 - exp(-Kb * LAI)) / Kb : 0.
     end ~ track(u"cm^2/m^2")
 
     # shaded LAI assuming closed canopy
@@ -360,7 +355,7 @@ end
 
     # sunlit fraction of current layer
     sunlit_fraction(sunrisen, Kb; L) => begin
-        sunrisen ? exp(-Kb * L) : 0
+        sunrisen ? exp(-Kb * L) : 0.
     end ~ call
 
     shaded_fraction(sunlit_fraction; L) => begin

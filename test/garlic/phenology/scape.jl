@@ -6,8 +6,8 @@
     #HACK use LTAR
     maximum_scaping_rate(LTAR_max): SR_max => LTAR_max ~ preserve(u"d^-1", parameter)
 
-    scape(SR_max, T, T_opt, T_ceil, scaping) => begin
-        scaping ? SR_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
+    scape(r=SR_max, T, T_opt, T_ceil, scaping) => begin
+        scaping ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate
 
     scapeable(l=leaf_appeared, f=floral_initiated) => (l && f) ~ flag

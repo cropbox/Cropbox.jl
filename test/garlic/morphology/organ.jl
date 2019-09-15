@@ -22,7 +22,7 @@
             #growing_degree_days(T, 8.0; T_max=43.3)
             growing_degree_days(T, 4.0; T_max=40.0)
         else
-            0
+            0.
         end
     end ~ accumulate
 

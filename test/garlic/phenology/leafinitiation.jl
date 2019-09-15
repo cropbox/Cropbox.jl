@@ -3,8 +3,8 @@
 
     maximum_leaf_initiation_rate: LIR_max => 0.20 ~ preserve(u"d^-1", parameter)
 
-    leaf_initiation(LIR_max, T, T_opt, T_ceil, leaf_initiating) => begin
-        leaf_initiating ? LIR_max * beta_thermal_func(T, T_opt, T_ceil) : 0u"d^-1"
+    leaf_initiation(r=LIR_max, T, T_opt, T_ceil, leaf_initiating) => begin
+        leaf_initiating ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate
 
     #HACK original garlic model assumed leaves are being initiated when the seeds are sown

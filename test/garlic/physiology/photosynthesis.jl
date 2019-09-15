@@ -46,7 +46,7 @@ end
         # ?(g / hour) * (hour/3600s) * (umol/g) / cm^2
         s = ws * PD / 3600 / ww / LAI
         #FIXME isinf necessary?
-        isinf(s) ? 0. : s
+        isinf(s) ? zero(s) : s
     end ~ track(u"mol/m^2/s" #= H2O =#)
 
     sunlit_leaf_area_index(x=radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
@@ -122,13 +122,9 @@ end
 
     conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI=dev.LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
-        if iszero(LAI_sunlit) || iszero(LAI_shaded)
-            0.
-        else
-            # average stomatal conductance Yang
-            weighted(array=conductance_array) / LAI
-            #c = max(0, c)
-            #isinf(c) ? 0. : c
-        end
+        # average stomatal conductance Yang
+        c = weighted(array=conductance_array) / LAI
+        #c = max(zero(c), c)
+        isinf(c) ? zero(c) : c
     end ~ track(u"μmol/m^2/s")
 end

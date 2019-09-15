@@ -142,16 +142,13 @@
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._elongation_tracker.rate, self.growth_duration)
         #FIXME how to define unit for this?
-        if growing
-            1u"hr/d" * beta_thermal_func(T, T_opt, T_ceil)
-        else
-            0
-        end
+        r = 1u"hr/d"
+        growing ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
     end ~ accumulate(u"d")
 
     #TODO move to common module (i.e. Organ?)
     beta_growth(t_b=0u"d", delta=1; t, t_m=nothing, c_m, t_e) => begin
-        t = clamp(t, 0u"d", t_e)
+        t = clamp(t, zero(t), t_e)
         t_m = isnothing(t_m) ? t_e / 2 : t_m
         t_et = t_e - t
         t_em = t_e - t_m
@@ -161,12 +158,9 @@
     end ~ call(u"cm/d")
 
     potential_elongation_rate(growing, beta_growth, elongation_age, LER_max, GD) => begin
-        if growing
-            #TODO proper integration with scipy.integrate
-            beta_growth(t=elongation_age, c_m=LER_max, t_e=GD)
-        else
-            0u"cm/d"
-        end
+        r = 1u"cm/d"
+        #TODO proper integration with scipy.integrate?
+        growing ? r * beta_growth(t=elongation_age, c_m=LER_max, t_e=GD) : zero(r)
     end ~ track(u"cm/d")
 
     temperature_effect_func(; T_grow, T_peak, T_base) => begin
@@ -179,7 +173,7 @@
 
         T_ratio = (T_grow - T_base) / (T_peak - T_base)
         # final leaf size is adjusted by growth temperature determining cell size during elongation
-        max(T_ratio * exp(1 - T_ratio), 0)
+        max(T_ratio * exp(1 - T_ratio), zero(T_ratio))
     end ~ call
 
     temperature_effect => begin
@@ -218,7 +212,7 @@
             #area_increase_from_length(actual_length_increase)
             area_from_length(l=length+actual_length_increase) - area
         else
-            0u"cm^2"
+            zero(area)
         end
     end ~ track(u"cm^2")
 
@@ -295,14 +289,14 @@
             #TODO remove WaterStress and use general Accumulator with a lambda function?
             scale * (1 - water_potential_effect(threshold=threshold))
         else
-            0
+            0.
         end
     end ~ accumulate(u"d")
 
     stay_green_duration(SG, GD, stay_green_water_stress_duration) => begin
         # SK 8/20/10: as in Sinclair and Horie, 1989 Crop sciences, N availability index scaled between 0 and 1 based on
         #nitrogen_index = max(0, (2 / (1 + exp(-2.9 * (self.g_content - 0.25))) - 1))
-        max(SG * GD - stay_green_water_stress_duration, 0u"d")
+        max(SG * GD - stay_green_water_stress_duration, zero(GD))
     end ~ track(u"d")
 
     active_age(mature, aging, T=pheno.T, T_opt=pheno.T_opt) => begin
@@ -316,7 +310,7 @@
             #TODO only for MAIZSIM
             q10_thermal_func(T, T_opt)
         else
-            0
+            0.
         end
     end ~ accumulate(u"d")
 
@@ -325,13 +319,13 @@
             # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
             scale * (1 - water_potential_effect(threshold=threshold))
         else
-            0
+            0.
         end
     end ~ accumulate(u"d")
 
     senescence_duration(GD, senescence_water_stress_duration) => begin
         # end of growth period, time to maturity
-        max(GD - senescence_water_stress_duration, 0u"d")
+        max(GD - senescence_water_stress_duration, zero(GD))
     end ~ track(u"d")
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
@@ -343,7 +337,7 @@
         if aging && !dead
             q10_thermal_func(T, T_opt)
         else
-            0
+            0.
         end
     end ~ accumulate(u"d")
 
@@ -360,7 +354,7 @@
         #     clip(r, 0., 1.)
         # for garlic
         if iszero(length)
-            0
+            0.
         else
             r = maximum_aging_rate * senescence_age / length
             clamp(r, 0, 1)
@@ -385,9 +379,9 @@
     maturity(emerged=pheno.emerged, mature, T=pheno.T) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         if emerged && !mature
-            growing_degree_days(T, 4; T_max=40)
+            growing_degree_days(T, 4.0; T_max=40.0)
         else
-            0
+            0.
         end
     end ~ accumulate
 
