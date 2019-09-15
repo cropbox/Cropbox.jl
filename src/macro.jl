@@ -568,7 +568,7 @@ genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
            $d = $C.value($f[$s.key])
         $C.store!($s, $d)
         #TODO: make store! return value
-        $C.value($s)
+        $C.value($s)::$C.valuetype($s)
     end # value() for Var
 end
 
