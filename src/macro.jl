@@ -125,7 +125,6 @@ genvartype(i::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
 genvartype(i::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
 genvartype(i::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 genvartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
-    #F = @q typeof($(symcall(i)))
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
         t = isnothing(t) ? :Float64 : esc(t)

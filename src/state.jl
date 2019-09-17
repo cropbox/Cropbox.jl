@@ -111,7 +111,6 @@ Track(; unit, _value, _type=Float64, _...) = begin
     V = valuetype(_type, U)
     v = unitfy(_value, U)
     V = promote_type(V, typeof(v))
-    #T = typeof(value(time))
     Track{V}(v)
 end
 
@@ -126,7 +125,6 @@ Drive(; unit, _name, _value, _type=Float64, _...) = begin
     V = valuetype(_type, U)
     v = unitfy(_value, U)
     V = promote_type(V, typeof(v))
-    #T = typeof(value(time))
     Drive{V}(v)
 end
 
@@ -139,7 +137,6 @@ end
 
 Call(; unit, _value, _type=Float64, _calltype, _...) = begin
     V = valuetype(_type, value(unit))
-    #F = typeof(_value)
     F = _calltype
     Call{V,F}(_value)
 end
@@ -161,10 +158,6 @@ Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     V = valuetype(_type, U)
     v = isnothing(_value) ? unitfy(zero(_type), U) : unitfy(_value, U)
     V = promote_type(V, typeof(v))
-    #TU = timeunittype(time, _system)
-    #T = valuetype(_type_time, TU)
-    #T = timetype(_type_time, time, _system)
-    #ST = typeof(time)
     t = value(time)
     T = typeof(t)
     TU = unittype(T)
@@ -188,9 +181,6 @@ Capture(; unit, time, _type=Float64, _...) = begin
     V = valuetype(_type, U)
     v = unitfy(zero(_type), U)
     V = promote_type(V, typeof(v))
-    #TU = timeunittype(time, _system)
-    #T = valuetype(_type_time, TU)
-    #ST = typeof(time)
     t = value(time)
     T = typeof(t)
     TU = unittype(T)
