@@ -17,7 +17,7 @@ import Base: getindex
 getindex(s::System, i) = getproperty(s, i)
 
 import Base: getproperty
-getproperty(s::System, n::String) = getvar(s, n)
+getproperty(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s, Symbol.(split(n, "."))...])
 
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
