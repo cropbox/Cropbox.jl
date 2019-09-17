@@ -176,16 +176,6 @@ end
 genfield(i::VarInfo) = genfield(genvartype(i), i.name, i.alias)
 genfields(infos) = [genfield(i) for i in infos]
 
-genparamdecl(i::VarInfo, params) = begin
-    P = vartype(i)
-    if isnothing(i.state)
-        @q $(esc(params[P[1]])) = typeof($(i.name))
-    else
-        @q ($([esc(params[p]) for p in P]...),) = typeof($(i.name)).parameters
-    end
-end
-genparamdecls(infos, params) = [genparamdecl(i, params) for i in infos]
-
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
 import DataStructures: OrderedSet
