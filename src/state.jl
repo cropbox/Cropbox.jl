@@ -141,7 +141,6 @@ Call(; unit, _value, _type=Float64, _calltype, _...) = begin
     Call{V,F}(_value)
 end
 
-#value(s::Call{V,F}) where {V,F} = s.value::F
 #HACK: showing s.value could trigger StackOverflowError
 show(io::IO, s::Call) = print(io, "<call>")
 
@@ -219,7 +218,6 @@ Produce(; _name, _type::Type{S}=System, _...) where {S<:System} = begin
     Produce{S}(S[], _name)
 end
 
-#value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
 produce(s::Type{<:System}; args...) = Product(s, args)
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
