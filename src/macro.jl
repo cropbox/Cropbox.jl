@@ -186,61 +186,11 @@ genparamdecl(i::VarInfo, params) = begin
 end
 genparamdecls(infos, params) = [genparamdecl(i, params) for i in infos]
 
-equation(f; static=false) = begin
-    fdef = splitdef(f)
-    name = Meta.quot(fdef[:name])
-    key(x::Symbol) = x
-    key(x::Expr) = x.args[1]
-    args = key.(fdef[:args]) |> Tuple{Vararg{Symbol}}
-    kwargs = key.(fdef[:kwargs]) |> Tuple{Vararg{Symbol}}
-    pair(x::Symbol) = nothing
-    pair(x::Expr) = x.args[1] => x.args[2]
-    default = filter(!isnothing, [pair.(fdef[:args]); pair.(fdef[:kwargs])]) |> Vector{Pair{Symbol,Any}}
-    # ensure default values are evaled (i.e. `nothing` instead of `:nothing`)
-    default = :(Dict{Symbol,Any}(k => $(esc(:eval))(v) for (k, v) in $default))
-    body = Meta.quot(fdef[:body])
-    func = @q function $(esc(gensym(fdef[:name])))($(esc.(fdef[:args])...); $(esc.(fdef[:kwargs])...)) $(esc(fdef[:body])) end
-    :($C.Equation($func, $name, $args, $kwargs, $default, $body; static=$static))
-end
-
-macro equation(f)
-    e = equation(f)
-    #FIXME: redundant call of splitdef() in equation()
-    name = splitdef(f)[:name]
-    :($(esc(name)) = $e)
-end
-
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
 import DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(i::VarInfo{Symbol}) = begin
-    static = get(i.tags, :static, false)
-    if isnothing(i.body)
-        if isempty(i.args)
-            # use externally defined equation
-            e = esc(i.name)
-        elseif length(i.args) == 1
-            # shorthand syntax for single value arg without key
-            a = i.args[1]
-            if @capture(a, k_=v_)
-                # `f(a="b") ~ ...` expands to `f(a="b") => a ~ ...`
-                f = @q function $(i.name)($k=$v) $k end
-            elseif typeof(a) <: Symbol
-                # `f(a) ~ ...` expands to `f(a) => a ~ ...`
-                f = @q function $(i.name)($a) $a end
-            else
-                # `f("a") ~ ...` expands to `f(x="a") => x ~ ...`
-                f = @q function $(i.name)(x=$a) x end
-            end
-            e = equation(f; static=static)
-        else
-            @error "Function not provided: $(i.name)"
-        end
-    else
-        f = @q function $(i.name)($(Tuple(i.args)...)) $(i.body) end
-        e = equation(f; static=static)
-    end
     name = Meta.quot(i.name)
     alias = Tuple(i.alias)
     value = get(i.tags, :override, false) ? genoverride(i.name, geninit(i)) : geninit(i)
@@ -387,7 +337,7 @@ macro infos(head, body)
     geninfos(body, parsehead(head)[2])
 end
 
-export @equation, @system
+export @system
 
 geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
