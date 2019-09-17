@@ -25,19 +25,6 @@ valuetype(T, ::Nothing) = T
 valuetype(T, U::UU) where {UU<:Units} = Quantity{T, dimension(U), UU}
 valuetype(::Type{Array{T,N}}, U::Units) where {T,N} = Array{valuetype(T, U), N}
 
-# #HACK: state var referred by `time` tag must have been already declared
-# timeunittype(time::String, s::System) = unit(state(getvar(s, time)))
-# timetype(T, time::String, s::System) = valuetype(T, timeunittype(time, s))
-# timevalue(t::String, s::System) = begin
-#     x = getvar(s, t)
-#     #FIXME: ensure only access static values on init
-#     @assert typeof(x.equation) <: StaticEquation
-#     v = value(x.equation)
-#     u = timeunittype(t, s)
-#     unitfy(v, u)
-# end
-# timevalue(t, _) = t
-#
 rateunittype(U::Nothing, T::Units) = T^-1
 rateunittype(U::Units, T::Units) = U/T
 rateunittype(U::Units, T::Nothing) = U
