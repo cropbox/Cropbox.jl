@@ -56,7 +56,7 @@
         l * w * r
     end ~ track(u"cm^2")
 
-    area_from_length(; l) => begin
+    area_from_length(; l(u"cm")) => begin
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
         @nounit l
@@ -147,9 +147,9 @@
     end ~ accumulate(u"d")
 
     #TODO move to common module (i.e. Organ?)
-    beta_growth(t_b=0u"d", delta=1; t, t_m=nothing, c_m, t_e) => begin
+    beta_growth(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")) => begin
         t = clamp(t, zero(t), t_e)
-        t_m = isnothing(t_m) ? t_e / 2 : t_m
+        t_m = t_e / 2 #TODO: allow custom value again?
         t_et = t_e - t
         t_em = t_e - t_m
         t_tb = t - t_b
@@ -159,10 +159,10 @@
 
     potential_elongation_rate(growing, beta_growth, elongation_age, LER_max, GD) => begin
         #TODO proper integration with scipy.integrate?
-        growing ? beta_growth(t=elongation_age, c_m=LER_max, t_e=GD) : 0.0u"cm/d"
+        growing ? beta_growth(elongation_age, GD, LER_max) : 0.0u"cm/d"
     end ~ track(u"cm/d")
 
-    temperature_effect_func(; T_grow, T_peak, T_base) => begin
+    temperature_effect_func(; T_grow(u"°C"), T_peak(u"°C"), T_base(u"°C")) => begin
         # T_peak is the optimal growth temperature at which the potential leaf size determined in calc_mophology achieved.
         # Similar concept to fig 3 of Fournier and Andreiu (1998)
 
@@ -176,9 +176,9 @@
     end ~ call
 
     temperature_effect => begin
-        #temperature_effect_func(T_grow=self.p.pheno.growing_temperature, T_peak=18.7, T_base=8.0) # for MAIZSIM
+        #temperature_effect_func(self.p.pheno.growing_temperature, 18.7, 8.0) # for MAIZSIM
         #FIXME garlic model uses current temperature, not average growing temperature
-        #temperature_effect_func(T_grow=self.p.pheno.temperature, T_peak=self.p.pheno.optimal_temperature, T_base=0) # for garlic
+        #temperature_effect_func(self.p.pheno.temperature, self.p.pheno.optimal_temperature, 0) # for garlic
         #FIXME garlic model does not actually use tempeature effect on final leaf size calculation
         1.0 # for garlic
     end ~ track
@@ -218,6 +218,7 @@
     # create a function which simulates the reducing in leaf expansion rate
     # when predawn leaf water potential decreases. Parameterization of rf_psil
     # and rf_sensitivity are done with the data from Boyer (1970) and Tanguilig et al (1987) YY
+    #FIXME: unit of call args kPa?
     water_potential_effect_func(; psi_predawn, psi_th) => begin
         #psi_predawn = self.p.soil.WP_leaf_predawn
         # psi_th: threshold wp below which stress effect shows up
@@ -233,7 +234,7 @@
 
     water_potential_effect(; threshold) => begin
         # for MAIZSIM
-        #water_potential_effect_func(psi_predawn=soil.WP_leaf_predawn, psi_th=threshold)
+        #water_potential_effect_func(soil.WP_leaf_predawn, threshold)
         # for garlic
         1.0
     end ~ call
@@ -252,7 +253,8 @@
     # actual area
     area(water_potential_effect, carbon_effect, temperature_effect, area_from_length, length) => begin
         # See Kim et al. (2012) Agro J. for more information on how this relationship has been derermined basned on multiple studies and is applicable across environments
-        we = water_potential_effect(threshold=-0.8657)
+        #FIXME: unit of threshold kPa?
+        we = water_potential_effect(-0.8657)
 
         # place holder
         ce = carbon_effect
@@ -286,7 +288,7 @@
             # One day of cumulative severe water stress (i.e., water_effect = 0.0 around -4MPa) would result in a reduction of leaf lifespan in relation staygreeness and growthDuration, SK
             # if scale is 1.0, one day of severe water stress shortens one day of stayGreenDuration
             #TODO remove WaterStress and use general Accumulator with a lambda function?
-            scale * (1 - water_potential_effect(threshold=threshold))
+            scale * (1 - water_potential_effect(threshold))
         else
             0.
         end
@@ -316,7 +318,7 @@
     senescence_water_stress_duration(aging, water_potential_effect, scale=0.5, threshold=-4.0) => begin
         if aging
             # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
-            scale * (1 - water_potential_effect(threshold=threshold))
+            scale * (1 - water_potential_effect(threshold))
         else
             0.
         end

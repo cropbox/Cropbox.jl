@@ -19,7 +19,7 @@ using CSV
             datetime_from_julian_day_WEA(r.year, r.jday, r.time, timezone)
         end
         df
-    end ~ preserve
+    end ~ preserve::DataFrame
     key(t=calendar.time) => t ~ track::ZonedDateTime
     store(df, index, key): s => begin
         df[df[!, index] .== key, :][1, :]
@@ -45,15 +45,14 @@ using CSV
     #TODO: make P_air parameter?
     air_pressure: P_air => 100 ~ track(u"kPa")
 
-    vapor_pressure_deficit(T_air, RH, D=vp.D): VPD => D(T=T_air, RH=RH) ~ track(u"kPa")
-    vapor_pressure_saturation_slope(T_air, P_air, s=vp.s): VPD_slope => s(T=T_air, P=P_air) ~ track(u"K^-1")
+    vapor_pressure_deficit(T_air, RH, D=vp.D): VPD => D(T_air, RH) ~ track(u"kPa")
+    vapor_pressure_saturation_slope(T_air, P_air, s=vp.s): VPD_slope => s(T_air, P_air) ~ track(u"K^-1")
 end
 
 # import Base: show
 # show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
 
 # o = configure(
-#     :Clock => (:unit => u"hr"),
 #     :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
 #     :Weather => (:filename => "test/garlic/data/2007.wea"),
 # )

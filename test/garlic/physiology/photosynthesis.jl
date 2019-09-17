@@ -52,7 +52,7 @@ end
     sunlit_leaf_area_index(x=radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
     shaded_leaf_area_index(x=radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"cm^2/m^2")
 
-    weighted(LAI_sunlit, LAI_shaded; array) => begin
+    weighted(LAI_sunlit, LAI_shaded; array::Vector{Float64}(u"μmol/m^2/s")) => begin
         v = [LAI_sunlit LAI_shaded] * array
         #FIXME better way to handling 1-element array value?
         v[1]
@@ -67,7 +67,7 @@ end
     #temperature_array(a=sunlit.T_leaf, b=shaded.T_leaf) => [a, b] ~ track::Vector{Float64}(u"°C")
     conductance_array(a=sunlit_gasexchange.gs, b=shaded_gasexchange.gs) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
 
-    gross_CO2_umol_per_m2_s(weighted, gross_array): A_gross => weighted(array=gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    gross_CO2_umol_per_m2_s(weighted, gross_array): A_gross => weighted(gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # plantsPerMeterSquare units are umol CO2 m-2 ground s-1
     # in the following we convert to g C plant-1 per hour
@@ -75,7 +75,7 @@ end
 
     net_CO2_umol_per_m2_s(weighted, net_array): A_net => begin
         # grams CO2 per plant per hour
-        weighted(array=net_array)
+        weighted(net_array)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     transpiration_H2O_mol_per_m2_s(weighted, evapotranspiration_array): ET => begin
@@ -84,7 +84,7 @@ end
         #self.transpiration_old = self.transpiration
         #FIXME need to check if LAIs are negative?
         #transpiration = sunlit_gasexchange.ET * max(0, sunlit_LAI) + shaded_gasexchange.ET * max(0, shaded_LAI)
-        weighted(array=evapotranspiration_array)
+        weighted(evapotranspiration_array)
     end ~ track(u"μmol/m^2/s" #= H2O =#)
 
     # final values
@@ -113,7 +113,7 @@ end
     end ~ capture(u"g")
 
     #FIXME: no sense to weight two temperature values here?
-    #temperature(weighted, temperature_array) => weighted(array=temperature_array) ~ track(u"°C")
+    #temperature(weighted, temperature_array) => weighted(temperature_array) ~ track(u"°C")
 
     vapor_pressure_deficit(VPD=sunlit_gasexchange.VPD) => begin
         #HACK only use sunlit leaves?
@@ -123,7 +123,7 @@ end
     conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI=dev.LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
         # average stomatal conductance Yang
-        c = weighted(array=conductance_array) / LAI
+        c = weighted(conductance_array) / LAI
         #c = max(zero(c), c)
         isinf(c) ? zero(c) : c
     end ~ track(u"μmol/m^2/s")

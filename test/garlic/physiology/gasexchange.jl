@@ -31,7 +31,7 @@ end
     # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     # Arrhenius equation
-    temperature_dependence_rate(T, Tb=25u"°C"; Ea): T_dep => begin
+    temperature_dependence_rate(T, Tb=25u"°C"; Ea(u"J/mol")): T_dep => begin
         R = 8.314u"J/K/mol" # universal gas constant (J K-1 mol-1)
         #HACK handle too low temperature values during optimization
         Tk = max(T |> u"K", 0u"K")
@@ -47,7 +47,7 @@ end
 
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     dark_respiration(T_dep, Rd25=2u"μmol/m^2/s" #= O2 =#, Ear=39800u"J/mol"): Rd => begin
-        Rd25 * T_dep(Ea=Ear)
+        Rd25 * T_dep(Ear)
     end ~ track(u"μmol/m^2/s")
 
     Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
@@ -67,7 +67,7 @@ end
 
         r = Jm25 * begin
             N_dep *
-            T_dep(Ea=Eaj) *
+            T_dep(Eaj) *
             (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
             (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
         end
@@ -86,12 +86,12 @@ end
 
     # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
     Kc(T_dep, Kc25=650u"μbar", Eac=59400u"J/mol") => begin
-        Kc25 * T_dep(Ea=Eac)
+        Kc25 * T_dep(Eac)
     end ~ track(u"μbar")
 
     # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
     Ko(T_dep, Ko25=450u"mbar", Eao=36000u"J/mol") => begin
-        Ko25 * T_dep(Ea=Eao)
+        Ko25 * T_dep(Eao)
     end ~ track(u"mbar")
 
     Km(Kc, Om, Ko) => begin
@@ -100,7 +100,7 @@ end
     end ~ track(u"μbar")
 
     Vpmax(N_dep, T_dep, Vpm25=70u"μmol/m^2/s" #= CO2 =#, EaVp=75100u"J/mol") => begin
-        Vpm25 * N_dep * T_dep(Ea=EaVp)
+        Vpm25 * N_dep * T_dep(EaVp)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     Vp(Vpmax, Cm, Kp) => begin
@@ -112,7 +112,7 @@ end
 
     # EaVc: Sage (2002) JXB
     Vcmax(N_dep, T_dep, Vcm25=50u"μmol/m^2/s" #= CO2 =#, EaVc=55900u"J/mol") => begin
-        Vcm25 * N_dep * T_dep(Ea=EaVc)
+        Vcm25 * N_dep * T_dep(EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     enzyme_limited_photosynthesis_rate(Vp, gbs, Cm, Rm, Vcmax, Rd): Ac => begin
@@ -263,8 +263,8 @@ end
 
 # C4 for maize, C3 for garlic
 @system PhotosyntheticLeaf(Stomata, C4) begin
-    weather ~ ::System(override)
-    soil ~ ::System(override)
+    weather ~ ::Weather(override)
+    soil ~ ::Soil(override)
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -369,8 +369,8 @@ end
         ambient=weather.vp.ambient,
         saturation=weather.vp.saturation
     ): ET => begin
-        ea = ambient(T=T_air, RH=RH)
-        es_leaf = saturation(T=T)
+        ea = ambient(T_air, RH)
+        es_leaf = saturation(T)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0.0u"μmol/m^2/s", ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"μmol/m^2/s" #= H2O =#)
@@ -378,7 +378,7 @@ end
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
-    weather: w ~ ::System(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
+    weather: w ~ ::Weather(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
     soil ~ ::Soil(override)
     leaf(context, weather, soil) => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
 
