@@ -35,11 +35,11 @@ using Unitful
         @system SNounitCall begin
             a => 1 ~ track(u"m")
             b(a; x) => (@nounit a; a+x) ~ call
-            c(b) => b(x=1) ~ track
+            c(b) => b(1) ~ track
         end
         s = instance(SNounitCall)
         @test s.a == u"1m"
-        @test Cropbox.value(s.b)(x=1) == 2
+        @test Cropbox.value(s.b)(1) == 2
         @test s.c == 2
     end
 end

@@ -22,11 +22,43 @@ using Unitful
 
     @testset "call" begin
         @system SCall begin
-            a(; x) => x ~ call
-            aa(a) => a(x=1) ~ track
+            fa(; x) => x ~ call
+            a(fa) => fa(1) ~ track
+            fb(i; x) => i + x ~ call
+            b(fb) => fb(1) ~ track
+            i => 1 ~ preserve
         end
         s = instance(SCall)
-        @test s.aa == 1
+        @test s.a == 1
+        @test s.b == 2
+    end
+
+    @testset "call with unit" begin
+        @system SCallUnit begin
+            fa(; x(u"m")) => x ~ call(u"m")
+            a(fa) => fa(1u"m") ~ track(u"m")
+            fb(i; x(u"m")) => i + x ~ call(u"m")
+            b(fb) => fb(1u"m") ~ track(u"m")
+            i => 1 ~ preserve(u"m")
+        end
+        s = instance(SCallUnit)
+        @test s.a == 1u"m"
+        @test s.b == 2u"m"
+    end
+
+    @testset "call with type and unit" begin
+        @system SCallTypeUnit begin
+            fa(; x::Int(u"m")) => x ~ call::Int(u"m")
+            a(fa) => fa(1u"m") ~ track::Int(u"m")
+            fb(i; x::Int(u"m")) => i + x ~ call::Int(u"m")
+            b(fb) => fb(1u"m") ~ track::Int(u"m")
+            i => 1 ~ preserve::Int(u"m")
+        end
+        s = instance(SCallTypeUnit)
+        @test s.a == 1u"m"
+        @test s.b == 2u"m"
+        @test Cropbox.value(s.a) |> ustrip |> typeof == Int
+        @test Cropbox.value(s.b) |> ustrip |> typeof == Int
     end
 
     @testset "accumulate" begin
@@ -80,7 +112,7 @@ using Unitful
 
     @testset "accumulate with time" begin
         @system SAccumulateTime begin
-            t(x=context.clock.tick) => 0.5x ~ track
+            t(x=context.clock.tick) => 0.5x ~ track(u"hr")
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(a) => a + 1 ~ accumulate(time=t)
@@ -113,20 +145,20 @@ using Unitful
 
     @testset "accumulate distribute" begin
         @system SAccumulateDistribute begin
-            s(x=context.clock.tick) => 100x ~ track
+            s(x=context.clock.tick) => (100u"hr^-1" * x) ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
         s = instance(SAccumulateDistribute)
         c = s.context
-        @test c.clock.tick == 1 && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.tick == 1u"hr" && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
         advance!(s)
-        @test c.clock.tick == 2 && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
+        @test c.clock.tick == 2u"hr" && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
         advance!(s)
-        @test c.clock.tick == 3 && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
+        @test c.clock.tick == 3u"hr" && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
         advance!(s)
-        @test c.clock.tick == 4 && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
+        @test c.clock.tick == 4u"hr" && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
     @testset "capture" begin
@@ -145,7 +177,7 @@ using Unitful
 
     @testset "capture with time" begin
         @system SCaptureTime begin
-            t(x=context.clock.tick) => 2x ~ track
+            t(x=context.clock.tick) => 2x ~ track(u"hr")
             a => 1 ~ track
             b(a) => a + 1 ~ capture(time=t)
             c(a) => a + 1 ~ accumulate(time=t)
@@ -202,12 +234,12 @@ using Unitful
 
     @testset "drive with dict" begin
         @system SDriveDict begin
-            a(t=context.clock.tick) => Dict(:a => 10t) ~ drive
+            a(t=context.clock.tick) => Dict(:a => 10t) ~ drive(u"hr")
         end
         s = instance(SDriveDict)
-        @test s.context.clock.tick == 1 && s.a == 10
+        @test s.context.clock.tick == 1u"hr" && s.a == 10u"hr"
         advance!(s)
-        @test s.context.clock.tick == 2 && s.a == 20
+        @test s.context.clock.tick == 2u"hr" && s.a == 20u"hr"
     end
 
     @testset "drive with key" begin
@@ -220,13 +252,13 @@ using Unitful
 
     @testset "drive with dataframe" begin
         @system SDriveDataFrame begin
-            df => DataFrame(t=0:4, a=0:10:40) ~ preserve::DataFrame(static)
+            df => DataFrame(t=(0:4)u"hr", a=0:10:40) ~ preserve::DataFrame(static)
             a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
         s = instance(SDriveDataFrame)
-        @test s.context.clock.tick == 1 && s.a == 10
+        @test s.context.clock.tick == 1u"hr" && s.a == 10
         advance!(s)
-        @test s.context.clock.tick == 2 && s.a == 20
+        @test s.context.clock.tick == 2u"hr" && s.a == 20
     end
 
     @testset "flag" begin
@@ -256,18 +288,18 @@ using Unitful
     @testset "produce with kwargs" begin
         @system SProduceKwargs begin
             a => produce(SProduceKwargs) ~ produce
-            i(t=context.clock.tick) => t ~ preserve
+            i(t=context.clock.tick) => t ~ preserve(u"hr")
         end
         s = instance(SProduceKwargs)
-        @test length(s.a) == 0 && s.i == 0
+        @test length(s.a) == 0 && s.i == 0u"hr"
         advance!(s)
-        @test length(s.a) == 1 && s.i == 0
-        @test length(s.a[1].a) == 0 && s.a[1].i == 1
+        @test length(s.a) == 1 && s.i == 0u"hr"
+        @test length(s.a[1].a) == 0 && s.a[1].i == 1u"hr"
         advance!(s)
-        @test length(s.a) == 2 && s.i == 0
-        @test length(s.a[1].a) == 1 && s.a[1].i == 1
-        @test length(s.a[2].a) == 0 && s.a[2].i == 2
-        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 2
+        @test length(s.a) == 2 && s.i == 0u"hr"
+        @test length(s.a[1].a) == 1 && s.a[1].i == 1u"hr"
+        @test length(s.a[2].a) == 0 && s.a[2].i == 2u"hr"
+        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i == 2u"hr"
     end
 
     @testset "produce with nothing" begin
@@ -283,7 +315,7 @@ using Unitful
     @testset "produce query index" begin
         @system SProduceQueryIndex begin
             p => produce(SProduceQueryIndex) ~ produce
-            i(t=context.clock.tick) => t ~ preserve
+            i(t=context.clock.tick) => (@nounit t; Int(t)) ~ preserve::Int
             a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             c(x=p["*/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -314,7 +346,7 @@ using Unitful
     @testset "produce query condition with track bool" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce
-            i(t=context.clock.tick) => t ~ preserve
+            i(t=context.clock.tick) => (@nounit t; Int(t)) ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -352,7 +384,7 @@ using Unitful
     @testset "produce query condition with flag" begin
         @system SProduceQueryConditionFlag begin
             p => produce(SProduceQueryConditionFlag) ~ produce
-            i(t=context.clock.tick) => t ~ preserve
+            i(t=context.clock.tick) => (@nounit t; Int(t)) ~ preserve::Int
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -416,9 +448,9 @@ using Unitful
         end
         s = instance(SClock)
         # after one advance! in instance()
-        @test s.context.clock.tick == 1
+        @test s.context.clock.tick == 1u"hr"
         advance!(s)
-        @test s.context.clock.tick == 2
+        @test s.context.clock.tick == 2u"hr"
     end
 
     @testset "clock with config" begin
@@ -427,14 +459,14 @@ using Unitful
         o = configure(:Clock => (#=:init => 5,=# step => 10))
         s = instance(SClockConfig; config=o)
         # after one advance! in instance()
-        @test s.context.clock.tick == 10
+        @test s.context.clock.tick == 10u"hr"
         advance!(s)
-        @test s.context.clock.tick == 20
+        @test s.context.clock.tick == 20u"hr"
     end
 
     @testset "calendar" begin
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
-        o = configure(:Clock => (:unit => u"hr"), :Calendar => (:init => t0))
+        o = configure(:Calendar => (:init => t0))
         s = instance(Calendar; config=o)
         # after one advance! in instance()
         @test s.init == t0

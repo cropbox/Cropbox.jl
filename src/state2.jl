@@ -108,9 +108,11 @@ mutable struct Preserve{V} <: State{V}
 end
 
 # Preserve is the only State that can store value `nothing`
-Preserve(; unit, _value, _...) = begin
-    v = unitfy(_value, value(unit))
-    V = typeof(v)
+Preserve(; unit, _value, _type=Float64, _...) = begin
+    U = value(unit)
+    V = valuetype(_type, U)
+    v = unitfy(_value, U)
+    V = promote_type(V, typeof(v))
     Preserve{V}(v)
 end
 
@@ -146,13 +148,15 @@ end
 
 ####
 
-mutable struct Call{V,F<:Function} <: State{V}
+import FunctionWrappers: FunctionWrapper
+mutable struct Call{V,F<:FunctionWrapper} <: State{V}
     value::F
 end
 
-Call(; unit, _value, _type=Float64, _...) = begin
+Call(; unit, _value, _type=Float64, _calltype, _...) = begin
     V = valuetype(_type, value(unit))
-    F = typeof(_value)
+    #F = typeof(_value)
+    F = _calltype
     Call{V,F}(_value)
 end
 

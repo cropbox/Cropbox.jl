@@ -49,7 +49,7 @@ end
 
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     dark_respiration(T_dep, Rd25=2, Ear=39800): Rd => begin
-        Rd25 * T_dep(Ea=Ear)
+        Rd25 * T_dep(Ear)
     end ~ track
 
     Rm(Rd) => 0.5Rd ~ track
@@ -64,7 +64,7 @@ end
 
         r = Jm25 * begin
             N_dep *
-            T_dep(Ea=Eaj) *
+            T_dep(Eaj) *
             (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
             (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
         end
@@ -83,12 +83,12 @@ end
 
     # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
     Kc(T_dep, Kc25=650, Eac=59400) => begin
-        Kc25 * T_dep(Ea=Eac)
+        Kc25 * T_dep(Eac)
     end ~ track
 
     # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
     Ko(T_dep, Ko25=450, Eao=36000) => begin
-        Ko25 * T_dep(Ea=Eao)
+        Ko25 * T_dep(Eao)
     end ~ track
 
     Km(Kc, Om, Ko) => begin
@@ -97,7 +97,7 @@ end
     end ~ track
 
     Vpmax(N_dep, T_dep, Vpm25=70, EaVp=75100) => begin
-        Vpm25 * N_dep * T_dep(Ea=EaVp)
+        Vpm25 * N_dep * T_dep(EaVp)
     end ~ track
 
     Vp(Vpmax, Cm, Kp) => begin
@@ -109,7 +109,7 @@ end
 
     # EaVc: Sage (2002) JXB
     Vcmax(N_dep, T_dep, Vcm25=50, EaVc=55900) => begin
-        Vcm25 * N_dep * T_dep(Ea=EaVc)
+        Vcm25 * N_dep * T_dep(EaVc)
     end ~ track
 
     enzyme_limited_photosynthesis_rate(Vp, gbs, Cm, Rm, Vcmax, Rd): Ac => begin
@@ -343,8 +343,8 @@ end
         ambient=weather.vp.ambient,
         saturation=weather.vp.saturation
     ): ET => begin
-        ea = ambient(T=T_air, RH=RH)
-        es_leaf = saturation(T=T)
+        ea = ambient(T_air, RH)
+        es_leaf = saturation(T)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track
@@ -357,12 +357,12 @@ end
     c => 240.97 ~ preserve(parameter) # C
 
     saturation(a, b, c; T): es => a*exp((b*T)/(c+T)) ~ call
-    ambient(es; T, RH): ea => es(T=T) * RH ~ call
-    deficit(es; T, RH): vpd => es(T=T) * (1 - RH) ~ call
-    relative_humidity(es; T, VPD): rh => 1 - VPD / es(T=T) ~ call
+    ambient(es; T, RH): ea => es(T) * RH ~ call
+    deficit(es; T, RH): vpd => es(T) * (1 - RH) ~ call
+    relative_humidity(es; T, VPD): rh => 1 - VPD / es(T) ~ call
 
     # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
-    curve_slope(es, b, c; T, P): cs => es(T=T) * (b*c)/(c+T)^2 / P ~ call
+    curve_slope(es, b, c; T, P): cs => es(T) * (b*c)/(c+T)^2 / P ~ call
 end
 
 #TODO: use improved @drive
@@ -376,8 +376,8 @@ end
     T_air => 25 ~ track # C
     wind => 2.0 ~ track # meters s-1
     P_air => 100 ~ track # kPa
-    VPD(T_air, RH, vpd=vp.vpd) => vpd(T=T_air, RH=RH) ~ track
-    VPD_slope(T_air, P_air, cs=vp.cs) => cs(T=T_air, P=P_air) ~ track
+    VPD(T_air, RH, vpd=vp.vpd) => vpd(T_air, RH) ~ track
+    VPD_slope(T_air, P_air, cs=vp.cs) => cs(T_air, P_air) ~ track
 end
 
 import Base: show

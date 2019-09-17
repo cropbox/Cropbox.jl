@@ -4,15 +4,15 @@ using Unitful
 @testset "root structure" begin
     @system RootSegment begin
         parent => nothing ~ ::Union{System,Nothing}(override)
-        elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"cm")
+        elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"mm/hr")
         branching_angle => rand(Normal(20, 10))*u"°" ~ preserve(u"°")
-        branching_interval: i => 3.0 ~ track(u"cm")
+        branching_interval: i => 3.0 ~ track(u"mm")
         branching_chance: p => clamp(rand(Normal(0.5, 0.5)), 0, 1) ~ track
         is_branching(l, ll, i, p) => (l - ll > i && p > 0.5) ~ flag
-        branched_length: bl => 0 ~ preserve(u"cm", override)
-        diameter => 0.1 ~ track(u"cm")
-        length(r): l ~ accumulate(u"cm")
-        last_branching_length(x=branch["*/-1"].bl): ll => (isempty(x) ? 0. : x[1]) ~ track(u"cm")
+        branched_length: bl => 0 ~ preserve(u"mm", override)
+        diameter => 0.1 ~ track(u"mm")
+        length(r): l ~ accumulate(u"mm")
+        last_branching_length(x=branch["*/-1"].bl): ll => (isempty(x) ? 0. : x[1]) ~ track(u"mm")
         branch(is_branching, l) => begin
             if is_branching
                 #println("branch at l = $l")
@@ -54,11 +54,11 @@ using Unitful
 
     s = instance(RootSegment)
     #d = []
-    while Cropbox.value(s.context.clock.tick) <= 30.0
+    while Cropbox.value(s.context.clock.tick) <= 30u"hr"
         advance!(s)
         #push!(d, (transform(collect(r))))
     end
-    @test Cropbox.value(s.context.clock.tick) > 30.0
+    @test Cropbox.value(s.context.clock.tick) > 30u"hr"
     #render(r)
     #write(d, tmp_path/'root.json')
 end

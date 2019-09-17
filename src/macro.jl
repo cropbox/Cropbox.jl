@@ -38,12 +38,12 @@ VarInfo(line::Union{Expr,Symbol}) = begin
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
-    tags = parsetags(tags, type, state, args)
+    tags = parsetags(tags, type, state, args, kwargs)
     VarInfo{typeof(state)}(name, alias, args, kwargs, body, state, type, tags, line)
 end
 
-parsetags(::Nothing, type, state, args) = parsetags([], type, state, args)
-parsetags(tags::Vector, type, state, args) = begin
+parsetags(::Nothing, a...) = parsetags([], a...)
+parsetags(tags::Vector, type, state, args, kwargs) = begin
     d = Dict{Symbol,Any}()
     for t in tags
         if @capture(t, k_=v_)
@@ -60,6 +60,19 @@ parsetags(tags::Vector, type, state, args) = begin
         end
     end
     !haskey(d, :unit) && (d[:unit] = nothing)
+    if state == :Call
+        #FIXME: lower duplicate efforts in vartype()
+        N = isnothing(type) ? :Float64 : type
+        U = get(d, :unit, nothing)
+        V = @q $C.valuetype($N, $U)
+        extract(a) = let k, t, u
+            @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
+            t = isnothing(t) ? :Float64 : t
+            @q $C.valuetype($t, $u)
+        end
+        F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
+        d[:_calltype] = F
+    end
     (state in (:Accumulate, :Capture)) && !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     !isnothing(type) && (d[:_type] = esc(type))
     d
@@ -97,41 +110,86 @@ end
 
 const C = :($(esc(:Cropbox)))
 
-posedparams(infos) = begin
-    K = union(Set.(vartype.(infos))...) |> collect
-    V = [Symbol(string(hash(k); base=62)) for k in K]
-    Dict(zip(K, V))
-end
-genvartype(i::VarInfo, params) = begin
-    P = vartype(i)
-    if isnothing(i.state)
-        @assert length(P) == 1
-        :($(esc(params[P[1]])))
-    else
-        :($C.$(i.state){$([:($(esc(params[p]))) for p in P]...)})
-    end
-end
+# posedparams(infos) = begin
+#     K = union(Set.(vartype.(infos))...) |> collect
+#     V = [Symbol(string(hash(k); base=62)) for k in K]
+#     Dict(zip(K, V))
+# end
+# genvartype(i::VarInfo, params) = begin
+#     P = vartype(i)
+#     if isnothing(i.state)
+#         @assert length(P) == 1
+#         :($(esc(params[P[1]])))
+#     else
+#         :($C.$(i.state){$([:($(esc(params[p]))) for p in P]...)})
+#     end
+# end
+#
+# vartype(i::VarInfo{Nothing}) = (i.name,) # ()
+# vartype(i::VarInfo{Symbol}) = vartype(i, Val(i.state))
+# vartype(i::VarInfo, ::Val{:Hold}) = (Any,)
+# vartype(i::VarInfo, ::Val{:Advance}) = ((isnothing(i.type) ? Int64 : i.type, get(i.tags, :unit, nothing)),)
+# vartype(i::VarInfo, ::Val{:Preserve}) = ((isnothing(i.type) ? i.name : i.type, get(i.tags, :unit, nothing)),)
+# vartype(i::VarInfo, ::Union{Val{:Track},Val{:Drive}}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
+# vartype(i::VarInfo, ::Val{:Call}) = begin
+#     V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
+#     F = i.name
+#     (V, F)
+# end
+# vartype(i::VarInfo, ::Union{Val{:Accumulate},Val{:Capture}}) = begin
+#     V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
+#     T = get(i.tags, :time, nothing)
+#     R = (V, T)
+#     (V, T, R)
+# end
+# vartype(i::VarInfo, ::Val{:Flag}) = (Bool,)
+# vartype(i::VarInfo, ::Val{:Produce}) = (:System,)
+# vartype(i::VarInfo, ::Val{:Solve}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
 
-vartype(i::VarInfo{Nothing}) = (i.name,) # ()
-vartype(i::VarInfo{Symbol}) = vartype(i, Val(i.state))
-vartype(i::VarInfo, ::Val{:Hold}) = (Any,)
-vartype(i::VarInfo, ::Val{:Advance}) = ((isnothing(i.type) ? Int64 : i.type, get(i.tags, :unit, nothing)),)
-vartype(i::VarInfo, ::Val{:Preserve}) = ((isnothing(i.type) ? i.name : i.type, get(i.tags, :unit, nothing)),)
-vartype(i::VarInfo, ::Union{Val{:Track},Val{:Drive}}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
-vartype(i::VarInfo, ::Val{:Call}) = begin
-    V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
-    F = i.name
-    (V, F)
+genvartype(i::VarInfo) = vartype(i)
+
+vartype(i::VarInfo{Nothing}) = esc(i.type)
+vartype(i::VarInfo{Symbol}) = begin
+    N = isnothing(i.type) ? :Float64 : i.type
+    U = get(i.tags, :unit, nothing)
+    V = @q $C.valuetype($N, $U)
+    vartype(i, Val(i.state); N=N, U=U, V=V)
 end
-vartype(i::VarInfo, ::Union{Val{:Accumulate},Val{:Capture}}) = begin
-    V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
-    T = get(i.tags, :time, nothing)
-    R = (V, T)
-    (V, T, R)
+vartype(i::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
+vartype(i::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
+vartype(i::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
+vartype(i::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
+vartype(i::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
+vartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
+    #F = @q typeof($(symcall(i)))
+    extract(a) = let k, t, u
+        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
+        t = isnothing(t) ? :Float64 : t
+        @q $C.valuetype($t, $u)
+    end
+    F = @q FunctionWrapper{$V, Tuple{$(extract.(i.kwargs)...)}}
+    @q Call{$V,$F}
 end
-vartype(i::VarInfo, ::Val{:Flag}) = (Bool,)
-vartype(i::VarInfo, ::Val{:Produce}) = (:System,)
-vartype(i::VarInfo, ::Val{:Solve}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
+vartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
+    TU = @q u"hr"
+    T = @q $C.valuetype(Float64, $TU)
+    RU = @q $C.rateunittype($U, $TU)
+    R = @q $C.valuetype($N, $RU)
+    @q Accumulate{$V,$T,$R}
+end
+vartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
+    TU = @q u"hr"
+    T = @q $C.valuetype(Float64, $TU)
+    RU = @q $C.rateunittype($U, $TU)
+    R = @q $C.valuetype($N, $RU)
+    @q Capture{$V,$T,$R}
+end
+vartype(i::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
+vartype(i::VarInfo, ::Val{:Produce}; _...) = begin
+    S = isnothing(i.type) ? :System : i.type
+    @q Produce{$S}
+end
+vartype(i::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 posedbaseparams(infos) = begin
     d = Dict{Symbol,Any}()
@@ -160,12 +218,31 @@ end
 
 posedvars(infos) = names.(infos) |> Iterators.flatten |> collect
 
-genfield(i::VarInfo, params) = genfield(genvartype(i, params), i.name, i.alias)
+gencall(i::VarInfo) = gencall(i, Val(i.state))
+gencall(i::VarInfo, ::Val) = nothing
+gencall(i::VarInfo, ::Val{:Call}) = begin
+    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
+    # emit(a) = @q $(esc(key(a)))
+    # args = Tuple(emit.(i.args)) #Tuple(:(esc(a)) for a in i.args)
+    # @q function $(symcall(i))($(args...); $(Tuple(i.kwargs)...)) $(i.body) end
+    args = genfuncargs(i)
+    body = flatten(@q let $args; $(i.body) end)
+    @q function $(symcall(i))($(Tuple(i.kwargs)...)) $body end
+end
+gencalls(infos) = filter(!isnothing, gencall.(infos))
+
+# genfield(i::VarInfo, params) = genfield(genvartype(i, params), i.name, i.alias)
+# genfield(type, name, alias) = @q begin
+#     $name::$type
+#     $(@q begin $([:($a::$type) for a in alias]...) end)
+# end
 genfield(type, name, alias) = @q begin
     $name::$type
     $(@q begin $([:($a::$type) for a in alias]...) end)
 end
-genfields(infos, params) = [genfield(i, params) for i in infos]
+# genfields(infos, params) = [genfield(i, params) for i in infos]
+genfield(i::VarInfo) = genfield(genvartype(i), i.name, i.alias)
+genfields(infos) = [genfield(i) for i in infos]
 
 genparamdecl(i::VarInfo, params) = begin
     P = vartype(i)
@@ -268,23 +345,28 @@ genfieldnamesunique(infos) = Tuple(i.name for i in infos)
 genstruct(name, infos, incl) = begin
     S = esc(name)
     nodes = sortednodes(name, infos)
-    params = posedparams(infos)
-    types = [:($(esc(t))) for t in values(params)]
-    baseparams = posedbaseparams(infos)
-    headertypes = [genheadertype(t, baseparams) for t in values(params)]
-    fields = genfields(infos, params)
+    #params = posedparams(infos)
+    #types = [:($(esc(t))) for t in values(params)]
+    #baseparams = posedbaseparams(infos)
+    #headertypes = [genheadertype(t, baseparams) for t in values(params)]
+    #fields = genfields(infos, params)
+    calls = gencalls(infos)
+    fields = genfields(infos)
     decls = gendecl(nodes)
-    paramdecls = genparamdecls(infos, params)
+    #paramdecls = genparamdecls(infos, params)
     vars = posedvars(infos)
     source = gensource(infos)
     system = @q begin
-        struct $name{$(headertypes...)} <: $C.System
+        #$(calls...)
+        #struct $name{$(headertypes...)} <: $C.System
+        struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
                 _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
                 $(decls...)
-                $(paramdecls...)
-                new{$(types...)}($(vars...))
+                #$(paramdecls...)
+                #new{$(types...)}($(vars...))
+                new($(vars...))
             end
         end
         $C.source(::Val{$(Meta.quot(name))}) = $(Meta.quot(source))
@@ -476,9 +558,36 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
     @q $C.unitfy($C.value($(genfunc(v))[$k]), $C.value($(v.tags[:unit])))
 end
 geninit(v::VarInfo, ::Val{:Call}) = begin
-    args = genfuncargs(v)
-    kwargs = [:($(esc(a))) for a in v.kwargs]
-    flatten(@q let $args; (; $(kwargs...)) -> $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit]))) end)
+    #symcall(v)
+
+    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
+    emiti(a) = (p = pair(a); @q $(esc(p[1])) = $C.value($(p[2])))
+    innerargs = @q begin $(emiti.(v.args)...) end
+
+    innercall = flatten(@q let $innerargs; $(esc(v.body)) end)
+    innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
+
+    emito(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
+    outerargs = @q begin $(emito.(v.args)...) end
+
+    extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end
+    emitc(a) = @q $(esc(extract(a)))
+    callargs = Tuple(emitc.(v.kwargs))
+
+    @q function $(symcall(v))($(callargs...))
+        $innerbody
+    end
+    # outerbody = flatten(@q let $outerargs
+    #     function $(symcall(v))($(callargs...))
+    #         $innerbody
+    #     end
+    # end)
+    #
+    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
+    # emitf(a) = @q $(esc(key(a)))
+    # fillargs = Tuple(emitf.(v.args))
+    #
+    # @q function $(symcall(v))($(fillargs...); $(callargs...)) $outerbody end
 end
 geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Capture}) = nothing
@@ -497,8 +606,9 @@ genupdate(nodes) = begin
     end
 end
 
-symstate(v::VarInfo) = Symbol("_state_$(v.name)")
+symstate(v::VarInfo) = Symbol(:_state_, v.name)
 symlabel(v::VarInfo, t::Step) = Symbol(v.name, suffix(t))
+symcall(v::VarInfo) = Symbol(v.name, :_call)
 
 genupdateinit(n::VarNode) = begin
     v = n.info
