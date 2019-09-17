@@ -607,7 +607,7 @@ genupdate(nodes) = begin
 end
 
 symstate(v::VarInfo) = Symbol(:_state_, v.name)
-symlabel(v::VarInfo, t::Step) = Symbol(v.name, suffix(t))
+symlabel(v::VarInfo, t::Step, s...) = Symbol(v.name, suffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :_call)
 
 genupdateinit(n::VarNode) = begin
@@ -784,7 +784,8 @@ end
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     N_MAX = 100
     TOL = 0.0001
-    l = symlabel(v, PreStep())
+    lstart = symlabel(v, PreStep())
+    lexit = symlabel(v, MainStep(), :_exit)
     @gensym s d zero tol
     @q let $s = $(symstate(v)),
            $zero = $C.unitfy(0, $C.unit($s))
@@ -795,13 +796,13 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             $s.b = $C.value($s.upper)
             $s.step = :a
             $C.store!($s, $s.a)
-            @goto $l
+            @goto $lstart
         elseif $s.step == :a
             $s.fa = $C.value($s) - $(genfunc(v))
             #@show "solve: $($s.a) => $($s.fa)"
             $s.step = :b
             $C.store!($s, $s.b)
-            @goto $l
+            @goto $lstart
         elseif $s.step == :b
             $s.fb = $C.value($s) - $(genfunc(v))
             #@show "solve: $($s.b) => $($s.fb)"
@@ -810,19 +811,20 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             $s.c = ($s.a + $s.b) / 2
             $C.store!($s, $s.c)
             $s.step = :c
-            @goto $l
+            @goto $lstart
         elseif $s.step == :c
             $s.fc = $C.value($s) - $(genfunc(v))
             #@show "solve: $($s.c) => $($s.fc)"
             if $s.fc ≈ $zero || ($s.b - $s.a) < $tol
                 $s.step = :z
                 #@show "solve: finished! $($C.value($s))"
+                @goto $lexit
             else
                 $s.N += 1
                 if $s.N > $N_MAX
                     @show #= @error =# "solve: convergence failed!"
                     $s.step = :z
-                    return
+                    @goto $lexit
                 end
                 if sign($s.fc) == sign($s.fa)
                     $s.a = $s.c
@@ -835,9 +837,11 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
                 end
                 $s.c = ($s.a + $s.b) / 2
                 $C.store!($s, $s.c)
-                @goto $l
+                @goto $lstart
             end
         end
+        @label $lexit
+        $C.value($s)
     end
 end
 
