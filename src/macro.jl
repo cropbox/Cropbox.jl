@@ -61,7 +61,7 @@ parsetags(tags::Vector, type, state, args, kwargs) = begin
     end
     !haskey(d, :unit) && (d[:unit] = nothing)
     if state == :Call
-        #FIXME: lower duplicate efforts in vartype()
+        #FIXME: lower duplicate efforts in genvartype()
         N = isnothing(type) ? :Float64 : esc(type)
         U = get(d, :unit, nothing)
         V = @q $C.valuetype($N, $U)
@@ -110,21 +110,21 @@ end
 
 const C = :($(esc(:Cropbox)))
 
-genvartype(i::VarInfo) = vartype(i)
+genvartype(i::VarInfo) = genvartype(i)
 
-vartype(i::VarInfo{Nothing}) = esc(i.type)
-vartype(i::VarInfo{Symbol}) = begin
+genvartype(i::VarInfo{Nothing}) = esc(i.type)
+genvartype(i::VarInfo{Symbol}) = begin
     N = isnothing(i.type) ? :Float64 : esc(i.type)
     U = get(i.tags, :unit, nothing)
     V = @q $C.valuetype($N, $U)
-    vartype(i, Val(i.state); N=N, U=U, V=V)
+    genvartype(i, Val(i.state); N=N, U=U, V=V)
 end
-vartype(i::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
-vartype(i::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
-vartype(i::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
-vartype(i::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
-vartype(i::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
-vartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
+genvartype(i::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
+genvartype(i::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
+genvartype(i::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
+genvartype(i::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
+genvartype(i::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
+genvartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
     #F = @q typeof($(symcall(i)))
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
@@ -134,7 +134,7 @@ vartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
     F = @q FunctionWrapper{$V, Tuple{$(extract.(i.kwargs)...)}}
     @q Call{$V,$F}
 end
-vartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
+genvartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     #TODO: automatic inference without explicit `timeunit` tag
     TU = get(i.tags, :timeunit, nothing)
     TU = isnothing(TU) ? @q(u"hr") : TU
@@ -143,7 +143,7 @@ vartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     R = @q $C.valuetype($N, $RU)
     @q Accumulate{$V,$T,$R}
 end
-vartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
+genvartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
     TU = get(i.tags, :timeunit, nothing)
     TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
@@ -151,12 +151,12 @@ vartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
     R = @q $C.valuetype($N, $RU)
     @q Capture{$V,$T,$R}
 end
-vartype(i::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
-vartype(i::VarInfo, ::Val{:Produce}; _...) = begin
+genvartype(i::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
+genvartype(i::VarInfo, ::Val{:Produce}; _...) = begin
     S = isnothing(i.type) ? :System : esc(i.type)
     @q Produce{$S}
 end
-vartype(i::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
+genvartype(i::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 posedvars(infos) = names.(infos) |> Iterators.flatten |> collect
 
