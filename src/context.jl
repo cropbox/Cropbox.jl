@@ -16,7 +16,7 @@ advance!(c::Context, n=1) = begin
 		preflush!(c.queue)
 		S = collect!(c.order, c)
 		for s in S
-        	updatestatic!(s)
+        	update!(s)
 		end
 		postflush!(c.queue)
     end

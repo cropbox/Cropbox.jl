@@ -247,7 +247,7 @@ genstruct(name, infos, incl) = begin
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce{<:Any}}, $S)
         @generated $C.updatable(::Type{<:$S}) = $C.filteredvars($S)
-        $C.updatestatic!($(esc(:self))::$S) = $(genupdate(nodes))
+        $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
     flatten(system)
@@ -283,7 +283,7 @@ filteredvars(::Type{S}) where {S<:System} = begin
     end
     Tuple(d)
 end
-@generated updatestatic!(::System) = nothing
+@generated update!(::System) = nothing
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)
