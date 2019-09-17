@@ -238,10 +238,48 @@ end
     end ~ track
 end
 
+@system VaporPressure begin
+    # Campbell and Norman (1998), p 41 Saturation vapor pressure in kPa
+    a => 0.611 ~ preserve(parameter) # kPa
+    b => 17.502 ~ preserve(parameter) # C
+    c => 240.97 ~ preserve(parameter) # C
+
+    saturation(a, b, c; T): es => a*exp((b*T)/(c+T)) ~ call
+    ambient(es; T, RH): ea => es(T) * RH ~ call
+    deficit(es; T, RH): vpd => es(T) * (1 - RH) ~ call
+    relative_humidity(es; T, VPD): rh => 1 - VPD / es(T) ~ call
+
+    # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
+    curve_slope(es, b, c; T, P): cs => es(T) * (b*c)/(c+T)^2 / P ~ call
+end
+
+#TODO: use improved @drive
+#TODO: implement @unit
+@system Weather begin
+    vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure
+
+    PFD => 1500 ~ track # umol m-2 s-1
+    CO2 => 400 ~ track # ppm
+    RH => 0.6 ~ track # 0~1
+    T_air => 25 ~ track # C
+    wind => 2.0 ~ track # meters s-1
+    P_air => 100 ~ track # kPa
+    VPD(T_air, RH, vpd=vp.vpd) => vpd(T_air, RH) ~ track
+    VPD_slope(T_air, P_air, cs=vp.cs) => cs(T_air, P_air) ~ track
+end
+
+import Base: show
+show(io::IO, w::Weather) = print(io, "PFD = $(w.PFD), CO2 = $(w.CO2), RH = $(w.RH), T_air = $(w.T_air), wind = $(w.wind), P_air = $(w.P_air)")
+
+@system Soil begin
+    # pressure - leaf water potential MPa...
+    WP_leaf => 0 ~ track
+end
+
 # C4 for maize, C3 for garlic
 @system PhotosyntheticLeaf(Stomata, C4) begin
-    weather ~ ::System(override)
-    soil ~ ::System(override)
+    weather ~ ::Weather(override)
+    soil ~ ::Soil(override)
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -348,44 +386,6 @@ end
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track
-end
-
-@system VaporPressure begin
-    # Campbell and Norman (1998), p 41 Saturation vapor pressure in kPa
-    a => 0.611 ~ preserve(parameter) # kPa
-    b => 17.502 ~ preserve(parameter) # C
-    c => 240.97 ~ preserve(parameter) # C
-
-    saturation(a, b, c; T): es => a*exp((b*T)/(c+T)) ~ call
-    ambient(es; T, RH): ea => es(T) * RH ~ call
-    deficit(es; T, RH): vpd => es(T) * (1 - RH) ~ call
-    relative_humidity(es; T, VPD): rh => 1 - VPD / es(T) ~ call
-
-    # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
-    curve_slope(es, b, c; T, P): cs => es(T) * (b*c)/(c+T)^2 / P ~ call
-end
-
-#TODO: use improved @drive
-#TODO: implement @unit
-@system Weather begin
-    vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure
-
-    PFD => 1500 ~ track # umol m-2 s-1
-    CO2 => 400 ~ track # ppm
-    RH => 0.6 ~ track # 0~1
-    T_air => 25 ~ track # C
-    wind => 2.0 ~ track # meters s-1
-    P_air => 100 ~ track # kPa
-    VPD(T_air, RH, vpd=vp.vpd) => vpd(T_air, RH) ~ track
-    VPD_slope(T_air, P_air, cs=vp.cs) => cs(T_air, P_air) ~ track
-end
-
-import Base: show
-show(io::IO, w::Weather) = print(io, "PFD = $(w.PFD), CO2 = $(w.CO2), RH = $(w.RH), T_air = $(w.T_air), wind = $(w.wind), P_air = $(w.P_air)")
-
-@system Soil begin
-    # pressure - leaf water potential MPa...
-    WP_leaf => 0 ~ track
 end
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
