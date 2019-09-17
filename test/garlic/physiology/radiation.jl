@@ -116,7 +116,7 @@ end
     end ~ track
 
     # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
-    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve::Vector{Float64}(u"rad", static)
+    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve::Vector{Float64}(u"rad")
 
     diffused_fraction(a=angles; x::Vector{Float64}): fdf => begin
         # Why multiplied by 2?

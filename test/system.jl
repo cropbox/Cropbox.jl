@@ -252,7 +252,7 @@ using Unitful
 
     @testset "drive with dataframe" begin
         @system SDriveDataFrame begin
-            df => DataFrame(t=(0:4)u"hr", a=0:10:40) ~ preserve::DataFrame(static)
+            df => DataFrame(t=(0:4)u"hr", a=0:10:40) ~ preserve::DataFrame
             a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
         s = instance(SDriveDataFrame)
