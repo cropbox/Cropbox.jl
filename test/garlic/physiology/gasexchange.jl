@@ -31,11 +31,13 @@ end
     # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     # Arrhenius equation
-    temperature_dependence_rate(T, Tb=25u"°C"; Ea(u"J/mol")): T_dep => begin
+    temperature_dependence_rate(T, Tb=25.0u"°C"; Ea(u"J/mol")): T_dep => begin
         R = 8.314u"J/K/mol" # universal gas constant (J K-1 mol-1)
         #HACK handle too low temperature values during optimization
-        Tk = max(T |> u"K", 0u"K")
-        Tbk = max(Tb |> u"K", 0u"K")
+        Tk = T |> u"K"
+        Tbk = Tb |> u"K"
+        Tk = max(Tk, zero(Tk))
+        Tbk = max(Tbk, zero(Tbk))
         r = exp(Ea * (T - Tb) / (Tbk * R * Tk))
         #isinf(r) ? 0. : r
         r
@@ -61,7 +63,7 @@ end
     ): Jmax => begin
         R = 8.314u"J/K/mol"
 
-        Tb = 25u"°C"
+        Tb = 25.0u"°C"
         Tk = T |> u"K"
         Tbk = Tb |> u"K"
 
@@ -354,7 +356,7 @@ end
         #     (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
         # end
         (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
-    end ~ solve(lower=-10u"K", upper=10u"K", u"K")
+    end ~ solve(lower=-10.0u"K", upper=10.0u"K", u"K")
 
     temperature(T_adj, T_air=weather.T_air): T => begin
         T_leaf = T_air + T_adj
