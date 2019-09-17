@@ -12,9 +12,6 @@ length(s::State) = 1
 iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
 
-# default(V::Type{<:Number}) = zero(V)
-# default(V::Type) = V()
-
 import Unitful: unit
 unit(::State{V}) where V = unittype(V)
 unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
