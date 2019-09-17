@@ -293,7 +293,7 @@ end
     nitrogen: N => 2.0 ~ preserve(parameter)
 
     # geometry
-    width => 10 // 100 ~ preserve(parameter) # meters
+    width => 0.1 ~ preserve(parameter) # meters
 
     # soil?
     ET_supply: Jw => 0 ~ preserve(parameter)

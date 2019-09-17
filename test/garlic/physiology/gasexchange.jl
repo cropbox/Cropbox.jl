@@ -281,7 +281,7 @@ end
     nitrogen: N => 2.0 ~ preserve(parameter)
 
     # geometry
-    width => 10 // 100 ~ preserve(u"m", parameter)
+    width => 0.1 ~ preserve(u"m", parameter)
 
     # soil?
     # actual water uptake rate (mol H2O m-2 s-1)

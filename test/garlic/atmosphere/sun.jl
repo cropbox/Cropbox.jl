@@ -80,7 +80,7 @@ import Dates
         0.006918 - 0.399912cos(g) + 0.070257sin(g) - 0.006758cos(2g) + 0.000907sin(2g) -0.002697cos(3g) + 0.00148sin(3g)
 	end ~ track(u"°")
 
-    degree_per_hour: dph => 360u"°" // 24u"hr" ~ preserve(u"°/hr")
+    degree_per_hour: dph => 360u"°" / 24u"hr" ~ preserve(u"°/hr")
 
     # LC is longitude correction for Light noon, Wohlfart et al, 2000; Campbell & Norman 1998
     longitude_correction(long, dph): LC => begin
