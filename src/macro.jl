@@ -64,11 +64,11 @@ parsetags(tags::Vector, type, state, args, kwargs) = begin
         #FIXME: lower duplicate efforts in vartype()
         N = isnothing(type) ? :Float64 : type
         U = get(d, :unit, nothing)
-        V = @q $C.valuetype($N, $U)
+        V = @q $C.valuetype($(esc(N)), $U)
         extract(a) = let k, t, u
             @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
             t = isnothing(t) ? :Float64 : t
-            @q $C.valuetype($t, $u)
+            @q $C.valuetype($(esc(t)), $u)
         end
         F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
         d[:_calltype] = F
@@ -152,7 +152,7 @@ vartype(i::VarInfo{Nothing}) = esc(i.type)
 vartype(i::VarInfo{Symbol}) = begin
     N = isnothing(i.type) ? :Float64 : i.type
     U = get(i.tags, :unit, nothing)
-    V = @q $C.valuetype($N, $U)
+    V = @q $C.valuetype($(esc(N)), $U)
     vartype(i, Val(i.state); N=N, U=U, V=V)
 end
 vartype(i::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
@@ -165,7 +165,7 @@ vartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
         t = isnothing(t) ? :Float64 : t
-        @q $C.valuetype($t, $u)
+        @q $C.valuetype($(esc(t)), $u)
     end
     F = @q FunctionWrapper{$V, Tuple{$(extract.(i.kwargs)...)}}
     @q Call{$V,$F}
@@ -174,14 +174,14 @@ vartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     TU = @q u"hr"
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
-    R = @q $C.valuetype($N, $RU)
+    R = @q $C.valuetype($(esc(N)), $RU)
     @q Accumulate{$V,$T,$R}
 end
 vartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
     TU = @q u"hr"
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
-    R = @q $C.valuetype($N, $RU)
+    R = @q $C.valuetype($(esc(N)), $RU)
     @q Capture{$V,$T,$R}
 end
 vartype(i::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
