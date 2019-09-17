@@ -14,7 +14,7 @@ using Unitful
     @testset "nounit" begin
         @system SNounit begin
             a => 1 ~ track(u"m")
-            b(a) => (@nounit a; a) ~ track
+            b(a) => ustrip(a) ~ track
         end
         s = instance(SNounit)
         @test s.a == u"1m"
@@ -24,7 +24,7 @@ using Unitful
     @testset "nounit with alias" begin
         @system SNounitAlias begin
             a: aa => 1 ~ track(u"m")
-            b(aa): bb => (@nounit aa; aa) ~ track
+            b(aa): bb => ustrip(aa) ~ track
         end
         s = instance(SNounitAlias)
         @test s.aa == u"1m"
@@ -34,7 +34,7 @@ using Unitful
     @testset "nounit with call" begin
         @system SNounitCall begin
             a => 1 ~ track(u"m")
-            b(a; x) => (@nounit a; a+x) ~ call
+            b(a; x) => (ustrip(a) + x) ~ call
             c(b) => b(1) ~ track
         end
         s = instance(SNounitCall)

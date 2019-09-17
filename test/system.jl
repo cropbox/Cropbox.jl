@@ -315,7 +315,7 @@ using Unitful
     @testset "produce query index" begin
         @system SProduceQueryIndex begin
             p => produce(SProduceQueryIndex) ~ produce
-            i(t=context.clock.tick) => (@nounit t; Int(t)) ~ preserve::Int
+            i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
             a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             c(x=p["*/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -346,7 +346,7 @@ using Unitful
     @testset "produce query condition with track bool" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce
-            i(t=context.clock.tick) => (@nounit t; Int(t)) ~ preserve::Int
+            i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
@@ -384,7 +384,7 @@ using Unitful
     @testset "produce query condition with flag" begin
         @system SProduceQueryConditionFlag begin
             p => produce(SProduceQueryConditionFlag) ~ produce
-            i(t=context.clock.tick) => (@nounit t; Int(t)) ~ preserve::Int
+            i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
             b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
