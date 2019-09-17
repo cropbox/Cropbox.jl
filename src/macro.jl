@@ -62,13 +62,13 @@ parsetags(tags::Vector, type, state, args, kwargs) = begin
     !haskey(d, :unit) && (d[:unit] = nothing)
     if state == :Call
         #FIXME: lower duplicate efforts in vartype()
-        N = isnothing(type) ? :Float64 : type
+        N = isnothing(type) ? :Float64 : esc(type)
         U = get(d, :unit, nothing)
-        V = @q $C.valuetype($(esc(N)), $U)
+        V = @q $C.valuetype($N, $U)
         extract(a) = let k, t, u
             @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-            t = isnothing(t) ? :Float64 : t
-            @q $C.valuetype($(esc(t)), $u)
+            t = isnothing(t) ? :Float64 : esc(t)
+            @q $C.valuetype($t, $u)
         end
         F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
         d[:_calltype] = F
@@ -150,9 +150,9 @@ genvartype(i::VarInfo) = vartype(i)
 
 vartype(i::VarInfo{Nothing}) = esc(i.type)
 vartype(i::VarInfo{Symbol}) = begin
-    N = isnothing(i.type) ? :Float64 : i.type
+    N = isnothing(i.type) ? :Float64 : esc(i.type)
     U = get(i.tags, :unit, nothing)
-    V = @q $C.valuetype($(esc(N)), $U)
+    V = @q $C.valuetype($N, $U)
     vartype(i, Val(i.state); N=N, U=U, V=V)
 end
 vartype(i::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
@@ -164,29 +164,32 @@ vartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
     #F = @q typeof($(symcall(i)))
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        t = isnothing(t) ? :Float64 : t
-        @q $C.valuetype($(esc(t)), $u)
+        t = isnothing(t) ? :Float64 : esc(t)
+        @q $C.valuetype($t, $u)
     end
     F = @q FunctionWrapper{$V, Tuple{$(extract.(i.kwargs)...)}}
     @q Call{$V,$F}
 end
 vartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
-    TU = @q u"hr"
+    #TODO: automatic inference without explicit `timeunit` tag
+    TU = get(i.tags, :timeunit, nothing)
+    TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
-    R = @q $C.valuetype($(esc(N)), $RU)
+    R = @q $C.valuetype($N, $RU)
     @q Accumulate{$V,$T,$R}
 end
 vartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
-    TU = @q u"hr"
+    TU = get(i.tags, :timeunit, nothing)
+    TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
-    R = @q $C.valuetype($(esc(N)), $RU)
+    R = @q $C.valuetype($N, $RU)
     @q Capture{$V,$T,$R}
 end
 vartype(i::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
 vartype(i::VarInfo, ::Val{:Produce}; _...) = begin
-    S = isnothing(i.type) ? :System : i.type
+    S = isnothing(i.type) ? :System : esc(i.type)
     @q Produce{$S}
 end
 vartype(i::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
