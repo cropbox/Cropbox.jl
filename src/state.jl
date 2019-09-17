@@ -234,18 +234,6 @@ end
 
 #value(s::Produce{S}) where {S<:System} = s.value::Vector{S}
 produce(s::Type{<:System}; args...) = Product(s, args)
-
-# produce(s::Produce, p::Product, x::AbstractVar) = begin
-#     c = s.context
-#     k = p.type(; context=c, p.args...)
-#     append!(s.value, k)
-#     inform!(c.order, x, k)
-# end
-# produce(s::Produce, p::Vector{<:Product}, x::AbstractVar) = produce.(Ref(s), p, Ref(x))
-# produce(s::Produce, ::Nothing, x::AbstractVar) = nothing
-# update!(s::Produce, f::AbstractVar, ::MainStep) = nothing
-# update!(s::Produce, f::AbstractVar, ::PostStep) = (p = f(); () -> produce(s, p, f))
-
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
 length(s::Produce) = length(s.value)
@@ -274,31 +262,5 @@ Solve(; lower=nothing, upper=nothing, unit, _type=Float64, _...) = begin
     v = zero(V)
     Solve{V}(v, lower, upper, :z, 0, v, v, v, v, v, v)
 end
-
-using Roots
-# update!(s::Solve, f::AbstractVar, ::PreStep) = nothing
-# update!(s::Solve, f::AbstractVar, ::MainStep) = begin
-#     #@show "begin solve $s"
-#     trigger(x) = (store!(s, x); recite!(s.context.order, f))
-#     cost(e) = x -> (trigger(x); e(x) |> ustrip)
-#     b = (value(s.lower), value(s.upper))
-#     if nothing in b
-#         try
-#             c = cost(x -> (x - f())^2)
-#             v = find_zero(c, value(s))
-#         catch e
-#             #@show "convergence failed: $e"
-#             v = value(s)
-#         end
-#     else
-#         c = cost(x -> (x - f()))
-#         v = find_zero(c, b, Roots.AlefeldPotraShi())
-#     end
-#     #HACK: trigger update with final value
-#     trigger(v)
-#     recitend!(s.context.order, f)
-# end
-
-####
 
 export produce
