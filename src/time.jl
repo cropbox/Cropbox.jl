@@ -22,13 +22,3 @@ convert(::Type{T}, timer::Timepiece) where {T<:Number} = convert(T, timer.t)
 # convert(::Type{Timepiece{T}}, t) where T = Timepiece(convert(T, t))
 # promote_rule(::Type{Timepiece{T}}, ::Type{U}) where {T,U} = promote_type(T, U)
 # +(timer::Timepiece, t) = +(promote(timer, t)...)
-
-# struct TimeState{T}
-#     tick::State{T}
-#     ticker::Timepiece{T}
-# end
-#
-# TimeState{T}(tick) where T = TimeState{T}(tick, Timepiece{T}(zero(T)))
-#
-# #getvar(s::TimeState) = getvar(s.tick)
-# value(s::TimeState) = value(s.tick)
