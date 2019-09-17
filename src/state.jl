@@ -241,7 +241,6 @@ mutable struct Solve{V} <: State{V}
     fc::V
 end
 
-#TODO: reimplement Solve
 Solve(; lower=nothing, upper=nothing, unit, _type=Float64, _...) = begin
     V = valuetype(_type, value(unit))
     v = zero(V)
