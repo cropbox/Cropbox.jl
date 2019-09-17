@@ -440,8 +440,6 @@ genstore(v::VarInfo) = begin
     @q let $s = $(symstate(v)),
            $f = $(genfunc(v))
         $C.store!($s, $f)
-        #TODO: make store! return value
-        $C.value($s)
     end
 end
 
@@ -469,8 +467,6 @@ genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
            $f = $(genfunc(v)),
            $d = $C.value($f[$k])
         $C.store!($s, $d)
-        #TODO: make store! return value
-        $C.value($s)::$C.valuetype($s)
     end # value() for Var
 end
 
@@ -488,8 +484,6 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
            $t0 = $s.tick,
            $a = $s.value + $s.rate * ($t - $t0)
         $C.store!($s, $a)
-        #TODO: make store! return value
-        $C.value($s)
     end
 end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
@@ -509,8 +503,6 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
            $t0 = $s.tick,
            $d = $s.rate * ($t - $t0)
         $C.store!($s, $d)
-        #TODO: make store! return value
-        $C.value($s)
     end
 end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin

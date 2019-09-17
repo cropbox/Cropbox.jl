@@ -4,7 +4,7 @@ value(v) = v
 value(s::State) = s.value
 value(S::Vector{<:State}) = value.(S)
 
-store!(s::State, v) = (s.value = unitfy(v, unit(s)); nothing)
+store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 
 import Base: getindex, length, iterate
 getindex(s::State, i) = s
