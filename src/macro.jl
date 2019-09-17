@@ -431,7 +431,7 @@ genupdate(v::VarInfo, t::Step) = begin
 end
 genupdate(v::VarInfo, t::PostStep) = @q begin
     @label $(symlabel(v, t))
-    $C.queue!(context.queue, $(genupdate(v, Val(v.state), t)), $C.priority($C.$(v.state)))
+    $(genupdate(v, Val(v.state), t))
 end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
@@ -492,7 +492,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
            $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s))
-        () -> ($s.tick = $t; $s.rate = $r)
+        $C.queue!(context.queue, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end
 
@@ -511,23 +511,24 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
            $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s))
-        () -> ($s.tick = $t; $s.rate = $r)
+        $C.queue!(context.queue, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     @gensym s f
-    #FIXME: make type stable oneway
     if get(v.tags, :oneway, false)
         @q let $s = $(symstate(v)),
                $f = $(genfunc(v))
-            !$C.value($s) ? () -> $C.store!($s, $f) : nothing
+            if !$C.value($s)
+                $C.queue!(context.queue, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+            end
         end
     else
         @q let $s = $(symstate(v)),
                $f = $(genfunc(v))
-            () -> $C.store!($s, $f)
+            $C.queue!(context.queue, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
         end
     end
 end
@@ -540,12 +541,12 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
            $c = context,
            $o = context.order
         if !(isnothing($P) || isempty($P))
-            function ()
+            $C.queue!(context.queue, function ()
                 for p in $P
                     append!($s.value, p.type(; context=$c, p.args...))
                 end
                 $C.inform!($o)
-            end
+            end, $C.priority($C.$(v.state)))
         end
     end
 end
