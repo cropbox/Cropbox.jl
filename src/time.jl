@@ -5,7 +5,7 @@ end
 
 Timepiece{T}(t) where {T<:Number} = Timepiece{T}(t, oneunit(T))
 
-advance!(timer::Timepiece{T}, t) where {T<:Number} = (timer.t += t)
+advance!(timer::Timepiece{T}, t) where {T<:Number} = (timer.t += t; timer.t)
 advance!(timer::Timepiece{T}) where {T<:Number} = advance!(timer, timer.dt)
 reset!(timer::Timepiece{T}) where {T<:Number} = (timer.t = zero(T))
 update!(timer::Timepiece{T}, t::T) where {T<:Number} = begin
@@ -23,13 +23,12 @@ convert(::Type{T}, timer::Timepiece) where {T<:Number} = convert(T, timer.t)
 # promote_rule(::Type{Timepiece{T}}, ::Type{U}) where {T,U} = promote_type(T, U)
 # +(timer::Timepiece, t) = +(promote(timer, t)...)
 
-struct TimeState{T}
-    tick::VarVal{T}
-    ticker::Timepiece{T}
-end
-
-TimeState{T}(system::System, tick) where T = begin
-    TimeState{T}(VarVal{T}(system, tick), Timepiece{T}(zero(T)))
-end
-
-getvar(s::TimeState) = getvar(s.tick)
+# struct TimeState{T}
+#     tick::State{T}
+#     ticker::Timepiece{T}
+# end
+#
+# TimeState{T}(tick) where T = TimeState{T}(tick, Timepiece{T}(zero(T)))
+#
+# #getvar(s::TimeState) = getvar(s.tick)
+# value(s::TimeState) = value(s.tick)
