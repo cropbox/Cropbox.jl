@@ -22,13 +22,6 @@ getproperty(s::System, n::String) = getvar(s, n)
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
 
-# init!(s::S) where {S<:System} = begin
-#     for a in updatable(S)
-#         x = getvar(s, a)
-#         patch_default!(s, x, x.equation)
-#     end
-# end
-
 import Base: collect
 import DataStructures: OrderedSet
 collect(s::System; recursive=true, exclude_self=false) = begin

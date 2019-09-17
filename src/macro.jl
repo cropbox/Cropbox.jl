@@ -110,42 +110,6 @@ end
 
 const C = :($(esc(:Cropbox)))
 
-# posedparams(infos) = begin
-#     K = union(Set.(vartype.(infos))...) |> collect
-#     V = [Symbol(string(hash(k); base=62)) for k in K]
-#     Dict(zip(K, V))
-# end
-# genvartype(i::VarInfo, params) = begin
-#     P = vartype(i)
-#     if isnothing(i.state)
-#         @assert length(P) == 1
-#         :($(esc(params[P[1]])))
-#     else
-#         :($C.$(i.state){$([:($(esc(params[p]))) for p in P]...)})
-#     end
-# end
-#
-# vartype(i::VarInfo{Nothing}) = (i.name,) # ()
-# vartype(i::VarInfo{Symbol}) = vartype(i, Val(i.state))
-# vartype(i::VarInfo, ::Val{:Hold}) = (Any,)
-# vartype(i::VarInfo, ::Val{:Advance}) = ((isnothing(i.type) ? Int64 : i.type, get(i.tags, :unit, nothing)),)
-# vartype(i::VarInfo, ::Val{:Preserve}) = ((isnothing(i.type) ? i.name : i.type, get(i.tags, :unit, nothing)),)
-# vartype(i::VarInfo, ::Union{Val{:Track},Val{:Drive}}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
-# vartype(i::VarInfo, ::Val{:Call}) = begin
-#     V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
-#     F = i.name
-#     (V, F)
-# end
-# vartype(i::VarInfo, ::Union{Val{:Accumulate},Val{:Capture}}) = begin
-#     V = (isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing))
-#     T = get(i.tags, :time, nothing)
-#     R = (V, T)
-#     (V, T, R)
-# end
-# vartype(i::VarInfo, ::Val{:Flag}) = (Bool,)
-# vartype(i::VarInfo, ::Val{:Produce}) = (:System,)
-# vartype(i::VarInfo, ::Val{:Solve}) = ((isnothing(i.type) ? Float64 : i.type, get(i.tags, :unit, nothing)),)
-
 genvartype(i::VarInfo) = vartype(i)
 
 vartype(i::VarInfo{Nothing}) = esc(i.type)
@@ -194,56 +158,21 @@ vartype(i::VarInfo, ::Val{:Produce}; _...) = begin
 end
 vartype(i::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
-posedbaseparams(infos) = begin
-    d = Dict{Symbol,Any}()
-    for i in infos
-        if isnothing(i.state)
-            P = vartype(i)
-            p = P[1]
-            k = Symbol(string(hash(p); base=62))
-            v = varbasetype(i)
-            !isnothing(v) && (d[k] = v)
-        end
-    end
-    d
-end
-varbasetype(i::VarInfo{Nothing}) = i.type
-varbasetype(i::VarInfo{Symbol}) = nothing
-
-genheadertype(t, baseparams) = begin
-    b = get(baseparams, t, nothing)
-    if isnothing(b)
-        :($(esc(t)))
-    else
-        :($(esc(t)) <: $(esc(b)))
-    end
-end
-
 posedvars(infos) = names.(infos) |> Iterators.flatten |> collect
 
 gencall(i::VarInfo) = gencall(i, Val(i.state))
 gencall(i::VarInfo, ::Val) = nothing
 gencall(i::VarInfo, ::Val{:Call}) = begin
-    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
-    # emit(a) = @q $(esc(key(a)))
-    # args = Tuple(emit.(i.args)) #Tuple(:(esc(a)) for a in i.args)
-    # @q function $(symcall(i))($(args...); $(Tuple(i.kwargs)...)) $(i.body) end
     args = genfuncargs(i)
     body = flatten(@q let $args; $(i.body) end)
     @q function $(symcall(i))($(Tuple(i.kwargs)...)) $body end
 end
 gencalls(infos) = filter(!isnothing, gencall.(infos))
 
-# genfield(i::VarInfo, params) = genfield(genvartype(i, params), i.name, i.alias)
-# genfield(type, name, alias) = @q begin
-#     $name::$type
-#     $(@q begin $([:($a::$type) for a in alias]...) end)
-# end
 genfield(type, name, alias) = @q begin
     $name::$type
     $(@q begin $([:($a::$type) for a in alias]...) end)
 end
-# genfields(infos, params) = [genfield(i, params) for i in infos]
 genfield(i::VarInfo) = genfield(genvartype(i), i.name, i.alias)
 genfields(infos) = [genfield(i) for i in infos]
 
@@ -348,27 +277,17 @@ genfieldnamesunique(infos) = Tuple(i.name for i in infos)
 genstruct(name, infos, incl) = begin
     S = esc(name)
     nodes = sortednodes(name, infos)
-    #params = posedparams(infos)
-    #types = [:($(esc(t))) for t in values(params)]
-    #baseparams = posedbaseparams(infos)
-    #headertypes = [genheadertype(t, baseparams) for t in values(params)]
-    #fields = genfields(infos, params)
     calls = gencalls(infos)
     fields = genfields(infos)
     decls = gendecl(nodes)
-    #paramdecls = genparamdecls(infos, params)
     vars = posedvars(infos)
     source = gensource(infos)
     system = @q begin
-        #$(calls...)
-        #struct $name{$(headertypes...)} <: $C.System
         struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
                 _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
                 $(decls...)
-                #$(paramdecls...)
-                #new{$(types...)}($(vars...))
                 new($(vars...))
             end
         end
@@ -378,8 +297,6 @@ genstruct(name, infos, incl) = begin
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, Vector{$C.System}, $C.Produce{<:Any}}, $S)
         @generated $C.updatable(::Type{<:$S}) = $C.filteredvars($S)
-        # $C.collectible(::Type{<:$S}) = $(gencollectible(infos))
-        # $C.updatable(::Type{<:$S}) = $(genupdatable(infos))
         $C.updatestatic!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
@@ -396,16 +313,6 @@ source(::Val{:System}) = @q begin
 end
 mixins(::Type{<:System}) = [System]
 mixins(s::S) where {S<:System} = mixins(S)
-
-# gencollectible(infos) = begin
-#     I = filter(i -> i.type in (:(Cropbox.System), :System, :(Vector{Cropbox.System}), :(Vector{System}), :(Cropbox.Produce), :Produce), infos)
-#     filter!(i -> !get(i.tags, :override, false), I)
-#     map(i -> i.name, I) |> Tuple
-# end
-# genupdatable(infos) = begin
-#     I = filter(i -> isnothing(i.type), infos)
-#     map(i -> i.name, I) |> Tuple
-# end
 
 fieldnamesunique(::Type{<:System}) = ()
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
@@ -426,8 +333,6 @@ filteredvars(::Type{S}) where {S<:System} = begin
     end
     Tuple(d)
 end
-#@generated collectible(::Type{S}) where {S<:System} = filteredfields(Union{System, Vector{System}, Var{<:Produce}}, S)
-#@generated updatable(::Type{S}) where {S<:System} = filteredvars(S)
 @generated updatestatic!(::System) = nothing
 
 parsehead(head) = begin
@@ -484,61 +389,6 @@ end
 
 export @equation, @system
 
-####
-
-#=
-# _predator_population_var / pre
-predator_population = _predator_population_state.value
-P = predator_population
-
-# _predator_reproduction_rate_var / main
-#v# = let
-    0.75
-end
-predator_reproductaion_rate = let s=_predator_reproduction_rate_var.state
-    store!(_predator_reproduction_rate_state, #v#)
-    s.value
-end
-d = predator_reproduction_rate
-
-# _timestep_var / main
-#v# = let t=resolve(s, "context.clock.tick")
-    0.01t
-end
-timestep = let s=_timestep_var.state
-    store!(s, #v#) # track
-    s.value
-end
-t = timestep
-
-# _predator_population_var / main
-predator_population = let s=_predator_population_state
-    t = value(s.time.tick)
-    t0 = s.tick
-    if ismissing(t0)
-        v = value(s.init)
-    else
-        v = s.value + s.rate * (t - t0)
-    end
-    store!(s, v)
-    s.value
-end
-
-# _predator_population_var / post
-#v# = let
-  d*b*H*P - c*P
-end
-let s=_predator_population_state
-    t = value(s.time.tick)
-    r = unitfy(#v#, rateunit(s))
-    f = () -> (s.tick = t; s.rate = r)
-    p = priority(s)
-    i = o.order #FIXME: should no longer be needed?
-    queue!(order, f, p, i)
-end
-
-=#
-
 geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Hold}) = nothing
@@ -561,8 +411,6 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
     @q $C.unitfy($C.value($(genfunc(v))[$k]), $C.value($(v.tags[:unit])))
 end
 geninit(v::VarInfo, ::Val{:Call}) = begin
-    #symcall(v)
-
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
     emiti(a) = (p = pair(a); @q $(esc(p[1])) = $C.value($(p[2])))
     innerargs = @q begin $(emiti.(v.args)...) end
@@ -693,20 +541,6 @@ genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
         $C.value($s)
     end
 end
-# begin
-#     key(a) = let k, v; @capture(a, k_=v_) ? k : a end
-#     args = [key(a) for a in v.args]
-#     @show args
-#     @q let s = $(symstate(v)),
-#            k = $(gensym(:k))
-#         #FIXME: need to patch function arguments here
-#         #s.value = (a...; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
-#         #(; k...) -> $C.unitfy(f()(a...; k...), $C.unit(s))
-#         (; k...) -> function ($(args...); k...)
-#             $C.unitfy($(genfunc(v)), $C.unit(s))
-#         end
-#     end
-# end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @gensym s t t0 a
@@ -848,29 +682,6 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
         $C.value($s)
     end
 end
-
-#TODO: reimplement Solve
-# update!(s::Solve, f::AbstractVar, ::MainStep) = begin
-#     #@show "begin solve $s"
-#     trigger(x) = (store!(s, x); recite!(s.context.order, f))
-#     cost(e) = x -> (trigger(x); e(x) |> ustrip)
-#     b = (value(s.lower), value(s.upper))
-#     if nothing in b
-#         try
-#             c = cost(x -> (x - f())^2)
-#             v = find_zero(c, value(s))
-#         catch e
-#             #@show "convergence failed: $e"
-#             v = value(s)
-#         end
-#     else
-#         c = cost(x -> (x - f()))
-#         v = find_zero(c, b, Roots.AlefeldPotraShi())
-#     end
-#     #HACK: trigger update with final value
-#     trigger(v)
-#     recitend!(s.context.order, f)
-# end
 
 genfuncargs(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
