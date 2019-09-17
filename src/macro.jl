@@ -82,10 +82,10 @@ names(i::VarInfo) = [i.name, i.alias...]
 
 ####
 
-abstract type Step end
-struct PreStep <: Step end
-struct MainStep <: Step end
-struct PostStep <: Step end
+abstract type VarStep end
+struct PreStep <: VarStep end
+struct MainStep <: VarStep end
+struct PostStep <: VarStep end
 
 suffix(::PreStep) = "_pre"
 suffix(::MainStep) = "_main"
@@ -93,7 +93,7 @@ suffix(::PostStep) = "_post"
 
 struct VarNode
     info::VarInfo
-    step::Step #TODO: rename to VarStep?
+    step::VarStep
 end
 
 prev(n::VarNode) = begin
@@ -397,7 +397,7 @@ genupdate(nodes) = begin
 end
 
 symstate(v::VarInfo) = Symbol(:_state_, v.name)
-symlabel(v::VarInfo, t::Step, s...) = Symbol(v.name, suffix(t), s...)
+symlabel(v::VarInfo, t::VarStep, s...) = Symbol(v.name, suffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :_call)
 
 genupdateinit(n::VarNode) = begin
@@ -415,7 +415,7 @@ genupdateinit(n::VarNode) = begin
 end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
-genupdate(v::VarInfo, t::Step) = begin
+genupdate(v::VarInfo, t::VarStep) = begin
     u = genupdate(v, Val(v.state), t)
     l = symlabel(v, t)
     if isnothing(u)
