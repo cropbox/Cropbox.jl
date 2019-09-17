@@ -750,6 +750,7 @@ end
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     @gensym s f
+    #FIXME: make type stable oneway
     if get(v.tags, :oneway, false)
         @q let $s = $(symstate(v)),
                $f = $(genfunc(v))
