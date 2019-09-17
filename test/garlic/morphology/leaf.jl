@@ -56,17 +56,17 @@
         l * w * r
     end ~ track(u"cm^2")
 
-    area_from_length(; l(u"cm")) => begin
+    area_from_length(; L(u"cm")) => begin
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
-        @nounit l
+        l = ustrip(L)
         iszero(l) ? l : 0.639945 + 0.954957l + 0.005920l^2
     end ~ call(u"cm^2")
 
     area_increase_from_length(length) => begin
         # for garlic, see JH's thesis
-        @nounit length
-        0.954957 + 2*0.005920length
+        l = ustrip(length)
+        0.954957 + 2*0.005920l
     end ~ track(u"cm^2")
 
     #TODO better name, shared by growth_duration and pontential_area
@@ -128,7 +128,7 @@
         # PotentialArea potential final area of a leaf with rank "n". YY
         #self.maximum_area * self.leaf_number_effect * self.rank_effect(weight=1)
         # for garlic
-        area_from_length(l=potential_length)
+        area_from_length(potential_length)
     end ~ track(u"cm^2")
 
     green_ratio(senescence_ratio) => (1 - senescence_ratio) ~ track
@@ -209,7 +209,7 @@
             # for garlic
             #TODO need common framework dealing with derivatives
             #area_increase_from_length(actual_length_increase)
-            area_from_length(l=length+actual_length_increase) - area
+            area_from_length(length+actual_length_increase) - area
         else
             zero(area)
         end
@@ -244,11 +244,11 @@
     length(potential_elongation_rate) => begin
         #TODO: incorporate stress effects as done in actual_area_increase()
         potential_elongation_rate
-    end ~ accumulate(u"cm", time=elongation_age)
+    end ~ accumulate(u"cm", time=elongation_age, timeunit=u"d")
 
     actual_length_increase(potential_elongation_rate) => begin
         potential_elongation_rate
-    end ~ capture(u"cm", time=elongation_age)
+    end ~ capture(u"cm", time=elongation_age, timeunit=u"d")
 
     # actual area
     area(water_potential_effect, carbon_effect, temperature_effect, area_from_length, length) => begin
@@ -262,7 +262,7 @@
 
         # growth temperature effect is now included here, outside of potential area increase calculation
         #TODO water and carbon effects are not multiplicative?
-        min(we, ce) * te * area_from_length(l=length)
+        min(we, ce) * te * area_from_length(length)
     end ~ track(u"cm^2")
 
     #TODO remove if unnecessary

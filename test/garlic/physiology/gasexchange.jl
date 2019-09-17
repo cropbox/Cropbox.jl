@@ -71,7 +71,7 @@ end
             (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
             (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
         end
-        max(0u"μmol/m^2/s", r)
+        max(r, zero(r))
     end ~ track(u"μmol/m^2/s" #= Electron =#)
 
     Om => begin
@@ -129,14 +129,17 @@ end
     # x: Partitioning factor of J, yield maximal J at this value
     transport_limited_photosynthesis_rate(T, Jmax, Rd, Rm, I2, gbs, Cm, theta=0.5, x=0.4): Aj => begin
         #FIXME: roots() requires no unit attached
-        c, b, a = [I2*Jmax, -(I2+Jmax), theta]
-        #a = a
-        b = ustrip(u"μmol/m^2/s", b)
-        c = ustrip(u"(μmol/m^2/s)^2", c)
+        a = theta
+        b = -(I2+Jmax)
+        c = I2*Jmax
+        sa = a
+        sb = ustrip(u"μmol/m^2/s", b)
+        sc = ustrip(u"(μmol/m^2/s)^2", c)
         #J = roots(Poly([c, b, a])) |> minimum
         #pr = roots(Poly([c, b, a]))
-        pr = quadratic_solve_lower(a, b, c)
-        J = minimum(pr) * u"μmol/m^2/s"
+        #J = minimum(pr) * u"μmol/m^2/s"
+        pr = quadratic_solve_lower(sa, sb, sc)
+        J = pr*u"μmol/m^2/s"
         #println("Jmax = $Jmax, J = $J")
         Aj1 = x * J/2 - Rm + gbs*Cm
         Aj2 = (1-x) * J/3 - Rd
@@ -209,23 +212,23 @@ end
     # stomatal conductance for water vapor in mol m-2 s-1
     # gamma: 10.0 for C4 maize
     #FIXME T_leaf not used
-    stomatal_conductance(g0, g1, gb, m, A_net, CO2=weather.CO2, RH=weather.RH, drb, gamma=10u"μmol/mol"): gs => begin
+    stomatal_conductance(g0, g1, gb, m, A_net, CO2=weather.CO2, RH=weather.RH, drb, gamma=10.0u"μmol/mol"): gs => begin
         Cs = CO2 - (drb * A_net / gb) # surface CO2 in mole fraction
         Cs = max(Cs, gamma)
 
         a = m * g1 * A_net / Cs
         b = g0 + gb - (m * g1 * A_net / Cs)
         c = (-RH * gb) - g0
-        a = ustrip(u"mmol/m^2/s", a)
-        b = ustrip(u"mmol/m^2/s", b)
-        c = ustrip(u"mmol/m^2/s", c)
+        sa = ustrip(u"mmol/m^2/s", a)
+        sb = ustrip(u"mmol/m^2/s", b)
+        sc = ustrip(u"mmol/m^2/s", c)
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
         #hs = roots(Poly([c, b, a]))) |> maximum
         #pr = roots(Poly([c, b, a]))
         #hss = filter(x -> 0 < x < 1, pr)
         #hs = isempty(hss) ? 0.1 : maximum(hss)
-        hs = quadratic_solve_upper(a, b, c)
+        hs = quadratic_solve_upper(sa, sb, sc)
         #FIXME: check unit
         hs = hs*u"mol/mol"
         #hs = clamp(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
@@ -263,7 +266,7 @@ end
 
 # C4 for maize, C3 for garlic
 @system PhotosyntheticLeaf(Stomata, C4) begin
-    weather ~ ::Weather(override)
+    weather ~ ::System(override) #HACK: to support Sunlit/ShadedWeather
     soil ~ ::Soil(override)
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
@@ -334,8 +337,7 @@ end
         psc = Cp / lamda # psychrometric constant (C-1) ~ 6.66e-4
         psc1 = psc * ghr / gv # apparent psychrometer constant
 
-        @nounit PFD
-        PAR = (PFD / 4.55) * u"J/m^2/s" # W m-2
+        PAR = (ustrip(PFD) / 4.55) * u"J/m^2/s" # W m-2
         # If total solar radiation unavailable, assume NIR the same energy as PAR waveband
         NIR = PAR
         scatt = 0.15
@@ -344,12 +346,14 @@ end
         R_abs = (1 - scatt)*PAR + scatt*NIR + 2(epsilon * sbc * Tk^4)
 
         # debug dt I commented out the changes that yang made for leaf temperature for a test. I don't think they work
-        if iszero(Jw)
-            # eqn 14.6b linearized form using first order approximation of Taylor series
-            (psc1 / (VPD_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
-        else
-            (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
-        end
+        # if iszero(Jw)
+        #     # eqn 14.6b linearized form using first order approximation of Taylor series
+        #     #FIXME: unit
+        #     (psc1 / (VPD_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
+        # else
+        #     (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
+        # end
+        (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
     end ~ solve(lower=-10u"K", upper=10u"K", u"K")
 
     temperature(T_adj, T_air=weather.T_air): T => begin
@@ -378,7 +382,7 @@ end
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
-    weather: w ~ ::Weather(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
+    weather: w ~ ::System(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
     soil ~ ::Soil(override)
     leaf(context, weather, soil) => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
 

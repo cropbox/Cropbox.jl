@@ -9,9 +9,9 @@ using CSV
 
     vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure
 
-    filename => "" ~ preserve(parameter)
-    timezone => tz"UTC" ~ preserve(parameter)
-    index => :timestamp ~ preserve(parameter)
+    filename => "" ~ preserve::String(parameter)
+    timezone => tz"UTC" ~ preserve::TimeZone(parameter)
+    index => :timestamp ~ preserve::Symbol(parameter)
 
     dataframe(filename, index, timezone): df => begin
         df = CSV.read(filename)

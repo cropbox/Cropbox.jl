@@ -2,8 +2,8 @@
     #HACK: can't use self.pheno.leaf_appearance.maximum_leaf_tip_appearance_rate due to recursion
     maximum_emergence_rate: ER_max => 0.20 ~ preserve(u"d^-1", parameter)
 
-    emergence_date => nothing ~ preserve(parameter)
-    begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve
+    emergence_date => nothing ~ preserve::Union{ZonedDateTime,Nothing}(parameter)
+    begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve::Bool
 
     emergence(r=ER_max, T, T_opt, T_ceil, emerging) => begin
         emerging ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)

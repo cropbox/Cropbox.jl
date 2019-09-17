@@ -15,11 +15,12 @@
 
     phenology(context, calendar, weather, sun, soil): pheno => Phenology(; context=context, calendar=calendar, weather=weather, sun=sun, soil=soil) ~ ::Phenology
 
-    primordia => 5 ~ preserve(parameter)
+    primordia => 5 ~ preserve::Int(parameter)
 
-    bulb => begin end ~ produce
+    #bulb => begin end ~ produce::Bulb
 
-    scape => begin end ~ produce
+    #FIXME: do not confuse with Scape in Phenology
+    #scape => begin end ~ produce::Scape
 
     root(root, pheno, emerging=pheno.emerging) => begin
         if isempty(root)
@@ -28,7 +29,7 @@
                 produce(Root, phenology=pheno)
             end
         end
-    end ~ produce
+    end ~ produce::Root
 
     #TODO pass PRIMORDIA as initial_leaves
     nodal_units(nu, pheno, primordia, germinated=pheno.germinated, dead=pheno.dead, l=pheno.leaves_initiated): nu => begin
@@ -37,7 +38,7 @@
         elseif germinated && !dead
             [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(nu)+1):l]
         end
-    end ~ produce
+    end ~ produce::NodalUnit
 
     #TODO find a better place?
     planting_density: PD => 55 ~ preserve(u"m^-2", parameter)

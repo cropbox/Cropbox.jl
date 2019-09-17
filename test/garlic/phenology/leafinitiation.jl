@@ -25,13 +25,13 @@
 end
 
 @system LeafInitiationWithoutStorage(LeafInitiation) begin
-    initial_leaves => 0 ~ preserve(parameter)
+    initial_leaves => 0 ~ preserve::Int(parameter)
 end
 
 @system LeafInitiationWithStorage(LeafInitiation) begin
     storage_days: SD => 0 ~ preserve(u"d", parameter)
     storage_temperature: ST => 5 ~ preserve(u"°C", parameter)
-    initial_leaves_at_harvest: ILN => 4 ~ preserve(parameter)
+    initial_leaves_at_harvest: ILN => 4 ~ preserve::Int(parameter)
     initial_leaves_during_storage(LIR_max, ST, T_opt, T_ceil, SD): ILS => begin
         LIR_max * beta_thermal_func(ST, T_opt, T_ceil) * SD
     end ~ track

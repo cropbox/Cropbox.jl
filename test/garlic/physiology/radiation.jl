@@ -45,7 +45,7 @@ end
     development ~ ::Development(override)
     leaf_area_index(development): LAI ~ drive(u"cm^2/m^2")
 
-    leaf_angle => ellipsoidal ~ preserve(parameter)
+    leaf_angle => ellipsoidal ~ preserve::LeafAngle(parameter)
 
     # ratio of horizontal to vertical axis of an ellipsoid
     leaf_angle_factor: LAF => begin
@@ -56,13 +56,13 @@ end
         0.7
     end ~ preserve(parameter)
 
-    wave_band => photothetically_active_radiation ~ preserve(parameter)
+    wave_band => photothetically_active_radiation ~ preserve::WaveBand(parameter)
 
     # scattering coefficient (reflectance + transmittance)
     scattering: s => 0.15 ~ preserve(parameter)
 
     # clumping index
-    clumping => 1 ~ preserve(parameter)
+    clumping => 1.0 ~ preserve(parameter)
 
     #FIXME reflectance?
     #r_h => 0.05 ~ preserve(parameter)
@@ -116,7 +116,7 @@ end
     end ~ track
 
     # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
-    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve(u"rad", static)
+    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve::Vector{Float64}(u"rad", static)
 
     diffused_fraction(a=angles; x::Vector{Float64}): fdf => begin
         # Why multiplied by 2?
@@ -275,7 +275,7 @@ end
     irradiance_Q_dm(LAI, I0_df, s, Kd): Q_dm => begin
         # Integral Qd / Integral L
         Q = I0_df * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
-        isinf(Q) ? zero(Q) : Q
+        isnan(Q) ? zero(Q) : Q
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # unintercepted beam (direct beam) flux at depth of L within canopy
@@ -309,7 +309,7 @@ end
     irradiance_Q_soilm(LAI, rho_soil, s, Kd, Q_soil): Q_soilm => begin
         # Integral Qd / Integral L
         Q = Q_soil * rho_soil * (1 - exp(-sqrt(1 - s) * Kd * LAI)) / (sqrt(1 - s) * Kd * LAI)
-        isinf(Q) ? zero(Q) : Q
+        isnan(Q) ? zero(Q) : Q
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # weighted average scattered radiation within canopy
@@ -323,7 +323,7 @@ end
         Q = (total_beam - nonscattered_beam) / LAI
         # Campbell and Norman (1998) p 261, Average between top (where scattering is 0) and bottom.
         #(self.Q_bt(LAI) - Q_b(LAI)) / 2
-        isinf(Q) ? zero(Q) : Q
+        isnan(Q) ? zero(Q) : Q
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # scattered radiation at depth L in the canopy
