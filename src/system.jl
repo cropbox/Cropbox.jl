@@ -42,21 +42,6 @@ collect(s::System; recursive=true, exclude_self=false) = begin
     S
 end
 
-collectvar(S) = begin
-    d = Set{Var}()
-    for s in S
-        for n in updatable(s)
-            push!(d, getvar(s, n))
-        end
-    end
-    d
-end
-
-context(s::System) = s.context
-
-# import Base: getproperty
-# getproperty(s::System, n::Symbol) = value(s, n)
-
 import Base: show
 show(io::IO, s::System) = print(io, "<$(name(s))>")
 
