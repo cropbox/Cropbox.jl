@@ -6,22 +6,20 @@
 	queue => Queue() ~ ::Queue
 
     clock(config) => Clock(; config=config) ~ ::Clock
-    systems ~ ::[System]
 end
 
 option(c::Context, keys...) = option(c.config, keys...)
 
-advance!(c::Context, n=1) = begin
+advance!(s::System, n=1) = begin
+	c = s.context
     for i in 1:n
 		preflush!(c.queue)
-		S = collect!(c.order, c)
-		for s in S
-        	update!(s)
-		end
+		S = collect!(c.order, s)
+		update!.(S)
 		postflush!(c.queue)
     end
+	s
 end
-advance!(s::System, n=1) = advance!(s.context, n)
 
 import DataFrames: DataFrame
 run!(s::System, n=1; names...) = begin
@@ -36,16 +34,12 @@ run!(s::System, n=1; names...) = begin
 	df
 end
 
-instance(Ss::Type{<:System}...; config=configure()) = begin
+instance(S::Type{<:System}; config=configure()) = begin
     c = Context(; config=config)
-    for S in Ss
-        s = S(; context=c)
-        push!(c.systems, s)
-		#FIXME: better integration with Order?
-		c.order.outdated = true
-    end
-    advance!(c)
-    c.systems[1]
+    s = S(; context=c)
+	#FIXME: better integration with Order?
+	c.order.outdated = true
+    advance!(s)
 end
 
 export advance!, run!, instance

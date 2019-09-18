@@ -15,7 +15,7 @@ collect!(o::Order, s::System) = begin
 end
 
 using LightGraphs
-collect!(s::System; recursive=true) = begin
+collect!(s::System) = begin
     g = DiGraph()
     V = System[]
     I = Dict{System,Int}()
@@ -39,13 +39,9 @@ collect!(s::System; recursive=true) = begin
             #@show "add edge $s ($(I[s])) -> $d ($(I[d]))"
             add_edge!(g, I[s], I[d])
         end
-        #HACK: use VarInfo tags to figure out dependency
-        vars = Dict(i.name => i for i in VarInfo.(source(s).args))
         D = System[]
         for n in collectible(s)
-            if !get(vars[n].tags, :override, false)
-                append!(D, getfield(s, n))
-            end
+            append!(D, getfield(s, n))
         end
         #@show "collectible $D"
         foreach(link, D)
@@ -53,9 +49,8 @@ collect!(s::System; recursive=true) = begin
         push!(S, s)
         filter!(d -> d ∉ S, D)
         #@show "collectible filtered $D"
-        recursive && foreach(visit, D)
+        foreach(visit, D)
     end
-    visit(s) = visit.(s)
     visit(s)
     J = topological_sort_by_dfs(g)
     [V[i] for i in reverse(J)]
