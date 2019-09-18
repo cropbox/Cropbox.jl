@@ -533,6 +533,8 @@ genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     end
 end
 
+# Produce referenced in args expected to be raw state, not extracted by value(), for querying
+genupdate(v::VarInfo, ::Val{:Produce}, ::PreStep) = symstate(v)
 genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = symstate(v)
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     @gensym s P c o
