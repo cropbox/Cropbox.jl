@@ -95,7 +95,7 @@ end
 Preserve(; unit, _value, _type=Float64, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
-    v = unitfy(_value, U)
+    v = _value
     V = promote_type(V, typeof(v))
     Preserve{V}(v)
 end
@@ -109,7 +109,7 @@ end
 Track(; unit, _value, _type=Float64, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
-    v = unitfy(_value, U)
+    v = _value
     V = promote_type(V, typeof(v))
     Track{V}(v)
 end
@@ -123,7 +123,7 @@ end
 Drive(; unit, _name, _value, _type=Float64, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
-    v = unitfy(_value, U)
+    v = _value
     V = promote_type(V, typeof(v))
     Drive{V}(v)
 end
@@ -155,7 +155,7 @@ end
 Accumulate(; unit, time, _value, _type=Float64, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
-    v = isnothing(_value) ? unitfy(zero(_type), U) : unitfy(_value, U)
+    v = isnothing(_value) ? unitfy(zero(_type), U) : _value
     V = promote_type(V, typeof(v))
     t = value(time)
     T = typeof(t)
