@@ -333,14 +333,13 @@ geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit
 geninit(v::VarInfo, ::Val{:Hold}) = nothing
 geninit(v::VarInfo, ::Val{:Advance}) = missing
 geninit(v::VarInfo, ::Val{:Preserve}) = begin
-    i = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
     if get(v.tags, :parameter, false)
         @gensym o
         @q let $o = $C.option(config, _names, $(names(v)))
-            isnothing($o) ? $i : $o
+            $C.unitfy(isnothing($o) ? $(genfunc(v)) : $o, $C.value($(v.tags[:unit])))
         end
     else
-        i
+        @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
     end
 end
 geninit(v::VarInfo, ::Val{:Drive}) = begin
