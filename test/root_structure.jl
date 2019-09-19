@@ -18,7 +18,7 @@ using Unitful
                 #println("branch at l = $l")
                 produce(RootSegment, parent=self, branched_length=l)
             end
-        end ~ produce
+        end ~ produce::RootSegment
     end
 
     render(r::RootSegment) = begin
