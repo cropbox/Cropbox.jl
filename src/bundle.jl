@@ -36,13 +36,13 @@ getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = begin
     Bundle{S}(s, resolve.(split(ops, "/")))
 end
 
-struct Bunch{S}
-    list::Vector{S}
+struct Bunch{V}
+    list::Vector{V}
 end
 
 import Base: getproperty
-getproperty(b::Bundle, p::Symbol) = getfield.(collect(b), p) |> Bunch
-getproperty(b::Bunch, p::Symbol) = getfield.(collect(b), p) |> Bunch
+getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
+getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
 value(b::Bunch) = value.(collect(b))
 
 import Base: collect
