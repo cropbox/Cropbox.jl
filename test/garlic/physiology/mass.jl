@@ -20,7 +20,7 @@
         #sum(typeof(0.0u"g")[Cropbox.value!(nu.stem.mass) for nu in NU]) + self.p.carbon.reserve
         #sum(typeof(0.0u"g")[Cropbox.value!(nu.sheath.mass) for nu in NU]) + self.p.carbon.reserve
         #FIXME carbon not ready yet
-        isempty(x) ? 0. : sum(x)
+        sum(x)
     end ~ track(u"g")
 
     initial_leaf_mass(initial_seed_mass, initial_leaf_ratio) => begin
@@ -33,17 +33,17 @@
         sum(typeof(0.0u"g")[Cropbox.value(nu.leaf.mass) for nu in nodal_units if !Cropbox.value(nu.leaf.dropped)])
     end ~ track(u"g")
     #TODO: support complex composition (i.e. `!`(leaf.dropped)) in condition syntax?
-    #active_leaf_mass(x=nodal_units["*/!leaf.dropped"].leaf.mass) => (isempty(x) ? 0. : sum(x)) ~ track(u"g")
+    #active_leaf_mass(x=nodal_units["*/!leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
 
     dropped_leaf_mass(nodal_units, x=nodal_units["*"].leaf.mass) => begin
         sum(typeof(0.0u"g")[Cropbox.value(nu.leaf.mass) for nu in nodal_units if Cropbox.value(nu.leaf.dropped)])
     end ~ track(u"g")
     #TODO: support more referencing options (i.e. "leaf.dropped") in condition syntax?
-    #dropped_leaf(x=nodal_units["*/leaf.dropped"].leaf.mass) => (isempty(x) ? 0. : sum(x)) ~ track(u"g")
+    #dropped_leaf(x=nodal_units["*/leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
 
     total_leaf_mass(x=nodal_units["*"].leaf.mass) => begin
         # this should equal to activeLeafMass + droppedLeafMass
-        isempty(x) ? 0. : sum(x)
+        sum(x)
     end ~ track(u"g")
 
     leaf_mass(total_leaf_mass) => total_leaf_mass ~ track(u"g")

@@ -314,12 +314,12 @@ using Unitful
 
     @testset "produce query index" begin
         @system SProduceQueryIndex begin
-            p => produce(SProduceQueryIndex) ~ produce
+            p => produce(SProduceQueryIndex) ~ produce::SProduceQueryIndex
             i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
-            a(x=p["*"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            b(x=p["**"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x=p["*/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x=p["*/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            a(x=p["*"].i) => sum(x) ~ track
+            b(x=p["**"].i) => sum(x) ~ track
+            c(x=p["*/1"].i) => sum(x) ~ track
+            d(x=p["*/-1"].i) => sum(x) ~ track
         end
         s = instance(SProduceQueryIndex)
         @test length(s.p) == 0
@@ -345,13 +345,13 @@ using Unitful
 
     @testset "produce query condition with track bool" begin
         @system SProduceQueryConditionTrackBool begin
-            p => produce(SProduceQueryConditionTrackBool) ~ produce
+            p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool
             i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
-            a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x=p["*/f/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x=p["*/f/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            a(x=p["*/f"].i) => sum(x) ~ track
+            b(x=p["**/f"].i) => sum(x) ~ track
+            c(x=p["*/f/1"].i) => sum(x) ~ track
+            d(x=p["*/f/-1"].i) => sum(x) ~ track
         end
         s = instance(SProduceQueryConditionTrackBool)
         @test length(s.p) == 0
@@ -383,13 +383,13 @@ using Unitful
 
     @testset "produce query condition with flag" begin
         @system SProduceQueryConditionFlag begin
-            p => produce(SProduceQueryConditionFlag) ~ produce
+            p => produce(SProduceQueryConditionFlag) ~ produce::SProduceQueryConditionFlag
             i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
             f(i) => isodd(i) ~ flag
-            a(x=p["*/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            b(x=p["**/f"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            c(x=p["*/f/1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
-            d(x=p["*/f/-1"].i) => (isempty(x) ? 0 : sum(x)) ~ track
+            a(x=p["*/f"].i) => sum(x) ~ track
+            b(x=p["**/f"].i) => sum(x) ~ track
+            c(x=p["*/f/1"].i) => sum(x) ~ track
+            d(x=p["*/f/-1"].i) => sum(x) ~ track
         end
         s = instance(SProduceQueryConditionFlag)
         @test length(s.p) == 0
