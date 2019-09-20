@@ -14,16 +14,16 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
 end
 
 import Base: show
-show(io::IO, i::VarInfo) = begin
-    println(io, "name: $(i.name)")
-    println(io, "alias: $(i.alias)")
-    println(io, "func ($(repr(i.args)); $(repr(i.kwargs))) = $(repr(i.body))")
-    println(io, "state: $(repr(i.state))")
-    println(io, "type: $(repr(i.type))")
-    for (k, v) in i.tags
-        println(io, "tag $k = $(repr(v))")
+show(io::IO, v::VarInfo) = begin
+    println(io, "name: $(v.name)")
+    println(io, "alias: $(v.alias)")
+    println(io, "func ($(repr(v.args)); $(repr(v.kwargs))) = $(repr(v.body))")
+    println(io, "state: $(repr(v.state))")
+    println(io, "type: $(repr(v.type))")
+    for (a, b) in v.tags
+        println(io, "tag $a = $(repr(b))")
     end
-    println(io, "line: $(i.line)")
+    println(io, "line: $(v.line)")
 end
 
 VarInfo(line::Union{Expr,Symbol}) = begin
@@ -78,7 +78,7 @@ parsetags(tags::Vector, type, state, args, kwargs) = begin
     d
 end
 
-names(i::VarInfo) = [i.name, i.alias...]
+names(v::VarInfo) = [v.name, v.alias...]
 
 ####
 
@@ -110,61 +110,61 @@ end
 
 const C = :($(esc(:Cropbox)))
 
-genvartype(i::VarInfo) = genvartype(i)
+genvartype(v::VarInfo) = genvartype(v)
 
-genvartype(i::VarInfo{Nothing}) = esc(i.type)
-genvartype(i::VarInfo{Symbol}) = begin
-    N = isnothing(i.type) ? :Float64 : esc(i.type)
-    U = get(i.tags, :unit, nothing)
+genvartype(v::VarInfo{Nothing}) = esc(v.type)
+genvartype(v::VarInfo{Symbol}) = begin
+    N = isnothing(v.type) ? :Float64 : esc(v.type)
+    U = get(v.tags, :unit, nothing)
     V = @q $C.valuetype($N, $U)
-    genvartype(i, Val(i.state); N=N, U=U, V=V)
+    genvartype(v, Val(v.state); N=N, U=U, V=V)
 end
-genvartype(i::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
-genvartype(i::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
-genvartype(i::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
-genvartype(i::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
-genvartype(i::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
-genvartype(i::VarInfo, ::Val{:Call}; V, _...) = begin
+genvartype(v::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
+genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
+genvartype(v::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
+genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
+genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
+genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
         t = isnothing(t) ? :Float64 : esc(t)
         @q $C.valuetype($t, $u)
     end
-    F = @q FunctionWrapper{$V, Tuple{$(extract.(i.kwargs)...)}}
+    F = @q FunctionWrapper{$V, Tuple{$(extract.(v.kwargs)...)}}
     @q Call{$V,$F}
 end
-genvartype(i::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
+genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     #TODO: automatic inference without explicit `timeunit` tag
-    TU = get(i.tags, :timeunit, nothing)
+    TU = get(v.tags, :timeunit, nothing)
     TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
     R = @q $C.valuetype($N, $RU)
     @q Accumulate{$V,$T,$R}
 end
-genvartype(i::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
-    TU = get(i.tags, :timeunit, nothing)
+genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
+    TU = get(v.tags, :timeunit, nothing)
     TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
     R = @q $C.valuetype($N, $RU)
     @q Capture{$V,$T,$R}
 end
-genvartype(i::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
-genvartype(i::VarInfo, ::Val{:Produce}; _...) = begin
-    S = isnothing(i.type) ? :System : esc(i.type)
+genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
+genvartype(v::VarInfo, ::Val{:Produce}; _...) = begin
+    S = isnothing(v.type) ? :System : esc(v.type)
     @q Produce{$S}
 end
-genvartype(i::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
+genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 posedvars(infos) = names.(infos) |> Iterators.flatten |> collect
 
-gencall(i::VarInfo) = gencall(i, Val(i.state))
-gencall(i::VarInfo, ::Val) = nothing
-gencall(i::VarInfo, ::Val{:Call}) = begin
-    args = genfuncargs(i)
-    body = flatten(@q let $args; $(i.body) end)
-    @q function $(symcall(i))($(i.kwargs...)) $body end
+gencall(v::VarInfo) = gencall(v, Val(v.state))
+gencall(v::VarInfo, ::Val) = nothing
+gencall(v::VarInfo, ::Val{:Call}) = begin
+    args = genfuncargs(v)
+    body = flatten(@q let $args; $(v.body) end)
+    @q function $(symcall(v))($(v.kwargs...)) $body end
 end
 gencalls(infos) = filter(!isnothing, gencall.(infos))
 
@@ -172,35 +172,35 @@ genfield(type, name, alias) = @q begin
     $name::$type
     $(@q begin $([:($a::$type) for a in alias]...) end)
 end
-genfield(i::VarInfo) = genfield(genvartype(i), i.name, i.alias)
-genfields(infos) = [genfield(i) for i in infos]
+genfield(v::VarInfo) = genfield(genvartype(v), v.name, v.alias)
+genfields(infos) = [genfield(v) for v in infos]
 
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
 import DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
-gendecl(i::VarInfo{Symbol}) = begin
-    name = Meta.quot(i.name)
-    alias = Tuple(i.alias)
-    value = get(i.tags, :override, false) ? genoverride(i.name, geninit(i)) : geninit(i)
-    stargs = [:($(esc(k))=$v) for (k, v) in i.tags]
-    decl = :($C.$(i.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
-    gendecl(decl, i.name, i.alias)
+gendecl(v::VarInfo{Symbol}) = begin
+    name = Meta.quot(v.name)
+    alias = Tuple(v.alias)
+    value = get(v.tags, :override, false) ? genoverride(v.name, geninit(v)) : geninit(v)
+    stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
+    decl = :($C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    gendecl(decl, v.name, v.alias)
 end
-gendecl(i::VarInfo{Nothing}) = begin
-    if get(i.tags, :override, false)
-        decl = genoverride(i.name, esc(i.body))
-    elseif !isnothing(i.body)
-        decl = esc(i.body)
+gendecl(v::VarInfo{Nothing}) = begin
+    if get(v.tags, :override, false)
+        decl = genoverride(v.name, esc(v.body))
+    elseif !isnothing(v.body)
+        decl = esc(v.body)
     else
         pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
         emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
-        kwargs = emit.(i.args)
-        decl = @q $(esc(i.type))(; $(kwargs...))
+        kwargs = emit.(v.args)
+        decl = @q $(esc(v.type))(; $(kwargs...))
     end
     # implicit :expose
-    decl = :($(esc(i.name)) = $decl)
-    gendecl(decl, i.name, i.alias)
+    decl = :($(esc(v.name)) = $decl)
+    gendecl(decl, v.name, v.alias)
 end
 gendecl(decl, var, alias) = @q begin
     $(LineNumberNode(0, "gendecl/$var"))
@@ -209,11 +209,11 @@ gendecl(decl, var, alias) = @q begin
 end
 
 gensource(infos) = begin
-    l = [i.line for i in infos]
+    l = [v.line for v in infos]
     striplines(flatten(@q begin $(l...) end))
 end
 
-genfieldnamesunique(infos) = Tuple(i.name for i in infos)
+genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -290,11 +290,11 @@ import DataStructures: OrderedDict, OrderedSet
 gensystem(head, body) = gensystem(parsehead(head)..., body)
 gensystem(name, incl, body) = genstruct(name, geninfos(body, incl), incl)
 geninfos(body, incl) = begin
-    con(b) = OrderedDict(i.name => i for i in VarInfo.(striplines(b).args))
+    con(b) = OrderedDict(v.name => v for v in VarInfo.(striplines(b).args))
     add!(d, b) = begin
-        for (n, i) in con(b)
-            (i.state == :Hold) && haskey(d, n) && continue
-            d[n] = i
+        for (n, v) in con(b)
+            (v.state == :Hold) && haskey(d, n) && continue
+            d[n] = v
         end
     end
     d = OrderedDict{Symbol,VarInfo}()

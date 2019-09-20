@@ -49,7 +49,7 @@ invertices!(d::Dependency, v::VarInfo; kwargs...) = begin
     f.(A)
 end
 
-extract(i::VarInfo; equation=true, tag=true) = begin
+extract(v::VarInfo; equation=true, tag=true) = begin
     parse(v::Expr) = begin
         f(v) = begin
             #@show v
@@ -61,12 +61,12 @@ extract(i::VarInfo; equation=true, tag=true) = begin
     end
     parse(v::Symbol) = v
     parse(v) = nothing
-    pick(a) = @capture(a, k_=v_) ? parse(v) : parse(a)
+    pick(a) = let k, v; @capture(a, k_=v_) ? parse(v) : parse(a) end
     pack(A) = filter(!isnothing, pick.(A)) |> Tuple
-    eq = equation ? pack(i.args) : ()
+    eq = equation ? pack(v.args) : ()
     #@show eq
     #HACK: exclude internal tags (i.e. _type)
-    tags = filter(!isnothing, [parse(p[2]) for p in i.tags if !startswith(String(p[1]), "_")]) |> Tuple
+    tags = filter(!isnothing, [parse(p[2]) for p in v.tags if !startswith(String(p[1]), "_")]) |> Tuple
     par = tag ? tags : ()
     #@show par
     Set([eq..., par...]) |> collect
