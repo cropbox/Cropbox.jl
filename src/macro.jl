@@ -173,6 +173,8 @@ end
 genfield(v::VarInfo) = genfield(genvartype(v), v.name, v.alias)
 genfields(infos) = [genfield(v) for v in infos]
 
+genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
+
 genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
 
 import DataStructures: OrderedSet
@@ -218,6 +220,7 @@ genstruct(name, infos, incl) = begin
     nodes = sortednodes(name, infos)
     calls = gencalls(infos)
     fields = genfields(infos)
+    predecl = genpredecl(name)
     decls = gendecl(nodes)
     args = names.(infos) |> Iterators.flatten |> collect
     source = gensource(infos)
@@ -225,7 +228,7 @@ genstruct(name, infos, incl) = begin
         struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
-                _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
+                $predecl
                 $(decls...)
                 new($(args...))
             end
