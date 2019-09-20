@@ -1,7 +1,7 @@
 @system Context begin
     context ~ ::Nothing
 
-    config => configure() ~ ::Config(override)
+    config ~ ::Config(override)
 	order ~ ::Order
 	queue ~ ::Queue
 

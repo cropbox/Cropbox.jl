@@ -188,15 +188,16 @@ gendecl(v::VarInfo{Symbol}) = begin
     gendecl(decl, v.name, v.alias)
 end
 gendecl(v::VarInfo{Nothing}) = begin
-    if get(v.tags, :override, false)
-        decl = genoverride(v.name, esc(v.body))
-    elseif !isnothing(v.body)
-        decl = esc(v.body)
-    else
+    decl = if isnothing(v.body)
         pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
         emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
         kwargs = emit.(v.args)
-        decl = @q $(esc(v.type))(; $(kwargs...))
+        @q $(esc(v.type))(; $(kwargs...))
+    else
+        esc(v.body)
+    end
+    if get(v.tags, :override, false)
+        decl = genoverride(v.name, decl)
     end
     # implicit :expose
     decl = :($(esc(v.name)) = $decl)
