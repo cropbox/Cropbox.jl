@@ -1,12 +1,12 @@
 #FIXME: confusion between PFD vs. PPFD
 @system SunlitWeather(Weather) begin
     radiation ~ ::Radiation(override)
-    photosynthetic_photon_flux_density(x=radiation.irradiance_Q_sunlit): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
+    photosynthetic_photon_flux_density(radiation.irradiance_Q_sunlit): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
 end
 
 @system ShadedWeather(Weather) begin
     radiation ~ ::Radiation(override)
-    photosynthetic_photon_flux_density(x=radiation.irradiance_Q_shaded): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
+    photosynthetic_photon_flux_density(radiation.irradiance_Q_shaded): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
 end
 
 #HACK: Sunlit/ShadedWeather is not a subclass of Weather
@@ -55,7 +55,7 @@ end
     end ~ preserve(u"cm", parameter)
 
     #TODO how do we get LeafWP and ET_supply?
-    leaf_water_potential(x=soil.WP_leaf): LWP ~ track(u"MPa")
+    leaf_water_potential(soil.WP_leaf): LWP ~ track(u"MPa")
 
     evapotranspiration_supply(LAI=dev.LAI, PD=dev.PD, ws=dev.water_supply, ww=dev.H2O_weight) => begin
         #TODO common handling logic for zero LAI
@@ -68,8 +68,8 @@ end
         isinf(s) ? zero(s) : s
     end ~ track(u"mol/m^2/s" #= H2O =#)
 
-    sunlit_leaf_area_index(x=radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
-    shaded_leaf_area_index(x=radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"cm^2/m^2")
+    sunlit_leaf_area_index(radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
+    shaded_leaf_area_index(radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"cm^2/m^2")
 
     weighted(LAI_sunlit, LAI_shaded; array::Vector{Float64}(u"μmol/m^2/s")) => begin
         v = [LAI_sunlit LAI_shaded] * array
@@ -77,8 +77,8 @@ end
         v[1]
     end ~ call(u"μmol/m^2/s")
 
-    sunlit_irradiance(x=radiation.irradiance_Q_sunlit) ~ track(u"μmol/m^2/s" #= Quanta =#)
-    shaded_irradiance(x=radiation.irradiance_Q_shaded) ~ track(u"μmol/m^2/s" #= Quanta =#)
+    sunlit_irradiance(radiation.irradiance_Q_sunlit) ~ track(u"μmol/m^2/s" #= Quanta =#)
+    shaded_irradiance(radiation.irradiance_Q_shaded) ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     gross_array(a=sunlit_gasexchange.A_gross, b=shaded_gasexchange.A_gross) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
     net_array(a=sunlit_gasexchange.A_net, b=shaded_gasexchange.A_net) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")

@@ -388,12 +388,12 @@ end
     soil ~ ::Soil(override)
     leaf(context, weather, soil) ~ ::PhotosyntheticLeaf
 
-    A_gross(x=leaf.A_gross) ~ track(u"μmol/m^2/s" #= CO2 =#)
-    A_net(x=leaf.A_net) ~ track(u"μmol/m^2/s" #= CO2 =#)
-    ET(x=leaf.ET) ~ track(u"μmol/m^2/s" #= H2O =#)
-    T_leaf(x=leaf.temperature) ~ track(u"°C")
-    VPD(x=weather.VPD) ~ track(u"kPa") #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-    gs(x=leaf.stomatal_conductance) ~ track(u"mol/m^2/s" #= H2O =#)
+    A_gross(leaf.A_gross) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    A_net(leaf.A_net) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    ET(leaf.ET) ~ track(u"μmol/m^2/s" #= H2O =#)
+    T_leaf(leaf.temperature) ~ track(u"°C")
+    VPD(weather.VPD) ~ track(u"kPa") #TODO: use Weather directly, instead of through PhotosyntheticLeaf
+    gs(leaf.stomatal_conductance) ~ track(u"mol/m^2/s" #= H2O =#)
 end
 
 config = configure()

@@ -70,7 +70,7 @@ end
     # Forward from Sun
 
     #TODO better name to make it drive?
-    current_zenith_angle(x=sun.zenith_angle) ~ track(u"°")
+    current_zenith_angle(sun.zenith_angle) ~ track(u"°")
     elevation_angle(sun) ~ drive(u"°")
     directional_photosynthetic_radiation(sun): I0_dr ~ drive(u"μmol/m^2/s" #= Quanta =#)
     diffusive_photosynthetic_radiation(sun): I0_df ~ drive(u"μmol/m^2/s" #= Quanta =#)

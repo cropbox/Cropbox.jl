@@ -35,7 +35,7 @@
     #############
 
     #FIXME
-    potential_leaves(x=pheno.leaves_potential) ~ track
+    potential_leaves(pheno.leaves_potential) ~ track
 
     #FIXME
     extra_leaves(np=potential_leaves, ng=pheno.leaves_generic) => (np - ng) ~ track

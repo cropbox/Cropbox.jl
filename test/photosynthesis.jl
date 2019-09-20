@@ -395,12 +395,12 @@ end
     soil(context) ~ ::Soil
     leaf(context, weather, soil) ~ ::PhotosyntheticLeaf
 
-    A_gross(x=leaf.A_gross) ~ track
-    A_net(x=leaf.A_net) ~ track
-    ET(x=leaf.ET) ~ track
-    T_leaf(x=leaf.temperature) ~ track
-    VPD(x=weather.VPD) ~ track #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-    gs(x=leaf.stomatal_conductance) ~ track
+    A_gross(leaf.A_gross) ~ track
+    A_net(leaf.A_net) ~ track
+    ET(leaf.ET) ~ track
+    T_leaf(leaf.temperature) ~ track
+    VPD(weather.VPD) ~ track #TODO: use Weather directly, instead of through PhotosyntheticLeaf
+    gs(leaf.stomatal_conductance) ~ track
 end
 
 config = configure()

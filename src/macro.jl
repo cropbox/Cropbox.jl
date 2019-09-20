@@ -630,14 +630,22 @@ genfuncargs(v::VarInfo) = begin
     @q begin $(emit.(v.args)...) end
 end
 genfunc(v::VarInfo) = begin
-    args = genfuncargs(v)
-    body = if isnothing(v.body) && length(v.args) == 1
-        # shorthand syntax for single value arg without key
+    if isnothing(v.body) && length(v.args) == 1
         a = v.args[1]
-        @capture(a, k_=_) ? :($k) : :($a)
+        emit(k, v) = @q $(esc(k)) = $C.value($v)
+        #HACK: can't use or (|) syntax: https://github.com/MikeInnes/MacroTools.jl/issues/36
+        if @capture(a, k_=v_)
+            args = emit(k, v)
+        elseif @capture(a, k_Symbol)
+            args = emit(k, k)
+        else
+            @gensym k
+            args = emit(k, a)
+        end
+        body = esc(k)
     else
-        v.body
+        args = genfuncargs(v)
+        body = esc(v.body)
     end
-    body = esc(body)
     flatten(@q let $args; $body end)
 end

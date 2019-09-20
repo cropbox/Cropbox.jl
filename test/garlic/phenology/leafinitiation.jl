@@ -12,7 +12,7 @@
     leaf_initiateable(germinated) ~ flag
 
     # for maize
-    #leaf_initiated(x=pheno.tassel_initiation.over) ~ flag
+    #leaf_initiated(pheno.tassel_initiation.over) ~ flag
     # for garlic
     leaf_initiated(floral_initiated) ~ flag
 

@@ -46,11 +46,11 @@
         sum(x)
     end ~ track(u"g")
 
-    leaf_mass(total_leaf_mass) => total_leaf_mass ~ track(u"g")
+    leaf_mass(total_leaf_mass) ~ track(u"g")
 
     # for maize
 
-    # ear_mass(x=ear.mass) ~ track(u"g")
+    # ear_mass(ear.mass) ~ track(u"g")
 
     # for garlic
 
