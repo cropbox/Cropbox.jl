@@ -22,11 +22,11 @@ end
     ##############
 
     # FIXME are they even used?
-    # beta_ABA => 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
-    # delta => -1.0
-    # alpha_ABA => 1.0e-4
-    # lambda_r => 4.0e-12 # Dewar's email
-    # lambda_l => 1.0e-12
+    # β_ABA => 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
+    # δ => -1.0
+    # α_ABA => 1.0e-4
+    # λ_r => 4.0e-12 # Dewar's email
+    # λ_l => 1.0e-12
     # K_max => 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
 
     gbs => 0.003 ~ preserve(parameter) # bundle sheath conductance to CO2, mol m-2 s-1
@@ -122,41 +122,40 @@ end
     end ~ track
 
     # Light and electron transport limited A mediated by J
-    # theta: sharpness of transition from light limitation to light saturation
+    # θ: sharpness of transition from light limitation to light saturation
     # x: Partitioning factor of J, yield maximal J at this value
-    transport_limited_photosynthesis_rate(T, Jmax, Rd, Rm, I2, gbs, Cm, theta=0.5, x=0.4): Aj => begin
-        #J = roots(Poly([I2*Jmax, -(I2+Jmax), theta])) |> minimum
-        J = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
+    transport_limited_photosynthesis_rate(T, Jmax, Rd, Rm, I2, gbs, Cm, θ=0.5, x=0.4): Aj => begin
+        #J = roots(Poly([I2*Jmax, -(I2+Jmax), θ])) |> minimum
+        J = quadratic_solve_lower(θ, -(I2+Jmax), I2*Jmax)
         #println("Jmax = $Jmax, J = $J")
         Aj1 = x * J/2 - Rm + gbs*Cm
         Aj2 = (1-x) * J/3 - Rd
         min(Aj1, Aj2)
     end ~ track
 
-    net_photosynthesis(Ac, Aj, beta=0.99): A_net => begin
+    net_photosynthesis(Ac, Aj, β=0.99): A_net => begin
         # smooting the transition between Ac and Aj
-        A_net = ((Ac+Aj) - sqrt((Ac+Aj)^2 - 4*beta*Ac*Aj)) / (2*beta)
+        A_net = ((Ac+Aj) - sqrt((Ac+Aj)^2 - 4β*Ac*Aj)) / 2β
         #println("Ac = $Ac, Aj = $Aj, A_net = $A_net")
         A_net
     end ~ track # solve(target=Cm, lower=0, upper=Cmmax)
 
     #FIXME: currently not used variables
 
-    # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
-    bundle_sheath_o2(A_net, gbs, Om, alpha=0.0001): Os => begin
-        alpha * A_net / (0.047*gbs) + Om # Bundle sheath O2 partial pressure, mbar
+    # α: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
+    bundle_sheath_o2(A_net, gbs, Om, α=0.0001): Os => begin
+        α * A_net / (0.047*gbs) + Om # Bundle sheath O2 partial pressure, mbar
     end ~ track
 
     bundle_sheath_co2(A_net, Vp, Cm, Rm, gbs): Cbs => begin
         Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
     end ~ track
 
-    gamma(Rd, Km, Vcmax, Os) => begin
+    Γ(Rd, Km, Vcmax, Os, Γ1=0.193) => begin
         # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
         # note that this become the same as that in C3 model when multiplied by [O2]
-        gamma1 = 0.193
-        gamma_star = gamma1 * Os
-        (Rd*Km + Vcmax*gamma_star) / (Vcmax - Rd)
+        Γ✶ = Γ1 * Os
+        (Rd*Km + Vcmax*Γ✶) / (Vcmax - Rd)
     end ~ track
 end
 
@@ -192,11 +191,11 @@ end
     end ~ track
 
     # stomatal conductance for water vapor in mol m-2 s-1
-    # gamma: 10.0 for C4 maize
+    # Γ: 10.0 for C4 maize
     #FIXME T_leaf not used
-    stomatal_conductance(g0, g1, gb, m, A_net, CO2=weather.CO2, RH=weather.RH, gamma=10): gs => begin
+    stomatal_conductance(g0, g1, gb, m, A_net, CO2=weather.CO2, RH=weather.RH, Γ=10): gs => begin
         Cs = CO2 - (1.37 * A_net / gb) # surface CO2 in mole fraction
-        Cs = max(Cs, gamma)
+        Cs = max(Cs, Γ)
 
         a = m * g1 * A_net / Cs
         b = g0 + gb - (m * g1 * A_net / Cs)
@@ -217,8 +216,8 @@ end
         max(gs, g0)
     end ~ track #cycle(init=g0)
 
-    leafp_effect(LWP=soil.WP_leaf, sf=2.3, phyf=-2.0): m => begin
-        (1 + exp(sf * phyf)) / (1 + exp(sf * (phyf - LWP)))
+    leafp_effect(LWP=soil.WP_leaf, sf=2.3, ϕf=-2.0): m => begin
+        (1 + exp(sf * ϕf)) / (1 + exp(sf * (ϕf - LWP)))
     end ~ track
 
     total_conductance_h2o(gs, gb): gv => begin
@@ -333,18 +332,18 @@ end
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
-        lamda=44000, # KJ mole-1 at 25oC
+        λ=44000, # KJ mole-1 at 25oC
         psc=6.66e-4,
         Cp=29.3, # thermodynamic psychrometer constant and specific heat of air (J mol-1 C-1)
-        epsilon=0.97,
+        ϵ=0.97,
         sbc=5.6697e-8,
     ): T_adj => begin
         Tk = T_air + 273.15
 
         gha = gb * (0.135 / 0.147) # heat conductance, gha = 1.4*.135*sqrt(u/d), u is the wind speed in m/s} Mol m-2 s-1 ?
-        gr = 4 * epsilon * sbc * Tk^3 / Cp * 2 # radiative conductance, 2 account for both sides
+        gr = 4ϵ * sbc * Tk^3 / Cp * 2 # radiative conductance, 2 account for both sides
         ghr = gha + gr
-        thermal_air = epsilon * sbc * Tk^4 * 2 # emitted thermal radiation
+        thermal_air = ϵ * sbc * Tk^4 * 2 # emitted thermal radiation
         psc1 = psc * ghr / gv # apparent psychrometer constant
 
         PAR = PFD / 4.55
@@ -353,14 +352,14 @@ end
         scatt = 0.15
         # shortwave radiation (PAR (=0.85) + NIR (=0.15) solar radiation absorptivity of leaves: =~ 0.5
         # times 2 for projected area basis
-        R_abs = (1 - scatt)*PAR + scatt*NIR + 2*(epsilon * sbc * Tk^4)
+        R_abs = (1 - scatt)*PAR + scatt*NIR + 2(ϵ * sbc * Tk^4)
 
         # debug dt I commented out the changes that yang made for leaf temperature for a test. I don't think they work
         if iszero(Jw)
             # eqn 14.6b linearized form using first order approximation of Taylor series
             (psc1 / (VPD_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
         else
-            (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
+            (R_abs - thermal_air - λ * Jw) / (Cp * ghr)
         end
     end ~ solve(lower=-10, upper=10)
 
@@ -446,7 +445,7 @@ config = configure()
 # config += """
 # # switchgrass params from Albaugha et al. (2014)
 # C4.Rd.Rd25 = 3.6 # not sure if it was normalized to 25 C
-# C4.Aj.theta = 0.79
+# C4.Aj.θ = 0.79
 # """
 
 # config += """
@@ -500,14 +499,14 @@ config = configure()
 
 # config += """
 # Stomata.m.sf = 2.3 # sensitivity parameter Tuzet et al. 2003 Yang
-# Stomata.m.phyf = -1.2 # reference potential Tuzet et al. 2003 Yang
+# Stomata.m.ϕf = -1.2 # reference potential Tuzet et al. 2003 Yang
 # """
 
 # config += """
 # #? = -1.68 # minimum sustainable leaf water potential (Albaugha 2014)
 # # switchgrass params from Le et al. (2010)
 # Stomata.m.sf = 6.5
-# Stomata.m.phyf = -1.3
+# Stomata.m.ϕf = -1.3
 # """
 
 # config += """
