@@ -1,11 +1,11 @@
 @system Context begin
-    context => nothing ~ ::Nothing
+    context ~ ::Nothing
 
     config => configure() ~ ::Config(override)
-	order => Order() ~ ::Order
-	queue => Queue() ~ ::Queue
+	order ~ ::Order
+	queue ~ ::Queue
 
-    clock(config) => Clock(; config=config) ~ ::Clock
+    clock(config) ~ ::Clock
 end
 
 option(c::Context, keys...) = option(c.config, keys...)

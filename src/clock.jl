@@ -1,5 +1,5 @@
 @system Clock begin
-    context => nothing ~ ::Nothing
+    context ~ ::Nothing
     config ~ ::Config(override)
     init => 0 ~ preserve(u"hr", parameter)
     step => 1 ~ preserve(u"hr", parameter)
