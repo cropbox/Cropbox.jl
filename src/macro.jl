@@ -188,13 +188,15 @@ gendecl(i::VarInfo{Symbol}) = begin
     gendecl(decl, i.name, i.alias)
 end
 gendecl(i::VarInfo{Nothing}) = begin
-    #@assert isempty(i.args) "Non-Var `$(i.name)` cannot have arguments: $(i.args)"
     if get(i.tags, :override, false)
         decl = genoverride(i.name, esc(i.body))
     elseif !isnothing(i.body)
         decl = esc(i.body)
     else
-        decl = :($(esc(i.type))())
+        pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
+        emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
+        kwargs = emit.(i.args)
+        decl = @q $(esc(i.type))(; $(kwargs...))
     end
     # implicit :expose
     decl = :($(esc(i.name)) = $decl)
