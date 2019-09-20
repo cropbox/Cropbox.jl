@@ -256,7 +256,7 @@ end
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather begin
-    vapor_pressure(context): vp => VaporPressure(; context=context) ~ ::VaporPressure
+    vapor_pressure(context): vp ~ ::VaporPressure
 
     PFD => 1500 ~ track # umol m-2 s-1
     CO2 => 400 ~ track # ppm
@@ -391,9 +391,9 @@ end
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
     #TODO: use externally initialized Weather / Soil
-    weather(context): w => Weather(; context=context) ~ ::Weather
-    soil(context) => Soil(; context=context) ~ ::Soil
-    leaf(context, weather, soil) => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
+    weather(context): w ~ ::Weather
+    soil(context) ~ ::Soil
+    leaf(context, weather, soil) ~ ::PhotosyntheticLeaf
 
     A_gross(x=leaf.A_gross) ~ track
     A_net(x=leaf.A_net) ~ track

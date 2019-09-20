@@ -20,12 +20,12 @@ end
 
 @system SunlitGasExchange(GasExchange) begin
     weather: w ~ ::SunlitWeather(override)
-    leaf(context, weather, soil) => SunlitPhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::SunlitPhotosyntheticLeaf
+    leaf(context, weather, soil) ~ ::SunlitPhotosyntheticLeaf
 end
 
 @system ShadedGasExchange(GasExchange) begin
     weather: w ~ ::ShadedWeather(override)
-    leaf(context, weather, soil) => ShadedPhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::ShadedPhotosyntheticLeaf
+    leaf(context, weather, soil) ~ ::ShadedPhotosyntheticLeaf
 end
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
@@ -40,13 +40,13 @@ end
     irradiance_Q_sunlit(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
     irradiance_Q_shaded(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
 
-    sunlit_weather(context, calendar, radiation) => SunlitWeather(; context=context, calendar=calendar, radiation=radiation) ~ ::SunlitWeather
-    shaded_weather(context, calendar, radiation) => ShadedWeather(; context=context, calendar=calendar, radiation=radiation) ~ ::ShadedWeather
+    sunlit_weather(context, calendar, radiation) ~ ::SunlitWeather
+    shaded_weather(context, calendar, radiation) ~ ::ShadedWeather
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use leaf_nitrogen_content, leaf_width, ET_supply
-    sunlit_gasexchange(context, soil, sunlit_weather) => SunlitGasExchange(; context=context, soil=soil, name="Sunlit", weather=sunlit_weather) ~ ::SunlitGasExchange
-    shaded_gasexchange(context, soil, shaded_weather) => ShadedGasExchange(; context=context, soil=soil, name="Shaded", weather=shaded_weather) ~ ::ShadedGasExchange
+    sunlit_gasexchange(context, soil, weather=sunlit_weather, name="Sunlit") ~ ::SunlitGasExchange
+    shaded_gasexchange(context, soil, weather=shaded_weather, name="Shaded") ~ ::ShadedGasExchange
 
     leaf_width => begin
         # to be calculated when implemented for individal leaves

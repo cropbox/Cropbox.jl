@@ -386,7 +386,7 @@ end
 @system GasExchange begin
     weather: w ~ ::System(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
     soil ~ ::Soil(override)
-    leaf(context, weather, soil) => PhotosyntheticLeaf(; context=context, weather=weather, soil=soil) ~ ::PhotosyntheticLeaf
+    leaf(context, weather, soil) ~ ::PhotosyntheticLeaf
 
     A_gross(x=leaf.A_gross) ~ track(u"μmol/m^2/s" #= CO2 =#)
     A_net(x=leaf.A_net) ~ track(u"μmol/m^2/s" #= CO2 =#)

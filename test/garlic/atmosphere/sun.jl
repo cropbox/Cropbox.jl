@@ -23,7 +23,7 @@ import Dates
 
 @system Sun begin
     #TODO make Location external
-    location(context): loc => Location(; context=context) ~ ::Location #(override)
+    location(context): loc ~ ::Location #(override)
     calendar ~ ::Calendar(override)
     weather ~ ::Weather(override)
 

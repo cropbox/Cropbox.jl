@@ -13,7 +13,7 @@
     sun ~ ::Sun(override)
     soil ~ ::Soil(override)
 
-    phenology(context, calendar, weather, sun, soil): pheno => Phenology(; context=context, calendar=calendar, weather=weather, sun=sun, soil=soil) ~ ::Phenology
+    phenology(context, calendar, weather, sun, soil): pheno ~ ::Phenology
 
     primordia => 5 ~ preserve::Int(parameter)
 
