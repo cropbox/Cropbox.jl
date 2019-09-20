@@ -275,7 +275,10 @@ filteredvars(::Type{S}) where {S<:System} = begin
     end
     Tuple(d)
 end
-@generated update!(::System) = nothing
+
+collectible(::S) where {S<:System} = collectible(S)
+updatable(::S) where {S<:System} = updatable(S)
+update!(::System) = nothing
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)

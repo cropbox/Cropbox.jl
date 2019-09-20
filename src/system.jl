@@ -19,9 +19,6 @@ getindex(s::System, i) = getproperty(s, i)
 import Base: getproperty
 getproperty(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s, Symbol.(split(n, "."))...])
 
-collectible(::S) where {S<:System} = collectible(S)
-updatable(::S) where {S<:System} = updatable(S)
-
 import Base: collect
 import DataStructures: OrderedSet
 collect(s::System; recursive=true, exclude_self=false) = begin
