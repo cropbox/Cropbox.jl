@@ -493,12 +493,13 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     end
 end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
-    @gensym s t f r
+    @gensym s t f r q
     @q let $s = $(symstate(v)),
            $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
-           $r = $C.unitfy($f, $C.rateunit($s))
-        $C.queue!(context.queue, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
+           $r = $C.unitfy($f, $C.rateunit($s)),
+           $q = context.queue
+        $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end
 
@@ -512,29 +513,32 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     end
 end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
-    @gensym s t f r
+    @gensym s t f r q
     @q let $s = $(symstate(v)),
            $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
-           $r = $C.unitfy($f, $C.rateunit($s))
-        $C.queue!(context.queue, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
+           $r = $C.unitfy($f, $C.rateunit($s)),
+           $q = context.queue
+        $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
-    @gensym s f
+    @gensym s f q
     if get(v.tags, :oneway, false)
         @q let $s = $(symstate(v)),
-               $f = $(genfunc(v))
+               $f = $(genfunc(v)),
+               $q = context.queue
             if !$C.value($s)
-                $C.queue!(context.queue, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+                $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
             end
         end
     else
         @q let $s = $(symstate(v)),
-               $f = $(genfunc(v))
-            $C.queue!(context.queue, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+               $f = $(genfunc(v)),
+               $q = context.queue
+            $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
         end
     end
 end
