@@ -157,8 +157,6 @@ genvartype(v::VarInfo, ::Val{:Produce}; _...) = begin
 end
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
-posedvars(infos) = names.(infos) |> Iterators.flatten |> collect
-
 gencall(v::VarInfo) = gencall(v, Val(v.state))
 gencall(v::VarInfo, ::Val) = nothing
 gencall(v::VarInfo, ::Val{:Call}) = begin
@@ -221,7 +219,7 @@ genstruct(name, infos, incl) = begin
     calls = gencalls(infos)
     fields = genfields(infos)
     decls = gendecl(nodes)
-    vars = posedvars(infos)
+    args = names.(infos) |> Iterators.flatten |> collect
     source = gensource(infos)
     system = @q begin
         struct $name <: $C.System
@@ -229,7 +227,7 @@ genstruct(name, infos, incl) = begin
             function $name(; _kwargs...)
                 _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
                 $(decls...)
-                new($(vars...))
+                new($(args...))
             end
         end
         $C.source(::Val{$(Meta.quot(name))}) = $(Meta.quot(source))
