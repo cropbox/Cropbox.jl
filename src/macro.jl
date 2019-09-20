@@ -164,7 +164,7 @@ gencall(i::VarInfo, ::Val) = nothing
 gencall(i::VarInfo, ::Val{:Call}) = begin
     args = genfuncargs(i)
     body = flatten(@q let $args; $(i.body) end)
-    @q function $(symcall(i))($(Tuple(i.kwargs)...)) $body end
+    @q function $(symcall(i))($(i.kwargs...)) $body end
 end
 gencalls(infos) = filter(!isnothing, gencall.(infos))
 
@@ -363,7 +363,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
 
     extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end
     emitc(a) = @q $(esc(extract(a)))
-    callargs = Tuple(emitc.(v.kwargs))
+    callargs = emitc.(v.kwargs)
 
     @q function $(symcall(v))($(callargs...))
         $innerbody
@@ -376,7 +376,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     #
     # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
     # emitf(a) = @q $(esc(key(a)))
-    # fillargs = Tuple(emitf.(v.args))
+    # fillargs = emitf.(v.args)
     #
     # @q function $(symcall(v))($(fillargs...); $(callargs...)) $outerbody end
 end
