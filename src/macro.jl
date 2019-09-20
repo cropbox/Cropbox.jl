@@ -253,7 +253,7 @@ source(::Val{:System}) = @q begin
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
-mixins(::Type{<:System}) = [System]
+mixins(::Type{<:System}) = (System,)
 mixins(s::S) where {S<:System} = mixins(S)
 
 fieldnamesunique(::Type{<:System}) = ()
