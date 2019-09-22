@@ -175,7 +175,10 @@ genfields(infos) = [genfield(v) for v in infos]
 
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
 
-genoverride(name, default) = @q get(_kwargs, $(Meta.quot(name)), $default)
+genoverride(name, default) = begin
+    key = Meta.quot(name)
+    @q haskey(_kwargs, $key) ? _kwargs[$key] : $default
+end
 
 import DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
