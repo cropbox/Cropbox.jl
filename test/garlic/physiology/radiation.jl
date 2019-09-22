@@ -284,12 +284,12 @@ end
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # mean flux density on sunlit leaves
-    irradiance_Q_sunlit(I0_dr, Kb, Q_sh) => begin
+    irradiance_Q_sunlit(I0_dr, Kb, Q_sh): Q_sun => begin
         I0_dr * Kb + Q_sh
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # flux density on sunlit leaves at delpth L
-    irradiance_Q_sunlit_at(I0_dr, Kb; L(u"cm^2/m^2")) => begin
+    irradiance_Q_sunlit_at(I0_dr, Kb; L(u"cm^2/m^2")): Q_sun_at => begin
         I0_dr * Kb + Q_sh_at(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
