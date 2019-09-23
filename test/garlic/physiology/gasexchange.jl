@@ -124,23 +124,19 @@ end
         min(Ac1, Ac2)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
+
+    # θ: sharpness of transition from light limitation to light saturation
+    light_transition_sharpness: θ => 0.5 ~ preserve(parameter)
+    electron_transport_rate(I2, Jmax, θ): J => begin
+        a = θ
+        b = -(I2+Jmax) |> u"μmol/m^2/s" |> ustrip
+        c = I2*Jmax |> u"(μmol/m^2/s)^2" |> ustrip
+        quadratic_solve_lower(a, b, c)
+    end ~ track(u"μmol/m^2/s")
+
     # Light and electron transport limited A mediated by J
-    # theta: sharpness of transition from light limitation to light saturation
     # x: Partitioning factor of J, yield maximal J at this value
-    transport_limited_photosynthesis_rate(T, Jmax, Rd, Rm, I2, gbs, Cm, theta=0.5, x=0.4): Aj => begin
-        #FIXME: roots() requires no unit attached
-        a = theta
-        b = -(I2+Jmax)
-        c = I2*Jmax
-        sa = a
-        sb = ustrip(u"μmol/m^2/s", b)
-        sc = ustrip(u"(μmol/m^2/s)^2", c)
-        #J = roots(Poly([c, b, a])) |> minimum
-        #pr = roots(Poly([c, b, a]))
-        #J = minimum(pr) * u"μmol/m^2/s"
-        pr = quadratic_solve_lower(sa, sb, sc)
-        J = pr*u"μmol/m^2/s"
-        #println("Jmax = $Jmax, J = $J")
+    transport_limited_photosynthesis_rate(J, Rd, Rm, gbs, Cm, x=0.4): Aj => begin
         Aj1 = x * J/2 - Rm + gbs*Cm
         Aj2 = (1-x) * J/3 - Rd
         min(Aj1, Aj2)
@@ -434,7 +430,7 @@ config = configure()
 # config += """
 # # switchgrass params from Albaugha et al. (2014)
 # C4.Rd.Rd25 = 3.6 # not sure if it was normalized to 25 C
-# C4.Aj.theta = 0.79
+# C4.Aj.θ = 0.79
 # """
 
 # config += """
