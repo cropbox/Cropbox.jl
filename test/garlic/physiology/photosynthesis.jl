@@ -103,11 +103,11 @@
 
     vapor_pressure_deficit(weather.VPD) ~ track(u"kPa")
 
-    conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI=dev.LAI) => begin
+    conductance(weighted, conductance_array, LAI=dev.LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
         # average stomatal conductance Yang
         c = weighted(conductance_array) / LAI
         #c = max(zero(c), c)
-        isinf(c) ? zero(c) : c
+        iszero(LAI) ? zero(c) : c
     end ~ track(u"μmol/m^2/s")
 end
