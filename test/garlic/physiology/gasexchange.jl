@@ -268,8 +268,10 @@ end
 
 # C4 for maize, C3 for garlic
 @system PhotosyntheticLeaf(Stomata, C4) begin
-    weather ~ ::System(override) #HACK: to support Sunlit/ShadedWeather
+    weather ~ ::Weather(override)
+    radiation ~ ::Radiation(override)
     soil ~ ::Soil(override)
+    kind ~ ::Symbol(override)
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -301,13 +303,24 @@ end
         #Cm
     end ~ solve(lower=0, upper=Cmmax, u"μmol/mol" #= CO2 =#)
 
+    #FIXME: confusion between PFD vs. PPFD
+    photosynthetic_photon_flux_density(Q_sun=radiation.Q_sun, Q_sh=radiation.Q_sh, kind): PPFD => begin
+        if kind == :sunlit
+            Q_sun
+        elseif kind == :shaded
+            Q_sh
+        else
+            error("unrecognized photosynthetic leaf kind: $kind")
+        end
+    end ~ track(u"μmol/m^2/s" #= Quanta =#)
+
     #FIXME is it right place? maybe need coordination with geometry object in the future
-    light(PFD=weather.PPFD): I2 => begin
+    light(PPFD): I2 => begin
         #FIXME make scatt global parameter?
         scatt = 0.15 # leaf reflectance + transmittance
         f = 0.15 # spectral correction
 
-        Ia = PFD * (1 - scatt) # absorbed irradiance
+        Ia = PPFD * (1 - scatt) # absorbed irradiance
         Ia * (1 - f) / 2 # useful light absorbed by PSII
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
@@ -318,7 +331,7 @@ end
     temperature_adjustment(
         gb, gv, Jw,
         T_air=weather.T_air,
-        PFD=weather.PPFD,
+        PPFD,
         P_air=weather.P_air,
         VPD=weather.VPD,
         VPD_slope=weather.VPD_slope,
@@ -339,7 +352,7 @@ end
         psc = Cp / lamda # psychrometric constant (C-1) ~ 6.66e-4
         psc1 = psc * ghr / gv # apparent psychrometer constant
 
-        PAR = (ustrip(PFD) / 4.55) * u"J/m^2/s" # W m-2
+        PAR = (ustrip(PPFD) / 4.55) * u"J/m^2/s" # W m-2
         # If total solar radiation unavailable, assume NIR the same energy as PAR waveband
         NIR = PAR
         scatt = 0.15
@@ -384,9 +397,11 @@ end
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 @system GasExchange begin
-    weather: w ~ ::System(override) #HACK: Sunlit/ShadedWeather is not a subclass of Weather
+    weather ~ ::Weather(override)
+    radiation ~ ::Radiation(override)
     soil ~ ::Soil(override)
-    leaf(context, weather, soil) ~ ::PhotosyntheticLeaf
+    kind ~ ::Symbol(override)
+    leaf(context, weather, radiation, soil, kind) ~ ::PhotosyntheticLeaf
 
     A_gross(leaf.A_gross) ~ track(u"μmol/m^2/s" #= CO2 =#)
     A_net(leaf.A_net) ~ track(u"μmol/m^2/s" #= CO2 =#)

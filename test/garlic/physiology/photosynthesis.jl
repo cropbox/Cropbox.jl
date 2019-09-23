@@ -1,33 +1,3 @@
-#FIXME: confusion between PFD vs. PPFD
-@system SunlitWeather(Weather) begin
-    radiation ~ ::Radiation(override)
-    photosynthetic_photon_flux_density(radiation.irradiance_Q_sunlit): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
-end
-
-@system ShadedWeather(Weather) begin
-    radiation ~ ::Radiation(override)
-    photosynthetic_photon_flux_density(radiation.irradiance_Q_shaded): PPFD ~ track(u"μmol/m^2/s" #= Quanta =#)
-end
-
-#HACK: Sunlit/ShadedWeather is not a subclass of Weather
-@system SunlitPhotosyntheticLeaf(PhotosyntheticLeaf) begin
-    weather ~ ::SunlitWeather(override)
-end
-
-@system ShadedPhotosyntheticLeaf(PhotosyntheticLeaf) begin
-    weather ~ ::ShadedWeather(override)
-end
-
-@system SunlitGasExchange(GasExchange) begin
-    weather: w ~ ::SunlitWeather(override)
-    leaf(context, weather, soil) ~ ::SunlitPhotosyntheticLeaf
-end
-
-@system ShadedGasExchange(GasExchange) begin
-    weather: w ~ ::ShadedWeather(override)
-    leaf(context, weather, soil) ~ ::ShadedPhotosyntheticLeaf
-end
-
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis begin
     calendar ~ hold
@@ -40,13 +10,10 @@ end
     irradiance_Q_sunlit(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
     irradiance_Q_shaded(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
 
-    sunlit_weather(context, calendar, radiation) ~ ::SunlitWeather
-    shaded_weather(context, calendar, radiation) ~ ::ShadedWeather
-
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use leaf_nitrogen_content, leaf_width, ET_supply
-    sunlit_gasexchange(context, soil, weather=sunlit_weather, name="Sunlit") ~ ::SunlitGasExchange
-    shaded_gasexchange(context, soil, weather=shaded_weather, name="Shaded") ~ ::ShadedGasExchange
+    sunlit_gasexchange(context, soil, weather, radiation, kind=:sunlit) ~ ::GasExchange
+    shaded_gasexchange(context, soil, weather, radiation, kind=:shaded) ~ ::GasExchange
 
     leaf_width => begin
         # to be calculated when implemented for individal leaves
