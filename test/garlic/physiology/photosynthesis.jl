@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis begin
     calendar ~ hold
@@ -31,17 +33,14 @@
         # ? * (1/m^2) * (hour/3600s) * (umol/g) * (m^2/cm^2) = mol/m^2/s H2O
         # ?(g / hour) * (hour/3600s) * (umol/g) / cm^2
         s = ws * PD / 3600 / ww / LAI
-        #FIXME isinf necessary?
-        isinf(s) ? zero(s) : s
+        iszero(LAI) ? zero(s) : s
     end ~ track(u"mol/m^2/s" #= H2O =#)
 
     sunlit_leaf_area_index(radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
     shaded_leaf_area_index(radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"cm^2/m^2")
 
     weighted(LAI_sunlit, LAI_shaded; array::Vector{Float64}(u"μmol/m^2/s")) => begin
-        v = [LAI_sunlit LAI_shaded] * array
-        #FIXME better way to handling 1-element array value?
-        v[1]
+        [LAI_sunlit LAI_shaded] ⋅ array
     end ~ call(u"μmol/m^2/s")
 
     sunlit_irradiance(radiation.irradiance_Q_sunlit) ~ track(u"μmol/m^2/s" #= Quanta =#)
