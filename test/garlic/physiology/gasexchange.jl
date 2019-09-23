@@ -38,9 +38,7 @@ end
         Tbk = Tb |> u"K"
         Tk = max(Tk, zero(Tk))
         Tbk = max(Tbk, zero(Tbk))
-        r = exp(Ea * (T - Tb) / (Tbk * R * Tk))
-        #isinf(r) ? 0. : r
-        r
+        exp(Ea * (T - Tb) / (Tbk * R * Tk))
     end ~ call
 
     nitrogen_limited_rate(N, s=2.9, N0=0.25): N_dep => begin

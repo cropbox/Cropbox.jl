@@ -40,7 +40,6 @@ end
         Tk = max(0, T + K)
         Tbk = max(0, Tb + K)
         r = exp(Ea * (T - Tb) / (Tbk * R * Tk))
-        isinf(r) ? zero(r) : r
     end ~ call
 
     nitrogen_limited_rate(N, s=2.9, N0=0.25): N_dep => begin
