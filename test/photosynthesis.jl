@@ -276,7 +276,7 @@ show(io::IO, w::Weather) = print(io, "PFD = $(w.PFD), CO2 = $(w.CO2), RH = $(w.R
 end
 
 # C4 for maize, C3 for garlic
-@system PhotosyntheticLeaf(Stomata, C4) begin
+@system GasExchange(Stomata, C4) begin
     weather ~ ::Weather(override)
     soil ~ ::Soil(override)
 
@@ -363,9 +363,7 @@ end
         end
     end ~ solve(lower=-10, upper=10)
 
-    temperature(T_adj, T_air=weather.T_air): T => begin
-        T_leaf = T_air + T_adj
-    end ~ track
+    temperature(T_adj, T_air=weather.T_air): [T, T_leaf] => T_air + T_adj ~ track
 
     #TODO: expand @optimize decorator to support both cost function and variable definition
     # @temperature.optimize or minimize?
@@ -373,7 +371,7 @@ end
     #     (self.temperature - self.new_temperature)^2
 
     evapotranspiration(
-        gv, T,
+        gv, T_leaf,
         T_air=weather.T_air,
         RH=weather.RH,
         P_air=weather.P_air,
@@ -381,25 +379,10 @@ end
         saturation=weather.vp.saturation
     ): ET => begin
         ea = ambient(T_air, RH)
-        es_leaf = saturation(T)
+        es_leaf = saturation(T_leaf)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track
-end
-
-#FIXME initialize weather and leaf more nicely, handling None case for properties
-@system GasExchange begin
-    #TODO: use externally initialized Weather / Soil
-    weather(context): w ~ ::Weather
-    soil(context) ~ ::Soil
-    leaf(context, weather, soil) ~ ::PhotosyntheticLeaf
-
-    A_gross(leaf.A_gross) ~ track
-    A_net(leaf.A_net) ~ track
-    ET(leaf.ET) ~ track
-    T_leaf(leaf.temperature) ~ track
-    VPD(weather.VPD) ~ track #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-    gs(leaf.stomatal_conductance) ~ track
 end
 
 config = configure()

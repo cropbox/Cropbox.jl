@@ -101,10 +101,7 @@
     #FIXME: no sense to weight two temperature values here?
     #temperature(weighted, temperature_array) => weighted(temperature_array) ~ track(u"°C")
 
-    vapor_pressure_deficit(VPD=sunlit_gasexchange.VPD) => begin
-        #HACK only use sunlit leaves?
-        max(0.0u"kPa", VPD)
-    end ~ track(u"kPa")
+    vapor_pressure_deficit(weather.VPD) ~ track(u"kPa")
 
     conductance(LAI_sunlit, LAI_shaded, weighted, conductance_array, LAI=dev.LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night

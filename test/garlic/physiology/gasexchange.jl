@@ -267,7 +267,7 @@ end
 end
 
 # C4 for maize, C3 for garlic
-@system PhotosyntheticLeaf(Stomata, C4) begin
+@system GasExchange(Stomata, C4) begin
     weather ~ ::Weather(override)
     radiation ~ ::Radiation(override)
     soil ~ ::Soil(override)
@@ -371,9 +371,7 @@ end
         (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
     end ~ solve(lower=-10.0u"K", upper=10.0u"K", u"K")
 
-    temperature(T_adj, T_air=weather.T_air): T => begin
-        T_leaf = T_air + T_adj
-    end ~ track(u"°C")
+    temperature(T_adj, T_air=weather.T_air): [T, T_leaf] => T_air + T_adj ~ track(u"°C")
 
     #TODO: expand @optimize decorator to support both cost function and variable definition
     # @temperature.optimize or minimize?
@@ -381,7 +379,7 @@ end
     #     (self.temperature - self.new_temperature)^2
 
     evapotranspiration(
-        gv, T,
+        gv, T_leaf,
         T_air=weather.T_air,
         RH=weather.RH,
         P_air=weather.P_air,
@@ -389,26 +387,10 @@ end
         saturation=weather.vp.saturation
     ): ET => begin
         ea = ambient(T_air, RH)
-        es_leaf = saturation(T)
+        es_leaf = saturation(T_leaf)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0.0u"μmol/m^2/s", ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"μmol/m^2/s" #= H2O =#)
-end
-
-#FIXME initialize weather and leaf more nicely, handling None case for properties
-@system GasExchange begin
-    weather ~ ::Weather(override)
-    radiation ~ ::Radiation(override)
-    soil ~ ::Soil(override)
-    kind ~ ::Symbol(override)
-    leaf(context, weather, radiation, soil, kind) ~ ::PhotosyntheticLeaf
-
-    A_gross(leaf.A_gross) ~ track(u"μmol/m^2/s" #= CO2 =#)
-    A_net(leaf.A_net) ~ track(u"μmol/m^2/s" #= CO2 =#)
-    ET(leaf.ET) ~ track(u"μmol/m^2/s" #= H2O =#)
-    T_leaf(leaf.temperature) ~ track(u"°C")
-    VPD(weather.VPD) ~ track(u"kPa") #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-    gs(leaf.stomatal_conductance) ~ track(u"mol/m^2/s" #= H2O =#)
 end
 
 config = configure()
