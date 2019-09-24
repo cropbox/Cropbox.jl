@@ -131,19 +131,10 @@ end
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
 
-@system Stomata begin
+@system BoundaryLayer begin
     weather ~ hold
-    soil ~ hold
-    net_photosynthesis: A_net ~ hold
-    co2_compensation_point: Γ ~ hold
-
-    g0 => 0.096 ~ preserve(u"mmol/m^2/s" #= H2O =#, parameter)
-    g1 => 6.824 ~ preserve(parameter)
 
     leaf_width: w => 0.1 ~ preserve(u"m", parameter)
-
-    diffusivity_ratio_boundary_layer: drb => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
-    diffusivity_ratio_air: dra => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
 
     # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
     stomatal_ratio: sr => 1.0 ~ preserve(parameter)
@@ -168,6 +159,20 @@ end
     end ~ track(u"mmol/m^2/s")
     # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
     boundary_layer_conductance(gh): gb => 0.147/0.135*gh ~ track(u"mol/m^2/s" #= H2O =#)
+end
+
+@system Stomata begin
+    weather ~ hold
+    soil ~ hold
+    boundary_layer_conductance: gb ~ hold
+    net_photosynthesis: A_net ~ hold
+    co2_compensation_point: Γ ~ hold
+
+    g0 => 0.096 ~ preserve(u"mmol/m^2/s" #= H2O =#, parameter)
+    g1 => 6.824 ~ preserve(parameter)
+
+    diffusivity_ratio_boundary_layer: drb => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
+    diffusivity_ratio_air: dra => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
 
     # surface CO2 in mole fraction
     co2_mole_fraction_at_leaf_surface(CO2=weather.CO2, drb, A_net, gb): Cs => begin
@@ -212,7 +217,7 @@ end
     end ~ track(u"m^2*s/mmol")
 end
 
-@system GasExchange(Stomata, C3) begin
+@system GasExchange(BoundaryLayer, Stomata, C3) begin
     weather ~ ::Weather(override)
     radiation ~ ::Radiation(override)
     soil ~ ::Soil(override)
