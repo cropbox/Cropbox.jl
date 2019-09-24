@@ -212,10 +212,10 @@ end
     soil ~ ::Soil(override)
     kind ~ ::Symbol(override)
 
-    co2_atmosphere(CO2=weather.CO2, P_air=weather.P_air): Ca => (CO2 * P_air) ~ track(u"μbar")
+    co2_atmosphere(CO2=weather.CO2, P_air): Ca => (CO2 * P_air) ~ track(u"μbar")
     intercellular_co2_upper_limit(Ca): Cimax => 2Ca ~ track(u"μbar")
     intercellular_co2_lower_limit: Cimin => 0 ~ preserve(u"μbar")
-    intercellular_co2(Ca, A_net, P_air=weather.P_air, CO2=weather.CO2, rvc): Ci => begin
+    intercellular_co2(Ca, A_net, P_air, CO2=weather.CO2, rvc): Ci => begin
         Ca - A_net * rvc * P_air
     end ~ solve(lower=Cimin, upper=Cimax, u"μbar")
 
@@ -301,7 +301,7 @@ end
 
     net_radiation_absorbed(R_in, R_out): R_net => R_in - R_out ~ track(u"W/m^2")
 
-    latent_heat_flux(λ, gv, VPD=weather.VPD, P_air=weather.P_air): λE => begin
+    latent_heat_flux(λ, gv, VPD=weather.VPD, P_air): λE => begin
         λ*gv*VPD / P_air
     end ~ track(u"W/m^2")
 
@@ -318,11 +318,12 @@ end
 
     air_temperature(weather.T_air): T_air ~ track(u"°C")
     absolute_air_temperature(weather.Tk_air): Tk_air ~ track(u"K")
+    air_pressure(weather.P_air): P_air ~ track(u"kPa")
 
     leaf_temperature(T_adj, T_air): [T, T_leaf] => T_air + T_adj ~ track(u"°C")
     absolute_leaf_temperature(T_leaf): Tk ~ track(u"K")
 
-    evapotranspiration(gv, T_leaf, T_air, RH=weather.RH, P_air=weather.P_air, ea=weather.vp.ambient, es=weather.vp.saturation): ET => begin
+    evapotranspiration(gv, T_leaf, T_air, P_air, RH=weather.RH, ea=weather.vp.ambient, es=weather.vp.saturation): ET => begin
         Ea = ea(T_air, RH)
         Es = es(T_leaf)
         ET = gv * ((Es - Ea) / P_air) / (1 - (Es + Ea) / P_air)
