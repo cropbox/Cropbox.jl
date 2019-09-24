@@ -182,7 +182,7 @@ end
     stomatal_conductance(g0, g1, m, A_net, hs, Cs): gs => begin
         gs = g0 + (g1 * m * (A_net * hs / Cs))
         max(gs, g0)
-    end ~ track(u"mol/m^2/s" #= H2O =#)
+    end ~ track(u"mmol/m^2/s" #= H2O =#)
 
     transpiration_reduction_factor: m => begin
         #TODO: implement soil water module
@@ -199,11 +199,11 @@ end
 
     stomatal_resistance_co2(gs, dra): rsc => begin
         dra / gs
-    end ~ track(u"m^2*s/mol")
+    end ~ track(u"m^2*s/mmol")
 
     total_resistance_co2(rbc, rsc): rvc => begin
         rbc + rsc
-    end ~ track(u"m^2*s/mol")
+    end ~ track(u"m^2*s/mmol")
 end
 
 @system GasExchange(Stomata, C3) begin
