@@ -147,21 +147,27 @@ end
 
     # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
     stomatal_ratio: sr => 1.0 ~ preserve(parameter)
-    wind_speed(weather.wind): u ~ track(u"m/s")
-    boundary_layer_conductance(sr, w, u): gb => begin
-        r = (sr + 1)^2 / (sr^2 + 1)
-        # characteristic dimension of a leaf, leaf width in m
-        d = 0.72w
-        #FIXME: check units, remove ustrip
-        # 1.42 # total BLC (both sides) for LI6400 leaf chamber
-        1.4 * 0.147 * sqrt(ustrip(max(u, 0.1u"m/s") / d)) * r
-        # (1.4*1.1*6.62*sqrt(wind/d)*(Press/(R*(273.15+Tair)))); // this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
-        # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
-        # 6.62 is for laminar forced convection of air over flat plates on projected area basis
-        # when all conversion is done for each surface it becomes close to 0.147 as given in Norman and Campbell
-        # multiply by 1.4 for outdoor condition, Campbell and Norman (1998), p109
+    sides_conductance_ratio(sr): scr => ((sr + 1)^2 / (sr^2 + 1)) ~ preserve
+
+    # multiply by 1.4 for outdoor condition, Campbell and Norman (1998), p109
+    outdoor_conductance_ratio: ocr => 1.4 ~ preserve
+
+    wind_velocity(u=weather.wind): u => max(u, 0.1u"m/s") ~ track(u"m/s")
+    # characteristic dimension of a leaf, leaf width in m
+    characteristic_dimension(w): d => 0.72w ~ track(u"m")
+    kinematic_viscosity_of_air_at_20: v => 1.51e-5 ~ track(u"m^2/s")
+    thermal_diffusivity_of_air_at_20: κ => 21.5e-6 ~ track(u"m^2/s")
+    reynolds_number(u, d, v): Re => u*d/v ~ track
+    nusselt_number(Re): Nu => 0.60sqrt(Re) ~ track
+    boundary_layer_heat_conductance(κ, Nu, d, scr, ocr, P_air=weather.P_air, Tk_air=weather.Tk_air): gh => begin
+        g = (κ*Nu/d)
         # multiply by ratio to get the effective blc (per projected area basis), licor 6400 manual p 1-9
-    end ~ track(u"mol/m^2/s" #= H2O =#)
+        g *= scr * ocr
+        # including a multiplier for conversion from mm s-1 to mol m-2 s-1
+        g * P_air / (u"R" * Tk_air)
+    end ~ track(u"mmol/m^2/s")
+    # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
+    boundary_layer_conductance(gh): gb => 0.147/0.135*gh ~ track(u"mol/m^2/s" #= H2O =#)
 
     # surface CO2 in mole fraction
     co2_mole_fraction_at_leaf_surface(CO2=weather.CO2, drb, A_net, gb): Cs => begin
@@ -252,12 +258,6 @@ end
 
     # apparent psychrometer constant
     apparent_psychometric_constant(psc, ghr, gv): psc1 => (psc * ghr / gv) ~ preserve(u"K^-1")
-
-    #FIXME: common coeffs with boundary layer conductance?
-    boundary_layer_heat_conductance(gb): gh => begin
-        # heat conductance, gha = 1.4*.135*sqrt(u/d), u is the wind speed in m/s} Mol m-2 s-1 ?
-        gb * (0.135 / 0.147)
-    end ~ track(u"mmol/m^2/s" #= H2O =#)
 
     # see Campbell and Norman (1998) pp 224-225
     # because Stefan-Boltzman constant is for unit surface area by denifition,
