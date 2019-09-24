@@ -39,6 +39,8 @@ using CSV
     air_temperature(s): T_air ~ drive(key=:Tair, u"°C")
     #T_air => 25 ~ track # C
 
+    absolute_air_temperature(T_air): Tk_air ~ track(u"K")
+
     wind_speed(s): wind ~ drive(key=:Wind, u"m/s")
     #wind => 2.0 ~ track # meters s-1
 

@@ -317,7 +317,7 @@ end
     end ~ solve(lower=-10u"K", upper=10u"K", u"K")
 
     air_temperature(weather.T_air): T_air ~ track(u"°C")
-    absolute_air_temperature(T_air): Tk_air ~ track(u"K")
+    absolute_air_temperature(weather.Tk_air): Tk_air ~ track(u"K")
 
     leaf_temperature(T_adj, T_air): [T, T_leaf] => T_air + T_adj ~ track(u"°C")
     absolute_leaf_temperature(T_leaf): Tk ~ track(u"K")
