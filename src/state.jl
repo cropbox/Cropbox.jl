@@ -120,7 +120,7 @@ mutable struct Drive{V} <: State{V}
     value::V
 end
 
-Drive(; unit, _name, _value, _type, _...) = begin
+Drive(; unit, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = _value
@@ -196,7 +196,7 @@ mutable struct Flag{Bool} <: State{Bool}
     value::Bool
 end
 
-Flag(; _value, _type, _...) = begin
+Flag(; _value, _...) = begin
     Flag{Bool}(_value)
 end
 
