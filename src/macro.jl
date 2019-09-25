@@ -407,9 +407,10 @@ genupdate(nodes) = begin
     end
 end
 
-symstate(v::VarInfo) = Symbol(:_state_, v.name)
-symlabel(v::VarInfo, t::VarStep, s...) = Symbol(v.name, suffix(t), s...)
-symcall(v::VarInfo) = Symbol(v.name, :_call)
+symname(v::VarInfo) = Symbol(:_, v.name)
+symstate(v::VarInfo) = Symbol(symname(v), :__state)
+symlabel(v::VarInfo, t::VarStep, s...) = Symbol(symname(v), suffix(t), s...)
+symcall(v::VarInfo) = Symbol(v.name, :__call)
 
 genupdateinit(n::VarNode) = begin
     v = n.info
