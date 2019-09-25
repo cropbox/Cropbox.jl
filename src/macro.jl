@@ -69,7 +69,6 @@ typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :System
 
 updatetags!(d, ::Val; _...) = nothing
-updatetags!(d, ::Val{:Hold}; _...) = (d[:override] = true)
 updatetags!(d, ::Union{Val{:Accumulate},Val{:Capture}}; _...) = begin
     !haskey(d, :time) && (d[:time] = :(context.clock.tick))
 end
@@ -263,8 +262,8 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    context ~ ::Cropbox.Context(override, extern)
-    config(context) => context.config ~ ::Cropbox.Config(override)
+    context ~ ::Cropbox.Context(extern)
+    config(context) => context.config ~ ::Cropbox.Config
 end
 mixins(::Type{<:System}) = (System,)
 mixins(s::S) where {S<:System} = mixins(S)
@@ -313,8 +312,6 @@ geninfos(name, incl, body) = begin
             if haskey(d, n)
                 if v.state == :Hold
                     continue
-                elseif !get(d[n].tags, :override, false)
-                    error("Redundant declaration encountered: $v")
                 end
             end
             d[n] = v
