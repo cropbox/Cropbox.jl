@@ -203,8 +203,8 @@ end
 ####
 
 mutable struct Produce{S<:System} <: State{S}
+    name::Symbol # used in recurisve collecting in collect()
     value::Vector{S}
-    name::Symbol # used in recurisve collecting in getvar!
 end
 
 struct Product{S<:System}
@@ -215,7 +215,7 @@ iterate(p::Product) = (p, nothing)
 iterate(p::Product, ::Nothing) = nothing
 
 Produce(; _name, _type::Type{S}, _...) where {S<:System} = begin
-    Produce{S}(S[], _name)
+    Produce{S}(_name, S[])
 end
 
 produce(s::Type{<:System}; args...) = Product(s, args)
