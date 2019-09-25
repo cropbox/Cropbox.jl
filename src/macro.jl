@@ -2,6 +2,7 @@ using MacroTools
 import MacroTools: @q, flatten, striplines
 
 struct VarInfo{S<:Union{Symbol,Nothing}}
+    system::Symbol
     name::Symbol
     alias::Vector{Symbol}
     args::Vector
@@ -15,6 +16,7 @@ end
 
 import Base: show
 show(io::IO, v::VarInfo) = begin
+    println(io, "system: $(v.system)")
     println(io, "name: $(v.name)")
     println(io, "alias: $(v.alias)")
     println(io, "func ($(repr(v.args)); $(repr(v.kwargs))) = $(repr(v.body))")
@@ -26,7 +28,7 @@ show(io::IO, v::VarInfo) = begin
     println(io, "line: $(v.line)")
 end
 
-VarInfo(line::Union{Expr,Symbol}) = begin
+VarInfo(line::Union{Expr,Symbol}, system::Symbol) = begin
     # name[(args..; kwargs..)][: alias | [alias...]] [=> body] ~ [state][::type][(tags..)]
     @capture(line, decl_ ~ deco_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
@@ -39,7 +41,7 @@ VarInfo(line::Union{Expr,Symbol}) = begin
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
     tags = parsetags(tags, type, state, args, kwargs)
-    VarInfo{typeof(state)}(name, alias, args, kwargs, body, state, type, tags, line)
+    VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line)
 end
 
 parsetags(::Nothing, a...) = parsetags([], a...)
@@ -296,20 +298,20 @@ end
 
 import DataStructures: OrderedDict, OrderedSet
 gensystem(head, body) = gensystem(parsehead(head)..., body)
-gensystem(name, incl, body) = genstruct(name, geninfos(body, incl), incl)
-geninfos(body, incl) = begin
-    con(b) = OrderedDict(v.name => v for v in VarInfo.(striplines(b).args))
-    add!(d, b) = begin
-        for (n, v) in con(b)
+gensystem(name, incl, body) = genstruct(name, geninfos(name, incl, body), incl)
+geninfos(name, incl, body) = begin
+    con(b, s) = OrderedDict(v.name => v for v in VarInfo.(striplines(b).args, s))
+    add!(d, b, s) = begin
+        for (n, v) in con(b, s)
             (v.state == :Hold) && haskey(d, n) && continue
             d[n] = v
         end
     end
     d = OrderedDict{Symbol,VarInfo}()
     for m in incl
-        add!(d, source(m))
+        add!(d, source(m), m)
     end
-    add!(d, body)
+    add!(d, body, name)
     collect(values(d))
 end
 
@@ -333,7 +335,7 @@ macro system(head, body)
 end
 
 macro infos(head, body)
-    geninfos(body, parsehead(head)[2])
+    geninfos(parsehead(head)..., body)
 end
 
 export @system
