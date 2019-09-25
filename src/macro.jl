@@ -50,12 +50,7 @@ parsetags(tags::Vector; state, type, a...) = begin
     d = Dict{Symbol,Any}()
     for t in tags
         if @capture(t, k_=v_)
-            if @capture(k, kn_::kt_)
-                d[kn] = v
-                d[Symbol("_type_", kn)] = kt
-            else
-                d[k] = v
-            end
+            d[k] = v
         elseif @capture(t, @u_str(v_))
             d[:unit] = :@u_str($v)
         else
