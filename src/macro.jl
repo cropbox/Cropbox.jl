@@ -89,9 +89,9 @@ struct PreStep <: VarStep end
 struct MainStep <: VarStep end
 struct PostStep <: VarStep end
 
-suffix(::PreStep) = "_pre"
-suffix(::MainStep) = "_main"
-suffix(::PostStep) = "_post"
+suffix(::PreStep) = "__pre"
+suffix(::MainStep) = "__main"
+suffix(::PostStep) = "__post"
 
 struct VarNode
     info::VarInfo
@@ -576,7 +576,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     N_MAX = 100
     TOL = 0.0001
     lstart = symlabel(v, PreStep())
-    lexit = symlabel(v, MainStep(), :_exit)
+    lexit = symlabel(v, MainStep(), :__exit)
     @gensym s d zero tol
     @q let $s = $(symstate(v)),
            $zero = $C.unitfy(0, $C.unit($s))
