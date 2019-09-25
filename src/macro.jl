@@ -40,12 +40,13 @@ VarInfo(line::Union{Expr,Symbol}, system::Symbol) = begin
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
-    tags = parsetags(tags, type, state, args, kwargs)
+    tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
     VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line)
 end
 
-parsetags(::Nothing, a...) = parsetags([], a...)
-parsetags(tags::Vector, type, state, args, kwargs) = begin
+parsetags(::Nothing; a...) = parsetags([]; a...)
+parsetags(tags::Vector; state, type, a...) = begin
+    s = Val(state)
     d = Dict{Symbol,Any}()
     for t in tags
         if @capture(t, k_=v_)
@@ -62,23 +63,33 @@ parsetags(tags::Vector, type, state, args, kwargs) = begin
         end
     end
     !haskey(d, :unit) && (d[:unit] = nothing)
-    (state == :Hold) && (d[:override] = true)
-    if state == :Call
-        #FIXME: lower duplicate efforts in genvartype()
-        N = isnothing(type) ? :Float64 : esc(type)
-        U = get(d, :unit, nothing)
-        V = @q $C.valuetype($N, $U)
-        extract(a) = let k, t, u
-            @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-            t = isnothing(t) ? :Float64 : esc(t)
-            @q $C.valuetype($t, $u)
-        end
-        F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
-        d[:_calltype] = F
-    end
-    (state in (:Accumulate, :Capture)) && !haskey(d, :time) && (d[:time] = :(context.clock.tick))
-    !isnothing(type) && (d[:_type] = esc(type))
+    d[:_type] = isnothing(type) ? typetag(s) : esc(type)
+    updatetags!(d, s; a...)
     d
+end
+
+typetag(::Val) = :Float64
+typetag(::Val{:Advance}) = :Int
+typetag(::Val{:Flag}) = :Bool
+typetag(::Val{:Produce}) = :System
+
+updatetags!(d, ::Val; _...) = nothing
+updatetags!(d, ::Val{:Hold}; _...) = (d[:override] = true)
+updatetags!(d, ::Union{Val{:Accumulate},Val{:Capture}}; _...) = begin
+    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
+end
+updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
+    #FIXME: lower duplicate efforts in genvartype()
+    N = d[:_type]
+    U = d[:unit]
+    V = @q $C.valuetype($N, $U)
+    extract(a) = let k, t, u
+        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
+        t = isnothing(t) ? :Float64 : esc(t)
+        @q $C.valuetype($t, $u)
+    end
+    F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
+    d[:_calltype] = F
 end
 
 names(v::VarInfo) = [v.name, v.alias...]

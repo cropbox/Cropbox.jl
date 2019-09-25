@@ -73,7 +73,7 @@ mutable struct Advance{T} <: State{T}
     value::Timepiece{T}
 end
 
-Advance(; init=nothing, step=nothing, unit, _type=Int64, _...) = begin
+Advance(; init=nothing, step=nothing, unit, _type, _...) = begin
     T = valuetype(_type, value(unit))
     t = isnothing(init) ? zero(T) : value(init)
     dt = isnothing(step) ? oneunit(T) : value(step)
@@ -92,7 +92,7 @@ mutable struct Preserve{V} <: State{V}
 end
 
 # Preserve is the only State that can store value `nothing`
-Preserve(; unit, _value, _type=Float64, _...) = begin
+Preserve(; unit, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = _value
@@ -106,7 +106,7 @@ mutable struct Track{V} <: State{V}
     value::V
 end
 
-Track(; unit, _value, _type=Float64, _...) = begin
+Track(; unit, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = _value
@@ -120,7 +120,7 @@ mutable struct Drive{V} <: State{V}
     value::V
 end
 
-Drive(; unit, _name, _value, _type=Float64, _...) = begin
+Drive(; unit, _name, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = _value
@@ -135,7 +135,7 @@ mutable struct Call{V,F<:FunctionWrapper} <: State{V}
     value::F
 end
 
-Call(; unit, _value, _type=Float64, _calltype, _...) = begin
+Call(; unit, _value, _type, _calltype, _...) = begin
     V = valuetype(_type, value(unit))
     F = _calltype
     Call{V,F}(_value)
@@ -152,7 +152,7 @@ mutable struct Accumulate{V,T,R} <: State{V}
     rate::R
 end
 
-Accumulate(; unit, time, _value, _type=Float64, _...) = begin
+Accumulate(; unit, time, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = isnothing(_value) ? unitfy(zero(_type), U) : _value
@@ -175,7 +175,7 @@ mutable struct Capture{V,T,R} <: State{V}
     rate::R
 end
 
-Capture(; unit, time, _type=Float64, _...) = begin
+Capture(; unit, time, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = unitfy(zero(_type), U)
@@ -196,7 +196,7 @@ mutable struct Flag{Bool} <: State{Bool}
     value::Bool
 end
 
-Flag(; _value, _type=Bool, _...) = begin
+Flag(; _value, _type, _...) = begin
     Flag{Bool}(_value)
 end
 
@@ -214,7 +214,7 @@ end
 iterate(p::Product) = (p, nothing)
 iterate(p::Product, ::Nothing) = nothing
 
-Produce(; _name, _type::Type{S}=System, _...) where {S<:System} = begin
+Produce(; _name, _type::Type{S}, _...) where {S<:System} = begin
     Produce{S}(S[], _name)
 end
 
@@ -241,7 +241,7 @@ mutable struct Solve{V} <: State{V}
     fc::V
 end
 
-Solve(; lower=nothing, upper=nothing, unit, _type=Float64, _...) = begin
+Solve(; lower=nothing, upper=nothing, unit, _type, _...) = begin
     V = valuetype(_type, value(unit))
     v = zero(V)
     Solve{V}(v, lower, upper, :z, 0, v, v, v, v, v, v)
