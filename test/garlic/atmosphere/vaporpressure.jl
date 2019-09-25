@@ -1,8 +1,8 @@
 @system VaporPressure begin
     # Campbell and Norman (1998), p 41 Saturation vapor pressure in kPa
     a => 0.611 ~ preserve(u"kPa", parameter)
-    b => 17.502 ~ preserve(parameter) # C
-    c => 240.97 ~ preserve(parameter) # C
+    b => 17.502 ~ preserve(parameter)
+    c => 240.97 ~ preserve(parameter) # °C
 
     saturation(a, b, c; T(u"°C")): es => (t = ustrip(T); a*exp((b*t)/(c+t))) ~ call(u"kPa")
     ambient(es; T(u"°C"), RH(u"percent")): ea => es(T) * RH ~ call(u"kPa")
