@@ -62,6 +62,7 @@ parsetags(tags::Vector, type, state, args, kwargs) = begin
         end
     end
     !haskey(d, :unit) && (d[:unit] = nothing)
+    (state == :Hold) && (d[:override] = true)
     if state == :Call
         #FIXME: lower duplicate efforts in genvartype()
         N = isnothing(type) ? :Float64 : esc(type)
@@ -256,8 +257,8 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    context ~ ::Cropbox.Context(extern)
-    config(context) => context.config ~ ::Cropbox.Config
+    context ~ ::Cropbox.Context(override, extern)
+    config(context) => context.config ~ ::Cropbox.Config(override)
 end
 mixins(::Type{<:System}) = (System,)
 mixins(s::S) where {S<:System} = mixins(S)
@@ -303,7 +304,13 @@ geninfos(name, incl, body) = begin
     con(b, s) = OrderedDict(v.name => v for v in VarInfo.(striplines(b).args, s))
     add!(d, b, s) = begin
         for (n, v) in con(b, s)
-            (v.state == :Hold) && haskey(d, n) && continue
+            if haskey(d, n)
+                if v.state == :Hold
+                    continue
+                elseif !get(d[n].tags, :override, false)
+                    error("Redundant declaration encountered: $v")
+                end
+            end
             d[n] = v
         end
     end
