@@ -8,10 +8,10 @@
     Water,
     Weight
 ) begin
-    calendar ~ ::Calendar(override)
-    weather ~ ::Weather(override)
-    sun ~ ::Sun(override)
-    soil ~ ::Soil(override)
+    calendar ~ ::Calendar(extern)
+    weather ~ ::Weather(extern)
+    sun ~ ::Sun(extern)
+    soil ~ ::Soil(extern)
 
     phenology(context, calendar, weather, sun, soil): pheno ~ ::Phenology
 

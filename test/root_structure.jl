@@ -3,13 +3,13 @@ using Unitful
 
 @testset "root structure" begin
     @system RootSegment begin
-        parent => nothing ~ ::Union{System,Nothing}(override)
+        parent => nothing ~ ::Union{System,Nothing}(extern)
         elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"mm/hr")
         branching_angle => rand(Normal(20, 10))*u"°" ~ preserve(u"°")
         branching_interval: i => 3.0 ~ track(u"mm")
         branching_chance: p => clamp(rand(Normal(0.5, 0.5)), 0, 1) ~ track
         is_branching(l, ll, i, p) => (l - ll > i && p > 0.5) ~ flag
-        branched_length: bl => 0 ~ preserve(u"mm", override)
+        branched_length: bl => 0 ~ preserve(u"mm", extern)
         diameter => 0.1 ~ track(u"mm")
         length(r): l ~ accumulate(u"mm")
         last_branching_length(x=branch["*/-1"].bl): ll => (isempty(x) ? 0. : x[1]) ~ track(u"mm")

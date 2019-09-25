@@ -1,5 +1,5 @@
 @system NodalUnit(Organ) begin
-    rank ~ ::Int(override) # preserve
+    rank ~ ::Int(extern) # preserve
     leaf(context, phenology, rank) ~ ::Leaf
     sheath(context, phenology, rank) ~ ::Sheath
 

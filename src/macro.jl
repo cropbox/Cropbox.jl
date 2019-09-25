@@ -177,7 +177,7 @@ genfields(infos) = [genfield(v) for v in infos]
 
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
 
-genoverride(name, default) = begin
+genextern(name, default) = begin
     key = Meta.quot(name)
     @q haskey(_kwargs, $key) ? _kwargs[$key] : $default
 end
@@ -187,7 +187,7 @@ gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo{Symbol}) = begin
     name = Meta.quot(v.name)
     alias = Tuple(v.alias)
-    value = get(v.tags, :override, false) ? genoverride(v.name, geninit(v)) : geninit(v)
+    value = get(v.tags, :extern, false) ? genextern(v.name, geninit(v)) : geninit(v)
     stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
     decl = :($C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     gendecl(decl, v.name, v.alias)
@@ -201,8 +201,8 @@ gendecl(v::VarInfo{Nothing}) = begin
     else
         esc(v.body)
     end
-    if get(v.tags, :override, false)
-        decl = genoverride(v.name, decl)
+    if get(v.tags, :extern, false)
+        decl = genextern(v.name, decl)
     end
     # implicit :expose
     decl = :($(esc(v.name)) = $decl)
@@ -256,7 +256,7 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    context ~ ::Cropbox.Context(override)
+    context ~ ::Cropbox.Context(extern)
     config(context) => context.config ~ ::Cropbox.Config
 end
 mixins(::Type{<:System}) = (System,)

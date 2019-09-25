@@ -1,5 +1,5 @@
 @system Organ begin
-    phenology: pheno ~ ::Phenology(override)
+    phenology: pheno ~ ::Phenology(extern)
 
     # organ temperature, C
     temperature(pheno): T ~ drive(u"°C")

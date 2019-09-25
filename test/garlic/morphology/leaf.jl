@@ -1,5 +1,5 @@
 @system Leaf(Organ) begin
-    rank ~ ::Int(override) # preserve
+    rank ~ ::Int(extern) # preserve
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
     # This is the "potential" elongation rate with no water stress Yang

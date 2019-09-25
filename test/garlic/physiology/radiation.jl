@@ -39,10 +39,10 @@ end
 end
 
 @system Radiation begin
-    sun ~ ::Sun(override)
+    sun ~ ::Sun(extern)
 
     # to access cumulative LAI at the layer
-    development ~ ::Development(override)
+    development ~ ::Development(extern)
     leaf_area_index(development): LAI ~ drive(u"cm^2/m^2")
 
     leaf_angle => ellipsoidal ~ preserve::LeafAngle(parameter)

@@ -262,10 +262,10 @@ end
 
 # C4 for maize, C3 for garlic
 @system GasExchange(Stomata, C4) begin
-    weather ~ ::Weather(override)
-    radiation ~ ::Radiation(override)
-    soil ~ ::Soil(override)
-    kind ~ ::Symbol(override)
+    weather ~ ::Weather(extern)
+    radiation ~ ::Radiation(extern)
+    soil ~ ::Soil(extern)
+    kind ~ ::Symbol(extern)
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width

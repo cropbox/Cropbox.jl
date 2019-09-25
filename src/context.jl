@@ -1,10 +1,8 @@
 @system Context begin
     context ~ ::Nothing
-
-    config ~ ::Config(override)
+    config ~ ::Config(extern)
 	order ~ ::Order
 	queue ~ ::Queue
-
     clock(config) ~ ::Clock
 end
 
