@@ -28,14 +28,14 @@ end
     # Arrhenius equation
     base_temperature: Tb => 25 ~ preserve(u"°C", parameter)
     absolute_base_temperature(Tb): Tbk ~ preserve(u"K", parameter)
-    temperature_dependence_rate(T, Tk, Tb, Tbk; Ea(u"J/mol")): T_dep => begin
+    temperature_dependence_rate(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): T_dep => begin
         exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
     end ~ call
 
     # Michaelis constant of rubisco for CO2 of C3 plants, ubar, from Bernacchi et al. (2001)
     rubisco_constant_for_co2_at_25: Kc25 => 404.9 ~ preserve(u"μbar", parameter)
     # Activation energy for Kc, Bernacchi (2001)
-    activation_energy_for_co2: Eac => 79430 ~ preserve(u"J/mol", parameter)
+    activation_energy_for_co2: Eac => 79.43 ~ preserve(u"kJ/mol", parameter)
     rubisco_constant_for_co2(T_dep, Kc25, Eac): Kc => begin
         Kc25 * T_dep(Eac)
     end ~ track(u"μbar")
@@ -43,7 +43,7 @@ end
     # Michaelis constant of rubisco for O2, mbar, from Bernacchi et al., (2001)
     rubisco_constant_for_o2_at_25: Ko25 => 278.4 ~ preserve(u"mbar", parameter)
     # Activation energy for Ko, Bernacchi (2001)
-    activation_energy_for_o2: Eao => 36380 ~ preserve(u"J/mol", parameter)
+    activation_energy_for_o2: Eao => 36.38 ~ preserve(u"kJ/mol", parameter)
     rubisco_constant_for_o2(T_dep, Ko25, Eao): Ko => begin
         Ko25 * T_dep(Eao)
     end ~ track(u"mbar")
@@ -57,7 +57,7 @@ end
     end ~ track(u"μbar")
 
     dark_respiration_at_25: Rd25 => 1.08 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
-    activation_energy_for_respiration: Ear => 49390 ~ preserve(u"J/mol", parameter)
+    activation_energy_for_respiration: Ear => 49.39 ~ preserve(u"kJ/mol", parameter)
     dark_respiration(T_dep, Rd25, Ear): Rd => begin
         Rd25 * T_dep(Ear)
     end ~ track(u"μmol/m^2/s")
@@ -70,15 +70,15 @@ end
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     maximum_carboxylation_rate_at_25: Vcm25 => 108.4 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
-    activation_energy_for_carboxylation: EaVc => 52157.3 ~ preserve(u"J/mol", parameter)
+    activation_energy_for_carboxylation: EaVc => 52.1573 ~ preserve(u"kJ/mol", parameter)
     maximum_carboxylation_rate(T_dep, Vcm25, EaVc): Vcmax => begin
         Vcm25 * T_dep(EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     maximum_electron_transport_rate_at_25: Jm25 => 169.0 ~ preserve(u"μmol/m^2/s" #= Electron =#, parameter)
-    activation_energy_for_electron_transport: Eaj => 23997.6 ~ preserve(u"J/mol", parameter)
+    activation_energy_for_electron_transport: Eaj => 23.9976 ~ preserve(u"kJ/mol", parameter)
     electron_transport_temperature_response: Sj => 616.4 ~ preserve(u"J/mol/K", parameter)
-    electron_transport_curvature: Hj => 200000 ~ preserve(u"J/mol", parameter)
+    electron_transport_curvature: Hj => 200 ~ preserve(u"kJ/mol", parameter)
     maximum_electron_transport_rate(Tk, Tbk, T_dep, Jm25, Eaj, Sj, Hj): Jmax => begin
         R = u"R"
         Jm25 * begin
@@ -90,7 +90,7 @@ end
 
     # CO2 compensation point in the absence of day respiration, value from Bernacchi (2001)
     co2_compensation_point_at_25: Γ25 => 42.75 ~ preserve(u"μbar", parameter)
-    activation_energy_for_co2_compensation_point: Eag => 37830 ~ preserve(u"J/mol", parameter)
+    activation_energy_for_co2_compensation_point: Eag => 37.83 ~ preserve(u"kJ/mol", parameter)
     co2_compensation_point(T_dep, Γ25, Eag): Γ => begin
         Γ25 * T_dep(Eag)
     end ~ track(u"μbar")
