@@ -1,17 +1,26 @@
 @system Mass begin
-    nodal_units ~ hold
+    phenology: pheno ~ hold
+    nodal_units: nu ~ hold
+
     initial_leaf_ratio ~ hold
     potential_leaf_area_increase ~ hold
 
     # seed weight g/seed
     initial_seed_mass => 0.275 ~ preserve(u"g", parameter)
 
+    # 10% available
+    seed_mass_export_limit => 10 ~ preserve(u"percent/d")
+    seed_mass_export_rate(seed_mass, seed_mass_export_limit, T=pheno.T, T_opt=pheno.T_opt, T_ceil=pheno.T_ceil) => begin
+        # reserved in the propagule (e.g., starch in endosperm of seeds)
+        #HACK ratio should depend on growth stage, but fix it for now
+        T_effect = beta_thermal_func(T, T_opt, T_ceil)
+        seed_mass * T_effect * seed_mass_export_limit
+    end ~ track(u"g/d")
+
     #HACK carbon mass of seed is pulled in the reserve
-    seed_mass(initial_seed_mass) => begin
-        #FIXME carbon not ready yet
-        #self.initial_seed - self.p.carbon.reserve_from_seed
-        initial_seed_mass
-    end ~ track(u"g")
+    seed_mass(seed_mass_export_rate) => begin
+        -seed_mass_export_rate
+    end ~ accumulate(init=initial_seed_mass, u"g")
 
     #stem(x=nodal_units["*"].stem.mass) => begin # for maize
     sheath_mass(x=nodal_units["*"].sheath.mass) => begin # for garlic
