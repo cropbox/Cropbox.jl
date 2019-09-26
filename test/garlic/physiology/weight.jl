@@ -5,6 +5,6 @@
     H2O_weight => 18.01528 ~ preserve(u"g/mol")
 
     C_to_CH2O_ratio(C_weight, CH2O_weight) => begin
-        C_weight / CH2O_weight # 0.40
+        CH2O_weight / C_weight
     end ~ preserve
 end
