@@ -30,7 +30,7 @@ using CSV
     #PFD => 1500 ~ track # umol m-2 s-1
 
     #TODO: make CO2 parameter?
-    CO2 => 400 ~ track(u"μmol/mol")
+    CO2 => 400 / 1e6 ~ track(u"μmol/mol")
 
     #relative_humidity(s): RH ~ drive(key="RH", u"percent")
     relative_humidity(s): RH => (s[:RH] / 100) ~ track(u"percent")
