@@ -15,5 +15,6 @@ include("context.jl")
 include("calendar.jl")
 
 include("util.jl")
+include("dive.jl")
 
 end
