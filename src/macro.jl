@@ -251,8 +251,8 @@ genstruct(name, infos, incl) = begin
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         #HACK: redefine them to avoid world age problem
-        @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, $C.Produce{<:Any}}, $S)
-        @generated $C.updatable(::Type{<:$S}) = $C.filteredvars($S)
+        @generated $C.collectible(::Type{<:$S}) = $(gencollectible(S))
+        @generated $C.updatable(::Type{<:$S}) = $(genupdatable(S))
         $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
@@ -278,12 +278,13 @@ filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     filter!(p -> p[1] in F, l)
     filter!(p -> p[2] <: type, l)
 end
-filteredfields(type::Type, ::Type{S}) where {S<:System} = begin
-    l = filtervar(type, S)
+
+gencollectible(S) = @q begin
+    l = $C.filtervar(Union{$C.System, $C.Produce{<:Any}}, $S)
     map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
 end
-filteredvars(::Type{S}) where {S<:System} = begin
-    l = filtervar(State, S)
+genupdatable(S) = @q begin
+    l = $C.filtervar($C.State, $S)
     d = Symbol[]
     for (n, T) in l
         push!(d, n)
