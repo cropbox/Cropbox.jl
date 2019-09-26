@@ -226,6 +226,7 @@ gensource(infos) = begin
 end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
+genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -248,6 +249,7 @@ genstruct(name, infos, incl) = begin
         $C.source(::Val{$(Meta.quot(name))}) = $(Meta.quot(source))
         $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
+        $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{<:$S}) = $C.filteredfields(Union{$C.System, $C.Produce{<:Any}}, $S)
         @generated $C.updatable(::Type{<:$S}) = $C.filteredvars($S)
@@ -269,6 +271,7 @@ mixins(::Type{<:System}) = (System,)
 mixins(s::S) where {S<:System} = mixins(S)
 
 fieldnamesunique(::Type{<:System}) = ()
+fieldnamesalias(::Type{<:System}) = ()
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
     F = fieldnamesunique(S)
@@ -288,6 +291,8 @@ filteredvars(::Type{S}) where {S<:System} = begin
     Tuple(d)
 end
 
+fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
+fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
 update!(::System) = nothing
