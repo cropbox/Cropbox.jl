@@ -168,7 +168,7 @@ end
     net_photosynthesis: A_net ~ hold
     co2_compensation_point: Γ ~ hold
 
-    g0 => 0.096 ~ preserve(u"mmol/m^2/s" #= H2O =#, parameter)
+    g0 => 0.096 ~ preserve(u"mol/m^2/s" #= H2O =#, parameter)
     g1 => 6.824 ~ preserve(parameter)
 
     diffusivity_ratio_boundary_layer: drb => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
@@ -180,9 +180,9 @@ end
     end ~ track
 
     relative_humidity_at_leaf_surface(g0, g1, gb, m, A_net, Cs, RH=weather.RH): hs => begin
-        a = m * g1 * A_net / Cs |> u"mmol/m^2/s" |> ustrip
-        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mmol/m^2/s" |> ustrip
-        c = (-RH * gb) - g0 |> u"mmol/m^2/s" |> ustrip
+        a = m * g1 * A_net / Cs |> u"mol/m^2/s" |> ustrip
+        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s" |> ustrip
+        c = (-RH * gb) - g0 |> u"mol/m^2/s" |> ustrip
         #FIXME: check unit
         hs = quadratic_solve_upper(a, b, c)
         #TODO: need to prevent bifurcation?
@@ -193,7 +193,7 @@ end
     stomatal_conductance(g0, g1, m, A_net, hs, Cs): gs => begin
         gs = g0 + (g1 * m * (A_net * hs / Cs))
         max(gs, g0)
-    end ~ track(u"mmol/m^2/s" #= H2O =#)
+    end ~ track(u"mol/m^2/s" #= H2O =#)
 
     transpiration_reduction_factor: m => begin
         #TODO: implement soil water module
@@ -202,7 +202,7 @@ end
 
     total_conductance_h2o(gs, gb): gv => begin
         gs * gb / (gs + gb)
-    end ~ track(u"mmol/m^2/s" #= H2O =#)
+    end ~ track(u"mol/m^2/s" #= H2O =#)
 
     boundary_layer_resistance_co2(gb, drb): rbc => begin
         drb / gb
@@ -210,11 +210,11 @@ end
 
     stomatal_resistance_co2(gs, dra): rsc => begin
         dra / gs
-    end ~ track(u"m^2*s/mmol")
+    end ~ track(u"m^2*s/mol")
 
     total_resistance_co2(rbc, rsc): rvc => begin
         rbc + rsc
-    end ~ track(u"m^2*s/mmol")
+    end ~ track(u"m^2*s/mol")
 end
 
 @system GasExchange(BoundaryLayer, Stomata, C3) begin

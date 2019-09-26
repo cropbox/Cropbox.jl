@@ -177,7 +177,7 @@ end
     net_photosynthesis: A_net ~ hold
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
-    g0 => 0.017 ~ preserve(u"mmol/m^2/s" #= H2O =#, parameter)
+    g0 => 0.017 ~ preserve(u"mol/m^2/s" #= H2O =#, parameter)
     g1 => 4.53 ~ preserve(parameter)
 
     diffusivity_ratio_boundary_layer: drb => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
@@ -215,9 +215,9 @@ end
         a = m * g1 * A_net / Cs
         b = g0 + gb - (m * g1 * A_net / Cs)
         c = (-RH * gb) - g0
-        sa = ustrip(u"mmol/m^2/s", a)
-        sb = ustrip(u"mmol/m^2/s", b)
-        sc = ustrip(u"mmol/m^2/s", c)
+        sa = ustrip(u"mol/m^2/s", a)
+        sb = ustrip(u"mol/m^2/s", b)
+        sc = ustrip(u"mol/m^2/s", c)
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
         #hs = roots(Poly([c, b, a]))) |> maximum
@@ -225,8 +225,6 @@ end
         #hss = filter(x -> 0 < x < 1, pr)
         #hs = isempty(hss) ? 0.1 : maximum(hss)
         hs = quadratic_solve_upper(sa, sb, sc)
-        #FIXME: check unit
-        hs = hs*u"mol/mol"
         #hs = clamp(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
 
         #FIXME unused?
@@ -245,7 +243,7 @@ end
 
     total_conductance_h2o(gs, gb): gv => begin
         gs * gb / (gs + gb)
-    end ~ track(u"mmol/m^2/s" #= H2O =#)
+    end ~ track(u"mol/m^2/s" #= H2O =#)
 
     boundary_layer_resistance_co2(gb, drb): rbc => begin
         drb / gb
