@@ -1,11 +1,5 @@
 @system Ratio begin
-    C_to_CH2O_ratio ~ hold
     primordia ~ hold
-
-    carbon_to_mass_ratio(r=C_to_CH2O_ratio) => begin
-        # 40% C, See Kim et al. (2007) EEB
-        r
-    end ~ preserve
 
     shoot_to_root_ratio => 0.7 ~ preserve
 
