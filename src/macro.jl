@@ -272,13 +272,16 @@ mixins(s::S) where {S<:System} = mixins(S)
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
+
+fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
+fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
+
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
     F = fieldnamesunique(S)
     filter!(p -> p[1] in F, l)
     filter!(p -> p[2] <: type, l)
 end
-
 gencollectible(S) = @q begin
     l = $C.filtervar(Union{$C.System, $C.Produce{<:Any}}, $S)
     map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
@@ -292,8 +295,6 @@ genupdatable(S) = @q begin
     Tuple(d)
 end
 
-fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
-fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
 update!(::System) = nothing
