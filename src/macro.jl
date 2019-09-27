@@ -193,9 +193,13 @@ gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo{Symbol}) = begin
     name = Meta.quot(v.name)
     alias = Tuple(v.alias)
-    value = get(v.tags, :extern, false) ? genextern(v.name, geninit(v)) : geninit(v)
-    stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
-    decl = :($C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    if get(v.tags, :override, false)
+        decl = @q _kwargs[$(Meta.quot(v.name))]
+    else
+        value = get(v.tags, :extern, false) ? genextern(v.name, geninit(v)) : geninit(v)
+        stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
+        decl = :($C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+    end
     gendecl(decl, v.name, v.alias)
 end
 gendecl(v::VarInfo{Nothing}) = begin
@@ -449,7 +453,11 @@ end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
 genupdate(v::VarInfo, t::VarStep) = begin
-    u = genupdate(v, Val(v.state), t)
+    u = if get(v.tags, :override, false)
+        genvalue(v)
+    else
+        genupdate(v, Val(v.state), t)
+    end
     l = symlabel(v, t)
     if isnothing(u)
         @q @label $l
