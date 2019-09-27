@@ -2,20 +2,23 @@ using LinearAlgebra
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis begin
-    calendar ~ hold
     weather ~ hold
     sun ~ hold
     soil ~ hold
-    development: dev ~ hold
-    radiation ~ hold
 
-    irradiance_Q_sunlit(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
-    irradiance_Q_shaded(radiation) ~ drive(u"μmol/m^2/s" #= Quanta =#)
+    leaf_area_index: LAI ~ hold
+    planting_density: PD ~ hold
+    water_supply ~ hold
+    H2O_weight ~ hold
+    CO2_weight ~ hold
+    CH2O_weight ~ hold
+
+    radiation(context, sun, leaf_area_index) ~ ::Radiation
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use leaf_nitrogen_content, leaf_width, ET_supply
-    sunlit_gasexchange(context, soil, weather, radiation, kind=:sunlit) ~ ::GasExchange
-    shaded_gasexchange(context, soil, weather, radiation, kind=:shaded) ~ ::GasExchange
+    sunlit_gasexchange(context, soil, weather, Q_sun, photosynthetic_photon_flux_density=Q_sun) ~ ::GasExchange
+    shaded_gasexchange(context, soil, weather, Q_sh, photosynthetic_photon_flux_density=Q_sh) ~ ::GasExchange
 
     leaf_width => begin
         # to be calculated when implemented for individal leaves
@@ -26,7 +29,7 @@ using LinearAlgebra
     #TODO how do we get LeafWP and ET_supply?
     leaf_water_potential(soil.WP_leaf): LWP ~ track(u"MPa")
 
-    evapotranspiration_supply(LAI=dev.LAI, PD=dev.PD, ws=dev.water_supply, ww=dev.H2O_weight) => begin
+    evapotranspiration_supply(LAI, PD, ws=water_supply, ww=H2O_weight) => begin
         #TODO common handling logic for zero LAI
         #FIXME check unit conversion (w.r.t water_supply)
         # ? * (1/m^2) / (3600s/hour) / (g/umol) / (cm^2/m^2) = mol/m^2/s H2O
@@ -43,8 +46,8 @@ using LinearAlgebra
         [LAI_sunlit LAI_shaded] ⋅ array
     end ~ call(u"μmol/m^2/s")
 
-    sunlit_irradiance(radiation.irradiance_Q_sunlit) ~ track(u"μmol/m^2/s" #= Quanta =#)
-    shaded_irradiance(radiation.irradiance_Q_shaded) ~ track(u"μmol/m^2/s" #= Quanta =#)
+    sunlit_irradiance(radiation.irradiance_Q_sunlit): Q_sun ~ track(u"μmol/m^2/s" #= Quanta =#)
+    shaded_irradiance(radiation.irradiance_Q_shaded): Q_sh ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     gross_array(a=sunlit_gasexchange.A_gross, b=shaded_gasexchange.A_gross) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
     net_array(a=sunlit_gasexchange.A_net, b=shaded_gasexchange.A_net) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
@@ -74,24 +77,24 @@ using LinearAlgebra
 
     # final values
     #TODO check final units
-    assimilation(A_gross, PD=dev.PD, w=dev.CO2_weight) => begin
+    assimilation(A_gross, PD, w=CO2_weight) => begin
         # grams CO2 per plant per hour
         A_gross / PD * w
     end ~ capture(u"g")
 
-    gross_assimilation(A_gross, PD=dev.PD, w=dev.CH2O_weight) => begin
+    gross_assimilation(A_gross, PD, w=CH2O_weight) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_gross / PD * w
     end ~ capture(u"g")
 
-    net_assimilation(A_net, PD=dev.PD, w=dev.CH2O_weight) => begin
+    net_assimilation(A_net, PD, w=CH2O_weight) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_net / PD * w
     end ~ capture(u"g")
 
-    transpiration(ET, PD=dev.PD, w=dev.H2O_weight) => begin
+    transpiration(ET, PD, w=H2O_weight) => begin
         # Units of Transpiration from sunlit->ET are mol m-2 (leaf area) s-1
         # Calculation of transpiration from ET involves the conversion to gr per plant per hour
         ET / PD * w
@@ -102,7 +105,7 @@ using LinearAlgebra
 
     vapor_pressure_deficit(weather.VPD) ~ track(u"kPa")
 
-    conductance(weighted, conductance_array, LAI=dev.LAI) => begin
+    conductance(weighted, conductance_array, LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
         # average stomatal conductance Yang
         c = weighted(conductance_array) / LAI

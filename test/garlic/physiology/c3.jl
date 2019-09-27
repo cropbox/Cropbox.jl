@@ -219,9 +219,7 @@ end
 
 @system GasExchange(BoundaryLayer, Stomata, C3) begin
     weather ~ ::Weather(extern)
-    radiation ~ ::Radiation(extern)
     soil ~ ::Soil(extern)
-    kind ~ ::Symbol(extern)
 
     co2_atmosphere(CO2=weather.CO2, P_air): Ca => (CO2 * P_air) ~ track(u"μbar")
     intercellular_co2_upper_limit(Ca): Cimax => 2Ca ~ track(u"μbar")
@@ -231,15 +229,7 @@ end
     end ~ solve(lower=Cimin, upper=Cimax, u"μbar")
 
     #FIXME: confusion between PFD vs. PPFD
-    photosynthetic_photon_flux_density(Q_sun=radiation.Q_sun, Q_sh=radiation.Q_sh, kind): PPFD => begin
-        if kind == :sunlit
-            Q_sun
-        elseif kind == :shaded
-            Q_sh
-        else
-            error("unrecognized photosynthetic leaf kind: $kind")
-        end
-    end ~ track(u"μmol/m^2/s" #= Quanta =#)
+    photosynthetic_photon_flux_density: PPFD ~ track(u"μmol/m^2/s" #= Quanta =#, override)
 
     # leaf reflectance + transmittance
     leaf_scattering: δ => 0.15 ~ preserve(parameter)
