@@ -2,7 +2,6 @@ using LightGraphs
 
 mutable struct Order
     systems::Vector{System}
-    updates::Vector{Pair{System,System}}
     outdated::Bool
     g::DiGraph
     V::Vector{System}
@@ -10,12 +9,7 @@ mutable struct Order
     S::Set{System}
 end
 
-Order() = Order(System[], Vector{Pair{System,System}}(), true, DiGraph(), System[], Dict{System,Int}(), Set{System}())
-
-inform!(o::Order, s::System, d::System) = begin
-    push!(o.updates, s => d)
-    o.outdated = true
-end
+Order() = Order(System[], true, DiGraph(), System[], Dict{System,Int}(), Set{System}())
 
 add!(o::Order, s::System) = begin
     i = get(o.I, s, nothing)
@@ -39,8 +33,9 @@ visit!(o::Order, s::System) = begin
     add!(o, s)
 
     D = System[]
+    F = fieldnamesextern(s)
     for n in collectible(s)
-        append!(D, getfield(s, n))
+        (n in F) && append!(D, getfield(s, n))
     end
     #@show "collectible $D"
     for d in D
@@ -66,16 +61,7 @@ end
 
 collect!(o::Order, s::System) = begin
     if o.outdated
-        if isempty(o.systems)
-            #@show "collect! initial"
-            visit!(o, s)
-        else
-            for (s, d) in o.updates
-                #@show "collect! $s -> $d"
-                visit!(o, s, d)
-            end
-            empty!(o.updates)
-        end
+        visit!(o, s)
         J = topological_sort_by_dfs(o.g)
         o.systems = [o.V[i] for i in reverse(J)]
         o.outdated = false

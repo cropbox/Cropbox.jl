@@ -27,8 +27,9 @@ collect(s::System; recursive=true, exclude_self=false) = begin
         T = OrderedSet{System}()
         add(f::System) = push!(T, f)
         add(f) = union!(T, f)
+        F = fieldnamesextern(s)
         for n in collectible(s)
-            add(getfield(s, n))
+            (n in F) && add(getfield(s, n))
         end
         filter!(s -> s ∉ S, T)
         union!(S, T)

@@ -227,6 +227,7 @@ end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
+genfieldnamesextern(infos) = Tuple(v.name for v in infos if get(v.tags, :extern, false))
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -250,6 +251,7 @@ genstruct(name, infos, incl) = begin
         $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
+        $C.fieldnamesextern(::Type{<:$S}) = $(genfieldnamesextern(infos))
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{<:$S}) = $(gencollectible(S))
         @generated $C.updatable(::Type{<:$S}) = $(genupdatable(S))
@@ -272,9 +274,11 @@ mixins(s::S) where {S<:System} = mixins(S)
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
+fieldnamesextern(::Type{<:System}) = ()
 
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
+fieldnamesextern(::S) where {S<:System} = fieldnamesextern(S)
 
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
@@ -297,7 +301,7 @@ end
 
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
-update!(::System) = nothing
+update!(s) = s
 
 parsehead(head) = begin
     @capture(head, name_(mixins__) | name_)
@@ -420,7 +424,7 @@ genupdate(nodes) = begin
     @q begin
         $([genupdateinit(n) for n in nodes]...)
         $([genupdate(n) for n in nodes]...)
-        nothing
+        self
     end
 end
 
@@ -431,14 +435,14 @@ symcall(v::VarInfo) = Symbol(v.name, :__call)
 
 genupdateinit(n::VarNode) = begin
     v = n.info
-    s = symstate(v)
     if isnothing(v.state)
         # implicit :expose
         @q begin
-            $s = $(v.name) = self.$(v.name)
-            $([:($a = $s) for a in v.alias]...)
+            $(v.name) = self.$(v.name)
+            $([:($a = $(v.name)) for a in v.alias]...)
         end
     else
+        s = symstate(v)
         @q $s = self.$(v.name)
     end
 end
@@ -472,7 +476,13 @@ genstore(v::VarInfo) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
+    if get(v.tags, :extern, false)
+        nothing
+    else
+        @q $C.update!(self.$(v.name))
+    end
+end
 
 genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val, ::MainStep) = genstore(v)
@@ -568,7 +578,15 @@ end
 
 # Produce referenced in args expected to be raw state, not extracted by value(), for querying
 genupdate(v::VarInfo, ::Val{:Produce}, ::PreStep) = symstate(v)
-genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = symstate(v)
+genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = begin
+    @gensym s b
+    @q let $s = $(symstate(v))
+        for $b in $C.value($s)
+            $C.update!($b)
+        end
+        $s
+    end
+end
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     @gensym s P c o q a b
     @q let $s = $(symstate(v)),
@@ -576,13 +594,12 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
            $c = context,
            $o = context.order,
            $q = context.queue,
-           $a = $(esc(:self))
+           $a = $C.value($s)
         if !(isnothing($P) || isempty($P))
             $C.queue!($q, function ()
                 for p in $P
                     $b = p.type(; context=$c, p.args...)
-                    append!($s.value, $b)
-                    $C.inform!($o, $a, $b)
+                    append!($a, $b)
                 end
             end, $C.priority($C.$(v.state)))
         end
