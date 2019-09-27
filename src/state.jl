@@ -60,7 +60,7 @@ end
 
 ####
 
-mutable struct Hold{Any} <: State{Any}
+struct Hold{Any} <: State{Any}
 end
 
 Hold(; _...) = begin
@@ -87,7 +87,7 @@ reset!(s::Advance) = reset!(s.value)
 
 ####
 
-mutable struct Preserve{V} <: State{V}
+struct Preserve{V} <: State{V}
     value::V
 end
 
@@ -131,7 +131,7 @@ end
 ####
 
 import FunctionWrappers: FunctionWrapper
-mutable struct Call{V,F<:FunctionWrapper} <: State{V}
+struct Call{V,F<:FunctionWrapper} <: State{V}
     value::F
 end
 
@@ -202,7 +202,7 @@ end
 
 ####
 
-mutable struct Produce{S<:System} <: State{S}
+struct Produce{S<:System} <: State{S}
     name::Symbol # used in recurisve collecting in collect()
     value::Vector{S}
 end
