@@ -261,7 +261,7 @@ import Dates
 end
 
 using Plots
-using UnitfulPlots
+using UnitfulRecipes
 unicodeplots()
 
 plot_sun(v) = begin

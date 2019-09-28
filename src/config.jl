@@ -5,8 +5,9 @@ configure(c::Tuple) = configure(Config(c))
 configure(c::Pair...) = configure(Config(c...))
 configure(c) = c
 
-using TOML
-loadconfig(c::AbstractString) = configure(TOML.parse(c))
+#TODO: wait until TOML 0.5 gets support
+# using TOML
+# loadconfig(c::AbstractString) = configure(TOML.parse(c))
 
 option(c) = c
 option(c, keys...) = nothing

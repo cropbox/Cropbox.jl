@@ -89,7 +89,7 @@ include("death.jl")
 end
 
 using Plots
-using UnitfulPlots
+using UnitfulRecipes
 unicodeplots()
 
 init_pheno() = begin
