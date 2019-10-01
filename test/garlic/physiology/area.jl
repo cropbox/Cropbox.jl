@@ -6,8 +6,9 @@
 
     green_leaf_area(x=nodal_units["*"].leaf.green_area) => sum(x) ~ track(u"cm^2")
 
-    #TODO remove if unnecessary
-    # active_leaf_ratio(green_leaf_area, leaf_area) => (green_leaf_area / leaf_area) ~ track
+    green_leaf_ratio(green_leaf_area, leaf_area) => begin
+		iszero(leaf_area) ? 0. : (green_leaf_area / leaf_area)
+	end ~ track
 
     leaf_area_index(green_leaf_area, planting_density): LAI => begin
         green_leaf_area * planting_density
