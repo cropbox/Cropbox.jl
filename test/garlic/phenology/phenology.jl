@@ -72,20 +72,20 @@ include("death.jl")
     #         "none"
     #     end
     # end ~ track::String
-    #
-    # development_phase(germinated, floral_initiated, dead, scape_removed) => begin
-    #     if !germinated
-    #         "seed"
-    #     elseif !floral_initiated
-    #         "vegetative"
-    #     elseif dead
-    #         "dead"
-    #     elseif !scape_removed
-    #         "bulb_growth_with_scape"
-    #     else
-    #         "bulb_growth_without_scape"
-    #     end
-    # end ~ track::String
+
+    development_phase(germinated, floral_initiated, dead, scape_removed) => begin
+        if !germinated
+            :seed
+        elseif !floral_initiated
+            :vegetative
+        elseif dead
+            :dead
+        elseif !scape_removed
+            :bulb_growth_with_scape
+        else
+            :bulb_growth_without_scape
+        end
+    end ~ track::Symbol
 end
 
 using Plots
