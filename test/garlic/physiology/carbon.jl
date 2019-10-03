@@ -155,7 +155,6 @@
         (1 - carbon_fraction) * Yg * c # gCH2O partitioned to roots
     end ~ track(u"g/d")
 
-    #TODO: provide a simple macro to handle table-like parameters?
     partitioning_table => begin
         # seed, vegetative, bulb growth w/scape, wo/scape, dead
         [0.00 0.10 0.10 0.10 0.00; # root
@@ -164,22 +163,13 @@
          0.00 0.45 0.25 0.30 0.00; # sheath
          0.00 0.00 0.10 0.00 0.00; # scape
          0.00 0.00 0.40 0.45 0.00] # bulb
-    end ~ preserve::Matrix{Float64}(parameter)
+    end ~ tabulate(
+        rows=(:seed, :vegetative, :bulb_growth_with_scape, :bulb_growth_without_scape, :dead),
+        columns=(:root, :shoot, :leaf, :sheath, :scape, :bulb),
+        parameter
+    )
 
-    partitioning_table_rows => begin
-        (:seed, :vegetative, :bulb_growth_with_scape, :bulb_growth_without_scape, :dead)
-    end ~ preserve::NTuple{5,Symbol}
-
-    partitioning_table_cols => begin
-        (:root, :shoot, :leaf, :sheath, :scape, :bulb)
-    end ~ preserve::NTuple{6,Symbol}
-
-    partitioning_table_dict(partitioning_table, partitioning_table_rows, partitioning_table_cols) => begin
-        matrix2dict(m, r, c) = Dict(zip(r, [Dict(zip(c, m[:,i])) for i in 1:size(m)[2]]))
-        matrix2dict(partitioning_table, partitioning_table_rows, partitioning_table_cols)
-    end ~ preserve::Dict{Symbol,Dict{Symbol,Float64}}
-
-    partition(d=partitioning_table_dict; r::Symbol, c::Symbol) => d[r][c] ~ call
+    partition(t=partitioning_table; r::Symbol, c::Symbol) => t[r][c] ~ call
 
     leaf_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
         shoot_carbon * p(dp, :leaf)

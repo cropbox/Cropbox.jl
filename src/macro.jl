@@ -130,6 +130,7 @@ end
 genvartype(v::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
 genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
 genvartype(v::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
+genvartype(v::VarInfo, ::Val{:Tabulate}; V, _...) = @q Tabulate{$V}
 genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
 genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
@@ -369,7 +370,9 @@ geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Hold}) = nothing
 geninit(v::VarInfo, ::Val{:Advance}) = missing
-geninit(v::VarInfo, ::Val{:Preserve}) = begin
+geninit(v::VarInfo, ::Val{:Preserve}) = geninitpreserve(v)
+geninit(v::VarInfo, ::Val{:Tabulate}) = geninitpreserve(v)
+geninitpreserve(v::VarInfo) = begin
     if get(v.tags, :parameter, false)
         @gensym o
         @q let $o = $C.option(config, _names, $(names(v)))
@@ -504,6 +507,8 @@ genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = genvalue(v)
+
+genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep) = genvalue(v)
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
     k = get(v.tags, :key, v.name)
