@@ -19,7 +19,6 @@
 
     #bulb => begin end ~ produce::Bulb
 
-    #FIXME: do not confuse with Scape in Phenology
     #scape => begin end ~ produce::Scape
 
     root(root, pheno, emerging=pheno.emerging) => begin

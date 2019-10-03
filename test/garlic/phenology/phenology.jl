@@ -5,7 +5,7 @@ include("floralinitiation.jl")
 include("leafinitiation.jl")
 include("leafappearance.jl")
 include("bulbappearance.jl")
-include("scape.jl")
+include("scapegrowth.jl")
 include("death.jl")
 
 #TODO make a common class to be shared by Garlic and MAIZSIM
@@ -16,7 +16,7 @@ include("death.jl")
 	LeafInitiationWithStorage,
 	LeafAppearance,
 	BulbAppearance,
-	Scape,
+	ScapeGrowth,
 	ScapeAppearance,
 	ScapeRemoval,
 	FlowerAppearance,
