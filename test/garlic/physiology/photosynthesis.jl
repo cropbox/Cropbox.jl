@@ -76,29 +76,28 @@ using LinearAlgebra
     end ~ track(u"μmol/m^2/s" #= H2O =#)
 
     # final values
-    #TODO check final units
     assimilation(A_gross, PD, w=CO2_weight) => begin
         # grams CO2 per plant per hour
         A_gross / PD * w
-    end ~ capture(u"g")
+    end ~ track(u"g/d")
 
     gross_assimilation(A_gross, PD, w=CH2O_weight) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_gross / PD * w
-    end ~ capture(u"g")
+    end ~ track(u"g/d")
 
     net_assimilation(A_net, PD, w=CH2O_weight) => begin
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
         A_net / PD * w
-    end ~ capture(u"g")
+    end ~ track(u"g/d")
 
     transpiration(ET, PD, w=H2O_weight) => begin
         # Units of Transpiration from sunlit->ET are mol m-2 (leaf area) s-1
         # Calculation of transpiration from ET involves the conversion to gr per plant per hour
         ET / PD * w
-    end ~ capture(u"g")
+    end ~ track(u"g/d")
 
     #FIXME: no sense to weight two temperature values here?
     #temperature(weighted, temperature_array) => weighted(temperature_array) ~ track(u"°C")

@@ -2,15 +2,13 @@
     weather ~ hold
     phenology: pheno ~ hold
 
-    #planting_density ~ hold
-
     C_to_CH2O_ratio ~ hold
-
     seed_mass_export_rate ~ hold
-    #shoot_mass ~ hold
-
+    assimilation ~ hold
     total_mass ~ hold
     green_leaf_ratio ~ hold
+
+    development_phase(pheno) => pheno.development_phase ~ track::Symbol
 
     carbon_concentration: C_conc => begin
         # maize: 40% C, See Kim et al. (2007) EEB
@@ -22,15 +20,16 @@
     end ~ track(u"g/d")
 
     #TODO: take account NSC from bulb
-    carbon_reserve(carbon_reserve_from_seed, carbon_reserve_use) => begin
-        carbon_reserve_from_seed - carbon_reserve_use
+    carbon_reserve(carbon_reserve_from_seed, carbon_translocation) => begin
+        carbon_reserve_from_seed - carbon_translocation
     end ~ accumulate(u"g")
 
     carbon_translocation(carbon_pool, carbon_reserve, carbon_translocation_rate) => begin
-        carbon_pool < 0 ? carbon_reserve * carbon_translocation_rate : 0
+        c = sign(carbon_pool) < 0 ? carbon_reserve : zero(carbon_reserve)
+        c * carbon_translocation_rate
     end ~ track(u"g/d")
 
-    carbon_pool(assimilation, carbon_translocation, carbon_pool_use) => begin
+    carbon_pool(assimilation, carbon_translocation, carbon_supply) => begin
         assimilation + carbon_translocation - carbon_supply
     end ~ accumulate(u"g")
 
@@ -102,9 +101,8 @@
         Q10 = 2
         T = T_air # should be soil temperature
         T_opt = 20u"°C"
-        dt = u"d"
         q = q10_thermal_func(T, T_opt; Q10=Q10)
-        total_mass * q * Rm / dt # gCH2O dt-1, agefn effect removed. 11/17/14. SK.
+        total_mass * q * Rm # gCH2O dt-1, agefn effect removed. 11/17/14. SK.
     end ~ track(u"g/d")
 
     carbon_available(carbon_supply, maintenance_respiration) => begin
@@ -157,134 +155,45 @@
         (1 - carbon_fraction) * Yg * c # gCH2O partitioned to roots
     end ~ track(u"g/d")
 
+    #TODO: provide a simple macro to handle table-like parameters?
     partitioning_table => begin
         # seed, vegetative, bulb growth w/scape, wo/scape, dead
-        DataFrame(
-            root   = [0.00, 0.10, 0.10, 0.10, 0.00],
-            shoot  = [0.00, 0.00, 0.00, 0.00, 0.00],
-            leaf   = [0.00, 0.45, 0.15, 0.15, 0.00],
-            sheath = [0.00, 0.45, 0.25, 0.30, 0.00],
-            bulb   = [0.00, 0.00, 0.40, 0.45, 0.00],
-        )
-    end ~ preserve::DataFrame
+        [0.00 0.10 0.10 0.10 0.00; # root
+         0.00 0.00 0.00 0.00 0.00; # shoot
+         0.00 0.45 0.15 0.15 0.00; # leaf
+         0.00 0.45 0.25 0.30 0.00; # sheath
+         0.00 0.00 0.10 0.00 0.00; # scape
+         0.00 0.00 0.40 0.45 0.00] # bulb
+    end ~ preserve::Matrix{Float64}(parameter)
 
-    # for maize
+    partitioning_table_rows => begin
+        (:seed, :vegetative, :bulb_growth_with_scape, :bulb_growth_without_scape, :dead)
+    end ~ preserve::NTuple{5,Symbol}
 
-    # @property
-    # def partition_shoot(self):
-    #     shoot = self.shoot
-    #     #FIXME: vegetative growth
-    #     #if self.p.pheno.vegetative_growing:
-    #     if not self.p.pheno.tassel_initiated:
-    #         return {
-    #             'leaf': shoot * 0.725,
-    #             'sheath': shoot * 0.275,
-    #             'stalk': 0,
-    #             'reserve': 0,
-    #             'husk': 0,
-    #             'cob': 0,
-    #             'grain': 0,
-    #         }
-    #     #FIXME: there is a period after silking and before grain filling that not handled by this function
-    #     #elif self.p.pheno.silking:
-    #     elif not self.p.pheno.grain_filling:
-    #         s = self._scale
-    #         def ratio(a, b, t):
-    #             r = a if s <= t else b
-    #             return shoot * max(r, 0)
-    #         leaf = ratio(0.725 - 0.775*s, 0, s)
-    #         sheath = ratio(0.275 - 0.225*s, 0, s)
-    #         #HACK: extended growth period for testing different allocation pattern with Maryland05 dataset
-    #         #leaf = shoot * max(0.725 - 0.775*s*0.7, 0)
-    #         #sheath = shoot * max(0.275 - 0.225*s*0.7, 0)
-    #         #TODO check if stalk ratio is conditioned this way, otherwise reserve_ratio should be computed here
-    #         #stalk = ratio(1.1*s, 2.33 - 0.6*np.exp(s), 0.85)
-    #         stalk = ratio(1.1*s, 0, 0.85)
-    #         reserve = ratio(0, 2.33 - 0.6*np.exp(s), 0.85)
-    #         husk = ratio(np.exp(-7.75 + 6.6*s), 1 - 0.675*s, 1.0)
-    #         cob = ratio(np.exp(-8.4 + 7.0*s), 0.625, 1.125)
-    #         # give reserve part what is left over, right now it is too high
-    #         if reserve > 0:
-    #             reserve = max(shoot - (leaf + sheath + stalk + husk + cob), 0)
-    #         # allocate shootPart into components
-    #         return {
-    #             'leaf': leaf,
-    #             'sheath': sheath,
-    #             'stalk': stalk,
-    #             'reserve': reserve,
-    #             'husk': husk,
-    #             'cob': cob,
-    #             'grain': 0,
-    #         }
-    #     #TODO: check if it should go further than grain filling until dead
-    #     elif self.p.pheno.grain_filling:
-    #         return {
-    #             'leaf': 0,
-    #             'sheath': 0,
-    #             'stalk': 0,
-    #             'reserve': 0,
-    #             'husk': 0,
-    #             'cob': 0,
-    #             'grain': shoot,
-    #         }
+    partitioning_table_cols => begin
+        (:root, :shoot, :leaf, :sheath, :scape, :bulb)
+    end ~ preserve::NTuple{6,Symbol}
 
-    # @property
-    # def leaf(self):
-    #     return self.partition_shoot['leaf']
-    #
-    # @property
-    # def sheath(self):
-    #     return self.partition_shoot['sheath']
-    #
-    # @property
-    # def stalk(self):
-    #     return self.partition_shoot['stalk']
-    #
-    # @property
-    # #FIXME shouldn't be confused with long-term reserve pool
-    # def shoot_reserve(self):
-    #     return self.partition_shoot['reserve']
-    #
-    # @property
-    # def husk(self):
-    #     return self.partition_shoot['husk']
-    #
-    # @property
-    # def cob(self):
-    #     return self.partition_shoot['cob']
-    #
-    # @property
-    # def grain(self):
-    #     return self.partition_shoot['grain']
-    #
-    # @property
-    # def stem(self):
-    #     #TODO sheath and stalk haven't been separated in this model
-    #     # shoot_reserve needs to be added later
-    #     return self.sheath + self.stalk
-    #
-    # @property
-    # def ear(self):
-    #     return self.grain + self.cob + self.husk
+    partitioning_table_dict(partitioning_table, partitioning_table_rows, partitioning_table_cols) => begin
+        matrix2dict(m, r, c) = Dict(zip(r, [Dict(zip(c, m[:,i])) for i in 1:size(m)[2]]))
+        matrix2dict(partitioning_table, partitioning_table_rows, partitioning_table_cols)
+    end ~ preserve::Dict{Symbol,Dict{Symbol,Float64}}
 
-    # for garlic
-    #TODO implement more programmatic way to access partition table
+    partition(d=partitioning_table_dict; r::Symbol, c::Symbol) => d[r][c] ~ call
 
-    @property
-    def leaf(self):
-        return self.shoot * self.p.initials[f'partition_{self.p.pheno.development_phase}_leaf']
+    leaf_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
+        shoot_carbon * p(dp, :leaf)
+    end ~ track(u"g/d")
 
-    @property
-    def sheath(self):
-        return self.shoot * self.p.initials[f'partition_{self.p.pheno.development_phase}_sheath']
+    sheath_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
+        shoot_carbon * p(dp, :sheath)
+    end ~ track(u"g/d")
 
-    @property
-    def scape(self):
-        return self.shoot * self.p.initials[f'partition_{self.p.pheno.development_phase}_scape']
+    scape_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
+        shoot_carbon * p(dp, :scape)
+    end ~ track(u"g/d")
 
-    @property
-    def bulb(self):
-        return self.shoot * self.p.initials[f'partition_{self.p.pheno.development_phase}_bulb']
-
-    def prepare_mobilization(self):
-        pass
+    bulb_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
+        shoot_carbon * p(dp, :bulb)
+    end ~ track(u"g/d")
+end
