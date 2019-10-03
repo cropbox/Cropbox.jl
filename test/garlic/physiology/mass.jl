@@ -5,6 +5,13 @@
     initial_leaf_ratio ~ hold
     potential_leaf_area_increase ~ hold
 
+    shoot_carbon ~ hold
+    root_carbon ~ hold
+    leaf_carbon ~ hold
+    sheath_carbon ~ hold
+    scape_carbon ~ hold
+    bulb_carbon ~ hold
+
     # seed weight g/seed
     initial_seed_mass => 0.275 ~ preserve(u"g", parameter)
 
@@ -63,46 +70,29 @@
 
     # for garlic
 
-    bulb_mass => begin
-        #FIXME handling None
-        #bulb.mass
-        0
-    end ~ track(u"g")
+    root_mass(root_carbon) ~ accumulate(u"g")
+    leaf_mass(leaf_carbon) ~ accumulate(u"g")
+    sheath_mass(sheath_carbon) ~ accumulate(u"g")
+    scape_mass(scape_carbon) ~ accumulate(u"g")
+    bulb_mass(bulb_carbon) ~ accumulate(u"g")
 
-    scape_mass => begin
-        #FIXME handling None
-        #scape.mass
-        0
-    end ~ track(u"g")
-
-    stalk_mass => begin
+    stalk_mass(sheath_mass, scape_mass) => begin
         #FIXME inconsistency: stem vs. sheath
-        #FIXME handling None
-        #sheath_mass + scape_mass
-        0
+        sheath_mass + scape_mass
     end ~ track(u"g")
 
-    root_mass => begin
-        #FIXME handling None
-        #root.mass
-        0
-    end ~ track(u"g")
-
-    shoot_mass => begin
+    #shoot_mass(shoot_carbon) => begin
+    shoot_mass(seed_mass, stalk_mass, leaf_mass, bulb_mass) => begin
         # for maize
         #seed_mass + stem_mass + leaf_mass + ear_mass
         # for garlic
-        #FIXME handling None
-        #seed_mass + stalk_mass + leaf_mass + bulb_mass
-        0
+        seed_mass + stalk_mass + leaf_mass + bulb_mass
     end ~ track(u"g")
 
-    total_mass => begin
+    total_mass(shoot_mass, root_mass) => begin
         #HACK include mobilized carbon pool (for more accurate mass under germination)
         #shoot_mass + root_mass + carbon.pool
-        #FIXME handling None
-        #shoot_mass + root_mass
-        0
+        shoot_mass + root_mass
     end ~ track(u"g")
 
     # this will only be used for total leaf area adjustment.
