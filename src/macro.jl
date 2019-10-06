@@ -179,7 +179,7 @@ genfield(type, name, alias) = @q begin
     $name::$type
     $(@q begin $([:($a::$type) for a in alias]...) end)
 end
-genfield(v::VarInfo) = genfield(genvartype(v), v.name, v.alias)
+genfield(v::VarInfo) = genfield(genvartype(v), symname(v), v.alias)
 genfields(infos) = [genfield(v) for v in infos]
 
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
@@ -435,7 +435,8 @@ genupdate(nodes) = begin
     end
 end
 
-symname(v::VarInfo) = Symbol(:_, v.name)
+symname(v::VarInfo) = symname(v.system, v.name)
+symname(s::Symbol, n::Symbol) = n #Symbol(:_, s, :__, n)
 symstate(v::VarInfo) = Symbol(symname(v), :__state)
 symlabel(v::VarInfo, t::VarStep, s...) = Symbol(symname(v), suffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :__call)
