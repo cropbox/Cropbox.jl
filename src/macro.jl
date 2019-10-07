@@ -625,10 +625,8 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     TOL = 0.0001
     lstart = symlabel(v, PreStep())
     lexit = symlabel(v, MainStep(), :__exit)
-    @gensym s d zero tol
-    @q let $s = $(symstate(v)),
-           $zero = $C.unitfy(0, $C.unit($s))
-           $tol = $C.unitfy($TOL, $C.unit($s))
+    @gensym s d
+    @q let $s = $(symstate(v))
         if $s.step == :z
             $s.N = 0
             $s.a = $C.value($s.lower)
@@ -654,7 +652,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
         elseif $s.step == :c
             $s.fc = $C.value($s) - $(genfunc(v))
             #@show "solve: $($s.c) => $($s.fc)"
-            if $s.fc ≈ $zero || ($s.b - $s.a) < $tol
+            if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / ($s.b) < $TOL
                 $s.step = :z
                 #@show "solve: finished! $($C.value($s))"
                 @goto $lexit
