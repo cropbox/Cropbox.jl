@@ -69,6 +69,10 @@ typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :System
 
 updatetags!(d, ::Val; _...) = nothing
+updatetags!(d, ::Val{:Interpolate}; _...) = begin
+    !haskey(d, :reverse) && (d[:reverse] = false)
+    !haskey(d, :knotunit) && (d[:knotunit] = nothing)
+end
 updatetags!(d, ::Union{Val{:Accumulate},Val{:Capture}}; _...) = begin
     !haskey(d, :time) && (d[:time] = :(context.clock.tick))
 end
@@ -131,6 +135,7 @@ genvartype(v::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
 genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
 genvartype(v::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
 genvartype(v::VarInfo, ::Val{:Tabulate}; V, _...) = @q Tabulate{$V}
+genvartype(v::VarInfo, ::Val{:Interpolate}; V, U, _...) = @q Interpolate{$V}
 genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
 genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
@@ -382,6 +387,17 @@ geninitpreserve(v::VarInfo) = begin
         @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
     end
 end
+#TODO: make use of geninitpreserve with unitfy turned off
+geninit(v::VarInfo, ::Val{:Interpolate}) = begin
+    if get(v.tags, :parameter, false)
+        @gensym o
+        @q let $o = $C.option(config, _names, $(names(v)))
+            isnothing($o) ? $(genfunc(v)) : $o
+        end
+    else
+        @q $(genfunc(v))
+    end
+end
 geninit(v::VarInfo, ::Val{:Drive}) = begin
     k = get(v.tags, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
@@ -510,6 +526,8 @@ end
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = genvalue(v)
 
 genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep) = genvalue(v)
+
+genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep) = genvalue(v)
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
     k = get(v.tags, :key, v.name)

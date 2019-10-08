@@ -232,6 +232,55 @@ using Unitful
         @test s.b == 2
     end
 
+    @testset "interpolate" begin
+        @system SInterpolate begin
+            m => ([1 => 10, 2 => 20, 3 => 30]) ~ interpolate
+            n(m) ~ interpolate(reverse)
+            a(m) => m(2.5) ~ track
+            b(n) => n(25) ~ track
+       end
+       s = instance(SInterpolate)
+       @test s.a == 25
+       @test s.b == 2.5
+    end
+
+    @testset "interpolate with matrix" begin
+        @system SInterpolateMatrix begin
+            m => ([1 10; 2 20; 3 30]) ~ interpolate
+            n(m) ~ interpolate(reverse)
+            a(m) => m(2.5) ~ track
+            b(n) => n(25) ~ track
+       end
+       s = instance(SInterpolateMatrix)
+       @test s.a == 25
+       @test s.b == 2.5
+    end
+
+    @testset "interpolate with config" begin
+        @system SInterpolateConfig begin
+            m => ([1 => 10]) ~ interpolate(parameter)
+            n(m) ~ interpolate(reverse)
+            a(m) => m(2.5) ~ track
+            b(n) => n(25) ~ track
+       end
+       o = configure(SInterpolateConfig => (:m => [1 => 10, 2 => 20, 3 => 30]))
+       s = instance(SInterpolateConfig; config=o)
+       @test s.a == 25
+       @test s.b == 2.5
+    end
+
+    @testset "interpolate with unit" begin
+        @system SInterpolateUnit begin
+            m => ([1 => 10, 2 => 20, 3 => 30]) ~ interpolate(u"s", knotunit=u"m")
+            n(m) ~ interpolate(u"m", reverse)
+            a(m) => m(2.5u"m") ~ track(u"s")
+            b(n) => n(25u"s") ~ track(u"m")
+       end
+       s = instance(SInterpolateUnit)
+       @test s.a == 25u"s"
+       @test s.b == 2.5u"m"
+    end
+
     @testset "drive with dict" begin
         @system SDriveDict begin
             a(t=context.clock.tick) => Dict(:a => 10t) ~ drive(u"hr")

@@ -130,6 +130,42 @@ end
 
 ####
 
+using Interpolations
+import Interpolations: Extrapolation
+import DataStructures: OrderedDict
+
+struct Interpolate{V} <: State{V}
+    #TODO: check performance of non-concrete type
+    value::Extrapolation{V}
+end
+
+Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
+    if typeof(_value) <: Extrapolation
+        i = _value.itp
+        k = if reverse
+            #HACK: reverse interpolation
+            (i.coefs, i.knots[1])
+        else
+            (i.knots[1], i.coefs)
+        end
+        v = LinearInterpolation(k...)
+    else
+        if typeof(_value) <: Matrix
+            d = OrderedDict(zip(_value[:, 1], _value[:, 2]))
+        else
+            d = OrderedDict(_value)
+        end
+        K = unitfy(collect(keys(d)), value(knotunit))
+        V = unitfy(collect(values(d)), value(unit))
+        v = LinearInterpolation(K, V)
+    end
+    #HACK: pick up unitfy-ed valuetype
+    V = typeof(v).parameters[1]
+    Interpolate{V}(v)
+end
+
+####
+
 mutable struct Track{V} <: State{V}
     value::V
 end
