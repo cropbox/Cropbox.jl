@@ -1,5 +1,8 @@
 abstract type State{V} end
 
+#TODO: support call syntax in Julia 1.3
+#(s::State)() = value(s)
+
 value(v) = v
 value(s::State) = s.value
 value(S::Vector{<:State}) = value.(S)
