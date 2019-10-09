@@ -140,25 +140,26 @@ struct Interpolate{V} <: State{V}
 end
 
 Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
-    if typeof(_value) <: Extrapolation
+    l = if typeof(_value) <: Extrapolation
         i = _value.itp
-        k = if reverse
+        if reverse
             #HACK: reverse interpolation
-            (i.coefs, i.knots[1])
+            zip(i.coefs, i.knots[1])
         else
-            (i.knots[1], i.coefs)
+            zip(i.knots[1], i.coefs)
         end
-        v = LinearInterpolation(k...)
     else
         if typeof(_value) <: Matrix
-            d = OrderedDict(zip(_value[:, 1], _value[:, 2]))
+            zip(_value[:, 1], _value[:, 2])
         else
-            d = OrderedDict(_value)
+            _value
         end
-        K = unitfy(collect(keys(d)), value(knotunit))
-        V = unitfy(collect(values(d)), value(unit))
-        v = LinearInterpolation(K, V)
     end
+    d = OrderedDict(l)
+    sort!(d)
+    K = unitfy(collect(keys(d)), value(knotunit))
+    V = unitfy(collect(values(d)), value(unit))
+    v = LinearInterpolation(K, V)
     #HACK: pick up unitfy-ed valuetype
     V = typeof(v).parameters[1]
     Interpolate{V}(v)
