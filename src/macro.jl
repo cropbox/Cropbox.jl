@@ -249,7 +249,7 @@ genstruct(name, infos, incl) = begin
     args = names.(infos) |> Iterators.flatten |> collect
     source = gensource(infos)
     system = @q begin
-        struct $name <: $C.System
+        mutable struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
                 $predecl
