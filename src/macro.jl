@@ -188,6 +188,7 @@ genfield(v::VarInfo) = genfield(genvartype(v), symname(v), v.alias)
 genfields(infos) = [genfield(v) for v in infos]
 
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
+gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genextern(name, default) = begin
     key = Meta.quot(name)
@@ -246,7 +247,7 @@ genstruct(name, infos, incl) = begin
     fields = genfields(infos)
     predecl = genpredecl(name)
     decls = gendecl(nodes)
-    args = names.(infos) |> Iterators.flatten |> collect
+    args = gennewargs(infos)
     source = gensource(infos)
     system = @q begin
         mutable struct $name <: $C.System
