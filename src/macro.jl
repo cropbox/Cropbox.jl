@@ -199,7 +199,7 @@ gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo{Symbol}) = begin
     name = Meta.quot(v.name)
     alias = Tuple(v.alias)
-    if get(v.tags, :override, false)
+    if get(v.tags, :override, false) && isnothing(v.body)
         decl = @q _kwargs[$(Meta.quot(v.name))]
     else
         value = get(v.tags, :extern, false) ? genextern(v.name, geninit(v)) : geninit(v)
