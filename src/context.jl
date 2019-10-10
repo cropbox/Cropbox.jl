@@ -32,9 +32,9 @@ run!(s::System, n=1; names...) = begin
 	df
 end
 
-instance(S::Type{<:System}; config=configure()) = begin
-    c = Context(; config=config)
-    s = S(; context=c)
+instance(S::Type{<:System}; context=nothing, config=configure(), kwargs...) = begin
+	c = isnothing(context) ? Context(; config=config) : context
+    s = S(; context=c, kwargs...)
 	#FIXME: better integration with Order?
 	c.order.outdated = true
     advance!(s)
