@@ -508,6 +508,8 @@ end
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
     if get(v.tags, :extern, false)
         nothing
+    elseif get(v.tags, :noupdate, false)
+        nothing
     else
         @q $C.update!(self.$(v.name))
     end
