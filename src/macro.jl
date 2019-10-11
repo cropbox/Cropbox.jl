@@ -210,13 +210,13 @@ gendecl(v::VarInfo{Symbol}) = begin
     gendecl(decl, v.name, v.alias)
 end
 gendecl(v::VarInfo{Nothing}) = begin
+    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
+    emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
+    args = emit.(v.args)
     decl = if isnothing(v.body)
-        pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-        emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
-        kwargs = emit.(v.args)
-        @q $(esc(v.type))(; $(kwargs...))
+        @q $(esc(v.type))(; $(args...))
     else
-        esc(v.body)
+        @q let $(args...); $(esc(v.body)) end
     end
     if get(v.tags, :extern, false)
         decl = genextern(v.name, decl)
