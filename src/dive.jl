@@ -27,6 +27,7 @@ dive(s::System) = begin
         end
         nav(map(a -> MenuItem(string(a), label(a), s[a]), [collectible(s)..., updatable(s)...]), t)
     end
+    nav(s::Vector{<:System}, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
     nav(s::Produce, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(value(s))), t)
     nav(s::State, t) = nav(map(v -> MenuItem("", "", v), value(s)), t)
     nav(l::Vector{MenuItem}, t) = begin

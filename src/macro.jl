@@ -298,7 +298,7 @@ filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     filter!(p -> p[2] <: type, l)
 end
 gencollectible(S) = @q begin
-    l = $C.filtervar(Union{$C.System, $C.Produce{<:Any}}, $S)
+    l = $C.filtervar(Union{$C.System, Vector{<:$C.System}, $C.Produce{<:Any}}, $S)
     map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
 end
 genupdatable(S) = @q begin
@@ -312,6 +312,7 @@ end
 
 collectible(::S) where {S<:System} = collectible(S)
 updatable(::S) where {S<:System} = updatable(S)
+update!(s::Vector{<:System}) = update!.(s)
 update!(s) = s
 
 parsehead(head) = begin
