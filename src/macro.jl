@@ -74,7 +74,7 @@ updatetags!(d, ::Val{:Interpolate}; _...) = begin
     !haskey(d, :knotunit) && (d[:knotunit] = nothing)
 end
 updatetags!(d, ::Union{Val{:Accumulate},Val{:Capture}}; _...) = begin
-    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
+    !haskey(d, :time) && (d[:time] = :(clock.tick))
 end
 updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
     #FIXME: lower duplicate efforts in genvartype()
@@ -279,6 +279,7 @@ source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
     context ~ ::Cropbox.Context(extern)
     config(context) => context.config ~ ::Cropbox.Config
+    clock(context, config) => context.clock ~ ::Cropbox.Clock(noupdate)
 end
 mixins(::Type{<:System}) = (System,)
 mixins(s::S) where {S<:System} = mixins(S)
@@ -446,9 +447,17 @@ geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(get(v.tags, :init
 ####
 
 genupdate(nodes) = begin
+    @gensym i n
     @q begin
         $([genupdateinit(n) for n in nodes]...)
-        $([genupdate(n) for n in nodes]...)
+        $n = if !isnothing(clock) && !isnothing(context) && context.clock != clock
+            ($C.value(context.clock.tick) - $C.value(clock.tick)) / $C.value(clock.step) |> upreferred
+        else
+            1
+        end
+        for $i in 1:$n
+            $([genupdate(n) for n in nodes]...)
+        end
         self
     end
 end
@@ -558,6 +567,8 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
            $t = $C.value($(v.tags[:time])),
            $t0 = $s.tick,
            $a = $s.value + $s.rate * ($t - $t0)
+         @show $t
+         @show $t0
         $C.store!($s, $a)
     end
 end
@@ -568,6 +579,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s)),
            $q = context.queue
+        @show $t
         $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end

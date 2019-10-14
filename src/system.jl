@@ -17,7 +17,15 @@ import Base: getindex
 getindex(s::System, i) = getproperty(s, i)
 
 import Base: getproperty
-getproperty(s::System, n::String) = reduce((a, b) -> getfield(a, b), [s, Symbol.(split(n, "."))...])
+getproperty(s::System, n::String) = begin
+    reduce((a, b) -> begin
+        m = match(r"([^\[\]]+)(?:\[(.+)\])?", b)
+        n, i = m[1], m[2]
+        v = getfield(a, Symbol(n))
+        !isnothing(i) && (v = getindex(v, parse(Int, i)))
+        v
+    end, [s, split(n, ".")...])
+end
 
 import Base: collect
 import DataStructures: OrderedSet

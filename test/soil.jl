@@ -1,3 +1,5 @@
+using Unitful
+
 @system Pedotransfer begin
     tension_wilting_point: Ψ_wp => 1500 ~ preserve(u"kPa", parameter)
     tension_field_capacity: Ψ_fc => 33 ~ preserve(u"kPa", parameter)
@@ -160,7 +162,7 @@ end
     hydraulic_conductivity_at(K_s, θ_s, λ; θ): K_at => begin
         #TODO: need bounds check?
         # θ = min(θ, θ_s)
-        # (Ψ_θ(vwc) < Ψ_ae) && (θ = θ_s)
+        # (Ψ_at(vwc) < Ψ_ae) && (θ = θ_s)
         K_s * (θ / θ_s)^(3 + 2/λ)
     end ~ call(u"mm/hr") # K_theta,i (m day-1)
 
@@ -177,28 +179,38 @@ end
         # max(Ψ_e, zero(Ψ_e))
     end ~ preserve(u"kPa") # psi_e (kPa)
 
-    tension(θ_s, θ_33, θ_1500, Ψ_e, A, B; θ): Ψ_θ => begin
+    tension_at(θ_s, θ_33, θ_1500, Ψ_e, A, B; θ): Ψ_at => begin
         if θ_s <= θ
             Ψ_e
         elseif θ_33 <= θ
-            33 - (θ - θ_33) * (33 - Ψ_e) / (θ_s - θ_33)
+            33u"kPa" - (θ - θ_33) * (33u"kPa" - Ψ_e) / (θ_s - θ_33)
         elseif θ_1500 <= θ
             A*θ^-B
         else
-            error("too low θ = $θ")
+            #@show "too low θ = $θ < θ_1500 = $θ_1500"
+            A*θ^-B
         end
     end ~ call(u"kPa") # psi_theta (kPa)
 
-    matric_head_at(Ψ_θ; θ): Hm_at => begin
-        @show θ
-        @show Ψ_θ(θ)
-        Ψ_θ(θ) * u"m" / 9.8041u"kPa"
+    matric_head_at(Ψ_at; θ): Hm_at => begin
+        Ψ_at(θ) * u"m" / 9.8041u"kPa"
     end ~ call(u"m") # H_mi (m)
 end
 
+#TODO: support convenient way to set up custom Clock
+#TODO: support unit reference again?
+import Cropbox: Clock
+@system SoilClock(Clock) begin
+    step => 15u"minute" ~ preserve(u"hr", parameter)
+end
+Cropbox.advance!(c::SoilClock) = advance!(c.tick)
+
 #TODO: implement LayeredTexture for customization
 @system Layer(CharacteristicTransfer) begin
+    clock ~ ::SoilClock(extern)
+
     index: i ~ ::Int(extern)
+    vwc_initial: θ_i => 0.4 ~ preserve(extern)
 
     # Soil layer depth and cumulative thickness (2.4.2)
     depth: z ~ preserve(u"m", extern) # z_i (m)
@@ -213,9 +225,9 @@ end
     end ~ track(u"m") # s_i | s_i - (S_i - d_root) (m)
 
     water_content_root_zone(θ, s_r): 𝚯_r => θ * s_r ~ track(u"m") # Theta_root,i (m) (Eq. 2.95)
-    water_content_root_zone_at_wilting_point(θ_wp, s_r): 𝚯_r_wp => θ_wp * s_r ~ track(u"m")
-    water_content_root_zone_at_field_capacity(θ_fc, s_r): 𝚯_r_fc => θ_fc * s_r ~ track(u"m")
-    water_content_root_zone_at_saturation(θ_sat, s_r): 𝚯_r_sat => θ_sat * s_r ~ track(u"m")
+    water_content_root_zone_wilting_point(θ_wp, s_r): 𝚯_r_wp => θ_wp * s_r ~ track(u"m")
+    water_content_root_zone_field_capacity(θ_fc, s_r): 𝚯_r_fc => θ_fc * s_r ~ track(u"m")
+    water_content_root_zone_saturation(θ_sat, s_r): 𝚯_r_sat => θ_sat * s_r ~ track(u"m")
 
     # Root extraction of water (2.4.5)
     water_extraction_ratio(z, d_r): ϕ => begin
@@ -239,24 +251,26 @@ end
     water_flux_in: qi => 0 ~ track(u"m/d", override) # q_i (m day-1)
     water_flux_out: qo => 0 ~ track(u"m/d", override) # q_o (m day-1)
     water_flux_net(qi, qo): q̂ => qi - qo ~ track(u"m/d") # q^hat_i (m day-1)
-    water_content(q̂): 𝚯 ~ accumulate(u"m") # Theta_i (m)
+    water_content(q̂): 𝚯 ~ accumulate(init=𝚯_i, u"m") # Theta_i (m)
 
-    water_content_at_wilting_point(θ_wp, s): 𝚯_wp => θ_wp * s ~ track(u"m")
-    water_content_at_field_capacity(θ_fc, s): 𝚯_fc => θ_fc * s ~ track(u"m")
-    water_content_at_saturation(θ_sat, s): 𝚯_sat => θ_sat * s ~ track(u"m")
+    water_content_initial(θ_i, s): 𝚯_i => θ_i * s ~ preserve(u"m")
+    water_content_wilting_point(θ_wp, s): 𝚯_wp => θ_wp * s ~ track(u"m")
+    water_content_field_capacity(θ_fc, s): 𝚯_fc => θ_fc * s ~ track(u"m")
+    water_content_saturation(θ_sat, s): 𝚯_sat => θ_sat * s ~ track(u"m")
 
     # Volumetric water content (-)
-    volumetric_water_content(𝚯, 𝚯_wp, 𝚯_sat, s): θ => begin
+    volumetric_water_content(i, 𝚯, 𝚯_wp, 𝚯_sat, s): θ => begin
         #FIXME: remove clamping?
         #HACK: clamping only for vwc
         # Teh uses 0.005 m3/m3 instead of wilting point
-        𝚯 = clamp(𝚯, 𝚯_wp, 𝚯_sat)
-        θ = 𝚯 / s
-        #max(θ, 0.005)
+        #𝚯 = clamp(𝚯, 𝚯_wp, 𝚯_sat)
+        θ = min(𝚯, 𝚯_sat) / s
+        θ = max(θ, 0.005)
     end ~ track # Theta_v,i (m3 m-3)
 end
 
 @system SurfaceInterface begin
+    clock ~ ::SoilClock(extern)
     layer: l ~ ::Layer(extern)
 
     precipitation: R ~ track(u"m/d", override)
@@ -277,6 +291,7 @@ end
 end
 
 @system SoilInterface begin
+    clock ~ ::SoilClock(extern)
     upper_layer: l1 ~ ::Layer(extern)
     lower_layer: l2 ~ ::Layer(extern)
 
@@ -310,6 +325,7 @@ end
 end
 
 @system BedrockInterface begin
+    clock ~ ::SoilClock(extern)
     layer: l ~ ::Layer(extern)
 
     flux(l.K): q ~ track(u"m/d")
@@ -319,43 +335,70 @@ end
     end ~ ::Nothing
 end
 
+using DataFrames
+using CSV
 @system Weather begin
-    evaporation: E => 0.1 ~ track(u"mm/d")
-    transpiration: T => 0.1 ~ track(u"mm/d")
-    precipitation: R => 0.3 ~ track(u"mm/d")
+    filename => "PyWaterBal.csv" ~ preserve::String(parameter)
+    index => :timestamp ~ preserve::Symbol(parameter)
+
+    dataframe(filename, index): df => begin
+        df = CSV.read(filename)
+        df[!, index] = map(eachrow(df)) do r
+            (r.timestamp - 1) * u"d"
+        end
+        df
+    end ~ preserve::DataFrame
+    key(t=clock.tick) ~ track(u"d")
+    store(df, index, key): s => begin
+        df[df[!, index] .== key, :][1, :]
+    end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
+    #Dict(:precipitation => 0.3, transpiration => 0.1, evaporation => 0.1)
+
+    precipitation(s): R => s[:precipitation] ~ track(u"mm/d")
+    transpiration(s): T => s[:transpiration] ~ track(u"mm/d")
+    evaporation(s): E => s[:evaporation] ~ track(u"mm/d")
 end
 
+# w = instance(Weather, config=configure(
+#     :Clock => (:step => 24),
+#     :Weather => (:filename => "test/PyWaterBal.csv")
+# ))
+
+#FIXME: not just SoilClock, but entire Context should be customized for sub-timestep handling
 #TODO: implement sub-timestep advance
 # 2.4.11 Daily integration
 # iterations=100
 # Theta_i,t+1 (m day-1) (Eq. 2.105)
 @system Soil begin
-    weather: w ~ ::Weather(extern)
+    clock(context) ~ ::SoilClock
+    weather(context): w ~ ::Weather
+
     rooting_depth: d_r => 0 ~ track(u"m", override, extern) # d_root (m)
 
     # Partitioning of soil profile into several layers (2.4.1)
-    layers(context, d_r): L => begin
+    layers(context, clock, d_r): L => begin
         # Soil layer depth and cumulative thickness (2.4.2)
         n = 5
         s = 0.2u"m" # thickness
         ss = 0u"m" # cumulative_thickness
+        θ = 0.4 # vwc_initial
         L = Layer[]
         for i in 1:n
             z = ss + s/2 # depth
-            l = Layer(context=context, index=i, depth=z, rooting_depth=d_r, thickness=s, cumulative_thickness=ss)
+            l = Layer(context=context, clock=clock, index=i, vwc_initial=θ, depth=z, rooting_depth=d_r, thickness=s, cumulative_thickness=ss)
             push!(L, l)
             ss += s
         end
         L
     end ~ ::Vector{Layer}
 
-    surface_interface(context, layer=L[1], precipitation, evaporation_actual, transpiration_actual) ~ ::SurfaceInterface
+    surface_interface(context, clock, layer=L[1], precipitation, evaporation_actual, transpiration_actual) ~ ::SurfaceInterface
 
-    soil_interfaces(context, L, Ta) => begin
-        [SoilInterface(context=context, upper_layer=a, lower_layer=b, transpiration_actual=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
+    soil_interfaces(context, clock, L, Ta) => begin
+        [SoilInterface(context=context, clock=clock, upper_layer=a, lower_layer=b, transpiration_actual=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
     end ~ ::Vector{SoilInterface}
 
-    bedrock_interface(context, layer=L[end]) ~ ::BedrockInterface
+    bedrock_interface(context, clock, layer=L[end]) ~ ::BedrockInterface
 
     interfaces(L, surface_interface, soil_interfaces, bedrock_interface) => begin
         [surface_interface, soil_interfaces..., bedrock_interface]
@@ -373,15 +416,15 @@ end
         sum([Cropbox.value(l.𝚯_r) for l in L]) / d_r
     end ~ track # Theta_v,root (m3 m-3)
 
-    volumetric_water_content_root_zone_at_wilting_point(L, d_r): θ_r_wp => begin
+    volumetric_water_content_root_zone_wilting_point(L, d_r): θ_r_wp => begin
         sum([Cropbox.value(l.𝚯_r_wp) for l in L]) / d_r
     end ~ track # (m3 m-3)
 
-    volumetric_water_content_root_zone_at_field_capacity(L, d_r): θ_r_fc => begin
+    volumetric_water_content_root_zone_field_capacity(L, d_r): θ_r_fc => begin
         sum([Cropbox.value(l.𝚯_r_fc) for l in L]) / d_r
     end ~ track # (m3 m-3)
 
-    volumetric_water_content_root_zone_at_saturation(L, d_r): θ_r_sat => begin
+    volumetric_water_content_root_zone_saturation(L, d_r): θ_r_sat => begin
         sum([Cropbox.value(l.𝚯_r_sat) for l in L]) / d_r
     end ~ track # (m3 m-3)
 
@@ -396,3 +439,9 @@ end
 
     precipitation(w.R): R ~ track(u"m/d")
 end
+
+s = instance(Soil, config=configure(
+    :Clock => (:step => 24),
+    :Weather => (:filename => "test/PyWaterBal.csv")
+), rooting_depth=0.3u"m")
+run!(s, 80, v1="L[1].θ", v2="L[2].θ", v3="L[3].θ", v4="L[4].θ", v5="L[5].θ")
