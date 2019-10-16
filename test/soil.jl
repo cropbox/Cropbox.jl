@@ -207,7 +207,6 @@ end
     context ~ ::Context(extern)
     clock(config) ~ ::SoilClock
 end
-Cropbox.advance!(c::SoilClock) = advance!(c.tick)
 
 #TODO: implement LayeredTexture for customization
 @system Layer(CharacteristicTransfer) begin
