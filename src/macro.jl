@@ -242,6 +242,7 @@ end
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
 genfieldnamesextern(infos) = Tuple(v.name for v in infos if istag(v, :extern))
+genfieldnamesadvance(infos) = Tuple(v.name for v in infos if istag(v, :advance))
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -266,6 +267,7 @@ genstruct(name, infos, incl) = begin
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         $C.fieldnamesextern(::Type{<:$S}) = $(genfieldnamesextern(infos))
+        $C.fieldnamesadvance(::Type{<:$S}) = $(genfieldnamesadvance(infos))
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{<:$S}) = $(gencollectible(S))
         @generated $C.updatable(::Type{<:$S}) = $(genupdatable(S))
@@ -280,7 +282,7 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    context ~ ::Cropbox.Context(extern)
+    context ~ ::Cropbox.Context(extern, advance)
     config(context) => context.config ~ ::Cropbox.Config
     clock(context, config) => context.clock ~ ::Cropbox.Clock(noupdate)
 end
@@ -290,10 +292,12 @@ mixins(s::S) where {S<:System} = mixins(S)
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
 fieldnamesextern(::Type{<:System}) = ()
+fieldnamesadvance(::Type{<:System}) = ()
 
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 fieldnamesextern(::S) where {S<:System} = fieldnamesextern(S)
+fieldnamesadvance(::S) where {S<:System} = fieldnamesadvance(S)
 
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))

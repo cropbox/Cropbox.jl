@@ -204,13 +204,13 @@ import Cropbox: Clock, Context
     step => 15u"minute" ~ preserve(u"hr", parameter)
 end
 @system SoilContext(Context) begin
-    context ~ ::Context(extern)
+    context ~ ::Context(extern, advance)
     clock(config) ~ ::SoilClock
 end
 
 #TODO: implement LayeredTexture for customization
 @system Layer(CharacteristicTransfer) begin
-    context ~ ::SoilContext(extern)
+    context ~ ::SoilContext(extern, advance)
 
     index: i ~ ::Int(extern)
     vwc_initial: θ_i => 0.4 ~ preserve(extern)
@@ -273,7 +273,7 @@ end
 end
 
 @system SurfaceInterface begin
-    context ~ ::SoilContext(extern)
+    context ~ ::SoilContext(extern, advance)
     layer: l ~ ::Layer(extern)
 
     precipitation: R ~ track(u"m/d", override)
@@ -294,7 +294,7 @@ end
 end
 
 @system SoilInterface begin
-    context ~ ::SoilContext(extern)
+    context ~ ::SoilContext(extern, advance)
     upper_layer: l1 ~ ::Layer(extern)
     lower_layer: l2 ~ ::Layer(extern)
 
@@ -328,7 +328,7 @@ end
 end
 
 @system BedrockInterface begin
-    context ~ ::SoilContext(extern)
+    context ~ ::SoilContext(extern, advance)
     layer: l ~ ::Layer(extern)
 
     flux(l.K): q ~ track(u"m/d")
@@ -373,7 +373,7 @@ end
 # iterations=100
 # Theta_i,t+1 (m day-1) (Eq. 2.105)
 @system Soil begin
-    context ~ ::SoilContext(extern)
+    context ~ ::SoilContext(extern, advance)
     weather(context): w ~ ::Weather
 
     rooting_depth: d_r => 0 ~ track(u"m", override, extern) # d_root (m)
