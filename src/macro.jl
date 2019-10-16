@@ -90,6 +90,9 @@ updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
     d[:_calltype] = F
 end
 
+istag(v::VarInfo, t) = get(v.tags, t, false)
+gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
+
 names(v::VarInfo) = [v.name, v.alias...]
 
 ####
@@ -127,7 +130,7 @@ genvartype(v::VarInfo) = genvartype(v)
 genvartype(v::VarInfo{Nothing}) = esc(v.type)
 genvartype(v::VarInfo{Symbol}) = begin
     N = isnothing(v.type) ? :Float64 : esc(v.type)
-    U = get(v.tags, :unit, nothing)
+    U = gettag(v, :unit)
     V = @q $C.valuetype($N, $U)
     genvartype(v, Val(v.state); N=N, U=U, V=V)
 end
@@ -149,7 +152,7 @@ genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
 end
 genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     #TODO: automatic inference without explicit `timeunit` tag
-    TU = get(v.tags, :timeunit, nothing)
+    TU = gettag(v, :timeunit)
     TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
@@ -157,7 +160,7 @@ genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     @q Accumulate{$V,$T,$R}
 end
 genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
-    TU = get(v.tags, :timeunit, nothing)
+    TU = gettag(v, :timeunit)
     TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
@@ -200,10 +203,10 @@ gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo{Symbol}) = begin
     name = Meta.quot(v.name)
     alias = Tuple(v.alias)
-    if get(v.tags, :override, false) && isnothing(v.body)
+    if istag(v, :override) && isnothing(v.body)
         decl = @q _kwargs[$(Meta.quot(v.name))]
     else
-        value = get(v.tags, :extern, false) ? genextern(v.name, geninit(v)) : geninit(v)
+        value = istag(v, :extern) ? genextern(v.name, geninit(v)) : geninit(v)
         stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
         decl = :($C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
     end
@@ -218,7 +221,7 @@ gendecl(v::VarInfo{Nothing}) = begin
     else
         @q let $(args...); $(esc(v.body)) end
     end
-    if get(v.tags, :extern, false)
+    if istag(v, :extern)
         decl = genextern(v.name, decl)
     end
     # implicit :expose
@@ -238,7 +241,7 @@ end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
-genfieldnamesextern(infos) = Tuple(v.name for v in infos if get(v.tags, :extern, false))
+genfieldnamesextern(infos) = Tuple(v.name for v in infos if istag(v, :extern))
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -381,7 +384,7 @@ geninit(v::VarInfo, ::Val{:Advance}) = missing
 geninit(v::VarInfo, ::Val{:Preserve}) = geninitpreserve(v)
 geninit(v::VarInfo, ::Val{:Tabulate}) = geninitpreserve(v)
 geninitpreserve(v::VarInfo) = begin
-    if get(v.tags, :parameter, false)
+    if istag(v, :parameter)
         @gensym o
         @q let $o = $C.option(config, _names, $(names(v)))
             $C.unitfy(isnothing($o) ? $(genfunc(v)) : $o, $C.value($(v.tags[:unit])))
@@ -392,7 +395,7 @@ geninitpreserve(v::VarInfo) = begin
 end
 #TODO: make use of geninitpreserve with unitfy turned off
 geninit(v::VarInfo, ::Val{:Interpolate}) = begin
-    if get(v.tags, :parameter, false)
+    if istag(v, :parameter)
         @gensym o
         @q let $o = $C.option(config, _names, $(names(v)))
             isnothing($o) ? $(genfunc(v)) : $o
@@ -402,7 +405,7 @@ geninit(v::VarInfo, ::Val{:Interpolate}) = begin
     end
 end
 geninit(v::VarInfo, ::Val{:Drive}) = begin
-    k = get(v.tags, :key, v.name)
+    k = gettag(v, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
     k = isa(k, QuoteNode) ? k : Meta.quot(k)
     @q $C.unitfy($C.value($(genfunc(v))[$k]), $C.value($(v.tags[:unit])))
@@ -437,12 +440,12 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     #
     # @q function $(symcall(v))($(fillargs...); $(callargs...)) $outerbody end
 end
-geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(gettag(v, :init))), $C.value($(v.tags[:unit])))
 geninit(v::VarInfo, ::Val{:Capture}) = nothing
 geninit(v::VarInfo, ::Val{:Flag}) = false
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
-geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(get(v.tags, :init, nothing))), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(gettag(v, :init))), $C.value($(v.tags[:unit])))
 
 ####
 
@@ -485,7 +488,7 @@ end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
 genupdate(v::VarInfo, t::VarStep) = begin
-    u = if get(v.tags, :override, false)
+    u = if istag(v, :override)
         genvalue(v)
     else
         genupdate(v, Val(v.state), t)
@@ -517,9 +520,9 @@ genstore(v::VarInfo) = begin
 end
 
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
-    if get(v.tags, :extern, false)
+    if istag(v, :extern)
         nothing
-    elseif get(v.tags, :noupdate, false)
+    elseif istag(v, :noupdate)
         nothing
     else
         @q $C.update!(self.$(v.name))
@@ -544,7 +547,7 @@ genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep) = genvalue(v)
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    k = get(v.tags, :key, v.name)
+    k = gettag(v, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
     k = isa(k, QuoteNode) ? k : Meta.quot(k)
     @gensym s f d
@@ -608,7 +611,7 @@ end
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     @gensym s f q
-    if get(v.tags, :oneway, false)
+    if istag(v, :oneway)
         @q let $s = $(symstate(v)),
                $f = $(genfunc(v)),
                $q = context.queue

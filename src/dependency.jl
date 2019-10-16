@@ -130,7 +130,7 @@ add!(d::Dependency, v::VarInfo) = begin
         n = mainnode!(d, v)
         inlink!(d, v, n)
     end
-    if get(v.tags, :parameter, false)
+    if istag(v, :parameter)
         c = mainnode!(d, :config)
         n = firstnode(d, v)
         link!(d, c, n)
