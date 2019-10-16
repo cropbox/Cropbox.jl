@@ -74,7 +74,7 @@ updatetags!(d, ::Val{:Interpolate}; _...) = begin
     !haskey(d, :knotunit) && (d[:knotunit] = nothing)
 end
 updatetags!(d, ::Union{Val{:Accumulate},Val{:Capture}}; _...) = begin
-    !haskey(d, :time) && (d[:time] = :(clock.tick))
+    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
 end
 updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
     #FIXME: lower duplicate efforts in genvartype()
@@ -447,11 +447,12 @@ geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(get(v.tags, :init
 ####
 
 genupdate(nodes) = begin
-    @gensym i n
+    @gensym c n i
     @q begin
         $([genupdateinit(n) for n in nodes]...)
-        $n = if !isnothing(clock) && !isnothing(context) && context.clock != clock
-            ($C.value(context.clock.tick) - $C.value(clock.tick)) / $C.value(clock.step) |> upreferred
+        $c = context
+        $n = if !isnothing($c) && !isnothing($c.context)
+            ($C.value($c.context.clock.tick) - $C.value($c.clock.tick)) / $C.value($c.clock.step) |> upreferred
         else
             1
         end

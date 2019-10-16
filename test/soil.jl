@@ -199,15 +199,19 @@ end
 
 #TODO: support convenient way to set up custom Clock
 #TODO: support unit reference again?
-import Cropbox: Clock
+import Cropbox: Clock, Context
 @system SoilClock(Clock) begin
     step => 15u"minute" ~ preserve(u"hr", parameter)
+end
+@system SoilContext(Context) begin
+    context ~ ::Context(extern)
+    clock(config) ~ ::SoilClock
 end
 Cropbox.advance!(c::SoilClock) = advance!(c.tick)
 
 #TODO: implement LayeredTexture for customization
 @system Layer(CharacteristicTransfer) begin
-    clock ~ ::SoilClock(extern)
+    context ~ ::SoilContext(extern)
 
     index: i ~ ::Int(extern)
     vwc_initial: θ_i => 0.4 ~ preserve(extern)
@@ -270,7 +274,7 @@ Cropbox.advance!(c::SoilClock) = advance!(c.tick)
 end
 
 @system SurfaceInterface begin
-    clock ~ ::SoilClock(extern)
+    context ~ ::SoilContext(extern)
     layer: l ~ ::Layer(extern)
 
     precipitation: R ~ track(u"m/d", override)
@@ -291,7 +295,7 @@ end
 end
 
 @system SoilInterface begin
-    clock ~ ::SoilClock(extern)
+    context ~ ::SoilContext(extern)
     upper_layer: l1 ~ ::Layer(extern)
     lower_layer: l2 ~ ::Layer(extern)
 
@@ -325,7 +329,7 @@ end
 end
 
 @system BedrockInterface begin
-    clock ~ ::SoilClock(extern)
+    context ~ ::SoilContext(extern)
     layer: l ~ ::Layer(extern)
 
     flux(l.K): q ~ track(u"m/d")
@@ -348,7 +352,7 @@ using CSV
         end
         df
     end ~ preserve::DataFrame
-    key(t=clock.tick) ~ track(u"d")
+    key(t=context.clock.tick) ~ track(u"d")
     store(df, index, key): s => begin
         df[df[!, index] .== key, :][1, :]
     end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
@@ -370,7 +374,7 @@ end
 # iterations=100
 # Theta_i,t+1 (m day-1) (Eq. 2.105)
 @system Soil begin
-    clock(context) ~ ::SoilClock
+    context ~ ::SoilContext(extern)
     weather(context): w ~ ::Weather
 
     rooting_depth: d_r => 0 ~ track(u"m", override, extern) # d_root (m)
@@ -440,8 +444,13 @@ end
     precipitation(w.R): R ~ track(u"m/d")
 end
 
-s = instance(Soil, config=configure(
+@system SoilController begin
+    soil_context(context, config) ~ ::SoilContext
+    soil(context=soil_context, rooting_depth=0.3u"m") ~ ::Soil
+end
+
+s = instance(SoilController, config=configure(
     :Clock => (:step => 24),
     :Weather => (:filename => "test/PyWaterBal.csv")
-), rooting_depth=0.3u"m")
+))
 run!(s, 80, v1="L[1].θ", v2="L[2].θ", v3="L[3].θ", v4="L[4].θ", v5="L[5].θ")
