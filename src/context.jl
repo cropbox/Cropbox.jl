@@ -6,8 +6,6 @@
     clock(config) ~ ::Clock
 end
 
-option(c::Context, keys...) = option(c.config, keys...)
-
 advance!(s::System, n=1) = begin
 	c = s.context
     for i in 1:n
