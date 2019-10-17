@@ -97,19 +97,21 @@ names(v::VarInfo) = [v.name, v.alias...]
 
 ####
 
-abstract type VarStep end
-struct PreStep <: VarStep end
-struct MainStep <: VarStep end
-struct PostStep <: VarStep end
+abstract type NodeStep end
+struct PreStep <: NodeStep end
+struct MainStep <: NodeStep end
+struct PostStep <: NodeStep end
 
 suffix(::PreStep) = "__pre"
 suffix(::MainStep) = "__main"
 suffix(::PostStep) = "__post"
 
-struct VarNode
-    info::VarInfo
-    step::VarStep
+struct Node{T}
+    info::T
+    step::NodeStep
 end
+
+const VarNode = Node{VarInfo}
 
 prev(n::VarNode) = begin
     if n.step == MainStep()
@@ -473,7 +475,7 @@ end
 symname(v::VarInfo) = symname(v.system, v.name)
 symname(s::Symbol, n::Symbol) = n #Symbol(:_, s, :__, n)
 symstate(v::VarInfo) = Symbol(symname(v), :__state)
-symlabel(v::VarInfo, t::VarStep, s...) = Symbol(symname(v), suffix(t), s...)
+symlabel(v::VarInfo, t::NodeStep, s...) = Symbol(symname(v), suffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :__call)
 
 genupdateinit(n::VarNode) = begin
@@ -491,7 +493,7 @@ genupdateinit(n::VarNode) = begin
 end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
-genupdate(v::VarInfo, t::VarStep) = begin
+genupdate(v::VarInfo, t::NodeStep) = begin
     u = if istag(v, :override)
         genvalue(v)
     else

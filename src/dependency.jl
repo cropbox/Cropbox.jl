@@ -19,8 +19,8 @@ vertex!(d::Dependency, v::VarNode) = begin
     v
 end
 
-node!(d::Dependency, v::VarInfo, t::VarStep) = vertex!(d, VarNode(v, t))
-node!(d::Dependency, v::Symbol, t::VarStep) = vertex!(d, VarNode(d.M[v], t))
+node!(d::Dependency, v::VarInfo, t::NodeStep) = vertex!(d, VarNode(v, t))
+node!(d::Dependency, v::Symbol, t::NodeStep) = vertex!(d, VarNode(d.M[v], t))
 prenode!(d::Dependency, v) = node!(d, v, PreStep())
 mainnode!(d::Dependency, v) = node!(d, v, MainStep())
 postnode!(d::Dependency, v) = node!(d, v, PostStep())
