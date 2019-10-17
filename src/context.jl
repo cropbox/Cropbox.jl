@@ -9,13 +9,14 @@ end
 iscontext(s::System) = false
 iscontext(s::Context) = true
 
+update!(s::System, ::ContextPreStep) = preflush!(s.queue)
+update!(s::System, ::ContextPostStep) = postflush!(s.queue)
+
 advance!(s::System, n=1) = begin
 	c = s.context
     for i in 1:n
-		preflush!(c.queue)
 		S = collect!(c.order, s)
 		update!.(S)
-		postflush!(c.queue)
     end
 	s
 end

@@ -8,9 +8,7 @@ struct ContextPostStep <: OrderStep end
 const SystemNode = Node{System,OrderStep}
 
 update!(s::SystemNode) = update!(s.info, s.step)
-update!(s::System, ::OrderStep) = update!(s)
-update!(s::System, ::ContextPreStep) = nothing
-update!(s::System, ::ContextPostStep) = nothing
+update!(s::System, ::SystemStep) = update!(s)
 
 mutable struct Order
     systems::Vector{SystemNode}
