@@ -1,61 +1,55 @@
 using LightGraphs
 
+const SystemNode = Node{System}
+
+update!(s::SystemNode) = update!(s.info)
+
 mutable struct Order
-    systems::Vector{System}
+    systems::Vector{SystemNode}
     outdated::Bool
     g::DiGraph
-    V::Vector{System}
-    I::Dict{System,Int}
+    V::Vector{SystemNode}
+    I::Dict{SystemNode,Int}
     S::Set{System}
 end
 
-Order() = Order(System[], true, DiGraph(), System[], Dict{System,Int}(), Set{System}())
+Order() = Order(SystemNode[], true, DiGraph(), SystemNode[], Dict{SystemNode,Int}(), Set{SystemNode}())
 
-add!(o::Order, s::System) = begin
-    i = get(o.I, s, nothing)
-    if isnothing(i)
-        add_vertex!(o.g)
-        push!(o.V, s)
-        i = o.I[s] = length(o.V)
+vertex!(g::Order, n::SystemNode) = begin
+    if !haskey(g.I, n)
+        add_vertex!(g.g)
+        push!(g.V, n)
+        g.I[n] = length(g.V)
     end
-    i
+    n
 end
 
-link!(o::Order, s::System, d::System) = begin
-    (s == d) && return
-    add!(o, d)
-    #@show "add edge $s ($(o.I[s])) -> $d ($(o.I[d]))"
-    add_edge!(o.g, o.I[s], o.I[d])
+node!(g::Order, s::System, t::NodeStep) = vertex!(g, SystemNode(s, t))
+mainnode!(g::Order, s) = node!(g, s, MainStep())
+postnode!(g::Order, s) = node!(g, s, PostStep())
+
+link!(g::Order, a::SystemNode, b::SystemNode) = begin
+    #@show "add edge $a ($(g.I[a])) -> $b ($(g.I[b]))"
+    add_edge!(g.g, g.I[a], g.I[b])
 end
 
 visit!(o::Order, s::System) = begin
     #@show "visit $s"
-    add!(o, s)
-
-    D = System[]
-    F = fieldnamesextern(s)
-    for n in collectible(s)
-        (n in F) && append!(D, getfield(s, n))
-    end
-    #@show "collectible $D"
-    for d in D
-        link!(o, s, d)
-    end
-
     push!(o.S, s)
-    filter!(d -> d ∉ o.S, D)
-    #@show "collectible filtered $D"
-    for d in D
-        visit!(o, d)
+    F = fieldnamesextern(s)
+    for c in collectible(s)
+        if c in F
+            d = getfield(s, c)
+            visit!(o, s, d)
+        end
     end
 end
 
 visit!(o::Order, s::System, d::System) = begin
     #@show "visit $s -> $d"
-    #add!(o, s)
-    #@assert haskey(o.I, s)
-    link!(o, s, d)
-    #push!(o.S, s)
+    a = mainnode!(o, s)
+    b = mainnode!(o, d)
+    link!(o, a, b)
     d ∉ o.S && visit!(o, d)
 end
 
