@@ -1,13 +1,16 @@
 using LightGraphs
 
-abstract type SystemStep end
-struct RegularStep <: SystemStep end
-struct BeginStep <: SystemStep end
-struct EndStep <: SystemStep end
+abstract type OrderStep end
+struct SystemStep <: OrderStep end
+struct ContextPreStep <: OrderStep end
+struct ContextPostStep <: OrderStep end
 
-const SystemNode = Node{System,SystemStep}
+const SystemNode = Node{System,OrderStep}
 
-update!(s::SystemNode) = update!(s.info)
+update!(s::SystemNode) = update!(s.info, s.step)
+update!(s::System, ::OrderStep) = update!(s)
+update!(s::System, ::ContextPreStep) = nothing
+update!(s::System, ::ContextPostStep) = nothing
 
 mutable struct Order
     systems::Vector{SystemNode}
@@ -29,15 +32,14 @@ vertex!(g::Order, n::SystemNode) = begin
     n
 end
 
-node!(o::Order, s::System, t::SystemStep) = vertex!(o, SystemNode(s, t))
-regularnode!(o::Order, s) = node!(o, s, RegularStep())
-beginnode!(o::Order, s) = node!(o, s, BeginStep())
-endnode!(o::Order, s) = node!(o, s, EndStep())
+node!(o::Order, s::System, t::OrderStep) = vertex!(o, SystemNode(s, t))
+node!(o::Order, s) = node!(o, s, SystemStep())
 
 link!(g::Order, a::SystemNode, b::SystemNode) = begin
     #@show "add edge $a ($(g.I[a])) -> $b ($(g.I[b]))"
     add_edge!(g.g, g.I[a], g.I[b])
 end
+link!(g::Order, a, b, c) = (link!(g, a, b); link!(g, b, c))
 
 visit!(o::Order, s::System) = begin
     #@show "visit $s"
@@ -53,9 +55,19 @@ end
 
 visit!(o::Order, s::System, d::System) = begin
     #@show "visit $s -> $d"
-    a = regularnode!(o, s)
-    b = regularnode!(o, d)
-    link!(o, a, b)
+    ns = node!(o, s)
+    if iscontext(d)
+        c0 = node!(o, d, ContextPreStep())
+        c1 = node!(o, d)
+        c2 = node!(o, d, ContextPostStep())
+        link!(o, c0, c1, c2)
+        link!(o, c0, ns)
+        link!(o, c1, ns)
+        link!(o, ns, c2)
+    else
+        nd = node!(o, d)
+        link!(o, nd, ns)
+    end
     d ∉ o.S && visit!(o, d)
 end
 
@@ -63,7 +75,7 @@ collect!(o::Order, s::System) = begin
     if o.outdated
         visit!(o, s)
         J = topological_sort_by_dfs(o.g)
-        o.systems = [o.V[i] for i in reverse(J)]
+        o.systems = [o.V[i] for i in J]
         o.outdated = false
     end
     o.systems

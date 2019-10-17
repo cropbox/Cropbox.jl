@@ -6,6 +6,9 @@
     clock(config) ~ ::Clock
 end
 
+iscontext(s::System) = false
+iscontext(s::Context) = true
+
 advance!(s::System, n=1) = begin
 	c = s.context
     for i in 1:n
