@@ -284,7 +284,6 @@ source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
     context ~ ::Cropbox.Context(extern)
     config(context) => context.config ~ ::Cropbox.Config
-    clock(context, config) => context.clock ~ ::Cropbox.Clock(noupdate)
 end
 mixins(::Type{<:System}) = (System,)
 mixins(s::S) where {S<:System} = mixins(S)
@@ -451,21 +450,10 @@ geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(gettag(v, :init))
 
 ####
 
-genupdate(nodes) = begin
-    @gensym c n i
-    @q begin
-        $([genupdateinit(n) for n in nodes]...)
-        $c = context
-        $n = if !isnothing($c) && !isnothing($c.context)
-            ($C.value($c.context.clock.tick) - $C.value($c.clock.tick)) / $C.value($c.clock.step) |> upreferred
-        else
-            1
-        end
-        for $i in 1:$n
-            $([genupdate(n) for n in nodes]...)
-        end
-        self
-    end
+genupdate(nodes) = @q begin
+    $([genupdateinit(n) for n in nodes]...)
+    $([genupdate(n) for n in nodes]...)
+    self
 end
 
 symname(v::VarInfo) = symname(v.system, v.name)

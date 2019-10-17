@@ -199,7 +199,7 @@ end
 
 #TODO: support convenient way to set up custom Clock
 #TODO: support unit reference again?
-import Cropbox: Clock, Context
+import Cropbox: Clock, Context, Config, Order, Queue
 @system SoilClock(Clock) begin
     step => 15u"minute" ~ preserve(u"hr", parameter)
 end
@@ -374,12 +374,12 @@ end
 # Theta_i,t+1 (m day-1) (Eq. 2.105)
 @system Soil begin
     context ~ ::SoilContext(extern)
-    weather(context): w ~ ::Weather
+    weather: w ~ ::Weather(extern)
 
     rooting_depth: d_r => 0 ~ track(u"m", override, extern) # d_root (m)
 
     # Partitioning of soil profile into several layers (2.4.1)
-    layers(context, clock, d_r): L => begin
+    layers(context, d_r): L => begin
         # Soil layer depth and cumulative thickness (2.4.2)
         n = 5
         s = 0.2u"m" # thickness
@@ -388,20 +388,20 @@ end
         L = Layer[]
         for i in 1:n
             z = ss + s/2 # depth
-            l = Layer(context=context, clock=clock, index=i, vwc_initial=θ, depth=z, rooting_depth=d_r, thickness=s, cumulative_thickness=ss)
+            l = Layer(context=context, index=i, vwc_initial=θ, depth=z, rooting_depth=d_r, thickness=s, cumulative_thickness=ss)
             push!(L, l)
             ss += s
         end
         L
     end ~ ::Vector{Layer}
 
-    surface_interface(context, clock, layer=L[1], precipitation, evaporation_actual, transpiration_actual) ~ ::SurfaceInterface
+    surface_interface(context, layer=L[1], precipitation, evaporation_actual, transpiration_actual) ~ ::SurfaceInterface
 
-    soil_interfaces(context, clock, L, Ta) => begin
-        [SoilInterface(context=context, clock=clock, upper_layer=a, lower_layer=b, transpiration_actual=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
+    soil_interfaces(context, L, Ta) => begin
+        [SoilInterface(context=context, upper_layer=a, lower_layer=b, transpiration_actual=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
     end ~ ::Vector{SoilInterface}
 
-    bedrock_interface(context, clock, layer=L[end]) ~ ::BedrockInterface
+    bedrock_interface(context, layer=L[end]) ~ ::BedrockInterface
 
     interfaces(L, surface_interface, soil_interfaces, bedrock_interface) => begin
         [surface_interface, soil_interfaces..., bedrock_interface]
@@ -444,12 +444,13 @@ end
 end
 
 @system SoilController begin
-    soil_context(context, config) ~ ::SoilContext
-    soil(context=soil_context, rooting_depth=0.3u"m") ~ ::Soil
+    weather(context, config): w ~ ::Weather
+    soil_context(context, config): sc ~ ::SoilContext
+    soil(context=soil_context, weather, rooting_depth=0.3u"m"): s ~ ::Soil
 end
 
 s = instance(SoilController, config=configure(
     :Clock => (:step => 24),
     :Weather => (:filename => "test/PyWaterBal.csv")
 ))
-run!(s, 80, v1="L[1].θ", v2="L[2].θ", v3="L[3].θ", v4="L[4].θ", v5="L[5].θ")
+run!(s, 80, v1="s.L[1].θ", v2="s.L[2].θ", v3="s.L[3].θ", v4="s.L[4].θ", v5="s.L[5].θ")
