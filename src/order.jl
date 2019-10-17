@@ -1,6 +1,11 @@
 using LightGraphs
 
-const SystemNode = Node{System}
+abstract type SystemStep end
+struct RegularStep <: SystemStep end
+struct BeginStep <: SystemStep end
+struct EndStep <: SystemStep end
+
+const SystemNode = Node{System,SystemStep}
 
 update!(s::SystemNode) = update!(s.info)
 
@@ -13,7 +18,7 @@ mutable struct Order
     S::Set{System}
 end
 
-Order() = Order(SystemNode[], true, DiGraph(), SystemNode[], Dict{SystemNode,Int}(), Set{SystemNode}())
+Order() = Order(SystemNode[], true, DiGraph(), SystemNode[], Dict{SystemNode,Int}(), Set{System}())
 
 vertex!(g::Order, n::SystemNode) = begin
     if !haskey(g.I, n)
@@ -24,9 +29,10 @@ vertex!(g::Order, n::SystemNode) = begin
     n
 end
 
-node!(g::Order, s::System, t::NodeStep) = vertex!(g, SystemNode(s, t))
-mainnode!(g::Order, s) = node!(g, s, MainStep())
-postnode!(g::Order, s) = node!(g, s, PostStep())
+node!(o::Order, s::System, t::SystemStep) = vertex!(o, SystemNode(s, t))
+regularnode!(o::Order, s) = node!(o, s, RegularStep())
+beginnode!(o::Order, s) = node!(o, s, BeginStep())
+endnode!(o::Order, s) = node!(o, s, EndStep())
 
 link!(g::Order, a::SystemNode, b::SystemNode) = begin
     #@show "add edge $a ($(g.I[a])) -> $b ($(g.I[b]))"
@@ -47,8 +53,8 @@ end
 
 visit!(o::Order, s::System, d::System) = begin
     #@show "visit $s -> $d"
-    a = mainnode!(o, s)
-    b = mainnode!(o, d)
+    a = regularnode!(o, s)
+    b = regularnode!(o, d)
     link!(o, a, b)
     d ∉ o.S && visit!(o, d)
 end
