@@ -7,7 +7,7 @@ struct ContextPostStep <: OrderStep end
 
 const SystemNode = Node{System,OrderStep}
 
-update!(s::SystemNode) = update!(s.info, s.step)
+update!(n::SystemNode) = update!(n.info, n.step)
 update!(s::System, ::SystemStep) = update!(s)
 
 mutable struct Order
@@ -78,3 +78,4 @@ collect!(o::Order, s::System) = begin
     end
     o.systems
 end
+collect!(s::System) = collect!(s.context.order, s)
