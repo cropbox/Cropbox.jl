@@ -218,6 +218,9 @@ gendecl(v::VarInfo{Nothing}) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
     emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
     args = emit.(v.args)
+    if istag(v, :option)
+        push!(args, @q $(esc(:option)) = _kwargs)
+    end
     decl = if isnothing(v.body)
         @q $(esc(v.type))(; $(args...))
     else
@@ -282,7 +285,10 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    context ~ ::Cropbox.Context(extern)
+    context => begin
+        kwargs = haskey(option, :config) ? (config=option[:config],) : ()
+        Cropbox.Context(; kwargs...)
+    end ~ ::Cropbox.Context(extern, option)
     config(context) => context.config ~ ::Cropbox.Config
 end
 mixins(::Type{<:System}) = (System,)
