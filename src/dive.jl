@@ -13,7 +13,7 @@ label(m::MenuItem) = isempty(m.label) ? m.name : m.label
 value(m::MenuItem) = m.value
 text(m::MenuItem) = begin
     l = label(m)
-    v = value(m)
+    v = value(m) |> repr
     isempty(l) ? v : "$l $(DARK_GRAY_FG("=")) $v"
 end
 
@@ -25,7 +25,8 @@ dive(s::System) = begin
             a = join(d[k], ", ")
             isempty(a) ? "$(BLUE_FG(n))" : "$(BLUE_FG(a)) $(DARK_GRAY_FG("($n)"))"
         end
-        nav(map(a -> MenuItem(string(a), label(a), s[a]), [collectible(s)..., updatable(s)...]), t)
+        l = fieldnames(typeof(s)) |> collect
+        nav(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
     end
     nav(s::Vector{<:System}, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
     nav(s::Produce, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(value(s))), t)
