@@ -92,6 +92,14 @@ using Plots
 using UnitfulRecipes
 unicodeplots()
 
+@system PhenologyController(Controller) begin
+	calendar(context) ~ ::Calendar
+	weather(context, calendar) ~ ::Weather
+	sun(context, calendar, weather) ~ ::Sun
+	soil(context) ~ ::Soil
+	phenology(context, calendar, weather, sun, soil): p ~ ::Phenology
+end
+
 init_pheno() = begin
 	o = configure(
 		:Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
@@ -101,27 +109,18 @@ init_pheno() = begin
 	#HACK: manually initate them due to Weather/Soil instances
 	#s = instance(Phenology; config=o)
 	#c = s.context
-	c = Cropbox.Context(; config=o)
-	l = Cropbox.Calendar(; context=c)
-    w = Weather(; context=c, calendar=l)
-	s = Sun(; context=c, calendar=l, weather=w)
-	r = Soil(; context=c)
-	p = Phenology(; context=c, calendar=l, weather=w, sun=s, soil=r)
-	append!(c.systems, [l, w, s, r, p])
-	c.order.outdated = true
-    update!(c)
-	p
+	instance(PhenologyController, config=o)
 end
 
 plot_pheno(v) = begin
 	s = init_pheno()
 	c = s.context
 	T = typeof(c.clock.tick')[]
-	V = typeof(s[v]')[]
+	V = typeof(s.p[v]')[]
 	while c.clock.tick' <= 300u"d"
 		#println("t = $(c.clock.tick): v = $(s[v])")
 		push!(T, c.clock.tick')
-		push!(V, s[v]')
+		push!(V, s.p[v]')
 		update!(s)
 	end
 	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))

@@ -264,25 +264,26 @@ using Plots
 using UnitfulRecipes
 unicodeplots()
 
+@system SunController(Controller) begin
+    calendar(context) ~ ::Calendar
+    weather(context, calendar) ~ ::Weather
+    sun(context, calendar, weather): s ~ ::Sun
+end
+
 plot_sun(v) = begin
 	o = configure(
 		:Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
 		:Weather => (:filename => "test/garlic/data/2007.wea"),
 	)
-	c = Cropbox.Context(; config=o)
-	l = Cropbox.Calendar(; context=c)
-	w = Weather(; context=c, calendar=l)
-	s = Sun(; context=c, calendar=l, weather=w)
-	append!(c.systems, [r, w, s])
-	c.order.outdated = true
-	update!(c)
+    s = instance(SunController, config=o)
+    c = s.context
 
 	T = typeof(c.clock.tick')[]
-	V = typeof(s[v]')[]
+	V = typeof(s.s[v]')[]
 	while c.clock.tick' <= 3u"d"
 		#println("t = $(c.clock.tick): v = $(s[v])")
 		push!(T, c.clock.tick')
-		push!(V, s[v]')
+		push!(V, s.s[v]')
 		update!(s)
 	end
 	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
