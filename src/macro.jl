@@ -252,7 +252,6 @@ end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
-genfieldnamesextern(infos) = Tuple(v.name for v in infos if istag(v, :extern))
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -276,7 +275,6 @@ genstruct(name, infos, incl) = begin
         $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
-        $C.fieldnamesextern(::Type{<:$S}) = $(genfieldnamesextern(infos))
         #HACK: redefine them to avoid world age problem
         @generated $C.collectible(::Type{<:$S}) = $(gencollectible(S))
         @generated $C.updatable(::Type{<:$S}) = $(genupdatable(S))
@@ -299,11 +297,9 @@ mixins(s::S) where {S<:System} = mixins(S)
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
-fieldnamesextern(::Type{<:System}) = ()
 
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
-fieldnamesextern(::S) where {S<:System} = fieldnamesextern(S)
 
 filtervar(type::Type, ::Type{S}) where {S<:System} = begin
     l = collect(zip(fieldnames(S), fieldtypes(S)))
