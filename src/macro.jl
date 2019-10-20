@@ -275,9 +275,6 @@ genstruct(name, infos, incl) = begin
         $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
-        #HACK: redefine them to avoid world age problem
-        @generated $C.collectible(::Type{<:$S}) = $(gencollectible(S))
-        @generated $C.updatable(::Type{<:$S}) = $(genupdatable(S))
         $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
@@ -301,27 +298,6 @@ fieldnamesalias(::Type{<:System}) = ()
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 
-filtervar(type::Type, ::Type{S}) where {S<:System} = begin
-    l = collect(zip(fieldnames(S), fieldtypes(S)))
-    F = fieldnamesunique(S)
-    filter!(p -> p[1] in F, l)
-    filter!(p -> p[2] <: type, l)
-end
-gencollectible(S) = @q begin
-    l = $C.filtervar(Union{$C.System, Vector{<:$C.System}, $C.Produce{<:Any}}, $S)
-    map(p -> p[1], l) |> Tuple{Vararg{Symbol}}
-end
-genupdatable(S) = @q begin
-    l = $C.filtervar($C.State, $S)
-    d = Symbol[]
-    for (n, T) in l
-        push!(d, n)
-    end
-    Tuple(d)
-end
-
-collectible(::S) where {S<:System} = collectible(S)
-updatable(::S) where {S<:System} = updatable(S)
 update!(s::Vector{<:System}) = update!.(s)
 update!(s) = s
 
