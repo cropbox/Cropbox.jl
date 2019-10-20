@@ -452,7 +452,8 @@ end
 end
 
 s = instance(SoilController, config=configure(
-    :Clock => (:step => 24),
+    :Clock => (:step => 1u"d"),
+    :SoilClock => (:step => 15u"minute"),
     :Weather => (:filename => "test/PyWaterBal.csv")
 ))
 run!(s, 80, v1="s.L[1].θ", v2="s.L[2].θ", v3="s.L[3].θ", v4="s.L[4].θ", v5="s.L[5].θ")
