@@ -33,22 +33,6 @@ firstnode(d::Dependency, v::VarInfo) = begin
     @error "no node found for $a"
 end
 
-invertices!(d::Dependency, v::VarInfo; kwargs...) = begin
-    #@show "innodes $v"
-    A = extract(v; kwargs...)
-    #@show "extracted = $A"
-    f(a::Symbol) = f(d.M[a])
-    f(v0::VarInfo) = begin
-        #@show v0
-        if v0 == v || v0.state == :Solve
-            prenode!(d, v0)
-        else
-            mainnode!(d, v0)
-        end
-    end
-    f.(A)
-end
-
 extract(v::VarInfo; equation=true, tag=true) = begin
     parse(v::Expr) = begin
         f(v) = begin
@@ -72,10 +56,22 @@ extract(v::VarInfo; equation=true, tag=true) = begin
     Set([eq..., par...]) |> collect
 end
 
-inlink!(d::Dependency, v, v1::VarNode; kwargs...) = begin
-    #@show "inlink! v = $v to v1 = $v1"
-    for v0 in invertices!(d, v; kwargs...)
-        link!(d, v0, v1)
+inlink!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
+    A = extract(v; kwargs...)
+    V = [d.M[a] for a in A]
+    for v0 in V
+        if v0 == v || v0.state == :Solve
+            n0 = prenode!(d, v0)
+            link!(d, n0, n)
+        elseif isnothing(v0.state) && istag(v0, :context)
+            n0 = mainnode!(d, v0)
+            n2 = postnode!(d, v0)
+            link!(d, n0, n)
+            link!(d, n, n2)
+        else
+            n1 = mainnode!(d, v0)
+            link!(d, n1, n)
+        end
     end
 end
 
