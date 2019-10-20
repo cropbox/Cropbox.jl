@@ -27,27 +27,6 @@ getproperty(s::System, n::String) = begin
     end, [s, split(n, ".")...])
 end
 
-import Base: collect
-import DataStructures: OrderedSet
-collect(s::System; recursive=true, exclude_self=false) = begin
-    S = OrderedSet{System}()
-    visit(s) = begin
-        T = OrderedSet{System}()
-        add(f::System) = push!(T, f)
-        add(f) = union!(T, f)
-        F = fieldnamesextern(s)
-        for n in collectible(s)
-            (n in F) && add(getfield(s, n))
-        end
-        filter!(s -> s ∉ S, T)
-        union!(S, T)
-        recursive && foreach(visit, T)
-    end
-    visit(s)
-    exclude_self && setdiff!(S, (s,))
-    S
-end
-
 #HACK: swap out state variable of mutable System after initialization
 setvar!(s::System, k::Symbol, v) = begin
     setfield!(s, k, v)
