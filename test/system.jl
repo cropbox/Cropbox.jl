@@ -58,8 +58,8 @@ using Unitful
         s = instance(SCallTypeUnit)
         @test s.a == 1u"m"
         @test s.b == 2u"m"
-        @test Cropbox.value(s.a) |> ustrip |> typeof == Int
-        @test Cropbox.value(s.b) |> ustrip |> typeof == Int
+        @test s.a' |> ustrip |> typeof == Int
+        @test s.b' |> ustrip |> typeof == Int
     end
 
     @testset "accumulate" begin
@@ -506,7 +506,7 @@ using Unitful
     #         x(x) => ((x^2 + 1) / 2) ~ solve
     #     end
     #     s = instance(SolveOrder0)
-    #     @test isapprox(Cropbox.value(s.x), 1; atol=1e-3)
+    #     @test isapprox(s.x', 1; atol=1e-3)
     # end
 
     @testset "solve bisect with unit" begin

@@ -15,14 +15,14 @@
     H = Float64[]
     P = Float64[]
     #TODO: isless() for Var with proper promote_rule
-    while Cropbox.value(s.t) <= 20.0u"hr"
+    while s.t' <= 20.0u"hr"
         #println("t = $(s.t): H = $(s.H), P = $(s.P)")
-        push!(T, Cropbox.value(s.t) |> ustrip)
-        push!(H, Cropbox.value(s.H))
-        push!(P, Cropbox.value(s.P))
+        push!(T, s.t' |> ustrip)
+        push!(H, s.H')
+        push!(P, s.P')
         update!(s)
     end
-    @test Cropbox.value(s.t) > 20.0u"hr"
+    @test s.t' > 20.0u"hr"
     using Plots
     unicodeplots()
     plot(T, [H P], lab=["Prey" "Predator"], xlab="Time", ylab="Population", xlim=(0, T[end]), ylim=(0, ceil(maximum([H P]))))

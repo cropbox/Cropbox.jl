@@ -416,19 +416,19 @@ end
 
     # Actual transpiration (2.4.4)
     volumetric_water_content_root_zone(L, d_r): θ_r => begin
-        sum([Cropbox.value(l.𝚯_r) for l in L]) / d_r
+        sum([l.𝚯_r' for l in L]) / d_r
     end ~ track # Theta_v,root (m3 m-3)
 
     volumetric_water_content_root_zone_wilting_point(L, d_r): θ_r_wp => begin
-        sum([Cropbox.value(l.𝚯_r_wp) for l in L]) / d_r
+        sum([l.𝚯_r_wp' for l in L]) / d_r
     end ~ track # (m3 m-3)
 
     volumetric_water_content_root_zone_field_capacity(L, d_r): θ_r_fc => begin
-        sum([Cropbox.value(l.𝚯_r_fc) for l in L]) / d_r
+        sum([l.𝚯_r_fc' for l in L]) / d_r
     end ~ track # (m3 m-3)
 
     volumetric_water_content_root_zone_saturation(L, d_r): θ_r_sat => begin
-        sum([Cropbox.value(l.𝚯_r_sat) for l in L]) / d_r
+        sum([l.𝚯_r_sat' for l in L]) / d_r
     end ~ track # (m3 m-3)
 
     transpiration_reduction_factor(θ_r, θ_r_wp, θ_r_sat): RD_t => begin

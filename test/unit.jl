@@ -39,7 +39,7 @@ using Unitful
         end
         s = instance(SNounitCall)
         @test s.a == u"1m"
-        @test Cropbox.value(s.b)(1) == 2
+        @test s.b'(1) == 2
         @test s.c == 2
     end
 end

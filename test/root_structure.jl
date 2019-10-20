@@ -58,11 +58,11 @@ using Unitful
 
     s = instance(Root)
     #d = []
-    while Cropbox.value(s.context.clock.tick) <= 30u"hr"
+    while s.context.clock.tick' <= 30u"hr"
         update!(s)
         #push!(d, (transform(collect(r))))
     end
-    @test Cropbox.value(s.context.clock.tick) > 30u"hr"
+    @test s.context.clock.tick' > 30u"hr"
     #render(r)
     #write(d, tmp_path/'root.json')
 end

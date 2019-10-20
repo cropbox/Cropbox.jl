@@ -277,12 +277,12 @@ plot_sun(v) = begin
 	c.order.outdated = true
 	update!(c)
 
-	T = typeof(Cropbox.value(c.clock.tick))[]
-	V = typeof(Cropbox.value(s[v]))[]
-	while Cropbox.value(c.clock.tick) <= 3u"d"
+	T = typeof(c.clock.tick')[]
+	V = typeof(s[v]')[]
+	while c.clock.tick' <= 3u"d"
 		#println("t = $(c.clock.tick): v = $(s[v])")
-		push!(T, Cropbox.value(c.clock.tick))
-		push!(V, Cropbox.value(s[v]))
+		push!(T, c.clock.tick')
+		push!(V, s[v]')
 		update!(s)
 	end
 	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))

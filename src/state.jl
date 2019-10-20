@@ -7,6 +7,9 @@ value(v) = v
 value(s::State) = s.value
 value(S::Vector{<:State}) = value.(S)
 
+import Base: adjoint
+adjoint(s::State) = value(s)
+
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 
 import Base: getindex, length, iterate

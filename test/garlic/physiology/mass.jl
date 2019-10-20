@@ -33,8 +33,8 @@
     sheath_mass(x=nodal_units["*"].sheath.mass) => begin # for garlic
         # dt the addition of C_reserve here only serves to maintain a total for the mass. It could have just as easily been added to total mass.
         # C_reserve is added to stem here to represent soluble TNC, SK
-        #sum(typeof(0.0u"g")[Cropbox.value!(nu.stem.mass) for nu in NU]) + self.p.carbon.reserve
-        #sum(typeof(0.0u"g")[Cropbox.value!(nu.sheath.mass) for nu in NU]) + self.p.carbon.reserve
+        #sum(typeof(0.0u"g")[nu.stem.mass' for nu in NU]) + self.p.carbon.reserve
+        #sum(typeof(0.0u"g")[nu.sheath.mass' for nu in NU]) + self.p.carbon.reserve
         #FIXME carbon not ready yet
         sum(x)
     end ~ track(u"g")
@@ -46,13 +46,13 @@
     # this is the total mass of active leaves that are not entirely dead (e.g., dropped).
     # It would be slightly greather than the green leaf mass because some senesced leaf area is included until they are complely aged (dead), SK
     active_leaf_mass(nodal_units, x=nodal_units["*"].leaf.mass) => begin
-        sum(typeof(0.0u"g")[Cropbox.value(nu.leaf.mass) for nu in nodal_units if !Cropbox.value(nu.leaf.dropped)])
+        sum(typeof(0.0u"g")[nu.leaf.mass' for nu in nodal_units if !nu.leaf.dropped'])
     end ~ track(u"g")
     #TODO: support complex composition (i.e. `!`(leaf.dropped)) in condition syntax?
     #active_leaf_mass(x=nodal_units["*/!leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
 
     dropped_leaf_mass(nodal_units, x=nodal_units["*"].leaf.mass) => begin
-        sum(typeof(0.0u"g")[Cropbox.value(nu.leaf.mass) for nu in nodal_units if Cropbox.value(nu.leaf.dropped)])
+        sum(typeof(0.0u"g")[nu.leaf.mass' for nu in nodal_units if nu.leaf.dropped'])
     end ~ track(u"g")
     #TODO: support more referencing options (i.e. "leaf.dropped") in condition syntax?
     #dropped_leaf(x=nodal_units["*/leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
