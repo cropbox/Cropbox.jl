@@ -192,7 +192,7 @@ end
 genfield(v::VarInfo) = genfield(genvartype(v), symname(v), v.alias)
 genfields(infos) = [genfield(v) for v in infos]
 
-genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
+genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect |> reverse
 gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
