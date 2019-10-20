@@ -377,7 +377,7 @@ end
     context ~ ::SoilContext(override)
     weather: w ~ ::Weather(override)
 
-    rooting_depth: d_r => 0 ~ track(u"m", override, extern) # d_root (m)
+    rooting_depth: d_r ~ track(u"m", override) # d_root (m)
 
     # Partitioning of soil profile into several layers (2.4.1)
     layers(context, d_r): L => begin
@@ -447,7 +447,8 @@ end
 @system SoilController(Controller) begin
     weather(context, config): w ~ ::Weather
     soil_context(context, config): sc ~ ::SoilContext(context)
-    soil(context=soil_context, weather, rooting_depth=0.3u"m"): s ~ ::Soil
+    rooting_depth => 0.3 ~ track(u"m")
+    soil(context=soil_context, weather, rooting_depth): s ~ ::Soil
 end
 
 s = instance(SoilController, config=configure(
