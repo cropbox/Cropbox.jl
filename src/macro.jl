@@ -384,7 +384,7 @@ macro infos(head, body)
     geninfos(parsehead(head)..., body)
 end
 
-export @system
+export @system, update!
 
 geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))

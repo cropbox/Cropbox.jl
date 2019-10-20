@@ -71,7 +71,7 @@ run!(s::System, n=1; names...) = begin
 	V = (k => [value(getproperty(s, n))] for (k, n) in pairs(N))
 	df = DataFrame(; V...)
 	for i in 2:n
-		advance!(s)
+		update!(s)
 		r = Tuple(value(getproperty(s, n)) for n in N)
 		push!(df, r)
 	end

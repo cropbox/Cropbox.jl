@@ -109,7 +109,7 @@ init_pheno() = begin
 	p = Phenology(; context=c, calendar=l, weather=w, sun=s, soil=r)
 	append!(c.systems, [l, w, s, r, p])
 	c.order.outdated = true
-    advance!(c)
+    update!(c)
 	p
 end
 
@@ -122,7 +122,7 @@ plot_pheno(v) = begin
 		#println("t = $(c.clock.tick): v = $(s[v])")
 		push!(T, Cropbox.value(c.clock.tick))
 		push!(V, Cropbox.value(s[v]))
-		advance!(s)
+		update!(s)
 	end
 	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
 end

@@ -275,7 +275,7 @@ plot_sun(v) = begin
 	s = Sun(; context=c, calendar=l, weather=w)
 	append!(c.systems, [r, w, s])
 	c.order.outdated = true
-	advance!(c)
+	update!(c)
 
 	T = typeof(Cropbox.value(c.clock.tick))[]
 	V = typeof(Cropbox.value(s[v]))[]
@@ -283,7 +283,7 @@ plot_sun(v) = begin
 		#println("t = $(c.clock.tick): v = $(s[v])")
 		push!(T, Cropbox.value(c.clock.tick))
 		push!(V, Cropbox.value(s[v]))
-		advance!(s)
+		update!(s)
 	end
 	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
 end

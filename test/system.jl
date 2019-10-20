@@ -69,11 +69,11 @@ using Unitful
         end
         s = instance(SAccumulate)
         @test s.a == 1 && s.b == 0
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 2
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 4
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 6
     end
 
@@ -84,11 +84,11 @@ using Unitful
         end
         s = instance(SAccumulateXRef)
         @test s.a == 0 && s.b == 0
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 1
-        advance!(s)
+        update!(s)
         @test s.a == 3 && s.b == 3
-        advance!(s)
+        update!(s)
         @test s.a == 7 && s.b == 7
     end
 
@@ -103,11 +103,11 @@ using Unitful
         end
         s1 = instance(SAccumulateXrefMirror1); s2 = instance(SAccumulateXrefMirror2)
         @test s1.a == 0 == s2.b && s1.b == 0 == s2.a
-        advance!(s1); advance!(s2)
+        update!(s1); update!(s2)
         @test s1.a == 1 == s2.b && s1.b == 2 == s2.a
-        advance!(s1); advance!(s2)
+        update!(s1); update!(s2)
         @test s1.a == 4 == s2.b && s1.b == 5 == s2.a
-        advance!(s1); advance!(s2)
+        update!(s1); update!(s2)
         @test s1.a == 10 == s2.b && s1.b == 11 == s2.a
     end
 
@@ -120,11 +120,11 @@ using Unitful
         end
         s = instance(SAccumulateTime)
         @test s.a == 1 && s.b == 0 && s.c == 0
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 2 && s.c == 1
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 4 && s.c == 2
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 6 && s.c == 3
     end
 
@@ -136,11 +136,11 @@ using Unitful
         end
         s = instance(SAccumulateTransport)
         @test s.a == 10 && s.b == 0 && s.c == 0
-        advance!(s)
+        update!(s)
         @test s.a == 0 && s.b == 10 && s.c == 0
-        advance!(s)
+        update!(s)
         @test s.a == 0 && s.b == 0 && s.c == 10
-        advance!(s)
+        update!(s)
         @test s.a == 0 && s.b == 0 && s.c == 10
     end
 
@@ -154,11 +154,11 @@ using Unitful
         s = instance(SAccumulateDistribute)
         c = s.context
         @test c.clock.tick == 1u"hr" && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
-        advance!(s)
+        update!(s)
         @test c.clock.tick == 2u"hr" && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
-        advance!(s)
+        update!(s)
         @test c.clock.tick == 3u"hr" && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
-        advance!(s)
+        update!(s)
         @test c.clock.tick == 4u"hr" && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
     end
 
@@ -170,9 +170,9 @@ using Unitful
         end
         s = instance(SCapture)
         @test s.b == 0 && s.c == 0
-        advance!(s)
+        update!(s)
         @test s.b == 2 && s.c == 2
-        advance!(s)
+        update!(s)
         @test s.b == 2 && s.c == 4
     end
 
@@ -185,9 +185,9 @@ using Unitful
         end
         s = instance(SCaptureTime)
         @test s.b == 0 && s.c == 0
-        advance!(s)
+        update!(s)
         @test s.b == 4 && s.c == 4
-        advance!(s)
+        update!(s)
         @test s.b == 4 && s.c == 8
     end
 
@@ -199,7 +199,7 @@ using Unitful
         end
         s = instance(SPreserve)
         @test s.a == 1 && s.b == 0 && s.c == 0
-        advance!(s)
+        update!(s)
         @test s.a == 1 && s.b == 2 && s.c == 0
     end
 
@@ -209,7 +209,7 @@ using Unitful
         end
         s = instance(SParameter)
         @test s.a == 1
-        advance!(s)
+        update!(s)
         @test s.a == 1
     end
 
@@ -288,7 +288,7 @@ using Unitful
         end
         s = instance(SDriveDict)
         @test s.context.clock.tick == 1u"hr" && s.a == 10u"hr"
-        advance!(s)
+        update!(s)
         @test s.context.clock.tick == 2u"hr" && s.a == 20u"hr"
     end
 
@@ -307,7 +307,7 @@ using Unitful
         end
         s = instance(SDriveDataFrame)
         @test s.context.clock.tick == 1u"hr" && s.a == 10
-        advance!(s)
+        update!(s)
         @test s.context.clock.tick == 2u"hr" && s.a == 20
     end
 
@@ -330,10 +330,10 @@ using Unitful
         sc = instance(SProduceController)
         s = sc.s
         @test length(s.a) == 0
-        advance!(s)
+        update!(sc)
         @test length(s.a) == 1
         @test length(s.a[1].a) == 0
-        advance!(s)
+        update!(sc)
         @test length(s.a) == 2
         @test length(s.a[1].a) == 1
         @test length(s.a[2].a) == 0
@@ -350,10 +350,10 @@ using Unitful
         sc = instance(SProduceKwargsController)
         s = sc.s
         @test length(s.a) == 0 && s.i == 0u"hr"
-        advance!(s)
+        update!(sc)
         @test length(s.a) == 1 && s.i == 0u"hr"
         @test length(s.a[1].a) == 0 && s.a[1].i == 1u"hr"
-        advance!(s)
+        update!(sc)
         @test length(s.a) == 2 && s.i == 0u"hr"
         @test length(s.a[1].a) == 1 && s.a[1].i == 1u"hr"
         @test length(s.a[2].a) == 0 && s.a[2].i == 2u"hr"
@@ -370,7 +370,7 @@ using Unitful
         sc = instance(SProduceNothingController)
         s = sc.s
         @test length(s.a) == 0
-        advance!(s)
+        update!(sc)
         @test length(s.a) == 0
     end
 
@@ -389,19 +389,19 @@ using Unitful
         sc = instance(SProduceQueryIndexController)
         s = sc.s
         @test length(s.p) == 0
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 1
         @test s.a == 1 # (1)
         @test s.b == 1 # (1)
         @test s.c == 1 # (1*)
         @test s.d == 1 # (1*)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 2
         @test s.a == 3 # (1 + 2)
         @test s.b == 5 # ((1 ~ 2) + 2)
         @test s.c == 1 # (1* + 2)
         @test s.d == 2 # (1 + 2*)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 3
         @test s.a == 6 # (1 + 2 + 3)
         @test s.b == 17 # ((1 ~ ((2 ~ 3) + 3) + (2 ~ 3) + 3)
@@ -425,25 +425,25 @@ using Unitful
         sc = instance(SProduceQueryConditionTrackBoolController)
         s = sc.s
         @test length(s.p) == 0
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 1
         @test s.a == 1 # (#1)
         @test s.b == 1 # (#1)
         @test s.c == 1 # (#1*)
         @test s.d == 1 # (#1*)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 2
         @test s.a == 1 # (#1 + 2)
         @test s.b == 1 # (#1 ~ 2) + 2)
         @test s.c == 1 # (#1* + 2)
         @test s.d == 1 # (#1* + 2)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 3
         @test s.a == 4 # (#1 + 2 + #3)
         @test s.b == 13 # ((#1 ~ ((2 ~ #3) + #3) + (2 ~ #3) + #3)
         @test s.c == 1 # (1* + 2 + 3)
         @test s.d == 3 # (1 + 2 + #3*)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 4
         @test s.a == 4 # (#1 + 2 + #3 + 4)
         @test s.b == 13 # ((#1 ~ (2 ~ (#3 ~ 4)) + (#3 ~ 4) + 4) + (2 ~ (#3 ~ 4)) + (#3 ~ 4) + 4)
@@ -467,25 +467,25 @@ using Unitful
         sc = instance(SProduceQueryConditionFlagController)
         s = sc.s
         @test length(s.p) == 0
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 1
         @test s.a == 0 # (.1)
         @test s.b == 0 # (.1)
         @test s.c == 0 # (.1*)
         @test s.d == 0 # (.1*)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 2
         @test s.a == 1 # (#1 + .2)
         @test s.b == 1 # (#1 ~ .2) + .2)
         @test s.c == 1 # (#1* + .2)
         @test s.d == 1 # (#1* + .2)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 3
         @test s.a == 1 # (#1 + 2 + .3)
         @test s.b == 1 # ((#1 ~ ((2 ~ .3) + .3) + (2 ~ .3) + .3)
         @test s.c == 1 # (#1* + 2 + .3)
         @test s.d == 1 # (#1* + 2 + .3)
-        advance!(s)
+        update!(sc)
         @test length(s.p) == 4
         @test s.a == 4 # (#1 + 2 + #3 + .4)
         @test s.b == 13 # ((#1 ~ (2 ~ (#3 ~ .4)) + (#3 ~ .4) + .4) + (2 ~ (#3 ~ .4)) + (#3 ~ .4) + .4)
@@ -523,7 +523,7 @@ using Unitful
         s = instance(SClock)
         # after one advance! in instance()
         @test s.context.clock.tick == 1u"hr"
-        advance!(s)
+        update!(s)
         @test s.context.clock.tick == 2u"hr"
     end
 
@@ -534,7 +534,7 @@ using Unitful
         s = instance(SClockConfig; config=o)
         # after one advance! in instance()
         @test s.context.clock.tick == 10u"hr"
-        advance!(s)
+        update!(s)
         @test s.context.clock.tick == 20u"hr"
     end
 
@@ -547,7 +547,7 @@ using Unitful
         # after one advance! in instance()
         @test s.init == t0
         @test s.time == ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")
-        advance!(s)
+        update!(s)
         @test s.time == ZonedDateTime(2011, 10, 29, 2, tz"Asia/Seoul")
     end
 

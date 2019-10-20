@@ -59,7 +59,7 @@ using Unitful
     s = instance(Root)
     #d = []
     while Cropbox.value(s.context.clock.tick) <= 30u"hr"
-        advance!(s)
+        update!(s)
         #push!(d, (transform(collect(r))))
     end
     @test Cropbox.value(s.context.clock.tick) > 30u"hr"

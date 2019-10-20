@@ -20,7 +20,7 @@
         push!(T, Cropbox.value(s.t) |> ustrip)
         push!(H, Cropbox.value(s.H))
         push!(P, Cropbox.value(s.P))
-        advance!(s)
+        update!(s)
     end
     @test Cropbox.value(s.t) > 20.0u"hr"
     using Plots
