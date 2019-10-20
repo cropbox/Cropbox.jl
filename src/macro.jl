@@ -524,7 +524,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
     end
 end
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
-    if istag(v, :override, :noupdate)
+    if istag(v, :override, :skip)
         nothing
     else
         @q $C.update!($(v.name))
@@ -546,7 +546,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
-genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :noupdate) ? genvalue(v) : genstore(v)
+genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? genvalue(v) : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
 genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin

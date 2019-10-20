@@ -252,8 +252,8 @@ iscontext(::SoilContext) = true
     total_head(Hm, Hg): H => Hm + Hg ~ track(u"m") # H_i (m)
 
     # Water content (2.4.10)
-    water_flux_in: qi => 0 ~ track(u"m/d", noupdate) # q_i (m day-1)
-    water_flux_out: qo => 0 ~ track(u"m/d", noupdate) # q_o (m day-1)
+    water_flux_in: qi => 0 ~ track(u"m/d", skip) # q_i (m day-1)
+    water_flux_out: qo => 0 ~ track(u"m/d", skip) # q_o (m day-1)
     water_flux_net(qi, qo): q̂ => qi - qo ~ track(u"m/d") # q^hat_i (m day-1)
     water_content(q̂): 𝚯 ~ accumulate(init=𝚯_i, u"m") # Theta_i (m)
 
@@ -406,7 +406,7 @@ end
 
     interfaces(L, surface_interface, soil_interfaces, bedrock_interface) => begin
         [surface_interface, soil_interfaces..., bedrock_interface]
-    end ~ ::Vector{System}(noupdate)
+    end ~ ::Vector{System}(skip)
 
     # Actual evaporation (2.4.3)
     evaporation_reduction_factor(θ=L[1].θ, θ_sat=L[1].θ_sat): RD_e => begin
