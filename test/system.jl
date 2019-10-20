@@ -518,8 +518,7 @@ using Unitful
     end
 
     @testset "clock" begin
-        @system SClock(Controller) begin
-        end
+        @system SClock(Controller)
         s = instance(SClock)
         # after one advance! in instance()
         @test s.context.clock.tick == 1u"hr"
@@ -528,8 +527,7 @@ using Unitful
     end
 
     @testset "clock with config" begin
-        @system SClockConfig(Controller) begin
-        end
+        @system SClockConfig(Controller)
         o = configure(:Clock => (#=:init => 5,=# step => 10))
         s = instance(SClockConfig; config=o)
         # after one advance! in instance()
@@ -539,8 +537,7 @@ using Unitful
     end
 
     @testset "calendar" begin
-        @system SCalendar(Calendar, Controller) begin
-        end
+        @system SCalendar(Calendar, Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         o = configure(:Calendar => (:init => t0))
         s = instance(SCalendar; config=o)

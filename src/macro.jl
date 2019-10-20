@@ -355,7 +355,7 @@ sortednodes(name, infos) = begin
     sort(d)
 end
 
-macro system(head, body)
+macro system(head, body=:(begin end))
     gensystem(head, body)
 end
 
