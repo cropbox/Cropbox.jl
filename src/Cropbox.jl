@@ -12,6 +12,7 @@ include("order.jl")
 include("queue.jl")
 include("clock.jl")
 include("context.jl")
+include("controller.jl")
 include("calendar.jl")
 
 include("util.jl")

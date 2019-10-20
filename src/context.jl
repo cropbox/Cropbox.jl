@@ -78,9 +78,4 @@ run!(s::System, n=1; names...) = begin
 	df
 end
 
-instance(S::Type{<:System}; config=configure(), kwargs...) = begin
-    s = S(; config=config, kwargs...)
-    advance!(s)
-end
-
-export advance!, run!, instance
+export advance!, run!

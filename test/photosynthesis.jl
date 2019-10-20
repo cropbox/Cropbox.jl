@@ -500,6 +500,11 @@ config = configure()
 # """
 
 @testset "photosynthesis" begin
-    ge = instance(GasExchange; config=config)
+    @system GasExchangeController(Controller) begin
+        weather(context): w ~ ::Weather
+        soil(context): s ~ ::Soil
+        gasexchange(context, weather, soil): ge ~ ::GasExchange
+    end
+    ge = instance(GasExchangeController; config=config)
     #write(transform(collect(ge)), tmp_path/"gasexchange.json")
 end

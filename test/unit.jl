@@ -2,7 +2,7 @@ using Unitful
 
 @testset "unit" begin
     @testset "unit" begin
-        @system SUnit begin
+        @system SUnit(Controller) begin
             a => 2 ~ track(u"m")
             b => 1 ~ track(u"s")
             c(a, b) => a / b ~ track(u"m/s")
@@ -12,7 +12,7 @@ using Unitful
     end
 
     @testset "nounit" begin
-        @system SNounit begin
+        @system SNounit(Controller) begin
             a => 1 ~ track(u"m")
             b(a) => ustrip(a) ~ track
         end
@@ -22,7 +22,7 @@ using Unitful
     end
 
     @testset "nounit with alias" begin
-        @system SNounitAlias begin
+        @system SNounitAlias(Controller) begin
             a: aa => 1 ~ track(u"m")
             b(aa): bb => ustrip(aa) ~ track
         end
@@ -32,7 +32,7 @@ using Unitful
     end
 
     @testset "nounit with call" begin
-        @system SNounitCall begin
+        @system SNounitCall(Controller) begin
             a => 1 ~ track(u"m")
             b(a; x) => (ustrip(a) + x) ~ call
             c(b) => b(1) ~ track

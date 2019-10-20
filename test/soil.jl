@@ -444,9 +444,9 @@ end
     precipitation(w.R): R ~ track(u"m/d")
 end
 
-@system SoilController begin
+@system SoilController(Controller) begin
     weather(context, config): w ~ ::Weather
-    soil_context(context, config): sc ~ ::SoilContext
+    soil_context(context, config): sc ~ ::SoilContext(context)
     soil(context=soil_context, weather, rooting_depth=0.3u"m"): s ~ ::Soil
 end
 

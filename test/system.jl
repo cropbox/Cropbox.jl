@@ -4,7 +4,7 @@ using Unitful
 
 @testset "system" begin
     @testset "derive" begin
-        @system SDerive begin
+        @system SDerive(Controller) begin
             a => 1 ~ track
             b => 2 ~ track
             c(a, b) => a + b ~ track
@@ -14,14 +14,14 @@ using Unitful
     end
 
     @testset "derive with cross reference" begin
-        @test_throws LoadError @eval @system SDeriveXRef begin
+        @test_throws LoadError @eval @system SDeriveXRef(Controller) begin
             a(b) => b ~ track
             b(a) => a ~ track
         end
     end
 
     @testset "call" begin
-        @system SCall begin
+        @system SCall(Controller) begin
             fa(; x) => x ~ call
             a(fa) => fa(1) ~ track
             fb(i; x) => i + x ~ call
@@ -34,7 +34,7 @@ using Unitful
     end
 
     @testset "call with unit" begin
-        @system SCallUnit begin
+        @system SCallUnit(Controller) begin
             fa(; x(u"m")) => x ~ call(u"m")
             a(fa) => fa(1u"m") ~ track(u"m")
             fb(i; x(u"m")) => i + x ~ call(u"m")
@@ -47,7 +47,7 @@ using Unitful
     end
 
     @testset "call with type and unit" begin
-        @system SCallTypeUnit begin
+        @system SCallTypeUnit(Controller) begin
             fa(; x::Int(u"m")) => x ~ call::Int(u"m")
             a(fa) => fa(1u"m") ~ track::Int(u"m")
             fb(i; x::Int(u"m")) => i + x ~ call::Int(u"m")
@@ -62,7 +62,7 @@ using Unitful
     end
 
     @testset "accumulate" begin
-        @system SAccumulate begin
+        @system SAccumulate(Controller) begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
         end
@@ -77,7 +77,7 @@ using Unitful
     end
 
     @testset "accumulate with cross reference" begin
-        @system SAccumulateXRef begin
+        @system SAccumulateXRef(Controller) begin
             a(b) => b + 1 ~ accumulate
             b(a) => a + 1 ~ accumulate
         end
@@ -92,11 +92,11 @@ using Unitful
     end
 
     @testset "accumulate with cross reference mirror" begin
-        @system SAccumulateXrefMirror1 begin
+        @system SAccumulateXrefMirror1(Controller) begin
             a(b) => b + 1 ~ accumulate
             b(a) => a + 2 ~ accumulate
         end
-        @system SAccumulateXrefMirror2 begin
+        @system SAccumulateXrefMirror2(Controller) begin
             a(b) => b + 2 ~ accumulate
             b(a) => a + 1 ~ accumulate
         end
@@ -111,7 +111,7 @@ using Unitful
     end
 
     @testset "accumulate with time" begin
-        @system SAccumulateTime begin
+        @system SAccumulateTime(Controller) begin
             t(x=context.clock.tick) => 0.5x ~ track(u"hr")
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
@@ -128,7 +128,7 @@ using Unitful
     end
 
     @testset "accumulate transport" begin
-        @system SAccumulateTransport begin
+        @system SAccumulateTransport(Controller) begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)
             b(a, b, c) => max(a - b, 0) - max(b - c, 0) ~ accumulate
             c(b, c) => max(b - c, 0) ~ accumulate
@@ -144,7 +144,7 @@ using Unitful
     end
 
     @testset "accumulate distribute" begin
-        @system SAccumulateDistribute begin
+        @system SAccumulateDistribute(Controller) begin
             s(x=context.clock.tick) => (100u"hr^-1" * x) ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
@@ -162,7 +162,7 @@ using Unitful
     end
 
     @testset "capture" begin
-        @system SCapture begin
+        @system SCapture(Controller) begin
             a => 1 ~ track
             b(a) => a + 1 ~ capture
             c(a) => a + 1 ~ accumulate
@@ -176,7 +176,7 @@ using Unitful
     end
 
     @testset "capture with time" begin
-        @system SCaptureTime begin
+        @system SCaptureTime(Controller) begin
             t(x=context.clock.tick) => 2x ~ track(u"hr")
             a => 1 ~ track
             b(a) => a + 1 ~ capture(time=t)
@@ -191,7 +191,7 @@ using Unitful
     end
 
     @testset "preserve" begin
-        @system SPreserve begin
+        @system SPreserve(Controller) begin
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(b) => b ~ preserve
@@ -203,7 +203,7 @@ using Unitful
     end
 
     @testset "parameter" begin
-        @system SParameter begin
+        @system SParameter(Controller) begin
             a => 1 ~ preserve(parameter)
         end
         s = instance(SParameter)
@@ -213,7 +213,7 @@ using Unitful
     end
 
     @testset "parameter with config" begin
-        @system SParameterConfig begin
+        @system SParameterConfig(Controller) begin
             a => 1 ~ preserve(parameter)
         end
         o = configure(SParameterConfig => (:a => 2))
@@ -222,7 +222,7 @@ using Unitful
     end
 
     @testset "parameter with config alias" begin
-        @system SParameterConfigAlias begin
+        @system SParameterConfigAlias(Controller) begin
             a: aa => 1 ~ preserve(parameter)
             bb: b => 1 ~ preserve(parameter)
         end
@@ -233,7 +233,7 @@ using Unitful
     end
 
     @testset "interpolate" begin
-        @system SInterpolate begin
+        @system SInterpolate(Controller) begin
             m => ([1 => 10, 2 => 20, 3 => 30]) ~ interpolate
             n(m) ~ interpolate(reverse)
             a(m) => m(2.5) ~ track
@@ -245,7 +245,7 @@ using Unitful
     end
 
     @testset "interpolate with matrix" begin
-        @system SInterpolateMatrix begin
+        @system SInterpolateMatrix(Controller) begin
             m => ([1 10; 2 20; 3 30]) ~ interpolate
             n(m) ~ interpolate(reverse)
             a(m) => m(2.5) ~ track
@@ -257,7 +257,7 @@ using Unitful
     end
 
     @testset "interpolate with config" begin
-        @system SInterpolateConfig begin
+        @system SInterpolateConfig(Controller) begin
             m => ([1 => 10]) ~ interpolate(parameter)
             n(m) ~ interpolate(reverse)
             a(m) => m(2.5) ~ track
@@ -270,7 +270,7 @@ using Unitful
     end
 
     @testset "interpolate with unit" begin
-        @system SInterpolateUnit begin
+        @system SInterpolateUnit(Controller) begin
             m => ([1 => 10, 2 => 20, 3 => 30]) ~ interpolate(u"s", knotunit=u"m")
             n(m) ~ interpolate(u"m", reverse)
             a(m) => m(2.5u"m") ~ track(u"s")
@@ -282,7 +282,7 @@ using Unitful
     end
 
     @testset "drive with dict" begin
-        @system SDriveDict begin
+        @system SDriveDict(Controller) begin
             a(t=context.clock.tick) => Dict(:a => 10t) ~ drive(u"hr")
         end
         s = instance(SDriveDict)
@@ -292,7 +292,7 @@ using Unitful
     end
 
     @testset "drive with key" begin
-        @system SDriveKey begin
+        @system SDriveKey(Controller) begin
             a => Dict(:b => 1) ~ drive(key=:b)
         end
         s = instance(SDriveKey)
@@ -300,7 +300,7 @@ using Unitful
     end
 
     @testset "drive with dataframe" begin
-        @system SDriveDataFrame begin
+        @system SDriveDataFrame(Controller) begin
             df => DataFrame(t=(0:4)u"hr", a=0:10:40) ~ preserve::DataFrame
             a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
@@ -311,7 +311,7 @@ using Unitful
     end
 
     @testset "flag" begin
-        @system SFlag begin
+        @system SFlag(Controller) begin
             a => true ~ flag
             b => false ~ flag
         end
@@ -323,7 +323,11 @@ using Unitful
         @system SProduce begin
             a => produce(SProduce) ~ produce
         end
-        s = instance(SProduce)
+        @system SProduceController(Controller) begin
+            s(context) ~ ::SProduce
+        end
+        sc = instance(SProduceController)
+        s = sc.s
         @test length(s.a) == 0
         advance!(s)
         @test length(s.a) == 1
@@ -339,7 +343,11 @@ using Unitful
             a => produce(SProduceKwargs) ~ produce
             i(t=context.clock.tick) => t ~ preserve(u"hr")
         end
-        s = instance(SProduceKwargs)
+        @system SProduceKwargsController(Controller) begin
+            s(context) ~ ::SProduceKwargs
+        end
+        sc = instance(SProduceKwargsController)
+        s = sc.s
         @test length(s.a) == 0 && s.i == 0u"hr"
         advance!(s)
         @test length(s.a) == 1 && s.i == 0u"hr"
@@ -355,7 +363,11 @@ using Unitful
         @system SProduceNothing begin
             a => nothing ~ produce
         end
-        s = instance(SProduceNothing)
+        @system SProduceNothingController(Controller) begin
+            s(context) ~ ::SProduceNothing
+        end
+        sc = instance(SProduceNothingController)
+        s = sc.s
         @test length(s.a) == 0
         advance!(s)
         @test length(s.a) == 0
@@ -370,7 +382,11 @@ using Unitful
             c(x=p["*/1"].i) => sum(x) ~ track
             d(x=p["*/-1"].i) => sum(x) ~ track
         end
-        s = instance(SProduceQueryIndex)
+        @system SProduceQueryIndexController(Controller) begin
+            s(context) ~ ::SProduceQueryIndex
+        end
+        sc = instance(SProduceQueryIndexController)
+        s = sc.s
         @test length(s.p) == 0
         advance!(s)
         @test length(s.p) == 1
@@ -402,7 +418,11 @@ using Unitful
             c(x=p["*/f/1"].i) => sum(x) ~ track
             d(x=p["*/f/-1"].i) => sum(x) ~ track
         end
-        s = instance(SProduceQueryConditionTrackBool)
+        @system SProduceQueryConditionTrackBoolController(Controller) begin
+            s(context) ~ ::SProduceQueryConditionTrackBool
+        end
+        sc = instance(SProduceQueryConditionTrackBoolController)
+        s = sc.s
         @test length(s.p) == 0
         advance!(s)
         @test length(s.p) == 1
@@ -440,7 +460,11 @@ using Unitful
             c(x=p["*/f/1"].i) => sum(x) ~ track
             d(x=p["*/f/-1"].i) => sum(x) ~ track
         end
-        s = instance(SProduceQueryConditionFlag)
+        @system SProduceQueryConditionFlagController(Controller) begin
+            s(context) ~ ::SProduceQueryConditionFlag
+        end
+        sc = instance(SProduceQueryConditionFlagController)
+        s = sc.s
         @test length(s.p) == 0
         advance!(s)
         @test length(s.p) == 1
@@ -469,7 +493,7 @@ using Unitful
     end
 
     @testset "solve bisect" begin
-        @system SolveBisect begin
+        @system SolveBisect(Controller) begin
             x(x) => 2x - 1 ~ solve(lower=0, upper=2)
         end
         s = instance(SolveBisect)
@@ -485,7 +509,7 @@ using Unitful
     # end
 
     @testset "solve bisect with unit" begin
-        @system SolveBisectUnit begin
+        @system SolveBisectUnit(Controller) begin
             x(x) => 2x - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
         end
         s = instance(SolveBisectUnit)
@@ -493,7 +517,7 @@ using Unitful
     end
 
     @testset "clock" begin
-        @system SClock begin
+        @system SClock(Controller) begin
         end
         s = instance(SClock)
         # after one advance! in instance()
@@ -503,7 +527,7 @@ using Unitful
     end
 
     @testset "clock with config" begin
-        @system SClockConfig begin
+        @system SClockConfig(Controller) begin
         end
         o = configure(:Clock => (#=:init => 5,=# step => 10))
         s = instance(SClockConfig; config=o)
@@ -514,9 +538,11 @@ using Unitful
     end
 
     @testset "calendar" begin
+        @system SCalendar(Calendar, Controller) begin
+        end
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         o = configure(:Calendar => (:init => t0))
-        s = instance(Calendar; config=o)
+        s = instance(SCalendar; config=o)
         # after one advance! in instance()
         @test s.init == t0
         @test s.time == ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")
@@ -525,7 +551,7 @@ using Unitful
     end
 
     @testset "alias" begin
-        @system SAlias begin
+        @system SAlias(Controller) begin
             a: aa => 1 ~ track
             b: [bb, bbb] => 2 ~ track
             c(a, aa, b, bb, bbb) => a + aa + b + bb + bbb ~ track
@@ -537,7 +563,7 @@ using Unitful
     end
 
     @testset "single arg without key" begin
-        @system SSingleArgWithoutKey begin
+        @system SSingleArgWithoutKey(Controller) begin
             a => 1 ~ track
             b(a) ~ track
             c(x=a) ~ track

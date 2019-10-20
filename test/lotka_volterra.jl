@@ -1,5 +1,5 @@
 @testset "lotka volterra" begin
-    @system LotkaVolterra begin
+    @system LotkaVolterra(Controller) begin
         timestep(t=context.clock.tick): t => 0.01t ~ track(u"hr")
         prey_birth_rate: a => 1.0 ~ track(u"hr^-1")
         prey_death_rate: b => 0.1 ~ track(u"hr^-1")

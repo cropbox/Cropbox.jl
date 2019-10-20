@@ -21,6 +21,10 @@ using Unitful
         end ~ produce::RootSegment
     end
 
+    @system Root(Controller) begin
+        root(context) => RootSegment(context=context, parent=nothing) ~ ::RootSegment
+    end
+
     render(r::RootSegment) = begin
         # s = trimesh.scene.scene.Scene()
         # #TODO: make System's own walker method?
@@ -52,7 +56,7 @@ using Unitful
         # s
     end
 
-    s = instance(RootSegment)
+    s = instance(Root)
     #d = []
     while Cropbox.value(s.context.clock.tick) <= 30u"hr"
         advance!(s)
