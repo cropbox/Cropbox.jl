@@ -587,8 +587,6 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
            $t = $C.value($(v.tags[:time])),
            $t0 = $s.tick,
            $a = $s.value + $s.rate * ($t - $t0)
-         @show $t
-         @show $t0
         $C.store!($s, $a)
     end
 end
@@ -599,7 +597,6 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s)),
            $q = context.queue
-        @show $t
         $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end
