@@ -91,6 +91,7 @@ updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
 end
 
 istag(v::VarInfo, t) = get(v.tags, t, false)
+istag(v::VarInfo, t...) = any(istag.(Ref(v), t))
 gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 
 names(v::VarInfo) = [v.name, v.alias...]
@@ -523,9 +524,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
     end
 end
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
-    if istag(v, :override)
-        nothing
-    elseif istag(v, :noupdate)
+    if istag(v, :override, :noupdate)
         nothing
     else
         @q $C.update!($(v.name))
