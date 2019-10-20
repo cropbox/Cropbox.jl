@@ -199,7 +199,7 @@ end
 
 #TODO: support convenient way to set up custom Clock
 #TODO: support unit reference again?
-import Cropbox: Clock, Context, Config, Order, Queue, iscontext
+import Cropbox: Clock, Context, Config, Queue
 @system SoilClock(Clock) begin
     step => 15u"minute" ~ preserve(u"hr", parameter)
 end
@@ -207,7 +207,6 @@ end
     context ~ ::Context(override)
     clock(config) ~ ::SoilClock
 end
-iscontext(::SoilContext) = true
 
 #TODO: implement LayeredTexture for customization
 @system Layer(CharacteristicTransfer) begin

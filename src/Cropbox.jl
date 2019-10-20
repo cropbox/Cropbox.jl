@@ -8,7 +8,6 @@ include("state.jl")
 include("bundle.jl")
 
 include("config.jl")
-include("order.jl")
 include("queue.jl")
 include("clock.jl")
 include("context.jl")

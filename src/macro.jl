@@ -657,7 +657,6 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     @q let $s = $(symstate(v)),
            $P = $(genfunc(v)),
            $c = context,
-           $o = context.order,
            $q = context.queue,
            $a = $C.value($s)
         if !(isnothing($P) || isempty($P))
