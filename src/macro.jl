@@ -515,7 +515,11 @@ end
 
 genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
     if istag(v, :context)
-        @q $C.preflush!(self.$(v.name).queue)
+        @gensym c
+        @q let $c = $(v.name)
+            $C.preflush!($c.queue)
+            $c
+        end
     end
 end
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
@@ -524,12 +528,21 @@ genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
     elseif istag(v, :noupdate)
         nothing
     else
-        @q $C.update!(self.$(v.name))
+        @q $C.update!($(v.name))
     end
 end
 genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
     if istag(v, :context)
-        @q $C.postflush!(self.$(v.name).queue)
+        l = symlabel(v, PreStep())
+        @gensym c cc
+        @q let $c = $(v.name),
+               $cc = $c.context
+            $C.postflush!($c.queue)
+            if !isnothing($cc) && $C.value($c.clock.tick) < $C.value($cc.clock.tick)
+				@goto $l
+			end
+            $c
+        end
     end
 end
 
