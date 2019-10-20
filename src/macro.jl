@@ -546,7 +546,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
-genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override) ? genvalue(v) : genstore(v)
+genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :noupdate) ? genvalue(v) : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
 genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
