@@ -70,7 +70,7 @@ import Dates
     declination_angle_campbell(d) => begin
         a = deg2rad(356.6 + 0.9856d)
         b = deg2rad(278.97 + 0.9856d + 1.9165sin(a))
-        asin(0.39785sin(b))
+        asind(0.39785sin(b))
 	end ~ track(u"°")
 
     # Spencer equation, Iqbal (1983) Pg 7 Eqn 1.3.1. Most accurate among all
@@ -78,7 +78,7 @@ import Dates
         # gamma: day angle
         g = 2pi * (d - 1)/365
         0.006918 - 0.399912cos(g) + 0.070257sin(g) - 0.006758cos(2g) + 0.000907sin(2g) -0.002697cos(3g) + 0.00148sin(3g)
-	end ~ track(u"°")
+	end ~ track(u"rad")
 
     degree_per_hour: dph => 360u"°" / 24u"hr" ~ preserve(u"°/hr")
 
@@ -120,7 +120,7 @@ import Dates
         # c > 1: in the polar region during the winter, sun does not rise
         # c < -1: white nights during the summer in the polar region
         c = clamp(c, -1, 1)
-        acos(c)
+        acosd(c)
 	end ~ track(u"°")
 
 	# from Iqbal (1983) p 16
@@ -134,7 +134,7 @@ import Dates
 
 	elevation_angle(h=hour_angle, d=declination_angle, p=latitude) => begin
         #FIXME When time gets the same as solarnoon, this function fails. 3/11/01 ??
-        asin(cos(h) * cos(d) * cos(p) + sin(d) * sin(p))
+        asind(cos(h) * cos(d) * cos(p) + sin(d) * sin(p))
 	end ~ track(u"°")
 
 	zenith_angle(elevation_angle) => (90u"°" - elevation_angle) ~ track(u"°")
@@ -145,7 +145,7 @@ import Dates
 	# See An introduction to solar radiation by Iqbal (1983) p 15-16
 	# Also see https://www.susdesign.com/sunangle/
     azimuth_angle(t_s=elevation_angle, d=declination_angle, p=latitude) => begin
-        acos((sin(d) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
+        acosd((sin(d) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
 	end ~ track(u"°")
 
     ###################
