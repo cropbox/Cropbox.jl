@@ -126,6 +126,13 @@ add!(d::Dependency, v::VarInfo) = begin
         # needs access to context in Produce constructor
         c = mainnode!(d, :context)
         link!(d, c, n0)
+    elseif isnothing(v.state) && istag(v, :context)
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        n2 = postnode!(d, v)
+        link!(d, n0, n1)
+        link!(d, n1, n2)
+        inlink!(d, v, n1)
     else
         n = mainnode!(d, v)
         inlink!(d, v, n)

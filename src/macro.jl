@@ -513,6 +513,11 @@ genstore(v::VarInfo) = begin
     end
 end
 
+genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
+    if istag(v, :context)
+        @q $C.preflush!(self.$(v.name).queue)
+    end
+end
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
     if istag(v, :override)
         nothing
@@ -520,6 +525,11 @@ genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
         nothing
     else
         @q $C.update!(self.$(v.name))
+    end
+end
+genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
+    if istag(v, :context)
+        @q $C.postflush!(self.$(v.name).queue)
     end
 end
 
