@@ -132,7 +132,7 @@ add!(d::Dependency, v::VarInfo) = begin
         n2 = postnode!(d, v)
         link!(d, n0, n1)
         link!(d, n1, n2)
-        inlink!(d, v, n1)
+        inlink!(d, v, n0)
     else
         n = mainnode!(d, v)
         inlink!(d, v, n)
