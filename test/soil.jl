@@ -204,16 +204,16 @@ import Cropbox: Clock, Context, Config, Order, Queue, iscontext
     step => 15u"minute" ~ preserve(u"hr", parameter)
 end
 @system SoilContext(Context) begin
-    context ~ ::Context(extern)
+    context ~ ::Context(override)
     clock(config) ~ ::SoilClock
 end
 iscontext(::SoilContext) = true
 
 #TODO: implement LayeredTexture for customization
 @system Layer(CharacteristicTransfer) begin
-    context ~ ::SoilContext(extern)
+    context ~ ::SoilContext(override)
 
-    index: i ~ ::Int(extern)
+    index: i ~ ::Int(override)
     vwc_initial: θ_i => 0.4 ~ preserve(extern)
 
     # Soil layer depth and cumulative thickness (2.4.2)
@@ -274,8 +274,8 @@ iscontext(::SoilContext) = true
 end
 
 @system SurfaceInterface begin
-    context ~ ::SoilContext(extern)
-    layer: l ~ ::Layer(extern)
+    context ~ ::SoilContext(override)
+    layer: l ~ ::Layer(override)
 
     precipitation: R ~ track(u"m/d", override)
     evaporation_actual: Ea ~ track(u"m/d", override)
@@ -295,9 +295,9 @@ end
 end
 
 @system SoilInterface begin
-    context ~ ::SoilContext(extern)
-    upper_layer: l1 ~ ::Layer(extern)
-    lower_layer: l2 ~ ::Layer(extern)
+    context ~ ::SoilContext(override)
+    upper_layer: l1 ~ ::Layer(override)
+    lower_layer: l2 ~ ::Layer(override)
 
     transpiration_actual: Ta ~ track(u"m/d", override)
 
@@ -329,8 +329,8 @@ end
 end
 
 @system BedrockInterface begin
-    context ~ ::SoilContext(extern)
-    layer: l ~ ::Layer(extern)
+    context ~ ::SoilContext(override)
+    layer: l ~ ::Layer(override)
 
     flux(l.K): q ~ track(u"m/d")
 
@@ -374,8 +374,8 @@ end
 # iterations=100
 # Theta_i,t+1 (m day-1) (Eq. 2.105)
 @system Soil begin
-    context ~ ::SoilContext(extern)
-    weather: w ~ ::Weather(extern)
+    context ~ ::SoilContext(override)
+    weather: w ~ ::Weather(override)
 
     rooting_depth: d_r => 0 ~ track(u"m", override, extern) # d_root (m)
 

@@ -3,7 +3,7 @@ using Unitful
 
 @testset "root structure" begin
     @system RootSegment begin
-        parent => nothing ~ ::Union{System,Nothing}(extern)
+        parent ~ ::Union{System,Nothing}(override)
         elongation_rate: r => rand(Normal(1, 0.2)) ~ track(u"mm/hr")
         branching_angle => rand(Normal(20, 10))*u"°" ~ preserve(u"°")
         branching_interval: i => 3.0 ~ track(u"mm")

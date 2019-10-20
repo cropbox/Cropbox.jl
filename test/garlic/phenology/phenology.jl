@@ -23,10 +23,10 @@ include("death.jl")
 	BulbilAppearance,
 	Death
 ) begin
-    calendar ~ ::Calendar(extern)
-    weather ~ ::Weather(extern)
-	sun ~ ::Sun(extern)
-    soil ~ ::Soil(extern)
+    calendar ~ ::Calendar(override)
+    weather ~ ::Weather(override)
+	sun ~ ::Sun(override)
+    soil ~ ::Soil(override)
 
 	planting_date => nothing ~ preserve::ZonedDateTime(parameter)
 

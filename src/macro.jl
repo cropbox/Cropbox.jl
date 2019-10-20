@@ -195,6 +195,12 @@ genfields(infos) = [genfield(v) for v in infos]
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect
 gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
+genoverride(v::VarInfo) = begin
+    !isnothing(v.body) && error("`override` can't have funtion body: $(v.body)")
+    genoverride(v.name)
+end
+genoverride(name) = @q _kwargs[$(Meta.quot(name))]
+
 genextern(name, default) = begin
     key = Meta.quot(name)
     @q haskey(_kwargs, $key) ? _kwargs[$key] : $default
@@ -205,12 +211,12 @@ gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo{Symbol}) = begin
     name = Meta.quot(v.name)
     alias = Tuple(v.alias)
-    if istag(v, :override) && isnothing(v.body)
-        decl = @q _kwargs[$(Meta.quot(v.name))]
+    decl = if istag(v, :override)
+        genoverride(v)
     else
         value = istag(v, :extern) ? genextern(v.name, geninit(v)) : geninit(v)
         stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
-        decl = :($C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...)))
+        @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
     end
     gendecl(decl, v.name, v.alias)
 end
@@ -221,13 +227,12 @@ gendecl(v::VarInfo{Nothing}) = begin
     if istag(v, :option)
         push!(args, @q $(esc(:option)) = _kwargs)
     end
-    decl = if isnothing(v.body)
+    decl = if istag(v, :override)
+        genoverride(v)
+    elseif isnothing(v.body)
         @q $(esc(v.type))(; $(args...))
     else
         @q let $(args...); $(esc(v.body)) end
-    end
-    if istag(v, :extern)
-        decl = genextern(v.name, decl)
     end
     # implicit :expose
     decl = :($(esc(v.name)) = $decl)
@@ -285,10 +290,7 @@ source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
 source(::Val{:System}) = @q begin
-    context => begin
-        kwargs = haskey(option, :config) ? (config=option[:config],) : ()
-        Cropbox.Context(; kwargs...)
-    end ~ ::Cropbox.Context(extern, option)
+    context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
 mixins(::Type{<:System}) = (System,)
@@ -484,11 +486,7 @@ end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
 genupdate(v::VarInfo, t::VarStep) = begin
-    u = if istag(v, :override)
-        genvalue(v)
-    else
-        genupdate(v, Val(v.state), t)
-    end
+    u = genupdate(v, Val(v.state), t)
     l = symlabel(v, t)
     if isnothing(u)
         @q @label $l
@@ -516,7 +514,7 @@ genstore(v::VarInfo) = begin
 end
 
 genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
-    if istag(v, :extern)
+    if istag(v, :override)
         nothing
     elseif istag(v, :noupdate)
         nothing
@@ -526,7 +524,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
-genupdate(v::VarInfo, ::Val, ::MainStep) = genstore(v)
+genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override) ? genvalue(v) : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
 genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin

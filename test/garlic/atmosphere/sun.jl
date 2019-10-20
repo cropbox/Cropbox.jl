@@ -22,10 +22,10 @@ end
 import Dates
 
 @system Sun begin
-    #TODO make Location external
-    location(context): loc ~ ::Location #(extern)
-    calendar ~ ::Calendar(extern)
-    weather ~ ::Weather(extern)
+    #TODO override Location
+    location(context): loc ~ ::Location #(override)
+    calendar ~ ::Calendar(override)
+    weather ~ ::Weather(override)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
     datetime(t=calendar.time): t => t ~ track::ZonedDateTime

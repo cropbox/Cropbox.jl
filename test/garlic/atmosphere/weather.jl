@@ -5,7 +5,7 @@ using CSV
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather begin
-    calendar(context) ~ ::Calendar(extern)
+    calendar(context) ~ ::Calendar(override)
 
     vapor_pressure(context): vp ~ ::VaporPressure
 

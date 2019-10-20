@@ -218,8 +218,8 @@ end
 end
 
 @system GasExchange(BoundaryLayer, Stomata, C3) begin
-    weather ~ ::Weather(extern)
-    soil ~ ::Soil(extern)
+    weather ~ ::Weather(override)
+    soil ~ ::Soil(override)
 
     co2_atmosphere(CO2=weather.CO2, P_air): Ca => (CO2 * P_air) ~ track(u"μbar")
     intercellular_co2_upper_limit(Ca): Cimax => 2Ca ~ track(u"μbar")

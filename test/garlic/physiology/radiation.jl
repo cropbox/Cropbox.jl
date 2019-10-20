@@ -39,7 +39,7 @@ end
 end
 
 @system Radiation begin
-    sun ~ ::Sun(extern)
+    sun ~ ::Sun(override)
     leaf_area_index: LAI ~ track(u"cm^2/m^2", override)
 
     leaf_angle => ellipsoidal ~ preserve::LeafAngle(parameter)
