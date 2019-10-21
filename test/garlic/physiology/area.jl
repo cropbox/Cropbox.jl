@@ -1,21 +1,21 @@
 @system Area begin
-	nodal_units ~ hold
-	planting_density ~ hold
+    nodal_units ~ hold
+    planting_density ~ hold
 
-	leaf_area(x=nodal_units["*"].leaf.area) => sum(x) ~ track(u"cm^2")
+    leaf_area(x=nodal_units["*"].leaf.area) => sum(x) ~ track(u"cm^2")
 
     green_leaf_area(x=nodal_units["*"].leaf.green_area) => sum(x) ~ track(u"cm^2")
 
     green_leaf_ratio(green_leaf_area, leaf_area) => begin
-		iszero(leaf_area) ? 0. : (green_leaf_area / leaf_area)
-	end ~ track
+        iszero(leaf_area) ? 0. : (green_leaf_area / leaf_area)
+    end ~ track
 
     leaf_area_index(green_leaf_area, planting_density): LAI => begin
         green_leaf_area * planting_density
-	end ~ track(u"cm^2/m^2")
+    end ~ track(u"cm^2/m^2")
 
     # actualgreenArea is the green area of leaf growing under carbon limitation
-	#SK 8/22/10: There appears to be no distinction between these two variables in the code.
+    #SK 8/22/10: There appears to be no distinction between these two variables in the code.
     actual_green_leaf_area(green_leaf_area) => green_leaf_area ~ track(u"cm^2")
 
     senescent_leaf_area(x=nodal_units["*"].leaf.senescent_area) => sum(x) ~ track(u"cm^2")

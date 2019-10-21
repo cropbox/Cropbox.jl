@@ -10,25 +10,25 @@ include("death.jl")
 
 #TODO make a common class to be shared by Garlic and MAIZSIM
 @system Phenology(
-	Germination,
-	Emergence,
-	FloralInitiation,
-	LeafInitiationWithStorage,
-	LeafAppearance,
-	BulbAppearance,
-	ScapeGrowth,
-	ScapeAppearance,
-	ScapeRemoval,
-	FlowerAppearance,
-	BulbilAppearance,
-	Death
+    Germination,
+    Emergence,
+    FloralInitiation,
+    LeafInitiationWithStorage,
+    LeafAppearance,
+    BulbAppearance,
+    ScapeGrowth,
+    ScapeAppearance,
+    ScapeRemoval,
+    FlowerAppearance,
+    BulbilAppearance,
+    Death
 ) begin
     calendar ~ ::Calendar(override)
     weather ~ ::Weather(override)
-	sun ~ ::Sun(override)
+    sun ~ ::Sun(override)
     soil ~ ::Soil(override)
 
-	planting_date => nothing ~ preserve::ZonedDateTime(parameter)
+    planting_date => nothing ~ preserve::ZonedDateTime(parameter)
 
     leaves_generic => 10 ~ preserve::Int(parameter)
     leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track::Int
@@ -47,8 +47,8 @@ include("death.jl")
         #max(T, 0.0u"°C")
     end ~ track(u"°C")
     #growing_temperature(r="gst_recorder.rate") => r ~ track
-	optimal_temperature: T_opt => 22.28 ~ preserve(u"°C", parameter)
-	ceiling_temperature: T_ceil => 34.23 ~ preserve(u"°C", parameter)
+    optimal_temperature: T_opt => 22.28 ~ preserve(u"°C", parameter)
+    ceiling_temperature: T_ceil => 34.23 ~ preserve(u"°C", parameter)
 
     # garlic
 
@@ -93,35 +93,35 @@ using UnitfulRecipes
 unicodeplots()
 
 @system PhenologyController(Controller) begin
-	calendar(context) ~ ::Calendar
-	weather(context, calendar) ~ ::Weather
-	sun(context, calendar, weather) ~ ::Sun
-	soil(context) ~ ::Soil
-	phenology(context, calendar, weather, sun, soil): p ~ ::Phenology
+    calendar(context) ~ ::Calendar
+    weather(context, calendar) ~ ::Weather
+    sun(context, calendar, weather) ~ ::Sun
+    soil(context) ~ ::Soil
+    phenology(context, calendar, weather, sun, soil): p ~ ::Phenology
 end
 
 init_pheno() = begin
-	o = configure(
-		:Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
-		:Weather => (:filename => "test/garlic/data/2007.wea"),
-		:Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"UTC")),
-	)
-	#HACK: manually initate them due to Weather/Soil instances
-	#s = instance(Phenology; config=o)
-	#c = s.context
-	instance(PhenologyController, config=o)
+    o = configure(
+        :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
+        :Weather => (:filename => "test/garlic/data/2007.wea"),
+        :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"UTC")),
+    )
+    #HACK: manually initate them due to Weather/Soil instances
+    #s = instance(Phenology; config=o)
+    #c = s.context
+    instance(PhenologyController, config=o)
 end
 
 plot_pheno(v) = begin
-	s = init_pheno()
-	c = s.context
-	T = typeof(c.clock.tick')[]
-	V = typeof(s.p[v]')[]
-	while c.clock.tick' <= 300u"d"
-		#println("t = $(c.clock.tick): v = $(s[v])")
-		push!(T, c.clock.tick')
-		push!(V, s.p[v]')
-		update!(s)
-	end
-	plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
+    s = init_pheno()
+    c = s.context
+    T = typeof(c.clock.tick')[]
+    V = typeof(s.p[v]')[]
+    while c.clock.tick' <= 300u"d"
+        #println("t = $(c.clock.tick): v = $(s[v])")
+        push!(T, c.clock.tick')
+        push!(V, s.p[v]')
+        update!(s)
+    end
+    plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
 end
