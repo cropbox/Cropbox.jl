@@ -162,7 +162,7 @@ sort(d::Dependency) = begin
     [d.V[i] for i in J]
 end
 
-#using LaTeXStrings
+using LaTeXStrings
 label(n::VarNode) = begin
     v = n.info
     name = replace(String(isempty(v.alias) ? v.name : v.alias[1]), "_" => "")
@@ -177,6 +177,17 @@ label(n::VarNode) = begin
     end
     latexstring("$(name)_{$tag}")
 end
-#using TikzGraphs, TikzPictures
-#save(d::Dependency, name) = TikzPictures.save(PDF(String(name)), TikzGraphs.plot(d.g, label.(d.V)))
-save(d::Dependency, name) = nothing
+
+import Base: write
+import TikzGraphs, TikzPictures
+write(filename::AbstractString, d::Dependency) = begin
+    f = TikzPictures.PDF(string(filename))
+    p = TikzGraphs.plot(d.g, label.(d.V))
+    TikzPictures.save(f, p)
+end
+write(filename::AbstractString, s::Type{S}) where {S<:System} = begin
+    V = geninfos(nameof(S), (), source(S))
+    d = Dependency(V)
+    write(filename, d)
+end
+write(filename::AbstractString, s::System) = write(filename, s)
