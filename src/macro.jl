@@ -256,7 +256,7 @@ genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
 genstruct(name, infos, incl) = begin
     S = esc(name)
     N = Meta.quot(name)
-    nodes = sortednodes(name, infos)
+    nodes = sortednodes(infos)
     calls = gencalls(infos)
     fields = genfields(infos)
     predecl = genpredecl(name)
@@ -345,12 +345,7 @@ geninfos(name, incl, body) = begin
 end
 
 include("dependency.jl")
-sortednodes(name, infos) = begin
-    d = Dependency(infos)
-    #HACK: for debugging
-    save(d, name)
-    sort(d)
-end
+sortednodes(infos) = sort(Dependency(infos))
 
 macro system(head, body=:(begin end))
     gensystem(head, body)
