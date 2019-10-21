@@ -9,3 +9,9 @@ Tabulate(; unit, rows, columns, _value, _type, _...) = begin
     v = matrix2dict(_value, rows, columns, V)
     Tabulate{V}(v)
 end
+
+genvartype(v::VarInfo, ::Val{:Tabulate}; V, _...) = @q Tabulate{$V}
+
+geninit(v::VarInfo, ::Val{:Tabulate}) = geninitpreserve(v)
+
+genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep) = genvalue(v)

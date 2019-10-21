@@ -69,26 +69,6 @@ typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :System
 
 updatetags!(d, ::Val; _...) = nothing
-updatetags!(d, ::Val{:Interpolate}; _...) = begin
-    !haskey(d, :reverse) && (d[:reverse] = false)
-    !haskey(d, :knotunit) && (d[:knotunit] = nothing)
-end
-updatetags!(d, ::Union{Val{:Accumulate},Val{:Capture}}; _...) = begin
-    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
-end
-updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
-    #FIXME: lower duplicate efforts in genvartype()
-    N = d[:_type]
-    U = d[:unit]
-    V = @q $C.valuetype($N, $U)
-    extract(a) = let k, t, u
-        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        t = isnothing(t) ? :Float64 : esc(t)
-        @q $C.valuetype($t, $u)
-    end
-    F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
-    d[:_calltype] = F
-end
 
 istag(v::VarInfo, t) = get(v.tags, t, false)
 istag(v::VarInfo, t...) = any(istag.(Ref(v), t))
@@ -129,7 +109,6 @@ end
 const C = :($(esc(:Cropbox)))
 
 genvartype(v::VarInfo) = genvartype(v)
-
 genvartype(v::VarInfo{Nothing}) = esc(v.type)
 genvartype(v::VarInfo{Symbol}) = begin
     N = isnothing(v.type) ? :Float64 : esc(v.type)
@@ -137,54 +116,6 @@ genvartype(v::VarInfo{Symbol}) = begin
     V = @q $C.valuetype($N, $U)
     genvartype(v, Val(v.state); N=N, U=U, V=V)
 end
-genvartype(v::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
-genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
-genvartype(v::VarInfo, ::Val{:Preserve}; V, _...) = @q Preserve{$V}
-genvartype(v::VarInfo, ::Val{:Tabulate}; V, _...) = @q Tabulate{$V}
-genvartype(v::VarInfo, ::Val{:Interpolate}; V, U, _...) = @q Interpolate{$V}
-genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
-genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
-genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
-    extract(a) = let k, t, u
-        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        t = isnothing(t) ? :Float64 : esc(t)
-        @q $C.valuetype($t, $u)
-    end
-    F = @q FunctionWrapper{$V, Tuple{$(extract.(v.kwargs)...)}}
-    @q Call{$V,$F}
-end
-genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
-    #TODO: automatic inference without explicit `timeunit` tag
-    TU = gettag(v, :timeunit)
-    TU = isnothing(TU) ? @q(u"hr") : TU
-    T = @q $C.valuetype(Float64, $TU)
-    RU = @q $C.rateunittype($U, $TU)
-    R = @q $C.valuetype($N, $RU)
-    @q Accumulate{$V,$T,$R}
-end
-genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
-    TU = gettag(v, :timeunit)
-    TU = isnothing(TU) ? @q(u"hr") : TU
-    T = @q $C.valuetype(Float64, $TU)
-    RU = @q $C.rateunittype($U, $TU)
-    R = @q $C.valuetype($N, $RU)
-    @q Capture{$V,$T,$R}
-end
-genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
-genvartype(v::VarInfo, ::Val{:Produce}; _...) = begin
-    S = isnothing(v.type) ? :System : esc(v.type)
-    @q Produce{$S}
-end
-genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
-
-gencall(v::VarInfo) = gencall(v, Val(v.state))
-gencall(v::VarInfo, ::Val) = nothing
-gencall(v::VarInfo, ::Val{:Call}) = begin
-    args = genfuncargs(v)
-    body = flatten(@q let $args; $(v.body) end)
-    @q function $(symcall(v))($(v.kwargs...)) $body end
-end
-gencalls(infos) = filter(!isnothing, gencall.(infos))
 
 genfield(type, name, alias) = @q begin
     $name::$type
@@ -257,7 +188,6 @@ genstruct(name, infos, incl) = begin
     S = esc(name)
     N = Meta.quot(name)
     nodes = sortednodes(infos)
-    calls = gencalls(infos)
     fields = genfields(infos)
     predecl = genpredecl(name)
     decls = gendecl(nodes)
@@ -359,10 +289,7 @@ export @system, update!
 
 geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
-geninit(v::VarInfo, ::Val{:Hold}) = nothing
-geninit(v::VarInfo, ::Val{:Advance}) = missing
-geninit(v::VarInfo, ::Val{:Preserve}) = geninitpreserve(v)
-geninit(v::VarInfo, ::Val{:Tabulate}) = geninitpreserve(v)
+
 geninitpreserve(v::VarInfo) = begin
     if istag(v, :parameter)
         @gensym o
@@ -373,61 +300,6 @@ geninitpreserve(v::VarInfo) = begin
         @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
     end
 end
-#TODO: make use of geninitpreserve with unitfy turned off
-geninit(v::VarInfo, ::Val{:Interpolate}) = begin
-    if istag(v, :parameter)
-        @gensym o
-        @q let $o = $C.option(config, _names, $(names(v)))
-            isnothing($o) ? $(genfunc(v)) : $o
-        end
-    else
-        @q $(genfunc(v))
-    end
-end
-geninit(v::VarInfo, ::Val{:Drive}) = begin
-    k = gettag(v, :key, v.name)
-    #HACK: needs quot if key is a symbol from VarInfo name
-    k = isa(k, QuoteNode) ? k : Meta.quot(k)
-    @q $C.unitfy($C.value($(genfunc(v))[$k]), $C.value($(v.tags[:unit])))
-end
-geninit(v::VarInfo, ::Val{:Call}) = begin
-    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    emiti(a) = (p = pair(a); @q $(esc(p[1])) = $C.value($(p[2])))
-    innerargs = @q begin $(emiti.(v.args)...) end
-
-    innercall = flatten(@q let $innerargs; $(esc(v.body)) end)
-    innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
-
-    emito(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
-    outerargs = @q begin $(emito.(v.args)...) end
-
-    extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end
-    emitc(a) = @q $(esc(extract(a)))
-    callargs = emitc.(v.kwargs)
-
-    @q function $(symcall(v))($(callargs...))
-        $innerbody
-    end
-    # outerbody = flatten(@q let $outerargs
-    #     function $(symcall(v))($(callargs...))
-    #         $innerbody
-    #     end
-    # end)
-    #
-    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
-    # emitf(a) = @q $(esc(key(a)))
-    # fillargs = emitf.(v.args)
-    #
-    # @q function $(symcall(v))($(fillargs...); $(callargs...)) $outerbody end
-end
-geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(gettag(v, :init))), $C.value($(v.tags[:unit])))
-geninit(v::VarInfo, ::Val{:Capture}) = nothing
-geninit(v::VarInfo, ::Val{:Flag}) = false
-geninit(v::VarInfo, ::Val{:Produce}) = nothing
-geninit(v::VarInfo, ::Val{:Solve}) = nothing
-geninit(v::VarInfo, ::Val{:Resolve}) = @q $C.unitfy($C.value($(gettag(v, :init))), $C.value($(v.tags[:unit])))
-
-####
 
 genupdate(nodes) = @q begin
     $([genupdateinit(n) for n in nodes]...)
@@ -518,189 +390,6 @@ end
 genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? genvalue(v) : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
-
-genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
-    @gensym s
-    @q let $s = $(symstate(v))
-        $C.advance!($s)
-    end
-end
-
-genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = genvalue(v)
-
-genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep) = genvalue(v)
-
-genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep) = genvalue(v)
-
-genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    k = gettag(v, :key, v.name)
-    #HACK: needs quot if key is a symbol from VarInfo name
-    k = isa(k, QuoteNode) ? k : Meta.quot(k)
-    @gensym s f d
-    @q let $s = $(symstate(v)),
-           $f = $(genfunc(v)),
-           $d = $C.value($f[$k])
-        $C.store!($s, $d)
-    end # value() for Var
-end
-
-genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
-    @gensym s
-    @q let $s = $(symstate(v))
-        $C.value($s)
-    end
-end
-
-genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
-    @gensym s t t0 a
-    @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
-           $t0 = $s.tick,
-           $a = $s.value + $s.rate * ($t - $t0)
-        $C.store!($s, $a)
-    end
-end
-genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
-    @gensym s t f r q
-    @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
-           $f = $(genfunc(v)),
-           $r = $C.unitfy($f, $C.rateunit($s)),
-           $q = context.queue
-        $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
-    end
-end
-
-genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
-    @gensym s t t0 d
-    @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
-           $t0 = $s.tick,
-           $d = $s.rate * ($t - $t0)
-        $C.store!($s, $d)
-    end
-end
-genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
-    @gensym s t f r q
-    @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
-           $f = $(genfunc(v)),
-           $r = $C.unitfy($f, $C.rateunit($s)),
-           $q = context.queue
-        $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
-    end
-end
-
-genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
-genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
-    @gensym s f q
-    if istag(v, :oneway)
-        @q let $s = $(symstate(v)),
-               $f = $(genfunc(v)),
-               $q = context.queue
-            if !$C.value($s)
-                $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
-            end
-        end
-    else
-        @q let $s = $(symstate(v)),
-               $f = $(genfunc(v)),
-               $q = context.queue
-            $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
-        end
-    end
-end
-
-# Produce referenced in args expected to be raw state, not extracted by value(), for querying
-genupdate(v::VarInfo, ::Val{:Produce}, ::PreStep) = symstate(v)
-genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = begin
-    @gensym s b
-    @q let $s = $(symstate(v))
-        for $b in $C.value($s)
-            $C.update!($b)
-        end
-        $s
-    end
-end
-genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
-    @gensym s P c o q a b
-    @q let $s = $(symstate(v)),
-           $P = $(genfunc(v)),
-           $c = context,
-           $q = context.queue,
-           $a = $C.value($s)
-        if !(isnothing($P) || isempty($P))
-            $C.queue!($q, function ()
-                for p in $P
-                    $b = p.type(; context=$c, p.args...)
-                    append!($a, $b)
-                end
-            end, $C.priority($C.$(v.state)))
-        end
-    end
-end
-
-genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
-    N_MAX = 100
-    TOL = 0.0001
-    lstart = symlabel(v, PreStep())
-    lexit = symlabel(v, MainStep(), :__exit)
-    @gensym s d
-    @q let $s = $(symstate(v))
-        if $s.step == :z
-            $s.N = 0
-            $s.a = $C.value($s.lower)
-            $s.b = $C.value($s.upper)
-            $s.step = :a
-            $C.store!($s, $s.a)
-            @goto $lstart
-        elseif $s.step == :a
-            $s.fa = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($s.a) => $($s.fa)"
-            $s.step = :b
-            $C.store!($s, $s.b)
-            @goto $lstart
-        elseif $s.step == :b
-            $s.fb = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($s.b) => $($s.fb)"
-            @assert sign($s.fa) != sign($s.fb)
-            $s.N = 1
-            $s.c = ($s.a + $s.b) / 2
-            $C.store!($s, $s.c)
-            $s.step = :c
-            @goto $lstart
-        elseif $s.step == :c
-            $s.fc = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($s.c) => $($s.fc)"
-            if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / ($s.b) < $TOL
-                $s.step = :z
-                #@show "solve: finished! $($C.value($s))"
-                @goto $lexit
-            else
-                $s.N += 1
-                if $s.N > $N_MAX
-                    @show #= @error =# "solve: convergence failed!"
-                    $s.step = :z
-                    @goto $lexit
-                end
-                if sign($s.fc) == sign($s.fa)
-                    $s.a = $s.c
-                    $s.fa = $s.fc
-                    #@show "solve: a <- $($s.c)"
-                else
-                    $s.b = $s.c
-                    $s.fb = $s.fc
-                    #@show "solve: b <- $($s.c)"
-                end
-                $s.c = ($s.a + $s.b) / 2
-                $C.store!($s, $s.c)
-                @goto $lstart
-            end
-        end
-        @label $lexit
-        $C.value($s)
-    end
-end
 
 genfuncargs(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end

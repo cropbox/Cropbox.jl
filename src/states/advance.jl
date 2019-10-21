@@ -13,3 +13,14 @@ end
 value(s::Advance) = s.value.t
 advance!(s::Advance) = advance!(s.value)
 reset!(s::Advance) = reset!(s.value)
+
+genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
+
+geninit(v::VarInfo, ::Val{:Advance}) = missing
+
+genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
+    @gensym s
+    @q let $s = $(symstate(v))
+        $C.advance!($s)
+    end
+end

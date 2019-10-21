@@ -32,3 +32,24 @@ Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
     V = typeof(v).parameters[1]
     Interpolate{V}(v)
 end
+
+updatetags!(d, ::Val{:Interpolate}; _...) = begin
+    !haskey(d, :reverse) && (d[:reverse] = false)
+    !haskey(d, :knotunit) && (d[:knotunit] = nothing)
+end
+
+genvartype(v::VarInfo, ::Val{:Interpolate}; V, U, _...) = @q Interpolate{$V}
+
+#TODO: make use of geninitpreserve with unitfy turned off
+geninit(v::VarInfo, ::Val{:Interpolate}) = begin
+    if istag(v, :parameter)
+        @gensym o
+        @q let $o = $C.option(config, _names, $(names(v)))
+            isnothing($o) ? $(genfunc(v)) : $o
+        end
+    else
+        @q $(genfunc(v))
+    end
+end
+
+genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep) = genvalue(v)

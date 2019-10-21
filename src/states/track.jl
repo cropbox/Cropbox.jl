@@ -9,3 +9,5 @@ Track(; unit, _value, _type, _...) = begin
     V = promote_type(V, typeof(v))
     Track{V}(v)
 end
+
+genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
