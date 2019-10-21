@@ -255,6 +255,7 @@ genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
+    N = Meta.quot(name)
     nodes = sortednodes(name, infos)
     calls = gencalls(infos)
     fields = genfields(infos)
@@ -271,8 +272,8 @@ genstruct(name, infos, incl) = begin
                 new($(args...))
             end
         end
-        $C.source(::Val{$(Meta.quot(name))}) = $(Meta.quot(source))
-        $C.mixins(::Type{<:$S}) = Tuple($(esc(:eval)).($incl))
+        $C.source(::Val{$N}) = $(Meta.quot(source))
+        $C.mixins(::Val{$N}) = Tuple($(esc(:eval)).($incl))
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
@@ -289,8 +290,11 @@ source(::Val{:System}) = @q begin
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
-mixins(::Type{<:System}) = (System,)
+
 mixins(s::S) where {S<:System} = mixins(S)
+mixins(S::Type{<:System}) = mixins(nameof(S))
+mixins(s::Symbol) = mixins(Val(s))
+mixins(::Val{:System}) = (System,)
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
