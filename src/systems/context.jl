@@ -1,6 +1,6 @@
 @system Context begin
     context ~ ::Nothing
-    config ~ ::Config(override)
-	queue ~ ::Queue
-    clock(config) ~ ::Clock
+    config ~ ::Cropbox.Config(override)
+	queue ~ ::Cropbox.Queue
+    clock(config) ~ ::Cropbox.Clock
 end
