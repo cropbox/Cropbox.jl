@@ -37,11 +37,12 @@ setvar!(s::System, k::Symbol, v) = begin
 end
 
 import DataFrames: DataFrame
+import ProgressMeter: @showprogress
 run!(s::System, n=1; names...) = begin
 	N = (t="context.clock.tick", names...)
 	V = (k => [value(getproperty(s, n))] for (k, n) in pairs(N))
 	df = DataFrame(; V...)
-	for i in 2:n
+	@showprogress for i in 1:n
 		update!(s)
 		r = Tuple(value(getproperty(s, n)) for n in N)
 		push!(df, r)
