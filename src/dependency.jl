@@ -56,7 +56,7 @@ extract(v::VarInfo; equation=true, tag=true) = begin
     Set([eq..., par...]) |> collect
 end
 
-inlink!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
+link!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
     A = extract(v; kwargs...)
     V = [d.M[a] for a in A]
     for v0 in V
@@ -90,19 +90,19 @@ add!(d::Dependency, v::VarInfo) = begin
         link!(d, n0, n1)
         link!(d, n1, n2)
         # needs `time` tags update, but equation args should be excluded due to cyclic dependency
-        inlink!(d, v, n0; equation=false)
-        inlink!(d, v, n2)
+        link!(d, v, n0; equation=false)
+        link!(d, v, n2)
     elseif v.state == :Capture
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
         link!(d, n0, n1)
-        inlink!(d, v, n0; equation=false)
-        inlink!(d, v, n1)
+        link!(d, v, n0; equation=false)
+        link!(d, v, n1)
     elseif v.state == :Solve
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         link!(d, n0, n1)
-        inlink!(d, v, n1)
+        link!(d, v, n1)
         # needs access to context in Solve constructor
         c = mainnode!(d, :context)
         link!(d, c, n0)
@@ -110,15 +110,15 @@ add!(d::Dependency, v::VarInfo) = begin
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
         link!(d, n0, n1)
-        inlink!(d, v, n1)
+        link!(d, v, n1)
     elseif v.state == :Produce
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         n2 = postnode!(d, v)
         link!(d, n0, n1)
         link!(d, n1, n2)
-        inlink!(d, v, n1)
-        inlink!(d, v, n2)
+        link!(d, v, n1)
+        link!(d, v, n2)
         # needs access to context in Produce constructor
         c = mainnode!(d, :context)
         link!(d, c, n0)
@@ -128,10 +128,10 @@ add!(d::Dependency, v::VarInfo) = begin
         n2 = postnode!(d, v)
         link!(d, n0, n1)
         link!(d, n1, n2)
-        inlink!(d, v, n0)
+        link!(d, v, n0)
     else
         n = mainnode!(d, v)
-        inlink!(d, v, n)
+        link!(d, v, n)
     end
     if istag(v, :parameter)
         c = mainnode!(d, :config)
