@@ -8,6 +8,17 @@ struct Dependency
 end
 
 Dependency(M::Dict{Symbol,VarInfo}) = Dependency(DiGraph(), VarNode[], Dict{VarNode,VarInfo}(), M)
+Dependency(V::Vector{VarInfo}) = begin
+    M = Dict{Symbol,VarInfo}()
+    for v in V
+        for n in names(v)
+            M[n] = v
+        end
+    end
+    d = Dependency(M)
+    add!(d, V)
+    d
+end
 
 vertex!(d::Dependency, v::VarNode) = begin
     if !haskey(d.I, v)

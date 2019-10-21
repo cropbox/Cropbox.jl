@@ -346,14 +346,7 @@ end
 
 include("dependency.jl")
 sortednodes(name, infos) = begin
-    M = Dict{Symbol,VarInfo}()
-    for v in infos
-        for n in names(v)
-            M[n] = v
-        end
-    end
-    d = Dependency(M)
-    add!(d, infos)
+    d = Dependency(infos)
     #HACK: for debugging
     save(d, name)
     sort(d)
