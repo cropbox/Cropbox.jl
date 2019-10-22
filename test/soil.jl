@@ -340,7 +340,7 @@ end
 
 using DataFrames
 using CSV
-@system Weather begin
+@system SoilWeather begin
     filename => "PyWaterBal.csv" ~ preserve::String(parameter)
     index => :timestamp ~ preserve::Symbol(parameter)
 
@@ -362,9 +362,9 @@ using CSV
     evaporation(s): E => s[:evaporation] ~ track(u"mm/d")
 end
 
-# w = instance(Weather, config=configure(
+# w = instance(SoilWeather, config=configure(
 #     :Clock => (:step => 24),
-#     :Weather => (:filename => "test/PyWaterBal.csv")
+#     :SoilWeather => (:filename => "test/PyWaterBal.csv")
 # ))
 
 #FIXME: not just SoilClock, but entire Context should be customized for sub-timestep handling
@@ -372,9 +372,9 @@ end
 # 2.4.11 Daily integration
 # iterations=100
 # Theta_i,t+1 (m day-1) (Eq. 2.105)
-@system Soil begin
+@system SoilModule begin
     context ~ ::SoilContext(override)
-    weather: w ~ ::Weather(override)
+    weather: w ~ ::SoilWeather(override)
 
     rooting_depth: d_r ~ track(u"m", override) # d_root (m)
 
@@ -444,15 +444,15 @@ end
 end
 
 @system SoilController(Controller) begin
-    weather(context, config): w ~ ::Weather
+    weather(context, config): w ~ ::SoilWeather
     soil_context(context, config): sc ~ ::SoilContext(context)
     rooting_depth: d_r => 0.3 ~ track(u"m")
-    soil(context=soil_context, w, d_r): s ~ ::Soil
+    soil(context=soil_context, w, d_r): s ~ ::SoilModule
 end
 
 s = instance(SoilController, config=configure(
     :Clock => (:step => 1u"d"),
     :SoilClock => (:step => 15u"minute"),
-    :Weather => (:filename => "test/PyWaterBal.csv")
+    :SoilWeather => (:filename => "test/PyWaterBal.csv")
 ))
 run!(s, 80, v1="s.L[1].θ", v2="s.L[2].θ", v3="s.L[3].θ", v4="s.L[4].θ", v5="s.L[5].θ")
