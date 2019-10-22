@@ -388,17 +388,17 @@ end
         L = Layer[]
         for i in 1:n
             z = ss + s/2 # depth
-            l = Layer(context=context, index=i, vwc_initial=θ, depth=z, rooting_depth=d_r, thickness=s, cumulative_thickness=ss)
+            l = Layer(context=context, i=i, θ_i=θ, z=z, d_r=d_r, s=s, ss=ss)
             push!(L, l)
             ss += s
         end
         L
     end ~ ::Vector{Layer}
 
-    surface_interface(context, layer=L[1], precipitation, evaporation_actual, transpiration_actual) ~ ::SurfaceInterface
+    surface_interface(context, layer=L[1], R, Ea, Ta) ~ ::SurfaceInterface
 
     soil_interfaces(context, L, Ta) => begin
-        [SoilInterface(context=context, upper_layer=a, lower_layer=b, transpiration_actual=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
+        [SoilInterface(context=context, l1=a, l2=b, Ta=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
     end ~ ::Vector{SoilInterface}
 
     bedrock_interface(context, layer=L[end]) ~ ::BedrockInterface
@@ -446,8 +446,8 @@ end
 @system SoilController(Controller) begin
     weather(context, config): w ~ ::Weather
     soil_context(context, config): sc ~ ::SoilContext(context)
-    rooting_depth => 0.3 ~ track(u"m")
-    soil(context=soil_context, weather, rooting_depth): s ~ ::Soil
+    rooting_depth: d_r => 0.3 ~ track(u"m")
+    soil(context=soil_context, w, d_r): s ~ ::Soil
 end
 
 s = instance(SoilController, config=configure(
