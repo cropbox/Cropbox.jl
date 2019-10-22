@@ -129,13 +129,22 @@ gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
     !isnothing(v.body) && error("`override` can't have funtion body: $(v.body)")
-    genoverride(v.name)
+    gengetkwargs(v, nothing)
 end
-genoverride(name) = @q _kwargs[$(Meta.quot(name))]
 
-genextern(name, default) = begin
-    key = Meta.quot(name)
-    @q haskey(_kwargs, $key) ? _kwargs[$key] : $default
+genextern(v::VarInfo, default) = gengetkwargs(v, default)
+
+gengetkwargs(v::VarInfo, default) = begin
+    K = [Meta.quot(n) for n in names(v)]
+    K = names(v)
+    @q $C.getbynames(_kwargs, $K, $default)
+end
+
+getbynames(d, K, default=nothing) = begin
+    for k in K
+        haskey(d, k) && return d[k]
+    end
+    default
 end
 
 import DataStructures: OrderedSet
@@ -146,7 +155,7 @@ gendecl(v::VarInfo{Symbol}) = begin
     decl = if istag(v, :override)
         genoverride(v)
     else
-        value = istag(v, :extern) ? genextern(v.name, geninit(v)) : geninit(v)
+        value = istag(v, :extern) ? genextern(v, geninit(v)) : geninit(v)
         stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
         @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
     end
