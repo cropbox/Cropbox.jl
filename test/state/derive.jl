@@ -6,7 +6,7 @@
             c(a, b) => a + b ~ track
         end
         s = instance(SDerive)
-        @test s.a == 1 && s.b == 2 && s.c == 3
+        @test s.a' == 1 && s.b' == 2 && s.c' == 3
     end
 
     @testset "cross reference" begin

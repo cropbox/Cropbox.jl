@@ -5,13 +5,13 @@
             b(a) => a + 1 ~ accumulate
         end
         s = instance(SAccumulate)
-        @test s.a == 1 && s.b == 0
+        @test s.a' == 1 && s.b' == 0
         update!(s)
-        @test s.a == 1 && s.b == 2
+        @test s.a' == 1 && s.b' == 2
         update!(s)
-        @test s.a == 1 && s.b == 4
+        @test s.a' == 1 && s.b' == 4
         update!(s)
-        @test s.a == 1 && s.b == 6
+        @test s.a' == 1 && s.b' == 6
     end
 
     @testset "cross reference" begin
@@ -20,13 +20,13 @@
             b(a) => a + 1 ~ accumulate
         end
         s = instance(SAccumulateXRef)
-        @test s.a == 0 && s.b == 0
+        @test s.a' == 0 && s.b' == 0
         update!(s)
-        @test s.a == 1 && s.b == 1
+        @test s.a' == 1 && s.b' == 1
         update!(s)
-        @test s.a == 3 && s.b == 3
+        @test s.a' == 3 && s.b' == 3
         update!(s)
-        @test s.a == 7 && s.b == 7
+        @test s.a' == 7 && s.b' == 7
     end
 
     @testset "cross reference mirror" begin
@@ -39,13 +39,13 @@
             b(a) => a + 1 ~ accumulate
         end
         s1 = instance(SAccumulateXrefMirror1); s2 = instance(SAccumulateXrefMirror2)
-        @test s1.a == 0 == s2.b && s1.b == 0 == s2.a
+        @test s1.a' == s2.b' == 0 && s1.b' == s2.a' == 0
         update!(s1); update!(s2)
-        @test s1.a == 1 == s2.b && s1.b == 2 == s2.a
+        @test s1.a' == s2.b' == 1 && s1.b' == s2.a' == 2
         update!(s1); update!(s2)
-        @test s1.a == 4 == s2.b && s1.b == 5 == s2.a
+        @test s1.a' == s2.b' == 4 && s1.b' == s2.a' == 5
         update!(s1); update!(s2)
-        @test s1.a == 10 == s2.b && s1.b == 11 == s2.a
+        @test s1.a' == s2.b' == 10 && s1.b' == s2.a' == 11
     end
 
     @testset "time" begin
@@ -56,13 +56,13 @@
             c(a) => a + 1 ~ accumulate(time=t)
         end
         s = instance(SAccumulateTime)
-        @test s.a == 1 && s.b == 0 && s.c == 0
+        @test s.a' == 1 && s.b' == 0 && s.c' == 0
         update!(s)
-        @test s.a == 1 && s.b == 2 && s.c == 1
+        @test s.a' == 1 && s.b' == 2 && s.c' == 1
         update!(s)
-        @test s.a == 1 && s.b == 4 && s.c == 2
+        @test s.a' == 1 && s.b' == 4 && s.c' == 2
         update!(s)
-        @test s.a == 1 && s.b == 6 && s.c == 3
+        @test s.a' == 1 && s.b' == 6 && s.c' == 3
     end
 
     @testset "transport" begin
@@ -72,13 +72,13 @@
             c(b, c) => max(b - c, 0) ~ accumulate
         end
         s = instance(SAccumulateTransport)
-        @test s.a == 10 && s.b == 0 && s.c == 0
+        @test s.a' == 10 && s.b' == 0 && s.c' == 0
         update!(s)
-        @test s.a == 0 && s.b == 10 && s.c == 0
+        @test s.a' == 0 && s.b' == 10 && s.c' == 0
         update!(s)
-        @test s.a == 0 && s.b == 0 && s.c == 10
+        @test s.a' == 0 && s.b' == 0 && s.c' == 10
         update!(s)
-        @test s.a == 0 && s.b == 0 && s.c == 10
+        @test s.a' == 0 && s.b' == 0 && s.c' == 10
     end
 
     @testset "distribute" begin
@@ -90,12 +90,12 @@
         end
         s = instance(SAccumulateDistribute)
         c = s.context
-        @test c.clock.tick == 1u"hr" && s.s == 100 && s.d1 == 0 && s.d2 == 0 && s.d3 == 0
+        @test c.clock.tick' == 1u"hr" && s.s' == 100 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
         update!(s)
-        @test c.clock.tick == 2u"hr" && s.s == 200 && s.d1 == 20 && s.d2 == 30 && s.d3 == 50
+        @test c.clock.tick' == 2u"hr" && s.s' == 200 && s.d1' == 20 && s.d2' == 30 && s.d3' == 50
         update!(s)
-        @test c.clock.tick == 3u"hr" && s.s == 300 && s.d1 == 60 && s.d2 == 90 && s.d3 == 150
+        @test c.clock.tick' == 3u"hr" && s.s' == 300 && s.d1' == 60 && s.d2' == 90 && s.d3' == 150
         update!(s)
-        @test c.clock.tick == 4u"hr" && s.s == 400 && s.d1 == 120 && s.d2 == 180 && s.d3 == 300
+        @test c.clock.tick' == 4u"hr" && s.s' == 400 && s.d1' == 120 && s.d2' == 180 && s.d3' == 300
     end
 end

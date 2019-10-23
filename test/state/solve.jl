@@ -4,7 +4,7 @@
             x(x) => 2x - 1 ~ solve(lower=0, upper=2)
         end
         s = instance(SolveBisect)
-        @test s.x == 1
+        @test s.x' == 1
     end
 
     # @testset "order0" begin
@@ -20,6 +20,6 @@
             x(x) => 2x - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
         end
         s = instance(SolveBisectUnit)
-        @test s.x == u"1m"
+        @test s.x' == u"1m"
     end
 end

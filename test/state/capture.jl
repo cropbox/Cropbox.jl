@@ -6,11 +6,11 @@
             c(a) => a + 1 ~ accumulate
         end
         s = instance(SCapture)
-        @test s.b == 0 && s.c == 0
+        @test s.b' == 0 && s.c' == 0
         update!(s)
-        @test s.b == 2 && s.c == 2
+        @test s.b' == 2 && s.c' == 2
         update!(s)
-        @test s.b == 2 && s.c == 4
+        @test s.b' == 2 && s.c' == 4
     end
 
     @testset "time" begin
@@ -21,10 +21,10 @@
             c(a) => a + 1 ~ accumulate(time=t)
         end
         s = instance(SCaptureTime)
-        @test s.b == 0 && s.c == 0
+        @test s.b' == 0 && s.c' == 0
         update!(s)
-        @test s.b == 4 && s.c == 4
+        @test s.b' == 4 && s.c' == 4
         update!(s)
-        @test s.b == 4 && s.c == 8
+        @test s.b' == 4 && s.c' == 8
     end
 end

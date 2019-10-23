@@ -40,22 +40,6 @@ struct PostPriority <: Priority end
 priority(::S) where {S<:State} = priority(S)
 priority(::Type{<:State}) = PostPriority()
 
-import Base: convert, promote_rule
-convert(::Type{<:State}, s::State) = s
-convert(::Type{V}, s::State) where V = convert(V, value(s))
-promote_rule(::Type{<:State}, ::Type{V}) where V = V
-
-import Base: ==
-#HACK: would make different Vars with same internal value clash for Dict key
-# ==(a::State, b::State) = ==(value(a), value(b))
-==(a::State, b::V) where V = ==(promote(a, b)...)
-==(a::V, b::State) where V = ==(b, a)
-#TODO: reduce redundant declarations of basic functions (i.e. comparison)
-# import Base: isless
-# isless(a::State, b::State) = isless(value(a), value(b))
-# isless(a::State, b::V) where {V<:Number} = isless(promote(a, b)...)
-# isless(a::V, b::State) where {V<:Number} = isless(b, a)
-
 import Base: show
 show(io::IO, s::S) where {S<:State} = begin
     v = value(s)

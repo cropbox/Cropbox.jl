@@ -8,8 +8,8 @@
             i => 1 ~ preserve
         end
         s = instance(SCall)
-        @test s.a == 1
-        @test s.b == 2
+        @test s.a' == 1
+        @test s.b' == 2
     end
 
     @testset "unit" begin
@@ -21,8 +21,8 @@
             i => 1 ~ preserve(u"m")
         end
         s = instance(SCallUnit)
-        @test s.a == 1u"m"
-        @test s.b == 2u"m"
+        @test s.a' == 1u"m"
+        @test s.b' == 2u"m"
     end
 
     @testset "type and unit" begin
@@ -34,8 +34,8 @@
             i => 1 ~ preserve::Int(u"m")
         end
         s = instance(SCallTypeUnit)
-        @test s.a == 1u"m"
-        @test s.b == 2u"m"
+        @test s.a' == 1u"m"
+        @test s.b' == 2u"m"
         @test s.a' |> ustrip |> typeof == Int
         @test s.b' |> ustrip |> typeof == Int
     end

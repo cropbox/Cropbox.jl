@@ -5,6 +5,6 @@
             b => false ~ flag
         end
         s = instance(SFlag)
-        @test s.a == true && s.b == false
+        @test s.a' == true && s.b' == false
     end
 end

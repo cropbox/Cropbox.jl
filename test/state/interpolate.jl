@@ -7,8 +7,8 @@
             b(n) => n(25) ~ track
        end
        s = instance(SInterpolate)
-       @test s.a == 25
-       @test s.b == 2.5
+       @test s.a' == 25
+       @test s.b' == 2.5
     end
 
     @testset "matrix" begin
@@ -19,8 +19,8 @@
             b(n) => n(25) ~ track
        end
        s = instance(SInterpolateMatrix)
-       @test s.a == 25
-       @test s.b == 2.5
+       @test s.a' == 25
+       @test s.b' == 2.5
     end
 
     @testset "config" begin
@@ -32,8 +32,8 @@
        end
        o = configure(SInterpolateConfig => (:m => [1 => 10, 2 => 20, 3 => 30]))
        s = instance(SInterpolateConfig; config=o)
-       @test s.a == 25
-       @test s.b == 2.5
+       @test s.a' == 25
+       @test s.b' == 2.5
     end
 
     @testset "unit" begin
@@ -44,7 +44,7 @@
             b(n) => n(25u"s") ~ track(u"m")
        end
        s = instance(SInterpolateUnit)
-       @test s.a == 25u"s"
-       @test s.b == 2.5u"m"
+       @test s.a' == 25u"s"
+       @test s.b' == 2.5u"m"
     end
 end
