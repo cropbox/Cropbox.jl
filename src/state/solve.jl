@@ -1,7 +1,5 @@
 mutable struct Solve{V} <: State{V}
     value::V
-    lower::V
-    upper::V
     step::Symbol
     N::Int
     a::V
@@ -12,10 +10,10 @@ mutable struct Solve{V} <: State{V}
     fc::V
 end
 
-Solve(; lower=nothing, upper=nothing, unit, _type, _...) = begin
+Solve(; unit, _type, _...) = begin
     V = valuetype(_type, value(unit))
     v = zero(V)
-    Solve{V}(v, lower, upper, :z, 0, v, v, v, v, v, v)
+    Solve{V}(v, :z, 0, v, v, v, v, v, v)
 end
 
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
@@ -31,8 +29,8 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     @q let $s = $(symstate(v))
         if $s.step == :z
             $s.N = 0
-            $s.a = $C.value($s.lower)
-            $s.b = $C.value($s.upper)
+            $s.a = $C.unitfy($C.value($(v.tags[:lower])), $C.value($(v.tags[:unit])))
+            $s.b = $C.unitfy($C.value($(v.tags[:upper])), $C.value($(v.tags[:unit])))
             $s.step = :a
             $C.store!($s, $s.a)
             @goto $lstart
