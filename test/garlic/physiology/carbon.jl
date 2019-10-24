@@ -155,15 +155,14 @@
         (1 - carbon_fraction) * Yg * c # gCH2O partitioned to roots
     end ~ track(u"g/d")
 
-    partitioning_table => begin
-        # seed, vegetative, bulb growth w/scape, wo/scape, dead
-        [0.00 0.10 0.10 0.10 0.00; # root
-         0.00 0.00 0.00 0.00 0.00; # shoot
-         0.00 0.45 0.15 0.15 0.00; # leaf
-         0.00 0.45 0.25 0.30 0.00; # sheath
-         0.00 0.00 0.10 0.00 0.00; # scape
-         0.00 0.00 0.40 0.45 0.00] # bulb
-    end ~ tabulate(
+    partitioning_table => [
+        # root shoot leaf sheath scape bulb
+          0.00  0.00 0.00   0.00  0.00 0.00 ; # seed
+          0.10  0.00 0.45   0.45  0.00 0.00 ; # vegetative
+          0.10  0.00 0.15   0.25  0.10 0.40 ; # bulb growth with scape
+          0.10  0.00 0.15   0.30  0.00 0.45 ; # bulb growth without scape
+          0.00  0.00 0.00   0.00  0.00 0.00 ; # dead
+    ] ~ tabulate(
         rows=(:seed, :vegetative, :bulb_growth_with_scape, :bulb_growth_without_scape, :dead),
         columns=(:root, :shoot, :leaf, :sheath, :scape, :bulb),
         parameter
