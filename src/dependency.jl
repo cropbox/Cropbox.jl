@@ -162,10 +162,17 @@ sort(d::Dependency) = begin
     [d.V[i] for i in J]
 end
 
+import REPL
+latex_symbols_inverse = begin
+    D = REPL.REPLCompletions.latex_symbols
+    Dict(D[k] => k for k in keys(D))
+end
+
 using LaTeXStrings
 label(n::VarNode) = begin
     v = n.info
     name = replace(String(isempty(v.alias) ? v.name : v.alias[1]), "_" => "")
+    name = join(map(c -> get(latex_symbols_inverse, string(c), c), collect(name)))
     tag = begin
         if n.step == PreStep()
             "0"
