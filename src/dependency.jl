@@ -184,7 +184,6 @@ dependency(s::S) where {S<:System} = dependency(S)
 import TikzGraphs
 plot(d::Dependency) = TikzGraphs.plot(d.g, label.(d.V))
 plot(::Type{S}) where {S<:System} = plot(dependency(S))
-plot(s::S) where {S<:System} = plot(S)
 
 import Base: write
 import TikzPictures
@@ -193,4 +192,3 @@ write(filename::AbstractString, d::Dependency) = begin
     TikzPictures.save(f, plot(d))
 end
 write(filename::AbstractString, ::Type{S}) where {S<:System} = write(filename, dependency(S))
-write(filename::AbstractString, s::S) where {S<:System} = write(filename, S)
