@@ -182,7 +182,7 @@ label(n::VarNode) = begin
             ""
         end
     end
-    latexstring("$(name)_{$tag}")
+    latexstring("\\mathrm{$(name)_{$tag}}")
 end
 
 dependency(::Type{S}) where {S<:System} = Dependency(geninfos(nameof(S), (), source(S)))
