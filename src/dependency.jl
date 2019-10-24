@@ -178,16 +178,19 @@ label(n::VarNode) = begin
     latexstring("$(name)_{$tag}")
 end
 
+dependency(::Type{S}) where {S<:System} = Dependency(geninfos(nameof(S), (), source(S)))
+dependency(s::S) where {S<:System} = dependency(S)
+
+import TikzGraphs
+plot(d::Dependency) = TikzGraphs.plot(d.g, label.(d.V))
+plot(::Type{S}) where {S<:System} = plot(dependency(S))
+plot(s::S) where {S<:System} = plot(S)
+
 import Base: write
-import TikzGraphs, TikzPictures
+import TikzPictures
 write(filename::AbstractString, d::Dependency) = begin
     f = TikzPictures.PDF(string(filename))
-    p = TikzGraphs.plot(d.g, label.(d.V))
-    TikzPictures.save(f, p)
+    TikzPictures.save(f, plot(d))
 end
-write(filename::AbstractString, s::Type{S}) where {S<:System} = begin
-    V = geninfos(nameof(S), (), source(S))
-    d = Dependency(V)
-    write(filename, d)
-end
-write(filename::AbstractString, s::System) = write(filename, s)
+write(filename::AbstractString, ::Type{S}) where {S<:System} = write(filename, dependency(S))
+write(filename::AbstractString, s::S) where {S<:System} = write(filename, S)
