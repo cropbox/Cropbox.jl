@@ -75,9 +75,9 @@ link!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
             n0 = prenode!(d, v0)
             link!(d, n0, n)
         elseif isnothing(v0.state) && istag(v0, :context)
-            n0 = mainnode!(d, v0)
+            n1 = mainnode!(d, v0)
             n2 = postnode!(d, v0)
-            link!(d, n0, n)
+            link!(d, n1, n)
             link!(d, n, n2)
         else
             n1 = mainnode!(d, v0)
