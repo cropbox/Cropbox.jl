@@ -140,6 +140,7 @@ add!(d::Dependency, v::VarInfo) = begin
         link!(d, n0, n1)
         link!(d, n1, n2)
         link!(d, v, n0)
+        link!(d, v, n2)
     else
         n = mainnode!(d, v)
         link!(d, v, n)
