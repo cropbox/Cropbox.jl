@@ -165,7 +165,7 @@ end
 
 label(n::VarNode) = begin
     v = n.info
-    name = replace(string(isempty(v.alias) ? v.name : v.alias[1]), "_" => "")
+    name = replace(string(isempty(v.alias) ? v.name : v.alias[1]), "_" => " ")
     tag = begin
         if n.step == PreStep()
             "∘"
