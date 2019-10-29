@@ -39,8 +39,8 @@ using LinearAlgebra
         iszero(LAI) ? zero(s) : s
     end ~ track(u"mol/m^2/s" #= H2O =#)
 
-    sunlit_leaf_area_index(radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"cm^2/m^2")
-    shaded_leaf_area_index(radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"cm^2/m^2")
+    sunlit_leaf_area_index(radiation.sunlit_leaf_area_index): LAI_sunlit ~ track(u"m^2/m^2")
+    shaded_leaf_area_index(radiation.shaded_leaf_area_index): LAI_shaded  ~ track(u"m^2/m^2")
 
     weighted(LAI_sunlit, LAI_shaded; array::Vector{Float64}(u"μmol/m^2/s")) => begin
         [LAI_sunlit LAI_shaded] ⋅ array

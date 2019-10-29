@@ -12,7 +12,7 @@
 
     leaf_area_index(green_leaf_area, planting_density): LAI => begin
         green_leaf_area * planting_density
-    end ~ track(u"cm^2/m^2")
+    end ~ track(u"m^2/m^2")
 
     # actualgreenArea is the green area of leaf growing under carbon limitation
     #SK 8/22/10: There appears to be no distinction between these two variables in the code.

@@ -40,7 +40,7 @@ end
 
 @system Radiation begin
     sun ~ ::Sun(override)
-    leaf_area_index: LAI ~ track(u"cm^2/m^2", override)
+    leaf_area_index: LAI ~ track(u"m^2/m^2", override)
 
     leaf_angle => ellipsoidal ~ preserve::LeafAngle(parameter)
 
@@ -184,33 +184,33 @@ end
     #######################
 
     # I_lb: dePury (1997) eqn A3
-    irradiance_lb(I0_dr, rho_cb, Kb1; L(u"cm^2/m^2")): I_lb => begin
+    irradiance_lb(I0_dr, rho_cb, Kb1; L(u"m^2/m^2")): I_lb => begin
         I0_dr * (1 - rho_cb) * Kb1 * exp(-Kb1 * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_ld: dePury (1997) eqn A5
-    irradiance_ld(I0_df, rho_cb, Kd1; L(u"cm^2/m^2")): I_ld => begin
+    irradiance_ld(I0_df, rho_cb, Kd1; L(u"m^2/m^2")): I_ld => begin
         I0_df * (1 - rho_cb) * Kd1 * exp(-Kd1 * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_l: dePury (1997) eqn A5
-    irradiance_l(; L(u"cm^2/m^2")): I_l => (I_lb(L) + I_ld(L)) ~ call(u"μmol/m^2/s" #= Quanta =#)
+    irradiance_l(; L(u"m^2/m^2")): I_l => (I_lb(L) + I_ld(L)) ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lbSun: dePury (1997) eqn A5
-    irradiance_l_sunlit(I0_dr, s, Kb, I_lSh; L(u"cm^2/m^2")): I_lbSun => begin
+    irradiance_l_sunlit(I0_dr, s, Kb, I_lSh; L(u"m^2/m^2")): I_lbSun => begin
         I_lb_sunlit = I0_dr * (1 - s) * Kb
         #TODO: check name I_lbSun vs. I_l_sunlit?
         I_l_sunlit = I_lb_sunlit + I_lSh(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lSh: dePury (1997) eqn A5
-    irradiance_l_shaded(I_ld, I_lbs; L(u"cm^2/m^2")): I_lSh => begin
+    irradiance_l_shaded(I_ld, I_lbs; L(u"m^2/m^2")): I_lSh => begin
         I_ld(L) + I_lbs(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # I_lbs: dePury (1997) eqn A5
     #FIXME: check name I_lbs vs. I_lbSun
-    irradiance_lbs(I0_dr, rho_cb, s, Kb1, Kb; L(u"cm^2/m^2")): I_lbs => begin
+    irradiance_lbs(I0_dr, rho_cb, s, Kb1, Kb; L(u"m^2/m^2")): I_lbs => begin
         I0_dr * ((1 - rho_cb) * Kb1 * exp(-Kb1 * L) - (1 - s) * Kb * exp(-Kb * L))
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -253,17 +253,17 @@ end
     # shaded_photon_flux_density(_shaded_Q) ~ track
 
     # Qtot: total irradiance (dir + dif) at depth L, simple empirical approach
-    irradiance_Q_tot(I0_tot, s, Kb, Kd; L(u"cm^2/m^2")): Q_tot => begin
+    irradiance_Q_tot(I0_tot, s, Kb, Kd; L(u"m^2/m^2")): Q_tot => begin
         I0_tot * exp(-sqrt(1 - s) * ((Kb + Kd) / 2) * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # Qbt: total beam radiation at depth L
-    irradiance_Q_bt(I0_dr, s, Kb; L(u"cm^2/m^2")): Q_bt => begin
+    irradiance_Q_bt(I0_dr, s, Kb; L(u"m^2/m^2")): Q_bt => begin
         I0_dr * exp(-sqrt(1 - s) * Kb * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
     # net diffuse flux at depth of L within canopy
-    irradiance_Q_d(I0_dr, s, Kd; L(u"cm^2/m^2")): Q_d => begin
+    irradiance_Q_d(I0_dr, s, Kd; L(u"m^2/m^2")): Q_d => begin
         I0_df * exp(-sqrt(1 - s) * Kd * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -276,7 +276,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # unintercepted beam (direct beam) flux at depth of L within canopy
-    irradinace_Q_b(I0_dr, Kb; L(u"cm^2/m^2")): Q_b => begin
+    irradinace_Q_b(I0_dr, Kb; L(u"m^2/m^2")): Q_b => begin
         I0_dr * exp(-Kb * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -286,7 +286,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # flux density on sunlit leaves at delpth L
-    irradiance_Q_sunlit_at(I0_dr, Kb; L(u"cm^2/m^2")): Q_sun_at => begin
+    irradiance_Q_sunlit_at(I0_dr, Kb; L(u"m^2/m^2")): Q_sun_at => begin
         I0_dr * Kb + Q_sh_at(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -297,7 +297,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # diffuse flux density on shaded leaves at depth L
-    irradiance_Q_shaded_at(Q_d, Q_sc; L(u"cm^2/m^2")): Q_sh_at => begin
+    irradiance_Q_shaded_at(Q_d, Q_sc; L(u"m^2/m^2")): Q_sh_at => begin
         # It does not include soil reflection
         Q_d(L) + Q_sc(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
@@ -324,7 +324,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # scattered radiation at depth L in the canopy
-    irradiance_Q_sc(Q_bt, Q_b; L(u"cm^2/m^2")): Q_sc => begin
+    irradiance_Q_sc(Q_bt, Q_b; L(u"m^2/m^2")): Q_sc => begin
         # total beam - nonscattered beam at depth L
         Q_bt(L) - Q_b(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
@@ -343,19 +343,19 @@ end
     # sunlit LAI assuming closed canopy; thus not accurate for row or isolated canopy
     sunlit_leaf_area_index(sunrisen, Kb, LAI): LAI_sunlit => begin
         sunrisen ? (1 - exp(-Kb * LAI)) / Kb : 0.
-    end ~ track(u"cm^2/m^2")
+    end ~ track(u"m^2/m^2")
 
     # shaded LAI assuming closed canopy
     shaded_leaf_area_index(LAI, LAI_sunlit): LAI_shaded => begin
         LAI - LAI_sunlit
-    end~ track(u"cm^2/m^2")
+    end~ track(u"m^2/m^2")
 
     # sunlit fraction of current layer
-    sunlit_fraction(sunrisen, Kb; L(u"cm^2/m^2")) => begin
+    sunlit_fraction(sunrisen, Kb; L(u"m^2/m^2")) => begin
         sunrisen ? exp(-Kb * L) : 0.
     end ~ call
 
-    shaded_fraction(sunlit_fraction; L(u"cm^2/m^2")) => begin
+    shaded_fraction(sunlit_fraction; L(u"m^2/m^2")) => begin
         1 - sunlit_fraction(L)
     end ~ call
 end
