@@ -27,4 +27,28 @@
         update!(s)
         @test s.b' == 4 && s.c' == 8
     end
+
+    @testset "unit hour" begin
+        @system SCaptureUnitHour(Controller) begin
+            a => 1 ~ capture(u"hr")
+        end
+        s = instance(SCaptureUnitHour)
+        @test iszero(s.a')
+        update!(s)
+        @test s.a' == 1u"hr"
+        update!(s)
+        @test s.a' == 1u"hr"
+    end
+
+    @testset "unit day" begin
+        @system SCaptureUnitDay(Controller) begin
+            a => 1 ~ capture(u"d")
+        end
+        s = instance(SCaptureUnitDay)
+        @test iszero(s.a')
+        update!(s)
+        @test s.a' == 1u"hr"
+        update!(s)
+        @test s.a' == 1u"hr"
+    end
 end

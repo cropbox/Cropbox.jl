@@ -4,14 +4,14 @@ mutable struct Capture{V,T,R} <: State{V}
     rate::R
 end
 
-Capture(; unit, time, _type, _...) = begin
+Capture(; unit, time, timeunit, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = unitfy(zero(_type), U)
     V = promote_type(V, typeof(v))
-    t = value(time)
+    TU = value(timeunit)
+    t = unitfy(value(time), TU)
     T = typeof(t)
-    TU = unittype(T)
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     Capture{V,T,R}(v, t, zero(R))
@@ -21,11 +21,20 @@ end
 
 updatetags!(d, ::Val{:Capture}; _...) = begin
     !haskey(d, :time) && (d[:time] = :(context.clock.tick))
+    #TODO: automatic inference without explicit `timeunit` tag
+    if !haskey(d, :timeunit)
+        U = d[:unit]
+        TU = if isnothing(U)
+            @q u"hr"
+        else
+            @q (Unitful.dimension($U) == Unitful.𝐓) ? $U : u"hr"
+        end
+        d[:timeunit] = TU
+    end
 end
 
 genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
     TU = gettag(v, :timeunit)
-    TU = isnothing(TU) ? @q(u"hr") : TU
     T = @q $C.valuetype(Float64, $TU)
     RU = @q $C.rateunittype($U, $TU)
     R = @q $C.valuetype($N, $RU)

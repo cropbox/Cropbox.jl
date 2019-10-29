@@ -65,6 +65,30 @@
         @test s.a' == 1 && s.b' == 6 && s.c' == 3
     end
 
+    @testset "unit hour" begin
+        @system SAccumulateUnitHour(Controller) begin
+            a => 1 ~ accumulate(u"hr")
+        end
+        s = instance(SAccumulateUnitHour)
+        @test iszero(s.a')
+        update!(s)
+        @test s.a' == 1u"hr"
+        update!(s)
+        @test s.a' == 2u"hr"
+    end
+
+    @testset "unit day" begin
+        @system SAccumulateUnitDay(Controller) begin
+            a => 1 ~ accumulate(u"d")
+        end
+        s = instance(SAccumulateUnitDay)
+        @test iszero(s.a')
+        update!(s)
+        @test s.a' == 1u"hr"
+        update!(s)
+        @test s.a' == 2u"hr"
+    end
+
     @testset "transport" begin
         @system SAccumulateTransport(Controller) begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)
