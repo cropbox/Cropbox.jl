@@ -165,9 +165,11 @@ import Dates
         atmospheric_pressure / (101.3u"kPa" * sin(t_s))
     end ~ track
 
+    solar_constant: SC => 1370 ~ preserve(u"W/m^2", parameter)
+
     # Campbell and Norman's global solar radiation, this approach is used here
     #TODO rename to insolation? (W/m2)
-    solar_radiation(elevation_angle, d, SC=1370u"W/m^2") => begin
+    solar_radiation(elevation_angle, d, SC) => begin
         # solar constant, Iqbal (1983)
         #FIXME better to be 1361 or 1362 W/m-2?
         t_s = max(elevation_angle, zero(elevation_angle))
@@ -245,11 +247,15 @@ import Dates
     # PARtot: total PAR (umol m-2 s-1) on horizontal surface (PFD)
     photosynthetic_active_radiation_total(PAR): PARtot ~ track(u"μmol/m^2/s") # Quanta
 
-    photosynthetic_active_radiation_total2(solar_radiation, PARfr, Q=4.6u"μmol/J"): PARtot2 => begin
-        # conversion factor from W/m2 to PFD (umol m-2 s-1) for PAR waveband (median 550 nm of 400-700 nm) of solar radiation,
-        # see Campbell and Norman (1994) p 149
+    photosynthetic_active_radiation_conversion_factor: Q => begin
         # 4.55 is a conversion factor from W to photons for solar radiation, Goudriaan and van Laar (1994)
         # some use 4.6 i.e., Amthor 1994, McCree 1981, Challa 1995.
+        4.6
+    end ~ preserve(u"μmol/J", parameter)
+
+    photosynthetic_active_radiation_total2(solar_radiation, PARfr, Q): PARtot2 => begin
+        # conversion factor from W/m2 to PFD (umol m-2 s-1) for PAR waveband (median 550 nm of 400-700 nm) of solar radiation,
+        # see Campbell and Norman (1994) p 149
         solar_radiation * PARfr * Q
     end ~ track(u"μmol/m^2/s") # Quanta
 

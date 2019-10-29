@@ -40,9 +40,13 @@
     #FIXME
     extra_leaves(np=potential_leaves, ng=pheno.leaves_generic) => (np - ng) ~ track
 
-    maximum_length_of_longest_leaf(LM_min, extra_leaves, k=0u"cm^2"): maximum_length => begin
+    maximum_length_of_longest_leaf_adjustment: k => begin
         # no length adjustment necessary for garlic, unlike MAIZE (KY, 2016-10-12)
-        #k = 0 # 24.0
+        # 24.0
+        0
+    end ~ preserve(u"cm^2", parameter)
+
+    maximum_length_of_longest_leaf(LM_min, extra_leaves, k): maximum_length => begin
         sqrt(LM_min^2 + k * extra_leaves)
     end ~ track(u"cm")
 
