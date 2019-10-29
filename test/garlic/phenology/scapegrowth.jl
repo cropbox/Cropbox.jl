@@ -26,7 +26,7 @@ end
 
 @system ScapeRemoval(Stage, ScapeGrowth, ScapeAppearance) begin
     #FIXME handling default (non-removal) value?
-    scape_removal_date => nothing ~ preserve::Union{ZonedDateTime,Nothing}(parameter)
+    scape_removal_date => nothing ~ preserve::ZonedDateTime(optional, parameter)
 
     scape_removeable(scape_appeared) ~ flag
     scape_removed(scape_removal_date, t=calendar.time) => begin

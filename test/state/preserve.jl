@@ -11,6 +11,17 @@
         @test s.a' == 1 && s.b' == 2 && s.c' == 0
     end
 
+    @testset "optional" begin
+        @system SPreserveOptional(Controller) begin
+            a ~ preserve(optional)
+            b => 1 ~ preserve(optional)
+        end
+        s = instance(SPreserveOptional)
+        @test isnothing(s.a') && s.b' == 1
+        update!(s)
+        @test isnothing(s.a') && s.b' == 1
+    end
+
     @testset "parameter" begin
         @system SParameter(Controller) begin
             a => 1 ~ preserve(parameter)
