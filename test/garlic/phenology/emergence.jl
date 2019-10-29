@@ -5,8 +5,8 @@
     emergence_date => nothing ~ preserve::ZonedDateTime(optional, parameter)
     begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve::Bool
 
-    emergence(r=ER_max, T, T_opt, T_ceil, emerging) => begin
-        emerging ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
+    emergence(r=ER_max, β=BF.ΔT, emerging) => begin
+        emerging ? r * β : zero(r)
     end ~ accumulate
 
     emergeable(germinated) ~ flag
