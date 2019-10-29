@@ -29,7 +29,7 @@ valuetype(T, U::Units) = isunitless(U) ? T : Quantity{T, dimension(U), typeof(U)
 valuetype(::Type{Array{T,N}}, U::Units) where {T,N} = Array{valuetype(T, U), N}
 
 rateunittype(U::Nothing, T::Units) = T^-1
-rateunittype(U::Units, T::Units) = (RU = U/T; Unitful.isunitless(RU) ? nothing : RU)
+rateunittype(U::Units, T::Units) = (R = U/T; isunitless(R) ? nothing : R)
 rateunittype(U::Units, T::Nothing) = U
 rateunittype(U::Nothing, T::Nothing) = nothing
 
