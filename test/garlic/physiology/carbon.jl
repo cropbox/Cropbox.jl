@@ -174,21 +174,21 @@ end
         parameter
     )
 
-    partition(t=partitioning_table; r::Symbol, c::Symbol) => t[r][c] ~ call
+    partition(t=partitioning_table, dp=development_phase; c::Symbol) => t[dp][c] ~ call
 
-    leaf_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
-        shoot_carbon * p(dp, :leaf)
+    leaf_carbon(shoot_carbon, p=partition) => begin
+        shoot_carbon * p(:leaf)
     end ~ track(u"g/d")
 
-    sheath_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
-        shoot_carbon * p(dp, :sheath)
+    sheath_carbon(shoot_carbon, p=partition) => begin
+        shoot_carbon * p(:sheath)
     end ~ track(u"g/d")
 
-    scape_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
-        shoot_carbon * p(dp, :scape)
+    scape_carbon(shoot_carbon, p=partition) => begin
+        shoot_carbon * p(:scape)
     end ~ track(u"g/d")
 
-    bulb_carbon(shoot_carbon, p=partition, dp=development_phase) => begin
-        shoot_carbon * p(dp, :bulb)
+    bulb_carbon(shoot_carbon, p=partition) => begin
+        shoot_carbon * p(:bulb)
     end ~ track(u"g/d")
 end
