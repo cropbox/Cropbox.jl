@@ -348,7 +348,7 @@ end
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._senescence_tracker.rate, self.senescence_duration)
         #FIXME need to remove dependency cycle? (senescence_age -> senescence_ratio -> dead -> senescence_age)
-        (aging && !dead) && q : zero(q)
+        (aging && !dead) ? q : zero(q)
     end ~ accumulate(u"d")
 
     #TODO confirm if it really means the senescence ratio, not rate
