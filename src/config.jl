@@ -20,4 +20,13 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     nothing
 end
 
+import DataStructures: OrderedSet
+parameters(::Type{S}) where {S<:System} = begin
+    d = dependency(S)
+    V = [n.info for n in d.V]
+    #HACK: only extract parameters with no dependency on other variables
+    filter!(v -> istag(v, :parameter) && isempty(v.args), V)
+    configure(S => configure((v.name => eval(v.body) for v in V)...))
+end
+
 export configure
