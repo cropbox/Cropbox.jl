@@ -31,9 +31,12 @@ end
 @system LeafInitiationWithStorage(LeafInitiation) begin
     storage_days: SD => 0 ~ preserve(u"d", parameter)
     storage_temperature: ST => 5 ~ preserve(u"°C", parameter)
+    #FIXME: ThermalTime only accepts override of track, not preserve
+    storage_tempreature_proxy(ST): STP ~ track(u"°C")
+    storage_beta_function(context, T=STP, To=T_opt', Tx=T_ceil'): SBF ~ ::BetaFunction
     initial_leaves_at_harvest: ILN => 4 ~ preserve::Int(parameter)
-    initial_leaves_during_storage(LIR_max, ST, T_opt, T_ceil, SD): ILS => begin
-        LIR_max * beta_thermal_func(ST, T_opt, T_ceil) * SD
-    end ~ track
-    initial_leaves(ILN, ILS) => ILN + ILS ~ track
+    initial_leaves_during_storage(LIR_max, β=SBF.ΔT, SD): ILS => begin
+        floor(Int, LIR_max * β * SD)
+    end ~ preserve::Int
+    initial_leaves(ILN, ILS) => ILN + ILS ~ preserve::Int
 end
