@@ -52,7 +52,7 @@ parsetags(tags::Vector; state, type, a...) = begin
         if @capture(t, k_=v_)
             d[k] = v
         elseif @capture(t, @u_str(v_))
-            d[:unit] = :@u_str($v)
+            d[:unit] = @q @u_str($v)
         else
             d[t] = true
         end
