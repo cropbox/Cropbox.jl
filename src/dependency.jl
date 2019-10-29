@@ -188,7 +188,7 @@ label(n::VarNode) = begin
     name * tag
 end
 
-dependency(::Type{S}) where {S<:System} = Dependency(geninfos(nameof(S), (), source(S)))
+dependency(::Type{S}) where {S<:System} = Dependency(geninfos(S))
 dependency(s::S) where {S<:System} = dependency(S)
 
 import TikzGraphs

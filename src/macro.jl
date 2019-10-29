@@ -282,6 +282,7 @@ geninfos(name, incl, body) = begin
     add!(d, body, name)
     collect(values(d))
 end
+geninfos(S::Type{<:System}) = geninfos(nameof(S), (), source(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(Dependency(infos))
