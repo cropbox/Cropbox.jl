@@ -1,3 +1,8 @@
+@system LeafMaturityTracker(GrowingDegree) begin
+    base_temperature: Tb => 4 ~ preserve(u"°C", parameter)
+    maximum_temperature: Tx => 40 ~ preserve(u"°C", parameter)
+end
+
 @system Leaf(Organ) begin
     rank ~ ::Int(override) # preserve
 
@@ -381,14 +386,11 @@
 
     # Maturity
 
-    maturity(emerged=pheno.emerged, mature, T=pheno.T) => begin
+    maturity_tracker(context, T=pheno.T) ~ ::LeafMaturityTracker
+    maturity(emerged=pheno.emerged, mature, r=maturity_tracker.tt) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
-        if emerged && !mature
-            growing_degree_days(T, 4.0; T_max=40.0)
-        else
-            0.
-        end
-    end ~ accumulate
+        emerged && !mature ? r : zero(r)
+    end ~ accumulate(u"K")
 
     # Nitrogen
 
