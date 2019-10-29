@@ -1,3 +1,13 @@
+@system RespirationTracker(Q10Function) begin
+    weather: w ~ ::Weather(override)
+    temperature(w.T_air): T ~ track(u"°C") # should be soil temperature
+    optimal_temperature: To => 20 ~ preserve(u"°C", parameter)
+    Q10 => begin
+        # typical Q10 value for respiration, Loomis and Amthor (1999) Crop Sci 39:1584-1596
+        2
+    end ~ preserve(parameter)
+end
+
 @system Carbon begin
     weather ~ hold
     phenology: pheno ~ hold
@@ -96,12 +106,8 @@
 
     # based on McCree's paradigm, See McCree(1988), Amthor (2000), Goudriaan and van Laar (1994)
     # units very important here, be explicit whether dealing with gC, gCH2O, or gCO2
-    maintenance_respiration(total_mass, T_air=weather.T_air, Rm, agefn) => begin
-        # typical Q10 value for respiration, Loomis and Amthor (1999) Crop Sci 39:1584-1596
-        Q10 = 2
-        T = T_air # should be soil temperature
-        T_opt = 20u"°C"
-        q = q10_thermal_func(T, T_opt; Q10=Q10)
+    maintenance_respiration_tracker(context, weather) ~ ::RespirationTracker
+    maintenance_respiration(total_mass, Rm, agefn, q=maintenance_respiration_tracker.tt) => begin
         total_mass * q * Rm # gCH2O dt-1, agefn effect removed. 11/17/14. SK.
     end ~ track(u"g/d")
 

@@ -3,6 +3,12 @@
     maximum_temperature: Tx => 40 ~ preserve(u"°C", parameter)
 end
 
+@system LeafAgeTracker(Q10Function) begin
+    phenology: pheno ~ ::Phenology(override)
+    temperature(pheno.T): T ~ track(u"°C")
+    optimal_temperature(pheno.T_opt): To ~ preserve(u"°C")
+end
+
 @system Leaf(Organ) begin
     rank ~ ::Int(override) # preserve
 
@@ -309,19 +315,17 @@ end
         max(SG * GD - stay_green_water_stress_duration, zero(GD))
     end ~ track(u"d")
 
-    active_age(mature, aging, T=pheno.T, T_opt=pheno.T_opt) => begin
+    age_tracker(context, pheno) ~ ::LeafAgeTracker
+
+    active_age(mature, aging, q=age_tracker.tt) => begin
         # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
         # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
         # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._aging_tracker.rate, self.stay_green_duration)
-        if mature && !aging
-            #TODO only for MAIZSIM
-            q10_thermal_func(T, T_opt)
-        else
-            0.
-        end
+        #TODO only for MAIZSIM
+        (mature && !aging) ? q : zero(q)
     end ~ accumulate(u"d")
 
     senescence_water_stress_duration(aging, water_potential_effect, scale=0.5, threshold=-4.0) => begin
@@ -339,16 +343,12 @@ end
     end ~ track(u"d")
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
-    senescence_age(aging, dead, T=pheno.T, T_opt=pheno.T_opt) => begin
+    senescence_age(aging, dead, q=age_tracker.tt) => begin
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._senescence_tracker.rate, self.senescence_duration)
         #FIXME need to remove dependency cycle? (senescence_age -> senescence_ratio -> dead -> senescence_age)
-        if aging && !dead
-            q10_thermal_func(T, T_opt)
-        else
-            0.
-        end
+        (aging && !dead) && q : zero(q)
     end ~ accumulate(u"d")
 
     #TODO confirm if it really means the senescence ratio, not rate
