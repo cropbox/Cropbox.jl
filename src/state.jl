@@ -22,10 +22,10 @@ import Unitful: unit
 unit(::State{V}) where V = unittype(V)
 unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
-import Unitful: Units, dimension
+import Unitful: Units, dimension, isunitless
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
-valuetype(T, U::UU) where {UU<:Units} = Quantity{T, dimension(U), UU}
+valuetype(T, U::Units) = isunitless(U) ? T : Quantity{T, dimension(U), typeof(U)}
 valuetype(::Type{Array{T,N}}, U::Units) where {T,N} = Array{valuetype(T, U), N}
 
 rateunittype(U::Nothing, T::Units) = T^-1
