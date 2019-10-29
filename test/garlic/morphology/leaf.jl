@@ -1,14 +1,3 @@
-@system LeafMaturityTracker(GrowingDegree) begin
-    base_temperature: Tb => 4 ~ preserve(u"°C", parameter)
-    maximum_temperature: Tx => 40 ~ preserve(u"°C", parameter)
-end
-
-@system LeafAgeTracker(Q10Function) begin
-    phenology: pheno ~ ::Phenology(override)
-    temperature(pheno.T): T ~ track(u"°C")
-    optimal_temperature(pheno.T_opt): To ~ preserve(u"°C")
-end
-
 #TODO: rename *temperature to more genereral terms
 @system LeafLengthTracker(BetaFunction) begin
     phenology: pheno ~ ::Phenology(override)
@@ -18,13 +7,6 @@ end
     minimum_temperature: Tn => 0 ~ preserve
     optimal_temperature(n): To => 0.88n ~ preserve
     maximum_temperature(n): Tx => 1.64n ~ preserve
-end
-
-@system LeafElongationAgeTracker(BetaFunction) begin
-    phenology: pheno ~ ::Phenology(override)
-    temperature(pheno.T): T ~ track(u"°C")
-    optimal_temperature(pheno.T_opt): To ~ preserve(u"°C")
-    maximum_temperature(pheno.T_ceil): Tx ~ preserve(u"°C")
 end
 
 @system Leaf(Organ) begin
@@ -165,8 +147,7 @@ end
 
     green_area(green_ratio, area) => (green_ratio * area) ~ track(u"cm^2")
 
-    elongation_age_tracker(context, pheno) ~ ::LeafElongationAgeTracker
-    elongation_age(growing, β=elongation_age_tracker.ΔT) => begin #TODO add dt in the args?
+    elongation_age(growing, β=pheno.BF.ΔT) => begin #TODO add dt in the args?
         #TODO implement Parent and Tardieu (2011, 2012) approach for leaf elongation in response to T and VPD, and normalized at 20C, SK, Nov 2012
         # elongAge indicates where it is now along the elongation stage or duration.
         # duration is determined by totallengh/maxElongRate which gives the shortest duration to reach full elongation in the unit of days.
@@ -330,9 +311,7 @@ end
         max(SG * GD - stay_green_water_stress_duration, zero(GD))
     end ~ track(u"d")
 
-    age_tracker(context, pheno) ~ ::LeafAgeTracker
-
-    active_age(mature, aging, q=age_tracker.ΔT) => begin
+    active_age(mature, aging, q=pheno.Q10.ΔT) => begin
         # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
         # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
         # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
@@ -358,7 +337,7 @@ end
     end ~ track(u"d")
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
-    senescence_age(aging, dead, q=age_tracker.ΔT) => begin
+    senescence_age(aging, dead, q=pheno.Q10.ΔT) => begin
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._senescence_tracker.rate, self.senescence_duration)
@@ -401,8 +380,7 @@ end
 
     # Maturity
 
-    maturity_tracker(context, T=pheno.T) ~ ::LeafMaturityTracker
-    maturity(emerged=pheno.emerged, mature, r=maturity_tracker.r) => begin
+    maturity(emerged=pheno.emerged, mature, r=pheno.GD.r) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         (emerged && !mature) ? r : zero(r)
     end ~ accumulate(u"K")

@@ -1,10 +1,3 @@
-@system OrganPhysiologicalAge(GrowingDegree) begin
-    #TODO support species/cultivar specific temperature parameters
-    # Tb => 8, Tx => 43.3
-    base_temperature: Tb => 4 ~ preserve(u"°C", parameter)
-    maximum_temperature: Tx => 40 ~ preserve(u"°C", parameter)
-end
-
 @system Organ begin
     phenology: pheno ~ ::Phenology(override)
 
@@ -23,8 +16,7 @@ end
     end ~ accumulate(u"g") # Nitrogen
 
     # physiological age accounting for temperature effect (in reference to endGrowth and lifeSpan, days)
-    physiological_age_tracker(context, T) ~ ::OrganPhysiologicalAge
-    physiological_age(e=pheno.emerged, r=physiological_age_tracker.r) => begin
+    physiological_age(e=pheno.emerged, r=pheno.GD.r) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         e ? r : zero(r)
     end ~ accumulate(u"K")
