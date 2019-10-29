@@ -7,18 +7,19 @@ struct Dependency
     M::Dict{Symbol,VarInfo}
 end
 
-Dependency(M::Dict{Symbol,VarInfo}) = Dependency(DiGraph(), VarNode[], Dict{VarNode,VarInfo}(), M)
-Dependency(V::Vector{VarInfo}) = begin
+dependency(M::Dict{Symbol,VarInfo}) = Dependency(DiGraph(), VarNode[], Dict{VarNode,VarInfo}(), M)
+dependency(V::Vector{VarInfo}) = begin
     M = Dict{Symbol,VarInfo}()
     for v in V
         for n in names(v)
             M[n] = v
         end
     end
-    d = Dependency(M)
+    d = dependency(M)
     add!(d, V)
     d
 end
+dependency(::Type{S}) where {S<:System} = dependency(geninfos(S))
 
 vertex!(d::Dependency, v::VarNode) = begin
     if !haskey(d.I, v)
@@ -190,9 +191,6 @@ label(n::VarNode) = begin
     end
     name * tag
 end
-
-dependency(::Type{S}) where {S<:System} = Dependency(geninfos(S))
-dependency(s::S) where {S<:System} = dependency(S)
 
 import TikzGraphs
 plot(d::Dependency) = TikzGraphs.plot(d.g, label.(d.V))

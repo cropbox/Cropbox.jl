@@ -285,7 +285,7 @@ end
 geninfos(S::Type{<:System}) = geninfos(nameof(S), (), source(S))
 
 include("dependency.jl")
-sortednodes(infos) = sort(Dependency(infos))
+sortednodes(infos) = sort(dependency(infos))
 
 macro system(head, body=:(begin end))
     gensystem(head, body)
