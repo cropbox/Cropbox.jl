@@ -9,6 +9,24 @@ end
     optimal_temperature(pheno.T_opt): To ~ preserve(u"°C")
 end
 
+#TODO: rename *temperature to more genereral terms
+@system LeafLengthTracker(BetaFunction) begin
+    phenology: pheno ~ ::Phenology(override)
+    temperature: T ~ ::Int(override)
+    #FIXME: leaves_potential is already max(leaves_generic, leaves_total)?
+    leaf_count(np=pheno.leaves_potential, ng=pheno.leaves_generic): n => max(np, ng) ~ track
+    minimum_temperature: Tn => 0 ~ preserve
+    optimal_temperature(n): To => 0.88n ~ preserve
+    maximum_temperature(n): Tx => 1.64n ~ preserve
+end
+
+@system LeafElongationAgeTracker(BetaFunction) begin
+    phenology: pheno ~ ::Phenology(override)
+    temperature(pheno.T): T ~ track(u"°C")
+    optimal_temperature(pheno.T_opt): To ~ preserve(u"°C")
+    maximum_temperature(pheno.T_ceil): Tx ~ preserve(u"°C")
+end
+
 @system Leaf(Organ) begin
     rank ~ ::Int(override) # preserve
 
@@ -98,15 +116,12 @@ end
         exp(a * scale^2 + b * scale^3)
     end ~ track
 
-    potential_length(maximum_length, rank, np=potential_leaves, ng=pheno.leaves_generic) => begin
+    potential_length_tracker(context, pheno, temperature=rank) ~ ::LeafLengthTracker
+    potential_length(maximum_length, β=potential_length_tracker.ΔT) => begin
         # for MAIZSIM
         #self.maximum_length * self.rank_effect(weight=0.5)
         # for beta fn calibrated from JH's thesis for SP and KM varieties, 8/10/15, SK
-        #FIXME: leaves_potential is already max(leaves_generic, leaves_total)?
-        n = max(np, ng)
-        l_t = 1.64n
-        l_pk = 0.88n
-        maximum_length * beta_thermal_func(rank, l_pk, l_t)
+        maximum_length * β
     end ~ track(u"cm")
 
     # from CLeaf::calc_dimensions()
@@ -150,15 +165,15 @@ end
 
     green_area(green_ratio, area) => (green_ratio * area) ~ track(u"cm^2")
 
-    elongation_age(growing, T=pheno.T, T_opt=pheno.T_opt, T_ceil=pheno.T_ceil) => begin #TODO add dt in the args?
+    elongation_age_tracker(context, pheno) ~ ::LeafElongationAgeTracker
+    elongation_age(growing, β=elongation_age_tracker.ΔT) => begin #TODO add dt in the args?
         #TODO implement Parent and Tardieu (2011, 2012) approach for leaf elongation in response to T and VPD, and normalized at 20C, SK, Nov 2012
         # elongAge indicates where it is now along the elongation stage or duration.
         # duration is determined by totallengh/maxElongRate which gives the shortest duration to reach full elongation in the unit of days.
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._elongation_tracker.rate, self.growth_duration)
         #FIXME how to define unit for this?
-        r = 1.0u"hr/d"
-        growing ? r * beta_thermal_func(T, T_opt, T_ceil) : zero(r)
+        growing ? β : zero(β)
     end ~ accumulate(u"d")
 
     #TODO move to common module (i.e. Organ?)
