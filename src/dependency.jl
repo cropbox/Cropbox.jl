@@ -52,7 +52,7 @@ extract(v::VarInfo; equation=true, tag=true) = begin
             #@show a
             if isexpr(a)
                 f(a)
-            # detect final callee of dot chaining (i.e. `c` in `a.b.c`)
+            # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
             elseif isexpr(v, :., :ref)
                 a
             # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
