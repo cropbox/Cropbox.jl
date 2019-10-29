@@ -318,40 +318,22 @@ end
 
 symname(v::VarInfo) = symname(v.system, v.name)
 symname(s::Symbol, n::Symbol) = n #Symbol(:_, s, :__, n)
-symstate(v::VarInfo) = Symbol(symname(v), :__state)
+symstate(v::VarInfo) = symname(v) #Symbol(symname(v), :__state)
 symlabel(v::VarInfo, t::VarStep, s...) = Symbol(symname(v), suffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :__call)
 
 genupdateinit(n::VarNode) = begin
     v = n.info
-    if isnothing(v.state)
-        # implicit :expose
-        @q begin
-            $(v.name) = self.$(v.name)
-            $([:($a = $(v.name)) for a in v.alias]...)
-        end
-    else
-        s = symstate(v)
-        @q $s = self.$(v.name)
+    # implicit :expose
+    @q begin
+        $(v.name) = self.$(v.name)
+        $([:($a = $(v.name)) for a in v.alias]...)
     end
 end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
-genupdate(v::VarInfo, t::VarStep) = begin
-    u = genupdate(v, Val(v.state), t)
-    l = symlabel(v, t)
-    if isnothing(u)
-        @q @label $l
-    else
-        @q begin
-            $(LineNumberNode(0, "genupdate/$(v.name)"))
-            @label $l
-            $(v.name) = $u
-            $([:($a = $(v.name)) for a in v.alias]...)
-        end
-    end
-end
-genupdate(v::VarInfo, t::PostStep) = @q begin
+genupdate(v::VarInfo, t::VarStep) = @q begin
+    $(LineNumberNode(0, "genupdate/$(v.name)"))
     @label $(symlabel(v, t))
     $(genupdate(v, Val(v.state), t))
 end
