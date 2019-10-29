@@ -389,7 +389,7 @@ end
     maturity_tracker(context, T=pheno.T) ~ ::LeafMaturityTracker
     maturity(emerged=pheno.emerged, mature, r=maturity_tracker.r) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
-        emerged && !mature ? r : zero(r)
+        (emerged && !mature) ? r : zero(r)
     end ~ accumulate(u"K")
 
     # Nitrogen
