@@ -20,7 +20,7 @@
 
     # no MAX_LEAF_NO implied unlike original model
     leaves_initiated(initial_leaves, leaf_initiation) => begin
-        floor(initial_leaves + leaf_initiation) |> Int
+        floor(Int, initial_leaves + leaf_initiation)
     end ~ track::Int
 end
 
