@@ -33,6 +33,17 @@ rateunittype(U::Units, T::Units) = U/T
 rateunittype(U::Units, T::Nothing) = U
 rateunittype(U::Nothing, T::Nothing) = nothing
 
+struct Nounit{S,U}
+    state::S
+    unit::U
+end
+
+nounit(s::State, u::Units) = Nounit(s, u)
+nounit(s::State) = Nounit(s, nothing)
+value(s::Nounit) = deunitfy(unitfy(value(s.state), s.unit))
+
+export nounit
+
 abstract type Priority end
 struct PrePriority <: Priority end
 struct PostPriority <: Priority end

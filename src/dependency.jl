@@ -50,7 +50,17 @@ extract(v::VarInfo; equation=true, tag=true) = begin
             #@show v
             a = v.args[1]
             #@show a
-            isexpr(a) ? f(a) : isexpr(v, :., :ref) ? a : nothing
+            if isexpr(a)
+                f(a)
+            # detect final callee of dot chaining (i.e. `c` in `a.b.c`)
+            elseif isexpr(v, :., :ref)
+                a
+            # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
+            elseif isexpr(v, :call) && length(v.args) == 2
+                v.args[2]
+            else
+                nothing
+            end
         end
         f(v)
     end
