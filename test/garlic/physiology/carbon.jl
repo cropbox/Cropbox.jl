@@ -48,7 +48,7 @@ end
     end ~ track(u"g/d")
 
     # to be used by allocate_carbon()
-    carbon_temperature_effect(T_air=weather.T_air, T_opt=pheno.T_opt, T_ceil=pheno.T_ceil) => begin
+    carbon_temperature_effect(T_air=weather.T_air, β=pheno.BF.ΔT) => begin
         #FIXME properly handle T_air
         T = ustrip(u"°C", T_air)
         # this needs to be f of temperature, source/sink relations, nitrogen, and probably water
@@ -68,7 +68,7 @@ end
         g2 = 1 - exp(-b3 * max(0, Td - T))
         #return g2 / g1
 
-        beta_thermal_func(T, T_opt, T_ceil)
+        β
     end ~ track
 
     carbon_growth_factor => begin

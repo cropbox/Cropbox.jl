@@ -17,10 +17,10 @@
 
     # 10% available
     seed_mass_export_limit => 10 ~ preserve(u"percent/d")
-    seed_mass_export_rate(seed_mass, seed_mass_export_limit, T=pheno.T, T_opt=pheno.T_opt, T_ceil=pheno.T_ceil) => begin
+    seed_mass_export_rate(seed_mass, seed_mass_export_limit, β=pheno.BF.ΔT) => begin
         # reserved in the propagule (e.g., starch in endosperm of seeds)
         #HACK ratio should depend on growth stage, but fix it for now
-        T_effect = beta_thermal_func(T, T_opt, T_ceil)
+        T_effect = β
         seed_mass * T_effect * seed_mass_export_limit
     end ~ track(u"g/d")
 
