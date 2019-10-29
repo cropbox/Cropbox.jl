@@ -50,6 +50,11 @@ include("death.jl")
     optimal_temperature: T_opt => 22.28 ~ preserve(u"°C", parameter)
     ceiling_temperature: T_ceil => 34.23 ~ preserve(u"°C", parameter)
 
+    #TODO support species/cultivar specific temperature parameters (i.e. Tb => 8, Tx => 43.3)
+    growing_degree(context, T, Tb=4.0u"°C", Tx=40.0u"°C"): GD ~ ::GrowingDegree
+    beta_function(context, T, To=T_opt', Tx=T_ceil'): BF ~ ::BetaFunction
+    q10_function(context, T, To=T_opt'): Q10 ~ ::Q10Function
+
     # garlic
 
     #FIXME clear definition of bulb maturing

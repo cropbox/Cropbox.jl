@@ -6,9 +6,9 @@
 end
 
 @system GrowingDegree(ThermalTime) begin
-    base_temperature: Tb ~ preserve(u"°C", parameter)
-    optimal_temperature: To ~ preserve(u"°C", optional, parameter)
-    maximum_temperature: Tx ~ preserve(u"°C", optional, parameter)
+    base_temperature: Tb ~ preserve(u"°C", extern, parameter)
+    optimal_temperature: To ~ preserve(u"°C", optional, extern, parameter)
+    maximum_temperature: Tx ~ preserve(u"°C", optional, extern, parameter)
 
     magnitude(T, Tb, To, Tx): ΔT => begin
         T = !isnothing(To) ? min(T, To) : T
@@ -19,9 +19,9 @@ end
 end
 
 @system BetaFunction(ThermalTime) begin
-    minimum_temperature: Tn => 0 ~ preserve(u"°C", parameter)
-    optimal_temperature: To ~ preserve(u"°C", parameter)
-    maximum_temperature: Tx ~ preserve(u"°C", parameter)
+    minimum_temperature: Tn => 0 ~ preserve(u"°C", extern, parameter)
+    optimal_temperature: To ~ preserve(u"°C", extern, parameter)
+    maximum_temperature: Tx ~ preserve(u"°C", extern, parameter)
     beta: β => 1 ~ preserve(parameter)
 
     magnitude(T, Tn, To, Tx, β): ΔT => begin
@@ -40,8 +40,8 @@ end
 end
 
 @system Q10Function(ThermalTime) begin
-    optimal_temperature: To ~ preserve(u"°C", parameter)
-    Q10 => 2 ~ preserve(parameter)
+    optimal_temperature: To ~ preserve(u"°C", extern, parameter)
+    Q10 => 2 ~ preserve(extern, parameter)
 
     #FIXME: Q10 isn't actually a thermal function like others (not a rate, check unit)
     magnitude(T, To, Q10): ΔT => begin
