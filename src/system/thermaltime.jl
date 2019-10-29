@@ -1,7 +1,8 @@
 @system ThermalTime begin
     temperature: T ~ track(u"°C", override)
     timestep(context.clock.step): Δt ~ preserve(u"hr")
-    thermal_time: tt ~ track(u"hr^-1")
+    magnitude: ΔT ~ track
+    rate(ΔT, Δt): r => ΔT / Δt ~ track(u"hr^-1")
 end
 
 @system GrowingDegree(ThermalTime) begin
@@ -9,12 +10,12 @@ end
     optimal_temperature: To ~ preserve(u"°C", optional, parameter)
     maximum_temperature: Tx ~ preserve(u"°C", optional, parameter)
 
-    thermal_time(T, Tb, To, Tx, Δt): tt => begin
+    magnitude(T, Tb, To, Tx): ΔT => begin
         T = !isnothing(To) ? min(T, To) : T
         T = !isnothing(Tx) && T >= Tx ? Tb : T
-        ΔT = max(T - Tb, zero(T))
-        ΔT / Δt
-    end ~ track(u"K/hr")
+        max(T - Tb, zero(T))
+    end ~ track(u"K")
+    rate(ΔT, Δt): r => ΔT / Δt ~ track(u"K/hr")
 end
 
 @system BetaFunction(ThermalTime) begin
@@ -23,9 +24,9 @@ end
     maximum_temperature: Tx ~ preserve(u"°C", parameter)
     beta: β => 1 ~ preserve(parameter)
 
-    thermal_time(T, Tn, To, Tx, β, Δt): tt => begin
+    magnitude(T, Tn, To, Tx, β): ΔT => begin
         # beta function, See Yin et al. (1995), Ag For Meteorol., Yan and Hunt (1999) AnnBot, SK
-        ΔT = if (Tn < T < Tx) && (Tn < To < Tx)
+        if (Tn < T < Tx) && (Tn < To < Tx)
             Ton = To - Tn
             Txo = Tx - To
             f = (T - Tn) / Ton
@@ -35,8 +36,7 @@ end
         else
             0.
         end
-        ΔT / Δt
-    end ~ track(u"hr^-1")
+    end ~ track
 end
 
 @system Q10Function(ThermalTime) begin
@@ -44,7 +44,7 @@ end
     Q10 => 2 ~ preserve(parameter)
 
     #FIXME: Q10 isn't actually a thermal function like others (not a rate, check unit)
-    thermal_time(T, To, Q10): tt => begin
+    magnitude(T, To, Q10): ΔT => begin
         Q10^((T - To) / 10u"K")
     end ~ track
 end

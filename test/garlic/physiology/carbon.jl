@@ -107,7 +107,7 @@ end
     # based on McCree's paradigm, See McCree(1988), Amthor (2000), Goudriaan and van Laar (1994)
     # units very important here, be explicit whether dealing with gC, gCH2O, or gCO2
     maintenance_respiration_tracker(context, weather) ~ ::RespirationTracker
-    maintenance_respiration(total_mass, Rm, agefn, q=maintenance_respiration_tracker.tt) => begin
+    maintenance_respiration(total_mass, Rm, agefn, q=maintenance_respiration_tracker.ΔT) => begin
         total_mass * q * Rm # gCH2O dt-1, agefn effect removed. 11/17/14. SK.
     end ~ track(u"g/d")
 

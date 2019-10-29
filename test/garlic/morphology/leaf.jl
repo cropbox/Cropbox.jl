@@ -317,7 +317,7 @@ end
 
     age_tracker(context, pheno) ~ ::LeafAgeTracker
 
-    active_age(mature, aging, q=age_tracker.tt) => begin
+    active_age(mature, aging, q=age_tracker.ΔT) => begin
         # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
         # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
         # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
@@ -343,7 +343,7 @@ end
     end ~ track(u"d")
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
-    senescence_age(aging, dead, q=age_tracker.tt) => begin
+    senescence_age(aging, dead, q=age_tracker.ΔT) => begin
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
         #min(self._senescence_tracker.rate, self.senescence_duration)
@@ -387,7 +387,7 @@ end
     # Maturity
 
     maturity_tracker(context, T=pheno.T) ~ ::LeafMaturityTracker
-    maturity(emerged=pheno.emerged, mature, r=maturity_tracker.tt) => begin
+    maturity(emerged=pheno.emerged, mature, r=maturity_tracker.r) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         emerged && !mature ? r : zero(r)
     end ~ accumulate(u"K")

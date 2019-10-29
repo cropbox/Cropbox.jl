@@ -24,7 +24,7 @@ end
 
     # physiological age accounting for temperature effect (in reference to endGrowth and lifeSpan, days)
     physiological_age_tracker(context, T) ~ ::OrganPhysiologicalAge
-    physiological_age(e=pheno.emerged, r=physiological_age_tracker.tt) => begin
+    physiological_age(e=pheno.emerged, r=physiological_age_tracker.r) => begin
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         e ? r : zero(r)
     end ~ accumulate(u"K")
