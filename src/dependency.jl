@@ -58,6 +58,9 @@ extract(v::VarInfo; equation=true, tag=true) = begin
             # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
             elseif isexpr(v, :call) && length(v.args) == 2
                 v.args[2]
+            # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
+            elseif isexpr(v, Symbol("'"))
+                a
             else
                 nothing
             end
