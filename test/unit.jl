@@ -11,6 +11,22 @@ using Unitful
         @test s.a' == 2u"m" && s.b' == 1u"s" && s.c' == 2u"m/s"
     end
 
+    @testset "unitless" begin
+        @system SUnitless(Controller) begin
+            a => 200 ~ track(u"cm^2")
+            b => 10 ~ track(u"m^2")
+            c(a, b) => a / b ~ track(u"cm^2/m^2")
+            d(a, b) => a / b ~ track(u"m^2/m^2")
+            e(a, b) => a / b ~ track
+        end
+        s = instance(SUnitless)
+        @test s.a' == 200u"cm^2"
+        @test s.b' == 10u"m^2"
+        @test s.c' == 20u"cm^2/m^2"
+        @test s.d' == 0.002
+        @test s.e' == 0.002
+    end
+
     @testset "nounit" begin
         @system SNounit(Controller) begin
             a => 1 ~ track(u"m")
