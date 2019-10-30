@@ -10,7 +10,8 @@ unitfy(v::Quantity, u::Units) = uconvert(u, v)
 unitfy(v::Array{<:Quantity}, u::Units) = uconvert.(u, v)
 
 deunitfy(::Nothing, u=nothing) = nothing
-deunitfy(v) = ustrip(v)
+deunitfy(v) = v
+deunitfy(v::Quantity) = ustrip(v)
 deunitfy(v, u::Units) = deunitfy(unitfy(v, u))
 
 # unitstr(s::String) = @eval @u_str $s
