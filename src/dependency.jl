@@ -2,7 +2,7 @@ using LightGraphs
 
 struct Dependency
     g::DiGraph
-    V::Vector{VarNode}
+    N::Vector{VarNode}
     I::Dict{VarNode,Int}
     M::Dict{Symbol,VarInfo}
 end
@@ -21,18 +21,17 @@ dependency(V::Vector{VarInfo}) = begin
 end
 dependency(::Type{S}) where {S<:System} = dependency(geninfos(S))
 
-vertex!(d::Dependency, v::VarNode) = begin
-    if !haskey(d.I, v)
+node!(d::Dependency, n::VarNode) = begin
+    if !haskey(d.I, n)
         add_vertex!(d.g)
-        push!(d.V, v)
-        d.I[v] = length(d.V)
-        #@show "new vertex at $(d.I[v])"
+        push!(d.N, n)
+        d.I[n] = length(d.N)
+        #@show "new vertex at $(d.I[n])"
     end
-    v
+    n
 end
-
-node!(d::Dependency, v::VarInfo, t::VarStep) = vertex!(d, VarNode(v, t))
-node!(d::Dependency, v::Symbol, t::VarStep) = vertex!(d, VarNode(d.M[v], t))
+node!(d::Dependency, v::VarInfo, t::VarStep) = node!(d, VarNode(v, t))
+node!(d::Dependency, v::Symbol, t::VarStep) = node!(d, VarNode(d.M[v], t))
 prenode!(d::Dependency, v) = node!(d, v, PreStep())
 mainnode!(d::Dependency, v) = node!(d, v, MainStep())
 postnode!(d::Dependency, v) = node!(d, v, PostStep())
@@ -174,7 +173,7 @@ end
 sort(d::Dependency) = begin
     @assert isempty(simplecycles(d.g))
     J = topological_sort_by_dfs(d.g)
-    [d.V[i] for i in J]
+    [d.N[i] for i in J]
 end
 
 label(n::VarNode) = begin
@@ -193,7 +192,7 @@ label(n::VarNode) = begin
 end
 
 import TikzGraphs
-plot(d::Dependency) = TikzGraphs.plot(d.g, label.(d.V))
+plot(d::Dependency) = TikzGraphs.plot(d.g, label.(d.N))
 plot(::Type{S}) where {S<:System} = plot(dependency(S))
 
 import Base: write
