@@ -384,7 +384,7 @@ end
     end ~ track
 end
 
-config = configure()
+config = ()
 
 # config += """
 # # Kim et al. (2007), Kim et al. (2006)

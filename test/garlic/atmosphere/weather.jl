@@ -54,7 +54,7 @@ end
 # import Base: show
 # show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
 
-# o = configure(
+# o = (
 #     :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
 #     :Weather => (:filename => "test/garlic/data/2007.wea"),
 # )

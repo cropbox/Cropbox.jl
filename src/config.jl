@@ -26,7 +26,7 @@ parameters(::Type{S}) where {S<:System} = begin
     V = [n.info for n in d.N]
     #HACK: only extract parameters with no dependency on other variables
     filter!(v -> istag(v, :parameter) && isempty(v.args), V)
-    configure(S => configure((v.name => eval(v.body) for v in V)...))
+    configure(S => ((v.name => eval(v.body) for v in V)...))
 end
 
 export configure

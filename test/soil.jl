@@ -362,7 +362,7 @@ using CSV
     evaporation(s): E => s[:evaporation] ~ track(u"mm/d")
 end
 
-# w = instance(SoilWeather, config=configure(
+# w = instance(SoilWeather, config=(
 #     :Clock => (:step => 24),
 #     :SoilWeather => (:filename => "test/PyWaterBal.csv")
 # ))
@@ -451,7 +451,7 @@ end
 end
 
 run!(SoilController, 80,
-    config=configure(
+    config=(
         :Clock => (:step => 1u"d"),
         :SoilClock => (:step => 15u"minute"),
         :SoilWeather => (:filename => "test/PyWaterBal.csv"),

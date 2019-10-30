@@ -30,7 +30,7 @@
             a(m) => m(2.5) ~ track
             b(n) => n(25) ~ track
        end
-       o = configure(SInterpolateConfig => (:m => [1 => 10, 2 => 20, 3 => 30]))
+       o = SInterpolateConfig => :m => [1 => 10, 2 => 20, 3 => 30]
        s = instance(SInterpolateConfig; config=o)
        @test s.a' == 25
        @test s.b' == 2.5

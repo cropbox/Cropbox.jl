@@ -5,7 +5,7 @@ import Dates
     @testset "basic" begin
         @system SCalendar(Calendar, Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
-        o = configure(:Calendar => (:init => t0))
+        o = :Calendar => :init => t0
         s = instance(SCalendar; config=o)
         # after one advance! in instance()
         @test s.init' == t0

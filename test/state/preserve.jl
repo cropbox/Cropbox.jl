@@ -36,7 +36,7 @@
         @system SParameterConfig(Controller) begin
             a => 1 ~ preserve(parameter)
         end
-        o = configure(SParameterConfig => (:a => 2))
+        o = SParameterConfig => :a => 2
         s = instance(SParameterConfig; config=o)
         @test s.a' == 2
     end
@@ -46,7 +46,7 @@
             a: aa => 1 ~ preserve(parameter)
             bb: b => 1 ~ preserve(parameter)
         end
-        o = configure(SParameterConfigAlias => (:a => 2, :b => 2))
+        o = SParameterConfigAlias => (:a => 2, :b => 2)
         s = instance(SParameterConfigAlias; config=o)
         @test s.a' == 2
         @test s.b' == 2
