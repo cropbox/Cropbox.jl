@@ -16,6 +16,7 @@ include("system/controller.jl")
 include("system/calendar.jl")
 include("system/thermaltime.jl")
 
+include("tool.jl")
 include("dive.jl")
 
 end
