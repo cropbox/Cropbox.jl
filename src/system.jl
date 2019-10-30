@@ -36,35 +36,48 @@ setvar!(s::System, k::Symbol, v) = begin
     end
 end
 
-import DataFrames: DataFrame
-import ProgressMeter: @showprogress
-run!(s::System, n=1; index="context.clock.tick", columns=(), nounit=false) = begin
+parserunkey(p::Pair) = p
+parserunkey(a::Symbol) = (a => a)
+parserunkey(a::String) = (Symbol(split(a, ".")[end]) => a)
+parserun(s::System, index, columns) = begin
     C = isempty(columns) ? fieldnamesunique(s) : columns
     N = [index, C...]
-    parse(p::Pair) = p
-    parse(a::Symbol) = (a => a)
-    parse(a::String) = (Symbol(split(a, ".")[end]) => a)
-    T = (; parse.(N)...)
+    (; parserunkey.(N)...)
+end
+
+import DataFrames: DataFrame
+createresult(s::System, ic) = begin
     R = []
     K = []
-    for (c, k) in pairs(T)
+    for (c, k) in pairs(ic)
         v = value(s[k])
         if typeof(v) <: Union{Number,Symbol,String}
             push!(R, c => v)
             push!(K, k)
         end
     end
-    df = DataFrame(; R...)
-    @showprogress for i in 1:n
+    (DataFrame(; R...), K)
+end
+
+import ProgressMeter: @showprogress
+updateresult!(s::System, n, df, keys; verbose=true) = begin
+    t = verbose ? 1 : Inf
+    @showprogress t for i in 1:n
         update!(s)
-        r = Tuple(value(s[k]) for k in K)
+        r = Tuple(value(s[k]) for k in keys)
         push!(df, r)
     end
+end
+
+run!(s::System, n=1; index="context.clock.tick", columns=(), verbose=true, nounit=false) = begin
+    T = parserun(s, index, columns)
+    df, K = createresult(s, T)
+    updateresult!(s, n, df, K; verbose=verbose)
     nounit ? deunitfy.(df) : df
 end
 
-run!(S::Type{<:System}, n=1; config=configure(), options=(), kwargs...) = begin
-    s = instance(S; config=config, options...)
+run!(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
+    s = instance(S, config=config, options...)
     run!(s, n; kwargs...)
 end
 
