@@ -81,7 +81,33 @@ run!(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
     run!(s, n; kwargs...)
 end
 
+import DataStructures: OrderedDict, DefaultDict
+import BlackBoxOptim: bboptimize, best_candidate
+fit!(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters) = begin
+    P = OrderedDict(parameters)
+    K = [Symbol.(split(n, ".")) for n in keys(P)]
+    config(X) = begin
+        d = DefaultDict(Dict)
+        for (k, v) in zip(K, X)
+            d[k[1]][k[2]] = v
+        end
+        configure(d)
+    end
+    i = parserunkey(index)[1]
+    k = parserunkey(column)[1]
+    k1 = Symbol(k, :_1)
+    cost(X) = begin
+        est = run!(S, n; config=config(X), index=index, columns=(column,), verbose=false)
+        df = join(est, obs, on=i, makeunique=true)
+        R = df[!, k] - df[!, k1]
+        sum(R.^2)
+    end
+    range = collect(values(P))
+    r = bboptimize(cost; SearchRange=range)
+    best_candidate(r) |> config
+end
+
 import Base: show
 show(io::IO, s::System) = print(io, "<$(name(s))>")
 
-export System, run!
+export System, run!, fit!
