@@ -38,16 +38,34 @@ end
 
 import DataFrames: DataFrame
 import ProgressMeter: @showprogress
-run!(s::System, n=1; names...) = begin
-	N = (t="context.clock.tick", names...)
-	V = (k => [value(getproperty(s, n))] for (k, n) in pairs(N))
-	df = DataFrame(; V...)
-	@showprogress for i in 1:n
-		update!(s)
-		r = Tuple(value(getproperty(s, n)) for n in N)
-		push!(df, r)
-	end
-	df
+run!(s::System, n=1; index="context.clock.tick", columns=(), nounit=false) = begin
+    C = isempty(columns) ? fieldnamesunique(s) : columns
+    N = [index, C...]
+    parse(p::Pair) = p
+    parse(a::Symbol) = (a => a)
+    parse(a::String) = (Symbol(split(a, ".")[end]) => a)
+    T = (; parse.(N)...)
+    R = []
+    K = []
+    for (c, k) in pairs(T)
+        v = value(s[k])
+        if typeof(v) <: Union{Number,Symbol,String}
+            push!(R, c => v)
+            push!(K, k)
+        end
+    end
+    df = DataFrame(; R...)
+    @showprogress for i in 1:n
+        update!(s)
+        r = Tuple(value(s[k]) for k in K)
+        push!(df, r)
+    end
+    nounit ? deunitfy.(df) : df
+end
+
+run!(S::Type{<:System}, n=1; config=configure(), options=(), kwargs...) = begin
+    s = instance(S; config=config, options...)
+    run!(s, n; kwargs...)
 end
 
 import Base: show
