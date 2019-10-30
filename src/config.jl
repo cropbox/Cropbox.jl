@@ -28,5 +28,3 @@ parameters(::Type{S}) where {S<:System} = begin
     filter!(v -> istag(v, :parameter) && isempty(v.args), V)
     configure(S => ((v.name => eval(v.body) for v in V)...))
 end
-
-export configure
