@@ -3,8 +3,8 @@
     context(config) ~ ::Cropbox.Context(context)
 end
 
-instance(S::Type{<:System}; config=configure(), kwargs...) = begin
-    s = S(; config=config, kwargs...)
+instance(S::Type{<:System}; config=(), kwargs...) = begin
+    s = S(; config=configure(config), kwargs...)
     update!(s)
 end
 
