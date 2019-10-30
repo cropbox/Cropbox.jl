@@ -1,6 +1,6 @@
 const Config = Dict{Any,Any}
 
-configure(c::Dict) = Config(Symbol(p.first) => configure(p.second) for p in c)
+configure(c::AbstractDict) = Config(Symbol(p.first) => configure(p.second) for p in c)
 configure(c::Tuple) = configure(Config(c))
 configure(c::Pair...) = configure(Config(c...))
 configure(c) = c
