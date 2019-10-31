@@ -62,9 +62,10 @@ fit!(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters
         est = run!(S, n; config=config(X), index=index, columns=(column,), verbose=false)
         df = join(est, obs, on=i, makeunique=true)
         R = df[!, k] - df[!, k1]
-        sum(R.^2)
+        sum(R.^2) |> deunitfy
     end
-    range = collect(values(P))
+    #FIXME: input parameters units are ignored without conversion
+    range = map(p -> Float64.(Tuple(deunitfy(p))), values(P))
     r = bboptimize(cost; SearchRange=range)
     best_candidate(r) |> config
 end

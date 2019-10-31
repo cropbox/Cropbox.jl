@@ -39,4 +39,20 @@ using DataFrames
         r = run!(SFit, n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end
+
+    @testset "fit with unit" begin
+        @system SFitUnit(Controller) begin
+            a => 0 ~ preserve(parameter, u"m/hr")
+            b(a) ~ accumulate(u"m")
+        end
+        n = 10
+        t, a, b = 10.0u"hr", 20u"m/hr", 180u"m"
+        #FIXME: parameter range units are just ignored
+        A = [0.0, 100.0]u"m/hr"
+        obs = DataFrame(tick=[t], b=[b])
+        p = fit!(SFitUnit, obs, n, column=:b, parameters=("SFitUnit.a" => A))
+        @test p[:SFitUnit][:a] == ustrip(a)
+        r = run!(SFitUnit, n, config=p)
+        @test r[r[!, :tick] .== t, :][1, :b] == b
+    end
 end
