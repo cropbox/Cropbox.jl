@@ -16,9 +16,3 @@ deunitfy(v::Quantity) = ustrip(v)
 deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v, u::Units) = deunitfy(unitfy(v, u))
-
-# unitstr(s::String) = @eval @u_str $s
-# unitstr(s::Unitful.Units) = s
-#
-# #TODO: make Config type with helper functions
-# configstr(s::String) = isletter(s[1]) ? s : unitstr(s)
