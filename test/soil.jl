@@ -340,22 +340,13 @@ end
 
 using DataFrames
 using CSV
-@system SoilWeather begin
+@system SoilWeather(DataFrameStore) begin
     filename => "PyWaterBal.csv" ~ preserve::String(parameter)
-    index => :timestamp ~ preserve::Symbol(parameter)
 
-    dataframe(filename, index): df => begin
-        df = CSV.read(filename)
-        df[!, index] = map(eachrow(df)) do r
-            (r.timestamp - 1) * u"d"
-        end
-        df
-    end ~ preserve::DataFrame
-    key(t=context.clock.tick) ~ track(u"d")
-    store(df, index, key): s => begin
-        df[df[!, index] .== key, :][1, :]
-    end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
-    #Dict(:precipitation => 0.3, transpiration => 0.1, evaporation => 0.1)
+    index(t=context.clock.tick) ~ track(u"d")
+    timestamp(; r::DataFrameRow) => begin
+        (r.timestamp - 1) * u"d"
+    end ~ call(u"d")
 
     precipitation(s): R => s[:precipitation] ~ track(u"mm/d")
     transpiration(s): T => s[:transpiration] ~ track(u"mm/d")

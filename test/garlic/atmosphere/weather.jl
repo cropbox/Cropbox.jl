@@ -4,27 +4,16 @@ using CSV
 
 #TODO: use improved @drive
 #TODO: implement @unit
-@system Weather begin
+@system Weather(DataFrameStore) begin
     calendar(context) ~ ::Calendar(override)
-
     vapor_pressure(context): vp ~ ::VaporPressure
 
-    filename => "" ~ preserve::String(parameter)
     timezone => tz"UTC" ~ preserve::TimeZone(parameter)
-    index => :timestamp ~ preserve::Symbol(parameter)
 
-    dataframe(filename, index, timezone): df => begin
-        df = CSV.read(filename)
-        df[!, index] = map(eachrow(df)) do r
-            datetime_from_julian_day_WEA(r.year, r.jday, r.time, timezone)
-        end
-        df
-    end ~ preserve::DataFrame
-    key(t=calendar.time) => t ~ track::ZonedDateTime
-    store(df, index, key): s => begin
-        df[df[!, index] .== key, :][1, :]
-    end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
-    #Dict(:SolRad => 1500, :CO2 => 400, :RH => 0.6, :T_air => 25, :wind => 2.0, :P_air => 100)
+    index(t=calendar.time) ~ track::ZonedDateTime
+    timestamp(timezone; r::DataFrameRow) => begin
+        datetime_from_julian_day_WEA(r.year, r.jday, r.time, timezone)
+    end ~ call::ZonedDateTime
 
     photon_flux_density(s): PFD ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
