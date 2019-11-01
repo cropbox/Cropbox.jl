@@ -38,14 +38,14 @@ run!(s::System, n=1; index="context.clock.tick", columns=(), verbose=true, nouni
     nounit ? deunitfy.(df) : df
 end
 
-run!(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
+run(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
     s = instance(S, config=config, options...)
     run!(s, n; kwargs...)
 end
 
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
-fit!(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters) = begin
+fit(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters) = begin
     P = OrderedDict(parameters)
     K = [Symbol.(split(n, ".")) for n in keys(P)]
     config(X) = begin
@@ -59,7 +59,7 @@ fit!(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters
     k = parserunkey(column)[1]
     k1 = Symbol(k, :_1)
     cost(X) = begin
-        est = run!(S, n; config=config(X), index=index, columns=(column,), verbose=false)
+        est = run(S, n; config=config(X), index=index, columns=(column,), verbose=false)
         df = join(est, obs, on=i, makeunique=true)
         R = df[!, k] - df[!, k1]
         sum(R.^2) |> deunitfy
@@ -70,4 +70,4 @@ fit!(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters
     best_candidate(r) |> config
 end
 
-export run!, fit!
+export run, fit
