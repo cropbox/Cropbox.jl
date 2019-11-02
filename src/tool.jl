@@ -1,10 +1,10 @@
-parserunkey(p::Pair) = p
-parserunkey(a::Symbol) = (a => a)
-parserunkey(a::String) = (Symbol(split(a, ".")[end]) => a)
-parserun(s::System, index, columns) = begin
+parsesimulatekey(p::Pair) = p
+parsesimulatekey(a::Symbol) = (a => a)
+parsesimulatekey(a::String) = (Symbol(split(a, ".")[end]) => a)
+parsesimulate(s::System, index, columns) = begin
     C = isempty(columns) ? fieldnamesunique(s) : columns
     N = [index, C...]
-    (; parserunkey.(N)...)
+    (; parsesimulatekey.(N)...)
 end
 
 import DataFrames: DataFrame
@@ -31,21 +31,21 @@ updateresult!(s::System, n, df, keys; verbose=true) = begin
     end
 end
 
-run!(s::System, n=1; index="context.clock.tick", columns=(), verbose=true, nounit=false) = begin
-    T = parserun(s, index, columns)
+simulate!(s::System, n=1; index="context.clock.tick", columns=(), verbose=true, nounit=false) = begin
+    T = parsesimulate(s, index, columns)
     df, K = createresult(s, T)
     updateresult!(s, n, df, K; verbose=verbose)
     nounit ? deunitfy.(df) : df
 end
 
-run(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
+simulate(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
     s = instance(S, config=config, options...)
-    run!(s, n; kwargs...)
+    simulate!(s, n; kwargs...)
 end
 
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
-fit(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters) = begin
+calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters) = begin
     P = OrderedDict(parameters)
     K = [Symbol.(split(n, ".")) for n in keys(P)]
     config(X) = begin
@@ -55,11 +55,11 @@ fit(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters)
         end
         configure(d)
     end
-    i = parserunkey(index)[1]
-    k = parserunkey(column)[1]
+    i = parsesimulatekey(index)[1]
+    k = parsesimulatekey(column)[1]
     k1 = Symbol(k, :_1)
     cost(X) = begin
-        est = run(S, n; config=config(X), index=index, columns=(column,), verbose=false)
+        est = simulate(S, n; config=config(X), index=index, columns=(column,), verbose=false)
         df = join(est, obs, on=i, makeunique=true)
         R = df[!, k] - df[!, k1]
         sum(R.^2) |> deunitfy
@@ -70,4 +70,4 @@ fit(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters)
     best_candidate(r) |> config
 end
 
-export run, fit
+export simulate, calibrate

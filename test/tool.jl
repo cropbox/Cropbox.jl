@@ -1,32 +1,32 @@
 using DataFrames
 
 @testset "util" begin
-    @testset "run" begin
-        @system SRun(Controller) begin
+    @testset "simulate" begin
+        @system SSimulate(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
         end
         n = 10
-        r = run(SRun, n)
+        r = simulate(SSimulate, n)
         @test typeof(r) <: DataFrame
         @test size(r, 1) == (n+1)
         @test names(r) == [:tick, :a, :b]
         @test r[end, :tick] == (n+1)u"hr"
         @test r[end, :a] == 1
         @test r[end, :b] == n
-        r = run(SRun, n, config=(:SRun => :a => 2))
+        r = simulate(SSimulate, n, config=(:SSimulate => :a => 2))
         @test r[end, :a] == 2
         @test r[end, :b] == 2n
-        r = run(SRun, n, columns=[:b])
+        r = simulate(SSimulate, n, columns=[:b])
         @test size(r, 2) == 2
         @test names(r) == [:tick, :b]
-        r = run(SRun, n, index=:b, columns=[:b])
+        r = simulate(SSimulate, n, index=:b, columns=[:b])
         @test size(r, 2) == 1
         @test names(r) == [:b]
     end
 
-    @testset "fit" begin
-        @system SFit(Controller) begin
+    @testset "calibrate" begin
+        @system SCalibrate(Controller) begin
             a => 0 ~ preserve(parameter)
             b(a) ~ accumulate
         end
@@ -34,14 +34,14 @@ using DataFrames
         t, a, b = 10.0u"hr", 20, 180
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
-        p = fit(SFit, obs, n, column=:b, parameters=("SFit.a" => A))
-        @test p[:SFit][:a] == a
-        r = run(SFit, n, config=p)
+        p = calibrate(SCalibrate, obs, n, column=:b, parameters=("SCalibrate.a" => A))
+        @test p[:SCalibrate][:a] == a
+        r = simulate(SCalibrate, n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end
 
-    @testset "fit with unit" begin
-        @system SFitUnit(Controller) begin
+    @testset "calibrate with unit" begin
+        @system SCalibrateUnit(Controller) begin
             a => 0 ~ preserve(parameter, u"m/hr")
             b(a) ~ accumulate(u"m")
         end
@@ -50,9 +50,9 @@ using DataFrames
         #FIXME: parameter range units are just ignored
         A = [0.0, 100.0]u"m/hr"
         obs = DataFrame(tick=[t], b=[b])
-        p = fit(SFitUnit, obs, n, column=:b, parameters=("SFitUnit.a" => A))
-        @test p[:SFitUnit][:a] == ustrip(a)
-        r = run(SFitUnit, n, config=p)
+        p = calibrate(SCalibrateUnit, obs, n, column=:b, parameters=("SCalibrateUnit.a" => A))
+        @test p[:SCalibrateUnit][:a] == ustrip(a)
+        r = simulate(SCalibrateUnit, n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end
 end

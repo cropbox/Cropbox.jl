@@ -441,7 +441,7 @@ end
     soil(context=soil_context, w, d_r): s ~ ::SoilModule
 end
 
-run(SoilController, 80,
+simulate(SoilController, 80,
     config=(
         :Clock => (:step => 1u"d"),
         :SoilClock => (:step => 15u"minute"),
