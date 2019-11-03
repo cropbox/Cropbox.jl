@@ -3,13 +3,12 @@ using Unitful
 
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
-import CoordinateTransformations: AngleAxis, LinearMap, Translation
+import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, Translation
 
 @system RootSegment begin
-    parent ~ ::Union{System,Nothing}(override)
-
-    zone_index: zi ~ preserve::Int(extern)
-    number_of_laterals: nob => 5 ~ preserve::Int(parameter)
+    root_order: ro => 1 ~ preserve::Int(extern)
+    zone_index: zi => 0 ~ preserve::Int(extern)
+    number_of_laterals: nob => 10 ~ preserve::Int(parameter)
 
     zone_type(zi, nob): zt => begin
         if zi == 0
@@ -22,8 +21,8 @@ import CoordinateTransformations: AngleAxis, LinearMap, Translation
     end ~ preserve::Symbol
 
     length_of_basal_zone: lb => 4.0 ~ preserve(u"mm", parameter)
-    length_of_apical_zone: la => 3.0 ~ preserve(u"mm", parameter)
-    length_between_lateral_branches: ln => 2.0 ~ preserve(u"mm", parameter)
+    length_of_apical_zone: la => 5.0 ~ preserve(u"mm", parameter)
+    length_between_lateral_branches: ln => 3.0 ~ preserve(u"mm", parameter)
     maximal_length(lb, la, ln, nob): lmax => (lb + la + (nob - 1)*ln) ~ preserve(u"mm")
 
     zone_length(zt, lb, ln, la): zl => begin
@@ -42,52 +41,75 @@ import CoordinateTransformations: AngleAxis, LinearMap, Translation
     remaining_elongation_rate(r, ar): rr => r - ar ~ track(u"mm/hr")
     remaining_length(rr, Δt): rl => rr*Δt ~ track(u"mm")
     initial_length: l0 => 0 ~ preserve(u"mm", extern)
-    length(ar): [l, dx] ~ accumulate(init=l0, u"mm")
+    parent_length: dx => 0 ~ preserve(u"mm", extern)
+    length(ar): l ~ accumulate(init=l0, u"mm")
 
-    standard_deviation_of_random_angular_change: σ => 5 ~ preserve(u"°", parameter)
-    normalized_standard_deviation_of_random_angular_change(σ, nounit(dx)): σ_dx => sqrt(dx)*σ ~ track(u"°")
+    standard_deviation_of_angle: σ => 30 ~ preserve(u"°", parameter)
+    normalized_standard_deviation_of_angle(σ, nounit(dx)): σ_dx => sqrt(dx)*σ ~ track(u"°")
 
-    insertion_angle(zt, nounit(σ_dx)): a => begin
+    insertion_angle: θ => 30 ~ preserve(u"°", parameter)
+    pick_angular_angle(zt, nounit(θ), nounit(σ_dx);): pα => begin
         if zt == :basal
-            rand(Normal(20, 10))*u"°"
+            rand(Normal(θ, σ_dx))*u"°"
         else
-            #TODO: implement tropism functions
             rand(Normal(0, σ_dx))*u"°"
         end
-    end ~ preserve(u"°")
+    end ~ call(u"°")
+    pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
+    tropism_objective(zt, RT0, nounit(l); α, β): to => begin
+        R = RotZ(β) * RotX(α) |> LinearMap
+        p = (R ∘ RT0)([0, 0, -l])
+        p[3]
+    end ~ call
+    tropsim_trials: N => 10 ~ preserve::Int
+    angles(pα, pβ, to, N): A => begin
+        P = [(pα(), pβ()) for i in 1:N]
+        O = [to(α, β) for (α, β) in P]
+        (o, i) = findmin(O)
+        P[i]
+    end ~ preserve::Tuple
+    angular_angle(A): α => A[1] ~ preserve(u"°")
+    radial_angle(A): β => A[2] ~ preserve(u"°")
 
-    diameter: d => 0.1 ~ track(u"mm", parameter)
+    parent_transformation: RT0 ~ track::AffineMap(override)
+    local_transformation(nounit(l), α, β): RT => begin
+        # put root segment at parent's end
+        T = Translation(0, 0, -l)
+        # rotate root segment
+        R = RotZ(β) * RotX(α) |> LinearMap
+        R ∘ T
+    end ~ track::AffineMap
+    global_transformation(RT0, RT): RT1 => RT ∘ RT0 ~ track::AffineMap
+
+    diameter: d => 0.05 ~ track(u"mm", parameter)
 
     is_grown(l, zl) => (l >= zl) ~ flag
-    branch(branch, is_grown, zt, zi, rl) => begin
+    branch(branch, is_grown, ro, zt, zi, rl, l, wrap(RT1)) => begin
         if isempty(branch) && is_grown && zt != :apical
             #println("branch at l = $l")
-            [
-                produce(RootSegment, parent=self, zi=0), # lateral branch
-                produce(RootSegment, parent=self, zi=zi+1, l0=rl), # consecutive segment
-            ]
+            P = []
+            # consecutive segment
+            push!(P, produce(RootSegment, ro=ro, zi=zi+1, l0=rl, dx=l, RT0=RT1)) # consecutive segment
+            # lateral branch
+            ro <= 2 && push!(P, produce(RootSegment, ro=ro+1, zi=0, dx=l, RT0=RT1))
+            P
         end
     end ~ produce::RootSegment
 end
 
 @system Root(Controller) begin
-    root(context) => RootSegment(context=context, parent=nothing, zi=0) ~ ::RootSegment
+    initial_transformation: RT0 => (LinearMap(one(RotMatrix{3})) ∘ Translation(0, 0, 0)) ~ track::AffineMap
+    root(context, RT0) => RootSegment(context=context, RT0=RT0) ~ ::RootSegment
 end
-
 
 render(r::RootSegment) = begin
     i = 0
     visit!(v, r) = begin
-        l = r.l' |> Cropbox.deunitfy
-        iszero(l) && return
+        l = Cropbox.deunitfy(r.l')
         d = Cropbox.deunitfy(r.d')
+        (iszero(l) || iszero(d)) && return
         m = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), d)
-        # put root segment at parent's end
-        T = Translation(0, 0, -l)
-        # rotate root segment along random axis (x: random, y: left or right)
-        a = Cropbox.deunitfy(r.a', u"rad")
-        R = AngleAxis(a, rand(), 2(rand() > 0.5) - 1, 0) |> LinearMap
-        M = R ∘ T
+        M = r.RT'
         # add root segment
         vv = v["$i"]
         i += 1
@@ -104,7 +126,7 @@ render(r::RootSegment) = begin
 end
 
 s = instance(Root)
-t = 30u"hr"
+t = 100u"hr"
 while s.context.clock.tick' <= t
     update!(s)
 end
