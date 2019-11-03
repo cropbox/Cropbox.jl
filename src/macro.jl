@@ -383,6 +383,7 @@ genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? genvalue(v) : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
+#TODO: merge extractfuncargdep() and extractfuncargkey()?
 extractfuncargdep(v::Expr) = begin
     a = v.args[1]
     if isexpr(a)
@@ -403,10 +404,31 @@ end
 extractfuncargdep(v::Symbol) = v
 extractfuncargdep(v) = nothing
 
+extractfuncargkey(v::Expr) = begin
+    a = v.args[end]
+    if isexpr(a)
+        extractfuncargkey(a)
+    # detect last callee of dot chaining (i.e. `c` in `a.b.c`)
+    elseif isexpr(v, :., :ref)
+        a
+    # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
+    elseif isexpr(v, :call) && length(v.args) == 2
+        a
+    # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
+    elseif isexpr(v, Symbol("'"))
+        a
+    else
+        error("unrecognized function argument key: $v")
+    end
+end
+extractfuncargkey(v::Symbol) = v
+
 genfuncargs(v::VarInfo) = begin
-    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    emit(a) = begin
-        p = pair(a)
+    pair(a) = let k, v
+        !@capture(a, k_=v_) && (k = a; v = a)
+        extractfuncargkey(k) => v
+    end
+    emit(a) = let p = pair(a)
         @q $(esc(p[1])) = $C.value($(p[2]))
     end
     @q begin $(emit.(v.args)...) end
