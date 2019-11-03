@@ -9,3 +9,5 @@ Wrap(; _value, _...) = begin
 end
 
 wrap(v::V) where V = Wrap{V}(v)
+
+export wrap
