@@ -37,14 +37,13 @@ genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
 end
 
 geninit(v::VarInfo, ::Val{:Call}) = begin
-    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    emiti(a) = (p = pair(a); @q $(esc(p[1])) = $C.value($(p[2])))
+    emiti(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $C.value($(p[2])))
     innerargs = @q begin $(emiti.(v.args)...) end
 
     innercall = flatten(@q let $innerargs; $(esc(v.body)) end)
     innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
 
-    emito(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
+    emito(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
     outerargs = @q begin $(emito.(v.args)...) end
 
     extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end

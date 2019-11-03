@@ -162,8 +162,7 @@ gendecl(v::VarInfo{Symbol}) = begin
     gendecl(decl, v.name, v.alias)
 end
 gendecl(v::VarInfo{Nothing}) = begin
-    pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
-    emit(a) = (p = pair(a); @q $(esc(p[1])) = $(p[2]))
+    emit(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
     args = emit.(v.args)
     if istag(v, :option)
         push!(args, @q $(esc(:option)) = _kwargs)
@@ -423,12 +422,13 @@ extractfuncargkey(v::Expr) = begin
 end
 extractfuncargkey(v::Symbol) = v
 
+extractfuncargpair(a) = let k, v
+    !@capture(a, k_=v_) && (k = a; v = a)
+    extractfuncargkey(k) => v
+end
+
 genfuncargs(v::VarInfo) = begin
-    pair(a) = let k, v
-        !@capture(a, k_=v_) && (k = a; v = a)
-        extractfuncargkey(k) => v
-    end
-    emit(a) = let p = pair(a)
+    emit(a) = let p = extractfuncargpair(a)
         @q $(esc(p[1])) = $C.value($(p[2]))
     end
     @q begin $(emit.(v.args)...) end
