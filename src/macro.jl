@@ -383,6 +383,26 @@ genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
 genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? genvalue(v) : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
+extractfuncargdep(v::Expr) = begin
+    a = v.args[1]
+    if isexpr(a)
+        extractfuncargdep(a)
+    # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
+    elseif isexpr(v, :., :ref)
+        a
+    # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
+    elseif isexpr(v, :call) && length(v.args) == 2
+        v.args[end]
+    # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
+    elseif isexpr(v, Symbol("'"))
+        a
+    else
+        nothing
+    end
+end
+extractfuncargdep(v::Symbol) = v
+extractfuncargdep(v) = nothing
+
 genfuncargs(v::VarInfo) = begin
     pair(a) = let k, v; @capture(a, k_=v_) ? k => v : a => a end
     emit(a) = begin

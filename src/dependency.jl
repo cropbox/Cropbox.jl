@@ -45,36 +45,12 @@ firstnode(d::Dependency, v::VarInfo) = begin
 end
 
 extract(v::VarInfo; equation=true, tag=true) = begin
-    parse(v::Expr) = begin
-        f(v) = begin
-            #@show v
-            a = v.args[1]
-            #@show a
-            if isexpr(a)
-                f(a)
-            # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
-            elseif isexpr(v, :., :ref)
-                a
-            # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
-            elseif isexpr(v, :call) && length(v.args) == 2
-                v.args[2]
-            # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
-            elseif isexpr(v, Symbol("'"))
-                a
-            else
-                nothing
-            end
-        end
-        f(v)
-    end
-    parse(v::Symbol) = v
-    parse(v) = nothing
-    pick(a) = let k, v; @capture(a, k_=v_) ? parse(v) : parse(a) end
+    pick(a) = let k, v; extractfuncargdep(@capture(a, k_=v_) ? v : a) end
     pack(A) = filter(!isnothing, pick.(A)) |> Tuple
     eq = equation ? pack(v.args) : ()
     #@show eq
     #HACK: exclude internal tags (i.e. _type)
-    tags = filter(!isnothing, [parse(p[2]) for p in v.tags if !startswith(String(p[1]), "_")]) |> Tuple
+    tags = filter(!isnothing, [extractfuncargdep(p[2]) for p in v.tags if !startswith(String(p[1]), "_")]) |> Tuple
     par = tag ? tags : ()
     #@show par
     Set([eq..., par...]) |> collect
