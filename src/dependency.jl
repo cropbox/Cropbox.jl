@@ -164,7 +164,7 @@ label(n::VarNode) = begin
             ""
         end
     end
-    name * tag
+    tag * name
 end
 
 import TikzGraphs
