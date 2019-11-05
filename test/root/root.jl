@@ -130,3 +130,4 @@ t = 100u"hr"
 while s.context.clock.tick' <= t
     update!(s)
 end
+# render(s.root) |> open
