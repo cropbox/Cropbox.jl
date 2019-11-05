@@ -39,7 +39,7 @@ simulate!(s::System, n=1; index="context.clock.tick", columns=(), verbose=true, 
 end
 
 simulate(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
-    s = instance(S, config=config, options...)
+    s = instance(S, config=config; options...)
     simulate!(s, n; kwargs...)
 end
 
