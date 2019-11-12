@@ -25,7 +25,7 @@ dive(s::System) = begin
             a = join(d[k], ", ")
             isempty(a) ? "$(BLUE_FG(n))" : "$(BLUE_FG(a)) $(DARK_GRAY_FG("($n)"))"
         end
-        l = fieldnamesunique(typeof(s)) |> collect
+        l = fieldnamesunique(s) |> collect
         nav(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
     end
     nav(s::Vector{<:System}, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
