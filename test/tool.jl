@@ -8,7 +8,7 @@ using DataFrames
         end
         n = 10
         r = simulate(SSimulate, n)
-        @test typeof(r) <: DataFrame
+        @test r isa DataFrame
         @test size(r, 1) == (n+1)
         @test names(r) == [:tick, :a, :b]
         @test r[end, :tick] == (n+1)u"hr"

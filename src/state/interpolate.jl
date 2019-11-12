@@ -8,7 +8,7 @@ struct Interpolate{V} <: State{V}
 end
 
 Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
-    l = if typeof(_value) <: Extrapolation
+    l = if _value isa Extrapolation
         i = _value.itp
         if reverse
             #HACK: reverse interpolation
@@ -17,7 +17,7 @@ Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
             zip(i.knots[1], i.coefs)
         end
     else
-        if typeof(_value) <: Matrix
+        if _value isa Matrix
             zip(_value[:, 1], _value[:, 2])
         else
             _value

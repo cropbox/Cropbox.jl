@@ -13,7 +13,7 @@ createresult(s::System, ic) = begin
     K = []
     for (c, k) in pairs(ic)
         v = value(s[k])
-        if typeof(v) <: Union{Number,Symbol,String}
+        if v isa Union{Number,Symbol,String}
             push!(R, c => v)
             push!(K, k)
         end
