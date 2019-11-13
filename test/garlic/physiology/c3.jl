@@ -151,7 +151,7 @@ end
     reynolds_number(u, d, v): Re => u*d/v ~ track
     nusselt_number(Re): Nu => 0.60sqrt(Re) ~ track
     boundary_layer_heat_conductance(κ, Nu, d, scr, ocr, P_air=weather.P_air, Tk_air=weather.Tk_air): gh => begin
-        g = (κ*Nu/d)
+        g = κ * Nu / d
         # multiply by ratio to get the effective blc (per projected area basis), licor 6400 manual p 1-9
         g *= scr * ocr
         # including a multiplier for conversion from mm s-1 to mol m-2 s-1
