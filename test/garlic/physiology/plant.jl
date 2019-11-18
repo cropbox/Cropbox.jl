@@ -42,3 +42,5 @@
     #TODO find a better place?
     planting_density: PD => 55 ~ preserve(u"m^-2", parameter)
 end
+
+@system Garlic(Plant, Controller)

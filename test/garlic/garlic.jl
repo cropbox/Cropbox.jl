@@ -7,8 +7,6 @@ include("phenology/phenology.jl")
 include("morphology/morphology.jl")
 include("physiology/physiology.jl")
 
-@system Garlic(Plant, Controller)
-
 o = (
     :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
     :Weather => (:filename => "test/garlic/data/2007.wea"),
