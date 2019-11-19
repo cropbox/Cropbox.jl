@@ -61,7 +61,7 @@ add!(h::Hierarchy, a::Symbol) = begin
 end
 add!(h::Hierarchy, a::Symbol, T::Type{<:System}) = begin
     b = node!(h, T)
-    link!(h, a, b)
+    link!(h, b, a)
     add!(h, T)
 end
 add!(h::Hierarchy, a::Symbol, T::Type{Vector{<:System}}) = foreach(b -> add!(h, a, b), T)
