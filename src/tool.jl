@@ -70,4 +70,4 @@ calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, param
     best_candidate(r) |> config
 end
 
-export simulate, calibrate
+export simulate, simulate!, calibrate
