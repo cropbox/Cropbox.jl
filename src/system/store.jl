@@ -12,7 +12,7 @@ using CSV
         df = CSV.read(filename)
         df[!, indexkey] = map(timestamp, eachrow(df))
         df
-    end ~ preserve::DataFrame
+    end ~ preserve::DataFrame(extern, parameter)
 
     store(df, indexkey, index): s => begin
         df[df[!, indexkey] .== index, :][1, :]
