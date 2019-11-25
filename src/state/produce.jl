@@ -44,7 +44,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
-    @gensym s P c o q a b
+    @gensym s P c q a p b
     @q let $s = $(symstate(v)),
            $P = $(genfunc(v)),
            $c = context,
@@ -52,9 +52,11 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
            $a = $C.value($s)
         if !(isnothing($P) || isempty($P))
             $C.queue!($q, function ()
-                for p in $P
-                    $b = p.type(; context=$c, p.args...)
-                    append!($a, $b)
+                for $p in $P
+                    if $p isa $C.Product
+                        $b = $p.type(; context=$c, $p.args...)
+                        append!($a, $b)
+                    end
                 end
             end, $C.priority($C.$(v.state)))
         end
