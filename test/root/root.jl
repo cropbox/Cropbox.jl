@@ -123,8 +123,5 @@ render(r::RootSegment) = begin
 end
 
 s = instance(Root)
-t = 100u"hr"
-while s.context.clock.tick' <= t
-    update!(s)
-end
+simulate!(s, 100)
 # render(s.root) |> open
