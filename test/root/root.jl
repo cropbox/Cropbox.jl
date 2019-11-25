@@ -84,16 +84,13 @@ import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, T
     diameter: d => 0.05 ~ track(u"mm", parameter)
 
     is_grown(l, zl) => (l >= zl) ~ flag
-    branch(branch, is_grown, ro, zt, zi, rl, l, wrap(RT1)) => begin
-        if isempty(branch) && is_grown && zt != :apical
-            #println("branch at l = $l")
-            P = []
+    branch(branch, is_grown, zt, ro, zi, rl, l, wrap(RT1)) => begin
+        (isempty(branch) && is_grown && zt != :apical) ? [
             # consecutive segment
-            push!(P, produce(RootSegment, ro=ro, zi=zi+1, l0=rl, dx=l, RT0=RT1)) # consecutive segment
+            produce(RootSegment, ro=ro, zi=zi+1, l0=rl, dx=l, RT0=RT1),
             # lateral branch
-            ro <= 2 && push!(P, produce(RootSegment, ro=ro+1, zi=0, dx=l, RT0=RT1))
-            P
-        end
+            (ro <= 2) ? produce(RootSegment, ro=ro+1, zi=0, dx=l, RT0=RT1) : nothing,
+        ] : nothing
     end ~ produce::RootSegment
 end
 
