@@ -55,7 +55,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
                 for $p in $P
                     if $p isa $C.Product
                         $b = $p.type(; context=$c, $p.args...)
-                        append!($a, $b)
+                        push!($a, $b)
                     end
                 end
             end, $C.priority($C.$(v.state)))
