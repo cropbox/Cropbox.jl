@@ -45,21 +45,21 @@ end
 
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
-calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, parameters) = begin
+calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, config=(), parameters) = begin
     P = OrderedDict(parameters)
     K = [Symbol.(split(n, ".")) for n in keys(P)]
-    config(X) = begin
+    makeconfig(X) = begin
         d = DefaultDict(Dict)
         for (k, v) in zip(K, X)
             d[k[1]][k[2]] = v
         end
-        configure(d)
+        configure(config, d)
     end
     i = parsesimulatekey(index)[1]
     k = parsesimulatekey(column)[1]
     k1 = Symbol(k, :_1)
     cost(X) = begin
-        est = simulate(S, n; config=config(X), index=index, columns=(column,), verbose=false)
+        est = simulate(S, n; config=makeconfig(X), index=index, columns=(column,), verbose=false)
         df = join(est, obs, on=i, makeunique=true)
         R = df[!, k] - df[!, k1]
         sum(R.^2) |> deunitfy
@@ -67,7 +67,7 @@ calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, param
     #FIXME: input parameters units are ignored without conversion
     range = map(p -> Float64.(Tuple(deunitfy(p))), values(P))
     r = bboptimize(cost; SearchRange=range)
-    best_candidate(r) |> config
+    best_candidate(r) |> makeconfig
 end
 
 export simulate, simulate!, calibrate

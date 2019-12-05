@@ -55,4 +55,22 @@ using DataFrames
         r = simulate(SCalibrateUnit, n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end
+
+    @testset "calibrate with config" begin
+        @system SCalibrateConfig(Controller) begin
+            a => 0 ~ preserve(parameter)
+            w => 1 ~ preserve(parameter)
+            b(a, w) => w*a ~ accumulate
+        end
+        n = 10
+        t, a, b = 10.0u"hr", 20, 180
+        w1, w2 = 1, 2
+        A = (0.0, 100.0)
+        obs = DataFrame(tick=[t], b=[b])
+        params = ("SCalibrateConfig.a" => A)
+        p1 = calibrate(SCalibrateConfig, obs, n, column=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
+        @test p1[:SCalibrateConfig][:a] == a/w1
+        p2 = calibrate(SCalibrateConfig, obs, n, column=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
+        @test p2[:SCalibrateConfig][:a] == a/w2
+    end
 end
