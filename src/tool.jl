@@ -21,20 +21,33 @@ createresult(s::System, ic) = begin
     (DataFrame(; R...), K)
 end
 
-import ProgressMeter: @showprogress
-updateresult!(s::System, n, df, keys; verbose=true) = begin
-    t = verbose ? 1 : Inf
-    @showprogress t for i in 1:n
+using ProgressMeter: @showprogress, ProgressUnknown, ProgressMeter
+updateresult!(s::System, n, df, keys; terminate=nothing, verbose=true) = begin
+    update() = begin
         update!(s)
         r = Tuple(value(s[k]) for k in keys)
         push!(df, r)
     end
+    #TODO: combine @showprogress (Progress) and ProgressUnknown
+    if isnothing(terminate)
+        t = verbose ? 1 : Inf
+        @showprogress t for i in 1:n
+            update()
+        end
+    else
+        p = ProgressUnknown("Iterations:")
+        while !s[terminate]'
+            update()
+            ProgressMeter.next!(p)
+        end
+        ProgressMeter.finish!(p)
+    end
 end
 
-simulate!(s::System, n=1; index="context.clock.tick", columns=(), verbose=true, nounit=false) = begin
+simulate!(s::System, n=1; index="context.clock.tick", columns=(), terminate=nothing, verbose=true, nounit=false) = begin
     T = parsesimulate(s, index, columns)
     df, K = createresult(s, T)
-    updateresult!(s, n, df, K; verbose=verbose)
+    updateresult!(s, n, df, K; terminate=terminate, verbose=verbose)
     nounit ? deunitfy.(df) : df
 end
 
