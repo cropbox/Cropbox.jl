@@ -17,6 +17,7 @@ end
 produce(s::Type{<:System}; args...) = Product(s, args)
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
+getindex(s::Produce, ::Nothing) = s
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
 priority(::Type{<:Produce}) = PrePriority()

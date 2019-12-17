@@ -15,6 +15,7 @@ broadcastable(s::System) = Ref(s)
 
 import Base: getindex
 getindex(s::System, i) = getproperty(s, i)
+getindex(s::System, ::Nothing) = s
 
 import Base: getproperty
 getproperty(s::System, n::String) = begin
@@ -22,7 +23,7 @@ getproperty(s::System, n::String) = begin
         m = match(r"([^\[\]]+)(?:\[(.+)\])?", b)
         n, i = m[1], m[2]
         v = getfield(a, Symbol(n))
-        isnothing(i) ? v : v[i]
+        v[i]
     end, [s, split(n, ".")...])
 end
 
