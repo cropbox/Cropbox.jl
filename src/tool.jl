@@ -8,11 +8,12 @@ parsesimulate(s::System, index, columns) = begin
 end
 
 import DataFrames: DataFrame
-createresult(s::System, ic) = begin
+createresult(s::System, base, ic) = begin
     R = []
     K = []
+    b = s[base]
     for (c, k) in pairs(ic)
-        v = value(s[k])
+        v = value(b[k])
         if v isa Union{Number,Symbol,String}
             push!(R, c => v)
             push!(K, k)
@@ -44,9 +45,14 @@ updateresult!(s::System, n, df, keys; terminate=nothing, verbose=true) = begin
     end
 end
 
-simulate!(s::System, n=1; index="context.clock.tick", columns=(), terminate=nothing, verbose=true, nounit=false) = begin
+[
+    [nothing, ["context.clock.tick"], ["a", "b", "c"]],
+    ["leaves[*]", ["context.clock.tick", "rank"], ["a", "b", "c"]],
+]
+
+simulate!(s::System, n=1; base=nothing, index="context.clock.tick", columns=(), terminate=nothing, verbose=true, nounit=false) = begin
     T = parsesimulate(s, index, columns)
-    df, K = createresult(s, T)
+    df, K = createresult(s, base, T)
     updateresult!(s, n, df, K; terminate=terminate, verbose=verbose)
     nounit ? deunitfy.(df) : df
 end

@@ -43,6 +43,8 @@ end
 import Base: getproperty
 getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
 getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
+getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
+getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
 value(b::Bunch) = value.(collect(b))
 
 import Base: collect
