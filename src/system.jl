@@ -5,10 +5,11 @@ import Base: names
 names(s::S) where {S<:System} = names(S)
 names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
-import Base: length, iterate
+import Base: length, iterate, eltype
 length(::System) = 1
 iterate(s::System) = (s, nothing)
 iterate(s::System, i) = nothing
+eltype(::S) where {S<:System} = S
 
 import Base: broadcastable
 broadcastable(s::System) = Ref(s)

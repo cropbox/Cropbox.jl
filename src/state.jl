@@ -12,11 +12,12 @@ adjoint(s::State) = value(s)
 
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 
-import Base: getindex, length, iterate
+import Base: getindex, length, iterate, eltype
 getindex(s::State, i) = s
 length(s::State) = 1
 iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
+eltype(::State{V}) where V = V
 
 import Unitful: unit
 unit(::State{V}) where V = unittype(V)
