@@ -36,6 +36,9 @@ getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = begin
     Bundle{S}(s, resolve.(split(ops, "/")))
 end
 
+fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
+fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
+
 struct Bunch{V}
     list::Vector{V}
 end
