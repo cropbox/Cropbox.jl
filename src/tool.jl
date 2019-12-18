@@ -1,48 +1,68 @@
-parsesimulatekey(p::Pair) = p
-parsesimulatekey(a::Symbol) = (a => a)
-parsesimulatekey(a::String) = (Symbol(split(a, ".")[end]) => a)
-parsesimulate(s::System, index, columns) = begin
-    C = isempty(columns) ? fieldnamesunique(s) : columns
-    N = [index, C...]
-    (; parsesimulatekey.(N)...)
+import DataStructures: OrderedDict
+import DataFrames: DataFrame, stack
+
+struct Simulation{S<:System}
+    system::S
+    base::Union{String,Nothing}
+    index::OrderedDict
+    target::OrderedDict
+    result::DataFrame
 end
 
-import DataFrames: DataFrame
-createresult(s::System, base, ic) = begin
-    R = []
-    K = []
+Simulation(s::System, base, index, target) = begin
     b = s[base]
-    for (c, k) in pairs(ic)
-        v = value(b[k])
-        if v isa Union{Number,Symbol,String}
-            push!(R, c => v)
-            push!(K, k)
-        end
+    I = parsesimulation(index)
+    T = if isempty(target)
+        #HACK: only pick up variables of simple types by default
+        filter(p -> begin
+            k = p.second; value(b[k]) isa Union{Number,Symbol,String}
+        end, parsesimulation(fieldnamesunique(s)))
+    else
+        parsesimulation(target)
     end
-    (DataFrame(; R...), K)
+    result = extract(b, I, T)
+    Simulation(s, base, I, T, result)
 end
 
-using ProgressMeter: @showprogress, ProgressUnknown, ProgressMeter
-updateresult!(s::System, n, df, keys; terminate=nothing, verbose=true) = begin
-    update() = begin
-        update!(s)
-        r = Tuple(value(s[k]) for k in keys)
-        push!(df, r)
-    end
-    #TODO: combine @showprogress (Progress) and ProgressUnknown
-    if isnothing(terminate)
-        t = verbose ? 1 : Inf
-        @showprogress t for i in 1:n
-            update()
-        end
+parsesimulationkey(p::Pair) = p
+parsesimulationkey(a::Symbol) = (a => a)
+parsesimulationkey(a::String) = (Symbol(split(a, ".")[end]) => a)
+parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a))
+parsesimulation(a::Tuple) = parsesimulation(collect(a))
+parsesimulation(a) = parsesimulation([a])
+
+extract(m::Simulation) = extract(m.system[m.base], m.index, m.target)
+extract(s::System, index, target) = begin
+    d = merge(index, target)
+    K = collect(keys(d))
+    V = map(k -> value(s[k]), values(d))
+    DataFrame(OrderedDict(zip(K, V)))
+end
+
+format(m::Simulation; nounit=false, long=false) = begin
+    r = m.result
+    r = nounit ? deunitfy.(r) : r
+    r = long ? stack(r, collect(keys(m.target)), collect(keys(m.index))) : r
+end
+
+using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
+update!(m::Simulation, n; terminate=nothing, verbose=true, kwargs...) = begin
+    s = m.system
+    check = if isnothing(terminate)
+        dt = verbose ? 1 : Inf
+        p = Progress(n, dt=dt)
+        () -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
-        while !s[terminate]'
-            update()
-            ProgressMeter.next!(p)
-        end
-        ProgressMeter.finish!(p)
+        () -> !s[terminate]'
     end
+    while check()
+        update!(s)
+        append!(m.result, extract(m))
+        ProgressMeter.next!(p)
+    end
+    ProgressMeter.finish!(p)
+    format(m; kwargs...)
 end
 
 [
@@ -50,11 +70,9 @@ end
     ["leaves[*]", ["context.clock.tick", "rank"], ["a", "b", "c"]],
 ]
 
-simulate!(s::System, n=1; base=nothing, index="context.clock.tick", columns=(), terminate=nothing, verbose=true, nounit=false) = begin
-    T = parsesimulate(s, index, columns)
-    df, K = createresult(s, base, T)
-    updateresult!(s, n, df, K; terminate=terminate, verbose=verbose)
-    nounit ? deunitfy.(df) : df
+simulate!(s::System, n=1; base=nothing, index="context.clock.tick", columns=(), kwargs...) = begin
+    m = Simulation(s, base, index, columns)
+    update!(m, n; kwargs...)
 end
 
 simulate(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
@@ -74,8 +92,8 @@ calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, confi
         end
         configure(config, d)
     end
-    i = parsesimulatekey(index)[1]
-    k = parsesimulatekey(column)[1]
+    i = parsesimulationkey(index).first
+    k = parsesimulationkey(column).first
     k1 = Symbol(k, :_1)
     cost(X) = begin
         est = simulate(S, n; config=makeconfig(X), index=index, columns=(column,), verbose=false)
