@@ -10,18 +10,9 @@ struct Simulation{S<:System}
 end
 
 Simulation(s::System, base, index, target) = begin
-    b = s[base]
     I = parsesimulation(index)
-    T = if isempty(target)
-        #HACK: only pick up variables of simple types by default
-        filter(p -> begin
-            k = p.second; value(b[k]) isa Union{Number,Symbol,String}
-        end, parsesimulation(fieldnamesunique(s)))
-    else
-        parsesimulation(target)
-    end
-    result = extract(b, I, T)
-    Simulation(s, base, I, T, result)
+    T = parsesimulation(isempty(target) ? fieldnamesunique(s[base]) : target)
+    Simulation(s, base, I, T, DataFrame())
 end
 
 parsesimulationkey(p::Pair) = p
@@ -36,17 +27,32 @@ extract(s::System, index, target) = begin
     d = merge(index, target)
     K = collect(keys(d))
     V = map(k -> value(s[k]), values(d))
-    DataFrame(OrderedDict(zip(K, V)))
+    od = OrderedDict(zip(K, V))
+    #HACK: only pick up variables of simple types by default
+    filter!(p -> p.second isa Union{Number,Symbol,String}, od)
+    DataFrame(od)
 end
+extract(b::Bundle{S}, index, target) where {S<:System} = begin
+    vcat([extract(s, index, target) for s in collect(b)]...)
+end
+
+update!(m::Simulation) = append!(m.result, extract(m))
 
 format(m::Simulation; nounit=false, long=false) = begin
     r = m.result
-    r = nounit ? deunitfy.(r) : r
-    r = long ? stack(r, collect(keys(m.target)), collect(keys(m.index))) : r
+    if nounit
+        r = deunitfy.(r)
+    end
+    if long
+        i = collect(keys(m.index))
+        t = setdiff(names(r), i)
+        r = stack(r, t, i)
+    end
+    r
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
-update!(m::Simulation, n; terminate=nothing, verbose=true, kwargs...) = begin
+progress!(m::Simulation, n; terminate=nothing, verbose=true, kwargs...) = begin
     s = m.system
     check = if isnothing(terminate)
         dt = verbose ? 1 : Inf
@@ -56,9 +62,10 @@ update!(m::Simulation, n; terminate=nothing, verbose=true, kwargs...) = begin
         p = ProgressUnknown("Iterations:")
         () -> !s[terminate]'
     end
+    update!(m)
     while check()
         update!(s)
-        append!(m.result, extract(m))
+        update!(m)
         ProgressMeter.next!(p)
     end
     ProgressMeter.finish!(p)
@@ -72,7 +79,7 @@ end
 
 simulate!(s::System, n=1; base=nothing, index="context.clock.tick", columns=(), kwargs...) = begin
     m = Simulation(s, base, index, columns)
-    update!(m, n; kwargs...)
+    progress!(m, n; kwargs...)
 end
 
 simulate(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
