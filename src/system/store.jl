@@ -1,5 +1,5 @@
-using DataFrames
-using CSV
+import DataFrames: DataFrame, DataFrameRow, DataFrames
+import CSV
 
 @system DataFrameStore begin
     filename => "" ~ preserve::String(parameter)
