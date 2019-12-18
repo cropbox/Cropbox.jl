@@ -17,10 +17,10 @@ using DataFrames
         r = simulate(SSimulate, n, config=(:SSimulate => :a => 2))
         @test r[end, :a] == 2
         @test r[end, :b] == 2n
-        r = simulate(SSimulate, n, columns=[:b])
+        r = simulate(SSimulate, n, target=[:b])
         @test size(r, 2) == 2
         @test names(r) == [:tick, :b]
-        r = simulate(SSimulate, n, index=:b, columns=[:b])
+        r = simulate(SSimulate, n, index=:b, target=[:b])
         @test size(r, 2) == 1
         @test names(r) == [:b]
     end
@@ -45,7 +45,7 @@ using DataFrames
         t, a, b = 10.0u"hr", 20, 180
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
-        p = calibrate(SCalibrate, obs, n, column=:b, parameters=("SCalibrate.a" => A))
+        p = calibrate(SCalibrate, obs, n, target=:b, parameters=("SCalibrate.a" => A))
         @test p[:SCalibrate][:a] == a
         r = simulate(SCalibrate, n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
@@ -61,7 +61,7 @@ using DataFrames
         #FIXME: parameter range units are just ignored
         A = [0.0, 100.0]u"m/hr"
         obs = DataFrame(tick=[t], b=[b])
-        p = calibrate(SCalibrateUnit, obs, n, column=:b, parameters=("SCalibrateUnit.a" => A))
+        p = calibrate(SCalibrateUnit, obs, n, target=:b, parameters=("SCalibrateUnit.a" => A))
         @test p[:SCalibrateUnit][:a] == ustrip(a)
         r = simulate(SCalibrateUnit, n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
@@ -79,9 +79,9 @@ using DataFrames
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
         params = ("SCalibrateConfig.a" => A)
-        p1 = calibrate(SCalibrateConfig, obs, n, column=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
+        p1 = calibrate(SCalibrateConfig, obs, n, target=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
         @test p1[:SCalibrateConfig][:a] == a/w1
-        p2 = calibrate(SCalibrateConfig, obs, n, column=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
+        p2 = calibrate(SCalibrateConfig, obs, n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
         @test p2[:SCalibrateConfig][:a] == a/w2
     end
 end

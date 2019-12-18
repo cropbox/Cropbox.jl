@@ -77,8 +77,8 @@ end
     ["leaves[*]", ["context.clock.tick", "rank"], ["a", "b", "c"]],
 ]
 
-simulate!(s::System, n=1; base=nothing, index="context.clock.tick", columns=(), kwargs...) = begin
-    m = Simulation(s, base, index, columns)
+simulate!(s::System, n=1; base=nothing, index="context.clock.tick", target=(), kwargs...) = begin
+    m = Simulation(s, base, index, target)
     progress!(m, n; kwargs...)
 end
 
@@ -89,7 +89,7 @@ end
 
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
-calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, config=(), parameters) = begin
+calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", target, config=(), parameters) = begin
     P = OrderedDict(parameters)
     K = [Symbol.(split(n, ".")) for n in keys(P)]
     makeconfig(X) = begin
@@ -100,10 +100,10 @@ calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", column, confi
         configure(config, d)
     end
     i = parsesimulationkey(index).first
-    k = parsesimulationkey(column).first
+    k = parsesimulationkey(target).first
     k1 = Symbol(k, :_1)
     cost(X) = begin
-        est = simulate(S, n; config=makeconfig(X), index=index, columns=(column,), verbose=false)
+        est = simulate(S, n; config=makeconfig(X), index=index, target=(target,), verbose=false)
         df = join(est, obs, on=i, makeunique=true)
         R = df[!, k] - df[!, k1]
         sum(R.^2) |> deunitfy
