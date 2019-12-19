@@ -85,6 +85,10 @@ simulate(S::Type{<:System}, layout; n=1, config=(), options=(), kwargs...) = beg
     s = instance(S, config=config; options...)
     simulate!(s, layout; n=n, kwargs...)
 end
+simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
+    R = [simulate(S, layout; config=c, kwargs...) for c in configs]
+    [vcat(r...) for r in eachrow(hcat(R...))]
+end
 
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
