@@ -7,20 +7,20 @@ using DataFrames
             b(a) ~ accumulate
         end
         n = 10
-        r = simulate(SSimulate, n)
+        r = simulate(SSimulate, n=n)
         @test r isa DataFrame
         @test size(r, 1) == (n+1)
         @test names(r) == [:tick, :a, :b]
         @test r[end, :tick] == (n+1)u"hr"
         @test r[end, :a] == 1
         @test r[end, :b] == n
-        r = simulate(SSimulate, n, config=(:SSimulate => :a => 2))
+        r = simulate(SSimulate, n=n, config=(:SSimulate => :a => 2))
         @test r[end, :a] == 2
         @test r[end, :b] == 2n
-        r = simulate(SSimulate, n, target=[:b])
+        r = simulate(SSimulate, n=n, target=[:b])
         @test size(r, 2) == 2
         @test names(r) == [:tick, :b]
-        r = simulate(SSimulate, n, index=:b, target=[:b])
+        r = simulate(SSimulate, n=n, index=:b, target=[:b])
         @test size(r, 2) == 1
         @test names(r) == [:b]
     end
@@ -47,7 +47,7 @@ using DataFrames
         obs = DataFrame(tick=[t], b=[b])
         p = calibrate(SCalibrate, obs, n, target=:b, parameters=("SCalibrate.a" => A))
         @test p[:SCalibrate][:a] == a
-        r = simulate(SCalibrate, n, config=p)
+        r = simulate(SCalibrate, n=n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end
 
@@ -63,7 +63,7 @@ using DataFrames
         obs = DataFrame(tick=[t], b=[b])
         p = calibrate(SCalibrateUnit, obs, n, target=:b, parameters=("SCalibrateUnit.a" => A))
         @test p[:SCalibrateUnit][:a] == ustrip(a)
-        r = simulate(SCalibrateUnit, n, config=p)
+        r = simulate(SCalibrateUnit, n=n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end
 

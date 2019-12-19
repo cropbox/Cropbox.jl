@@ -8,7 +8,7 @@ struct Simulation
     result::DataFrame
 end
 
-simulation(s::System, base, index, target) = begin
+simulation(s::System; base=nothing, index="context.clock.tick", target=()) = begin
     I = parsesimulation(index)
     T = parsesimulation(isempty(target) ? fieldnamesunique(s[base]) : target)
     Simulation(base, I, T, DataFrame())
@@ -51,7 +51,7 @@ format(m::Simulation; nounit=false, long=false) = begin
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
-progress!(s::System, m::Simulation, n; terminate=nothing, verbose=true, kwargs...) = begin
+progress!(s::System, M::Vector{Simulation}; n, terminate=nothing, verbose=true, kwargs...) = begin
     check = if isnothing(terminate)
         dt = verbose ? 1 : Inf
         p = Progress(n, dt=dt)
@@ -60,29 +60,30 @@ progress!(s::System, m::Simulation, n; terminate=nothing, verbose=true, kwargs..
         p = ProgressUnknown("Iterations:")
         () -> !s[terminate]'
     end
-    update!(m, s)
+    update!.(M, s)
     while check()
         update!(s)
-        update!(m, s)
+        update!.(M, s)
         ProgressMeter.next!(p)
     end
     ProgressMeter.finish!(p)
-    format(m; kwargs...)
+    format.(M; kwargs...)
 end
 
-[
-    [nothing, ["context.clock.tick"], ["a", "b", "c"]],
-    ["leaves[*]", ["context.clock.tick", "rank"], ["a", "b", "c"]],
-]
-
-simulate!(s::System, n=1; base=nothing, index="context.clock.tick", target=(), kwargs...) = begin
-    m = simulation(s, base, index, target)
-    progress!(s, m, n; kwargs...)
+simulate!(s::System; n=1, base=nothing, index="context.clock.tick", target=(), kwargs...) = begin
+    simulate!(s, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
+end
+simulate!(s::System, plan; n=1, kwargs...) = begin
+    M = [simulation(s; p...) for p in plan]
+    progress!(s, M; n=n, kwargs...)
 end
 
-simulate(S::Type{<:System}, n=1; config=(), options=(), kwargs...) = begin
+simulate(S::Type{<:System}; n=1, base=nothing, index="context.clock.tick", target=(), kwargs...) = begin
+    simulate(S, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
+end
+simulate(S::Type{<:System}, plan; n=1, config=(), options=(), kwargs...) = begin
     s = instance(S, config=config; options...)
-    simulate!(s, n; kwargs...)
+    simulate!(s, plan; n=n, kwargs...)
 end
 
 import DataStructures: OrderedDict, DefaultDict
@@ -101,7 +102,7 @@ calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", target, confi
     k = parsesimulationkey(target).first
     k1 = Symbol(k, :_1)
     cost(X) = begin
-        est = simulate(S, n; config=makeconfig(X), index=index, target=(target,), verbose=false)
+        est = simulate(S; n=n, config=makeconfig(X), index=index, target=(target,), verbose=false)
         df = join(est, obs, on=i, makeunique=true)
         R = df[!, k] - df[!, k1]
         sum(R.^2) |> deunitfy
