@@ -73,17 +73,17 @@ end
 simulate!(s::System; n=1, base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate!(s, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
 end
-simulate!(s::System, plan; n=1, kwargs...) = begin
-    M = [simulation(s; p...) for p in plan]
+simulate!(s::System, layout; n=1, kwargs...) = begin
+    M = [simulation(s; l...) for l in layout]
     progress!(s, M; n=n, kwargs...)
 end
 
 simulate(S::Type{<:System}; n=1, base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
 end
-simulate(S::Type{<:System}, plan; n=1, config=(), options=(), kwargs...) = begin
+simulate(S::Type{<:System}, layout; n=1, config=(), options=(), kwargs...) = begin
     s = instance(S, config=config; options...)
-    simulate!(s, plan; n=n, kwargs...)
+    simulate!(s, layout; n=n, kwargs...)
 end
 
 import DataStructures: OrderedDict, DefaultDict
