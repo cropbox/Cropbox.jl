@@ -36,6 +36,54 @@ using DataFrames
         @test r[end-1, :b] != 10
     end
 
+    @testset "simulate with layout" begin
+        @system SSimulateLayout(Controller) begin
+            i => 1 ~ accumulate
+            a(i) => i-1 ~ track
+            b(i) => 2i ~ track
+        end
+        L = [
+            (target=:a,),
+            (index=[:t => "context.clock.tick", "i"], target=["a", :B => :b]),
+            (base="context.clock", index="tick", target="step"),
+        ]
+        n = 1
+        r = simulate(SSimulateLayout, L, n=n)
+        @test names(r[1]) == [:tick, :a]
+        @test names(r[2]) == [:t, :i, :a, :B]
+        @test names(r[3]) == [:tick, :step]
+        @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == (n+1)u"hr"
+        @test r[1][end, :a] == 0
+        @test r[2][end, :B] == 2
+        @test r[3][end, :step] == 1u"hr"
+    end
+
+    @testset "simulate with layout and configs" begin
+        @system SSimulateLayoutConfigs(Controller) begin
+            p ~ preserve(parameter)
+            i => 1 ~ accumulate
+            a(i, p) => p*(i-1) ~ track
+            b(i, p) => 2p*i ~ track
+        end
+        L = [
+            (index=:i, target=:a),
+            (index=:t => "context.clock.tick", target=:b),
+            (target=[:i, :a, :b],),
+        ]
+        p1, p2 = 1, 2
+        C = [
+            :SSimulateLayoutConfigs => :p => p1,
+            :SSimulateLayoutConfigs => :p => p2,
+        ]
+        n = 10
+        r = simulate(SSimulateLayoutConfigs, L, C, n=n)
+        @test length(r) == length(L)
+        o = r[3]
+        @test o[o[!, :tick] .== (n+1)*u"hr", :i] == [n, n]
+        @test o[o[!, :tick] .== (n+1)*u"hr", :a] == [p1*(n-1), p2*(n-1)]
+        @test o[o[!, :tick] .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
+    end
+
     @testset "calibrate" begin
         @system SCalibrate(Controller) begin
             a => 0 ~ preserve(parameter)
