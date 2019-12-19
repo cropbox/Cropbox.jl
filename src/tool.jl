@@ -8,9 +8,9 @@ struct Simulation
     result::DataFrame
 end
 
-simulation(s::System; base=nothing, index="context.clock.tick", target=()) = begin
+simulation(s::System; base=nothing, index="context.clock.tick", target=nothing) = begin
     I = parsesimulation(index)
-    T = parsesimulation(isempty(target) ? fieldnamesunique(s[base]) : target)
+    T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
     Simulation(base, I, T, DataFrame())
 end
 
@@ -70,7 +70,7 @@ progress!(s::System, M::Vector{Simulation}; n, terminate=nothing, verbose=true, 
     format.(M; kwargs...)
 end
 
-simulate!(s::System; n=1, base=nothing, index="context.clock.tick", target=(), kwargs...) = begin
+simulate!(s::System; n=1, base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate!(s, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
 end
 simulate!(s::System, plan; n=1, kwargs...) = begin
@@ -78,7 +78,7 @@ simulate!(s::System, plan; n=1, kwargs...) = begin
     progress!(s, M; n=n, kwargs...)
 end
 
-simulate(S::Type{<:System}; n=1, base=nothing, index="context.clock.tick", target=(), kwargs...) = begin
+simulate(S::Type{<:System}; n=1, base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
 end
 simulate(S::Type{<:System}, plan; n=1, config=(), options=(), kwargs...) = begin
