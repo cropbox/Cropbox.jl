@@ -93,7 +93,7 @@ using DataFrames
         t, a, b = 10.0u"hr", 20, 180
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
-        p = calibrate(SCalibrate, obs, n, target=:b, parameters=("SCalibrate.a" => A))
+        p = calibrate(SCalibrate, obs, n=n, target=:b, parameters=("SCalibrate.a" => A))
         @test p[:SCalibrate][:a] == a
         r = simulate(SCalibrate, n=n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
@@ -109,7 +109,7 @@ using DataFrames
         #FIXME: parameter range units are just ignored
         A = [0.0, 100.0]u"m/hr"
         obs = DataFrame(tick=[t], b=[b])
-        p = calibrate(SCalibrateUnit, obs, n, target=:b, parameters=("SCalibrateUnit.a" => A))
+        p = calibrate(SCalibrateUnit, obs, n=n, target=:b, parameters=("SCalibrateUnit.a" => A))
         @test p[:SCalibrateUnit][:a] == ustrip(a)
         r = simulate(SCalibrateUnit, n=n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
@@ -127,9 +127,30 @@ using DataFrames
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
         params = ("SCalibrateConfig.a" => A)
-        p1 = calibrate(SCalibrateConfig, obs, n, target=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
+        p1 = calibrate(SCalibrateConfig, obs, n=n, target=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
         @test p1[:SCalibrateConfig][:a] == a/w1
-        p2 = calibrate(SCalibrateConfig, obs, n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
+        p2 = calibrate(SCalibrateConfig, obs, n=n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
         @test p2[:SCalibrateConfig][:a] == a/w2
+    end
+
+    @testset "calibrate with configs as index" begin
+        @system SCalibrateConfigsIndex(Controller) begin
+            a => 0 ~ preserve(parameter)
+            w => 1 ~ preserve(parameter)
+            b(a, w) => w*a ~ accumulate
+        end
+        n = 10
+        t, w, b = [10.0u"hr", 10.0u"hr"], [1, 2], [90, 180]
+        A = (0.0, 100.0)
+        obs = DataFrame(tick=t, w=w, b=b)
+        configs = [
+            :SCalibrateConfigsIndex => :w => 1,
+            :SCalibrateConfigsIndex => :w => 2,
+        ]
+        index = ["context.clock.tick", :w]
+        target = :b
+        params = ("SCalibrateConfigsIndex.a" => A)
+        p = calibrate(SCalibrateConfigsIndex, obs, configs, n=n, index=index, target=target, parameters=params)
+        @test p[:SCalibrateConfigsIndex][:a] == 10
     end
 end

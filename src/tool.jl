@@ -92,29 +92,33 @@ end
 
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
-calibrate(S::Type{<:System}, obs, n=1; index="context.clock.tick", target, config=(), parameters) = begin
+calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
+calibrate(S::Type{<:System}, obs, configs; n=1, index="context.clock.tick", target, parameters) = begin
     P = OrderedDict(parameters)
     K = [Symbol.(split(n, ".")) for n in keys(P)]
-    makeconfig(X) = begin
+    config(X) = begin
         d = DefaultDict(Dict)
         for (k, v) in zip(K, X)
             d[k[1]][k[2]] = v
         end
-        configure(config, d)
+        d
     end
-    i = parsesimulationkey(index).first
+    i = parsesimulation(index) |> keys |> collect
     k = parsesimulationkey(target).first
     k1 = Symbol(k, :_1)
-    cost(X) = begin
-        est = simulate(S; n=n, config=makeconfig(X), index=index, target=(target,), verbose=false)
+    residual(c) = begin
+        est = simulate(S; n=n, config=c, index=index, target=target, verbose=false)
         df = join(est, obs, on=i, makeunique=true)
-        R = df[!, k] - df[!, k1]
+        df[!, k] - df[!, k1]
+    end
+    cost(X) = begin
+        R = [residual(configure(c, config(X))) for c in configs] |> Iterators.flatten
         sum(R.^2) |> deunitfy
     end
     #FIXME: input parameters units are ignored without conversion
     range = map(p -> Float64.(Tuple(deunitfy(p))), values(P))
     r = bboptimize(cost; SearchRange=range)
-    best_candidate(r) |> makeconfig
+    best_candidate(r) |> config
 end
 
 export simulate, simulate!, calibrate
