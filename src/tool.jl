@@ -51,10 +51,11 @@ format(m::Simulation; nounit=false, long=false) = begin
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
-progress!(s::System, M::Vector{Simulation}; n, stop=nothing, verbose=true, kwargs...) = begin
-    check = if isnothing(stop)
+progress!(s::System, M::Vector{Simulation}; stop=nothing, verbose=true, kwargs...) = begin
+    isnothing(stop) && (stop = 1)
+    check = if stop isa Number
         dt = verbose ? 1 : Inf
-        p = Progress(n, dt=dt)
+        p = Progress(stop, dt=dt)
         () -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
@@ -70,20 +71,20 @@ progress!(s::System, M::Vector{Simulation}; n, stop=nothing, verbose=true, kwarg
     format.(M; kwargs...)
 end
 
-simulate!(s::System; n=1, base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
-    simulate!(s, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
+simulate!(s::System; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
+    simulate!(s, [(base=base, index=index, target=target)]; kwargs...)[1]
 end
-simulate!(s::System, layout; n=1, kwargs...) = begin
+simulate!(s::System, layout; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
-    progress!(s, M; n=n, kwargs...)
+    progress!(s, M; kwargs...)
 end
 
-simulate(S::Type{<:System}; n=1, base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
-    simulate(S, [(base=base, index=index, target=target)]; n=n, kwargs...)[1]
+simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
+    simulate(S, [(base=base, index=index, target=target)]; kwargs...)[1]
 end
-simulate(S::Type{<:System}, layout; n=1, config=(), options=(), kwargs...) = begin
+simulate(S::Type{<:System}, layout; config=(), options=(), kwargs...) = begin
     s = instance(S, config=config; options...)
-    simulate!(s, layout; n=n, kwargs...)
+    simulate!(s, layout; kwargs...)
 end
 simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
     R = [simulate(S, layout; config=c, kwargs...) for c in configs]
@@ -93,7 +94,7 @@ end
 import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
-calibrate(S::Type{<:System}, obs, configs; n=1, index="context.clock.tick", target, parameters) = begin
+calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, kwargs...) = begin
     P = OrderedDict(parameters)
     K = [Symbol.(split(n, ".")) for n in keys(P)]
     config(X) = begin
@@ -107,15 +108,15 @@ calibrate(S::Type{<:System}, obs, configs; n=1, index="context.clock.tick", targ
     k = parsesimulationkey(target).first
     k1 = Symbol(k, :_1)
     residual(c) = begin
-        est = simulate(S; n=n, config=c, index=index, target=target, verbose=false)
+        est = simulate(S; config=c, index=index, target=target, verbose=false, kwargs...)
         df = join(est, obs, on=i, makeunique=true)
         df[!, k] - df[!, k1]
     end
     cost(X) = begin
         c = config(X)
-        l = length(configs)
-        T = Vector(undef, l)
-        Threads.@threads for i in 1:l
+        n = length(configs)
+        T = Vector(undef, n)
+        Threads.@threads for i in 1:n
             T[i] = residual(configure(configs[i], c))
         end
         R = T |> Iterators.flatten

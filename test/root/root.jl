@@ -123,5 +123,5 @@ render(r::RootSegment) = begin
 end
 
 s = instance(Root)
-simulate!(s, n=100)
+simulate!(s, stop=100)
 # render(s.root) |> open
