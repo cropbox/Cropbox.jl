@@ -112,7 +112,13 @@ calibrate(S::Type{<:System}, obs, configs; n=1, index="context.clock.tick", targ
         df[!, k] - df[!, k1]
     end
     cost(X) = begin
-        R = [residual(configure(c, config(X))) for c in configs] |> Iterators.flatten
+        c = config(X)
+        l = length(configs)
+        T = Vector(undef, l)
+        Threads.@threads for i in 1:l
+            T[i] = residual(configure(configs[i], c))
+        end
+        R = T |> Iterators.flatten
         sum(R.^2) |> deunitfy
     end
     #FIXME: input parameters units are ignored without conversion
