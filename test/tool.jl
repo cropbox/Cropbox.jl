@@ -25,13 +25,13 @@ using DataFrames
         @test names(r) == [:b]
     end
 
-    @testset "simulate with terminate" begin
-        @system SSimulateTerminate(Controller) begin
+    @testset "simulate with stop" begin
+        @system SSimulateStop(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
             z(b) => b >= 10 ~ flag
         end
-        r = simulate(SSimulateTerminate, terminate="z")
+        r = simulate(SSimulateStop, stop="z")
         @test r[end, :b] == 10
         @test r[end-1, :b] != 10
     end

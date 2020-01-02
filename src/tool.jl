@@ -51,14 +51,14 @@ format(m::Simulation; nounit=false, long=false) = begin
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
-progress!(s::System, M::Vector{Simulation}; n, terminate=nothing, verbose=true, kwargs...) = begin
-    check = if isnothing(terminate)
+progress!(s::System, M::Vector{Simulation}; n, stop=nothing, verbose=true, kwargs...) = begin
+    check = if isnothing(stop)
         dt = verbose ? 1 : Inf
         p = Progress(n, dt=dt)
         () -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
-        () -> !s[terminate]'
+        () -> !s[stop]'
     end
     update!.(M, s)
     while check()
