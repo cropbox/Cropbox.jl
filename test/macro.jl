@@ -22,4 +22,17 @@
         @test s.b' == 1
         @test s.c' == 1
     end
+    
+    @testset "body replacement" begin
+        @system SBodyReplacement1(Controller) begin
+            a => 1 ~ preserve
+        end
+        @eval @system SBodyReplacement2(SBodyReplacement1) begin
+            a => 2
+        end
+        s1 = instance(SBodyReplacement1)
+        s2 = instance(SBodyReplacement2)
+        @test s1.a' == 1
+        @test s2.a' == 2
+    end
 end

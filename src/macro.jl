@@ -29,8 +29,8 @@ show(io::IO, v::VarInfo) = begin
 end
 
 VarInfo(line::Union{Expr,Symbol}, system::Symbol) = begin
-    # name[(args..; kwargs..)][: alias | [alias...]] [=> body] ~ [state][::type][(tags..)]
-    @capture(line, decl_ ~ deco_)
+    # name[(args..; kwargs..)][: alias | [alias...]] [=> body] [~ [state][::type][(tags..)]]
+    @capture(line, (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: [alias__]) | (def2_: alias__) | def2_)
@@ -260,6 +260,7 @@ parsehead(head) = begin
 end
 
 import DataStructures: OrderedDict, OrderedSet
+import Setfield: @set
 gensystem(head, body) = gensystem(parsehead(head)..., body)
 gensystem(name, incl, body) = genstruct(name, geninfos(name, incl, body), incl)
 geninfos(name, incl, body) = begin
@@ -269,6 +270,10 @@ geninfos(name, incl, body) = begin
             if haskey(d, n)
                 if v.state == :Hold
                     continue
+                # support simple body replacement (i.e. `a => 1` without `~ ...` part)
+                elseif isnothing(v.state) && isnothing(v.type)
+                    v0 = d[n]
+                    v = @set v0.body = v.body
                 end
             end
             d[n] = v
