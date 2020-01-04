@@ -389,18 +389,16 @@ genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
 #TODO: merge extractfuncargdep() and extractfuncargkey()?
 extractfuncargdep(v::Expr) = begin
-    a = v.args[1]
-    if isexpr(a)
-        extractfuncargdep(a)
-    # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
-    elseif isexpr(v, :., :ref)
-        a
-    # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
-    elseif isexpr(v, :call) && length(v.args) == 2
-        extractfuncargdep(v.args[end])
+    a = v.args
+    # detect variable inside wrapping function (i.e. `a` in `nounit(a.b, ..)`)
+    if isexpr(v, :call)
+        extractfuncargdep(a[2])
     # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
     elseif isexpr(v, Symbol("'"))
-        a
+        extractfuncargdep(a[1])
+    # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
+    elseif isexpr(v, :., :ref)
+        extractfuncargdep(a[1])
     else
         nothing
     end
@@ -409,22 +407,21 @@ extractfuncargdep(v::Symbol) = v
 extractfuncargdep(v) = nothing
 
 extractfuncargkey(v::Expr) = begin
-    a = v.args[end]
-    if isexpr(a)
-        extractfuncargkey(a)
+    a = v.args
+    # detect variable inside wrapping function (i.e. `b` in `nounit(a.b, ..)`)
+    if isexpr(v, :call)
+        extractfuncargkey(a[2])
+    # detect shorthand syntax for calling value() (i.e. `b` in `a.b'` = `value(a.b)`)
+    elseif isexpr(v, Symbol("'"))
+        extractfuncargkey(a[1])
     # detect last callee of dot chaining (i.e. `c` in `a.b.c`)
     elseif isexpr(v, :., :ref)
-        a
-    # detect variable inside wrapping function (i.e. `a` in `nounit(a)`)
-    elseif isexpr(v, :call) && length(v.args) == 2
-        a
-    # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
-    elseif isexpr(v, Symbol("'"))
-        a
+        extractfuncargkey(a[2])
     else
         error("unrecognized function argument key: $v")
     end
 end
+extractfuncargkey(v::QuoteNode) = extractfuncargkey(v.value)
 extractfuncargkey(v::Symbol) = v
 
 extractfuncargpair(a) = let k, v
