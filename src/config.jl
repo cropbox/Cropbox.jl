@@ -21,7 +21,6 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     nothing
 end
 
-import DataStructures: OrderedSet
 parameters(::Type{S}) where {S<:System} = begin
     d = dependency(S)
     V = [n.info for n in d.N]
