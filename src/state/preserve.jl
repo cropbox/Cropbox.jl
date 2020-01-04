@@ -7,7 +7,7 @@ Preserve(; unit, optional, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     v = _value
-    V = promote_type(V, typeof(v))
+    #V = promote_type(V, typeof(v))
     V = optional ? Union{V,Nothing} : V
     Preserve{V}(v)
 end
