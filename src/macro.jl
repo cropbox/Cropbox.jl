@@ -112,7 +112,7 @@ const C = :($(esc(:Cropbox)))
 genvartype(v::VarInfo) = genvartype(v)
 genvartype(v::VarInfo{Nothing}) = esc(v.type)
 genvartype(v::VarInfo{Symbol}) = begin
-    N = isnothing(v.type) ? :Float64 : esc(v.type)
+    N = gettag(v, :_type)
     U = gettag(v, :unit)
     V = @q $C.valuetype($N, $U)
     genvartype(v, Val(v.state); N=N, U=U, V=V)
