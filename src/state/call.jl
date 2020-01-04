@@ -12,6 +12,8 @@ end
 #HACK: showing s.value could trigger StackOverflowError
 show(io::IO, s::Call) = print(io, "<call>")
 
+gencallargtype(t) = isnothing(t) ? :Float64 : esc(t)
+
 updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
     #FIXME: lower duplicate efforts in genvartype()
     N = d[:_type]
@@ -19,8 +21,7 @@ updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
     V = @q $C.valuetype($N, $U)
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        t = isnothing(t) ? :Float64 : esc(t)
-        @q $C.valuetype($t, $u)
+        @q $C.valuetype($(gencallargtype(t)), $u)
     end
     F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
     d[:_calltype] = F
@@ -29,8 +30,7 @@ end
 genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
     extract(a) = let k, t, u
         @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        t = isnothing(t) ? :Float64 : esc(t)
-        @q $C.valuetype($t, $u)
+        @q $C.valuetype($(gencallargtype(t)), $u)
     end
     F = @q FunctionWrapper{$V, Tuple{$(extract.(v.kwargs)...)}}
     @q Call{$V,$F}
