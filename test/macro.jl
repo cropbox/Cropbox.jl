@@ -32,7 +32,9 @@
         end
         s1 = instance(SBodyReplacement1)
         s2 = instance(SBodyReplacement2)
+        @test s1.a isa Cropbox.Preserve
         @test s1.a' == 1
+        @test s2.a isa Cropbox.Preserve
         @test s2.a' == 2
     end
 end
