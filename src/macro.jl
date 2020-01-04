@@ -39,7 +39,7 @@ VarInfo(line::Union{Expr,Symbol}, system::Symbol) = begin
     kwargs = isnothing(kwargs) ? [] : kwargs
     alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
-    type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : type
+    type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
     VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line)
 end
@@ -58,7 +58,7 @@ parsetags(tags::Vector; state, type, a...) = begin
         end
     end
     !haskey(d, :unit) && (d[:unit] = nothing)
-    d[:_type] = isnothing(type) ? typetag(s) : esc(type)
+    d[:_type] = esc(type)
     updatetags!(d, s; a...)
     d
 end
