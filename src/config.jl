@@ -1,4 +1,5 @@
-const Config = Dict{Any,Any}
+import DataStructures: OrderedDict
+const Config = OrderedDict{Any,Any}
 
 configure(c::AbstractDict) = Config(Symbol(p.first) => configure(p.second) for p in c)
 configure(c::Tuple) = configure(Config(c))
