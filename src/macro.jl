@@ -67,6 +67,7 @@ typetag(::Val) = :Float64
 typetag(::Val{:Advance}) = :Int
 typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :System
+typetag(::Val{nothing}) = nothing
 
 updatetags!(d, ::Val; _...) = nothing
 
