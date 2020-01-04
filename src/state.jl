@@ -34,6 +34,8 @@ rateunittype(U::Units, T::Units) = (R = U/T; isunitless(R) ? nothing : R)
 rateunittype(U::Units, T::Nothing) = U
 rateunittype(U::Nothing, T::Nothing) = nothing
 
+timeunittype(U, TU=u"hr") = isnothing(U) ? TU : (dimension(U) == Unitful.𝐓) ? U : TU
+
 struct Nounit{S,U}
     state::S
     unit::U

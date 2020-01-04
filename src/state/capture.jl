@@ -22,15 +22,7 @@ end
 updatetags!(d, ::Val{:Capture}; _...) = begin
     !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     #TODO: automatic inference without explicit `timeunit` tag
-    if !haskey(d, :timeunit)
-        U = d[:unit]
-        TU = if isnothing(U)
-            @q u"hr"
-        else
-            @q (Unitful.dimension($U) == Unitful.𝐓) ? $U : u"hr"
-        end
-        d[:timeunit] = TU
-    end
+    !haskey(d, :timeunit) && (d[:timeunit] = @q $C.timeunittype($(d[:unit])))
 end
 
 genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
