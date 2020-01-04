@@ -12,14 +12,14 @@ configure(c) = c
 # loadconfig(c::AbstractString) = configure(TOML.parse(c))
 
 option(c) = c
-option(c, keys...) = nothing
-option(c::Config, key::Symbol, keys...) = option(get(c, key, nothing), keys...)
+option(c, keys...) = missing
+option(c::Config, key::Symbol, keys...) = option(get(c, key, missing), keys...)
 option(c::Config, key::Vector{Symbol}, keys...) = begin
     for k in key
         v = option(c, k, keys...)
-        !isnothing(v) && return v
+        !ismissing(v) && return v
     end
-    nothing
+    missing
 end
 
 parameters(::Type{S}) where {S<:System} = begin

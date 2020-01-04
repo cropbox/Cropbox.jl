@@ -45,7 +45,7 @@ geninit(v::VarInfo, ::Val{:Interpolate}) = begin
     if istag(v, :parameter)
         @gensym o
         @q let $o = $C.option(config, _names, $(names(v)))
-            isnothing($o) ? $(genfunc(v)) : $o
+            ismissing($o) ? $(genfunc(v)) : $o
         end
     else
         @q $(genfunc(v))
