@@ -64,7 +64,7 @@ parsetags(tags::Vector; state, type, a...) = begin
 end
 
 typetag(::Val) = :Float64
-typetag(::Val{:Advance}) = :Int
+typetag(::Val{:Advance}) = :Float64 #HACK: avoid unexpected promotion (i.e. Rational) when using :Int
 typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :System
 typetag(::Val{nothing}) = nothing
