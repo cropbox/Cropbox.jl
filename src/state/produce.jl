@@ -26,9 +26,8 @@ priority(::Type{<:Produce}) = PrePriority()
 
 export produce
 
-genvartype(v::VarInfo, ::Val{:Produce}; _...) = begin
-    S = isnothing(v.type) ? :System : esc(v.type)
-    @q Produce{$S}
+genvartype(v::VarInfo, ::Val{:Produce}; N, _...) = begin
+    @q Produce{$N}
 end
 
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
