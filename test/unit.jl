@@ -58,4 +58,20 @@ using Unitful
         @test s.b'(1) == 2
         @test s.c' == 2
     end
+    
+    @testset "nounit nested" begin
+        @system SNounitNestedComponent begin
+            a => 1 ~ track(u"m")
+        end
+        @system SNounitNested(Controller) begin
+            n(context) ~ ::SNounitNestedComponent
+            a(n.a) ~ track(u"m")
+            b(nounit(n.a)) ~ track
+            c(x=nounit(n.a)) => 2x ~ track
+        end
+        s = instance(SNounitNested)
+        @test s.n.a' == s.a' == u"1m"
+        @test s.b' == 1
+        @test s.c' == 2
+    end
 end
