@@ -22,10 +22,17 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
     missing
 end
 
-parameters(::Type{S}) where {S<:System} = begin
-    d = dependency(S)
-    V = [n.info for n in d.N]
+import DataStructures: OrderedSet
+parameters(::Type{S}; recursive=false) where {S<:System} = begin
+    V = [n.info for n in dependency(S).N]
     #HACK: only extract parameters with no dependency on other variables
-    filter!(v -> istag(v, :parameter) && isempty(v.args), V)
-    configure(S => ((v.name => unitfy(eval(v.body), eval(v.tags[:unit])) for v in V)...,))
+    P = filter(v -> istag(v, :parameter) && isempty(v.args), V)
+    C = configure(nameof(S) => ((v.name => unitfy(eval(v.body), eval(v.tags[:unit])) for v in P)...,))
+    if recursive
+        #HACK: evaluate types defined in Main module
+        T = OrderedSet([Main.eval(v.type) for v in V])
+        T = filter(t -> t <: System, T)
+        C = configure(parameters.(T, recursive=true)..., C)
+    end
+    C
 end
