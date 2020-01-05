@@ -219,18 +219,21 @@ end
     #FIXME: currently not used variables
 
     # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
-    Os(A_net, gbs, Om, alpha=0.0001): bundle_sheath_o2 => begin
-        alpha * A_net / (0.047gbs) + Om # Bundle sheath O2 partial pressure, mbar
+    α: bundle_sheath_PSII_activity_fraction => 0.0001 ~ preserve(parameter)
+    # Bundle sheath O2 partial pressure, mbar
+    Os(A_net, gbs, Om, α): bundle_sheath_o2 => begin
+        α * A_net / (0.047gbs) + Om
     end ~ track(u"mbar")
 
     Cbs(A_net, Vp, Cm, Rm, gbs): bundle_sheath_co2 => begin
         Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
     end ~ track(u"μbar")
 
-    Γ(Rd, Km, Vcmax, Os, Γ1=0.193) => begin
-        # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
-        # note that this become the same as that in C3 model when multiplied by [O2]
-        Γ★ = Γ1 * Os
+    # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
+    # note that this become the same as that in C3 model when multiplied by [O2]
+    Γ1 => 0.193 ~ preserve(parameter)
+    Γ★(Γ1, Os) => Γ1 * Os ~ track(u"μbar")
+    Γ(Rd, Km, Vcmax, Γ★) => begin
         (Rd*Km + Vcmax*Γ★) / (Vcmax - Rd)
     end ~ track(u"μbar")
 end
