@@ -1,5 +1,6 @@
 using MacroTools
 import MacroTools: @q
+import Setfield: @set
 
 struct VarInfo{S<:Union{Symbol,Nothing}}
     system::Symbol
@@ -78,6 +79,11 @@ istag(v::VarInfo, t...) = any(istag.(Ref(v), t))
 gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 
 names(v::VarInfo) = [v.name, v.alias...]
+
+linenumber(v::VarInfo, prefix="") = begin
+    n = v.linenumber
+    @set n.file = Symbol(n.file, ":$prefix|", v.name)
+end
 
 ####
 
@@ -162,7 +168,7 @@ gendecl(v::VarInfo{Symbol}) = begin
         stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
         @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
     end
-    gendecl(decl, v.name, v.alias)
+    gendecl(v, decl)
 end
 gendecl(v::VarInfo{Nothing}) = begin
     emit(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
@@ -179,12 +185,12 @@ gendecl(v::VarInfo{Nothing}) = begin
     end
     # implicit :expose
     decl = :($(esc(v.name)) = $decl)
-    gendecl(decl, v.name, v.alias)
+    gendecl(v, decl)
 end
-gendecl(decl, var, alias) = @q begin
-    $(LineNumberNode(0, "gendecl/$var"))
-    $var = $decl
-    $(@q begin $([:($a = $var) for a in alias]...) end)
+gendecl(v::VarInfo, decl) = @q begin
+    $(linenumber(v, "gendecl"))
+    $(v.name) = $decl
+    $(@q begin $([:($a = $(v.name)) for a in v.alias]...) end)
 end
 
 gensource(infos) = begin
@@ -263,7 +269,6 @@ parsehead(head) = begin
 end
 
 import DataStructures: OrderedDict, OrderedSet
-import Setfield: @set
 gensystem(head, body) = gensystem(parsehead(head)..., body)
 gensystem(name, incl, body) = genstruct(name, geninfos(name, incl, body), incl)
 geninfos(name, incl, body) = begin
@@ -356,7 +361,7 @@ end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
 genupdate(v::VarInfo, t::VarStep) = @q begin
-    $(LineNumberNode(0, "genupdate/$(v.name)"))
+    $(linenumber(v, "genupdate"))
     @label $(symlabel(v, t))
     $(genupdate(v, Val(v.state), t))
 end
