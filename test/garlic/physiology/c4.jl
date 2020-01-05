@@ -423,7 +423,7 @@ end
 
     T_adj(R_net, λE, C): temperature_adjustment => begin
         # eqn 14.6b linearized form using first order approximation of Taylor series
-        #(γ★ / (VPD_slope + γ★)) * (R_net / (Cp*ghr) - VPD/(γ★ * P_air))
+        #(γ★ / (VPD_slope_delta + γ★)) * (R_net / (Cp*ghr) - VPD/γ★)
         (R_net - λE) / C
     end ~ solve(lower=-10u"K", upper=10u"K", u"K")
 
