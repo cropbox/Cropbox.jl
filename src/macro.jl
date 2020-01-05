@@ -1,5 +1,5 @@
 using MacroTools
-import MacroTools: @q, flatten, striplines
+import MacroTools: @q, flatten
 
 struct VarInfo{S<:Union{Symbol,Nothing}}
     system::Symbol
@@ -12,6 +12,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
     type::Union{Symbol,Expr,Nothing}
     tags::Dict{Symbol,Any}
     line::Union{Expr,Symbol}
+    linenumber::LineNumberNode
 end
 
 import Base: show
@@ -26,9 +27,10 @@ show(io::IO, v::VarInfo) = begin
         println(io, "tag $a = $(repr(b))")
     end
     println(io, "line: $(v.line)")
+    println(io, "linenumber: $(v.linenumber)")
 end
 
-VarInfo(line::Union{Expr,Symbol}, system::Symbol) = begin
+VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode) = begin
     # name[(args..; kwargs..)][: alias | [alias...]] [=> body] [~ [state][::type][(tags..)]]
     @capture(line, (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
@@ -41,7 +43,7 @@ VarInfo(line::Union{Expr,Symbol}, system::Symbol) = begin
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
-    VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line)
+    VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber)
 end
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
@@ -186,8 +188,8 @@ gendecl(decl, var, alias) = @q begin
 end
 
 gensource(infos) = begin
-    l = [v.line for v in infos]
-    striplines(flatten(@q begin $(l...) end))
+    l = [@q begin $(v.linenumber); $(v.line) end for v in infos]
+    flatten(@q begin $(l...) end)
 end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
@@ -225,7 +227,7 @@ end
 source(s::S) where {S<:System} = source(S)
 source(S::Type{<:System}) = source(nameof(S))
 source(s::Symbol) = source(Val(s))
-source(::Val{:System}) = @q begin
+source(::Val{:System}) = quote
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
@@ -265,7 +267,19 @@ import Setfield: @set
 gensystem(head, body) = gensystem(parsehead(head)..., body)
 gensystem(name, incl, body) = genstruct(name, geninfos(name, incl, body), incl)
 geninfos(name, incl, body) = begin
-    con(b, s) = OrderedDict(v.name => v for v in VarInfo.(striplines(b).args, s))
+    con(b, s) = begin
+        d = OrderedDict{Symbol,VarInfo}()
+        #HACK: always assume presence of LineNumberNode
+        a = b.args
+        #HACK: empty block still has a LineNumberNode
+        length(a) == 1 && a[1] isa LineNumberNode && (a = [])
+        m = reshape(a, 2, :)
+        for (ln, l) in eachcol(m)
+            v = VarInfo(s, l, ln)
+            d[v.name] = v
+        end
+        d
+    end
     add!(d, b, s) = begin
         for (n, v) in con(b, s)
             if haskey(d, n)
@@ -280,12 +294,15 @@ geninfos(name, incl, body) = begin
             d[n] = v
         end
     end
-    d = OrderedDict{Symbol,VarInfo}()
-    for m in incl
-        add!(d, source(m), m)
+    combine() = begin
+        d = OrderedDict{Symbol,VarInfo}()
+        for m in incl
+            add!(d, source(m), m)
+        end
+        add!(d, body, name)
+        d
     end
-    add!(d, body, name)
-    collect(values(d))
+    combine() |> values |> collect
 end
 geninfos(S::Type{<:System}) = geninfos(nameof(S), (), source(S))
 
