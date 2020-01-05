@@ -1,5 +1,5 @@
 using MacroTools
-import MacroTools: @q, flatten
+import MacroTools: @q
 
 struct VarInfo{S<:Union{Symbol,Nothing}}
     system::Symbol
@@ -189,7 +189,7 @@ end
 
 gensource(infos) = begin
     l = [@q begin $(v.linenumber); $(v.line) end for v in infos]
-    flatten(@q begin $(l...) end)
+    MacroTools.flatten(@q begin $(l...) end)
 end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
@@ -220,7 +220,7 @@ genstruct(name, infos, incl) = begin
         $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
-    flatten(system)
+    MacroTools.flatten(system)
 end
 
 #TODO: maybe need to prevent naming clash by assigning UUID for each System
@@ -471,5 +471,5 @@ genfunc(v::VarInfo) = begin
         args = genfuncargs(v)
         body = esc(v.body)
     end
-    flatten(@q let $args; $body end)
+    MacroTools.flatten(@q let $args; $body end)
 end

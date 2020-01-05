@@ -40,7 +40,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     emiti(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $C.value($(p[2])))
     innerargs = @q begin $(emiti.(v.args)...) end
 
-    innercall = flatten(@q let $innerargs; $(esc(v.body)) end)
+    innercall = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
     innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
 
     emito(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
@@ -53,7 +53,7 @@ geninit(v::VarInfo, ::Val{:Call}) = begin
     @q function $(symcall(v))($(callargs...))
         $innerbody
     end
-    # outerbody = flatten(@q let $outerargs
+    # outerbody = MacroTools.flatten(@q let $outerargs
     #     function $(symcall(v))($(callargs...))
     #         $innerbody
     #     end
