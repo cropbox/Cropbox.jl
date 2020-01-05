@@ -257,8 +257,8 @@ end
     u(u=weather.wind): wind_velocity => max(u, 0.1u"m/s") ~ track(u"m/s")
     # characteristic dimension of a leaf, leaf width in m
     d(w): characteristic_dimension => 0.72w ~ track(u"m")
-    v: kinematic_viscosity_of_air_at_20 => 1.51e-5 ~ track(u"m^2/s")
-    κ: thermal_diffusivity_of_air_at_20 => 21.5e-6 ~ track(u"m^2/s")
+    v: kinematic_viscosity_of_air_at_20 => 1.51e-5 ~ preserve(u"m^2/s", parameter)
+    κ: thermal_diffusivity_of_air_at_20 => 21.5e-6 ~ preserve(u"m^2/s", parameter)
     Re(u, d, v): reynolds_number => u*d/v ~ track
     Nu(Re): nusselt_number => 0.60sqrt(Re) ~ track
     gh(κ, Nu, d, scr, ocr, P_air=weather.P_air, Tk_air=weather.Tk_air): boundary_layer_heat_conductance => begin
