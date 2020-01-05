@@ -23,7 +23,7 @@ dive(s::System) = begin
         label(k) = begin
             n = string(k)
             a = join(d[k], ", ")
-            isempty(a) ? "$(BLUE_FG(n))" : "$(BLUE_FG(a)) $(DARK_GRAY_FG("($n)"))"
+            isempty(a) ? "$(BLUE_FG(n))" : "$(BLUE_FG(n)) $(DARK_GRAY_FG("($a)"))"
         end
         l = fieldnamesunique(s) |> collect
         nav(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
