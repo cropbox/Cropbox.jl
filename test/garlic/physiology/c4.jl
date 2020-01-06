@@ -391,7 +391,7 @@ end
     δ ~ hold #FIXME: really needed?
 
     ϵ: leaf_thermal_emissivity => 0.97 ~ preserve(parameter)
-    σ: stefan_boltzmann_constant => u"σ" ~ preserve(u"W/m^2/K^4", parameter)
+    σ: stefan_boltzmann_constant => u"σ" ~ preserve(u"W/m^2/K^4")
     λ: latent_heat_of_vaporiztion_at_25 => 44 ~ preserve(u"kJ/mol", parameter)
     Cp: specific_heat_of_air => 29.3 ~ preserve(u"J/mol/K", parameter)
 
