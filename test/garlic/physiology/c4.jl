@@ -371,6 +371,8 @@ end
 @system Irradiance begin
     PPFD ~ hold
 
+    #FIXME: duplicate? already considered in Radiation?
+    #FIXME: how is (1 - δ) related to α in EnergyBalance?
     # leaf reflectance + transmittance
     δ: leaf_scattering => 0.15 ~ preserve(parameter)
     f: leaf_spectral_correction => 0.15 ~ preserve(parameter)
@@ -388,7 +390,7 @@ end
     gv ~ hold
     gh ~ hold
     PPFD ~ hold
-    δ ~ hold #FIXME: really needed?
+    #δ ~ hold #FIXME: really needed?
 
     ϵ: leaf_thermal_emissivity => 0.97 ~ preserve(parameter)
     σ: stefan_boltzmann_constant => u"σ" ~ preserve(u"W/m^2/K^4")
@@ -416,33 +418,29 @@ end
     k: radiation_conversion_factor => (1 / 4.55) ~ preserve(u"J/μmol")
     PAR(PPFD, k): photosynthetically_active_radiation => (PPFD * k) ~ track(u"W/m^2")
 
-    NIR(PAR): near_infrared_radiation => begin
-        # If total solar radiation unavailable, assume NIR the same energy as PAR waveband
-        PAR
-    end ~ track(u"W/m^2")
+    # NIR(PAR): near_infrared_radiation => begin
+    #     #FIXME: maybe δ or similar ratio supposed to be applied here?
+    #     # If total solar radiation unavailable, assume NIR the same energy as PAR waveband
+    #     PAR
+    # end ~ track(u"W/m^2")
 
     # solar radiation absorptivity of leaves: =~ 0.5
+    #FIXME: is α different from (1 - δ) in Irradiance?
     α: absorption_coefficient => 0.5 ~ preserve(parameter)
 
-    R_light(PAR, NIR, α, δ): radiation_absorbed_from_light => begin
+    #R_sw(PAR, NIR, α, δ): shortwave_radiation_absorbed => begin
+    R_sw(PAR, α): shortwave_radiation_absorbed => begin
+        #FIXME: why δ needed here? α should already take care of scattering
         # shortwave radiation (PAR (=0.85) + NIR (=0.15))
-        α*((1-δ)*PAR + δ*NIR)
+        #α*((1-δ)*PAR + δ*NIR)
+        α*PAR
     end ~ track(u"W/m^2")
 
-    R_wall(ϵ, σ, Tk_air): radiation_absorbed_from_wall => begin
-        ϵ*σ*Tk_air^4
-    end ~ track(u"W/m^2")
+    R_wall(ϵ, σ, Tk_air): thermal_radiation_absorbed_from_wall => 2ϵ*σ*Tk_air^4 ~ track(u"W/m^2")
+    R_leaf(ϵ, σ, Tk): thermal_radiation_emitted_by_leaf => 2ϵ*σ*Tk^4 ~ track(u"W/m^2")
+    R_thermal(R_wall, R_leaf): thermal_radiation_absored => R_wall - R_leaf ~ track(u"W/m^2")
 
-    R_in(R_light, R_wall): radiation_absored => begin
-        # times 2 for projected area basis
-        2(R_light + R_wall)
-    end ~ track(u"W/m^2")
-
-    R_out(ϵ, σ, Tk): radiation_emitted => begin
-        2(ϵ*σ*Tk^4)
-    end ~ track(u"W/m^2")
-
-    R_net(R_in, R_out): net_radiation_absorbed => R_in - R_out ~ track(u"W/m^2")
+    R_net(R_sw, R_thermal): net_radiation_absorbed => R_sw + R_thermal ~ track(u"W/m^2")
 
     λE(λ, gv, VPD): latent_heat_flux => begin
         λ*gv*VPD
