@@ -53,11 +53,34 @@ end
     vapor_pressure_saturation_slope(T_air, P_air, s=vp.s): VPD_slope => s(T_air, P_air) ~ track(u"K^-1")
 end
 
+#TODO: make @stub macro to automate this
+@system WeatherStub begin
+    weather ~ hold
+
+    PFD(weather.PFD): photon_flux_density ~ track(u"μmol/m^2/s" #= Quanta =#)
+    CO2(weather.CO2) ~ track(u"μmol/mol")
+    RH(weather.RH): relative_humidity ~ track(u"percent")
+    T_air(weather.T_air): air_temperature ~ track(u"°C")
+    Tk_air(weather.Tk_air): absolute_air_temperature ~ track(u"K")
+    wind(weather.wind): wind_speed ~ track(u"m/s")
+    P_air(weather.P_air): air_pressure ~ track(u"kPa")
+
+    VPD(weather.VPD): vapor_pressure_deficit ~ track(u"kPa")
+    VPD_slope_delta(weather.VPD_slope_delta): vapor_pressure_saturation_slope_delta ~ track(u"kPa/K")
+    VPD_slope(weather.VPD_slope): vapor_pressure_saturation_slope ~ track(u"K^-1")
+end
+
 #TODO implement proper soil module
 @system Soil begin
     T_soil => 10 ~ track(u"°C")
     leaf_water_potential: WP_leaf => 0 ~ preserve(u"MPa", parameter) # pressure - leaf water potential MPa...
     total_root_weight => 0 ~ track(u"g")
+end
+
+@system SoilStub begin
+    soil ~ hold
+
+    WP_leaf(soil.leaf_water_potential) ~ track(u"MPa")
 end
 
 quadratic_solve_upper(a, b, c) = begin
@@ -238,9 +261,7 @@ end
     end ~ track(u"μbar")
 end
 
-@system BoundaryLayer begin
-    weather ~ hold
-
+@system BoundaryLayer(WeatherStub) begin
     w: leaf_width => 0.1 ~ preserve(u"m", parameter)
 
     # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
@@ -254,7 +275,7 @@ end
     # multiply by 1.4 for outdoor condition, Campbell and Norman (1998), p109
     ocr: outdoor_conductance_ratio => 1.4 ~ preserve
 
-    u(u=weather.wind): wind_velocity => max(u, 0.1u"m/s") ~ track(u"m/s")
+    u(u=wind): wind_velocity => max(u, 0.1u"m/s") ~ track(u"m/s")
     # characteristic dimension of a leaf, leaf width in m
     d(w): characteristic_dimension => 0.72w ~ track(u"m")
     v: kinematic_viscosity_of_air_at_20 => 1.51e-5 ~ preserve(u"m^2/s", parameter)
@@ -269,12 +290,10 @@ end
         g * P_air / (u"R" * Tk_air)
     end ~ track(u"mmol/m^2/s")
     # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
-    gb(gh, P_air=weather.P_air): boundary_layer_conductance => 0.147/0.135*gh / P_air ~ track(u"mol/m^2/s/bar" #= H2O =#)
+    gb(gh, P_air): boundary_layer_conductance => 0.147/0.135*gh / P_air ~ track(u"mol/m^2/s/bar" #= H2O =#)
 end
 
-@system Stomata begin
-    weather ~ hold
-    soil ~ hold
+@system Stomata(WeatherStub, SoilStub) begin
     gb: boundary_layer_conductance ~ hold
     A_net: net_photosynthesis ~ hold
 
@@ -285,7 +304,7 @@ end
     drb: diffusivity_ratio_boundary_layer => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
     dra: diffusivity_ratio_air => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
 
-    Ca(CO2=weather.CO2, P=weather.P_air): co2_air => (CO2 * P) ~ track(u"μbar")
+    Ca(CO2, P_air): co2_air => (CO2 * P_air) ~ track(u"μbar")
     # surface CO2 in mole fraction
     Cs(Ca, drb, A_net, gb): co2_at_leaf_surface => begin
         Ca - (drb * A_net / gb)
@@ -293,7 +312,7 @@ end
         #max(Cs, gamma)
     end ~ track(u"μbar")
 
-    hs(g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
+    hs(g0, g1, gb, m, A_net, Cs, RH): relative_humidity_at_leaf_surface => begin
         a = m * g1 * A_net / Cs |> u"mol/m^2/s/bar" |> ustrip
         b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s/bar" |> ustrip
         c = (-RH * gb) - g0 |> u"mol/m^2/s/bar" |> ustrip
@@ -309,7 +328,7 @@ end
         max(gs, g0)
     end ~ track(u"mol/m^2/s/bar" #= H2O =#)
 
-    LWP(soil.WP_leaf): leaf_water_potential ~ track(u"MPa")
+    LWP(WP_leaf): leaf_water_potential ~ track(u"MPa")
     sf => 2.3 ~ preserve(u"MPa^-1", parameter)
     ϕf => -2.0 ~ preserve(u"MPa", parameter)
     m(LWP, sf, ϕf): [leafp_effect, transpiration_reduction_factor] => begin
@@ -333,18 +352,24 @@ end
     end ~ track(u"m^2*s/mol*bar")
 end
 
-@system GasExchange(BoundaryLayer, Stomata, C4) begin
-    weather ~ ::Weather(override)
-    soil ~ ::Soil(override)
+@system IntercellularSpace(WeatherStub) begin
+    A_net ~ hold
+    #TODO: interface between boundary/stomata/intercellular space (i.e. soil layers?)
+    rvc ~ hold
 
+    #FIXME: duplicate in Stomata
+    Ca(CO2, P_air): co2_air => (CO2 * P_air) ~ track(u"μbar")
+
+    #HACK: high temperature simulation requires higher upper bound
     Cimax(Ca): intercellular_co2_upper_limit => 4Ca ~ track(u"μbar")
     Cimin: intercellular_co2_lower_limit => 0 ~ preserve(u"μbar")
-    Ci(Ca, A_net, CO2=weather.CO2, rvc): intercellular_co2 => begin
+    Ci(Ca, A_net, rvc): intercellular_co2 => begin
         Ca - A_net * rvc
     end ~ solve(lower=Cimin, upper=Cimax, u"μbar")
+end
 
-    #FIXME: confusion between PFD vs. PPFD
-    PPFD: photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s" #= Quanta =#, override)
+@system Irradiance begin
+    PPFD ~ hold
 
     # leaf reflectance + transmittance
     δ: leaf_scattering => 0.15 ~ preserve(parameter)
@@ -357,6 +382,13 @@ end
     I2(Ia, f): effective_irradiance => begin
         Ia * (1 - f) / 2 # useful light absorbed by PSII
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
+end
+
+@system EnergyBalance(WeatherStub) begin
+    gv ~ hold
+    gh ~ hold
+    PPFD ~ hold
+    δ ~ hold #FIXME: really needed?
 
     ϵ: leaf_thermal_emissivity => 0.97 ~ preserve(parameter)
     σ: stefan_boltzmann_constant => u"σ" ~ preserve(u"W/m^2/K^4", parameter)
@@ -412,12 +444,12 @@ end
 
     R_net(R_in, R_out): net_radiation_absorbed => R_in - R_out ~ track(u"W/m^2")
 
-    λE(λ, gv, VPD=weather.VPD): latent_heat_flux => begin
+    λE(λ, gv, VPD): latent_heat_flux => begin
         λ*gv*VPD
     end ~ track(u"W/m^2")
 
     #FIXME: come up with a better name? (i.e. heat capacity = J(/kg)/K))
-    C(Cp, ghr, λ, gv, VPD_slope_delta=weather.VPD_slope_delta): sensible_heat_capacity => begin
+    C(Cp, ghr, λ, gv, VPD_slope_delta): sensible_heat_capacity => begin
         Cp*ghr + λ*gv*VPD_slope_delta
     end ~ track(u"W/m^2/K")
 
@@ -427,21 +459,29 @@ end
         (R_net - λE) / C
     end ~ solve(lower=-10u"K", upper=10u"K", u"K")
 
-    T_air(weather.T_air): air_temperature ~ track(u"°C")
-    Tk_air(weather.Tk_air): absolute_air_temperature ~ track(u"K")
-    P_air(weather.P_air): air_pressure ~ track(u"kPa")
-
     T(T_adj, T_air): leaf_temperature => T_air + T_adj ~ track(u"°C")
     Tk(T): absolute_leaf_temperature ~ track(u"K")
+end
 
-    ET(gv, T, T_air, P_air, RH=weather.RH, ea=weather.vp.ambient, es=weather.vp.saturation): evapotranspiration => begin
+@system GasExchange(
+    WeatherStub, SoilStub,
+    BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance,
+    C4
+) begin
+    weather ~ ::Weather(override)
+    soil ~ ::Soil(override)
+
+    #FIXME: confusion between PFD vs. PPFD
+    PPFD: photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s" #= Quanta =#, override)
+
+    N: nitrogen => 2.0 ~ preserve(parameter)
+
+    ET(gv, T, T_air, P_air, RH, ea=weather.vp.ambient, es=weather.vp.saturation): evapotranspiration => begin
         Es = es(T)
         Ea = ea(T_air, RH)
         ET = gv * ((Es - Ea) / P_air) / (1 - (Es + Ea) / P_air) * P_air
         max(ET, zero(ET)) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"mmol/m^2/s" #= H2O =#)
-
-    N: nitrogen => 2.0 ~ preserve(parameter)
 end
 
 @system GasExchangeController(Controller) begin
@@ -449,7 +489,7 @@ end
     #calendar(context) ~ ::Calendar
     weather(context#=, calendar =#) ~ ::Weather
     soil(context) ~ ::Soil
-    PPFD(weather.PFD) ~ track(u"μmol/m^2/s")
+    PPFD(weather.PFD) ~ track(u"μmol/m^2/s") #HACK: should be PPFD from Radiation
 end
 
 df_c = DataFrame(SolRad=1500, CO2=0:10:1500, RH=60, Tair=25, Wind=2.0)
