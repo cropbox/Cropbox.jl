@@ -37,4 +37,15 @@
         @test s2.a isa Cropbox.Preserve
         @test s2.a' == 2
     end
+
+    @testset "replacement with different alias" begin
+        @system SReplacementDifferentAlias1 begin
+            x: aaa => 1 ~ preserve
+        end
+        #FIXME: need robust LineNumberNode handling in geninfos()
+        #@test_logs (:warn, "replaced variable has different alias")
+        @eval @system SReplacementDifferentAlias2(SReplacementDifferentAlias1) begin
+            x: bbb => 2 ~ preserve
+        end
+    end
 end

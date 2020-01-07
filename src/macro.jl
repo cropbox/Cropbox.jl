@@ -290,12 +290,14 @@ geninfos(name, incl, body) = begin
     add!(d, b, s) = begin
         for (n, v) in con(b, s)
             if haskey(d, n)
+                v0 = d[n]
                 if v.state == :Hold
                     continue
                 # support simple body replacement (i.e. `a => 1` without `~ ...` part)
                 elseif isnothing(v.state) && isnothing(v.type)
-                    v0 = d[n]
                     v = @set v0.body = v.body
+                elseif v0.alias != v.alias && v0.state != :Hold
+                    @warn "replaced variable has different alias" name=v.name old=v0.alias new=v.alias
                 end
             end
             d[n] = v
