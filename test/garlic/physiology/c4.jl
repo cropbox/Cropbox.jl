@@ -464,13 +464,14 @@ end
 @system GasExchange(
     WeatherStub, SoilStub,
     BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance,
-    C4
+    C4, Controller
 ) begin
-    weather ~ ::Weather(override)
-    soil ~ ::Soil(override)
+    #calendar(context) ~ ::Calendar
+    weather(context#=, calendar =#) ~ ::Weather
+    soil(context) ~ ::Soil
 
-    #FIXME: confusion between PFD vs. PPFD
-    PPFD: photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s" #= Quanta =#, override)
+    #HACK: should be PPFD from Radiation
+    PPFD(weather.PFD): photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s")
 
     N: nitrogen => 2.0 ~ preserve(parameter)
 
@@ -480,14 +481,6 @@ end
         ET = gv * ((Es - Ea) / P_air) / (1 - (Es + Ea) / P_air) * P_air
         max(ET, zero(ET)) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"mmol/m^2/s" #= H2O =#)
-end
-
-@system GasExchangeController(Controller) begin
-    ge(context, weather, soil, PPFD) ~ ::GasExchange
-    #calendar(context) ~ ::Calendar
-    weather(context#=, calendar =#) ~ ::Weather
-    soil(context) ~ ::Soil
-    PPFD(weather.PFD) ~ track(u"μmol/m^2/s") #HACK: should be PPFD from Radiation
 end
 
 df_c = DataFrame(SolRad=1500, CO2=0:10:1500, RH=60, Tair=25, Wind=2.0)
@@ -501,8 +494,8 @@ config = (
     :Soil => :WP_leaf => 2.0,
 )
 
-#res = simulate(GasExchangeController, stop=nrow(df)-2, target=["ge.A_net"], config=config)
-#res = simulate(GasExchangeController, stop=nrow(df)-2, base="ge", target=[:A_net, :Ac, :Aj, :gs, :Ca, :Ci], index=["context.clock.tick", "weather.CO2", "weather.T_air", "weather.PFD"], config=config, nounit=true)
+#res = simulate(GasExchange, stop=nrow(df)-2, target=["A_net"], config=config)
+#res = simulate(GasExchange, stop=nrow(df)-2, target=[:A_net, :Ac, :Aj, :gs, :Ca, :Ci], index=["context.clock.tick", "weather.CO2", "weather.T_air", "weather.PFD"], config=config, nounit=true)
 
 #config = ()
 
