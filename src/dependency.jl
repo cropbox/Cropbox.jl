@@ -102,6 +102,8 @@ add!(d::Dependency, v::VarInfo) = begin
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         link!(d, n0, n1)
+        # needs `lower/upper` tags
+        link!(d, v, n0; equation=false)
         link!(d, v, n1)
         # needs access to context in Solve constructor
         c = mainnode!(d, :context)
@@ -117,6 +119,8 @@ add!(d::Dependency, v::VarInfo) = begin
         n2 = postnode!(d, v)
         link!(d, n0, n1)
         link!(d, n1, n2)
+        # no tag available for produce, but just in case we need one later
+        link!(d, v, n0; equation=false)
         link!(d, v, n1)
         link!(d, v, n2)
         # needs access to context in Produce constructor
