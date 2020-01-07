@@ -205,12 +205,14 @@ genstruct(name, infos, incl) = begin
     S = esc(name)
     N = Meta.quot(name)
     nodes = sortednodes(infos)
-    fields = genfields(infos)
+    #HACK: field declarations inside block doesn't work as expected
+    #fields = genfields(infos)
+    fields = MacroTools.flatten(@q begin $(genfields(infos)...) end).args
     predecl = genpredecl(name)
     decls = gendecl(nodes)
     args = gennewargs(infos)
     source = gensource(infos)
-    system = @q begin
+    system = quote
         mutable struct $name <: $C.System
             $(fields...)
             function $name(; _kwargs...)
@@ -226,7 +228,7 @@ genstruct(name, infos, incl) = begin
         $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
         $S
     end
-    MacroTools.flatten(system)
+    system #|> MacroTools.flatten
 end
 
 #TODO: maybe need to prevent naming clash by assigning UUID for each System
