@@ -1,5 +1,5 @@
 import DataStructures: OrderedDict
-import DataFrames: DataFrame, stack
+import DataFrames: DataFrame
 
 struct Simulation
     base::Union{String,Nothing}
@@ -45,7 +45,7 @@ format(m::Simulation; nounit=false, long=false) = begin
     if long
         i = collect(keys(m.index))
         t = setdiff(names(r), i)
-        r = stack(r, t, i)
+        r = DataFrames.stack(r, t, i)
     end
     r
 end
