@@ -426,14 +426,14 @@ end
 
     # solar radiation absorptivity of leaves: =~ 0.5
     #FIXME: is α different from (1 - δ) in Irradiance?
-    α: absorption_coefficient => 0.5 ~ preserve(parameter)
+    α_s: absorption_coefficient => 0.5 ~ preserve(parameter)
 
-    #R_sw(PAR, NIR, α, δ): shortwave_radiation_absorbed => begin
-    R_sw(PAR, α): shortwave_radiation_absorbed => begin
+    #R_sw(PAR, NIR, α_s, δ): shortwave_radiation_absorbed => begin
+    R_sw(PAR, α_s): shortwave_radiation_absorbed => begin
         #FIXME: why δ needed here? α should already take care of scattering
         # shortwave radiation (PAR (=0.85) + NIR (=0.15))
-        #α*((1-δ)*PAR + δ*NIR)
-        α*PAR
+        #α_s*((1-δ)*PAR + δ*NIR)
+        α_s*PAR
     end ~ track(u"W/m^2")
 
     R_wall(ϵ, σ, Tk_air): thermal_radiation_absorbed_from_wall => 2ϵ*σ*Tk_air^4 ~ track(u"W/m^2")
