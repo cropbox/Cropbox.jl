@@ -24,9 +24,6 @@ end
     # calendar(context) ~ ::Calendar(override)
     vapor_pressure(context): vp ~ ::VaporPressure
 
-    index(t=nounit(context.clock.tick)) => t + 1 ~ track::Int
-    timestamp(; r::DataFrameRow) => getfield(r, :row) ~ call
-
     photon_flux_density(s): PFD ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
 

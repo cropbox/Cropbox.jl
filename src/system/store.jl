@@ -5,8 +5,8 @@ import CSV
     filename => "" ~ preserve::String(parameter)
     indexkey => :timestamp ~ preserve::Symbol(optional, parameter)
 
-    index ~ hold
-    timestamp ~ hold
+    index(t=nounit(context.clock.tick)) => t + 1 ~ track::Int
+    timestamp(; r::DataFrameRow) => getfield(r, :row) ~ call
 
     dataframe(filename, indexkey, timestamp): df => begin
         df = CSV.read(filename)
