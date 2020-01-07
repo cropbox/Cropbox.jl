@@ -201,11 +201,11 @@ end
         Vcm25 * N_dep * T_dep(EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    Ac(Vp, gbs, Cm, Rm, Vcmax, Rd): enzyme_limited_photosynthesis_rate => begin
-        # Enzyme limited A (Rubisco or PEP carboxylation)
-        Ac1 = Vp + gbs*Cm - Rm
+    # Enzyme limited A (Rubisco or PEP carboxylation)
+    Ac1(Vp, gbs, Cm, Rm) => (Vp + gbs*Cm - Rm) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Ac2(Vcmax, Rd) => (Vcmax - Rd) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Ac(Ac1, Ac2): enzyme_limited_photosynthesis_rate => begin
         #Ac1 = max(0, Ac1) # prevent Ac1 from being negative Yang 9/26/06
-        Ac2 = Vcmax - Rd
         min(Ac1, Ac2)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
@@ -221,9 +221,9 @@ end
     # x: Partitioning factor of J, yield maximal J at this value
     x: electron_transport_partitioning_factor => 0.4 ~ preserve(parameter)
     # Light and electron transport limited A mediated by J
-    Aj(J, Rd, Rm, gbs, Cm, x): transport_limited_photosynthesis_rate => begin
-        Aj1 = x * J/2 - Rm + gbs*Cm
-        Aj2 = (1-x) * J/3 - Rd
+    Aj1(x, J, Rm, gbs, Cm) => (x * J/2 - Rm + gbs*Cm) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Aj2(x, J, Rd) => (1-x) * J/3 - Rd ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Aj(Aj1, Aj2): transport_limited_photosynthesis_rate => begin
         min(Aj1, Aj2)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
