@@ -1,5 +1,4 @@
 using Cropbox
-using Unitful
 using Test
 
 @testset "cropbox" begin

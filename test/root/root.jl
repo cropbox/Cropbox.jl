@@ -1,5 +1,4 @@
 using Distributions
-using Unitful
 
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0

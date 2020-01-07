@@ -1,5 +1,3 @@
-using Unitful
-
 @system Pedotransfer begin
     tension_wilting_point: Ψ_wp => 1500 ~ preserve(u"kPa", parameter)
     tension_field_capacity: Ψ_fc => 33 ~ preserve(u"kPa", parameter)

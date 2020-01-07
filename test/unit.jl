@@ -1,5 +1,3 @@
-using Unitful
-
 @testset "unit" begin
     @testset "unit" begin
         @system SUnit(Controller) begin
