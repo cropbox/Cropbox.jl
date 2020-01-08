@@ -270,14 +270,15 @@ gensystem(name, incl, body) = genstruct(name, geninfos(name, incl, body), incl)
 geninfos(name, incl, body) = begin
     con(b, s) = begin
         d = OrderedDict{Symbol,VarInfo}()
-        #HACK: always assume presence of LineNumberNode
-        a = b.args
-        #HACK: empty block still has a LineNumberNode
-        length(a) == 1 && a[1] isa LineNumberNode && (a = [])
-        m = reshape(a, 2, :)
-        for (ln, l) in eachcol(m)
-            v = VarInfo(s, l, ln)
-            d[v.name] = v
+        #HACK: default in case LineNumberNode is not attached
+        ln = LineNumberNode(@__LINE__, @__FILE__)
+        for l in b.args
+            if l isa LineNumberNode
+                ln = l
+            else
+                v = VarInfo(s, l, ln)
+                d[v.name] = v
+            end
         end
         d
     end
