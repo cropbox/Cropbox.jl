@@ -251,12 +251,6 @@ fieldnamesalias(::Type{<:System}) = ()
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 
-import ProgressMeter: @showprogress
-update!(s::System, n) = begin
-    @showprogress for i in 1:n
-        update!(s)
-    end
-end
 update!(s::Vector{<:System}) = update!.(s)
 update!(s) = s
 
