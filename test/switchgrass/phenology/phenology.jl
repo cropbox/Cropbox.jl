@@ -4,8 +4,6 @@ include("emergence.jl")
 include("floralinitiation.jl")
 include("leafinitiation.jl")
 include("leafappearance.jl")
-include("bulbappearance.jl")
-include("scapegrowth.jl")
 include("death.jl")
 
 #TODO make a common class to be shared by Garlic and MAIZSIM
@@ -54,29 +52,6 @@ include("death.jl")
     growing_degree(context, T, Tb=4.0u"°C", Tx=40.0u"°C"): GD ~ ::GrowingDegree
     beta_function(context, T, To=T_opt', Tx=T_ceil'): BF ~ ::BetaFunction
     q10_function(context, T, To=T_opt'): Q10 ~ ::Q10Function
-
-    # garlic
-
-    #FIXME clear definition of bulb maturing
-    #bulb_maturing(scape_removed, bulbil_appeared) => (scape_removed || bulbil_appeared) ~ flag
-
-    # common
-
-    # # GDDsum
-    # gdd_after_emergence(emerged, r=gdd_recorder.rate) => begin
-    #     #HACK tracker is reset when emergence is over
-    #     emerged ? r : 0
-    # end ~ track
-    #
-    # current_stage(emerged, dead) => begin
-    #     if emerged
-    #         "Emerged"
-    #     elseif dead
-    #         "Inactive"
-    #     else
-    #         "none"
-    #     end
-    # end ~ track::String
 
     development_phase(germinated, floral_initiated, dead, scape_removed) => begin
         if !germinated
