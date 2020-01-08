@@ -5,7 +5,7 @@ import Setfield: @set
 struct VarInfo{S<:Union{Symbol,Nothing}}
     system::Symbol
     name::Symbol
-    alias::Vector{Symbol}
+    alias::Union{Symbol,Nothing}
     args::Vector
     kwargs::Vector
     body#::Union{Expr,Symbol,Nothing}
@@ -32,15 +32,14 @@ show(io::IO, v::VarInfo) = begin
 end
 
 VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode) = begin
-    # name[(args..; kwargs..)][: alias | [alias...]] [=> body] [~ [state][::type][(tags..)]]
+    # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
     @capture(line, (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
     @capture(decl, (def1_ => body_) | def1_)
-    @capture(def1, (def2_: [alias__]) | (def2_: alias__) | def2_)
+    @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
     args = isnothing(args) ? [] : args
     kwargs = isnothing(kwargs) ? [] : kwargs
-    alias = isnothing(alias) ? [] : alias
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
@@ -78,8 +77,9 @@ istag(v::VarInfo, t) = get(v.tags, t, false)
 istag(v::VarInfo, t...) = any(istag.(Ref(v), t))
 gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 
-names(v::VarInfo) = [v.name, v.alias...]
-
+names(v::VarInfo) = let n = v.name, a = v.alias
+    isnothing(a) ? [n] : [n, a]
+end
 linenumber(v::VarInfo, prefix="") = begin
     n = v.linenumber
     @set n.file = Symbol(n.file, ":$prefix|", v.name)
@@ -128,7 +128,7 @@ end
 
 genfield(type, name, alias) = @q begin
     $name::$type
-    $(@q begin $([:($a::$type) for a in alias]...) end)
+    $(isnothing(alias) ? :(;) : :($alias::$type))
 end
 genfield(v::VarInfo) = genfield(genvartype(v), symname(v), v.alias)
 genfields(infos) = [genfield(v) for v in infos]
@@ -160,7 +160,7 @@ import DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo{Symbol}) = begin
     name = Meta.quot(v.name)
-    alias = Tuple(v.alias)
+    alias = Meta.quot(v.alias)
     decl = if istag(v, :override)
         genoverride(v)
     else
@@ -190,7 +190,7 @@ end
 gendecl(v::VarInfo, decl) = @q begin
     $(linenumber(v, "gendecl"))
     $(v.name) = $decl
-    $(@q begin $([:($a = $(v.name)) for a in v.alias]...) end)
+    $(isnothing(v.alias) ? :(;) : :($(v.alias) = $(v.name)))
 end
 
 gensource(infos) = begin
@@ -199,7 +199,7 @@ gensource(infos) = begin
 end
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
-genfieldnamesalias(infos) = Tuple((v.name, Tuple(v.alias)) for v in infos)
+genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
 genstruct(name, infos, incl) = begin
     S = esc(name)
@@ -353,7 +353,7 @@ genupdateinit(n::VarNode) = begin
     # implicit :expose
     @q begin
         $(v.name) = self.$(v.name)
-        $([:($a = $(v.name)) for a in v.alias]...)
+        $(isnothing(v.alias) ? :(;) : :($(v.alias) = $(v.name)))
     end
 end
 

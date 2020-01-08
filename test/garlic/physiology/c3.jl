@@ -315,12 +315,12 @@ end
     absolute_air_temperature(weather.Tk_air): Tk_air ~ track(u"K")
     air_pressure(weather.P_air): P_air ~ track(u"kPa")
 
-    leaf_temperature(T_adj, T_air): [T, T_leaf] => T_air + T_adj ~ track(u"°C")
-    absolute_leaf_temperature(T_leaf): Tk ~ track(u"K")
+    leaf_temperature(T_adj, T_air): T => T_air + T_adj ~ track(u"°C")
+    absolute_leaf_temperature(T): Tk ~ track(u"K")
 
-    evapotranspiration(gv, T_leaf, T_air, P_air, RH=weather.RH, ea=weather.vp.ambient, es=weather.vp.saturation): ET => begin
+    evapotranspiration(gv, T, T_air, P_air, RH=weather.RH, ea=weather.vp.ambient, es=weather.vp.saturation): ET => begin
         Ea = ea(T_air, RH)
-        Es = es(T_leaf)
+        Es = es(T)
         ET = gv * ((Es - Ea) / P_air) / (1 - (Es + Ea) / P_air)
         max(ET, zero(ET)) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"mmol/m^2/s" #= H2O =#)

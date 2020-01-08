@@ -301,7 +301,7 @@ end
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
     co2_atmosphere(CO2=weather.CO2, P_air=weather.P_air): Ca => (CO2 * P_air / 100) ~ track
     co2_mesophyll_upper_limit(Ca): Cmmax => 2Ca ~ track
-    co2_mesophyll(Ca, A_net, rvc, P_air=weather.P_air, CO2=weather.CO2): [Cm, Ci] => begin
+    co2_mesophyll(Ca, A_net, rvc, P_air=weather.P_air, CO2=weather.CO2): Cm => begin
         P = P_air / 100
         Cm = Ca - A_net * rvc * P
         #println("+ Cm = $Cm, Ca = $Ca, A_net = $A_net, rvc = $rvc, P = $P")
@@ -362,7 +362,7 @@ end
         end
     end ~ solve(lower=-10, upper=10)
 
-    temperature(T_adj, T_air=weather.T_air): [T, T_leaf] => T_air + T_adj ~ track
+    temperature(T_adj, T_air=weather.T_air): T => T_air + T_adj ~ track
 
     #TODO: expand @optimize decorator to support both cost function and variable definition
     # @temperature.optimize or minimize?
@@ -370,7 +370,7 @@ end
     #     (self.temperature - self.new_temperature)^2
 
     evapotranspiration(
-        gv, T_leaf,
+        gv, T,
         T_air=weather.T_air,
         RH=weather.RH,
         P_air=weather.P_air,
@@ -378,7 +378,7 @@ end
         saturation=weather.vp.saturation
     ): ET => begin
         ea = ambient(T_air, RH)
-        es_leaf = saturation(T_leaf)
+        es_leaf = saturation(T)
         ET = gv * ((es_leaf - ea) / P_air) / (1 - (es_leaf + ea) / P_air)
         max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track
