@@ -388,7 +388,7 @@ end
     # Nitrogen
 
     #FIXME avoid incorrect cycle detection (nitrogen member vs. module) - ?
-    nitrogen => begin
+    nitrogen: N => begin
         #TODO is this default value needed?
         # no N stress
         3.0

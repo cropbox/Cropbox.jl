@@ -39,7 +39,7 @@
     #     self._carbohydrate = mass
 
     # physiological days to reach the end of growth (both cell division and expansion) at optimal temperature, days
-    growth_duration => 10 ~ preserve(u"d", parameter)
+    growth_duration: GD => 10 ~ preserve(u"d", parameter)
 
     # life expectancy of an organ in days at optimal temperature (fastest growing temp), days
     #FIXME not used
