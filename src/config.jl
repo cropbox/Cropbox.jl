@@ -27,7 +27,7 @@ parameters(::Type{S}; recursive=false) where {S<:System} = begin
     V = [n.info for n in dependency(S).N]
     #HACK: only extract parameters with no dependency on other variables
     P = filter(v -> istag(v, :parameter) && isempty(v.args), V)
-    C = configure(nameof(S) => ((v.name => unitfy(eval(v.body), eval(v.tags[:unit])) for v in P)...,))
+    C = configure(nameof(S) => ((v.name => unitfy(Main.eval(v.body), Main.eval(v.tags[:unit])) for v in P)...,))
     if recursive
         #HACK: evaluate types defined in Main module
         T = OrderedSet([Main.eval(v.type) for v in V])
