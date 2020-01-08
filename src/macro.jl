@@ -291,7 +291,7 @@ geninfos(name, incl, body) = begin
                 elseif isnothing(v.state) && isnothing(v.type)
                     v = @set v0.body = v.body
                 elseif v0.alias != v.alias && v0.state != :Hold
-                    @warn "replaced variable has different alias" name=v.name old=v0.alias new=v.alias
+                    @warn "variable replaced with inconsistent alias" name=v.name system=(v0.system => v.system) alias=(v0.alias => v.alias)
                 end
             end
             d[n] = v
