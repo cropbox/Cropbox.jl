@@ -29,7 +29,7 @@ extract(s::System, index, target) = begin
     V = map(k -> value(s[k]), values(d))
     od = OrderedDict(zip(K, V))
     #HACK: only pick up variables of simple types by default
-    filter!(p -> p.second isa Union{Number,Symbol,String,AbstractDateTime}, od)
+    filter!(p -> p.second isa Union{Number,Symbol,AbstractString,AbstractDateTime}, od)
     DataFrame(od)
 end
 extract(b::Bundle{S}, index, target) where {S<:System} = begin
