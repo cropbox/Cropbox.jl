@@ -2,7 +2,9 @@ using DataFrames
 using TimeZones
 import Dates
 
-@system Estimator(DataFrameStore) begin
+abstract type Estimator <: System end
+
+@system EstimatorBase(DataFrameStore) <: Estimator begin
     year ~ preserve::Int(parameter)
 
     Ds: start_date_offset => 0 ~ preserve::Int(optional)
@@ -38,7 +40,16 @@ import Dates
     temperature(s): T => s[:tavg] ~ track(u"°C")
 end
 
-@system BetaFuncEstimator(BetaFunction, Estimator, Controller) begin
+#FIXME: compilation takes forever without @nospecialize here
+@nospecialize
+estimate(S::Type{<:Estimator}, years; params, index=[:year, "calendar.time"], target=[:match], stop=:stop, kwargs...) = begin
+    configs = [nameof(S) => (params..., year=y) for y in years] |> collect
+    r = simulate(S, [(index=index, target=target)], configs; stop=stop, kwargs...)[1]
+    r[r[!, :match] .== 1, :]
+end
+@specialize
+
+@system BetaFuncEstimator(BetaFunction, EstimatorBase, Controller) <: Estimator begin
     Rg: growth_requirement ~ preserve(parameter)
     Cg(ΔT): growth_cumulated ~ accumulate
     match(Cg, Rg) => Cg >= Rg ~ track::Bool
@@ -56,15 +67,5 @@ params = (
     :Tx => 35,
     :Rg => 1000,
 );
-config = :BetaFuncEstimator => (params..., year=2017);
-simulate(BetaFuncEstimator, config=config, stop=:stop, index=[:year, "calendar.time"], target=[:ΔT, :Cg, :match, :stop]);
-r = ans;
-r[r[!, :match] .== 1, :]
-
-configs = [
-    :BetaFuncEstimator => (params..., year=2017),
-    :BetaFuncEstimator => (params..., year=2018),
-];
-simulate(BetaFuncEstimator, [(index=[:year, "calendar.time"], target=[:ΔT, :Cg, :match, :stop])], configs, stop=:stop);
-r = ans[1];
-r[r[!, :match] .== 1, :]
+estimate(BetaFuncEstimator, 2017; params=params, target=[:ΔT, :Cg, :match, :stop])
+estimate(BetaFuncEstimator, [2017, 2018]; params=params, target=[:ΔT, :Cg, :match, :stop])
