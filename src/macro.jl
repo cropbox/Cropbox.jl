@@ -201,8 +201,9 @@ end
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
-genstruct(name, infos, incl) = begin
+genstruct(name, type, infos, incl) = begin
     S = esc(name)
+    T = esc(type)
     N = Meta.quot(name)
     nodes = sortednodes(infos)
     #HACK: field declarations inside block doesn't work as expected
@@ -213,7 +214,7 @@ genstruct(name, infos, incl) = begin
     args = gennewargs(infos)
     source = gensource(infos)
     system = quote
-        mutable struct $name <: $C.System
+        mutable struct $S <: $T
             $(fields...)
             function $name(; _kwargs...)
                 $predecl
@@ -255,19 +256,22 @@ update!(s::Vector{<:System}) = update!.(s)
 update!(s) = s
 
 parsehead(head) = begin
-    @capture(head, name_(mixins__) | name_)
+    # @system name[(mixins..)] [<: type]
+    @capture(head, (decl_ <: type_) | decl_)
+    @capture(decl, name_(mixins__) | name_)
+    type = isnothing(type) ? :System : type
     mixins = isnothing(mixins) ? [] : mixins
     incl = [:System]
     for m in mixins
         push!(incl, m)
     end
-    (name, incl)
+    #TODO: use implicit named tuple once implemented: https://github.com/JuliaLang/julia/pull/34331
+    (; name=name, incl=incl, type=type)
 end
 
 import DataStructures: OrderedDict, OrderedSet
-gensystem(head, body) = gensystem(parsehead(head)..., body)
-gensystem(name, incl, body) = genstruct(name, geninfos(name, incl, body), incl)
-geninfos(name, incl, body) = begin
+gensystem(body; name, incl, type, _...) = genstruct(name, type, geninfos(body; name=name, incl=incl), incl)
+geninfos(body; name, incl, _...) = begin
     con(b, s) = begin
         d = OrderedDict{Symbol,VarInfo}()
         #HACK: default in case LineNumberNode is not attached
@@ -308,17 +312,17 @@ geninfos(name, incl, body) = begin
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(nameof(S), (), source(S))
+geninfos(S::Type{<:System}) = geninfos(source(S); name=nameof(S), incl=())
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))
 
 macro system(head, body=:(begin end))
-    gensystem(head, body)
+    gensystem(body; parsehead(head)...)
 end
 
 macro infos(head, body)
-    geninfos(parsehead(head)..., body)
+    geninfos(body; parsehead(head)...)
 end
 
 export @system, update!

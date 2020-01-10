@@ -44,4 +44,11 @@
             x: bbb => 2 ~ preserve
         end
     end
+    
+    @testset "custom system" begin
+        abstract type SAbstractCustomSystem <: System end
+        @system SCustomSystem <: SAbstractCustomSystem
+        @test SCustomSystem <: System
+        @test SCustomSystem <: SAbstractCustomSystem
+    end
 end
