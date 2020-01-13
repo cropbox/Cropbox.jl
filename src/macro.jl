@@ -252,7 +252,12 @@ fieldnamesalias(::Type{<:System}) = ()
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 
-update!(s::Vector{<:System}) = update!.(s)
+update!(S::Vector{<:System}) = begin
+    #HACK: preliminary support for multi-threaded update! (could be much slower if update is small)
+    Threads.@threads for s in S
+        update!(s)
+    end
+end
 update!(s) = s
 
 parsehead(head) = begin
