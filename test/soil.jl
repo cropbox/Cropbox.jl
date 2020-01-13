@@ -439,17 +439,18 @@ end
     soil(context=soil_context, w, d_r): s ~ ::SoilModule
 end
 
-simulate(SoilController, 80,
+simulate(SoilController, stop=80,
     config=(
         :Clock => (:step => 1u"d"),
         :SoilClock => (:step => 15u"minute"),
         :SoilWeather => (:filename => "test/PyWaterBal.csv"),
     ),
-    columns=(
+    target=(
         :v1 => "s.L[1].θ",
         :v2 => "s.L[2].θ",
         :v3 => "s.L[3].θ",
         :v4 => "s.L[4].θ",
         :v5 => "s.L[5].θ",
-    )
+    ),
+    nounit=true
 )
