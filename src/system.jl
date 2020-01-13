@@ -31,10 +31,9 @@ end
 #HACK: swap out state variable of mutable System after initialization
 setvar!(s::System, k::Symbol, v) = begin
     setfield!(s, k, v)
-    d = Dict(fieldnamesalias(s))
-    for a in d[k]
-        setfield!(s, a, v)
-    end
+    a = Dict(fieldnamesalias(s))[k]
+    !isnothing(a) && setfield!(s, a, v)
+    nothing
 end
 
 import Base: show
