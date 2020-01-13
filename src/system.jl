@@ -24,7 +24,16 @@ getproperty(s::System, n::String) = begin
         m = match(r"([^\[\]]+)(?:\[(.+)\])?", b)
         n, i = m[1], m[2]
         v = getfield(a, Symbol(n))
-        v[i]
+        if isnothing(i)
+            v
+        else
+            #HACK: support indexing of non-Variable (i.e. Vector{Layer})
+            try
+                v[parse(Int, i)]
+            catch
+                v[i]
+            end
+        end
     end, [s, split(n, ".")...])
 end
 
