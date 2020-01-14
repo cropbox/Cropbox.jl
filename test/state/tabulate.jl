@@ -23,4 +23,24 @@
         @test s.Bb' == 4
         @test s.Cb' == 5
     end
+
+    @testset "default columns" begin
+        @system STabulateDefaultColumns(Controller) begin
+            T => [
+                # a b
+                  0 2 ; # a
+                  1 3 ; # b
+            ] ~ tabulate(rows=(:a, :b))
+            aa(T) => T[:a][:a] ~ track
+            ba(T) => T[:b][:a] ~ track
+            ab(T) => T[:a][:b] ~ track
+            bb(T) => T[:b][:b] ~ track
+        end
+        s = instance(STabulateDefaultColumns)
+        @test s.T.rows == s.T.columns == (:a, :b)
+        @test s.aa' == 0
+        @test s.ba' == 1
+        @test s.ab' == 2
+        @test s.bb' == 3
+    end
 end
