@@ -22,8 +22,10 @@ dive(s::System) = begin
         d = Dict(fieldnamesalias(s))
         label(k) = begin
             n = string(k)
-            a = join(d[k], ", ")
-            isempty(a) ? "$(BLUE_FG(n))" : "$(BLUE_FG(n)) $(DARK_GRAY_FG("($a)"))"
+            a = d[k]
+            l = "$(BLUE_FG(n))"
+            !isnothing(a) && (l *= " $(DARK_GRAY_FG("($a)"))")
+            l
         end
         l = fieldnamesunique(s) |> collect
         nav(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
