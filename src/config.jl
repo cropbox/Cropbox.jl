@@ -24,7 +24,7 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
 end
 
 import DataStructures: OrderedSet
-parameters(::Type{S}; alias=false, recursive=false) where {S<:System} = begin
+parameters(::Type{S}; alias=false, recursive=false, exclude=()) where {S<:System} = begin
     V = [n.info for n in dependency(S).N]
     #HACK: only extract parameters with no dependency on other variables
     P = filter(v -> istag(v, :parameter) && isempty(v.args), V)
@@ -33,8 +33,9 @@ parameters(::Type{S}; alias=false, recursive=false) where {S<:System} = begin
     if recursive
         #HACK: evaluate types defined in Main module
         T = OrderedSet([Main.eval(v.type) for v in V])
-        T = filter(t -> t <: System, T)
-        C = configure(parameters.(T, alias=alias, recursive=true)..., C)
+        T = filter(t -> t <: System && t ∉ exclude, T)
+        X = (S, T..., exclude...) |> Set
+        C = configure(parameters.(T, alias=alias, recursive=true, exclude=X)..., C)
     end
     C
 end
