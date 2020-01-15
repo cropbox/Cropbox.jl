@@ -11,12 +11,28 @@ import UUIDs
     tropism_objective(; α, β): to => 0 ~ call
 end
 
+@system Plagiotropism(Tropism) begin
+    parent_transformation: RT0 ~ hold
+    tropism_objective(RT0; α, β): to => begin
+        R = RotZX(β, α) |> LinearMap
+        (RT0 ∘ R).linear[9] |> abs
+    end ~ call
+end
+
 @system Gravitropism(Tropism) begin
     parent_transformation: RT0 ~ hold
     tropism_objective(RT0; α, β): to => begin
         R = RotZX(β, α) |> LinearMap
+        #-(RT0 ∘ R).linear[9]
         p = (RT0 ∘ R)([0, 0, -1])
         p[3]
+    end ~ call
+end
+
+@system Exotropism(Tropism) begin
+    tropism_objective(; α, β): to => begin
+        #HACK: not exact implementation, needs to keep initial heading
+        abs(ustrip(α))
     end ~ call
 end
 
