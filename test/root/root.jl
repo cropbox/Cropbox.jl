@@ -109,7 +109,7 @@ abstract type Root <: System end
             # consecutive segment
             produce(name, ro=ro, zi=zi+1, l0=rl, lp=l, RT0=RT1),
             # lateral branch
-            produce(successor(), ro=ro+1, zi=0, lp=l, RT0=RT1),
+            produce(successor(), ro=ro+1, RT0=RT1),
         ] : nothing
     end ~ produce::Root
 end
