@@ -63,9 +63,10 @@ abstract type Root <: System end
         p = (RT0 ∘ R)([0, 0, -1])
         p[3]
     end ~ call
-    tropsim_trials: N => 10 ~ preserve::Int
+    tropsim_trials: N => 1.0 ~ preserve(parameter)
     angles(pα, pβ, to, N): A => begin
-        P = [(pα(), pβ()) for i in 1:N]
+        n = rand() < N % 1 ? ceil(N) : floor(N)
+        P = [(pα(), pβ()) for i in 0:n]
         O = [to(α, β) for (α, β) in P]
         (o, i) = findmin(O)
         P[i]
@@ -179,6 +180,7 @@ o = (
         :Δx => 0.5,
         :σ => 10,
         :θ => 80,
+        :N => 1.5,
         :a => 0.04,
     ),
     :FirstOrderLateralRoot => (
@@ -190,6 +192,7 @@ o = (
         :Δx => 1,
         :σ => 20,
         :θ => 70,
+        :N => 1,
         :a => 0.03,
     ),
     :SecondOrderLateralRoot => (
@@ -201,6 +204,7 @@ o = (
         :Δx => 0.1,
         :σ => 20,
         :θ => 70,
+        :N => 2,
         :a => 0.02,
     )
 )
