@@ -240,6 +240,7 @@ source(::Val{:System}) = quote
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
+source(::Val) = :()
 
 mixins(s::S) where {S<:System} = mixins(S)
 mixins(S::Type{<:System}) = mixins(nameof(S))
