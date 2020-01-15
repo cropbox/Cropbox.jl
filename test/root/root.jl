@@ -6,9 +6,23 @@ import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Tran
 import Colors: RGBA
 import UUIDs
 
+@system Tropism begin
+    tropsim_trials: N => 1.0 ~ preserve(parameter)
+    tropism_objective(; α, β): to => 0 ~ call
+end
+
+@system Gravitropism(Tropism) begin
+    parent_transformation: RT0 ~ hold
+    tropism_objective(RT0; α, β): to => begin
+        R = RotZX(β, α) |> LinearMap
+        p = (RT0 ∘ R)([0, 0, -1])
+        p[3]
+    end ~ call
+end
+
 abstract type Root <: System end
 
-@system BaseRoot <: Root begin
+@system BaseRoot(Tropism) <: Root begin
     root_order: ro => 1 ~ preserve::Int(extern)
     zone_index: zi => 0 ~ preserve::Int(extern)
 
@@ -56,12 +70,6 @@ abstract type Root <: System end
         rand(Normal(θ, σ_Δx))
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
-    tropism_objective(RT0; α, β): to => begin
-        R = RotZX(β, α) |> LinearMap
-        p = (RT0 ∘ R)([0, 0, -1])
-        p[3]
-    end ~ call
-    tropsim_trials: N => 1.0 ~ preserve(parameter)
     angles(pα, pβ, to, N): A => begin
         n = rand() < N % 1 ? ceil(N) : floor(N)
         P = [(pα(), pβ()) for i in 0:n]
@@ -115,13 +123,13 @@ end
 @system MyBaseRoot(BaseRoot) <: Root begin
     succession ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
 end
-@system PrimaryRoot(MyBaseRoot) <: Root begin
+@system PrimaryRoot(MyBaseRoot, Gravitropism) <: Root begin
     name => :PrimaryRoot ~ preserve::Symbol
 end
-@system FirstOrderLateralRoot(MyBaseRoot) <: Root begin
+@system FirstOrderLateralRoot(MyBaseRoot, Gravitropism) <: Root begin
     name => :FirstOrderLateralRoot ~ preserve::Symbol
 end
-@system SecondOrderLateralRoot(MyBaseRoot) <: Root begin
+@system SecondOrderLateralRoot(MyBaseRoot, Gravitropism) <: Root begin
     name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
 
