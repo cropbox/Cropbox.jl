@@ -58,12 +58,15 @@ abstract type Root <: System end
         end
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
-    tropism_objective(zt, RT0, nounit(l); α, β): to => begin
+    tropism_objective(RT0; α, β): to => begin
         R = RotX(α) * RotZ(β) |> LinearMap
-        p = (R ∘ RT0)([0, 0, -l])
+        #p = (R ∘ inv(RT0))([0, 0, -1])
+        p = (R ∘ Translation(0, 0, -0.1) ∘ inv(RT0))([0, 0, -1])
+        #p = (inv(RT0) ∘ R)([0, 0, -1])
+        #p = (recenter(inv(RT0), [0, 0, 0]) ∘ R)([0, 0, -1])
         p[3]
     end ~ call
-    tropsim_trials: N => 10 ~ preserve::Int
+    tropsim_trials: N => 50 ~ preserve::Int
     angles(pα, pβ, to, N): A => begin
         P = [(pα(), pβ()) for i in 1:N]
         O = [to(α, β) for (α, β) in P]
@@ -178,7 +181,7 @@ o = (
         :r => 6.0,
         :Δx => 0.5,
         :σ => 10,
-        :θ => 10,
+        :θ => 80,
         :a => 0.04,
     ),
     :FirstOrderLateralRoot => (
@@ -189,7 +192,7 @@ o = (
         :r => 2.0,
         :Δx => 1,
         :σ => 20,
-        :θ => 20,
+        :θ => 70,
         :a => 0.03,
     ),
     :SecondOrderLateralRoot => (
@@ -200,7 +203,7 @@ o = (
         :r => 2.0,
         :Δx => 0.1,
         :σ => 20,
-        :θ => 20,
+        :θ => 70,
         :a => 0.02,
     )
 )
