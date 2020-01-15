@@ -87,6 +87,8 @@ abstract type Root <: System end
 
     radius: a => 0.05 ~ track(u"cm", parameter)
 
+    color => RGBA(1, 1, 1, 1) ~ preserve::RGBA(parameter)
+
     name ~ hold
     succession ~ hold
     successor(succession, name;) => begin
@@ -143,15 +145,7 @@ render_visit!(v, r) = begin
     # add root segment
     vv = v["$(UUIDs.uuid1())"]
     ro = r.ro'
-    c = if ro == 1
-        RGBA(1, 0, 0, 1)
-    elseif ro == 2
-        RGBA(0, 1, 0, 1)
-    elseif ro == 3
-        RGBA(0, 0, 1, 1)
-    else
-        RGBA(1, 1, 1, 1)
-    end
+    c = r.color'
     m = MeshCat.defaultmaterial(color=c)
     setobject!(vv, g, m)
     settransform!(vv, M)
@@ -190,6 +184,7 @@ o = (
         :θ => 80,
         :N => 1.5,
         :a => 0.04,
+        :color => RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (
         :lb => 0.2,
@@ -202,6 +197,7 @@ o = (
         :θ => 70,
         :N => 1,
         :a => 0.03,
+        :color => RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (
         :lb => 0,
@@ -214,6 +210,7 @@ o = (
         :θ => 70,
         :N => 2,
         :a => 0.02,
+        :color => RGBA(0, 0, 1, 1),
     )
 )
 s = instance(RootSystem, config=o)
