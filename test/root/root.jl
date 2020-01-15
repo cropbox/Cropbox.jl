@@ -59,7 +59,7 @@ abstract type Root <: System end
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
     tropism_objective(zt, RT0, nounit(l); α, β): to => begin
-        R = RotZ(β) * RotX(α) |> LinearMap
+        R = RotX(α) * RotZ(β) |> LinearMap
         p = (R ∘ RT0)([0, 0, -l])
         p[3]
     end ~ call
@@ -78,7 +78,7 @@ abstract type Root <: System end
         # put root segment at parent's end
         T = Translation(0, 0, -l)
         # rotate root segment
-        R = RotZ(β) * RotX(α) |> LinearMap
+        R = RotX(α) * RotZ(β) |> LinearMap
         R ∘ T
     end ~ track::Transformation
     global_transformation(RT0, RT): RT1 => RT ∘ RT0 ~ track::Transformation
