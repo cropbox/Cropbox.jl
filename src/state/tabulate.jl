@@ -1,5 +1,7 @@
+import DataStructures: OrderedDict
+
 struct Tabulate{V} <: State{V}
-    value::Dict{Symbol,Dict{Symbol,V}}
+    value::OrderedDict{Symbol,OrderedDict{Symbol,V}}
     rows::Tuple{Vararg{Symbol}}
     columns::Tuple{Vararg{Symbol}}
 end
@@ -7,7 +9,7 @@ end
 Tabulate(; unit, rows, columns=(), _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
-    matrix2dict(m, r, c, V) = Dict(zip(r, [Dict(zip(c, V.(m[i,:]))) for i in 1:size(m, 1)]))
+    matrix2dict(m, r, c, V) = OrderedDict(zip(r, [OrderedDict(zip(c, V.(m[i,:]))) for i in 1:size(m, 1)]))
     columns = isempty(columns) ? rows : columns
     v = matrix2dict(_value, rows, columns, V)
     Tabulate{V}(v, rows, columns)
