@@ -4,6 +4,7 @@ using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
 import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Transformation, Translation
 import Colors: RGBA
+import UUIDs
 
 abstract type Root <: System end
 
@@ -133,37 +134,40 @@ end
     end ~ produce::PrimaryRoot
 end
 
-render(r::Root) = begin
-    i = 0
-    visit!(v, r) = begin
-        l = Cropbox.deunitfy(r.l')
-        a = Cropbox.deunitfy(r.a')
-        (iszero(l) || iszero(a)) && return
-        g = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
-        M = r.RT'
-        # add root segment
-        vv = v["$i"]
-        i += 1
-        ro = r.ro'
-        c = if ro == 1
-            RGBA(1, 0, 0, 1)
-        elseif ro == 2
-            RGBA(0, 1, 0, 1)
-        elseif ro == 3
-            RGBA(0, 0, 1, 1)
-        else
-            RGBA(1, 1, 1, 1)
-        end
-        m = MeshCat.defaultmaterial(color=c)
-        setobject!(vv, g, m)
-        settransform!(vv, M)
-        # visit recursively
-        for cr in r.branch
-            visit!(vv, cr)
-        end
+render_visit!(v, r) = begin
+    l = Cropbox.deunitfy(r.l')
+    a = Cropbox.deunitfy(r.a')
+    (iszero(l) || iszero(a)) && return
+    g = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
+    M = r.RT'
+    # add root segment
+    vv = v["$(UUIDs.uuid1())"]
+    ro = r.ro'
+    c = if ro == 1
+        RGBA(1, 0, 0, 1)
+    elseif ro == 2
+        RGBA(0, 1, 0, 1)
+    elseif ro == 3
+        RGBA(0, 0, 1, 1)
+    else
+        RGBA(1, 1, 1, 1)
     end
+    m = MeshCat.defaultmaterial(color=c)
+    setobject!(vv, g, m)
+    settransform!(vv, M)
+    # visit recursively
+    for cr in r.branch
+        render_visit!(vv, cr)
+    end
+    v
+end
+
+render(r::Root) = render_visit!(Visualizer(), r)
+render(R::Vector{<:Root}) = begin
     v = Visualizer()
-    visit!(v, r)
+    for r in R
+        render_visit!(v, r)
+    end
     v
 end
 
@@ -214,4 +218,4 @@ o = (
 )
 s = instance(RootSystem, config=o)
 simulate!(s, stop=100)
-# render(s.root) |> open
+# render(s.roots') |> open
