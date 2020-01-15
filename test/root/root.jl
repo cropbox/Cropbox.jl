@@ -52,11 +52,8 @@ abstract type Root <: System end
 
     insertion_angle: θ => 30 ~ preserve(u"°", parameter)
     pick_angular_angle(zi, nounit(θ), nounit(σ_Δx);): pα => begin
-        if zi == 0
-            rand(Normal(θ, σ_Δx))*u"°"
-        else
-            rand(Normal(0, σ_Δx))*u"°"
-        end
+        θ = zi == 0 ? θ : zero(θ)
+        rand(Normal(θ, σ_Δx))
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
     tropism_objective(RT0; α, β): to => begin
