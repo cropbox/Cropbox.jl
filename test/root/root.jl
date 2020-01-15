@@ -60,13 +60,10 @@ abstract type Root <: System end
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
     tropism_objective(RT0; α, β): to => begin
         R = RotX(α) * RotZ(β) |> LinearMap
-        #p = (R ∘ inv(RT0))([0, 0, -1])
-        p = (R ∘ Translation(0, 0, -0.1) ∘ inv(RT0))([0, 0, -1])
-        #p = (inv(RT0) ∘ R)([0, 0, -1])
-        #p = (recenter(inv(RT0), [0, 0, 0]) ∘ R)([0, 0, -1])
+        p = (RT0 ∘ R)([0, 0, -1])
         p[3]
     end ~ call
-    tropsim_trials: N => 50 ~ preserve::Int
+    tropsim_trials: N => 10 ~ preserve::Int
     angles(pα, pβ, to, N): A => begin
         P = [(pα(), pβ()) for i in 1:N]
         O = [to(α, β) for (α, β) in P]
@@ -84,7 +81,7 @@ abstract type Root <: System end
         R = RotX(α) * RotZ(β) |> LinearMap
         R ∘ T
     end ~ track::Transformation
-    global_transformation(RT0, RT): RT1 => RT ∘ RT0 ~ track::Transformation
+    global_transformation(RT0, RT): RT1 => RT0 ∘ RT ~ track::Transformation
 
     radius: a => 0.05 ~ track(u"cm", parameter)
 
