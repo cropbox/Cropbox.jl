@@ -126,8 +126,11 @@ end
 end
 
 @system RootSystem(Controller) begin
+    number_of_basal_roots: maxB => 1 ~ preserve::Int(parameter)
     initial_transformation: RT0 => IdentityTransformation() ~ track::Transformation
-    root(context, RT0) => PrimaryRoot(context=context, RT0=RT0) ~ ::PrimaryRoot
+    roots(roots, maxB, wrap(RT0)) => begin
+        [produce(PrimaryRoot, RT0=RT0) for i in (length(roots)+1):maxB]
+    end ~ produce::PrimaryRoot
 end
 
 render(r::Root) = begin
@@ -165,6 +168,7 @@ render(r::Root) = begin
 end
 
 o = (
+    :RootSystem => :maxB => 5,
     :MyBaseRoot => :succession => [
         # P F S
           0 1 0 ; # P
