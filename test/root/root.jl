@@ -2,7 +2,7 @@ using Distributions
 
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
-import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, Translation
+import CoordinateTransformations: IdentityTransformation, LinearMap, RotX, RotZ, Transformation, Translation
 import Colors: RGBA
 
 abstract type Root <: System end
@@ -73,15 +73,15 @@ abstract type Root <: System end
     angular_angle(A): α => A[1] ~ preserve(u"°")
     radial_angle(A): β => A[2] ~ preserve(u"°")
 
-    parent_transformation: RT0 ~ track::AffineMap(override)
+    parent_transformation: RT0 ~ track::Transformation(override)
     local_transformation(nounit(l), α, β): RT => begin
         # put root segment at parent's end
         T = Translation(0, 0, -l)
         # rotate root segment
         R = RotZ(β) * RotX(α) |> LinearMap
         R ∘ T
-    end ~ track::AffineMap
-    global_transformation(RT0, RT): RT1 => RT ∘ RT0 ~ track::AffineMap
+    end ~ track::Transformation
+    global_transformation(RT0, RT): RT1 => RT ∘ RT0 ~ track::Transformation
 
     radius: a => 0.05 ~ track(u"cm", parameter)
 
@@ -125,7 +125,7 @@ end
 end
 
 @system RootSystem(Controller) begin
-    initial_transformation: RT0 => (LinearMap(one(RotMatrix{3})) ∘ Translation(0, 0, 0)) ~ track::AffineMap
+    initial_transformation: RT0 => IdentityTransformation() ~ track::Transformation
     root(context, RT0) => PrimaryRoot(context=context, RT0=RT0) ~ ::PrimaryRoot
 end
 
