@@ -3,6 +3,7 @@ using Distributions
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
 import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, Translation
+import Colors: RGBA
 
 abstract type Root <: System end
 
@@ -134,12 +135,23 @@ render(r::Root) = begin
         l = Cropbox.deunitfy(r.l')
         a = Cropbox.deunitfy(r.a')
         (iszero(l) || iszero(a)) && return
-        m = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
+        g = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
         M = r.RT'
         # add root segment
         vv = v["$i"]
         i += 1
-        setobject!(vv, m)
+        ro = r.ro'
+        c = if ro == 1
+            RGBA(1, 0, 0, 1)
+        elseif ro == 2
+            RGBA(0, 1, 0, 1)
+        elseif ro == 3
+            RGBA(0, 0, 1, 1)
+        else
+            RGBA(1, 1, 1, 1)
+        end
+        m = MeshCat.defaultmaterial(color=c)
+        setobject!(vv, g, m)
         settransform!(vv, M)
         # visit recursively
         for cr in r.branch
