@@ -4,25 +4,26 @@ using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
 import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, Translation
 
-@system RootSegment begin
+abstract type Root <: System end
+
+@system BaseRoot <: Root begin
     root_order: ro => 1 ~ preserve::Int(extern)
     zone_index: zi => 0 ~ preserve::Int(extern)
-    number_of_laterals: nob => 10 ~ preserve::Int(parameter)
 
-    zone_type(zi, nob): zt => begin
-        if zi == 0
-            :basal
-        elseif zi == nob
+    zone_type(zi, lmax, la, lp): zt => begin
+        if (lmax - la) <= lp
             :apical
+        elseif zi == 0
+            :basal
         else
             :lateral
         end
     end ~ preserve::Symbol
 
-    length_of_basal_zone: lb => 4.0 ~ preserve(u"mm", parameter)
-    length_of_apical_zone: la => 5.0 ~ preserve(u"mm", parameter)
-    length_between_lateral_branches: ln => 3.0 ~ preserve(u"mm", parameter)
-    maximal_length(lb, la, ln, nob): lmax => (lb + la + (nob - 1)*ln) ~ preserve(u"mm")
+    length_of_basal_zone: lb => 0.4 ~ preserve(u"cm", parameter)
+    length_of_apical_zone: la => 0.5 ~ preserve(u"cm", parameter)
+    length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", parameter)
+    maximal_length: lmax => 3.9 ~ preserve(u"cm", parameter)
 
     zone_length(zt, lb, ln, la): zl => begin
         if zt == :basal
@@ -32,26 +33,27 @@ import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, T
         else
             ln
         end
-    end ~ preserve(u"mm")
+    end ~ preserve(u"cm")
 
     timestep(context.clock.step): Δt ~ preserve(u"hr")
-    elongation_rate: r => 1.0 ~ preserve(u"mm/hr", parameter)
-    actual_elongation_rate(r, zl, l, Δt): ar => min(r, (zl - l) / Δt) ~ track(u"mm/hr")
-    remaining_elongation_rate(r, ar): rr => r - ar ~ track(u"mm/hr")
-    remaining_length(rr, Δt): rl => rr*Δt ~ track(u"mm")
-    initial_length: l0 => 0 ~ preserve(u"mm", extern)
-    parent_length: dx => 0 ~ preserve(u"mm", extern)
-    length(ar): l ~ accumulate(init=l0, u"mm")
+    elongation_rate: r => 1.0 ~ preserve(u"cm/d", parameter)
+    actual_elongation_rate(r, zl, l, Δt): ar => min(r, (zl - l) / Δt) ~ track(u"cm/d")
+    remaining_elongation_rate(r, ar): rr => r - ar ~ track(u"cm/d")
+    remaining_length(rr, Δt): rl => rr*Δt ~ track(u"cm")
+    initial_length: l0 => 0 ~ preserve(u"cm", extern)
+    parent_length: lp => 0 ~ preserve(u"cm", extern)
+    length(ar): l ~ accumulate(init=l0, u"cm")
 
+    axial_resolution: Δx => 1 ~ preserve(u"cm", parameter)
     standard_deviation_of_angle: σ => 30 ~ preserve(u"°", parameter)
-    normalized_standard_deviation_of_angle(σ, nounit(dx)): σ_dx => sqrt(dx)*σ ~ track(u"°")
+    normalized_standard_deviation_of_angle(σ, nounit(Δx)): σ_Δx => sqrt(Δx)*σ ~ track(u"°")
 
     insertion_angle: θ => 30 ~ preserve(u"°", parameter)
-    pick_angular_angle(zt, nounit(θ), nounit(σ_dx);): pα => begin
+    pick_angular_angle(zt, nounit(θ), nounit(σ_Δx);): pα => begin
         if zt == :basal
-            rand(Normal(θ, σ_dx))*u"°"
+            rand(Normal(θ, σ_Δx))*u"°"
         else
-            rand(Normal(0, σ_dx))*u"°"
+            rand(Normal(0, σ_Δx))*u"°"
         end
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
@@ -80,31 +82,59 @@ import CoordinateTransformations: AffineMap, LinearMap, RotMatrix, RotX, RotZ, T
     end ~ track::AffineMap
     global_transformation(RT0, RT): RT1 => RT ∘ RT0 ~ track::AffineMap
 
-    diameter: d => 0.05 ~ track(u"mm", parameter)
+    radius: a => 0.05 ~ track(u"cm", parameter)
+
+    name ~ hold
+    succession ~ hold
+    successor(succession, name;) => begin
+        find(r) = begin
+            d = succession[name]
+            for (k, v) in d
+                r < v ? (return k) : (r -= v)
+            end
+            :nothing
+        end
+        find(rand())
+    end ~ call::Symbol
 
     is_grown(l, zl) => (l >= zl) ~ flag
-    branch(branch, is_grown, zt, ro, zi, rl, l, wrap(RT1)) => begin
+    branch(branch, is_grown, name, successor, zt, ro, zi, rl, l, wrap(RT1)) => begin
+        #FIXME: need to branch every Δx for adding consecutive segments?
         (isempty(branch) && is_grown && zt != :apical) ? [
             # consecutive segment
-            produce(RootSegment, ro=ro, zi=zi+1, l0=rl, dx=l, RT0=RT1),
+            produce(name, ro=ro, zi=zi+1, l0=rl, lp=l, RT0=RT1),
             # lateral branch
-            (ro <= 2) ? produce(RootSegment, ro=ro+1, zi=0, dx=l, RT0=RT1) : nothing,
+            (ro <= 2) ? produce(successor(), ro=ro+1, zi=0, lp=l, RT0=RT1) : nothing,
         ] : nothing
-    end ~ produce::RootSegment
+    end ~ produce::Root
 end
 
-@system Root(Controller) begin
+#TODO: provide @macro / function to automatically build a series of related Systems
+@system MyBaseRoot(BaseRoot) <: Root begin
+    succession ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
+end
+@system PrimaryRoot(MyBaseRoot) <: Root begin
+    name => :PrimaryRoot ~ preserve::Symbol
+end
+@system FirstOrderLateralRoot(MyBaseRoot) <: Root begin
+    name => :FirstOrderLateralRoot ~ preserve::Symbol
+end
+@system SecondOrderLateralRoot(MyBaseRoot) <: Root begin
+    name => :SecondOrderLateralRoot ~ preserve::Symbol
+end
+
+@system RootSystem(Controller) begin
     initial_transformation: RT0 => (LinearMap(one(RotMatrix{3})) ∘ Translation(0, 0, 0)) ~ track::AffineMap
-    root(context, RT0) => RootSegment(context=context, RT0=RT0) ~ ::RootSegment
+    root(context, RT0) => PrimaryRoot(context=context, RT0=RT0) ~ ::PrimaryRoot
 end
 
-render(r::RootSegment) = begin
+render(r::Root) = begin
     i = 0
     visit!(v, r) = begin
         l = Cropbox.deunitfy(r.l')
-        d = Cropbox.deunitfy(r.d')
-        (iszero(l) || iszero(d)) && return
-        m = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), d)
+        a = Cropbox.deunitfy(r.a')
+        (iszero(l) || iszero(a)) && return
+        m = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
         M = r.RT'
         # add root segment
         vv = v["$i"]
@@ -121,6 +151,47 @@ render(r::RootSegment) = begin
     v
 end
 
-s = instance(Root)
+o = (
+    :MyBaseRoot => :succession => [
+        # P F S
+          0 1 0 ; # P
+          0 0 1 ; # F
+          0 0 0 ; # S
+    ],
+    :PrimaryRoot => (
+        :lb => 0.1,
+        :la => 18.0,
+        :ln => 0.6,
+        :lmax => 89.7,
+        :r => 6.0,
+        :Δx => 0.5,
+        :σ => 10,
+        :θ => 10,
+        :a => 0.04,
+    ),
+    :FirstOrderLateralRoot => (
+        :lb => 0.2,
+        :la => 0.4,
+        :ln => 0.4,
+        :lmax => 0.6,
+        :r => 2.0,
+        :Δx => 1,
+        :σ => 20,
+        :θ => 20,
+        :a => 0.03,
+    ),
+    :SecondOrderLateralRoot => (
+        :lb => 0,
+        :la => 0.4,
+        :ln => 0,
+        :lmax => 0.4,
+        :r => 2.0,
+        :Δx => 0.1,
+        :σ => 20,
+        :θ => 20,
+        :a => 0.02,
+    )
+)
+s = instance(RootSystem, config=o)
 simulate!(s, stop=100)
 # render(s.root) |> open
