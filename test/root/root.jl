@@ -2,7 +2,7 @@ using Distributions
 
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
-import CoordinateTransformations: IdentityTransformation, LinearMap, RotX, RotZ, Transformation, Translation
+import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Transformation, Translation
 import Colors: RGBA
 
 abstract type Root <: System end
@@ -59,7 +59,7 @@ abstract type Root <: System end
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
     tropism_objective(RT0; α, β): to => begin
-        R = RotX(α) * RotZ(β) |> LinearMap
+        R = RotZX(β, α) |> LinearMap
         p = (RT0 ∘ R)([0, 0, -1])
         p[3]
     end ~ call
@@ -79,7 +79,7 @@ abstract type Root <: System end
         # put root segment at parent's end
         T = Translation(0, 0, -l)
         # rotate root segment
-        R = RotX(α) * RotZ(β) |> LinearMap
+        R = RotZX(β, α) |> LinearMap
         R ∘ T
     end ~ track::Transformation
     global_transformation(RT0, RT): RT1 => RT0 ∘ RT ~ track::Transformation
