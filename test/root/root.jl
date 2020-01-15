@@ -51,8 +51,8 @@ abstract type Root <: System end
     normalized_standard_deviation_of_angle(σ, nounit(Δx)): σ_Δx => sqrt(Δx)*σ ~ track(u"°")
 
     insertion_angle: θ => 30 ~ preserve(u"°", parameter)
-    pick_angular_angle(zt, nounit(θ), nounit(σ_Δx);): pα => begin
-        if zt == :basal
+    pick_angular_angle(zi, nounit(θ), nounit(σ_Δx);): pα => begin
+        if zi == 0
             rand(Normal(θ, σ_Δx))*u"°"
         else
             rand(Normal(0, σ_Δx))*u"°"
