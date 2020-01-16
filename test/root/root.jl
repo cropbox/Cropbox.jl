@@ -6,6 +6,36 @@ import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Tran
 import Colors: RGBA
 import UUIDs
 
+abstract type Container <: System end
+
+@system BaseContainer <: Container begin
+    dist(; p::Point3f0): distance => -Inf ~ call
+end
+
+@system PlantContainer(BaseContainer) <: Container begin
+    r1: top_radius => 5 ~ preserve(u"cm", parameter)
+    r2: bottom_radius => 5 ~ preserve(u"cm", parameter)
+    h: height => 100 ~ preserve(u"cm", parameter)
+    sq: square => false ~ preserve::Bool(parameter)
+
+    dist(nounit(r1), nounit(r2), nounit(h), sq; p::Point3f0): distance => begin
+        x, y, z = p
+        if z < -h # below
+            -z - h
+        elseif 0 < z # above
+            z
+        else # inside: -h <= z <= 0
+            w = -z / h # [0, 1]
+            r = (1-w)*r1 + w*r2
+            if sq
+                max(abs(x), abs(y)) - r
+            else
+                sqrt(x^2 + y^2) - r
+            end
+        end
+    end ~ call
+end
+
 @system Tropism begin
     tropsim_trials: N => 1.0 ~ preserve(parameter)
     tropism_objective(; α, β): to => 0 ~ call
@@ -39,6 +69,8 @@ end
 abstract type Root <: System end
 
 @system BaseRoot(Tropism) <: Root begin
+    box ~ ::Container(override)
+
     root_order: ro => 1 ~ preserve::Int(extern)
     zone_index: zi => 0 ~ preserve::Int(extern)
 
@@ -86,17 +118,39 @@ abstract type Root <: System end
         rand(Normal(θ, σ_Δx))
     end ~ call(u"°")
     pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
-    angles(pα, pβ, to, N): A => begin
+    angular_angle_trials: αN => 20 ~ preserve::Int(parameter)
+    raidal_angle_trials: βN => 5 ~ preserve::Int(parameter)
+    angles(pα, pβ, to, N, dist=box.dist, np, αN, βN): A => begin
         n = rand() < N % 1 ? ceil(N) : floor(N)
         P = [(pα(), pβ()) for i in 0:n]
         O = [to(α, β) for (α, β) in P]
         (o, i) = findmin(O)
-        P[i]
+        (α, β) = P[i]
+        d = dist(np(α, β))
+        for i in 1:αN
+            α1 = α + 90u"°" * (i-1)/αN
+            for j in 1:βN
+                d < 0 && break
+                β1 = pβ()
+                d1 = dist(np(α1, β1))
+                if d1 < d
+                    d = d1
+                    α, β = α1, β1
+                end
+            end
+            d < 0 && break
+        end
+        (α, β)
     end ~ preserve::Tuple
     angular_angle(A): α => A[1] ~ preserve(u"°")
     radial_angle(A): β => A[2] ~ preserve(u"°")
 
     parent_transformation: RT0 ~ track::Transformation(override)
+    parent_position(RT0): pp => RT0([0, 0, 0]) ~ preserve::Point3f0
+    new_position(pp, RT0, nounit(Δx); α, β): np => begin
+        R = RotZX(β, α) |> LinearMap
+        pp + (RT0 ∘ R)([0, 0, -Δx])
+    end ~ call::Point3f0
     local_transformation(nounit(l), α, β): RT => begin
         # put root segment at parent's end
         T = Translation(0, 0, -l)
@@ -124,13 +178,13 @@ abstract type Root <: System end
     end ~ call::Symbol
 
     is_grown(l, zl) => (l >= zl) ~ flag
-    branch(branch, is_grown, name, successor, zt, ro, zi, rl, l, wrap(RT1)) => begin
+    branch(branch, is_grown, box, name, successor, zt, ro, zi, rl, l, wrap(RT1)) => begin
         #FIXME: need to branch every Δx for adding consecutive segments?
         (isempty(branch) && is_grown && zt != :apical) ? [
             # consecutive segment
-            produce(name, ro=ro, zi=zi+1, l0=rl, lp=l, RT0=RT1),
+            produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lp=l, RT0=RT1),
             # lateral branch
-            produce(successor(), ro=ro+1, RT0=RT1),
+            produce(successor(), box=box, ro=ro+1, RT0=RT1),
         ] : nothing
     end ~ produce::Root
 end
@@ -150,10 +204,11 @@ end
 end
 
 @system RootSystem(Controller) begin
+    box(context) ~ ::PlantContainer
     number_of_basal_roots: maxB => 1 ~ preserve::Int(parameter)
     initial_transformation: RT0 => IdentityTransformation() ~ track::Transformation
-    roots(roots, maxB, wrap(RT0)) => begin
-        [produce(PrimaryRoot, RT0=RT0) for i in (length(roots)+1):maxB]
+    roots(roots, box, maxB, wrap(RT0)) => begin
+        [produce(PrimaryRoot, box=box, RT0=RT0) for i in (length(roots)+1):maxB]
     end ~ produce::PrimaryRoot
 end
 
