@@ -9,7 +9,7 @@ struct Product{S<:System}
 end
 iterate(p::Product) = (p, nothing)
 iterate(p::Product, ::Nothing) = nothing
-eltype(::Product) = Product
+eltype(::Type{Product}) = Product
 
 Produce(; _name, _type::Type{S}, _...) where {S<:System} = begin
     Produce{S}(_name, S[])
@@ -24,7 +24,7 @@ getindex(s::Produce, i) = getindex(s.value, i)
 getindex(s::Produce, ::Nothing) = s
 length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
-eltype(::Produce{S}) where {S<:System} = S
+eltype(::Type{Produce{S}}) where {S<:System} = S
 priority(::Type{<:Produce}) = PrePriority()
 
 export produce

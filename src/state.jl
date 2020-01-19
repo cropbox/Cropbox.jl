@@ -17,7 +17,7 @@ getindex(s::State, i) = s
 length(s::State) = 1
 iterate(s::State) = (s, nothing)
 iterate(s::State, i) = nothing
-eltype(::State{V}) where V = V
+eltype(::Type{<:State{V}}) where V = V
 
 import Unitful: unit
 unit(::State{V}) where V = unittype(V)
