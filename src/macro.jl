@@ -247,6 +247,7 @@ mixins(s::S) where {S<:System} = mixins(S)
 mixins(S::Type{<:System}) = mixins(nameof(S))
 mixins(s::Symbol) = mixins(Val(s))
 mixins(::Val{:System}) = (System,)
+mixins(::Val) = ()
 
 import DataStructures: OrderedSet
 mixincollect(s::S) where {S<:System} = mixincollect(S)
