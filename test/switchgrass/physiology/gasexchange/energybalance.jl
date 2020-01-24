@@ -59,8 +59,8 @@
     end ~ track(u"W/m^2")
 
     #FIXME: come up with a better name? (i.e. heat capacity = J(/kg)/K))
-    C(Cp, ghr, λ, gv, VPD_slope_delta): sensible_heat_capacity => begin
-        Cp*ghr + λ*gv*VPD_slope_delta
+    C(Cp, ghr, λ, gv, VPD_Δ): sensible_heat_capacity => begin
+        Cp*ghr + λ*gv*VPD_Δ
     end ~ track(u"W/m^2/K")
 
     T_adj(R_net, λE, C): temperature_adjustment => begin

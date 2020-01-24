@@ -7,9 +7,9 @@ using DataFrames
     PFD(s): photon_flux_density ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
     CO2(s) => s[:CO2] ~ track(u"μmol/mol")
     RH(s): relative_humidity => s[:RH] ~ track(u"percent")
-    T_air(s): air_temperature ~ s[:Tair] ~ track(u"°C")
+    T_air(s): air_temperature => s[:Tair] ~ track(u"°C")
     Tk_air(T_air): absolute_air_temperature ~ track(u"K")
-    wind(s): wind_speed ~ s[:Wind] ~ track(u"m/s")
+    wind(s): wind_speed => s[:Wind] ~ track(u"m/s")
 
     #TODO: make P_air parameter?
     P_air: air_pressure => 100 ~ track(u"kPa")

@@ -36,7 +36,7 @@
     LWP(WP_leaf): leaf_water_potential ~ track(u"MPa")
     sf => 2.3 ~ preserve(u"MPa^-1", parameter)
     ϕf => -2.0 ~ preserve(u"MPa", parameter)
-    m(LWP, sf, ϕf): [leafp_effect, transpiration_reduction_factor] => begin
+    m(LWP, sf, ϕf): transpiration_reduction_factor => begin
         (1 + exp(sf * ϕf)) / (1 + exp(sf * (ϕf - LWP)))
     end ~ track
 
