@@ -5,11 +5,15 @@ import Base: names
 names(s::S) where {S<:System} = names(S)
 names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
-import Base: length, iterate, eltype
-length(::System) = 1
-iterate(s::System) = (s, nothing)
-iterate(s::System, i) = nothing
-eltype(::Type{S}) where {S<:System} = S
+import Base: length, iterate
+length(s::System) = length(fieldnamesunique(s))
+iterate(s::System) = iterate(s, 1)
+iterate(s::System, i) = begin
+    F = fieldnamesunique(s)
+    l = length(F)
+    l == 0 ? nothing : (s[F[i]], l == i ? nothing : i+1)
+end
+iterate(s::System, ::Nothing) = nothing
 
 import Base: broadcastable
 broadcastable(s::System) = Ref(s)
