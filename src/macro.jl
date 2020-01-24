@@ -224,6 +224,7 @@ genstruct(name, type, infos, incl) = begin
         end
         $C.source(::Val{$N}) = $(Meta.quot(source))
         $C.mixins(::Val{$N}) = Tuple($(esc(:eval)).($incl))
+        $C.type(::Val{$N}) = $S
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         $C.update!($(esc(:self))::$S) = $(genupdate(nodes))
@@ -246,6 +247,8 @@ mixins(s::S) where {S<:System} = mixins(S)
 mixins(S::Type{<:System}) = mixins(nameof(S))
 mixins(s::Symbol) = mixins(Val(s))
 mixins(::Val{:System}) = (System,)
+
+type(s::Symbol) = type(Val(s))
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
