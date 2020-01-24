@@ -248,6 +248,19 @@ mixins(S::Type{<:System}) = mixins(nameof(S))
 mixins(s::Symbol) = mixins(Val(s))
 mixins(::Val{:System}) = (System,)
 
+import DataStructures: OrderedSet
+mixincollect(s::S) where {S<:System} = mixincollect(S)
+mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
+    S in l && return l
+    push!(l, S)
+    for m in mixins(S)
+        union!(l, mixincollect(m, l))
+    end
+    l
+end
+mixincollect(s) = ()
+mixindispatch(s, S::Type{<:System}) = (Val(S in mixincollect(s) ? nameof(S) : nothing), s)
+
 type(s::Symbol) = type(Val(s))
 
 fieldnamesunique(::Type{<:System}) = ()
