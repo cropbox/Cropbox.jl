@@ -6,9 +6,11 @@ import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Tran
 import Colors: RGBA
 import UUIDs
 
+@system Rendering
+
 abstract type Container <: System end
 
-@system BaseContainer <: Container begin
+@system BaseContainer(Rendering) <: Container begin
     dist(; p::Point3f0): distance => -Inf ~ call
 end
 
@@ -68,7 +70,7 @@ end
 
 abstract type Root <: System end
 
-@system BaseRoot(Tropism) <: Root begin
+@system BaseRoot(Tropism, Rendering) <: Root begin
     box ~ ::Container(override)
 
     root_order: ro => 1 ~ preserve::Int(extern)
@@ -212,34 +214,30 @@ end
     end ~ produce::PrimaryRoot
 end
 
-render_visit!(v, r) = begin
+render(s::System) = (vis = Visualizer(); render!(s, vis); vis)
+#TODO: provide macro (i.e. @mixin/@drive?) for scaffolding functions based on traits (Val)
+render!(s, vis) = render!(Cropbox.mixindispatch(s, Rendering)..., vis)
+render!(V::Val{:Rendering}, r::Root, vis) = begin
     l = Cropbox.deunitfy(r.l')
     a = Cropbox.deunitfy(r.a')
     (iszero(l) || iszero(a)) && return
     g = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
     M = r.RT'
     # add root segment
-    vv = v["$(UUIDs.uuid1())"]
+    cvis = vis["$(UUIDs.uuid1())"]
     ro = r.ro'
     c = r.color'
     m = MeshCat.defaultmaterial(color=c)
-    setobject!(vv, g, m)
-    settransform!(vv, M)
+    setobject!(cvis, g, m)
+    settransform!(cvis, M)
     # visit recursively
     for cr in r.branch
-        render_visit!(vv, cr)
+        render!(V, cr, cvis)
     end
-    v
 end
-
-render(r::Root) = render_visit!(Visualizer(), r)
-render(R::Vector{<:Root}) = begin
-    v = Visualizer()
-    for r in R
-        render_visit!(v, r)
-    end
-    v
-end
+render!(::Val, s::System, vis) = render!.(Cropbox.value.(collect(s)), Ref(vis))
+render!(::Val, V::Vector{<:System}, vis) = render!.(V, Ref(vis))
+render!(::Val, s, vis) = nothing
 
 o = (
     :RootSystem => :maxB => 5,
