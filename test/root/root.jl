@@ -240,6 +240,11 @@ render!(::Val, V::Vector{<:System}, vis) = render!.(V, Ref(vis))
 render!(::Val, s, vis) = nothing
 
 o = (
+    :PlantContainer => (
+        :r1 => 5,
+        :r2 => 5,
+        :height => 50,
+    ),
     :RootSystem => :maxB => 5,
     :MyBaseRoot => :succession => [
         # P F S
@@ -288,5 +293,5 @@ o = (
     )
 )
 s = instance(RootSystem, config=o)
-simulate!(s, stop=100)
+simulate!(s, stop=500)
 # render(s.roots') |> open
