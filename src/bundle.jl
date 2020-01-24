@@ -55,11 +55,11 @@ collect(b::Bundle{S}) where S = reduce((a, b) -> collect(a, b), Any[getfield(b, 
 collect(b::Bunch) = getfield(b, :list)
 collect(p::Produce, ::BundleAll) = value(p)
 collect(p::Produce{S}, ::BundleRecursiveAll) where S = begin
-    V = value(p)
     l = S[]
     #TODO: possibly reduce overhead by reusing calculated values in child nodes
-    f(V) = (append!(l, V); foreach(s -> f.(value(getfield(s, p.name))), V); l)
-    f(V)
+    f(s) = (push!(l, s); f.(value(getfield(s, p.name))))
+    f.(value(p))
+    l
 end
 collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
     n = length(V)
