@@ -351,16 +351,22 @@ end
 export @system, update!
 
 geninit(v::VarInfo) = geninit(v, Val(v.state))
-geninit(v::VarInfo, ::Val) = @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val) = geninitvalue(v)
 
-geninitpreserve(v::VarInfo) = begin
-    if istag(v, :parameter)
+geninitvalue(v::VarInfo; parameter=false, unitfy=true) = begin
+    f(x) = if unitfy
+        @q $C.unitfy($x, $C.value($(v.tags[:unit])))
+    else
+        x
+    end
+    if parameter && istag(v, :parameter)
         @gensym o
+        x = @q ismissing($o) ? $(genfunc(v)) : $o
         @q let $o = $C.option(config, _names, $(names(v)))
-            $C.unitfy(ismissing($o) ? $(genfunc(v)) : $o, $C.value($(v.tags[:unit])))
+            $(f(x))
         end
     else
-        @q $C.unitfy($(genfunc(v)), $C.value($(v.tags[:unit])))
+        f(genfunc(v))
     end
 end
 

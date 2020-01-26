@@ -23,6 +23,6 @@ genvartype(v::VarInfo, ::Val{:Preserve}; V, _...) = begin
     @q Preserve{$V}
 end
 
-geninit(v::VarInfo, ::Val{:Preserve}) = geninitpreserve(v)
+geninit(v::VarInfo, ::Val{:Preserve}) = geninitvalue(v, parameter=true)
 
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = genvalue(v)

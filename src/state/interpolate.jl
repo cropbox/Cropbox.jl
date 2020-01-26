@@ -40,16 +40,6 @@ end
 
 genvartype(v::VarInfo, ::Val{:Interpolate}; V, U, _...) = @q Interpolate{$V}
 
-#TODO: make use of geninitpreserve with unitfy turned off
-geninit(v::VarInfo, ::Val{:Interpolate}) = begin
-    if istag(v, :parameter)
-        @gensym o
-        @q let $o = $C.option(config, _names, $(names(v)))
-            ismissing($o) ? $(genfunc(v)) : $o
-        end
-    else
-        @q $(genfunc(v))
-    end
-end
+geninit(v::VarInfo, ::Val{:Interpolate}) = geninitvalue(v, parameter=true, unitfy=false)
 
 genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep) = genvalue(v)
