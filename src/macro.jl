@@ -353,12 +353,10 @@ export @system, update!
 geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = geninitvalue(v)
 
-geninitvalue(v::VarInfo; parameter=false, unitfy=true) = begin
-    f(x) = if unitfy
-        @q $C.unitfy($x, $C.value($(v.tags[:unit])))
-    else
-        x
-    end
+geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true) = begin
+    s(x) = sample ? (@q $C.sample($x)) : x
+    u(x) = unitfy ? (@q $C.unitfy($x, $C.value($(v.tags[:unit])))) : x
+    f(x) = x |> s |> u
     if parameter && istag(v, :parameter)
         @gensym o
         x = @q ismissing($o) ? $(genfunc(v)) : $o
