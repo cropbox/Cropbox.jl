@@ -56,7 +56,7 @@
     @testset "query index" begin
         @system SProduceQueryIndex begin
             p => produce(SProduceQueryIndex) ~ produce::SProduceQueryIndex
-            i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
+            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
             a(x=p["*"].i) => sum(x) ~ track
             b(x=p["**"].i) => sum(x) ~ track
             c(x=p["*/1"].i) => sum(x) ~ track
@@ -91,7 +91,7 @@
     @testset "query condition with track bool" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool
-            i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
+            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => sum(x) ~ track
             b(x=p["**/f"].i) => sum(x) ~ track
@@ -133,7 +133,7 @@
     @testset "query condition with flag" begin
         @system SProduceQueryConditionFlag begin
             p => produce(SProduceQueryConditionFlag) ~ produce::SProduceQueryConditionFlag
-            i(t=context.clock.tick) => Int(ustrip(t)) ~ preserve::Int
+            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => sum(x) ~ track
             b(x=p["**/f"].i) => sum(x) ~ track
