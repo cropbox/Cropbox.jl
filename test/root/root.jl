@@ -38,6 +38,24 @@ end
     end ~ call
 end
 
+@system Rhizobox(BaseContainer) <: Container begin
+    l: length => 16u"inch" ~ preserve(u"cm", parameter)
+    w: width => 10.5u"inch" ~ preserve(u"cm", parameter)
+    h: height => 42u"inch" ~ preserve(u"cm", parameter)
+
+    dist(nounit(l), nounit(w), nounit(h); p::Point3f0): distance => begin
+        x, y, z = p
+        if z < -h # below
+            -z - h
+        elseif 0 < z # above
+            z
+        else # inside: -h <= z <= 0
+            d = abs(y) - w/2
+            d < 0 ? abs(x) - l/2 : d
+        end
+    end ~ call
+end
+
 @system Tropism begin
     tropsim_trials: N => 1.0 ~ preserve(parameter)
     tropism_objective(; α, β): to => 0 ~ call
@@ -206,7 +224,7 @@ end
 end
 
 @system RootSystem(Controller) begin
-    box(context) ~ ::PlantContainer
+    box(context) ~ ::Rhizobox
     number_of_basal_roots: maxB => 1 ~ preserve::Int(parameter)
     initial_transformation: RT0 => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
