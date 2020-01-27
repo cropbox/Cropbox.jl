@@ -249,9 +249,7 @@ render!(V::Val{:Rendering}, r::Root, vis) = begin
     setobject!(cvis, g, m)
     settransform!(cvis, M)
     # visit recursively
-    for cr in r.branch
-        render!(V, cr, cvis)
-    end
+    render!(Val(nothing), r, cvis)
 end
 render!(::Val, s::System, vis) = render!.(Cropbox.value.(collect(s)), Ref(vis))
 render!(::Val, V::Vector{<:System}, vis) = render!.(V, Ref(vis))
