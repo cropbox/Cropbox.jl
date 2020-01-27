@@ -82,7 +82,7 @@ end
 @system Exotropism(Tropism) begin
     tropism_objective(; α, β): to => begin
         #HACK: not exact implementation, needs to keep initial heading
-        abs(ustrip(α))
+        abs(Cropbox.deunitfy(α))
     end ~ call
 end
 

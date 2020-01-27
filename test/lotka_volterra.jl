@@ -19,7 +19,7 @@
     t = s.context.clock.tick
     while t' <= 20.0u"hr"
         #println("t = $(s.t): H = $(s.H), P = $(s.P)")
-        push!(T, t' |> ustrip)
+        push!(T, t' |> Cropbox.deunitfy)
         push!(H, s.H')
         push!(P, s.P')
         update!(s)

@@ -171,7 +171,7 @@ end
     end ~ preserve(u"kPa") # psi_et (kPa)
 
     tension_air_entry(Ψ_et): Ψ_e => begin
-        Ψ = ustrip(u"kPa", Ψ_et)
+        Ψ = Cropbox.deunitfy(Ψ_et, u"kPa")
         Ψ_e = Ψ + (0.02Ψ^2 - 0.113Ψ - 0.70)
         #TODO: need bounds check?
         # max(Ψ_e, zero(Ψ_e))

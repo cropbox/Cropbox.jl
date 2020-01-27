@@ -10,13 +10,13 @@ using Dates
     b => 17.502 ~ preserve(parameter)
     c => 240.97 ~ preserve(parameter) # °C
 
-    saturation(a, b, c; T(u"°C")): es => (t = ustrip(T); a*exp((b*t)/(c+t))) ~ call(u"kPa")
+    saturation(a, b, c; T(u"°C")): es => (t = Cropbox.deunitfy(T); a*exp((b*t)/(c+t))) ~ call(u"kPa")
     ambient(es; T(u"°C"), RH(u"percent")): ea => es(T) * RH ~ call(u"kPa")
     deficit(es; T(u"°C"), RH(u"percent")): D => es(T) * (1 - RH) ~ call(u"kPa")
     relative_humidity(es; T(u"°C"), VPD(u"kPa")): rh => 1 - VPD / es(T) ~ call(u"NoUnits")
 
     # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
-    saturation_slope_delta(es, b, c; T(u"°C")): Delta => (e = es(T); t = ustrip(T); e*(b*c)/(c+t)^2 / u"K") ~ call(u"kPa/K")
+    saturation_slope_delta(es, b, c; T(u"°C")): Delta => (e = es(T); t = Cropbox.deunitfy(T); e*(b*c)/(c+t)^2 / u"K") ~ call(u"kPa/K")
     saturation_slope(Delta; T(u"°C"), P(u"kPa")): s => Delta(T) / P ~ call(u"K^-1")
 end
 
@@ -210,8 +210,8 @@ end
     θ: light_transition_sharpness => 0.5 ~ preserve(parameter)
     J(I2, Jmax, θ): electron_transport_rate => begin
         a = θ
-        b = -(I2+Jmax) |> u"μmol/m^2/s" |> ustrip
-        c = I2*Jmax |> u"(μmol/m^2/s)^2" |> ustrip
+        b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
+        c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
         quadratic_solve_lower(a, b, c)
     end ~ track(u"μmol/m^2/s")
 
@@ -310,9 +310,9 @@ end
     end ~ track(u"μbar")
 
     hs(g0, g1, gb, m, A_net, Cs, RH): relative_humidity_at_leaf_surface => begin
-        a = m * g1 * A_net / Cs |> u"mol/m^2/s/bar" |> ustrip
-        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s/bar" |> ustrip
-        c = (-RH * gb) - g0 |> u"mol/m^2/s/bar" |> ustrip
+        a = m * g1 * A_net / Cs |> u"mol/m^2/s/bar" |> Cropbox.deunitfy
+        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s/bar" |> Cropbox.deunitfy
+        c = (-RH * gb) - g0 |> u"mol/m^2/s/bar" |> Cropbox.deunitfy
         #FIXME: check unit
         hs = quadratic_solve_upper(a, b, c) |> u"percent"
         #TODO: need to prevent bifurcation?

@@ -110,7 +110,7 @@ using DataFrames
         A = [0.0, 100.0]u"m/hr"
         obs = DataFrame(tick=[t], b=[b])
         p = calibrate(SCalibrateUnit, obs, stop=n, target=:b, parameters=("SCalibrateUnit.a" => A))
-        @test p[:SCalibrateUnit][:a] == ustrip(a)
+        @test p[:SCalibrateUnit][:a] == Cropbox.deunitfy(a)
         r = simulate(SCalibrateUnit, stop=n, config=p)
         @test r[r[!, :tick] .== t, :][1, :b] == b
     end

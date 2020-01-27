@@ -292,7 +292,7 @@ plot_sun(v) = begin
         push!(V, s.s[v]')
         update!(s)
     end
-    plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
+    plot(T, V, xlab="tick", ylab=String(v), xlim=Cropbox.deunitfy.((T[1], T[end])), ylim=Cropbox.deunitfy.((minimum(V), maximum(V))))
 end
 
 test_sun() = begin

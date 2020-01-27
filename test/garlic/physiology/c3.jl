@@ -107,8 +107,8 @@ end
     light_transition_sharpness: θ => 0.7 ~ preserve(parameter)
     electron_transport_rate(I2, Jmax, θ): J => begin
         a = θ
-        b = -(I2+Jmax) |> u"μmol/m^2/s" |> ustrip
-        c = I2*Jmax |> u"(μmol/m^2/s)^2" |> ustrip
+        b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
+        c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
         quadratic_solve_lower(a, b, c)
     end ~ track(u"μmol/m^2/s")
 
@@ -180,9 +180,9 @@ end
     end ~ track
 
     relative_humidity_at_leaf_surface(g0, g1, gb, m, A_net, Cs, RH=weather.RH): hs => begin
-        a = m * g1 * A_net / Cs |> u"mol/m^2/s" |> ustrip
-        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s" |> ustrip
-        c = (-RH * gb) - g0 |> u"mol/m^2/s" |> ustrip
+        a = m * g1 * A_net / Cs |> u"mol/m^2/s" |> Cropbox.deunitfy
+        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s" |> Cropbox.deunitfy
+        c = (-RH * gb) - g0 |> u"mol/m^2/s" |> Cropbox.deunitfy
         #FIXME: check unit
         hs = quadratic_solve_upper(a, b, c)
         #TODO: need to prevent bifurcation?

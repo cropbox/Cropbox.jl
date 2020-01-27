@@ -13,7 +13,7 @@ end
 
 measurement(a::Quantity, b::Quantity) = begin
     u = Unitful.promote_unit(unit(a), unit(b))
-    measurement(ustrip(u, a), ustrip(u, b)) * u
+    measurement(deunitfy(a, u), deunitfy(b, u)) * u
 end
 measurement(a, b) = Measurement(promote(a, b)...)
 
@@ -25,5 +25,5 @@ show(io::IO, m::Measurement) = print(io, "$(m.val) ± $(m.err)")
 
 sample(v::Distribution) = rand(v)
 sample(v::Measurement) = rand(Normal(v.val, v.err))
-sample(v::Quantity{<:Measurement}) = sample(ustrip(v)) * unit(v)
+sample(v::Quantity{<:Measurement}) = sample(deunitfy(v)) * unit(v)
 sample(v) = v

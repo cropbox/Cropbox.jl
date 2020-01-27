@@ -74,13 +74,13 @@ end
     area_from_length(; L(u"cm")) => begin
         #HACK ensure zero area for zero length
         # for garlic, see JH's thesis
-        l = ustrip(L)
+        l = Cropbox.deunitfy(L)
         iszero(l) ? l : 0.639945 + 0.954957l + 0.005920l^2
     end ~ call(u"cm^2")
 
     area_increase_from_length(length) => begin
         # for garlic, see JH's thesis
-        l = ustrip(length)
+        l = Crobpox.deunitfy(length)
         0.954957 + 2*0.005920l
     end ~ track(u"cm^2")
 
