@@ -162,7 +162,7 @@ abstract type Root <: System end
     end ~ track::Transformation
     global_transformation(RT0, RT): RT1 => RT0 ∘ RT ~ track::Transformation
 
-    radius: a => 0.05 ~ track(u"cm", parameter, min=0.01)
+    radius: a => 0.05 ~ preserve(u"cm", parameter, min=0.01)
 
     color => RGBA(1, 1, 1, 1) ~ preserve::RGBA(parameter)
 
