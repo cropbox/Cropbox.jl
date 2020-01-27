@@ -17,7 +17,4 @@ deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v, u::Units) = deunitfy(unitfy(v, u))
 
-using Reexport
-#FIXME: only works with Reexport master
-#@reexport using Unitful: @u_str
-@reexport using Unitful
+export @u_str
