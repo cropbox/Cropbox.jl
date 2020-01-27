@@ -21,5 +21,6 @@ include("system/thermaltime.jl")
 include("tool.jl")
 include("dive.jl")
 include("hierarchy.jl")
+include("plot.jl")
 
 end
