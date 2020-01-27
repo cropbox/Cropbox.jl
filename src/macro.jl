@@ -358,10 +358,19 @@ genunitfy(v::VarInfo, x) = begin
     u = gettag(v, :unit)
     isnothing(u) ? x : @q $C.unitfy($x, $C.value($u))
 end
-geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true) = begin
+genminmax(v::VarInfo, x) = begin
+    l = gettag(v, :min)
+    u = gettag(v, :max)
+    #TODO: validate (min <= max)
+    x = isnothing(l) ? x : @q max($(genunitfy(v, l)), $x)
+    x = isnothing(u) ? x : @q min($x, $(genunitfy(v, u)))
+    x
+end
+geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true) = begin
     s(x) = sample ? gensample(v, x) : x
     u(x) = unitfy ? genunitfy(v, x) : x
-    f(x) = x |> s |> u
+    m(x) = minmax ? genminmax(v, x) : x
+    f(x) = x |> s |> u |> m
     if parameter && istag(v, :parameter)
         @gensym o
         x = @q ismissing($o) ? $(genfunc(v)) : $o

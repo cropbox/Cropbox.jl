@@ -51,4 +51,34 @@
         @test s.a' == 2
         @test s.b' == 2
     end
+    
+    @testset "minmax" begin
+        @system SPreserveMinMax(Controller) begin
+            a => 0 ~ preserve(parameter, min=1)
+            b => 0 ~ preserve(parameter, max=2)
+            c => 0 ~ preserve(parameter, min=1, max=2)
+        end
+        s = instance(SPreserveMinMax)
+        @test s.a' == 1
+        @test s.b' == 0
+        @test s.c' == 1
+    end
+        
+    @testset "parameter minmax" begin
+        @system SParameterMinMax(Controller) begin
+            a => 0 ~ preserve(parameter, min=-1)
+            b => 0 ~ preserve(parameter, max=1)
+            c => 0 ~ preserve(parameter, min=-1, max=1)
+        end
+        o1 = SParameterMinMax => (:a => 2, :b => 2, :c => 2)
+        s1 = instance(SParameterMinMax; config=o1)
+        @test s1.a' == 2
+        @test s1.b' == 1
+        @test s1.c' == 1
+        o2 = SParameterMinMax => (:a => -2, :b => -2, :c => -2)
+        s2 = instance(SParameterMinMax; config=o2)
+        @test s2.a' == -1
+        @test s2.b' == -2
+        @test s2.c' == -1
+    end
 end
