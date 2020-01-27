@@ -23,7 +23,7 @@ import Unitful: unit
 unit(::State{V}) where V = unittype(V)
 unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
-import Unitful: isunitless
+import Unitful: isunitless, dimension
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
 valuetype(T, U::Units) = isunitless(U) ? T : Quantity{T, dimension(U), typeof(U)}

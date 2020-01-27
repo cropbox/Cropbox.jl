@@ -1,5 +1,4 @@
-using Unitful
-import Unitful: Units
+import Unitful: Unitful, Units, Quantity, uconvert, ustrip, @u_str
 
 unitfy(::Nothing, u) = nothing
 unitfy(::Nothing, ::Nothing) = nothing
