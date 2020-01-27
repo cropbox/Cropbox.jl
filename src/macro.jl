@@ -353,9 +353,14 @@ export @system, update!
 geninit(v::VarInfo) = geninit(v, Val(v.state))
 geninit(v::VarInfo, ::Val) = geninitvalue(v)
 
+gensample(v::VarInfo, x) = @q $C.sample($x)
+genunitfy(v::VarInfo, x) = begin
+    u = gettag(v, :unit)
+    isnothing(u) ? x : @q $C.unitfy($x, $C.value($u))
+end
 geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true) = begin
-    s(x) = sample ? (@q $C.sample($x)) : x
-    u(x) = unitfy ? (@q $C.unitfy($x, $C.value($(v.tags[:unit])))) : x
+    s(x) = sample ? gensample(v, x) : x
+    u(x) = unitfy ? genunitfy(v, x) : x
     f(x) = x |> s |> u
     if parameter && istag(v, :parameter)
         @gensym o
