@@ -86,10 +86,10 @@ abstract type Root <: System end
         end
     end ~ preserve::Symbol
 
-    length_of_basal_zone: lb => 0.4 ~ preserve(u"cm", parameter)
-    length_of_apical_zone: la => 0.5 ~ preserve(u"cm", parameter)
-    length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", parameter)
-    maximal_length: lmax => 3.9 ~ preserve(u"cm", parameter)
+    length_of_basal_zone: lb => 0.4 ~ preserve(u"cm", parameter, min=0)
+    length_of_apical_zone: la => 0.5 ~ preserve(u"cm", parameter, min=0)
+    length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", parameter, min=0)
+    maximal_length: lmax => 3.9 ~ preserve(u"cm", parameter, min=0)
 
     zone_length(zt, lb, ln, la): zl => begin
         if zt == :basal
@@ -102,7 +102,7 @@ abstract type Root <: System end
     end ~ preserve(u"cm")
 
     timestep(context.clock.step): Δt ~ preserve(u"hr")
-    elongation_rate: r => 1.0 ~ preserve(u"cm/d", parameter)
+    elongation_rate: r => 1.0 ~ preserve(u"cm/d", parameter, min=0)
     actual_elongation_rate(r, zl, l, Δt): ar => min(r, (zl - l) / Δt) ~ track(u"cm/d")
     remaining_elongation_rate(r, ar): rr => r - ar ~ track(u"cm/d")
     remaining_length(rr, Δt): rl => rr*Δt ~ track(u"cm")
@@ -162,7 +162,7 @@ abstract type Root <: System end
     end ~ track::Transformation
     global_transformation(RT0, RT): RT1 => RT0 ∘ RT ~ track::Transformation
 
-    radius: a => 0.05 ~ track(u"cm", parameter)
+    radius: a => 0.05 ~ track(u"cm", parameter, min=0.01)
 
     color => RGBA(1, 1, 1, 1) ~ preserve::RGBA(parameter)
 
@@ -253,42 +253,42 @@ o = (
           0 0 0 ; # S
     ],
     :PrimaryRoot => (
-        :lb => 0.1,
-        :la => 18.0,
-        :ln => 0.6,
-        :lmax => 89.7,
-        :r => 6.0,
+        :lb => 0.1 ± 0.01,
+        :la => 18.0 ± 1.8,
+        :ln => 0.6 ± 0.06,
+        :lmax => 89.7 ± 7.4,
+        :r => 6.0 ± 0.6,
         :Δx => 0.5,
         :σ => 10,
-        :θ => 80,
+        :θ => 80 ± 8,
         :N => 1.5,
-        :a => 0.04,
+        :a => 0.04 ± 0.004,
         :color => RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (
-        :lb => 0.2,
-        :la => 0.4,
-        :ln => 0.4,
-        :lmax => 0.6,
-        :r => 2.0,
+        :lb => 0.2 ± 0.04,
+        :la => 0.4 ± 0.04,
+        :ln => 0.4 ± 0.03,
+        :lmax => 0.6 ± 1.6,
+        :r => 2.0 ± 0.2,
         :Δx => 1,
         :σ => 20,
-        :θ => 70,
+        :θ => 70 ± 15,
         :N => 1,
-        :a => 0.03,
+        :a => 0.03 ± 0.003,
         :color => RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (
         :lb => 0,
-        :la => 0.4,
+        :la => 0.4 ± 0.02,
         :ln => 0,
         :lmax => 0.4,
-        :r => 2.0,
+        :r => 2.0 ± 0.2,
         :Δx => 0.1,
         :σ => 20,
-        :θ => 70,
+        :θ => 70 ± 10,
         :N => 2,
-        :a => 0.02,
+        :a => 0.02 ± 0.002,
         :color => RGBA(0, 0, 1, 1),
     )
 )
