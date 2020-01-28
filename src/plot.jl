@@ -16,7 +16,8 @@ plot(df::DataFrame, index::Symbol, target::Vector{Symbol}) = begin
     ylim = (l = lim.(Ys); (minimum(l)[1], maximum(l)[2]))
     
     lab(n) = (s = string(u(n)); isempty(s) ? "$n" : "$n ($s)")
-    xlab = lab(index)
+    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
+    xlab = lab(index) * '\n'
     
     p = UnicodePlots.lineplot(X, Ys[1], name=lab(target[1]), xlabel=xlab, xlim=xlim, ylim=ylim)
     for i in 2:length(Ys)
