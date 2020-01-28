@@ -9,23 +9,9 @@
         prey_population(a, b, H, P): H => a*H - b*H*P ~ accumulate(init=H0)
         predator_population(b, c, d, H, P): P => d*b*H*P - c*P ~ accumulate(init=P0)
     end
-    s = instance(LotkaVolterra, config=(
+    r = simulate(LotkaVolterra, stop=1200, config=(
         :Clock => (:step => 1u"minute"),
     ))
-    T = Float64[]
-    H = Float64[]
-    P = Float64[]
-    #TODO: isless() for Var with proper promote_rule
-    t = s.context.clock.tick
-    while t' <= 20.0u"hr"
-        #println("t = $(s.t): H = $(s.H), P = $(s.P)")
-        push!(T, t' |> Cropbox.deunitfy)
-        push!(H, s.H')
-        push!(P, s.P')
-        update!(s)
-    end
-    @test t' > 20.0u"hr"
-    using Plots
-    unicodeplots()
-    plot(T, [H P], lab=["Prey" "Predator"], xlab="Time", ylab="Population", xlim=(0, T[end]), ylim=(0, ceil(maximum([H P]))))
+    @test r[!, :tick][end] > 20u"hr"
+    Cropbox.plot(r, :tick, [:prey_population, :predator_population])
 end

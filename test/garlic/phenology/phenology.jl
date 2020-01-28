@@ -93,40 +93,23 @@ include("death.jl")
     end ~ track::Symbol
 end
 
-using Plots
-using UnitfulRecipes
-unicodeplots()
-
 @system PhenologyController(Controller) begin
     calendar(context) ~ ::Calendar
     weather(context, calendar) ~ ::Weather
     sun(context, calendar, weather) ~ ::Sun
     soil(context) ~ ::Soil
     phenology(context, calendar, weather, sun, soil): p ~ ::Phenology
+    duration: d => 100 ~ preserve(u"d", parameter)
+    stop(context.clock.tick, d) => tick >= d ~ flag
 end
 
-init_pheno() = begin
+plot_pheno(v, d=300) = begin
     o = (
         :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
         :Weather => (:filename => "test/garlic/data/2007.wea"),
         :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"UTC")),
+        :PhenologyController => (:duration => d),
     )
-    #HACK: manually initate them due to Weather/Soil instances
-    #s = instance(Phenology; config=o)
-    #c = s.context
-    instance(PhenologyController, config=o)
-end
-
-plot_pheno(v) = begin
-    s = init_pheno()
-    c = s.context
-    T = typeof(c.clock.tick')[]
-    V = typeof(s.p[v]')[]
-    while c.clock.tick' <= 300u"d"
-        #println("t = $(c.clock.tick): v = $(s[v])")
-        push!(T, c.clock.tick')
-        push!(V, s.p[v]')
-        update!(s)
-    end
-    plot(T, V, xlab="tick", ylab=String(v), xlim=Cropbox.deunitfy.((T[1], T[end])), ylim=Cropbox.deunitfy.((minimum(V), maximum(V))))
+    r = simulate(PhenologyController, stop=:stop, config=o, base=:phenology)
+    Cropbox.plot(r, :tick, v)
 end

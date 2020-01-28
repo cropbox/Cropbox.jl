@@ -266,33 +266,22 @@ import Dates
     diffusive_photosynthetic_radiation(PARtot, diffusive_fraction): PARdif => (diffusive_fraction * PARtot) ~ track(u"μmol/m^2/s") # Quanta
 end
 
-using Plots
-using UnitfulRecipes
-unicodeplots()
-
 @system SunController(Controller) begin
     calendar(context) ~ ::Calendar
     weather(context, calendar) ~ ::Weather
     sun(context, calendar, weather): s ~ ::Sun
+    duration: d => 1 ~ preserve(u"d", parameter)
+    stop(context.clock.tick, d) => tick >= d ~ flag
 end
 
-plot_sun(v) = begin
+plot_sun(v, d=3) = begin
     o = (
         :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
         :Weather => (:filename => "test/garlic/data/2007.wea"),
+        :SunController => (:duration => d),
     )
-    s = instance(SunController, config=o)
-    c = s.context
-
-    T = typeof(c.clock.tick')[]
-    V = typeof(s.s[v]')[]
-    while c.clock.tick' <= 3u"d"
-        #println("t = $(c.clock.tick): v = $(s[v])")
-        push!(T, c.clock.tick')
-        push!(V, s.s[v]')
-        update!(s)
-    end
-    plot(T, V, xlab="tick", ylab=String(v), xlim=Cropbox.deunitfy.((T[1], T[end])), ylim=Cropbox.deunitfy.((minimum(V), maximum(V))))
+    r = simulate(SunController, stop=:stop, config=o, base=:sun)
+    Cropbox.plot(r, :tick, v)
 end
 
 test_sun() = begin
