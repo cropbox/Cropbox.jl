@@ -22,5 +22,5 @@ plot(df::DataFrame, index::Symbol, target::Vector{Symbol}) = begin
     for i in 2:length(Ys)
         UnicodePlots.lineplot!(p, X, Ys[i], name=lab(target[i]))
     end
-    p
+    p |> display
 end
