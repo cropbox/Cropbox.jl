@@ -255,7 +255,7 @@ render!(::Val, s::System, vis) = render!.(Cropbox.value.(collect(s)), Ref(vis))
 render!(::Val, V::Vector{<:System}, vis) = render!.(V, Ref(vis))
 render!(::Val, s, vis) = nothing
 
-o = (
+maize = (
     :PlantContainer => (
         :r1 => 5,
         :r2 => 5,
@@ -308,6 +308,54 @@ o = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
-s = instance(RootSystem, config=o)
+switchgrass_N = (
+    :RootSystem => :maxB => 5,
+    :MyBaseRoot => :succession => [
+        # P F S
+          0 1 0 ; # P
+          0 0 1 ; # F
+          0 0 0 ; # S
+    ],
+    :PrimaryRoot => (
+        :lb => 0.41 ± 0.26,
+        :la => 0.63 ± 0.50,
+        :ln => 0.27 ± 0.07,
+        :lmax => 33.92 ± 22.81,
+        :r => 1 ± 0.1,
+        :Δx => 0.5,
+        :σ => 9,
+        :θ => 60 ± 6,
+        :N => 1.5,
+        :a => (0.62 ± 0.06)u"mm",
+        :color => RGBA(1, 0, 0, 1),
+    ),
+    :FirstOrderLateralRoot => (
+        :lb => 0.63 ± 0.45,
+        :la => 1.12 ± 1.42,
+        :ln => 0.23 ± 0.11,
+        :lmax => 5.61 ± 6.88,
+        :r => 0.21 ± 0.02,
+        :Δx => 1,
+        :σ => 18,
+        :θ => 60 ± 6,
+        :N => 1,
+        :a => (0.22 ± 0.02)u"mm",
+        :color => RGBA(0, 1, 0, 1),
+    ),
+    :SecondOrderLateralRoot => (
+        :lb => 0.45 ± 0.64,
+        :la => 0.71 ± 0.64,
+        :ln => 0.14 ± 0.10,
+        :lmax => 2.61 ± 2.99,
+        :r => 0.08 ± 0.01,
+        :Δx => 0.1,
+        :σ => 20,
+        :θ => 60 ± 6,
+        :N => 2,
+        :a => (0.19 ± 0.02)u"mm",
+        :color => RGBA(0, 0, 1, 1),
+    )
+)
+s = instance(RootSystem, config=maize)
 simulate!(s, stop=500)
-# render(s.roots') |> open
+# render(s) |> open
