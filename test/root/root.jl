@@ -94,10 +94,10 @@ abstract type Root <: System end
     root_order: ro => 1 ~ preserve::Int(extern)
     zone_index: zi => 0 ~ preserve::Int(extern)
 
-    zone_type(zi, lmax, la, lp): zt => begin
+    zone_type(lmax, la, lb, lp): zt => begin
         if (lmax - la) <= lp
             :apical
-        elseif zi == 0
+        elseif lp < lb
             :basal
         else
             :lateral
