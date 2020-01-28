@@ -18,9 +18,9 @@ plot(df::DataFrame, index::Symbol, target::Vector{Symbol}) = begin
     lab(n) = (s = string(u(n)); isempty(s) ? "$n" : "$n ($s)")
     xlab = lab(index)
     
-    p = UnicodePlots.scatterplot(X, Ys[1], name=lab(target[1]), xlabel=xlab, xlim=xlim, ylim=ylim)
+    p = UnicodePlots.lineplot(X, Ys[1], name=lab(target[1]), xlabel=xlab, xlim=xlim, ylim=ylim)
     for i in 2:length(Ys)
-        UnicodePlots.scatterplot!(p, X, Ys[i], name=lab(target[i]))
+        UnicodePlots.lineplot!(p, X, Ys[i], name=lab(target[i]))
     end
     p
 end
