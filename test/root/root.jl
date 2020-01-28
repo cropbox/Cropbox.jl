@@ -104,10 +104,10 @@ abstract type Root <: System end
         end
     end ~ preserve::Symbol
 
-    length_of_basal_zone: lb => 0.4 ~ preserve(u"cm", parameter, min=0)
-    length_of_apical_zone: la => 0.5 ~ preserve(u"cm", parameter, min=0)
-    length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", parameter, min=0)
-    maximal_length: lmax => 3.9 ~ preserve(u"cm", parameter, min=0)
+    length_of_basal_zone: lb => 0.4 ~ preserve(u"cm", extern, parameter, min=0)
+    length_of_apical_zone: la => 0.5 ~ preserve(u"cm", extern, parameter, min=0)
+    length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", extern, parameter, min=0)
+    maximal_length: lmax => 3.9 ~ preserve(u"cm", extern, parameter, min=0)
 
     zone_length(zt, lb, ln, la): zl => begin
         if zt == :basal
@@ -198,11 +198,12 @@ abstract type Root <: System end
     end ~ call::Symbol
 
     is_grown(l, zl) => (l >= zl) ~ flag
-    branch(branch, is_grown, box, name, successor, zt, ro, zi, rl, l, wrap(RT1)) => begin
+    branch(branch, is_grown, box, name, successor, zt, ro, zi, rl, lb, la, ln, lmax, l, wrap(RT1)) => begin
         #FIXME: need to branch every Δx for adding consecutive segments?
         (isempty(branch) && is_grown && zt != :apical) ? [
             # consecutive segment
-            produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lp=l, RT0=RT1),
+            #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
+            produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=l, RT0=RT1),
             # lateral branch
             produce(successor(), box=box, ro=ro+1, RT0=RT1),
         ] : nothing
