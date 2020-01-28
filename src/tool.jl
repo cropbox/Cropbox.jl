@@ -3,7 +3,7 @@ import DataFrames: DataFrame
 import Dates: AbstractDateTime
 
 struct Simulation
-    base::Union{String,Nothing}
+    base::Union{String,Symbol,Nothing}
     index::OrderedDict
     target::OrderedDict
     result::DataFrame
