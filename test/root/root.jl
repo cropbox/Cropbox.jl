@@ -109,14 +109,15 @@ abstract type Root <: System end
     length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", extern, parameter, min=0)
     maximal_length: lmax => 3.9 ~ preserve(u"cm", extern, parameter, min=0)
 
-    zone_length(zt, lb, ln, la): zl => begin
-        if zt == :basal
+    zone_length(zt, lb, ln, la, lmax, lp): zl => begin
+        l = if zt == :basal
             lb
         elseif zt == :apical
             la
         else
             ln
         end
+        max(zero(l), min(l, lmax - lp))
     end ~ preserve(u"cm")
 
     timestep(context.clock.step): Δt ~ preserve(u"hr")
@@ -127,6 +128,7 @@ abstract type Root <: System end
     initial_length: l0 => 0 ~ preserve(u"cm", extern)
     parent_length: lp => 0 ~ preserve(u"cm", extern)
     length(ar): l ~ accumulate(init=l0, u"cm")
+    total_length(lp, l): lt => lp + l ~ track(u"cm")
 
     axial_resolution: Δx => 1 ~ preserve(u"cm", parameter)
     standard_deviation_of_angle: σ => 30 ~ preserve(u"°", parameter)
@@ -197,14 +199,18 @@ abstract type Root <: System end
         find(rand())
     end ~ call::Symbol
 
-    is_grown(l, zl) => (l >= zl) ~ flag
-    branch(branch, is_grown, box, name, successor, zt, ro, zi, rl, lb, la, ln, lmax, l, wrap(RT1)) => begin
+    may_segment(l, zl, lt, lmax) => (l >= zl && lt < lmax) ~ flag
+    segment(segment, may_segment, name, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)) => begin
         #FIXME: need to branch every Δx for adding consecutive segments?
-        (isempty(branch) && is_grown && zt != :apical) ? [
-            # consecutive segment
+        (isempty(segment) && may_segment) ? [
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-            produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=l, RT0=RT1),
-            # lateral branch
+            produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
+        ] : nothing
+    end ~ produce::Root
+
+    may_branch(l, zl, zt) => (l >= zl && zt != :apical) ~ flag
+    branch(branch, may_branch, successor, box, ro, wrap(RT1)) => begin
+        (isempty(branch) && may_branch) ? [
             produce(successor(), box=box, ro=ro+1, RT0=RT1),
         ] : nothing
     end ~ produce::Root
