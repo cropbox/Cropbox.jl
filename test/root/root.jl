@@ -180,6 +180,7 @@ abstract type Root <: System end
         R ∘ T
     end ~ track::Transformation
     global_transformation(RT0, RT): RT1 => RT0 ∘ RT ~ track::Transformation
+    current_position(RT1): cp => RT1([0, 0, 0]) ~ track::Point3f0
 
     radius: a => 0.05 ~ preserve(u"cm", parameter, min=0.01)
 
