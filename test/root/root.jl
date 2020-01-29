@@ -57,21 +57,21 @@ end
 end
 
 @system Tropism begin
-    tropsim_trials: N => 1.0 ~ preserve(parameter)
-    tropism_objective(; α, β): to => 0 ~ call
+    N: tropsim_trials => 1.0 ~ preserve(parameter)
+    to(; α, β): tropism_objective => 0 ~ call
 end
 
 @system Plagiotropism(Tropism) begin
-    parent_transformation: RT0 ~ hold
-    tropism_objective(RT0; α, β): to => begin
+    RT0: parent_transformation ~ hold
+    to(RT0; α, β): tropism_objective => begin
         R = RotZX(β, α) |> LinearMap
         (RT0 ∘ R).linear[9] |> abs
     end ~ call
 end
 
 @system Gravitropism(Tropism) begin
-    parent_transformation: RT0 ~ hold
-    tropism_objective(RT0; α, β): to => begin
+    RT0: parent_transformation ~ hold
+    to(RT0; α, β): tropism_objective => begin
         R = RotZX(β, α) |> LinearMap
         #-(RT0 ∘ R).linear[9]
         p = (RT0 ∘ R)([0, 0, -1])
@@ -80,7 +80,7 @@ end
 end
 
 @system Exotropism(Tropism) begin
-    tropism_objective(; α, β): to => begin
+    to(; α, β): tropism_objective => begin
         #HACK: not exact implementation, needs to keep initial heading
         abs(Cropbox.deunitfy(α))
     end ~ call
@@ -91,10 +91,10 @@ abstract type Root <: System end
 @system BaseRoot(Tropism, Rendering) <: Root begin
     box ~ ::Container(override)
 
-    root_order: ro => 1 ~ preserve::Int(extern)
-    zone_index: zi => 0 ~ preserve::Int(extern)
+    ro: root_order => 1 ~ preserve::Int(extern)
+    zi: zone_index => 0 ~ preserve::Int(extern)
 
-    zone_type(lmax, la, lb, lp): zt => begin
+    zt(lmax, la, lb, lp): zone_type => begin
         if (lmax - la) <= lp
             :apical
         elseif lp < lb
@@ -104,12 +104,12 @@ abstract type Root <: System end
         end
     end ~ preserve::Symbol
 
-    length_of_basal_zone: lb => 0.4 ~ preserve(u"cm", extern, parameter, min=0)
-    length_of_apical_zone: la => 0.5 ~ preserve(u"cm", extern, parameter, min=0)
-    length_between_lateral_branches: ln => 0.3 ~ preserve(u"cm", extern, parameter, min=0)
-    maximal_length: lmax => 3.9 ~ preserve(u"cm", extern, parameter, min=0)
+    lb: length_of_basal_zone => 0.4 ~ preserve(u"cm", extern, parameter, min=0)
+    la: length_of_apical_zone => 0.5 ~ preserve(u"cm", extern, parameter, min=0)
+    ln: length_between_lateral_branches => 0.3 ~ preserve(u"cm", extern, parameter, min=0)
+    lmax: maximal_length => 3.9 ~ preserve(u"cm", extern, parameter, min=0)
 
-    zone_length(zt, lb, ln, la, lmax, lp): zl => begin
+    zl(zt, lb, ln, la, lmax, lp): zone_length => begin
         l = if zt == :basal
             lb
         elseif zt == :apical
@@ -119,29 +119,29 @@ abstract type Root <: System end
         end
     end ~ preserve(u"cm")
 
-    timestep(context.clock.step): Δt ~ preserve(u"hr")
-    elongation_rate: r => 1.0 ~ preserve(u"cm/d", parameter, min=0)
-    actual_elongation_rate(r, Δx, l, Δt): ar => min(r, (Δx - l) / Δt) ~ track(u"cm/d")
-    remaining_elongation_rate(r, ar): rr => r - ar ~ track(u"cm/d")
-    remaining_length(rr, Δt): rl => rr*Δt ~ track(u"cm")
-    initial_length: l0 => 0 ~ preserve(u"cm", extern)
-    parent_length: lp => 0 ~ preserve(u"cm", extern)
-    length(ar): l ~ accumulate(init=l0, u"cm")
-    total_length(lp, l): lt => lp + l ~ track(u"cm")
+    Δt(context.clock.step): timestep ~ preserve(u"hr")
+    r: elongation_rate => 1.0 ~ preserve(u"cm/d", parameter, min=0)
+    ar(r, Δx, l, Δt): actual_elongation_rate => min(r, (Δx - l) / Δt) ~ track(u"cm/d")
+    rr(r, ar): remaining_elongation_rate => r - ar ~ track(u"cm/d")
+    rl(rr, Δt): remaining_length => rr*Δt ~ track(u"cm")
+    l0: initial_length => 0 ~ preserve(u"cm", extern)
+    lp: parent_length => 0 ~ preserve(u"cm", extern)
+    l(ar): length ~ accumulate(init=l0, u"cm")
+    lt(lp, l): total_length => lp + l ~ track(u"cm")
 
-    axial_resolution: Δx => 1 ~ preserve(u"cm", parameter)
-    standard_deviation_of_angle: σ => 30 ~ preserve(u"°", parameter)
-    normalized_standard_deviation_of_angle(σ, nounit(Δx)): σ_Δx => sqrt(Δx)*σ ~ track(u"°")
+    Δx: axial_resolution => 1 ~ preserve(u"cm", parameter)
+    σ: standard_deviation_of_angle => 30 ~ preserve(u"°", parameter)
+    σ_Δx(σ, nounit(Δx)): normalized_standard_deviation_of_angle => sqrt(Δx)*σ ~ track(u"°")
 
-    insertion_angle: θ => 30 ~ preserve(u"°", parameter)
-    pick_angular_angle(zi, nounit(θ), nounit(σ_Δx);): pα => begin
+    θ: insertion_angle => 30 ~ preserve(u"°", parameter)
+    pα(zi, nounit(θ), nounit(σ_Δx);): pick_angular_angle => begin
         θ = zi == 0 ? θ : zero(θ)
         rand(Normal(θ, σ_Δx))
     end ~ call(u"°")
-    pick_radial_angle(;): pβ => rand(Uniform(0, 360)) ~ call(u"°")
-    angular_angle_trials: αN => 20 ~ preserve::Int(parameter)
-    raidal_angle_trials: βN => 5 ~ preserve::Int(parameter)
-    angles(pα, pβ, to, N, dist=box.dist, np, αN, βN): A => begin
+    pβ(;): pick_radial_angle => rand(Uniform(0, 360)) ~ call(u"°")
+    αN: angular_angle_trials => 20 ~ preserve::Int(parameter)
+    βN: raidal_angle_trials => 5 ~ preserve::Int(parameter)
+    A(pα, pβ, to, N, dist=box.dist, np, αN, βN): angles => begin
         n = rand() < N % 1 ? ceil(N) : floor(N)
         P = [(pα(), pβ()) for i in 0:n]
         O = [to(α, β) for (α, β) in P]
@@ -163,34 +163,34 @@ abstract type Root <: System end
         end
         (α, β)
     end ~ preserve::Tuple
-    angular_angle(A): α => A[1] ~ preserve(u"°")
-    radial_angle(A): β => A[2] ~ preserve(u"°")
+    α(A): angular_angle => A[1] ~ preserve(u"°")
+    β(A): radial_angle => A[2] ~ preserve(u"°")
 
-    parent_transformation: RT0 ~ track::Transformation(override)
-    parent_position(RT0): pp => RT0([0, 0, 0]) ~ preserve::Point3f0
-    new_position(pp, RT0, nounit(Δx); α, β): np => begin
+    RT0: parent_transformation ~ track::Transformation(override)
+    pp(RT0): parent_position => RT0([0, 0, 0]) ~ preserve::Point3f0
+    np(pp, RT0, nounit(Δx); α, β): new_position => begin
         R = RotZX(β, α) |> LinearMap
         pp + (RT0 ∘ R)([0, 0, -Δx])
     end ~ call::Point3f0
-    local_transformation(nounit(l), α, β): RT => begin
+    RT(nounit(l), α, β): local_transformation => begin
         # put root segment at parent's end
         T = Translation(0, 0, -l)
         # rotate root segment
         R = RotZX(β, α) |> LinearMap
         R ∘ T
     end ~ track::Transformation
-    global_transformation(RT0, RT): RT1 => RT0 ∘ RT ~ track::Transformation
-    current_position(RT1): cp => RT1([0, 0, 0]) ~ track::Point3f0
+    RT1(RT0, RT): global_transformation => RT0 ∘ RT ~ track::Transformation
+    cp(RT1): current_position => RT1([0, 0, 0]) ~ track::Point3f0
 
-    radius: a => 0.05 ~ preserve(u"cm", parameter, min=0.01)
+    a: radius => 0.05 ~ preserve(u"cm", parameter, min=0.01)
 
-    color => RGBA(1, 1, 1, 1) ~ preserve::RGBA(parameter)
+    c: color => RGBA(1, 1, 1, 1) ~ preserve::RGBA(parameter)
 
-    name ~ hold
-    succession ~ hold
-    successor(succession, name;) => begin
+    n: name ~ hold
+    T: transition ~ hold
+    nb(T, name;): next_branch => begin
         find(r) = begin
-            d = succession[name]
+            d = T[name]
             for (k, v) in d
                 r < v ? (return k) : (r -= v)
             end
@@ -199,40 +199,40 @@ abstract type Root <: System end
         find(rand())
     end ~ call::Symbol
 
-    may_segment(l, Δx, lt, lmax) => (l >= Δx && lt < lmax) ~ flag
-    segment(segment, may_segment, name, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)) => begin
-        (isempty(segment) && may_segment) ? [
+    ms(l, Δx, lt, lmax) => (l >= Δx && lt < lmax): may_segment ~ flag
+    S(S, ms, n, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
+        (isempty(S) && ms) ? [
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-            produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
+            produce(n, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
         ] : nothing
     end ~ produce::Root
 
-    may_branch(lt, zl, zt) => (lt >= zl && zt != :apical) ~ flag
-    branch(branch, may_branch, successor, box, ro, wrap(RT1)) => begin
-        (isempty(branch) && may_branch) ? [
-            produce(successor(), box=box, ro=ro+1, RT0=RT1),
+    mb(lt, zl, zt) => (lt >= zl && zt != :apical): may_branch ~ flag
+    B(B, mb, nb, box, ro, wrap(RT1)): branch => begin
+        (isempty(B) && mb) ? [
+            produce(nb(), box=box, ro=ro+1, RT0=RT1),
         ] : nothing
     end ~ produce::Root
 end
 
 #TODO: provide @macro / function to automatically build a series of related Systems
 @system MyBaseRoot(BaseRoot) <: Root begin
-    succession ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
+    T: transition ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
 end
 @system PrimaryRoot(MyBaseRoot, Gravitropism) <: Root begin
-    name => :PrimaryRoot ~ preserve::Symbol
+    n: name => :PrimaryRoot ~ preserve::Symbol
 end
 @system FirstOrderLateralRoot(MyBaseRoot, Gravitropism) <: Root begin
-    name => :FirstOrderLateralRoot ~ preserve::Symbol
+    n: name => :FirstOrderLateralRoot ~ preserve::Symbol
 end
 @system SecondOrderLateralRoot(MyBaseRoot, Gravitropism) <: Root begin
-    name => :SecondOrderLateralRoot ~ preserve::Symbol
+    n: name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
 
 @system RootSystem(Controller) begin
     box(context) ~ ::Rhizobox
-    number_of_basal_roots: maxB => 1 ~ preserve::Int(parameter)
-    initial_transformation: RT0 => IdentityTransformation() ~ track::Transformation
+    maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
+    RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
         [produce(PrimaryRoot, box=box, RT0=RT0) for i in (length(roots)+1):maxB]
     end ~ produce::PrimaryRoot
@@ -303,7 +303,7 @@ maize = (
         :height => 50,
     ),
     :RootSystem => :maxB => 5,
-    :MyBaseRoot => :succession => [
+    :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
           0 0 1 ; # F
@@ -351,7 +351,7 @@ maize = (
 )
 switchgrass_N = (
     :RootSystem => :maxB => 5,
-    :MyBaseRoot => :succession => [
+    :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
           0 0 1 ; # F
@@ -399,7 +399,7 @@ switchgrass_N = (
 )
 switchgrass_W = (
     :RootSystem => :maxB => 15,
-    :MyBaseRoot => :succession => [
+    :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
           0 0 1 ; # F
