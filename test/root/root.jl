@@ -117,7 +117,6 @@ abstract type Root <: System end
         else
             ln
         end
-        max(zero(l), min(l, lmax - lp))
     end ~ preserve(u"cm")
 
     timestep(context.clock.step): Δt ~ preserve(u"hr")
