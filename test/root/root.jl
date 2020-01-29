@@ -328,7 +328,7 @@ maize = (
         :ln => 0.4 ± 0.03,
         :lmax => 0.6 ± 1.6,
         :r => 2.0 ± 0.2,
-        :Δx => 1,
+        :Δx => 0.1,
         :σ => 20,
         :θ => 70 ± 15,
         :N => 1,
@@ -380,7 +380,7 @@ switchgrass_N = (
         :σ => 18,
         :θ => 60 ± 6,
         :N => 1,
-        :a => (0.22 ± 0.02)u"mm",
+        :a => (0.17 ± 0.02)u"mm",
         :color => RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (
@@ -397,6 +397,55 @@ switchgrass_N = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
+switchgrass_W = (
+    :RootSystem => :maxB => 15,
+    :MyBaseRoot => :succession => [
+        # P F S
+          0 1 0 ; # P
+          0 0 1 ; # F
+          0 0 0 ; # S
+    ],
+    :PrimaryRoot => (
+        :lb => 3.40 ± 0.45,
+        :la => 3.37 ± 2.89,
+        :ln => 0.31 ± 0.06,
+        :lmax => 42.33 ± 31.71,
+        :r => 1 ± 0.1,
+        :Δx => 0.5,
+        :σ => 9,
+        :θ => 60 ± 6,
+        :N => 1.5,
+        :a => (0.71 ± 0.07)u"mm",
+        :color => RGBA(1, 0, 0, 1),
+    ),
+    :FirstOrderLateralRoot => (
+        :lb => 0.59 ± 0.48,
+        :la => 0.74 ± 0.87,
+        :ln => 0.09 ± 0.09,
+        :lmax => 1.66 ± 1.75,
+        :r => 0.04 ± 0.01,
+        :Δx => 0.1,
+        :σ => 18,
+        :θ => 60 ± 6,
+        :N => 1,
+        :a => (0.19 ± 0.02)u"mm",
+        :color => RGBA(0, 1, 0, 1),
+    ),
+    :SecondOrderLateralRoot => (
+        :lb => 0.07 ± 0.04,
+        :la => 0,
+        :ln => 0,
+        :lmax => 0.07 ± 0.04,
+        :r => 0.002 ± 0.001,
+        :Δx => 0.01,
+        :σ => 20,
+        :θ => 60 ± 6,
+        :N => 2,
+        :a => (0.19 ± 0.02)u"mm", # 0.68
+        :color => RGBA(0, 0, 1, 1),
+    )
+)
 s = instance(RootSystem, config=maize)
-simulate!(s, stop=500)
+# simulate!(s, stop=1000)
 # render(s) |> open
+# writevtk("test", s)
