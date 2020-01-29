@@ -261,6 +261,41 @@ render!(::Val, s::System, vis) = render!.(Cropbox.value.(collect(s)), Ref(vis))
 render!(::Val, V::Vector{<:System}, vis) = render!.(V, Ref(vis))
 render!(::Val, s, vis) = nothing
 
+gather(s::System) = (L = []; gather!(s, L); L)
+gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
+gather!(V::Val{:BaseRoot}, r::Root, L) = begin
+    if r.zi' == 0
+        l = [r.pp', r.cp']
+        #TODO: support r.segment["**"].cp
+        S = r.segment["**"] |> collect
+        append!(l, [s.cp' for s in S])
+        push!(L, l)
+    end
+    gather!(Val(nothing), r, L)
+end
+gather!(::Val, s::System, L) = gather!.(Cropbox.value.(collect(s)), Ref(L))
+gather!(::Val, V::Vector{<:System}, L) = gather!.(V, Ref(L))
+gather!(::Val, s, L) = nothing
+
+using WriteVTK
+writevtk(name::AbstractString, s::System) = begin
+    L = gather(s)
+    P = Float32[]
+    C = MeshCell[]
+    i = 0
+    for l in L
+        [append!(P, p) for p in l]
+        n = length(l)
+        I = collect(1:n) .+ i
+        i += n
+        c = MeshCell(VTKCellTypes.VTK_POLY_LINE, I)
+        push!(C, c)
+    end
+    P3 = reshape(P, 3, :)
+    g = vtk_grid(name, P3, C)
+    vtk_save(g)
+end
+
 maize = (
     :PlantContainer => (
         :r1 => 5,
