@@ -121,7 +121,7 @@ abstract type Root <: System end
 
     timestep(context.clock.step): Δt ~ preserve(u"hr")
     elongation_rate: r => 1.0 ~ preserve(u"cm/d", parameter, min=0)
-    actual_elongation_rate(r, zl, l, Δt): ar => min(r, (zl - l) / Δt) ~ track(u"cm/d")
+    actual_elongation_rate(r, Δx, l, Δt): ar => min(r, (Δx - l) / Δt) ~ track(u"cm/d")
     remaining_elongation_rate(r, ar): rr => r - ar ~ track(u"cm/d")
     remaining_length(rr, Δt): rl => rr*Δt ~ track(u"cm")
     initial_length: l0 => 0 ~ preserve(u"cm", extern)
@@ -198,16 +198,15 @@ abstract type Root <: System end
         find(rand())
     end ~ call::Symbol
 
-    may_segment(l, zl, lt, lmax) => (l >= zl && lt < lmax) ~ flag
+    may_segment(l, Δx, lt, lmax) => (l >= Δx && lt < lmax) ~ flag
     segment(segment, may_segment, name, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)) => begin
-        #FIXME: need to branch every Δx for adding consecutive segments?
         (isempty(segment) && may_segment) ? [
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
             produce(name, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
         ] : nothing
     end ~ produce::Root
 
-    may_branch(l, zl, zt) => (l >= zl && zt != :apical) ~ flag
+    may_branch(lt, zl, zt) => (lt >= zl && zt != :apical) ~ flag
     branch(branch, may_branch, successor, box, ro, wrap(RT1)) => begin
         (isempty(branch) && may_branch) ? [
             produce(successor(), box=box, ro=ro+1, RT0=RT1),
