@@ -1,27 +1,42 @@
 import DataFrames: DataFrame
 import UnicodePlots
 
-plot(df::DataFrame, index::Symbol, target::Symbol) = plot(df, index, [target])
-plot(df::DataFrame, index::Symbol, target::Vector{Symbol}) = begin
+plot(df::DataFrame, index::Symbol, target::Symbol; kw...) = plot(df, index, [target]; kw...)
+plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
+plot!(p, df::DataFrame, index::Symbol, target::Symbol; kw...) = plot!(p, df, index, [target]; kw...)
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing) = begin
+    if kind == :line
+        plot = UnicodePlots.lineplot
+        plot! = UnicodePlots.lineplot!
+    elseif kind == :scatter
+        plot = UnicodePlots.scatterplot
+        plot! = UnicodePlots.scatterplot!
+    else
+        error("unrecognized plot kind = $kind")
+    end
+
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
-    
+
     arr(n::Symbol, u) = deunitfy(df[!, n], u)
     X = arr(index, xu)
     Ys = arr.(target, yu)
-    
+
     lim(a) = (floor(minimum(a)), ceil(maximum(a)))
     xlim = lim(X)
     ylim = (l = lim.(Ys); (minimum(l)[1], maximum(l)[2]))
-    
-    lab(n) = (s = string(u(n)); isempty(s) ? "$n" : "$n ($s)")
-    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = lab(index) * '\n'
-    
-    p = UnicodePlots.lineplot(X, Ys[1], name=lab(target[1]), xlabel=xlab, xlim=xlim, ylim=ylim)
-    for i in 2:length(Ys)
-        UnicodePlots.lineplot!(p, X, Ys[i], name=lab(target[i]))
+
+    lab(n, l) = (s = string(u(n)); isempty(s) ? "$l" : "$l ($s)")
+    lab(n, ::Nothing) = lab(n, n)
+    xlab = lab(index, xlabel)
+
+    if isnothing(p)
+        a = Float64[]
+        p = UnicodePlots.Plot(a, a, xlabel=xlab, xlim=xlim, ylim=ylim)
     end
-    p |> display
+    for i in 1:length(Ys)
+        plot!(p, X, Ys[i], name=lab(target[i], ylabel))
+    end
+    p
 end
