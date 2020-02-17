@@ -6,6 +6,7 @@ using Test
     include("state.jl")
     include("system.jl")
     include("unit.jl")
+    include("config.jl")
     include("tool.jl")
     include("lotka_volterra.jl")
     include("root_structure.jl")

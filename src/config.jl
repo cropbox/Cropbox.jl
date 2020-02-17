@@ -1,12 +1,15 @@
 import DataStructures: OrderedDict
 const Config = OrderedDict{Any,Any}
 
-configure(c::AbstractDict) = Config(Symbol(p.first) => configure(p.second) for p in c)
-configure(c::Tuple) = configure(Config(c))
-configure(c::NamedTuple) = configure(Config(pairs(c)))
-configure(c::Pair) = configure(Config(c))
+configure(c::AbstractDict) = configure(c...)
+configure(c::Pair) = _configure(c.first, c.second)
+configure(c::Tuple) = configure(c...)
 configure(c...) = merge(merge, configure.(c)...)
-configure(c) = c
+configure() = Config()
+_configure(k::Symbol, v) = Config(k => _configure(v))
+_configure(k::Type{<:System}, v) = _configure(nameof(k), v)
+_configure(v) = Config(v)
+_configure(v::NamedTuple) = Config(pairs(v))
 
 #TODO: wait until TOML 0.5 gets support
 # using TOML
