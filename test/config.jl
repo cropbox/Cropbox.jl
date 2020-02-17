@@ -147,6 +147,20 @@ import DataStructures: OrderedDict
         end
     end
     
+    @testset "calibrate" begin
+        c = (:S1 => (:a => 1, :b => 2), :S2 => :c => 3)
+        C = Cropbox.configure(c)
+        K = Cropbox.parameterkeys(C)
+        @test K == [(:S1, :a), (:S1, :b), (:S2, :c)]
+        V = Cropbox.parametervalues(C)
+        @test V == [1, 2, 3]
+        P = Cropbox.parameterzip(K, V)
+        @test P == C
+        @test P[:S1][:a] == 1
+        @test P[:S1][:b] == 2
+        @test P[:S2][:c] == 3
+    end
+    
     @testset "parameters" begin
         @testset "basic" begin
             @system SConfigParameters begin

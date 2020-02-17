@@ -1,4 +1,4 @@
-import DataStructures: OrderedDict
+import DataStructures: OrderedDict, DefaultOrderedDict
 const Config = OrderedDict{Any,Any}
 
 configure(c::AbstractDict) = configure(c...)
@@ -21,6 +21,25 @@ end
 _configure(k::Type{<:System}, v) = _configure(nameof(k), v)
 _configure(v) = Config(v)
 _configure(v::NamedTuple) = Config(pairs(v))
+
+parameterflatten(c::Config) = begin
+    l = OrderedDict()
+    for (s, d) in c
+        for (k, v) in d
+            l[(s, k)] = v
+        end
+    end
+    l
+end
+parameterkeys(c::Config) = collect(keys(parameterflatten(c)))
+parametervalues(c::Config) = collect(values(parameterflatten(c)))
+parameterzip(K, V) = begin
+    l = DefaultOrderedDict(OrderedDict)
+    for ((s, k), v) in zip(K, V)
+        l[s][k] = v
+    end
+    configure(l)
+end
 
 #TODO: wait until TOML 0.5 gets support
 # using TOML
