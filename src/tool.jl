@@ -92,19 +92,12 @@ simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
 
-import DataStructures: OrderedDict, DefaultDict
 import BlackBoxOptim: bboptimize, best_candidate
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
 calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, kwargs...) = begin
-    P = OrderedDict(parameters)
-    K = [Symbol.(split(n, ".")) for n in keys(P)]
-    config(X) = begin
-        d = DefaultDict(Dict)
-        for (k, v) in zip(K, X)
-            d[k[1]][k[2]] = v
-        end
-        d
-    end
+    P = configure(parameters)
+    K = parameterkeys(P)
+    config(X) = parameterzip(K, X)
     i = parsesimulation(index) |> keys |> collect
     k = parsesimulationkey(target).first
     k1 = Symbol(k, :_1)
@@ -124,7 +117,7 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
         sum(R.^2) |> deunitfy
     end
     #FIXME: input parameters units are ignored without conversion
-    range = map(p -> Float64.(Tuple(deunitfy(p))), values(P))
+    range = map(p -> Float64.(Tuple(deunitfy(p))), parametervalues(P))
     r = bboptimize(cost; SearchRange=range)
     best_candidate(r) |> config
 end

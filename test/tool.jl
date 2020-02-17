@@ -126,7 +126,7 @@ using DataFrames
         w1, w2 = 1, 2
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
-        params = ("SCalibrateConfig.a" => A)
+        params = :SCalibrateConfig => :a => A
         p1 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
         @test p1[:SCalibrateConfig][:a] == a/w1
         p2 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
@@ -149,7 +149,7 @@ using DataFrames
         ]
         index = ["context.clock.tick", :w]
         target = :b
-        params = ("SCalibrateConfigsIndex.a" => A)
+        params = :SCalibrateConfigsIndex => :a => A
         p = calibrate(SCalibrateConfigsIndex, obs, configs, stop=n, index=index, target=target, parameters=params)
         @test p[:SCalibrateConfigsIndex][:a] == 10
     end
