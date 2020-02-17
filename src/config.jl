@@ -7,6 +7,17 @@ configure(c::Tuple) = configure(c...)
 configure(c...) = merge(merge, configure.(c)...)
 configure() = Config()
 _configure(k::Symbol, v) = Config(k => _configure(v))
+_configure(k::String, v) = begin
+    a = Symbol.(split(k, "."))
+    n = length(a)
+    if n == 2
+        Config(a[1] => _configure(a[2] => v))
+    elseif n == 1
+        Config(a[1] => _configure(v))
+    else
+        error("unrecognized configuration key string: $k")
+    end
+end
 _configure(k::Type{<:System}, v) = _configure(nameof(k), v)
 _configure(v) = Config(v)
 _configure(v::NamedTuple) = Config(pairs(v))

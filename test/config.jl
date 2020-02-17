@@ -128,6 +128,25 @@ import DataStructures: OrderedDict
         end
     end
     
+    @testset "string" begin
+        @testset "basic" begin
+            c = "S.a" => 1
+            C = Cropbox.configure(c)
+            @test C[:S][:a] == 1
+        end
+        
+        @testset "system" begin
+            c = "S" => :a => 1
+            C = Cropbox.configure(c)
+            @test C[:S][:a] == 1
+        end
+        
+        @testset "error" begin
+            c = "S.a.b" => 1
+            @test_throws ErrorException Cropbox.configure(c)
+        end
+    end
+    
     @testset "parameters" begin
         @testset "basic" begin
             @system SConfigParameters begin
