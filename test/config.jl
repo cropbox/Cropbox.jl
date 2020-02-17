@@ -127,4 +127,57 @@ import DataStructures: OrderedDict
             @test C[:S][:a] == 2
         end
     end
+    
+    @testset "parameters" begin
+        @testset "basic" begin
+            @system SConfigParameters begin
+                a => 1 ~ preserve(parameter)
+            end
+            c = Cropbox.parameters(SConfigParameters)
+            @test c[:SConfigParameters][:a] == 1
+        end
+        
+        @testset "unit" begin
+            @system SConfigParametersUnit begin
+                a => 1 ~ preserve(u"m", parameter)
+            end
+            c = Cropbox.parameters(SConfigParametersUnit)
+            @test c[:SConfigParametersUnit][:a] == 1u"m"
+        end
+        
+        @testset "alias" begin
+            @system SConfigParametersAlias begin
+                a: aa => 1 ~ preserve(parameter)
+            end
+            c = Cropbox.parameters(SConfigParametersAlias, alias=true)
+            @test_throws KeyError c[:SConfigParametersAlias][:a]
+            @test c[:SConfigParametersAlias][:aa] == 1
+        end
+        
+        @testset "recursive" begin
+            @system SConfigParametersRecursiveChild begin
+                b => 2 ~ preserve(parameter)
+            end
+            @system SConfigParametersRecursive begin
+                s ~ ::SConfigParametersRecursiveChild
+                a => 1 ~ preserve(parameter)
+            end
+            c = Cropbox.parameters(SConfigParametersRecursive, recursive=true)
+            @test haskey(c, :Context)
+            @test haskey(c, :Clock)
+            @test c[:SConfigParametersRecursive][:a] == 1
+            @test c[:SConfigParametersRecursiveChild][:b] == 2
+        end
+        
+        @testset "exclude" begin
+            @system SConfigParametersExclude begin
+                a => 1 ~ preserve(parameter)
+            end
+            X = (Cropbox.Context,)
+            c = Cropbox.parameters(SConfigParametersExclude, recursive=true, exclude=X)
+            @test !haskey(c, :Context)
+            @test !haskey(c, :Clock)
+            @test c[:SConfigParametersExclude][:a] == 1
+        end
+    end
 end
