@@ -199,7 +199,7 @@ abstract type Root <: System end
         find(rand())
     end ~ call::Symbol
 
-    ms(l, Δx, lt, lmax) => (l >= Δx && lt < lmax): may_segment ~ flag
+    ms(l, Δx, lt, lmax): may_segment => (l >= Δx && lt < lmax) ~ flag
     S(S, ms, n, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
         (isempty(S) && ms) ? [
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
@@ -207,7 +207,7 @@ abstract type Root <: System end
         ] : nothing
     end ~ produce::Root
 
-    mb(lt, zl, zt) => (lt >= zl && zt != :apical): may_branch ~ flag
+    mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
     B(B, mb, nb, box, ro, wrap(RT1)): branch => begin
         (isempty(B) && mb) ? [
             produce(nb(), box=box, ro=ro+1, RT0=RT1),
