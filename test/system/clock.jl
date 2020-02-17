@@ -10,7 +10,7 @@
 
     @testset "config" begin
         @system SClockConfig(Controller)
-        o = :Clock => (#=:init => 5,=# step => 10)
+        o = :Clock => (#=:init => 5,=# :step => 10)
         s = instance(SClockConfig; config=o)
         # after one advance! in instance()
         @test s.context.clock.tick' == 10u"hr"
