@@ -1,6 +1,6 @@
 struct Produce{S<:System} <: State{S}
     name::Symbol # used in recurisve collecting in collect()
-    value::Vector{S}
+    value::Vector{System}
 end
 
 struct Product{S<:System}

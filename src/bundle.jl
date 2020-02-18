@@ -51,11 +51,11 @@ getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
 value(b::Bunch) = value.(collect(b))
 
 import Base: collect
-collect(b::Bundle{S}) where S = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])::Vector{<:S}
+collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
 collect(b::Bunch) = getfield(b, :list)
 collect(p::Produce, ::BundleAll) = value(p)
-collect(p::Produce{S}, ::BundleRecursiveAll) where S = begin
-    l = S[]
+collect(p::Produce, ::BundleRecursiveAll) = begin
+    l = System[]
     #TODO: possibly reduce overhead by reusing calculated values in child nodes
     f(s) = (push!(l, s); f.(value(getfield(s, p.name))))
     f.(value(p))
