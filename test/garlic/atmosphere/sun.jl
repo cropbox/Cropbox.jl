@@ -32,8 +32,8 @@ import Dates
     d(t): day => Dates.dayofyear(t) ~ track::Int
     h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
 
-    lat(loc): latitude ~ drive(u"°") # DO NOT convert to radians for consistency
-    long(loc): longitude ~ drive(u"°") # leave it as in degrees, used only once for solar noon calculation
+    ϕ(loc): latitude ~ drive(key=:lat, u"°") # DO NOT convert to radians for consistency
+    λ(loc): longitude ~ drive(key=:long, u"°") # leave it as in degrees, used only once for solar noon calculation
     alt(loc): altitude ~ drive(u"m")
 
     #TODO: fix inconsistent naming of PAR vs. PFD
@@ -83,15 +83,15 @@ import Dates
     dph: degree_per_hour => 360u"°" / 24u"hr" ~ preserve(u"°/hr")
 
     # LC is longitude correction for Light noon, Wohlfart et al, 2000; Campbell & Norman 1998
-    LC(long, dph): longitude_correction => begin
+    LC(λ, dph): longitude_correction => begin
         # standard meridian for pacific time zone is 120 W, Eastern Time zone : 75W
         # LC is positive if local meridian is east of standard meridian, i.e., 76E is east of 75E
         #standard_meridian = -120
-        meridian = round(u"hr", long / dph) * dph
+        meridian = round(u"hr", λ / dph) * dph
         #FIXME use standard longitude sign convention
         #(long - meridian) / dph
         #HACK this assumes inverted longitude sign that MAIZSIM uses
-        (meridian - long) / dph
+        (meridian - λ) / dph
     end ~ track(u"hr")
 
     ET(d): equation_of_time => begin
@@ -102,7 +102,7 @@ import Dates
     solar_noon(LC, ET) => 12u"hr" - LC - ET ~ track(u"hr")
 
     # θs: zenith angle
-    hour_angle_at(p=latitude, δ; θs(u"°")) => begin
+    hour_angle_at(ϕ, δ; θs(u"°")) => begin
         # this value should never become negative because -90 <= latitude <= 90 and -23.45 < decl < 23.45
         #HACK is this really needed for crop models?
         # preventing division by zero for N and S poles
@@ -111,8 +111,8 @@ import Dates
         #TODO need to deal with lat_bound to prevent tan(90)?
         #lat_bound = radians(68)? radians(85)?
         # cos(h0) at cos(theta_s) = 0 (solar zenith angle = 90 deg == elevation angle = 0 deg)
-        #-tan(latitude) * tan(δ)
-        c = (cos(θs) - sin(p) * sin(δ)) / (cos(p) * cos(δ))
+        #-tan(ϕ) * tan(δ)
+        c = (cos(θs) - sin(ϕ) * sin(δ)) / (cos(ϕ) * cos(δ))
         # c > 1: in the polar region during the winter, sun does not rise
         # c < -1: white nights during the summer in the polar region
         c = clamp(c, -1, 1)
@@ -130,9 +130,9 @@ import Dates
 
     hour_angle(h, solar_noon, dph) => ((h - solar_noon) * dph) ~ track(u"°")
 
-    elevation_angle(h=hour_angle, δ, p=latitude) => begin
+    elevation_angle(h=hour_angle, δ, ϕ) => begin
         #FIXME When time gets the same as solarnoon, this function fails. 3/11/01 ??
-        asind(cos(h) * cos(δ) * cos(p) + sin(δ) * sin(p))
+        asind(cos(h) * cos(δ) * cos(ϕ) + sin(δ) * sin(ϕ))
     end ~ track(u"°")
 
     zenith_angle(elevation_angle) => (90u"°" - elevation_angle) ~ track(u"°")
@@ -142,8 +142,8 @@ import Dates
     # View point from south, morning: +, afternoon: -
     # See An introduction to solar radiation by Iqbal (1983) p 15-16
     # Also see https://www.susdesign.com/sunangle/
-    azimuth_angle(t_s=elevation_angle, δ, p=latitude) => begin
-        acosd((sin(δ) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
+    azimuth_angle(t_s=elevation_angle, δ, ϕ) => begin
+        acosd((sin(δ) - sin(t_s) * sin(ϕ)) / (cos(t_s) * cos(ϕ)))
     end ~ track(u"°")
 
     ###################
