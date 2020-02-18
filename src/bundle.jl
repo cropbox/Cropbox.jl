@@ -68,3 +68,7 @@ collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
     (1 <= i <= n) ? [V[i]] : S[]
 end
 collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(getfield(s, Symbol(o.cond))), V)
+
+import Base: adjoint
+adjoint(b::Bundle) = collect(b)
+adjoint(b::Bunch) = [v' for v in collect(b)]
