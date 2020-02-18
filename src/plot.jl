@@ -23,7 +23,10 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
     X = arr(index, xu)
     Ys = arr.(target, yu)
 
-    lim(a) = (floor(minimum(a)), ceil(maximum(a)))
+    lim(a) = let l = floor(minimum(a)), u = ceil(maximum(a))
+        #HACK: avoid empty range
+        l == u ? (l, l+1) : (l, u)
+    end
     xlim = lim(X)
     ylim = (l = lim.(Ys); (minimum(l)[1], maximum(l)[2]))
 
