@@ -443,7 +443,7 @@ simulate(SoilController, stop=80,
     config=(
         :Clock => (:step => 1u"d"),
         :SoilClock => (:step => 15u"minute"),
-        :SoilWeather => (:filename => "test/PyWaterBal.csv"),
+        :SoilWeather => (:filename => "test/soil/PyWaterBal.csv"),
     ),
     target=(
         :v1 => "s.L[1].θ",
