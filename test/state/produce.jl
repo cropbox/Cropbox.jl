@@ -171,4 +171,26 @@
         @test s.c' == 1 # (#1* + 2 + #3 + .4)
         @test s.d' == 3 # (#1 + 2 + #3* + .4)
     end
+
+    @testset "adjoint" begin
+        @system SProduceAdjoint begin
+            p => produce(SProduceAdjoint) ~ produce::SProduceAdjoint
+            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
+        end
+        @system SProduceAdjointController(Controller) begin
+            s(context) ~ ::SProduceAdjoint
+        end
+        sc = instance(SProduceAdjointController)
+        s = sc.s
+        update!(sc)
+        @test length(s.p["*"]') == 1
+        @test length(s.p["**"]') == 1
+        @test s.p["*"].i' == [1]
+        @test s.p["**"].i' == [1]
+        update!(sc)
+        @test length(s.p["*"]') == 2
+        @test length(s.p["**"]') == 3
+        @test s.p["*"].i' == [1, 2]
+        @test s.p["**"].i' == [1, 2, 2]
+    end
 end
