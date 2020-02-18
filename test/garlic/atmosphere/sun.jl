@@ -272,19 +272,19 @@ end
     stop(context.clock.tick, d) => tick >= d ~ flag
 end
 
-plot_sun(v, d=3) = begin
+plot_sun(v, d=3; kw...) = begin
     o = (
         :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
         :Weather => (:filename => "test/garlic/data/2007.wea"),
         :SunController => (:duration => d),
     )
     r = simulate(SunController, stop=:stop, config=o, base=:sun)
-    Cropbox.plot(r, :tick, v)
+    Cropbox.plot(r, :tick, v; kw...)
 end
 
-test_sun() = begin
-    plot_sun(:δ) # declination_angle
-    plot_sun(:elevation_angle)
-    plot_sun(:Fdir) # directional_coeff
-    plot_sun(:Fdif) # diffusive_coeff
-end
+test_sun(d=3) = foreach(v -> display(plot_sun(v, d)), [
+    :δ, # declination_angle
+    :elevation_angle,
+    :Fdir, # directional_coeff
+    :Fdif, # diffusive_coeff
+])
