@@ -452,5 +452,5 @@ simulate(SoilController, stop=80,
         :v4 => "s.L[4].θ",
         :v5 => "s.L[5].θ",
     ),
-    nounit=true
 )
+Cropbox.plot(ans, :tick, [:v1, :v2, :v3, :v4, :v5])
