@@ -80,7 +80,7 @@ end
 
     area_increase_from_length(length) => begin
         # for garlic, see JH's thesis
-        l = Crobpox.deunitfy(length)
+        l = Cropbox.deunitfy(length)
         0.954957 + 2*0.005920l
     end ~ track(u"cm^2")
 
