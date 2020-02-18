@@ -101,8 +101,8 @@ import Dates
 
     solar_noon(LC, ET) => 12u"hr" - LC - ET ~ track(u"hr")
 
-    # w_s: zenith angle
-    cos_hour_angle(p=latitude, δ; w_s(u"°")) => begin
+    # θs: zenith angle
+    hour_angle_at(p=latitude, δ; θs(u"°")) => begin
         # this value should never become negative because -90 <= latitude <= 90 and -23.45 < decl < 23.45
         #HACK is this really needed for crop models?
         # preventing division by zero for N and S poles
@@ -112,16 +112,14 @@ import Dates
         #lat_bound = radians(68)? radians(85)?
         # cos(h0) at cos(theta_s) = 0 (solar zenith angle = 90 deg == elevation angle = 0 deg)
         #-tan(latitude) * tan(δ)
-        (cos(w_s) - sin(p) * sin(δ)) / (cos(p) * cos(δ))
-    end ~ call
-
-    hour_angle_at_horizon(cos_hour_angle) => begin
-        c = cos_hour_angle(90u"°")
+        c = (cos(θs) - sin(p) * sin(δ)) / (cos(p) * cos(δ))
         # c > 1: in the polar region during the winter, sun does not rise
         # c < -1: white nights during the summer in the polar region
         c = clamp(c, -1, 1)
         acosd(c)
-    end ~ track(u"°")
+    end ~ call(u"°")
+
+    hour_angle_at_horizon(hour_angle_at) => hour_angle_at(90u"°") ~ track(u"°")
 
     # from Iqbal (1983) p 16
     half_day_length(hour_angle_at_horizon, dph) => (hour_angle_at_horizon / dph) ~ track(u"hr")
