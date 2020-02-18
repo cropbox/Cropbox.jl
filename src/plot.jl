@@ -1,9 +1,9 @@
 import DataFrames: DataFrame
 import UnicodePlots
 
-plot(df::DataFrame, index::Symbol, target::Symbol; kw...) = plot(df, index, [target]; kw...)
+plot(df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot(df, index, [target]; ylabel=[ylabel], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Symbol; kw...) = plot!(p, df, index, [target]; kw...)
+plot!(p, df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot!(p, df, index, [target]; ylabel=[ylabel], kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing) = begin
     if kind == :line
         plot = UnicodePlots.lineplot
@@ -22,6 +22,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
     arr(n::Symbol, u) = deunitfy(df[!, n], u)
     X = arr(index, xu)
     Ys = arr.(target, yu)
+    n = length(Ys)
 
     lim(a) = let l = floor(minimum(a)), u = ceil(maximum(a))
         #HACK: avoid empty range
@@ -35,13 +36,14 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
     end
     lab(n, ::Nothing) = lab(n, n)
     xlab = lab(index, xlabel)
+    ylabs = isnothing(ylabel) ? repeat([nothing], n) : ylabel
 
     if isnothing(p)
         a = Float64[]
         p = UnicodePlots.Plot(a, a, xlabel=xlab, xlim=xlim, ylim=ylim)
     end
-    for i in 1:length(Ys)
-        plot!(p, X, Ys[i], name=lab(target[i], ylabel))
+    for i in 1:n
+        plot!(p, X, Ys[i], name=lab(target[i], ylabs[i]))
     end
     p
 end
