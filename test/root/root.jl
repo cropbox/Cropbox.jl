@@ -8,13 +8,13 @@ import UUIDs
 
 @system Rendering
 
-abstract type Container <: System end
+abstract type ContainerSystem <: System end
 
-@system BaseContainer(Rendering) <: Container begin
+@system BaseContainer(Rendering) <: ContainerSystem begin
     dist(; p::Point3f0): distance => -Inf ~ call
 end
 
-@system PlantContainer(BaseContainer) <: Container begin
+@system PlantContainer(BaseContainer) <: ContainerSystem begin
     r1: top_radius => 5 ~ preserve(u"cm", parameter)
     r2: bottom_radius => 5 ~ preserve(u"cm", parameter)
     h: height => 100 ~ preserve(u"cm", parameter)
@@ -38,7 +38,7 @@ end
     end ~ call
 end
 
-@system Rhizobox(BaseContainer) <: Container begin
+@system Rhizobox(BaseContainer) <: ContainerSystem begin
     l: length => 16u"inch" ~ preserve(u"cm", parameter)
     w: width => 10.5u"inch" ~ preserve(u"cm", parameter)
     h: height => 42u"inch" ~ preserve(u"cm", parameter)
@@ -86,10 +86,10 @@ end
     end ~ call
 end
 
-abstract type Root <: System end
+abstract type RootSystem <: System end
 
-@system BaseRoot(Tropism, Rendering) <: Root begin
-    box ~ ::Container(override)
+@system BaseRoot(Tropism, Rendering) <: RootSystem begin
+    box ~ ::ContainerSystem(override)
 
     ro: root_order => 1 ~ preserve::Int(extern)
     zi: zone_index => 0 ~ preserve::Int(extern)
@@ -216,20 +216,20 @@ abstract type Root <: System end
 end
 
 #TODO: provide @macro / function to automatically build a series of related Systems
-@system MyBaseRoot(BaseRoot) <: Root begin
+@system MyBaseRoot(BaseRoot) <: RootSystem begin
     T: transition ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
 end
-@system PrimaryRoot(MyBaseRoot, Gravitropism) <: Root begin
+@system PrimaryRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
     n: name => :PrimaryRoot ~ preserve::Symbol
 end
-@system FirstOrderLateralRoot(MyBaseRoot, Gravitropism) <: Root begin
+@system FirstOrderLateralRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
     n: name => :FirstOrderLateralRoot ~ preserve::Symbol
 end
-@system SecondOrderLateralRoot(MyBaseRoot, Gravitropism) <: Root begin
+@system SecondOrderLateralRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
     n: name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
 
-@system RootSystem(Controller) begin
+@system RootArchiteture(Controller) begin
     box(context) ~ ::Rhizobox
     maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
@@ -241,7 +241,7 @@ end
 render(s::System) = (vis = Visualizer(); render!(s, vis); vis)
 #TODO: provide macro (i.e. @mixin/@drive?) for scaffolding functions based on traits (Val)
 render!(s, vis) = render!(Cropbox.mixindispatch(s, Rendering)..., vis)
-render!(V::Val{:Rendering}, r::Root, vis) = begin
+render!(V::Val{:Rendering}, r::RootSystem, vis) = begin
     l = Cropbox.deunitfy(r.l')
     a = Cropbox.deunitfy(r.a')
     (iszero(l) || iszero(a)) && return
@@ -263,7 +263,7 @@ render!(::Val, s, vis) = nothing
 
 gather(s::System) = (L = []; gather!(s, L); L)
 gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
-gather!(V::Val{:BaseRoot}, r::Root, L) = begin
+gather!(V::Val{:BaseRoot}, r::RootSystem, L) = begin
     r.zi' == 0 && push!(L, [r.pp', r.cp', r.S["**"].cp'...])
     gather!(Val(nothing), r, L)
 end
@@ -296,7 +296,7 @@ maize = (
         :r2 => 5,
         :height => 50,
     ),
-    :RootSystem => :maxB => 5,
+    :RootArchiteture => :maxB => 5,
     :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -344,7 +344,7 @@ maize = (
     )
 )
 switchgrass_N = (
-    :RootSystem => :maxB => 5,
+    :RootArchiteture => :maxB => 5,
     :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -392,7 +392,7 @@ switchgrass_N = (
     )
 )
 switchgrass_W = (
-    :RootSystem => :maxB => 15,
+    :RootArchiteture => :maxB => 15,
     :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -439,7 +439,7 @@ switchgrass_W = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
-s = instance(RootSystem, config=maize)
+s = instance(RootArchiteture, config=maize)
 # simulate!(s, stop=1000)
 # render(s) |> open
 # writevtk("test", s)
