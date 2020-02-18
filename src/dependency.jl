@@ -156,9 +156,10 @@ sort(d::Dependency) = begin
     [d.N[i] for i in J]
 end
 
-label(n::VarNode) = begin
+label(n::VarNode; alias=false) = begin
     v = n.info
-    name = replace(string(v.name), "_" => " ")
+    name = alias && !isnothing(v.alias) ? v.alias : v.name
+    name = replace(string(name), "_" => " ")
     tag = begin
         if n.step == PreStep()
             "∘"
@@ -172,13 +173,13 @@ label(n::VarNode) = begin
 end
 
 import TikzGraphs
-plot(d::Dependency) = TikzGraphs.plot(d.g, label.(d.N))
-plot(::Type{S}) where {S<:System} = plot(dependency(S))
+plot(d::Dependency; kw...) = TikzGraphs.plot(d.g, label.(d.N; kw...))
+plot(::Type{S}; kw...) where {S<:System} = plot(dependency(S); kw...)
 
 import Base: write
 import TikzPictures
-write(filename::AbstractString, d::Dependency) = begin
+write(filename::AbstractString, d::Dependency; kw...) = begin
     f = TikzPictures.PDF(string(filename))
-    TikzPictures.save(f, plot(d))
+    TikzPictures.save(f, plot(d; kw...))
 end
-write(filename::AbstractString, ::Type{S}) where {S<:System} = write(filename, dependency(S))
+write(filename::AbstractString, ::Type{S}; kw...) where {S<:System} = write(filename, dependency(S); kw...)
