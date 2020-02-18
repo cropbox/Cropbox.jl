@@ -205,14 +205,14 @@ abstract type Root <: System end
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
             produce(n, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
         ] : nothing
-    end ~ produce::Root
+    end ~ produce::BaseRoot
 
     mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
     B(B, mb, nb, box, ro, wrap(RT1)): branch => begin
         (isempty(B) && mb) ? [
             produce(nb(), box=box, ro=ro+1, RT0=RT1),
         ] : nothing
-    end ~ produce::Root
+    end ~ produce::BaseRoot
 end
 
 #TODO: provide @macro / function to automatically build a series of related Systems
@@ -264,13 +264,7 @@ render!(::Val, s, vis) = nothing
 gather(s::System) = (L = []; gather!(s, L); L)
 gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
 gather!(V::Val{:BaseRoot}, r::Root, L) = begin
-    if r.zi' == 0
-        l = [r.pp', r.cp']
-        #TODO: support r.segment["**"].cp
-        S = r.segment["**"] |> collect
-        append!(l, [s.cp' for s in S])
-        push!(L, l)
-    end
+    r.zi' == 0 && push!(L, [r.pp', r.cp', r.S["**"].cp'...])
     gather!(Val(nothing), r, L)
 end
 gather!(::Val, s::System, L) = gather!.(Cropbox.value.(collect(s)), Ref(L))
