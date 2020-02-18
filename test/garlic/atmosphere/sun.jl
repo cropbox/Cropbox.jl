@@ -151,16 +151,16 @@ import Dates
     ###################
 
     # atmospheric pressure in kPa (default = 100 kPa?)
-    atmospheric_pressure(altitude) => begin
+    p(altitude): atmospheric_pressure => begin
         # campbell and Norman (1998), p 41
         101.3exp(-altitude / 8200u"m")
     end ~ track(u"kPa")
 
-    m(atmospheric_pressure, αs): optical_air_mass_number => begin
+    m(p, αs): optical_air_mass_number => begin
         t_s = max(αs, zero(αs))
         #FIXME check 101.3 is indeed in kPa
-        #iszero(t_s) ? 0. : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
-        atmospheric_pressure / (101.3u"kPa" * sin(t_s))
+        #iszero(t_s) ? 0. : p / (101.3u"kPa" * sin(t_s))
+        p / (101.3u"kPa" * sin(t_s))
     end ~ track
 
     SC: solar_constant => 1370 ~ preserve(u"W/m^2", parameter)
