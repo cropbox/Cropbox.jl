@@ -10,14 +10,14 @@ using Dates
     b => 17.502 ~ preserve(parameter)
     c => 240.97 ~ preserve(parameter) # °C
 
-    saturation(a, b, c; T(u"°C")): es => (t = Cropbox.deunitfy(T); a*exp((b*t)/(c+t))) ~ call(u"kPa")
-    ambient(es; T(u"°C"), RH(u"percent")): ea => es(T) * RH ~ call(u"kPa")
-    deficit(es; T(u"°C"), RH(u"percent")): D => es(T) * (1 - RH) ~ call(u"kPa")
-    relative_humidity(es; T(u"°C"), VPD(u"kPa")): rh => 1 - VPD / es(T) ~ call(u"NoUnits")
+    es(a, b, c; T(u"°C")): saturation => (t = Cropbox.deunitfy(T); a*exp((b*t)/(c+t))) ~ call(u"kPa")
+    ea(es; T(u"°C"), RH(u"percent")): ambient => es(T) * RH ~ call(u"kPa")
+    D(es; T(u"°C"), RH(u"percent")): deficit => es(T) * (1 - RH) ~ call(u"kPa")
+    RH(es; T(u"°C"), VPD(u"kPa")): relative_humidity => 1 - VPD / es(T) ~ call(u"NoUnits")
 
     # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
-    saturation_slope_delta(es, b, c; T(u"°C")): Delta => (e = es(T); t = Cropbox.deunitfy(T); e*(b*c)/(c+t)^2 / u"K") ~ call(u"kPa/K")
-    saturation_slope(Delta; T(u"°C"), P(u"kPa")): s => Delta(T) / P ~ call(u"K^-1")
+    Δ(es, b, c; T(u"°C")): saturation_slope_delta => (e = es(T); t = Cropbox.deunitfy(T); e*(b*c)/(c+t)^2 / u"K") ~ call(u"kPa/K")
+    s(Δ; T(u"°C"), P(u"kPa")): saturation_slope => Δ(T) / P ~ call(u"K^-1")
 end
 
 @system Weather(DataFrameStore) begin
@@ -46,8 +46,8 @@ end
     P_air: air_pressure => 100 ~ track(u"kPa")
 
     VPD(T_air, RH, D=vp.D): vapor_pressure_deficit => D(T_air, RH) ~ track(u"kPa")
-    VPD_slope_delta(T_air, Δ=vp.Delta): vapor_pressure_saturation_slope_delta => Δ(T_air) ~ track(u"kPa/K")
-    VPD_slope(T_air, P_air, s=vp.s): vapor_pressure_saturation_slope => s(T_air, P_air) ~ track(u"K^-1")
+    VPD_Δ(T_air, Δ=vp.Δ): vapor_pressure_saturation_slope_delta => Δ(T_air) ~ track(u"kPa/K")
+    VPD_s(T_air, P_air, s=vp.s): vapor_pressure_saturation_slope => s(T_air, P_air) ~ track(u"K^-1")
 end
 
 #TODO: make @stub macro to automate this
@@ -63,8 +63,8 @@ end
     P_air(weather.P_air): air_pressure ~ track(u"kPa")
 
     VPD(weather.VPD): vapor_pressure_deficit ~ track(u"kPa")
-    VPD_slope_delta(weather.VPD_slope_delta): vapor_pressure_saturation_slope_delta ~ track(u"kPa/K")
-    VPD_slope(weather.VPD_slope): vapor_pressure_saturation_slope ~ track(u"K^-1")
+    VPD_Δ(weather.VPD_Δ): vapor_pressure_saturation_slope_delta ~ track(u"kPa/K")
+    VPD_s(weather.VPD_s): vapor_pressure_saturation_slope ~ track(u"K^-1")
 end
 
 #TODO implement proper soil module

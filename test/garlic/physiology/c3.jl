@@ -301,13 +301,13 @@ end
     end ~ track(u"W/m^2")
 
     #FIXME: come up with a better name? (i.e. heat capacity = J(/kg)/K))
-    sensible_heat_capacity(Cp, ghr, λ, gv, VPD_slope=weather.VPD_slope): C => begin
-        Cp*ghr + λ*gv*VPD_slope
+    sensible_heat_capacity(Cp, ghr, λ, gv, VPD_s=weather.VPD_s): C => begin
+        Cp*ghr + λ*gv*VPD_s
     end ~ track(u"W/m^2/K")
 
     temperature_adjustment(R_net, λE, C): T_adj => begin
         # eqn 14.6b linearized form using first order approximation of Taylor series
-        #(psc1 / (VPD_slope + psc1)) * (R_net / (Cp*ghr) - VPD/(psc1*P_air))
+        #(psc1 / (VPD_s + psc1)) * (R_net / (Cp*ghr) - VPD/(psc1*P_air))
         (R_net - λE) / C
     end ~ solve(lower=-10u"K", upper=10u"K", u"K")
 
