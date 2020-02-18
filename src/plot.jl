@@ -30,7 +30,9 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
     xlim = lim(X)
     ylim = (l = lim.(Ys); (minimum(l)[1], maximum(l)[2]))
 
-    lab(n, l) = (s = string(u(n)); isempty(s) ? "$l" : "$l ($s)")
+    lab(n, l) = let s = string(u(n))
+        isempty(s) ? "$l" : "$l ($s)"
+    end
     lab(n, ::Nothing) = lab(n, n)
     xlab = lab(index, xlabel)
 
