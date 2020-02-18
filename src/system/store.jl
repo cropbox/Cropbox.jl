@@ -5,22 +5,22 @@ import CSV
     filename => "" ~ preserve::String(parameter)
     indexkey => :timestamp ~ preserve::Symbol(optional, parameter)
 
-    index(t=nounit(context.clock.tick)) => t + 1 ~ track::Int
-    timestamp(; r::DataFrameRow) => getfield(r, :row) ~ call
+    i(t=nounit(context.clock.tick)): index => t + 1 ~ track::Int
+    t(; r::DataFrameRow): timestamp => getfield(r, :row) ~ call
 
-    dataframe(filename, indexkey, timestamp): df => begin
+    df(filename, indexkey, t): dataframe => begin
         df = CSV.read(filename)
         if !isnothing(indexkey)
-            df[!, indexkey] = map(timestamp, eachrow(df))
+            df[!, indexkey] = map(t, eachrow(df))
         end
         df
     end ~ preserve::DataFrame(extern, parameter)
 
-    store(df, indexkey, index): s => begin
+    s(df, indexkey, i): store => begin
         if !isnothing(indexkey)
-            df[df[!, indexkey] .== index, :][1, :]
+            df[df[!, indexkey] .== i, :][1, :]
         else
-            df[index, :]
+            df[i, :]
         end
     end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
 end

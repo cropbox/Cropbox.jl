@@ -1,30 +1,30 @@
 @system ThermalTime begin
-    temperature: T ~ track(u"°C", override)
-    timestep(context.clock.step): Δt ~ preserve(u"hr")
-    magnitude: ΔT ~ track
-    rate(ΔT, Δt): r => ΔT / Δt ~ track(u"hr^-1")
+    T: temperature ~ track(u"°C", override)
+    Δt(context.clock.step): timestep ~ preserve(u"hr")
+    ΔT: magnitude ~ track
+    r(ΔT, Δt): rate => ΔT / Δt ~ track(u"hr^-1")
 end
 
 @system GrowingDegree(ThermalTime) begin
-    base_temperature: Tb ~ preserve(u"°C", extern, parameter)
-    optimal_temperature: To ~ preserve(u"°C", optional, extern, parameter)
-    maximum_temperature: Tx ~ preserve(u"°C", optional, extern, parameter)
+    Tb: base_temperature ~ preserve(u"°C", extern, parameter)
+    To: optimal_temperature ~ preserve(u"°C", optional, extern, parameter)
+    Tx: maximum_temperature ~ preserve(u"°C", optional, extern, parameter)
 
-    magnitude(T, Tb, To, Tx): ΔT => begin
+    ΔT(T, Tb, To, Tx): magnitude => begin
         T = !isnothing(To) ? min(T, To) : T
         T = !isnothing(Tx) && T >= Tx ? Tb : T
         max(T - Tb, zero(T))
     end ~ track(u"K")
-    rate(ΔT, Δt): r => ΔT / Δt ~ track(u"K/hr")
+    r(ΔT, Δt): rate => ΔT / Δt ~ track(u"K/hr")
 end
 
 @system BetaFunction(ThermalTime) begin
-    minimum_temperature: Tn => 0 ~ preserve(u"°C", extern, parameter)
-    optimal_temperature: To ~ preserve(u"°C", extern, parameter)
-    maximum_temperature: Tx ~ preserve(u"°C", extern, parameter)
-    beta: β => 1 ~ preserve(parameter)
+    Tn: minimum_temperature => 0 ~ preserve(u"°C", extern, parameter)
+    To: optimal_temperature ~ preserve(u"°C", extern, parameter)
+    Tx: maximum_temperature ~ preserve(u"°C", extern, parameter)
+    β: beta => 1 ~ preserve(parameter)
 
-    magnitude(T, Tn, To, Tx, β): ΔT => begin
+    ΔT(T, Tn, To, Tx, β): magnitude => begin
         # beta function, See Yin et al. (1995), Ag For Meteorol., Yan and Hunt (1999) AnnBot, SK
         if (Tn < T < Tx) && (Tn < To < Tx)
             Ton = To - Tn
@@ -40,11 +40,11 @@ end
 end
 
 @system Q10Function(ThermalTime) begin
-    optimal_temperature: To ~ preserve(u"°C", extern, parameter)
+    To: optimal_temperature ~ preserve(u"°C", extern, parameter)
     Q10 => 2 ~ preserve(extern, parameter)
 
     #FIXME: Q10 isn't actually a thermal function like others (not a rate, check unit)
-    magnitude(T, To, Q10): ΔT => begin
+    ΔT(T, To, Q10): magnitude => begin
         Q10^((T - To) / 10u"K")
     end ~ track
 end

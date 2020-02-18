@@ -341,14 +341,14 @@ using CSV
 @system SoilWeather(DataFrameStore) begin
     filename => "PyWaterBal.csv" ~ preserve::String(parameter)
 
-    index(t=context.clock.tick) ~ track(u"d")
-    timestamp(; r::DataFrameRow) => begin
+    i(t=context.clock.tick): index ~ track(u"d")
+    t(; r::DataFrameRow): timestamp => begin
         (r.timestamp - 1) * u"d"
     end ~ call(u"d")
 
-    precipitation(s): R => s[:precipitation] ~ track(u"mm/d")
-    transpiration(s): T => s[:transpiration] ~ track(u"mm/d")
-    evaporation(s): E => s[:evaporation] ~ track(u"mm/d")
+    R(s): precipitation => s[:precipitation] ~ track(u"mm/d")
+    T(s): transpiration => s[:transpiration] ~ track(u"mm/d")
+    E(s): evaporation => s[:evaporation] ~ track(u"mm/d")
 end
 
 # w = instance(SoilWeather, config=(

@@ -1,12 +1,12 @@
 #TODO: rename *temperature to more genereral terms
 @system LeafLengthTracker(BetaFunction) begin
-    phenology: pheno ~ ::Phenology(override)
-    temperature: T ~ ::Int(override)
+    pheno: phenology ~ ::Phenology(override)
+    T: temperature ~ ::Int(override)
     #FIXME: leaves_potential is already max(leaves_generic, leaves_total)?
-    leaf_count(np=pheno.leaves_potential, ng=pheno.leaves_generic): n => max(np, ng) ~ track
-    minimum_temperature: Tn => 0 ~ preserve
-    optimal_temperature(n): To => 0.88n ~ preserve
-    maximum_temperature(n): Tx => 1.64n ~ preserve
+    n(np=pheno.leaves_potential, ng=pheno.leaves_generic): leaf_count => max(np, ng) ~ track
+    Tn: minimum_temperature => 0 ~ preserve
+    To(n): optimal_temperature => 0.88n ~ preserve
+    Tx(n): maximum_temperature => 1.64n ~ preserve
 end
 
 @system Leaf(Organ) begin

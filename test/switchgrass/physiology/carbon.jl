@@ -1,7 +1,7 @@
 @system RespirationTracker(Q10Function) begin
-    weather: w ~ ::Weather(override)
-    temperature(w.T_air): T ~ track(u"°C") # should be soil temperature
-    optimal_temperature: To => 20 ~ preserve(u"°C", parameter)
+    w: weather ~ ::Weather(override)
+    T(w.T_air): temperature ~ track(u"°C") # should be soil temperature
+    To: optimal_temperature => 20 ~ preserve(u"°C", parameter)
     Q10 => begin
         # typical Q10 value for respiration, Loomis and Amthor (1999) Crop Sci 39:1584-1596
         2
