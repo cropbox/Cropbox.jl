@@ -14,31 +14,31 @@
 # - added direct and diffuse separation functions according to Weiss and Norman (1985), 3/16/05
 
 @system Location begin
-    latitude => 36u"°" ~ preserve(u"°", parameter)
-    longitude => 128u"°" ~ preserve(u"°", parameter)
-    altitude => 20u"m" ~ preserve(u"m", parameter)
+    lat: latitude => 36u"°" ~ preserve(u"°", parameter)
+    long: longitude => 128u"°" ~ preserve(u"°", parameter)
+    alt: altitude => 20u"m" ~ preserve(u"m", parameter)
 end
 
 import Dates
 
 @system Sun begin
     #TODO override Location
-    location(context): loc ~ ::Location #(override)
+    loc(context): location ~ ::Location #(override)
     calendar ~ ::Calendar(override)
     weather ~ ::Weather(override)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
-    datetime(t=calendar.time): t => t ~ track::ZonedDateTime
-    day(t): d => Dates.dayofyear(t) ~ track::Int
-    hour(t): h => Dates.hour(t) ~ track::Int(u"hr")
+    t(calendar.time): datetime ~ track::ZonedDateTime
+    d(t): day => Dates.dayofyear(t) ~ track::Int
+    h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
 
-    latitude(loc): lat ~ drive(u"°") # DO NOT convert to radians for consistency
-    longitude(loc): long ~ drive(u"°") # leave it as in degrees, used only once for solar noon calculation
-    altitude(loc): alt ~ drive(u"m")
+    lat(loc): latitude ~ drive(u"°") # DO NOT convert to radians for consistency
+    long(loc): longitude ~ drive(u"°") # leave it as in degrees, used only once for solar noon calculation
+    alt(loc): altitude ~ drive(u"m")
 
     #TODO: fix inconsistent naming of PAR vs. PFD
-    photosynthetic_active_radiation(weather): PAR ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
-    transmissivity: τ => 0.5 ~ preserve(parameter) # atmospheric transmissivity, Goudriaan and van Laar (1994) p 30
+    PAR(weather): photosynthetic_active_radiation ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
+    τ: transmissivity => 0.5 ~ preserve(parameter) # atmospheric transmissivity, Goudriaan and van Laar (1994) p 30
 
     #####################
     # Solar Coordinates #
@@ -46,7 +46,7 @@ import Dates
 
     #HACK always use degrees for consistency and easy tracing
     #FIXME pascal version of LightEnv uses iqbal()
-    declination_angle(declination_angle_spencer): dec ~ track(u"°")
+    dec(declination_angle_spencer): declination_angle ~ track(u"°")
 
     # Goudriaan 1977
     declination_angle_goudriaan(d) => begin
@@ -80,10 +80,10 @@ import Dates
         0.006918 - 0.399912cos(g) + 0.070257sin(g) - 0.006758cos(2g) + 0.000907sin(2g) -0.002697cos(3g) + 0.00148sin(3g)
     end ~ track(u"rad")
 
-    degree_per_hour: dph => 360u"°" / 24u"hr" ~ preserve(u"°/hr")
+    dph: degree_per_hour => 360u"°" / 24u"hr" ~ preserve(u"°/hr")
 
     # LC is longitude correction for Light noon, Wohlfart et al, 2000; Campbell & Norman 1998
-    longitude_correction(long, dph): LC => begin
+    LC(long, dph): longitude_correction => begin
         # standard meridian for pacific time zone is 120 W, Eastern Time zone : 75W
         # LC is positive if local meridian is east of standard meridian, i.e., 76E is east of 75E
         #standard_meridian = -120
@@ -94,7 +94,7 @@ import Dates
         (meridian - long) / dph
     end ~ track(u"hr")
 
-    equation_of_time(d): ET => begin
+    ET(d): equation_of_time => begin
         f = (279.575 + 0.9856d)*u"°"
         (-104.7sin(f) + 596.2sin(2f) + 4.3sin(3f) - 12.7sin(4f) -429.3cos(f) - 2.0cos(2f) + 19.3cos(3f)) / (60 * 60)
     end ~ track(u"hr")
@@ -158,14 +158,14 @@ import Dates
         101.3exp(-altitude / 8200u"m")
     end ~ track(u"kPa")
 
-    optical_air_mass_number(atmospheric_pressure, elevation_angle): m => begin
+    m(atmospheric_pressure, elevation_angle): optical_air_mass_number => begin
         t_s = max(elevation_angle, zero(elevation_angle))
         #FIXME check 101.3 is indeed in kPa
         #iszero(t_s) ? 0. : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
         atmospheric_pressure / (101.3u"kPa" * sin(t_s))
     end ~ track
 
-    solar_constant: SC => 1370 ~ preserve(u"W/m^2", parameter)
+    SC: solar_constant => 1370 ~ preserve(u"W/m^2", parameter)
 
     # Campbell and Norman's global solar radiation, this approach is used here
     #TODO rename to insolation? (W/m2)
@@ -185,7 +185,7 @@ import Dates
         Fdif * solar_radiation
     end ~ track(u"W/m^2")
 
-    directional_coeff(τ, m): Fdir => begin
+    Fdir(τ, m): directional_coeff => begin
         # Goudriaan and van Laar's global solar radiation
         #FIXME should be goudriaan() version
         goudriaan(τ) = τ * (1 - diffusive_coeff)
@@ -198,7 +198,7 @@ import Dates
     end ~ track
 
     # Fdif: Fraction of diffused light
-    diffusive_coeff(τ, m): Fdif => begin
+    Fdif(τ, m): diffusive_coeff => begin
         # Goudriaan and van Laar's global solar radiation
         goudriaan(τ) = begin
             # clear sky : 20% diffuse
@@ -224,7 +224,7 @@ import Dates
 
     # PARfr
     #TODO better naming: extinction? transmitted_fraction?
-    photosynthetic_coeff(τ): PARfr => begin
+    PARfr(τ): photosynthetic_coeff => begin
         #if self.elevation_angle <= 0:
         #    0
         #TODO: implement Weiss and Norman (1985), 3/16/05
@@ -245,32 +245,32 @@ import Dates
     end ~ track
 
     # PARtot: total PAR (umol m-2 s-1) on horizontal surface (PFD)
-    photosynthetic_active_radiation_total(PAR): PARtot ~ track(u"μmol/m^2/s") # Quanta
+    PARtot(PAR): photosynthetic_active_radiation_total ~ track(u"μmol/m^2/s") # Quanta
 
-    photosynthetic_active_radiation_conversion_factor: Q => begin
+    Q: photosynthetic_active_radiation_conversion_factor => begin
         # 4.55 is a conversion factor from W to photons for solar radiation, Goudriaan and van Laar (1994)
         # some use 4.6 i.e., Amthor 1994, McCree 1981, Challa 1995.
         4.6
     end ~ preserve(u"μmol/J", parameter)
 
-    photosynthetic_active_radiation_total2(solar_radiation, PARfr, Q): PARtot2 => begin
+    PARtot2(solar_radiation, PARfr, Q): photosynthetic_active_radiation_total2 => begin
         # conversion factor from W/m2 to PFD (umol m-2 s-1) for PAR waveband (median 550 nm of 400-700 nm) of solar radiation,
         # see Campbell and Norman (1994) p 149
         solar_radiation * PARfr * Q
     end ~ track(u"μmol/m^2/s") # Quanta
 
     # PARdir
-    directional_photosynthetic_radiation(PARtot, directional_fraction): PARdir => (directional_fraction * PARtot) ~ track(u"μmol/m^2/s") # Quanta
+    PARdir(PARtot, directional_fraction): directional_photosynthetic_radiation => (directional_fraction * PARtot) ~ track(u"μmol/m^2/s") # Quanta
 
     # PARdif
-    diffusive_photosynthetic_radiation(PARtot, diffusive_fraction): PARdif => (diffusive_fraction * PARtot) ~ track(u"μmol/m^2/s") # Quanta
+    PARdif(PARtot, diffusive_fraction): diffusive_photosynthetic_radiation => (diffusive_fraction * PARtot) ~ track(u"μmol/m^2/s") # Quanta
 end
 
 @system SunController(Controller) begin
     calendar(context) ~ ::Calendar
     weather(context, calendar) ~ ::Weather
-    sun(context, calendar, weather): s ~ ::Sun
-    duration: d => 1 ~ preserve(u"d", parameter)
+    s(context, calendar, weather): sun ~ ::Sun
+    d: duration => 1 ~ preserve(u"d", parameter)
     stop(context.clock.tick, d) => tick >= d ~ flag
 end
 
@@ -285,8 +285,8 @@ plot_sun(v, d=3) = begin
 end
 
 test_sun() = begin
-    plot_sun(:declination_angle)
+    plot_sun(:dec) # declination_angle
     plot_sun(:elevation_angle)
-    plot_sun(:directional_coeff)
-    plot_sun(:diffusive_coeff)
+    plot_sun(:Fdir) # directional_coeff
+    plot_sun(:Fdif) # diffusive_coeff
 end
