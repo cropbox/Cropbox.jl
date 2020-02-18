@@ -130,20 +130,20 @@ import Dates
 
     hour_angle(h, solar_noon, dph) => ((h - solar_noon) * dph) ~ track(u"°")
 
-    elevation_angle(h=hour_angle, δ, ϕ) => begin
+    αs(h=hour_angle, δ, ϕ): elevation_angle => begin
         #FIXME When time gets the same as solarnoon, this function fails. 3/11/01 ??
         asind(cos(h) * cos(δ) * cos(ϕ) + sin(δ) * sin(ϕ))
     end ~ track(u"°")
 
-    zenith_angle(elevation_angle) => (90u"°" - elevation_angle) ~ track(u"°")
+    θs(αs): zenith_angle => (90u"°" - αs) ~ track(u"°")
 
     # The solar azimuth angle is the angular distance between due South and the
     # projection of the line of sight to the sun on the ground.
     # View point from south, morning: +, afternoon: -
     # See An introduction to solar radiation by Iqbal (1983) p 15-16
     # Also see https://www.susdesign.com/sunangle/
-    azimuth_angle(t_s=elevation_angle, δ, ϕ) => begin
-        acosd((sin(δ) - sin(t_s) * sin(ϕ)) / (cos(t_s) * cos(ϕ)))
+    ϕs(αs, δ, ϕ): azimuth_angle => begin
+        acosd((sin(δ) - sin(αs) * sin(ϕ)) / (cos(αs) * cos(ϕ)))
     end ~ track(u"°")
 
     ###################
@@ -156,8 +156,8 @@ import Dates
         101.3exp(-altitude / 8200u"m")
     end ~ track(u"kPa")
 
-    m(atmospheric_pressure, elevation_angle): optical_air_mass_number => begin
-        t_s = max(elevation_angle, zero(elevation_angle))
+    m(atmospheric_pressure, αs): optical_air_mass_number => begin
+        t_s = max(αs, zero(αs))
         #FIXME check 101.3 is indeed in kPa
         #iszero(t_s) ? 0. : atmospheric_pressure / (101.3u"kPa" * sin(t_s))
         atmospheric_pressure / (101.3u"kPa" * sin(t_s))
@@ -167,10 +167,10 @@ import Dates
 
     # Campbell and Norman's global solar radiation, this approach is used here
     #TODO rename to insolation? (W/m2)
-    solar_radiation(elevation_angle, d, SC) => begin
+    solar_radiation(αs, d, SC) => begin
         # solar constant, Iqbal (1983)
         #FIXME better to be 1361 or 1362 W/m-2?
-        t_s = max(elevation_angle, zero(elevation_angle))
+        t_s = max(αs, zero(αs))
         g = 2pi * (d - 10)/365
         SC * sin(t_s) * (1 + 0.033cos(g))
     end ~ track(u"W/m^2")
@@ -284,7 +284,7 @@ end
 
 test_sun(d=3) = foreach(v -> display(plot_sun(v, d)), [
     :δ, # declination_angle
-    :elevation_angle,
+    :αs, # elevation_angle
     :Fdir, # directional_coeff
     :Fdif, # diffusive_coeff
 ])
