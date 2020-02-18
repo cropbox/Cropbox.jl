@@ -46,7 +46,7 @@ import Dates
 
     #HACK always use degrees for consistency and easy tracing
     #FIXME pascal version of LightEnv uses iqbal()
-    dec(declination_angle_spencer): declination_angle ~ track(u"°")
+    δ(declination_angle_spencer): declination_angle ~ track(u"°")
 
     # Goudriaan 1977
     declination_angle_goudriaan(d) => begin
@@ -102,7 +102,7 @@ import Dates
     solar_noon(LC, ET) => 12u"hr" - LC - ET ~ track(u"hr")
 
     # w_s: zenith angle
-    cos_hour_angle(p=latitude, d=declination_angle; w_s(u"°")) => begin
+    cos_hour_angle(p=latitude, δ; w_s(u"°")) => begin
         # this value should never become negative because -90 <= latitude <= 90 and -23.45 < decl < 23.45
         #HACK is this really needed for crop models?
         # preventing division by zero for N and S poles
@@ -111,8 +111,8 @@ import Dates
         #TODO need to deal with lat_bound to prevent tan(90)?
         #lat_bound = radians(68)? radians(85)?
         # cos(h0) at cos(theta_s) = 0 (solar zenith angle = 90 deg == elevation angle = 0 deg)
-        #-tan(latitude) * tan(declination_angle)
-        (cos(w_s) - sin(p) * sin(d)) / (cos(p) * cos(d))
+        #-tan(latitude) * tan(δ)
+        (cos(w_s) - sin(p) * sin(δ)) / (cos(p) * cos(δ))
     end ~ call
 
     hour_angle_at_horizon(cos_hour_angle) => begin
@@ -132,9 +132,9 @@ import Dates
 
     hour_angle(h, solar_noon, dph) => ((h - solar_noon) * dph) ~ track(u"°")
 
-    elevation_angle(h=hour_angle, d=declination_angle, p=latitude) => begin
+    elevation_angle(h=hour_angle, δ, p=latitude) => begin
         #FIXME When time gets the same as solarnoon, this function fails. 3/11/01 ??
-        asind(cos(h) * cos(d) * cos(p) + sin(d) * sin(p))
+        asind(cos(h) * cos(δ) * cos(p) + sin(δ) * sin(p))
     end ~ track(u"°")
 
     zenith_angle(elevation_angle) => (90u"°" - elevation_angle) ~ track(u"°")
@@ -144,8 +144,8 @@ import Dates
     # View point from south, morning: +, afternoon: -
     # See An introduction to solar radiation by Iqbal (1983) p 15-16
     # Also see https://www.susdesign.com/sunangle/
-    azimuth_angle(t_s=elevation_angle, d=declination_angle, p=latitude) => begin
-        acosd((sin(d) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
+    azimuth_angle(t_s=elevation_angle, δ, p=latitude) => begin
+        acosd((sin(δ) - sin(t_s) * sin(p)) / (cos(t_s) * cos(p)))
     end ~ track(u"°")
 
     ###################
@@ -285,7 +285,7 @@ plot_sun(v, d=3) = begin
 end
 
 test_sun() = begin
-    plot_sun(:dec) # declination_angle
+    plot_sun(:δ) # declination_angle
     plot_sun(:elevation_angle)
     plot_sun(:Fdir) # directional_coeff
     plot_sun(:Fdif) # diffusive_coeff
