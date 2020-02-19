@@ -92,7 +92,7 @@ end
         #0.015
         #0.018 # for maize
         0.012
-    end ~ preserve(u"g/g/d")
+    end ~ preserve(u"g/g/d", parameter)
 
     agefn(green_leaf_ratio): carbon_age_effect => begin
         # as more leaves senesce maint cost should go down, added 1 to both denom and numer to avoid division by zero.
