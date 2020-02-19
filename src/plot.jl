@@ -35,7 +35,8 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
         isempty(s) ? "$l" : "$l ($s)"
     end
     lab(n, ::Nothing) = lab(n, n)
-    xlab = lab(index, xlabel)
+    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
+    xlab = lab(index, xlabel) * '\n'
     ylabs = isnothing(ylabel) ? repeat([nothing], n) : ylabel
 
     if isnothing(p)
