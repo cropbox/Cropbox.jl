@@ -32,10 +32,12 @@
 
     #TODO pass PRIMORDIA as initial_leaves
     NU(NU, pheno, primordia, germinated=pheno.germinated, dead=pheno.dead, l=pheno.leaves_initiated): nodal_units => begin
-        if isempty(NU)
-            [produce(NodalUnit, phenology=pheno, rank=i) for i in 1:primordia]
-        elseif germinated && !dead
-            [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(NU)+1):l]
+        if germinated
+            if isempty(NU)
+                [produce(NodalUnit, phenology=pheno, rank=i) for i in 1:primordia]
+            elseif !dead
+                [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(NU)+1):l]
+            end
         end
     end ~ produce::NodalUnit
 
