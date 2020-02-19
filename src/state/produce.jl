@@ -16,8 +16,6 @@ Produce(; _name, _type::Type{S}, _...) where {S<:System} = begin
 end
 
 produce(s::Type{<:System}; args...) = Product(s, args)
-#HACK: to support Symbol-based instantiation based on tabulate-d matrix
-produce(s::Symbol; args...) = produce(Main.eval(s); args...)
 produce(::Nothing; args...) = nothing
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
