@@ -171,7 +171,7 @@ SP_2014_P2_SR0 = Cropbox.configure(SP, CUH_2014_P2, (
 ))
 
 @testset "garlic" begin
-    r = simulate(Garlic.GarlicModel, config=garlic, stop=7000)
-    @test r[!, :tick][end] > 7000u"hr"
+    r = simulate(Garlic.GarlicModel, config=garlic, stop=8000)
+    @test r[!, :tick][end] > 8000u"hr"
     Cropbox.plot(r, :tick, [:leaf_mass, :bulb_mass, :total_mass]) |> display
 end
