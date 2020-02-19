@@ -6,7 +6,7 @@ import CSV
     indexkey => :timestamp ~ preserve::Symbol(optional, parameter)
 
     i(t=nounit(context.clock.tick)): index => t + 1 ~ track::Int
-    t(; r::DataFrameRow): timestamp => getfield(r, :row) ~ call
+    t(; r::DataFrameRow): timestamp => DataFrames.row(r) ~ call
 
     df(filename, indexkey, t): dataframe => begin
         df = CSV.read(filename)
