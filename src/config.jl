@@ -57,18 +57,24 @@ option(c::Config, key::Vector{Symbol}, keys...) = begin
 end
 
 import DataStructures: OrderedSet
-parameters(::Type{S}; alias=false, recursive=false, exclude=()) where {S<:System} = begin
+parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) where {S<:System} = begin
+    #HACK: default evaluation scope is the module where S was originally defined
+    isnothing(scope) && (scope = S.name.module)
     V = [n.info for n in dependency(S).N]
     #HACK: only extract parameters with no dependency on other variables
     P = filter(v -> istag(v, :parameter) && isempty(v.args), V)
     key = alias ? (v -> isnothing(v.alias) ? v.name : v.alias) : (v -> v.name)
-    C = configure(nameof(S) => ((key(v) => unitfy(Main.eval(v.body), Main.eval(v.tags[:unit])) for v in P)...,))
+    val(v) = begin
+        b = @eval scope $(v.body)
+        u = @eval scope $(v.tags[:unit])
+        unitfy(b, u)
+    end
+    C = configure(nameof(S) => ((key(v) => val(v) for v in P)...,))
     if recursive
-        #HACK: evaluate types defined in Main module
-        T = OrderedSet([Main.eval(v.type) for v in V])
+        T = OrderedSet([@eval scope $(v.type) for v in V])
         T = filter(t -> t <: System && t ∉ exclude, T)
         X = (S, T..., exclude...) |> Set
-        C = configure(parameters.(T, alias=alias, recursive=true, exclude=X)..., C)
+        C = configure(parameters.(T, alias=alias, recursive=true, exclude=X, scope=scope)..., C)
     end
     C
 end
