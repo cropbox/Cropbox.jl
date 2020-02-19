@@ -18,8 +18,7 @@ using CSV
     PFD(s): photon_flux_density ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
 
-    #TODO: make CO2 parameter?
-    CO2 => 400 ~ track(u"μmol/mol")
+    CO2 => 400 ~ preserve(u"μmol/mol", parameter)
 
     #RH(s): relative_humidity ~ drive(key="RH", u"percent")
     RH(s): relative_humidity => s[:RH] ~ track(u"percent")
