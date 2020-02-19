@@ -1,5 +1,5 @@
 import DataStructures: OrderedDict, DefaultOrderedDict
-const Config = OrderedDict{Any,Any}
+const Config = OrderedDict{Symbol,Any}
 
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
