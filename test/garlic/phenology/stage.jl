@@ -4,9 +4,9 @@
     sun ~ hold
     soil ~ hold
 
-    temperature: T ~ hold
-    optimal_temperature: T_opt ~ hold
-    ceiling_temperature: T_ceil ~ hold
+    T: temperature ~ hold
+    T_opt: optimal_temperature ~ hold
+    T_ceil: ceiling_temperature ~ hold
 
-    beta_function: BF ~ hold
+    BF: beta_function ~ hold
 end

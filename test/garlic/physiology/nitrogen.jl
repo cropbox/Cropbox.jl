@@ -1,7 +1,7 @@
 #TODO move into Leaf class?
 @system Nitrogen begin
-    pheno ~ hold
-    planting_density ~ hold
+    pheno: phenology ~ hold
+    PD: planting_density ~ hold
 
     initial_seed_mass ~ hold
     shoot_mass ~ hold
@@ -21,8 +21,8 @@
     #     self.cumulative_demand = 0
     #     self.cumulative_soil_uptake = 0
 
-    nitrogen_pool_from_shoot(shoot_mass, planting_density, frac=0.063) => begin
-        if shoot_mass * planting_density <= 100u"g/m^2"
+    nitrogen_pool_from_shoot(shoot_mass, PD, frac=0.063) => begin
+        if shoot_mass * PD <= 100u"g/m^2"
             # when shoot biomass is lower than 100 g/m2, the maximum [N] allowed is 6.3%
             # shoot biomass and Nitrogen are in g
             # need to adjust demand or else there will be mass balance problems

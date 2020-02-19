@@ -6,8 +6,8 @@ using LinearAlgebra
     sun ~ hold
     soil ~ hold
 
-    leaf_area_index: LAI ~ hold
-    planting_density: PD ~ hold
+    LAI: leaf_area_index ~ hold
+    PD: planting_density ~ hold
     water_supply ~ hold
     H2O_weight ~ hold
     CO2_weight ~ hold
@@ -27,7 +27,7 @@ using LinearAlgebra
     end ~ preserve(u"cm", parameter)
 
     #TODO how do we get LeafWP and ET_supply?
-    leaf_water_potential(soil.WP_leaf): LWP ~ track(u"MPa")
+    LWP(soil.WP_leaf): leaf_water_potential ~ track(u"MPa")
 
     evapotranspiration_supply(LAI, PD, ws=water_supply, ww=H2O_weight) => begin
         #TODO common handling logic for zero LAI
@@ -39,15 +39,15 @@ using LinearAlgebra
         iszero(LAI) ? zero(s) : s
     end ~ track(u"mol/m^2/s" #= H2O =#)
 
-    sunlit_leaf_area_index(radiation.sunlit_leaf_area_index): LAI_sunlit ~ track
-    shaded_leaf_area_index(radiation.shaded_leaf_area_index): LAI_shaded  ~ track
+    LAI_sunlit(radiation.sunlit_leaf_area_index): sunlit_leaf_area_index ~ track
+    LAI_shaded(radiation.shaded_leaf_area_index): shaded_leaf_area_index ~ track
 
     weighted(LAI_sunlit, LAI_shaded; array::Vector{Float64}(u"μmol/m^2/s")) => begin
         [LAI_sunlit LAI_shaded] ⋅ array
     end ~ call(u"μmol/m^2/s")
 
-    sunlit_irradiance(radiation.irradiance_Q_sunlit): Q_sun ~ track(u"μmol/m^2/s" #= Quanta =#)
-    shaded_irradiance(radiation.irradiance_Q_shaded): Q_sh ~ track(u"μmol/m^2/s" #= Quanta =#)
+    Q_sun(radiation.irradiance_Q_sunlit): sunlit_irradiance ~ track(u"μmol/m^2/s" #= Quanta =#)
+    Q_sh(radiation.irradiance_Q_shaded): shaded_irradiance ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     gross_array(a=sunlit_gasexchange.A_gross, b=shaded_gasexchange.A_gross) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
     net_array(a=sunlit_gasexchange.A_net, b=shaded_gasexchange.A_net) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
@@ -55,18 +55,18 @@ using LinearAlgebra
     #temperature_array(a=sunlit.T_leaf, b=shaded.T_leaf) => [a, b] ~ track::Vector{Float64}(u"°C")
     conductance_array(a=sunlit_gasexchange.gs, b=shaded_gasexchange.gs) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
 
-    gross_CO2_umol_per_m2_s(weighted, gross_array): A_gross => weighted(gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    A_gross(weighted, gross_array): gross_CO2_umol_per_m2_s => weighted(gross_array) ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # plantsPerMeterSquare units are umol CO2 m-2 ground s-1
     # in the following we convert to g C plant-1 per hour
     # photosynthesis_gross is umol CO2 m-2 leaf s-1
 
-    net_CO2_umol_per_m2_s(weighted, net_array): A_net => begin
+    A_net(weighted, net_array): net_CO2_umol_per_m2_s => begin
         # grams CO2 per plant per hour
         weighted(net_array)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    transpiration_H2O_mol_per_m2_s(weighted, evapotranspiration_array): ET => begin
+    ET(weighted, evapotranspiration_array): transpiration_H2O_mol_per_m2_s => begin
         #TODO need to save this?
         # when outputting the previous step transpiration is compared to the current step's water uptake
         #self.transpiration_old = self.transpiration

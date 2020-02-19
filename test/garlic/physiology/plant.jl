@@ -13,7 +13,7 @@
     weather(context, calendar) ~ ::Weather
     sun(context, calendar, weather) ~ ::Sun
     soil(context) ~ ::Soil
-    phenology(context, calendar, weather, sun, soil): pheno ~ ::Phenology
+    pheno(context, calendar, weather, sun, soil): phenology ~ ::Phenology
 
     primordia => 5 ~ preserve::Int(parameter)
 
@@ -31,16 +31,16 @@
     end ~ produce::Root
 
     #TODO pass PRIMORDIA as initial_leaves
-    nodal_units(nu, pheno, primordia, germinated=pheno.germinated, dead=pheno.dead, l=pheno.leaves_initiated): nu => begin
-        if isempty(nu)
+    NU(NU, pheno, primordia, germinated=pheno.germinated, dead=pheno.dead, l=pheno.leaves_initiated): nodal_units => begin
+        if isempty(NU)
             [produce(NodalUnit, phenology=pheno, rank=i) for i in 1:primordia]
         elseif germinated && !dead
-            [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(nu)+1):l]
+            [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(NU)+1):l]
         end
     end ~ produce::NodalUnit
 
     #TODO find a better place?
-    planting_density: PD => 55 ~ preserve(u"m^-2", parameter)
+    PD: planting_density => 55 ~ preserve(u"m^-2", parameter)
 end
 
 @system Garlic(Plant, Controller)

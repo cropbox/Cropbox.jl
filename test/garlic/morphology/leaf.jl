@@ -18,9 +18,9 @@ end
 
     # max elongation rate (cm per day) at optipmal temperature
     # (Topt: 31C with Tbase = 9.8C using 0.564 cm/dd rate from Fournier 1998 paper above
-    maximum_elongation_rate: LER_max => 12 ~ preserve(u"cm/d", parameter)
+    LER_max: maximum_elongation_rate => 12 ~ preserve(u"cm/d", parameter)
 
-    minimum_length_of_longest_leaf: LM_min => 60 ~ preserve(u"cm", parameter)
+    LM_min: minimum_length_of_longest_leaf => 60 ~ preserve(u"cm", parameter)
 
     # leaf lamina width to length ratio
     length_to_width_ratio => begin
@@ -37,9 +37,9 @@ end
     # it takes 15 years to grow up, stays active for 60 years,
     # and age the last 15 year if it were for a 90 year life span creature.
     # Once fully grown, the clock works differently so that the hotter it is quicker it ages
-    stay_green: SG => 3.5 ~ preserve(parameter)
+    SG: stay_green => 3.5 ~ preserve(parameter)
 
-    maximum_aging_rate(LER_max) => LER_max ~ preserve(u"cm/d", parameter)
+    maximum_aging_rate(LER_max) => LER_max ~ track(u"cm/d")
 
     #############
     # Variables #
@@ -51,13 +51,13 @@ end
     #FIXME
     extra_leaves(np=potential_leaves, ng=pheno.leaves_generic) => (np - ng) ~ track
 
-    maximum_length_of_longest_leaf_adjustment: k => begin
+    k: maximum_length_of_longest_leaf_adjustment => begin
         # no length adjustment necessary for garlic, unlike MAIZE (KY, 2016-10-12)
         # 24.0
         0
     end ~ preserve(u"cm^2", parameter)
 
-    maximum_length_of_longest_leaf(LM_min, extra_leaves, k): maximum_length => begin
+    maximum_length(LM_min, extra_leaves, k): maximum_length_of_longest_leaf => begin
         sqrt(LM_min^2 + k * extra_leaves)
     end ~ track(u"cm")
 
@@ -115,7 +115,7 @@ end
     # the unit of k is cm^2 (Fournier and Andrieu 1998 Pg239). YY
     # L_max is the length of the largest leaf when grown at T_peak. Here we assume LM_min is determined at growing Topt with minmal (generic) leaf no, SK 8/2011
     # If this routine runs before TI, totalLeaves = genericLeafNo, and needs to be run with each update until TI and total leaves are finalized, SK
-    growth_duration(potential_length, LER_max): GD => begin
+    GD(potential_length, LER_max): growth_duration => begin
         # shortest possible linear phase duration in physiological time (days instead of GDD) modified
         days = potential_length / LER_max
         # for garlic
@@ -372,7 +372,7 @@ end
         senescence_ratio * area
     end ~ track(u"cm^2")
 
-    specific_leaf_area(area, mass): SLA => begin
+    SLA(area, mass): specific_leaf_area => begin
         # temporary for now - it should vary by age. Value comes from some of Soo's work
         #200.0
         area / mass
@@ -388,7 +388,7 @@ end
     # Nitrogen
 
     #FIXME avoid incorrect cycle detection (nitrogen member vs. module) - ?
-    nitrogen: N => begin
+    N: nitrogen => begin
         #TODO is this default value needed?
         # no N stress
         3.0

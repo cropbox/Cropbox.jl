@@ -10,7 +10,7 @@ end
 
 @system Carbon begin
     weather ~ hold
-    phenology: pheno ~ hold
+    pheno: phenology ~ hold
 
     C_to_CH2O_ratio ~ hold
     seed_mass_export_rate ~ hold
@@ -20,7 +20,7 @@ end
 
     development_phase(pheno.development_phase) ~ track::Symbol
 
-    carbon_concentration: C_conc => begin
+    C_conc: carbon_concentration => begin
         # maize: 40% C, See Kim et al. (2007) EEB
         0.45
     end ~ preserve(u"percent")
@@ -87,14 +87,14 @@ end
         carbon_temperature_effect * carbon_growth_factor
     end ~ track(u"hr^-1")
 
-    maintenance_respiration_coefficient: Rm => begin
+    Rm: maintenance_respiration_coefficient => begin
         # gCH2O g-1DM day-1 at 20C for young plants, Goudriaan and van Laar (1994) Wageningen textbook p 54, 60-61
         #0.015
         #0.018 # for maize
         0.012
     end ~ preserve(u"g/g/d")
 
-    carbon_age_effect(green_leaf_ratio): agefn => begin
+    agefn(green_leaf_ratio): carbon_age_effect => begin
         # as more leaves senesce maint cost should go down, added 1 to both denom and numer to avoid division by zero.
         #agefn = (self.p.area.green_leaf + 1) / (self.p.area.leaf + 1)
         # no maint cost for dead materials but needs to be more mechanistic, SK
@@ -132,7 +132,7 @@ end
         min(0.925, 0.67 + 0.33s) # for garlic
     end ~ track
 
-    synthesis_efficiency: Yg => begin
+    Yg: synthesis_efficiency => begin
         #1 / 1.43 # equivalent Yg, Goudriaan and van Laar (1994)
         #0.75 # synthesis efficiency, ranges between 0.7 to 0.76 for corn, see Loomis and Amthor (1999), Grant (1989), McCree (1988)
         #0.74

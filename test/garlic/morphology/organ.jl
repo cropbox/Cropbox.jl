@@ -1,17 +1,17 @@
 @system Organ begin
-    phenology: pheno ~ ::Phenology(override)
+    pheno: phenology ~ ::Phenology(override)
 
     # organ temperature, C
-    #temperature(pheno): T ~ drive(u"°C")
-    temperature(pheno.T): T ~ track(u"°C")
+    #T(pheno): temperature ~ drive(u"°C")
+    T(pheno.T): temperature ~ track(u"°C")
 
     # glucose, MW = 180.18 / 6 = 30.03 g
-    carbohydrate(imported_carbohydrate): C => begin
+    C(imported_carbohydrate): carbohydrate => begin
         imported_carbohydrate # * respiration_adjustment
     end ~ accumulate(u"g") # CH2O
 
     # nitrogen content, mg
-    nitrogen(imported_nitrogen): N => begin
+    N(imported_nitrogen): nitrogen => begin
         imported_nitrogen
     end ~ accumulate(u"g") # Nitrogen
 
@@ -39,7 +39,7 @@
     #     self._carbohydrate = mass
 
     # physiological days to reach the end of growth (both cell division and expansion) at optimal temperature, days
-    growth_duration: GD => 10 ~ preserve(u"d", parameter)
+    GD: growth_duration => 10 ~ preserve(u"d", parameter)
 
     # life expectancy of an organ in days at optimal temperature (fastest growing temp), days
     #FIXME not used

@@ -1,6 +1,6 @@
 @system Emergence(Stage, Germination) begin
     #HACK: can't use self.pheno.leaf_appearance.maximum_leaf_tip_appearance_rate due to recursion
-    maximum_emergence_rate: ER_max => 0.20 ~ preserve(u"d^-1", parameter)
+    ER_max: maximum_emergence_rate => 0.20 ~ preserve(u"d^-1", parameter)
 
     emergence_date => nothing ~ preserve::ZonedDateTime(optional, parameter)
     begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve::Bool

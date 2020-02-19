@@ -1,5 +1,5 @@
 @system FloralInitiation(Stage, Germination) begin
-    critical_photoperiod: critPPD => 12.5 ~ preserve(u"hr", parameter)
+    critPPD: critical_photoperiod => 12.5 ~ preserve(u"hr", parameter)
 
     floral_initiateable(germinated) ~ flag
 

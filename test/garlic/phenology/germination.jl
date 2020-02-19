@@ -3,7 +3,7 @@
     #HACK: can't mixin Emergence here due to cyclic dependency
     begin_from_emergence ~ hold
 
-    maximum_germination_rate: GR_max => 0.45 ~ preserve(u"d^-1", parameter)
+    GR_max: maximum_germination_rate => 0.45 ~ preserve(u"d^-1", parameter)
 
     germination(r=GR_max, β=BF.ΔT, germinating) => begin
         #FIXME prevent extra accumulation after it's `over`

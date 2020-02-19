@@ -1,5 +1,5 @@
 @system LeafAppearance(Stage, Germination, Emergence, LeafInitiation) begin
-    maximum_leaf_tip_appearance_rate: LTAR_max => 0.20 ~ preserve(u"d^-1", parameter)
+    LTAR_max: maximum_leaf_tip_appearance_rate => 0.20 ~ preserve(u"d^-1", parameter)
 
     leaf_tip_appearance(r=LTAR_max, β=BF.ΔT, leaf_appearing) => begin
         leaf_appearing ? r * β : zero(r)

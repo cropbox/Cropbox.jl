@@ -34,7 +34,7 @@ include("death.jl")
     leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track::Int
     leaves_total(leaves_initiated) ~ track::Int
 
-    temperature(leaves_appeared, T_air=weather.T_air): T => begin
+    T(leaves_appeared, T_air=weather.T_air): temperature => begin
         if leaves_appeared < 9
             #FIXME soil module is not implemented yet
             #T = T_soil
@@ -47,13 +47,13 @@ include("death.jl")
         #max(T, 0.0u"°C")
     end ~ track(u"°C")
     #growing_temperature(r="gst_recorder.rate") => r ~ track
-    optimal_temperature: T_opt => 22.28 ~ preserve(u"°C", parameter)
-    ceiling_temperature: T_ceil => 34.23 ~ preserve(u"°C", parameter)
+    T_opt: optimal_temperature => 22.28 ~ preserve(u"°C", parameter)
+    T_ceil: ceiling_temperature => 34.23 ~ preserve(u"°C", parameter)
 
     #TODO support species/cultivar specific temperature parameters (i.e. Tb => 8, Tx => 43.3)
-    growing_degree(context, T, Tb=4.0u"°C", Tx=40.0u"°C"): GD ~ ::GrowingDegree
-    beta_function(context, T, To=T_opt', Tx=T_ceil'): BF ~ ::BetaFunction
-    q10_function(context, T, To=T_opt'): Q10 ~ ::Q10Function
+    GD(context, T, Tb=4.0u"°C", Tx=40.0u"°C"): growing_degree ~ ::GrowingDegree
+    BF(context, T, To=T_opt', Tx=T_ceil'): beta_function ~ ::BetaFunction
+    Q10(context, T, To=T_opt'): q10_function ~ ::Q10Function
 
     # garlic
 

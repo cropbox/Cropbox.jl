@@ -1,6 +1,6 @@
 @system Mass begin
-    phenology: pheno ~ hold
-    nodal_units: nu ~ hold
+    pheno: phenology ~ hold
+    NU: nodal_units ~ hold
 
     initial_leaf_ratio ~ hold
     potential_leaf_area_increase ~ hold
@@ -29,8 +29,8 @@
         -seed_mass_export_rate
     end ~ accumulate(init=initial_seed_mass, u"g")
 
-    #stem(x=nodal_units["*"].stem.mass) => begin # for maize
-    sheath_mass(x=nodal_units["*"].sheath.mass) => begin # for garlic
+    #stem(x=NU["*"].stem.mass) => begin # for maize
+    sheath_mass(x=NU["*"].sheath.mass) => begin # for garlic
         # dt the addition of C_reserve here only serves to maintain a total for the mass. It could have just as easily been added to total mass.
         # C_reserve is added to stem here to represent soluble TNC, SK
         #sum(typeof(0.0u"g")[nu.stem.mass' for nu in NU]) + self.p.carbon.reserve
@@ -45,19 +45,19 @@
 
     # this is the total mass of active leaves that are not entirely dead (e.g., dropped).
     # It would be slightly greather than the green leaf mass because some senesced leaf area is included until they are complely aged (dead), SK
-    active_leaf_mass(nodal_units, x=nodal_units["*"].leaf.mass) => begin
-        sum(typeof(0.0u"g")[nu.leaf.mass' for nu in nodal_units if !nu.leaf.dropped'])
+    active_leaf_mass(NU #=, x=NU["*"].leaf.mass =#) => begin
+        sum(typeof(0.0u"g")[nu.leaf.mass' for nu in NU if !nu.leaf.dropped'])
     end ~ track(u"g")
     #TODO: support complex composition (i.e. `!`(leaf.dropped)) in condition syntax?
-    #active_leaf_mass(x=nodal_units["*/!leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
+    #active_leaf_mass(x=NU["*/!leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
 
-    dropped_leaf_mass(nodal_units, x=nodal_units["*"].leaf.mass) => begin
-        sum(typeof(0.0u"g")[nu.leaf.mass' for nu in nodal_units if nu.leaf.dropped'])
+    dropped_leaf_mass(NU #=, x=NU["*"].leaf.mass =#) => begin
+        sum(typeof(0.0u"g")[nu.leaf.mass' for nu in NU if nu.leaf.dropped'])
     end ~ track(u"g")
     #TODO: support more referencing options (i.e. "leaf.dropped") in condition syntax?
-    #dropped_leaf(x=nodal_units["*/leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
+    #dropped_leaf(x=NU["*/leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
 
-    total_leaf_mass(x=nodal_units["*"].leaf.mass) => begin
+    total_leaf_mass(x=NU["*"].leaf.mass) => begin
         # this should equal to activeLeafMass + droppedLeafMass
         sum(x)
     end ~ track(u"g")
