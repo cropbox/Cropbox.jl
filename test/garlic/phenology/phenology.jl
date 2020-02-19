@@ -13,7 +13,7 @@ include("death.jl")
     Germination,
     Emergence,
     FloralInitiation,
-    LeafInitiationWithStorage,
+    LeafInitiation,
     LeafAppearance,
     BulbAppearance,
     ScapeGrowth,
