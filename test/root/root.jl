@@ -1,5 +1,7 @@
-using Distributions
+module Root
 
+using Cropbox
+using Distributions
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
 import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Transformation, Translation
@@ -203,14 +205,15 @@ abstract type RootSystem <: System end
     S(S, ms, n, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
         (isempty(S) && ms) ? [
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-            produce(n, box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
+            produce(eval(n), box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
         ] : nothing
     end ~ produce::BaseRoot
 
     mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
     B(B, mb, nb, box, ro, wrap(RT1)): branch => begin
         (isempty(B) && mb) ? [
-            produce(nb(), box=box, ro=ro+1, RT0=RT1),
+            #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
+            produce(eval(nb()), box=box, ro=ro+1, RT0=RT1),
         ] : nothing
     end ~ produce::BaseRoot
 end
@@ -290,6 +293,9 @@ writevtk(name::AbstractString, s::System) = begin
     vtk_save(g)
 end
 
+end
+
+import Colors: RGBA
 maize = (
     :PlantContainer => (
         :r1 => 5,
@@ -439,7 +445,11 @@ switchgrass_W = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
-s = instance(RootArchiteture, config=maize)
-# simulate!(s, stop=1000)
-# render(s) |> open
-# writevtk("test", s)
+
+@testset "root" begin
+    s = instance(Root.RootArchiteture, config=maize)
+    r = simulate!(s, stop=50)
+    @test r[!, :tick][end] > 50u"hr"
+    # render(s) |> open
+    # writevtk("test", s)
+end
