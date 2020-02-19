@@ -1,5 +1,5 @@
 @system LeafInitiation(Stage, Germination, FloralInitiation) begin
-    SD: storage_days => 0 ~ preserve(u"d", parameter)
+    SD: storage_days => 100 ~ preserve(u"d", parameter)
     ST: storage_temperature => 5 ~ preserve(u"°C", parameter)
     #FIXME: ThermalTime only accepts override of track, not preserve
     STP(ST): storage_tempreature_proxy ~ track(u"°C")
