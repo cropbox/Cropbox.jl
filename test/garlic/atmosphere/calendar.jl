@@ -4,8 +4,8 @@ using TimeZones
 const JULIAN_EPOCH_USDA = 2415078.5 # 1990-03-01
 const JULIAN_EPOCH_UNIX = 2440587.5 # 1970-01-01
 
-datetime_from_julian_day_WEA(year, jday, time::Time, tz::TimeZone) =
-    ZonedDateTime(Date(year) + (Day(jday) - Day(1)) + time, tz)
+datetime_from_julian_day_WEA(year, jday, time::Time, tz::TimeZone, occurrence=1) =
+    ZonedDateTime(Date(year) + (Day(jday) - Day(1)) + time, tz, occurrence)
 datetime_from_julian_day_WEA(year, jday, tz::TimeZone) = datetime_from_julian_day_WEA(year, jday, "00:00", tz)
 
 #julian_day_from_datetime(clock::Dates.AbstractDateTime) = dayofyear(clock)

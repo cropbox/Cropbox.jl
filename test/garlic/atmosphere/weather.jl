@@ -12,7 +12,14 @@ using CSV
 
     i(calendar.time): index ~ track::ZonedDateTime
     t(tz; r::DataFrameRow): timestamp => begin
-        datetime_from_julian_day_WEA(r.year, r.jday, r.time, tz)
+        #HACK: handle ambiguous time conversion under DST
+        occurrence = 1
+        i = DataFrames.row(r)
+        if i > 1
+            r0 = parent(r)[i-1, :]
+            r0.time == r.time && (occurrence = 2)
+        end
+        datetime_from_julian_day_WEA(r.year, r.jday, r.time, tz, occurrence)
     end ~ call::ZonedDateTime
 
     PFD(s): photon_flux_density ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
