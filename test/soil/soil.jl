@@ -1,3 +1,7 @@
+module Soil
+
+using Cropbox
+
 @system Pedotransfer begin
     Ψ_wp: tension_wilting_point => 1500 ~ preserve(u"kPa", parameter)
     Ψ_fc: tension_field_capacity => 33 ~ preserve(u"kPa", parameter)
@@ -439,18 +443,23 @@ end
     s(context=soil_context, w, d_r): soil ~ ::SoilModule
 end
 
-simulate(SoilController, stop=80,
-    config=(
-        :Clock => (:step => 1u"d"),
-        :SoilClock => (:step => 15u"minute"),
-        :SoilWeather => (:filename => "test/soil/PyWaterBal.csv"),
-    ),
-    target=(
-        :v1 => "s.L[1].θ",
-        :v2 => "s.L[2].θ",
-        :v3 => "s.L[3].θ",
-        :v4 => "s.L[4].θ",
-        :v5 => "s.L[5].θ",
-    ),
-)
-Cropbox.plot(ans, :tick, [:v1, :v2, :v3, :v4, :v5])
+end
+
+@testset "soil" begin
+    simulate(Soil.SoilController, stop=80,
+        config=(
+            :Clock => (:step => 1u"d"),
+            :SoilClock => (:step => 15u"minute"),
+            :SoilWeather => (:filename => "soil/PyWaterBal.csv"),
+        ),
+        target=(
+            :v1 => "s.L[1].θ",
+            :v2 => "s.L[2].θ",
+            :v3 => "s.L[3].θ",
+            :v4 => "s.L[4].θ",
+            :v5 => "s.L[5].θ",
+        ),
+    )
+    @test r[!, :tick][end] > 80u"d"
+    Cropbox.plot(ans, :tick, [:v1, :v2, :v3, :v4, :v5]) |> display
+end
