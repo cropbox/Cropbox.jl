@@ -4,7 +4,7 @@
     LTAR_k => 0.0256 ~ preserve(paramter)
     LTAR_max(asym=LTARa_max, x=SD, x_m=LTAR_SDm, k=LTAR_k): maximum_leaf_tip_appearance_rate => begin
         asym / (1 + exp(-k * Cropbox.deunitfy(x - x_m)))
-    end ~ track(u"d^-1")
+    end ~ preserve(u"d^-1", parameter)
 
     leaf_tip_appearance(r=LTAR_max, β=BF.ΔT, leaf_appearing) => begin
         leaf_appearing ? r * β : zero(r)
