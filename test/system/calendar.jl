@@ -9,8 +9,8 @@ import Dates
         s = instance(SCalendar; config=o)
         # after one advance! in instance()
         @test s.init' == t0
-        @test s.time' == ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")
+        @test s.time' == t0 + Dates.Hour(1)
         update!(s)
-        @test s.time' == ZonedDateTime(2011, 10, 29, 2, tz"Asia/Seoul")
+        @test s.time' == t0 + Dates.Hour(2)
     end
 end
