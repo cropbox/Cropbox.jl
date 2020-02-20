@@ -28,7 +28,7 @@ include("death.jl")
     sun ~ ::Sun(override)
     soil ~ ::Soil(override)
 
-    planting_date => nothing ~ preserve::ZonedDateTime(parameter)
+    planting_date ~ preserve::ZonedDateTime(parameter)
 
     leaves_generic => 10 ~ preserve::Int(parameter)
     leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track::Int
