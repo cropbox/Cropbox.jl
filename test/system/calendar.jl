@@ -30,4 +30,27 @@ import Dates
         @test s.time' == t1 + Dates.Hour(1)
         @test s.stop' == true
     end
+    
+    @testset "count" begin
+        @system SCalendarCount(Calendar, Controller)
+        t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
+        t1 = t0 + Dates.Day(1)
+        n = 24 - 1
+        o = :Calendar => (init=t0, last=t1)
+        s = instance(SCalendarCount; config=o)
+        @test s.count' == n
+        r1 = simulate(SCalendarCount; config=o, stop=n)
+        r2 = simulate(SCalendarCount; config=o, stop=:stop)
+        r3 = simulate(SCalendarCount; config=o, stop=:count)
+        @test r1 == r2 == r3
+    end
+    
+    @testset "count nothing" begin
+        @system SCalendarCountNothing(Calendar, Controller)
+        t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
+        o = :Calendar => (init=t0, last=nothing)
+        s = instance(SCalendarCountNothing; config=o)
+        @test s.count' == nothing
+        @test s.stop' == false
+    end
 end
