@@ -15,6 +15,13 @@ import DataStructures: OrderedDict
             @test C[:S2][:a] == 2
         end
         
+        @testset "vector" begin
+            c = [:S1 => :a => 1, :S2 => :a => 2]
+            C = Cropbox.configure(c)
+            @test C[:S1][:a] == 1
+            @test C[:S2][:a] == 2
+        end
+        
         @testset "type" begin
             @system SConfigSystemType begin
                 a ~ preserve(parameter)

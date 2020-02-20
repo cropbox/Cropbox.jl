@@ -4,6 +4,7 @@ const Config = OrderedDict{Symbol,Any}
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
 configure(c::Tuple) = configure(c...)
+configure(c::Vector) = configure(c...)
 configure(c...) = merge(merge, configure.(c)...)
 configure() = Config()
 _configure(k::Symbol, v) = Config(k => _configure(v))
