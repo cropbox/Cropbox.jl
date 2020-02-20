@@ -12,8 +12,11 @@ end
 
 using TimeZones
 garlic = (
-    :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
-    :Weather => (:filename => "garlic/data/2007.wea"),
+    :Calendar => (
+        :init => ZonedDateTime(2007, 9, 1, tz"UTC"),
+        :last => ZonedDateTime(2008, 8, 31, tz"UTC"),
+    ),
+    :Weather => (:filename => "$(@__DIR__)/data/2007.wea"),
     :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"UTC")),
 )
 
@@ -80,19 +83,23 @@ CUH = (
 )
 CUH_2013 = [CUH, (
     :Weather => (
-        filename = "test/garlic/data/CUH/2013.wea", # .dat
+        filename = "$(@__DIR__)/data/CUH/2013.wea", # .dat
         timezone = tz"America/Los_Angeles",
     ),
-    :Calendar => (init = ZonedDateTime(2013, 10, 30, tz"America/Los_Angeles"),), # Y1 bgn
-    #Y2 end
+    :Calendar => (
+        init = ZonedDateTime(2013, 10, 30, tz"America/Los_Angeles"), # Y1 bgn
+        last = ZonedDateTime(2014, 7, 28, tz"America/Los_Angeles"), #Y2 end
+    ),
 )]
 CUH_2014 = [CUH, (
     :Weather => (
-        filename = "test/garlic/data/CUH/2014.wea", # .dat
+        filename = "$(@__DIR__)/data/CUH/2014.wea", # .dat
         timezone = tz"America/Los_Angeles",
     ),
-    :Calendar => (init = ZonedDateTime(2014, 9, 1, 1, tz"America/Los_Angeles"),), # Y1 bgn
-    #Y2 end
+    :Calendar => (
+        init = ZonedDateTime(2014, 9, 1, 1, tz"America/Los_Angeles"), # Y1 bgn
+        last = ZonedDateTime(2015, 7, 7, tz"America/Los_Angeles"), #Y2 end
+    ),
 )]
 
 CUH_2013_P1 = [CUH_2013, (
@@ -171,7 +178,9 @@ SP_2014_P2_SR0 = [SP, CUH_2014_P2, (
 )]
 
 @testset "garlic" begin
-    r = simulate(Garlic.GarlicModel, config=garlic, stop=8000)
-    @test r[!, :tick][end] > 8000u"hr"
+    r = simulate(Garlic.GarlicModel, config=KM_2014_P2_SR0, stop="calendar.count")
+    @test r[!, :leaves_initiated][end] > 0
+    Cropbox.plot(r, :tick, [:leaves_appeared, :leaves_mature, :leaves_dropped]) |> display # Fig. 3.D
+    Cropbox.plot(r, :tick, :green_leaf_area) |> display # Fig. 4.D
     Cropbox.plot(r, :tick, [:leaf_mass, :bulb_mass, :total_mass]) |> display
 end
