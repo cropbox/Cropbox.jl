@@ -1,4 +1,5 @@
 using DataFrames
+using Dates
 
 @testset "util" begin
     @testset "simulate" begin
@@ -82,6 +83,28 @@ using DataFrames
         @test o[o[!, :tick] .== (n+1)*u"hr", :i] == [n, n]
         @test o[o[!, :tick] .== (n+1)*u"hr", :a] == [p1*(n-1), p2*(n-1)]
         @test o[o[!, :tick] .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
+    end
+
+    @testset "simulate extractable" begin
+        @system SSimulateExtractable(Controller) begin
+            a => 1 ~ track
+            b => :hello ~ track::Symbol
+            c => "world" ~ track::String
+            d => DateTime(2020, 3, 1) ~ track::DateTime
+            e => Dict(:k => 0) ~ track::Dict
+            f => [1, 2, 3] ~ track::Vector
+            g => (1, 2) ~ track::Tuple
+        end
+        r = simulate(SSimulateExtractable)
+        N = names(r)
+        # default = Union{Number,Symbol,AbstractString,AbstractDateTime}
+        @test :a ∈ N
+        @test :b ∈ N
+        @test :c ∈ N
+        @test :d ∈ N
+        @test :e ∉ N
+        @test :f ∉ N
+        @test :g ∉ N
     end
 
     @testset "calibrate" begin

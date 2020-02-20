@@ -28,12 +28,15 @@ extract(s::System, index, target) = begin
     K = collect(keys(d))
     V = map(k -> value(s[k]), values(d))
     od = OrderedDict(zip(K, V))
-    #HACK: only pick up variables of simple types by default
-    filter!(p -> p.second isa Union{Number,Symbol,AbstractString,AbstractDateTime}, od)
+    filter!(p -> extractable(s, p), od)
     DataFrame(od)
 end
 extract(b::Bundle{S}, index, target) where {S<:System} = begin
     vcat([extract(s, index, target) for s in collect(b)]...)
+end
+extractable(s::System, p) = begin
+    # only pick up variables of simple types by default
+    p[2] isa Union{Number,Symbol,AbstractString,AbstractDateTime}
 end
 
 update!(m::Simulation, s::System) = append!(m.result, extract(s, m))
