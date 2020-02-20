@@ -53,4 +53,17 @@ import Dates
         @test s.count' == nothing
         @test s.stop' == false
     end
+    
+    @testset "count seconds" begin
+        @system SCalendarCountSeconds(Calendar, Controller)
+        t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
+        t1 = t0 + Dates.Hour(1)
+        n = 60*60 - 1
+        o = (
+            :Calendar => (init=t0, last=t1),
+            :Clock => (step=1u"s",),
+        )
+        s = instance(SCalendarCountSeconds; config=o)
+        @test s.count' == n
+    end
 end
