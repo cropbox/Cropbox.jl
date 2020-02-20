@@ -43,6 +43,7 @@
 
     #TODO find a better place?
     PD: planting_density => 55 ~ preserve(u"m^-2", parameter)
+    DAP(pheno.DAP): day_after_planting ~ track::Int
 end
 
 @system GarlicModel(Plant, Controller)
