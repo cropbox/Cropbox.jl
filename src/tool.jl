@@ -54,9 +54,21 @@ end
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 progress!(s::System, M::Vector{Simulation}; stop=nothing, verbose=true, kwargs...) = begin
     isnothing(stop) && (stop = 1)
-    check = if stop isa Number
+    n = if stop isa Number
+        stop
+    else
+        v = s[stop]'
+        if v isa Bool
+            nothing
+        elseif v isa Number
+            v
+        else
+            error("unrecognized stop condition: $stop")
+        end
+    end
+    check = if n isa Number
         dt = verbose ? 1 : Inf
-        p = Progress(stop, dt=dt)
+        p = Progress(n, dt=dt)
         () -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
