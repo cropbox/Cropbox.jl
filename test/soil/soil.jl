@@ -446,11 +446,11 @@ end
 end
 
 @testset "soil" begin
-    simulate(Soil.SoilController, stop=80,
+    r = simulate(Soil.SoilController, stop=80,
         config=(
             :Clock => (:step => 1u"d"),
             :SoilClock => (:step => 15u"minute"),
-            :SoilWeather => (:filename => "soil/PyWaterBal.csv"),
+            :SoilWeather => (:filename => "$(@__DIR__)/PyWaterBal.csv"),
         ),
         target=(
             :v1 => "s.L[1].θ",
@@ -461,5 +461,5 @@ end
         ),
     )
     @test r[!, :tick][end] > 80u"d"
-    Cropbox.plot(ans, :tick, [:v1, :v2, :v3, :v4, :v5]) |> display
+    Cropbox.plot(r, :tick, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> display
 end
