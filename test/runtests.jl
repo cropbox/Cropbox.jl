@@ -13,7 +13,9 @@ using Test
 
     @testset "application" begin
         include("lotka_volterra.jl")
+        include("pheno/pheno.jl")
         include("root/root.jl")
+        include("soil/soil.jl")
         include("garlic/garlic.jl")
         include("photosynthesis.jl")
     end
