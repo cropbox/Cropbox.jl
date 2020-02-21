@@ -177,10 +177,42 @@ SP_2014_P2_SR0 = [SP, CUH_2014_P2, (
     ),
 )]
 
+using CSV
+using Query
+using DataFrames
+import Dates
+loaddata(cv, y, p) = begin
+    ps = CSV.read("$(@__DIR__)/data/CUH/PhenologySummary.csv")
+    ps |> @query(i, begin
+        @where i.CV == cv && i.Year == y && i.Pgroup == p
+        @select {i.DAP, i.Leaves}
+    end) |> DataFrame
+end
+
+calibrate_LTAR(cv, y, p) = begin
+    c = eval(Symbol("$(cv)_$(y)_P$(p)_SR0")) #HACK for now
+    obs = loaddata(cv, y, p)
+    cb(s) = s.DAP' in obs[!, :DAP] && Dates.hour(s.calendar.time') == 12
+    #r = simulate(Garlic.GarlicModel;
+    calibrate(Garlic.GarlicModel, obs;
+        config=c,
+        stop="calendar.count",
+        index=:DAP,
+        target=:Leaves => :leaves_appeared,
+        parameters=:Phenology => :LTAR_max => (0.01, 0.80),
+        callback=cb,
+    )
+end
+#calibrate_LTAR("KM", 2014, 2)
+
 @testset "garlic" begin
-    r = simulate(Garlic.GarlicModel, config=KM_2014_P2_SR0, stop="calendar.count")
+    r = simulate(Garlic.GarlicModel;
+        config=KM_2014_P2_SR0,
+        stop="calendar.count",
+        callback=s -> Dates.hour(s.calendar.time') == 12,
+    )
     @test r[!, :leaves_initiated][end] > 0
-    Cropbox.plot(r, :tick, [:leaves_appeared, :leaves_mature, :leaves_dropped]) |> display # Fig. 3.D
-    Cropbox.plot(r, :tick, :green_leaf_area) |> display # Fig. 4.D
-    Cropbox.plot(r, :tick, [:leaf_mass, :bulb_mass, :total_mass]) |> display
+    Cropbox.plot(r, :DAP, [:leaves_appeared, :leaves_mature, :leaves_dropped]) |> display # Fig. 3.D
+    Cropbox.plot(r, :DAP, :green_leaf_area) |> display # Fig. 4.D
+    Cropbox.plot(r, :DAP, [:leaf_mass, :bulb_mass, :total_mass]) |> display
 end
