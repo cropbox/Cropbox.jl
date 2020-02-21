@@ -27,17 +27,15 @@ abstract type Estimator <: System end
     end ~ preserve::ZonedDateTime
 
     calendar(context, init=t0') ~ ::Calendar
-    t(calendar.time) ~ track::ZonedDateTime
     match => false ~ track::Bool
-    stop(m=match, t, t1) => (m || t >= t1) ~ flag
+    stop(m=match, t=i, t1) => (m || t >= t1) ~ flag
 
-    index(t) ~ track::ZonedDateTime
-    timestamp(timezone; r::DataFrameRow) => begin
+    i(calendar.time): index ~ track::ZonedDateTime
+    t(timezone; r::DataFrameRow): timestamp => begin
         r.timestamp
     end ~ call::ZonedDateTime
 
-    #FIXME: transition to "short: long" syntax
-    temperature(s): T => s[:tavg] ~ track(u"°C")
+    T(s): temperature => s[:tavg] ~ track(u"°C")
 end
 
 #FIXME: compilation takes forever without @nospecialize here
