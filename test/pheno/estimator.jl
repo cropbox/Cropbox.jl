@@ -1,3 +1,6 @@
+module Pheno
+
+using Cropbox
 using DataFrames
 using TimeZones
 import Dates
@@ -53,17 +56,38 @@ end
     match(Cg, Rg) => Cg >= Rg ~ track::Bool
 end
 
-t0 = ZonedDateTime(2017, 1, 1, tz"UTC")
-t1 = ZonedDateTime(2019, 1, 1, tz"UTC")
-dt = Dates.Hour(1)
-T = collect(t0:dt:t1);
-df = DataFrame(timestamp=T, tavg=25.0);
+end
 
-params = (
-    :dataframe => df,
-    :To => 20,
-    :Tx => 35,
-    :Rg => 1000,
-);
-estimate(BetaFuncEstimator, 2017; params=params, target=[:ΔT, :Cg, :match, :stop])
-estimate(BetaFuncEstimator, [2017, 2018]; params=params, target=[:ΔT, :Cg, :match, :stop])
+using DataFrames
+using TimeZones
+import Dates
+@testset "pheno" begin
+    t0 = ZonedDateTime(2017, 1, 1, tz"UTC")
+    t1 = ZonedDateTime(2019, 1, 1, tz"UTC")
+    dt = Dates.Hour(1)
+    T = collect(t0:dt:t1);
+    df = DataFrame(timestamp=T, tavg=25.0);
+
+    Rg = 1000
+    params = (
+        :dataframe => df,
+        :To => 20,
+        :Tx => 35,
+        :Rg => Rg,
+    )
+    @testset "single" begin
+        r = Pheno.estimate(Pheno.BetaFuncEstimator, 2017; params=params, target=[:ΔT, :Cg, :match, :stop])
+        @test nrow(r) == 1
+        r1 = r[1, :]
+        @test r1.match == true
+        @test r1.stop == true
+        @test r1.Cg >= Rg
+    end
+    @testset "double" begin
+        r = Pheno.estimate(Pheno.BetaFuncEstimator, [2017, 2018]; params=params, target=[:ΔT, :Cg, :match, :stop])
+        @test nrow(r) == 2
+        @test all(r[!, :match])
+        @test all(r[!, :stop])
+        @test all(r.Cg .>= Rg)
+    end
+end
