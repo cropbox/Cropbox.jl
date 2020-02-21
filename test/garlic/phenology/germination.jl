@@ -10,7 +10,7 @@
         germinating ? r * β : zero(r)
     end ~ accumulate
 
-    germinateable(planting_date, t=calendar.time) => (t >= planting_date) ~ flag
+    germinateable(planting_date, t=context.calendar.time) => (t >= planting_date) ~ flag
     germinated(germination, germinateable, begin_from_emergence) => (germination >= 0.5 || (germinateable && begin_from_emergence)) ~ flag
     germinating(a=germinateable, b=germinated) => (a && !b) ~ flag
 

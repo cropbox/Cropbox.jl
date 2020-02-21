@@ -12,9 +12,9 @@ include("config.jl")
 include("queue.jl")
 
 include("system/clock.jl")
+include("system/calendar.jl")
 include("system/context.jl")
 include("system/controller.jl")
-include("system/calendar.jl")
 include("system/store.jl")
 include("system/thermaltime.jl")
 

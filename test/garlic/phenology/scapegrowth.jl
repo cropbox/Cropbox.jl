@@ -29,7 +29,7 @@ end
     scape_removal_date => nothing ~ preserve::ZonedDateTime(optional, parameter)
 
     scape_removeable(scape_appeared) ~ flag
-    scape_removed(scape_removal_date, t=calendar.time) => begin
+    scape_removed(scape_removal_date, t=context.calendar.time) => begin
         isnothing(scape_removal_date) ? false : t >= scape_removal_date
     end ~ flag
     scape_removing(a=scape_appeared, b=scape_removed) => (a && !b) ~ flag

@@ -9,11 +9,10 @@
     Weight,
     Photosynthesis
 ) begin
-    calendar(context) ~ ::Calendar
-    weather(context, calendar) ~ ::Weather
-    sun(context, calendar, weather) ~ ::Sun
+    weather(context) ~ ::Weather
+    sun(context, weather) ~ ::Sun
     soil(context) ~ ::Soil
-    pheno(context, calendar, weather, sun, soil): phenology ~ ::Phenology
+    pheno(context, weather, sun, soil): phenology ~ ::Phenology
 
     primordia => 5 ~ preserve::Int(parameter)
 

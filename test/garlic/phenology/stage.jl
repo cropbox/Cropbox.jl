@@ -1,5 +1,4 @@
 @system Stage begin
-    calendar ~ hold
     weather ~ hold
     sun ~ hold
     soil ~ hold

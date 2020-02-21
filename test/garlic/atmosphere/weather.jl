@@ -5,12 +5,11 @@ using CSV
 #TODO: use improved @drive
 #TODO: implement @unit
 @system Weather(DataFrameStore) begin
-    calendar(context) ~ ::Calendar(override)
     vp(context): vapor_pressure ~ ::VaporPressure
 
     tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
 
-    i(calendar.time): index ~ track::ZonedDateTime
+    i(context.calendar.time): index ~ track::ZonedDateTime
     t(tz; r::DataFrameRow): timestamp => begin
         #HACK: handle ambiguous time conversion under DST
         occurrence = 1

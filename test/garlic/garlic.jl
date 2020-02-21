@@ -192,11 +192,11 @@ end
 calibrate_LTAR(cv, y, p) = begin
     c = eval(Symbol("$(cv)_$(y)_P$(p)_SR0")) #HACK for now
     obs = loaddata(cv, y, p)
-    cb(s) = s.DAP' in obs[!, :DAP] && Dates.hour(s.calendar.time') == 12
+    cb(s) = s.DAP' in obs[!, :DAP] && Dates.hour(s.context.calendar.time') == 12
     #r = simulate(Garlic.GarlicModel;
     calibrate(Garlic.GarlicModel, obs;
         config=c,
-        stop="calendar.count",
+        stop="context.calendar.count",
         index=:DAP,
         target=:Leaves => :leaves_appeared,
         parameters=:Phenology => :LTAR_max => (0.01, 0.80),
@@ -209,8 +209,8 @@ end
 @testset "garlic" begin
     r = simulate(Garlic.GarlicModel;
         config=KM_2014_P2_SR0,
-        stop="calendar.count",
-        callback=s -> Dates.hour(s.calendar.time') == 12,
+        stop="context.calendar.count",
+        callback=s -> Dates.hour(s.context.calendar.time') == 12,
     )
     @test r[!, :leaves_initiated][end] > 0
     Cropbox.plot(r, :DAP, [:leaves_appeared, :leaves_mature, :leaves_dropped]) |> display # Fig. 3.D

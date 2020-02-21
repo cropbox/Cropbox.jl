@@ -24,11 +24,10 @@ import Dates
 @system Sun begin
     #TODO override Location
     loc(context): location ~ ::Location #(override)
-    calendar ~ ::Calendar(override)
     weather ~ ::Weather(override)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
-    t(calendar.time): datetime ~ track::ZonedDateTime
+    t(context.calendar.time): datetime ~ track::ZonedDateTime
     d(t): day => Dates.dayofyear(t) ~ track::Int
     h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
 
@@ -265,9 +264,8 @@ import Dates
 end
 
 @system SunController(Controller) begin
-    calendar(context) ~ ::Calendar
-    weather(context, calendar) ~ ::Weather
-    s(context, calendar, weather): sun ~ ::Sun
+    weather(context) ~ ::Weather
+    s(context, weather): sun ~ ::Sun
     d: duration => 1 ~ preserve(u"d", parameter)
     stop(context.clock.tick, d) => tick >= d ~ flag
 end

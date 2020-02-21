@@ -29,7 +29,7 @@ abstract type Estimator <: System end
         ZonedDateTime(year, 1, 1, tz) + Dates.Day(De)
     end ~ preserve::ZonedDateTime
 
-    calendar(context, init=t0') ~ ::Calendar
+    calendar(context.config, context.clock, init=t0') ~ ::Calendar
     match => false ~ track::Bool
     stop(m=match, t=i, t1) => (m || t >= t1) ~ flag
 

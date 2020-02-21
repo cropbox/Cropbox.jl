@@ -25,13 +25,12 @@ import Dates
     BulbilAppearance,
     Death
 ) begin
-    calendar ~ ::Calendar(override)
     weather ~ ::Weather(override)
     sun ~ ::Sun(override)
     soil ~ ::Soil(override)
 
     planting_date ~ preserve::ZonedDateTime(parameter)
-    DAP(t0=planting_date, t=calendar.time): day_after_planting => begin
+    DAP(t0=planting_date, t=context.calendar.time): day_after_planting => begin
         Δt = floor(t - t0, Dates.Day) |> Dates.value
         max(Δt, 0)
     end ~ track::Int
@@ -100,11 +99,10 @@ import Dates
 end
 
 @system PhenologyController(Controller) begin
-    calendar(context) ~ ::Calendar
-    weather(context, calendar) ~ ::Weather
-    sun(context, calendar, weather) ~ ::Sun
+    weather(context) ~ ::Weather
+    sun(context, weather) ~ ::Sun
     soil(context) ~ ::Soil
-    phenology(context, calendar, weather, sun, soil): p ~ ::Phenology
+    phenology(context, weather, sun, soil): p ~ ::Phenology
     duration: d => 100 ~ preserve(u"d", parameter)
     stop(context.clock.tick, d) => tick >= d ~ flag
 end

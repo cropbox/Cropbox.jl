@@ -3,59 +3,63 @@ import Dates
 
 @testset "calendar" begin
     @testset "basic" begin
-        @system SCalendar(Calendar, Controller)
+        @system SCalendar(Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         o = :Calendar => :init => t0
         s = instance(SCalendar; config=o)
+        c = s.context.calendar
         # after one advance! in instance()
-        @test s.init' == t0
-        @test s.time' == t0 + Dates.Hour(1)
+        @test c.init' == t0
+        @test c.time' == t0 + Dates.Hour(1)
         update!(s)
-        @test s.time' == t0 + Dates.Hour(2)
+        @test c.time' == t0 + Dates.Hour(2)
     end
     
     @testset "stop" begin
-        @system SCalendarStop(Calendar, Controller)
+        @system SCalendarStop(Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         t1 = t0 + Dates.Day(1)
         o = :Calendar => (init=t0, last=t1)
         s = instance(SCalendarStop; config=o)
-        @test s.init' == t0
-        @test s.last' == t1
-        @test s.time' == t0 + Dates.Hour(1)
-        @test s.stop' == false
+        c = s.context.calendar
+        @test c.init' == t0
+        @test c.last' == t1
+        @test c.time' == t0 + Dates.Hour(1)
+        @test c.stop' == false
         for i in 1:24
             update!(s)
         end
-        @test s.time' == t1 + Dates.Hour(1)
-        @test s.stop' == true
+        @test c.time' == t1 + Dates.Hour(1)
+        @test c.stop' == true
     end
     
     @testset "count" begin
-        @system SCalendarCount(Calendar, Controller)
+        @system SCalendarCount(Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         t1 = t0 + Dates.Day(1)
         n = 24 - 1
         o = :Calendar => (init=t0, last=t1)
         s = instance(SCalendarCount; config=o)
-        @test s.count' == n
+        c = s.context.calendar
+        @test c.count' == n
         r1 = simulate(SCalendarCount; config=o, stop=n)
-        r2 = simulate(SCalendarCount; config=o, stop=:stop)
-        r3 = simulate(SCalendarCount; config=o, stop=:count)
+        r2 = simulate(SCalendarCount; config=o, stop="context.calendar.stop")
+        r3 = simulate(SCalendarCount; config=o, stop="context.calendar.count")
         @test r1 == r2 == r3
     end
     
     @testset "count nothing" begin
-        @system SCalendarCountNothing(Calendar, Controller)
+        @system SCalendarCountNothing(Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         o = :Calendar => (init=t0, last=nothing)
         s = instance(SCalendarCountNothing; config=o)
-        @test s.count' == nothing
-        @test s.stop' == false
+        c = s.context.calendar
+        @test c.count' == nothing
+        @test c.stop' == false
     end
     
     @testset "count seconds" begin
-        @system SCalendarCountSeconds(Calendar, Controller)
+        @system SCalendarCountSeconds(Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         t1 = t0 + Dates.Hour(1)
         n = 60*60 - 1
@@ -64,6 +68,7 @@ import Dates
             :Clock => (step=1u"s",),
         )
         s = instance(SCalendarCountSeconds; config=o)
-        @test s.count' == n
+        c = s.context.calendar
+        @test c.count' == n
     end
 end
