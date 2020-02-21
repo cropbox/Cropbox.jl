@@ -110,7 +110,7 @@ end
 
 import BlackBoxOptim: bboptimize, best_candidate
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
-calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     config(X) = parameterzip(K, X)
@@ -134,7 +134,7 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
     end
     #FIXME: input parameters units are ignored without conversion
     range = map(p -> Float64.(Tuple(deunitfy(p))), parametervalues(P))
-    r = bboptimize(cost; SearchRange=range)
+    r = bboptimize(cost; SearchRange=range, optim...)
     best_candidate(r) |> config
 end
 
