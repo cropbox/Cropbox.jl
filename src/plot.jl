@@ -4,7 +4,7 @@ import UnicodePlots
 plot(df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot(df, index, [target]; ylabel=[ylabel], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot!(p, df, index, [target]; ylabel=[ylabel], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing) = begin
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing, xlim=nothing, ylim=nothing) = begin
     if kind == :line
         plot = UnicodePlots.lineplot
         plot! = UnicodePlots.lineplot!
@@ -28,8 +28,11 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
         #HACK: avoid empty range
         l == u ? (l, l+1) : (l, u)
     end
-    xlim = lim(X)
-    ylim = (l = lim.(Ys); (minimum(l)[1], maximum(l)[2]))
+    isnothing(xlim) && (xlim = lim(X))
+    if isnothing(ylim)
+        l = lim.(Ys)
+        ylim = (minimum(l)[1], maximum(l)[2])
+    end
 
     lab(n, l) = let s = string(u(n))
         isempty(s) ? "$l" : "$l ($s)"
