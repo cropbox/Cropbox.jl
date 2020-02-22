@@ -1,4 +1,4 @@
-module Soil
+module SoilWater
 
 using Cropbox
 
@@ -446,7 +446,7 @@ end
 end
 
 @testset "soil" begin
-    r = simulate(Soil.SoilController, stop=80,
+    r = simulate(SoilWater.SoilController, stop=80,
         config=(
             :Clock => (:step => 1u"d"),
             :SoilClock => (:step => 15u"minute"),
