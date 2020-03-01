@@ -1,9 +1,9 @@
-@testset "solve" begin
-    @testset "bisect" begin
-        @system SolveBisect(Controller) begin
-            x(x) => 2x - 1 ~ solve(lower=0, upper=2)
+@testset "bisect" begin
+    @testset "basic" begin
+        @system SBisect(Controller) begin
+            x(x) => 2x - 1 ~ bisect(lower=0, upper=2)
         end
-        s = instance(SolveBisect)
+        s = instance(SBisect)
         @test s.x' == 1
     end
 
@@ -16,10 +16,10 @@
     # end
 
     @testset "bisect with unit" begin
-        @system SolveBisectUnit(Controller) begin
-            x(x) => 2x - u"1m" ~ solve(lower=u"0m", upper=u"2m", u"m")
+        @system SBisectUnit(Controller) begin
+            x(x) => 2x - u"1m" ~ bisect(lower=u"0m", upper=u"2m", u"m")
         end
-        s = instance(SolveBisectUnit)
+        s = instance(SBisectUnit)
         @test s.x' == u"1m"
     end
 end

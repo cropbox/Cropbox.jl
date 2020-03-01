@@ -1,4 +1,4 @@
-mutable struct Solve{V} <: State{V}
+mutable struct Bisect{V} <: State{V}
     value::V
     step::Symbol
     N::Int
@@ -10,17 +10,17 @@ mutable struct Solve{V} <: State{V}
     fc::V
 end
 
-Solve(; unit, _type, _...) = begin
+Bisect(; unit, _type, _...) = begin
     V = valuetype(_type, value(unit))
     v = zero(V)
-    Solve{V}(v, :z, 0, v, v, v, v, v, v)
+    Bisect{V}(v, :z, 0, v, v, v, v, v, v)
 end
 
-genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
+genvartype(v::VarInfo, ::Val{:Bisect}; V, _...) = @q Bisect{$V}
 
-geninit(v::VarInfo, ::Val{:Solve}) = nothing
+geninit(v::VarInfo, ::Val{:Bisect}) = nothing
 
-genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
     N_MAX = 100
     TOL = 0.0001
     lstart = symlabel(v, PreStep())
@@ -37,13 +37,13 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             @goto $lstart
         elseif $s.step == :a
             $s.fa = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($s.a) => $($s.fa)"
+            #@show "bisect: $($s.a) => $($s.fa)"
             $s.step = :b
             $C.store!($s, $s.b)
             @goto $lstart
         elseif $s.step == :b
             $s.fb = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($s.b) => $($s.fb)"
+            #@show "bisect: $($s.b) => $($s.fb)"
             @assert sign($s.fa) != sign($s.fb)
             $s.N = 1
             $s.c = ($s.a + $s.b) / 2
@@ -52,26 +52,26 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             @goto $lstart
         elseif $s.step == :c
             $s.fc = $C.value($s) - $(genfunc(v))
-            #@show "solve: $($s.c) => $($s.fc)"
+            #@show "bisect: $($s.c) => $($s.fc)"
             if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / ($s.b) < $TOL
                 $s.step = :z
-                #@show "solve: finished! $($C.value($s))"
+                #@show "bisect: finished! $($C.value($s))"
                 @goto $lexit
             else
                 $s.N += 1
                 if $s.N > $N_MAX
-                    @show #= @error =# "solve: convergence failed!"
+                    @show #= @error =# "bisect: convergence failed!"
                     $s.step = :z
                     @goto $lexit
                 end
                 if sign($s.fc) == sign($s.fa)
                     $s.a = $s.c
                     $s.fa = $s.fc
-                    #@show "solve: a <- $($s.c)"
+                    #@show "bisect: a <- $($s.c)"
                 else
                     $s.b = $s.c
                     $s.fb = $s.fc
-                    #@show "solve: b <- $($s.c)"
+                    #@show "bisect: b <- $($s.c)"
                 end
                 $s.c = ($s.a + $s.b) / 2
                 $C.store!($s, $s.c)

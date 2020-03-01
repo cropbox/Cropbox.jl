@@ -226,7 +226,7 @@ end
     intercellular_co2_lower_limit: Cimin => 0 ~ preserve(u"μbar")
     intercellular_co2(Ca, A_net, P_air, CO2=weather.CO2, rvc): Ci => begin
         Ca - A_net * rvc * P_air
-    end ~ solve(lower=Cimin, upper=Cimax, u"μbar")
+    end ~ bisect(lower=Cimin, upper=Cimax, u"μbar")
 
     #FIXME: confusion between PFD vs. PPFD
     photosynthetic_photon_flux_density: PPFD ~ track(u"μmol/m^2/s" #= Quanta =#, override)
@@ -309,7 +309,7 @@ end
         # eqn 14.6b linearized form using first order approximation of Taylor series
         #(psc1 / (VPD_s + psc1)) * (R_net / (Cp*ghr) - VPD/(psc1*P_air))
         (R_net - λE) / C
-    end ~ solve(lower=-10u"K", upper=10u"K", u"K")
+    end ~ bisect(lower=-10u"K", upper=10u"K", u"K")
 
     air_temperature(weather.T_air): T_air ~ track(u"°C")
     absolute_air_temperature(weather.Tk_air): Tk_air ~ track(u"K")

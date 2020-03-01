@@ -305,7 +305,7 @@ end
         P = P_air / 100
         Cm = Ca - A_net * rvc * P
         #println("+ Cm = $Cm, Ca = $Ca, A_net = $A_net, rvc = $rvc, P = $P")
-    end ~ solve(lower=0, upper=Cmmax) # resolve(init=Ca)
+    end ~ bisect(lower=0, upper=Cmmax) # resolve(init=Ca)
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
     light(PFD=weather.PFD): I2 => begin
@@ -360,7 +360,7 @@ end
         else
             (R_abs - thermal_air - λ * Jw) / (Cp * ghr)
         end
-    end ~ solve(lower=-10, upper=10)
+    end ~ bisect(lower=-10, upper=10)
 
     temperature(T_adj, T_air=weather.T_air): T => T_air + T_adj ~ track
 

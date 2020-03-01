@@ -67,7 +67,7 @@
         # eqn 14.6b linearized form using first order approximation of Taylor series
         #(γ★ / (VPD_slope_delta + γ★)) * (R_net / (Cp*ghr) - VPD/γ★)
         (R_net - λE) / C
-    end ~ solve(lower=-10u"K", upper=10u"K", u"K")
+    end ~ bisect(lower=-10u"K", upper=10u"K", u"K")
 
     T(T_adj, T_air): leaf_temperature => T_air + T_adj ~ track(u"°C")
     Tk(T): absolute_leaf_temperature ~ track(u"K")

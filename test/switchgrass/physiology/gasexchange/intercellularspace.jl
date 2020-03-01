@@ -11,5 +11,5 @@
     Cimin: intercellular_co2_lower_limit => 0 ~ preserve(u"μbar")
     Ci(Ca, A_net, rvc): intercellular_co2 => begin
         Ca - A_net * rvc
-    end ~ solve(lower=Cimin, upper=Cimax, u"μbar")
+    end ~ bisect(lower=Cimin, upper=Cimax, u"μbar")
 end

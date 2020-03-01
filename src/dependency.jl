@@ -60,7 +60,7 @@ link!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
     A = extract(v; kwargs...)
     V = [d.M[a] for a in A]
     for v0 in V
-        if v0 == v || v0.state == :Solve
+        if v0 == v || v0.state == :Bisect
             n0 = prenode!(d, v0)
             link!(d, n0, n)
         elseif isnothing(v0.state) && istag(v0, :context)
@@ -98,14 +98,14 @@ add!(d::Dependency, v::VarInfo) = begin
         link!(d, n0, n1)
         link!(d, v, n0; equation=false)
         link!(d, v, n1)
-    elseif v.state == :Solve
+    elseif v.state == :Bisect
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         link!(d, n0, n1)
         # needs `lower/upper` tags
         link!(d, v, n0; equation=false)
         link!(d, v, n1)
-        # needs access to context in Solve constructor
+        # needs access to context in Bisect constructor
         c = mainnode!(d, :context)
         link!(d, c, n0)
     elseif v.state == :Flag
