@@ -25,12 +25,13 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     TOL = 0.0001
     lstart = symlabel(v, PreStep())
     lexit = symlabel(v, MainStep(), :__exit)
-    @gensym s d
+    @gensym s u
     @q let $s = $(symstate(v))
         if $s.step == :z
             $s.N = 0
-            $s.a = $C.unitfy($C.value($(v.tags[:lower])), $C.value($(v.tags[:unit])))
-            $s.b = $C.unitfy($C.value($(v.tags[:upper])), $C.value($(v.tags[:unit])))
+            $u = $C.value($(gettag(v, :unit)))
+            $s.a = $C.unitfy($C.value($(v.tags[:lower])), $u)
+            $s.b = $C.unitfy($C.value($(v.tags[:upper])), $u)
             $s.step = :a
             $C.store!($s, $s.a)
             @goto $lstart
