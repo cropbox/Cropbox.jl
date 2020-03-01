@@ -41,7 +41,7 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
     (a in h.N || hasloop(h, a)) && return
     add!(h, a)
     V = geninfos(S)
-    for v in V
+    for (n, v) in V
         #HACK: evaluate types defined in Main module
         T = Main.eval(v.type)
         #HACK: skip Context since the graph tends to look too busy

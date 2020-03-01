@@ -1,4 +1,5 @@
 using LightGraphs
+import DataStructures: OrderedDict
 
 struct Dependency
     g::DiGraph
@@ -7,7 +8,6 @@ struct Dependency
     M::Dict{Symbol,VarInfo}
 end
 
-dependency(M::Dict{Symbol,VarInfo}) = Dependency(DiGraph(), VarNode[], Dict{VarNode,VarInfo}(), M)
 dependency(V::Vector{VarInfo}) = begin
     M = Dict{Symbol,VarInfo}()
     for v in V
@@ -15,10 +15,11 @@ dependency(V::Vector{VarInfo}) = begin
             M[n] = v
         end
     end
-    d = dependency(M)
+    d = Dependency(DiGraph(), VarNode[], Dict{VarNode,VarInfo}(), M)
     add!(d, V)
     d
 end
+dependency(V::OrderedDict{Symbol,VarInfo}) = dependency(collect(values(V)))
 dependency(::Type{S}) where {S<:System} = dependency(geninfos(S))
 
 node!(d::Dependency, n::VarNode) = begin

@@ -131,10 +131,10 @@ genfield(type, name, alias) = @q begin
     $(isnothing(alias) ? :(;) : :($alias::$type))
 end
 genfield(v::VarInfo) = genfield(genvartype(v), symname(v), v.alias)
-genfields(infos) = [genfield(v) for v in infos]
+genfields(infos) = [genfield(v) for v in values(infos)]
 
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect |> reverse
-gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
+gennewargs(infos) = names.(values(infos)) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
     !isnothing(v.body) && error("`override` can't have funtion body: $(v.body)")
@@ -194,12 +194,12 @@ gendecl(v::VarInfo, decl) = @q begin
 end
 
 gensource(infos) = begin
-    l = [@q begin $(v.linenumber); $(v.line) end for v in infos]
+    l = [@q begin $(v.linenumber); $(v.line) end for v in values(infos)]
     MacroTools.flatten(@q begin $(l...) end)
 end
 
-genfieldnamesunique(infos) = Tuple(v.name for v in infos)
-genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
+genfieldnamesunique(infos) = Tuple(n for (n, v) in infos)
+genfieldnamesalias(infos) = Tuple((n, v.alias) for (n, v) in infos)
 
 genstruct(name, type, infos, incl) = begin
     S = esc(name)
@@ -333,7 +333,7 @@ geninfos(body; name, incl, _...) = begin
         add!(d, body, name)
         d
     end
-    combine() |> values |> collect
+    combine()
 end
 geninfos(S::Type{<:System}) = geninfos(source(S); name=nameof(S), incl=())
 
