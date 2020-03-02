@@ -14,6 +14,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
     tags::Dict{Symbol,Any}
     line::Union{Expr,Symbol}
     linenumber::LineNumberNode
+    docstring::String
 end
 
 import Base: show
@@ -29,9 +30,10 @@ show(io::IO, v::VarInfo) = begin
     end
     println(io, "line: $(v.line)")
     println(io, "linenumber: $(v.linenumber)")
+    println(io, "docstring: $(v.docstring)")
 end
 
-VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode) = begin
+VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode, docstring::String) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
     @capture(line, (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
@@ -43,7 +45,7 @@ VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode) = 
     state = isnothing(state) ? nothing : Symbol(uppercasefirst(string(state)))
     type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
-    VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber)
+    VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
 end
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
@@ -126,11 +128,18 @@ genvartype(v::VarInfo{Symbol}) = begin
     genvartype(v, Val(v.state); N=N, U=U, V=V)
 end
 
-genfield(type, name, alias) = @q begin
-    $name::$type
-    $(isnothing(alias) ? :(;) : :($alias::$type))
+genfield(v::VarInfo) = begin
+    type = genvartype(v)
+    name = symname(v)
+    docstring = isempty(v.docstring) ? :(;) : v.docstring
+    alias = v.alias
+    @q begin
+        $docstring
+        $name::$type
+        $docstring
+        $(isnothing(alias) ? :(;) : :($alias::$type))
+    end
 end
-genfield(v::VarInfo) = genfield(genvartype(v), symname(v), v.alias)
 genfields(infos) = [genfield(v) for v in infos]
 
 genpredecl(name) = @q _names = $C.names.([$C.mixins($name)..., $name]) |> Iterators.flatten |> collect |> reverse
@@ -193,10 +202,17 @@ gendecl(v::VarInfo, decl) = @q begin
     $(isnothing(v.alias) ? :(;) : :($(v.alias) = $(v.name)))
 end
 
-gensource(infos) = begin
-    l = [@q begin $(v.linenumber); $(v.line) end for v in infos]
-    MacroTools.flatten(@q begin $(l...) end)
+#HACK: @capture doesn't seem to support GlobalRef
+const DOCREF = GlobalRef(Core, Symbol("@doc"))
+isdoc(ex) = isexpr(ex, :macrocall) && ex.args[1] == DOCREF
+gensource(v::VarInfo) = begin
+    if isempty(v.docstring)
+        @q begin $(v.linenumber); $(v.line) end
+    else
+        Expr(:macrocall, DOCREF, v.linenumber, v.docstring, v.line)
+    end
 end
+gensource(infos) = MacroTools.flatten(@q begin $(gensource.(infos)...) end)
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
@@ -300,12 +316,15 @@ geninfos(body; name, incl, _...) = begin
         #HACK: default in case LineNumberNode is not attached
         ln = LineNumberNode(@__LINE__, @__FILE__)
         for l in b.args
-            if l isa LineNumberNode
-                ln = l
+            isline(l) && (ln = l; continue)
+            if isdoc(l)
+                lnn, ds, l = l.args[2:4]
+                isline(lnn) && (ln = lnn)
             else
-                v = VarInfo(s, l, ln)
-                d[v.name] = v
+                ds = ""
             end
+            v = VarInfo(s, l, ln, ds)
+            d[v.name] = v
         end
         d
     end
