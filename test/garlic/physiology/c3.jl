@@ -105,12 +105,12 @@ end
 
     # θ: sharpness of transition from light limitation to light saturation
     light_transition_sharpness: θ => 0.7 ~ preserve(parameter)
-    electron_transport_rate(I2, Jmax, θ): J => begin
+    J(J, I2, Jmax, θ): electron_transport_rate => begin
         a = θ
-        b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
-        c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
-        quadratic_solve_lower(a, b, c)
-    end ~ track(u"μmol/m^2/s")
+        b = -(I2+Jmax)
+        c = I2*Jmax
+        a*J^2 + b*J + c ⩵ 0
+    end ~ solve(u"μmol/m^2/s", root=:lower)
 
     # light and electron transport limited A mediated by J
     transport_limited_photosynthesis_rate(J, Ci, Γ): Aj => begin
