@@ -502,7 +502,7 @@ genfuncargs(v::VarInfo) = begin
     end
     @q begin $(emit.(v.args)...) end
 end
-genfunc(v::VarInfo) = begin
+genfunc(v::VarInfo, body=nothing) = begin
     if isnothing(v.body) && length(v.args) == 1
         a = v.args[1]
         emit(k, v) = @q $(esc(k)) = $C.value($v)
@@ -518,7 +518,7 @@ genfunc(v::VarInfo) = begin
         body = esc(k)
     else
         args = genfuncargs(v)
-        body = esc(v.body)
+        isnothing(body) && (body = esc(v.body))
     end
     MacroTools.flatten(@q let $args; $body end)
 end
