@@ -105,9 +105,6 @@ add!(d::Dependency, v::VarInfo) = begin
         # needs `lower/upper` tags
         link!(d, v, n0; equation=false)
         link!(d, v, n1)
-        # needs access to context in Bisect constructor
-        c = mainnode!(d, :context)
-        link!(d, c, n0)
     elseif v.state == :Flag
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)
