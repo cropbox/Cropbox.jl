@@ -32,6 +32,23 @@ solvepolynomial(p, u=nothing) = begin
     PolynomialRoots.roots(sp)
 end
 
+genrootfunc(v::VarInfo) = begin
+    root = gettag(v, :root)
+    @capture(root, :(r_))
+    #TODO: more general approach (i.e. functional composition)
+    if r == :upper
+        :maximum
+    elseif r == :lower
+        :minimum
+    else
+        error("unrecognized root selection method: $r")
+    end
+end
+
+updatetags!(d, ::Val{:Solve}; _...) = begin
+    !haskey(d, :root) && (d[:root] = :upper)
+end
+
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
@@ -39,9 +56,10 @@ geninit(v::VarInfo, ::Val{:Solve}) = nothing
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     U = gettag(v, :unit)
     poly = genpolynomial(v)
+    root = genrootfunc(v)
     @gensym r
     body = @q let $r = $C.solvepolynomial([$(esc.(poly)...)], $U)
-        $r |> real |> maximum
+        filter(isreal, $r) .|> real |> $root
     end
     val = genfunc(v, body)
     genstore(v, val)

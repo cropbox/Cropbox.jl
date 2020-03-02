@@ -43,4 +43,17 @@
         s = instance(SSolveUnitScale, config=:SSolveUnitScale => (a=0.01, b=2, c=1))
         @test s.x' == -1u"cm"
     end
+
+    @testset "root" begin
+        @system SSolveRootUpper(Controller) begin
+            x(x) => (x^2 + 2x - 3) ~ solve(root=:upper)
+        end
+        @system SSolveRootLower(Controller) begin
+            x(x) => (x^2 + 2x - 3) ~ solve(root=:lower)
+        end
+        s1 = instance(SSolveRootUpper)
+        s2 = instance(SSolveRootLower)
+        @test s1.x' == 1
+        @test s2.x' == -3
+    end
 end
