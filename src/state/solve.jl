@@ -46,7 +46,9 @@ genrootfunc(v::VarInfo) = begin
 end
 
 updatetags!(d, ::Val{:Solve}; _...) = begin
-    !haskey(d, :root) && (d[:root] = :upper)
+    #HACK: Symbol needs to be in QuoteNode
+    #TODO: handle such conversion in gettag()?
+    !haskey(d, :root) && (d[:root] = :(:upper))
 end
 
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
