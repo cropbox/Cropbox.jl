@@ -24,14 +24,23 @@ genpolynomial(v::VarInfo) = begin
     Q .|> repr .|> Meta.parse
 end
 
+import PolynomialRoots
+solvepolynomial(p, u=nothing) = begin
+    isnothing(u) && (u = u"NoUnits")
+    u1 = unit(p[1])
+    sp = [deunitfy(q, Unitful.upreferred(u1 / u^(i-1))) for (i, q) in enumerate(p)]
+    PolynomialRoots.roots(sp)
+end
+
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+    U = gettag(v, :unit)
     poly = genpolynomial(v)
     @gensym r
-    body = @q let $r = $C.PolynomialRoots.roots([$(esc.(E)...)])
+    body = @q let $r = $C.solvepolynomial([$(esc.(poly)...)], $U)
         $r |> real |> maximum
     end
     val = genfunc(v, body)
