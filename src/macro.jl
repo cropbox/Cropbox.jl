@@ -411,11 +411,11 @@ genupdate(v::VarInfo, t::VarStep) = @q begin
 end
 
 genvalue(v::VarInfo) = :($C.value($(symstate(v))))
-genstore(v::VarInfo) = begin
-    @gensym s f
-    @q let $s = $(symstate(v)),
-           $f = $(genfunc(v))
-        $C.store!($s, $f)
+genstore(v::VarInfo, val=nothing) = begin
+    isnothing(val) && (val = genfunc(v))
+    @gensym s
+    @q let $s = $(symstate(v))
+        $C.store!($s, $val)
     end
 end
 
