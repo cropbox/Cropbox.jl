@@ -13,7 +13,7 @@ import SymPy: SymPy, sympy, ⩵
 export ⩵
 genpolynomial(v::VarInfo) = begin
     x = v.name
-    V = extractfuncargkey.(v.args)
+    V = extractfuncargpair.(v.args) .|> first
     p = eval(@q let $(V...)
         SymPy.@vars $(V...)
         sympy.Poly(begin
