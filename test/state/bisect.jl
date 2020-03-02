@@ -7,7 +7,7 @@
         @test s.x' == 1
     end
 
-    @testset "bisect with unit" begin
+    @testset "unit" begin
         @system SBisectUnit(Controller) begin
             x(x) => 2x - u"1m" ~ bisect(lower=u"0m", upper=u"2m", u"m")
         end
