@@ -363,10 +363,6 @@ macro system(head, body=:(begin end))
     gensystem(body; parsehead(head)...)
 end
 
-macro infos(head, body)
-    geninfos(body; parsehead(head)...)
-end
-
 export @system, update!
 
 geninit(v::VarInfo) = geninit(v, Val(v.state))
