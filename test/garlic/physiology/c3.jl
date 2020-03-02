@@ -179,15 +179,11 @@ end
         CO2 - (drb * A_net / gb)
     end ~ track
 
-    relative_humidity_at_leaf_surface(g0, g1, gb, m, A_net, Cs, RH=weather.RH): hs => begin
-        a = m * g1 * A_net / Cs |> u"mol/m^2/s" |> Cropbox.deunitfy
-        b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s" |> Cropbox.deunitfy
-        c = (-RH * gb) - g0 |> u"mol/m^2/s" |> Cropbox.deunitfy
-        #FIXME: check unit
-        hs = quadratic_solve_upper(a, b, c)
-        #TODO: need to prevent bifurcation?
-        #clamp(hs, 0.1, 1.0)
-    end ~ track(u"percent")
+    #TODO: need to prevent bifurcation? -- clamp(hs, 0.1, 1.0)
+    hs(hs, g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
+        gs = g0 + (g1 * m * (A_net * hs / Cs))
+        (hs - RH)*gb ⩵ (1 - hs)*gs
+    end ~ solve(u"percent")
 
     # stomatal conductance for water vapor in mol m-2 s-1
     stomatal_conductance(g0, g1, m, A_net, hs, Cs): gs => begin
