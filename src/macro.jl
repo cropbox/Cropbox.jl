@@ -214,7 +214,7 @@ genstruct(name, type, infos, incl) = begin
     args = gennewargs(infos)
     source = gensource(infos)
     system = quote
-        mutable struct $S <: $T
+        Core.@__doc__ mutable struct $S <: $T
             $(fields...)
             function $name(; _kwargs...)
                 $predecl
