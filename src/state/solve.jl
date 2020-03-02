@@ -1,8 +1,3 @@
-import SymPy: SymPy, sympy, ⩵
-export ⩵
-
-import PolynomialRoots
-
 mutable struct Solve{V} <: State{V}
     value::V
 end
@@ -14,11 +9,9 @@ Solve(; unit, _type, _...) = begin
     Solve{V}(v)
 end
 
-genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
-
-geninit(v::VarInfo, ::Val{:Solve}) = nothing
-
-genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+import SymPy: SymPy, sympy, ⩵
+export ⩵
+genpolynomial(v::VarInfo) = begin
     x = v.name
     V = extractfuncargkey.(v.args)
     p = eval(@q let $(V...)
@@ -28,7 +21,15 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
         end, $x)
     end)
     Q = p.coeffs() |> reverse .|> SymPy.simplify
-    E = Q .|> repr .|> Meta.parse
+    Q .|> repr .|> Meta.parse
+end
+
+genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
+
+geninit(v::VarInfo, ::Val{:Solve}) = nothing
+
+genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+    poly = genpolynomial(v)
     @gensym r
     body = @q let $r = $C.PolynomialRoots.roots([$(esc.(E)...)])
         $r |> real |> maximum
