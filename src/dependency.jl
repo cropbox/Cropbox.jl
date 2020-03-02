@@ -105,6 +105,10 @@ add!(d::Dependency, v::VarInfo) = begin
         # needs `lower/upper` tags
         link!(d, v, n0; equation=false)
         link!(d, v, n1)
+    elseif v.state == :Solve
+        n0 = prenode!(d, v)
+        n1 = mainnode!(d, v)
+        link!(d, n0, n1)
     elseif v.state == :Flag
         n0 = mainnode!(d, v)
         n1 = postnode!(d, v)

@@ -10,4 +10,5 @@
     include("state/flag.jl")
     include("state/produce.jl")
     include("state/bisect.jl")
+    include("state/solve.jl")
 end
