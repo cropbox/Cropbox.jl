@@ -21,23 +21,23 @@ genpolynomial(v::VarInfo) = begin
             $(v.body)
         end, $x)
     end)
-    Q = p.coeffs() |> reverse .|> SymPy.simplify
+    Q = p.coeffs()
+    #HACK: normalize coefficient to avoid runtime unit generation
+    Q = Q / Q[1] |> reverse .|> SymPy.simplify
     Q .|> repr .|> Meta.parse
 end
+genpolynomialunits(U, n) = [@q($U^$(i-1)) for i in n:-1:1]
 
 import PolynomialRoots
-import Unitful: upreferred
-solvepolynomial(p, u=nothing) = begin
-    isnothing(u) && (u = u"NoUnits")
-    u = u |> upreferred
-    u1 = unit(p[1]) |> upreferred
-    sp = [deunitfy(q, u1 / u^(i-1)) for (i, q) in enumerate(p)]
+solvepolynomial(p, pu, u) = begin
+    sp = [deunitfy(q, qu) for (q, qu) in zip(p, pu)]
     r = PolynomialRoots.roots(sp)
-    real.(filter(isreal, r)) * u
+    unitfy(real.(filter(isreal, r)), u)
 end
 
 updatetags!(d, ::Val{:Solve}; _...) = begin
-    !haskey(d, :order) && (d[:order] = 1)
+    #HACK: `end` causes missing variable dependency
+    #!haskey(d, :order) && (d[:order] = :(:end))
     !haskey(d, :lower) && (d[:lower] = -Inf)
     !haskey(d, :upper) && (d[:upper] = Inf)
 end
@@ -48,22 +48,18 @@ geninit(v::VarInfo, ::Val{:Solve}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     U = gettag(v, :unit)
-    poly = genpolynomial(v)
-    order = gettag(v, :order)
+    isnothing(U) && (U = @q(u"NoUnits"))
+    P = genpolynomial(v)
+    PU = genpolynomialunits(U, length(P))
+    #HACK: pick last one as it seems align with our use (i.e. upper for hs, lower for J)
+    order = gettag(v, :order, :end)
     lower = gettag(v, :lower)
     upper = gettag(v, :upper)
     @gensym r a b l
-    body = @q let $r = $C.solvepolynomial([$(esc.(poly)...)], $U)#,
-                  #$a = $C.unitfy($C.value($lower), $U),
-                  #$b = $C.unitfy($C.value($upper), $U)
-        # @show $r
-        # @show $a
-        # @show $b
-        #filter(isreal, $r) .|> real |> $root
-        #$rr = real.(filter(isreal, $r))
-        # @show $rr
+    body = @q let $r = $C.solvepolynomial([$(esc.(P)...)], [$(PU...)], $U),
+                  $a = $C.unitfy($C.value($lower), $U),
+                  $b = $C.unitfy($C.value($upper), $U)
         # $l = filter(x -> $a <= x <= $b, $r)
-        # # @show $l
         # isempty($l) && ($l = clamp.($r, $a, $b))
         $l = $r
         $l[$order]

@@ -110,27 +110,13 @@ end
         b = -(I2+Jmax)
         c = I2*Jmax
         a*J^2 + b*J + c ⩵ 0
-    end ~ solve(lower=0, upper=Jmax, order=1, u"μmol/m^2/s")
+    end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
 
-    # J0(I2, Jmax, θ): electron_transport_rate_0 => begin
+    # J(I2, Jmax, θ): electron_transport_rate => begin
     #     a = θ
     #     b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
     #     c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
     #     quadratic_solve_lower(a, b, c)
-    # end ~ track(u"μmol/m^2/s")
-
-    # J0l(I2, Jmax, θ): electron_transport_rate_0_lower => begin
-    #     a = θ
-    #     b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
-    #     c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
-    #     quadratic_solve_lower(a, b, c)
-    # end ~ track(u"μmol/m^2/s")
-    # 
-    # J0u(I2, Jmax, θ): electron_transport_rate_0_upper => begin
-    #     a = θ
-    #     b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
-    #     c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
-    #     quadratic_solve_upper(a, b, c)
     # end ~ track(u"μmol/m^2/s")
 
     # light and electron transport limited A mediated by J
@@ -200,11 +186,11 @@ end
         CO2 - (drb * A_net / gb)
     end ~ track
 
-    #TODO: need to prevent bifurcation? -- clamp(hs, 0.1, 1.0)
+    #HACK: avoid scaling issue with dimensionless unit
     hs(g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
         gs = g0 + (g1 * m * (A_net * hs / Cs))
         (hs - RH)*gb ⩵ (1 - hs)*gs
-    end ~ solve(lower=0, upper=1, order=2) #, u"percent")
+    end ~ solve(lower=0, upper=1) #, u"percent")
 
     # hs(g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
     #     a = m * g1 * A_net / Cs |> u"mol/m^2/s" |> Cropbox.deunitfy
