@@ -105,12 +105,33 @@ end
 
     # θ: sharpness of transition from light limitation to light saturation
     light_transition_sharpness: θ => 0.7 ~ preserve(parameter)
-    J(J, I2, Jmax, θ): electron_transport_rate => begin
+    J(I2, Jmax, θ): electron_transport_rate => begin
         a = θ
         b = -(I2+Jmax)
         c = I2*Jmax
         a*J^2 + b*J + c ⩵ 0
-    end ~ solve(u"μmol/m^2/s", root=:lower)
+    end ~ solve(lower=0, upper=Jmax, order=1, u"μmol/m^2/s")
+
+    # J0(I2, Jmax, θ): electron_transport_rate_0 => begin
+    #     a = θ
+    #     b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
+    #     c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
+    #     quadratic_solve_lower(a, b, c)
+    # end ~ track(u"μmol/m^2/s")
+
+    # J0l(I2, Jmax, θ): electron_transport_rate_0_lower => begin
+    #     a = θ
+    #     b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
+    #     c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
+    #     quadratic_solve_lower(a, b, c)
+    # end ~ track(u"μmol/m^2/s")
+    # 
+    # J0u(I2, Jmax, θ): electron_transport_rate_0_upper => begin
+    #     a = θ
+    #     b = -(I2+Jmax) |> u"μmol/m^2/s" |> Cropbox.deunitfy
+    #     c = I2*Jmax |> u"(μmol/m^2/s)^2" |> Cropbox.deunitfy
+    #     quadratic_solve_upper(a, b, c)
+    # end ~ track(u"μmol/m^2/s")
 
     # light and electron transport limited A mediated by J
     transport_limited_photosynthesis_rate(J, Ci, Γ): Aj => begin
@@ -180,10 +201,20 @@ end
     end ~ track
 
     #TODO: need to prevent bifurcation? -- clamp(hs, 0.1, 1.0)
-    hs(hs, g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
+    hs(g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
         gs = g0 + (g1 * m * (A_net * hs / Cs))
         (hs - RH)*gb ⩵ (1 - hs)*gs
-    end ~ solve(u"percent")
+    end ~ solve(lower=0, upper=1, order=2) #, u"percent")
+
+    # hs(g0, g1, gb, m, A_net, Cs, RH=weather.RH): relative_humidity_at_leaf_surface => begin
+    #     a = m * g1 * A_net / Cs |> u"mol/m^2/s" |> Cropbox.deunitfy
+    #     b = g0 + gb - (m * g1 * A_net / Cs) |> u"mol/m^2/s" |> Cropbox.deunitfy
+    #     c = (-RH * gb) - g0 |> u"mol/m^2/s" |> Cropbox.deunitfy
+    #     #FIXME: check unit
+    #     hs = quadratic_solve_upper(a, b, c) |> u"percent"
+    #     #TODO: need to prevent bifurcation?
+    #     #clamp(hs, 0.1, 1.0)
+    # end ~ track(u"percent")
 
     # stomatal conductance for water vapor in mol m-2 s-1
     stomatal_conductance(g0, g1, m, A_net, hs, Cs): gs => begin
