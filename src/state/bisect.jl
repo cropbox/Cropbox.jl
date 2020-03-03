@@ -22,7 +22,7 @@ geninit(v::VarInfo, ::Val{:Bisect}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
     N_MAX = 100
-    TOL = 0.0001
+    TOL = 0.01
     lstart = symlabel(v, PreStep())
     lexit = symlabel(v, MainStep(), :__exit)
     @gensym s u
