@@ -46,4 +46,4 @@
     DAP(pheno.DAP): day_after_planting ~ track::Int
 end
 
-@system GarlicModel(Plant, Controller)
+@system Model(Plant, Controller)

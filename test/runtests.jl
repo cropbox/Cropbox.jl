@@ -17,7 +17,7 @@ using Test
         include("gasexchange/runtests.jl")
         include("root/root.jl")
         include("soil/soil.jl")
-        include("garlic/garlic.jl")
+        include("garlic/runtests.jl")
         include("photosynthesis.jl")
     end
 end
