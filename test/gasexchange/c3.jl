@@ -39,19 +39,6 @@
         Kc * (1 + Om / Ko)
     end ~ track(u"μbar")
 
-    Rd25: dark_respiration_at_25 => 1.08 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
-    Ear: activation_energy_for_respiration => 49.39 ~ preserve(u"kJ/mol", parameter)
-    Rd(T_dep, Rd25, Ear): dark_respiration => begin
-        Rd25 * T_dep(Ear)
-    end ~ track(u"μmol/m^2/s")
-    #Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
-
-    TPU25: triose_phosphate_limitation_at_25 => 16.03 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
-    EaTPU: activation_energy_for_TPU => 47100 ~ preserve(u"J/mol", parameter)
-    TPU(T_dep, TPU25, EaTPU): triose_phosphate_limitation => begin
-        TPU25 * T_dep(EaTPU)
-    end ~ track(u"μmol/m^2/s" #= CO2 =#)
-
     Vcm25: maximum_carboxylation_rate_at_25 => 108.4 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     EaVc: activation_energy_for_carboxylation => 52.1573 ~ preserve(u"kJ/mol", parameter)
     Vcmax(T_dep, Vcm25, EaVc): maximum_carboxylation_rate => begin
@@ -71,6 +58,28 @@
         end
     end ~ track(u"μmol/m^2/s" #= Electron =#)
 
+    # θ: sharpness of transition from light limitation to light saturation
+    θ: light_transition_sharpness => 0.7 ~ preserve(parameter)
+    J(I2, Jmax, θ): electron_transport_rate => begin
+        a = θ
+        b = -(I2+Jmax)
+        c = I2*Jmax
+        a*J^2 + b*J + c ⩵ 0
+    end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
+
+    TPU25: triose_phosphate_limitation_at_25 => 16.03 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
+    EaTPU: activation_energy_for_TPU => 47100 ~ preserve(u"J/mol", parameter)
+    TPU(T_dep, TPU25, EaTPU): triose_phosphate_limitation => begin
+        TPU25 * T_dep(EaTPU)
+    end ~ track(u"μmol/m^2/s" #= CO2 =#)
+
+    Rd25: dark_respiration_at_25 => 1.08 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
+    Ear: activation_energy_for_respiration => 49.39 ~ preserve(u"kJ/mol", parameter)
+    Rd(T_dep, Rd25, Ear): dark_respiration => begin
+        Rd25 * T_dep(Ear)
+    end ~ track(u"μmol/m^2/s")
+    #Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
+
     # CO2 compensation point in the absence of day respiration, value from Bernacchi (2001)
     Γ25: co2_compensation_point_at_25 => 42.75 ~ preserve(u"μbar", parameter)
     Eag: activation_energy_for_co2_compensation_point => 37.83 ~ preserve(u"kJ/mol", parameter)
@@ -85,15 +94,6 @@
     Ac(Vcmax, Ci, Γ, Km): enzyme_limited_photosynthesis_rate => begin
         Vcmax * (Ci - Γ) / (Ci + Km)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
-
-    # θ: sharpness of transition from light limitation to light saturation
-    θ: light_transition_sharpness => 0.7 ~ preserve(parameter)
-    J(I2, Jmax, θ): electron_transport_rate => begin
-        a = θ
-        b = -(I2+Jmax)
-        c = I2*Jmax
-        a*J^2 + b*J + c ⩵ 0
-    end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
 
     # light and electron transport limited A mediated by J
     Aj(J, Ci, Γ): transport_limited_photosynthesis_rate => begin

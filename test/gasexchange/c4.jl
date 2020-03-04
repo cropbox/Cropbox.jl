@@ -7,6 +7,10 @@
     Cm(Ci): mesophyll_co2 ~ track(u"μbar")
     Tk(T): absolute_leaf_temperature ~ track(u"K")
 
+    ##############
+    # Parameters #
+    ##############
+
     # FIXME are they even used?
     # beta_ABA => 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
     # delta => -1.0
@@ -31,32 +35,6 @@
         2 / (1 + exp(-s * (max(N0, N) - N0))) - 1
     end ~ track
 
-    # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
-    Rd25: dark_respiration_at_25 => 2 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
-    Ear: activation_energy_for_respiration => 39.8 ~ preserve(u"kJ/mol", parameter)
-    Rd(T_dep, Rd25, Ear): dark_respiration => begin
-        Rd25 * T_dep(Ear)
-    end ~ track(u"μmol/m^2/s")
-
-    Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
-
-    Jm25: maximum_electron_transport_rate_at_25 => 300 ~ preserve(u"μmol/m^2/s" #= Electron =#, parameter)
-    Eaj: activation_energy_for_electron_transport => 32.8 ~ preserve(u"kJ/mol", parameter)
-    Sj: electron_transport_temperature_response => 702.6 ~ preserve(u"J/mol/K", parameter)
-    Hj: electron_transport_curvature => 220 ~ preserve(u"kJ/mol", parameter)
-    Jmax(Tk, Tbk, T_dep, N_dep, Jm25, Eaj, Sj, Hj): maximum_electron_transport_rate => begin
-        R = u"R"
-        Jm25 * begin
-            N_dep *
-            T_dep(Eaj) *
-            (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
-            (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
-        end
-    end ~ track(u"μmol/m^2/s" #= Electron =#)
-
-    # mesophyll O2 partial pressure
-    Om: mesophyll_o2_partial_pressure => 210 ~ preserve(u"mbar", parameter)
-
     # Kp25: Michaelis constant for PEP caboxylase for CO2
     Kp25: pep_carboxylase_constant_for_co2_at_25 => 80 ~ preserve(u"μbar", parameter)
     Kp(Kp25): pep_carboxylase_constant_for_co2 => begin
@@ -78,7 +56,9 @@
         Ko25 * T_dep(Eao)
     end ~ track(u"mbar")
 
-    Km(Kc, Om, Ko) => begin
+    # mesophyll O2 partial pressure
+    Om: mesophyll_o2_partial_pressure => 210 ~ preserve(u"mbar", parameter)
+    Km(Kc, Om, Ko): rubisco_constant_for_co2_with_o2 => begin
         # effective M-M constant for Kc in the presence of O2
         Kc * (1 + Om / Ko)
     end ~ track(u"μbar")
@@ -91,7 +71,6 @@
 
     # PEP regeneration limited Vp, value adopted from vC book
     Vpr: regeneration_limited_pep_carboxylation_rate => 80 ~ preserve(u"μmol/m^2/s", parameter)
-
     Vp(Vpmax, Vpr, Cm, Kp): pep_carboxylation_rate => begin
         # PEP carboxylation rate, that is the rate of C4 acid generation
         Vp = (Cm * Vpmax) / (Cm + Kp)
@@ -105,13 +84,19 @@
         Vcm25 * N_dep * T_dep(EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    # Enzyme limited A (Rubisco or PEP carboxylation)
-    Ac1(Vp, gbs, Cm, Rm) => (Vp + gbs*Cm - Rm) ~ track(u"μmol/m^2/s" #= CO2 =#)
-    Ac2(Vcmax, Rd) => (Vcmax - Rd) ~ track(u"μmol/m^2/s" #= CO2 =#)
-    Ac(Ac1, Ac2): enzyme_limited_photosynthesis_rate => begin
-        #Ac1 = max(0, Ac1) # prevent Ac1 from being negative Yang 9/26/06
-        min(Ac1, Ac2)
-    end ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Jm25: maximum_electron_transport_rate_at_25 => 300 ~ preserve(u"μmol/m^2/s" #= Electron =#, parameter)
+    Eaj: activation_energy_for_electron_transport => 32.8 ~ preserve(u"kJ/mol", parameter)
+    Sj: electron_transport_temperature_response => 702.6 ~ preserve(u"J/mol/K", parameter)
+    Hj: electron_transport_curvature => 220 ~ preserve(u"kJ/mol", parameter)
+    Jmax(Tk, Tbk, T_dep, N_dep, Jm25, Eaj, Sj, Hj): maximum_electron_transport_rate => begin
+        R = u"R"
+        Jm25 * begin
+            N_dep *
+            T_dep(Eaj) *
+            (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
+            (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
+        end
+    end ~ track(u"μmol/m^2/s" #= Electron =#)
 
     # θ: sharpness of transition from light limitation to light saturation
     θ: light_transition_sharpness => 0.5 ~ preserve(parameter)
@@ -121,6 +106,47 @@
         c = I2*Jmax
         a*J^2 + b*J + c ⩵ 0
     end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
+
+    # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
+    Rd25: dark_respiration_at_25 => 2 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
+    Ear: activation_energy_for_respiration => 39.8 ~ preserve(u"kJ/mol", parameter)
+    Rd(T_dep, Rd25, Ear): dark_respiration => begin
+        Rd25 * T_dep(Ear)
+    end ~ track(u"μmol/m^2/s")
+    Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
+
+    #FIXME: currently not used variables
+
+    # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
+    α: bundle_sheath_PSII_activity_fraction => 0.0001 ~ preserve(parameter)
+    # Bundle sheath O2 partial pressure, mbar
+    Os(A_net, gbs, Om, α): bundle_sheath_o2 => begin
+        α * A_net / (0.047gbs) + Om
+    end ~ track(u"mbar")
+
+    Cbs(A_net, Vp, Cm, Rm, gbs): bundle_sheath_co2 => begin
+        Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
+    end ~ track(u"μbar")
+
+    # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
+    # note that this become the same as that in C3 model when multiplied by [O2]
+    Γ1 => 0.193 ~ preserve(parameter)
+    Γ★(Γ1, Os) => Γ1 * Os ~ track(u"μbar")
+    Γ(Rd, Km, Vcmax, Γ★): co2_compensation_point => begin
+        (Rd*Km + Vcmax*Γ★) / (Vcmax - Rd)
+    end ~ track(u"μbar")
+
+    #########
+    # Rates #
+    #########
+
+    # Enzyme limited A (Rubisco or PEP carboxylation)
+    Ac1(Vp, gbs, Cm, Rm) => (Vp + gbs*Cm - Rm) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Ac2(Vcmax, Rd) => (Vcmax - Rd) ~ track(u"μmol/m^2/s" #= CO2 =#)
+    Ac(Ac1, Ac2): enzyme_limited_photosynthesis_rate => begin
+        #Ac1 = max(0, Ac1) # prevent Ac1 from being negative Yang 9/26/06
+        min(Ac1, Ac2)
+    end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # x: Partitioning factor of J, yield maximal J at this value
     x: electron_transport_partitioning_factor => 0.4 ~ preserve(parameter)
@@ -142,25 +168,4 @@
         # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
         #max(A_gross, zero(A_gross))
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
-
-    #FIXME: currently not used variables
-
-    # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
-    α: bundle_sheath_PSII_activity_fraction => 0.0001 ~ preserve(parameter)
-    # Bundle sheath O2 partial pressure, mbar
-    Os(A_net, gbs, Om, α): bundle_sheath_o2 => begin
-        α * A_net / (0.047gbs) + Om
-    end ~ track(u"mbar")
-
-    Cbs(A_net, Vp, Cm, Rm, gbs): bundle_sheath_co2 => begin
-        Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
-    end ~ track(u"μbar")
-
-    # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
-    # note that this become the same as that in C3 model when multiplied by [O2]
-    Γ1 => 0.193 ~ preserve(parameter)
-    Γ★(Γ1, Os) => Γ1 * Os ~ track(u"μbar")
-    Γ(Rd, Km, Vcmax, Γ★) => begin
-        (Rd*Km + Vcmax*Γ★) / (Vcmax - Rd)
-    end ~ track(u"μbar")
 end
