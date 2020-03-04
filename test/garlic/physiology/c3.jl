@@ -237,8 +237,8 @@ end
     co2_atmosphere(CO2=weather.CO2, P_air): Ca => (CO2 * P_air) ~ track(u"μbar")
     intercellular_co2_upper_limit(Ca): Cimax => 2Ca ~ track(u"μbar")
     intercellular_co2_lower_limit: Cimin => 0 ~ preserve(u"μbar")
-    intercellular_co2(Ca, A_net, P_air, CO2=weather.CO2, rvc): Ci => begin
-        Ca - A_net * rvc * P_air
+    intercellular_co2(Ca, Ci, A_net, P_air, CO2=weather.CO2, rvc): Ci => begin
+        Ca - Ci - A_net * rvc * P_air
     end ~ bisect(lower=Cimin, upper=Cimax, u"μbar")
 
     #FIXME: confusion between PFD vs. PPFD
