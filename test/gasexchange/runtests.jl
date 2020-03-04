@@ -97,7 +97,7 @@ ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
         @testset "A-Ci" begin
             r = estimate(ge_df_c)
-            Cropbox.plot(r, :CO2, :A_net) |> display
+            Cropbox.plot(r, :Ci, :A_net) |> display
         end
 
         @testset "A-Q" begin
@@ -116,7 +116,7 @@ ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
         @testset "A-Ci" begin
             r = estimate(ge_df_c)
-            Cropbox.plot(r, :CO2, :A_net) |> display
+            Cropbox.plot(r, :Ci, :A_net) |> display
         end
 
         @testset "A-Q" begin
