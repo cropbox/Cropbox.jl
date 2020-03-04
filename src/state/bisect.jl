@@ -1,22 +1,34 @@
-mutable struct Bisect{V} <: State{V}
+mutable struct Bisect{V,E} <: State{V}
     value::V
     step::Symbol
     N::Int
     a::V
     b::V
     c::V
-    fa
-    fb
-    fc
+    fa::E
+    fb::E
+    fc::E
 end
 
-Bisect(; unit, _type, _...) = begin
+Bisect(; unit, evalunit, _type, _...) = begin
     V = valuetype(_type, value(unit))
+    E = valuetype(_type, value(evalunit))
     v = zero(V)
-    Bisect{V}(v, :z, 0, v, v, v, v, v, v)
+    e = zero(E)
+    Bisect{V,E}(v, :z, 0, v, v, v, e, e, e)
 end
 
-genvartype(v::VarInfo, ::Val{:Bisect}; V, _...) = @q Bisect{$V}
+@generated evalunit(s::Bisect{V,E}) where {V,E} = unittype(E)
+
+updatetags!(d, ::Val{:Bisect}; _...) = begin
+    !haskey(d, :evalunit) && (d[:evalunit] = d[:unit])
+end
+
+genvartype(v::VarInfo, ::Val{:Bisect}; N, V, _...) = begin
+    EU = gettag(v, :evalunit)
+    E = @q $C.valuetype($N, $EU)
+    @q Bisect{$V,$E}
+end
 
 geninit(v::VarInfo, ::Val{:Bisect}) = nothing
 

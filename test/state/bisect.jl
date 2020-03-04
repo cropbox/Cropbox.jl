@@ -14,4 +14,15 @@
         s = instance(SBisectUnit)
         @test s.x' == u"1m"
     end
+
+    @testset "eval unit" begin
+        @system SBisectEvalUnit(Controller) begin
+            f(x) => (x/1u"s" - 1u"m/s") ~ track(u"m/s")
+            x(f) ~ bisect(lower=0, upper=2, u"m", evalunit=u"m/s")
+        end
+        s = instance(SBisectEvalUnit)
+        @test s.x' == 1u"m"
+        @test Cropbox.unit(s.x) == u"m"
+        @test Cropbox.evalunit(s.x) == u"m/s"
+    end
 end
