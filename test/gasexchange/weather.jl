@@ -23,6 +23,8 @@ end
 @system WeatherStub begin
     weather ~ hold
 
+    vp(x=weather.vp) => x ~ ::VaporPressure
+
     PFD(weather.PFD): photon_flux_density ~ track(u"μmol/m^2/s" #= Quanta =#)
     CO2(weather.CO2) ~ track(u"μmol/mol")
     RH(weather.RH): relative_humidity ~ track(u"percent")
