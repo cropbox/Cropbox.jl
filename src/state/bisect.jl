@@ -5,6 +5,7 @@ mutable struct Bisect{V,E} <: State{V}
     a::V
     b::V
     c::V
+    d::V
     fa::E
     fb::E
     fc::E
@@ -15,7 +16,7 @@ Bisect(; unit, evalunit, _type, _...) = begin
     E = valuetype(_type, value(evalunit))
     v = zero(V)
     e = zero(E)
-    Bisect{V,E}(v, :z, 0, v, v, v, e, e, e)
+    Bisect{V,E}(v, :z, 0, v, v, v, v, e, e, e)
 end
 
 @generated evalunit(s::Bisect{V,E}) where {V,E} = unittype(E)
@@ -44,6 +45,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $u = $C.value($(gettag(v, :unit)))
             $s.a = $C.unitfy($C.value($(v.tags[:lower])), $u)
             $s.b = $C.unitfy($C.value($(v.tags[:upper])), $u)
+            $s.d = $s.b - $s.a
             $s.step = :a
             $C.store!($s, $s.a)
             @goto $lstart
@@ -65,7 +67,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         elseif $s.step == :c
             $s.fc = $(genfunc(v))
             #@show "bisect: $($s.c) => $($s.fc)"
-            if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / ($s.b) < $TOL
+            if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / $s.d < $TOL
                 $s.step = :z
                 #@show "bisect: finished! $($C.value($s))"
                 @goto $lexit
