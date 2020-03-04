@@ -5,9 +5,9 @@ mutable struct Bisect{V} <: State{V}
     a::V
     b::V
     c::V
-    fa::V
-    fb::V
-    fc::V
+    fa
+    fb
+    fc
 end
 
 Bisect(; unit, _type, _...) = begin
@@ -36,13 +36,13 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $C.store!($s, $s.a)
             @goto $lstart
         elseif $s.step == :a
-            $s.fa = $C.value($s) - $(genfunc(v))
+            $s.fa = $(genfunc(v))
             #@show "bisect: $($s.a) => $($s.fa)"
             $s.step = :b
             $C.store!($s, $s.b)
             @goto $lstart
         elseif $s.step == :b
-            $s.fb = $C.value($s) - $(genfunc(v))
+            $s.fb = $(genfunc(v))
             #@show "bisect: $($s.b) => $($s.fb)"
             @assert sign($s.fa) != sign($s.fb)
             $s.N = 1
@@ -51,7 +51,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $s.step = :c
             @goto $lstart
         elseif $s.step == :c
-            $s.fc = $C.value($s) - $(genfunc(v))
+            $s.fc = $(genfunc(v))
             #@show "bisect: $($s.c) => $($s.fc)"
             if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / ($s.b) < $TOL
                 $s.step = :z
