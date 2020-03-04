@@ -14,6 +14,7 @@ using Test
     @testset "application" begin
         include("lotka_volterra.jl")
         include("pheno/estimator.jl")
+        include("gasexchange/runtests.jl")
         include("root/root.jl")
         include("soil/soil.jl")
         include("garlic/garlic.jl")
