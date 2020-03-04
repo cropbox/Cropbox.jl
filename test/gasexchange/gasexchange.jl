@@ -12,10 +12,12 @@ include("stomata.jl")
 include("intercellularspace.jl")
 include("irradiance.jl")
 include("energybalance.jl")
+include("transpiration.jl")
 
 @system Model(
     WeatherStub, SoilStub,
     BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance,
+    BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance, Transpiration,
     C4, Controller
 ) begin
     weather(context) ~ ::Weather
@@ -25,13 +27,6 @@ include("energybalance.jl")
     PPFD(weather.PFD): photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s")
 
     N: nitrogen => 2.0 ~ preserve(parameter)
-
-    ET(gv, T, T_air, P_air, RH, ea=weather.vp.ambient, es=weather.vp.saturation): evapotranspiration => begin
-        Es = es(T)
-        Ea = ea(T_air, RH)
-        ET = gv * ((Es - Ea) / P_air) / (1 - (Es + Ea) / P_air) * P_air
-        max(ET, zero(ET)) # 04/27/2011 dt took out the 1000 everything is moles now
-    end ~ track(u"mmol/m^2/s" #= H2O =#)
 end
 
 estimate(df; config=(),
