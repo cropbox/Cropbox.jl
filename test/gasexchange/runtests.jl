@@ -91,18 +91,41 @@ ge_df_q = DataFrame(SolRad=0:1:3000, CO2=400, RH=60, Tair=25, Wind=2.0)
 ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
 @testset "gasexchange" begin
-    @testset "A-Ci" begin
-        r = GasExchangeTest.estimate(ge_df_c)
-        Cropbox.plot(r, :CO2, :A_net) |> display
+    @testset "C3" begin
+        estimate = GasExchangeTest.estimate_c3
+
+        @testset "A-Ci" begin
+            r = estimate(ge_df_c)
+            Cropbox.plot(r, :CO2, :A_net) |> display
+        end
+
+        @testset "A-Q" begin
+            r = estimate(ge_df_q)
+            Cropbox.plot(r, :PFD, :A_net) |> display
+        end
+
+        @testset "A-T" begin
+            r = estimate(ge_df_t)
+            Cropbox.plot(r, :T_air, :A_net) |> display
+        end
     end
 
-    @testset "A-Q" begin
-        r = GasExchangeTest.estimate(ge_df_q)
-        Cropbox.plot(r, :PFD, :A_net) |> display
-    end
+    @testset "C4" begin
+        estimate = GasExchangeTest.estimate_c4
 
-    @testset "A-T" begin
-        r = GasExchangeTest.estimate(ge_df_t)
-        Cropbox.plot(r, :T_air, :A_net) |> display
+        @testset "A-Ci" begin
+            r = estimate(ge_df_c)
+            Cropbox.plot(r, :CO2, :A_net) |> display
+        end
+
+        @testset "A-Q" begin
+            r = estimate(ge_df_q)
+            Cropbox.plot(r, :PFD, :A_net) |> display
+        end
+
+        @testset "A-T" begin
+            r = estimate(ge_df_t)
+            Cropbox.plot(r, :T_air, :A_net) |> display
+        end
     end
 end
