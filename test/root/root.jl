@@ -296,7 +296,7 @@ end
 end
 
 import Colors: RGBA
-maize = (
+root_maize = (
     :PlantContainer => (
         :r1 => 5,
         :r2 => 5,
@@ -349,7 +349,7 @@ maize = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
-switchgrass_N = (
+root_switchgrass_N = (
     :RootArchiteture => :maxB => 5,
     :MyBaseRoot => :T => [
         # P F S
@@ -397,7 +397,7 @@ switchgrass_N = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
-switchgrass_W = (
+root_switchgrass_W = (
     :RootArchiteture => :maxB => 15,
     :MyBaseRoot => :T => [
         # P F S
@@ -447,7 +447,7 @@ switchgrass_W = (
 )
 
 @testset "root" begin
-    s = instance(Root.RootArchiteture, config=maize)
+    s = instance(Root.RootArchiteture, config=root_maize)
     r = simulate!(s, stop=50)
     @test r[!, :tick][end] > 50u"hr"
     # render(s) |> open
