@@ -1,13 +1,9 @@
-@system C3 begin
+@system C3Base begin
     Ci: intercellular_co2 ~ hold
     I2: effective_irradiance ~ hold
     T: leaf_temperature ~ hold
 
     Tk(T): absolute_leaf_temperature ~ track(u"K")
-
-    ##############
-    # Parameters #
-    ##############
 
     # Arrhenius equation
     Tb: base_temperature => 25 ~ preserve(u"°C", parameter)
@@ -15,7 +11,9 @@
     T_dep(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): temperature_dependence_rate => begin
         exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
     end ~ call
+end
 
+@system C3c(C3Base) begin
     # Michaelis constant of rubisco for CO2 of C3 plants, ubar, from Bernacchi et al. (2001)
     Kc25: rubisco_constant_for_co2_at_25 => 404.9 ~ preserve(u"μbar", parameter)
     # Activation energy for Kc, Bernacchi (2001)
@@ -44,7 +42,9 @@
     Vcmax(T_dep, Vcm25, EaVc): maximum_carboxylation_rate => begin
         Vcm25 * T_dep(EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
+end
 
+@system C3j(C3Base) begin
     Jm25: maximum_electron_transport_rate_at_25 => 169.0 ~ preserve(u"μmol/m^2/s" #= Electron =#, parameter)
     Eaj: activation_energy_for_electron_transport => 23.9976 ~ preserve(u"kJ/mol", parameter)
     Sj: electron_transport_temperature_response => 616.4 ~ preserve(u"J/mol/K", parameter)
@@ -66,13 +66,17 @@
         c = I2*Jmax
         a*J^2 + b*J + c ⩵ 0
     end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
+end
 
+@system C3p(C3Base) begin
     TPU25: triose_phosphate_limitation_at_25 => 16.03 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     EaTPU: activation_energy_for_TPU => 47100 ~ preserve(u"J/mol", parameter)
     TPU(T_dep, TPU25, EaTPU): triose_phosphate_limitation => begin
         TPU25 * T_dep(EaTPU)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
+end
 
+@system C3r(C3Base) begin
     Rd25: dark_respiration_at_25 => 1.08 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
     Ear: activation_energy_for_respiration => 49.39 ~ preserve(u"kJ/mol", parameter)
     Rd(T_dep, Rd25, Ear): dark_respiration => begin
@@ -86,11 +90,9 @@
     Γ(T_dep, Γ25, Eag): co2_compensation_point => begin
         Γ25 * T_dep(Eag)
     end ~ track(u"μbar")
+end
 
-    #########
-    # Rates #
-    #########
-
+@system C3Rate(C3c, C3j, C3p, C3r) begin
     Ac(Vcmax, Ci, Γ, Km): enzyme_limited_photosynthesis_rate => begin
         Vcmax * (Ci - Γ) / (Ci + Km)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
@@ -113,3 +115,5 @@
         A_gross - Rd
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
+
+@system C3(C3Rate)

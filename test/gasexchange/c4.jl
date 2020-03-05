@@ -1,4 +1,4 @@
-@system C4 begin
+@system C4Base begin
     Ci: intercellular_co2 ~ hold
     I2: effective_irradiance ~ hold
     T: leaf_temperature ~ hold
@@ -6,18 +6,6 @@
 
     Cm(Ci): mesophyll_co2 ~ track(u"μbar")
     Tk(T): absolute_leaf_temperature ~ track(u"K")
-
-    ##############
-    # Parameters #
-    ##############
-
-    # FIXME are they even used?
-    # beta_ABA => 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
-    # delta => -1.0
-    # alpha_ABA => 1.0e-4
-    # lambda_r => 4.0e-12 # Dewar's email
-    # lambda_l => 1.0e-12
-    # K_max => 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
 
     gbs => 0.003 ~ preserve(u"mol/m^2/s/bar" #= CO2 =#, parameter) # bundle sheath conductance to CO2, mol m-2 s-1
     # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
@@ -34,33 +22,13 @@
     N_dep(N, s, N0): nitrogen_limited_rate => begin
         2 / (1 + exp(-s * (max(N0, N) - N0))) - 1
     end ~ track
+end
 
+@system C4c(C4Base) begin
     # Kp25: Michaelis constant for PEP caboxylase for CO2
     Kp25: pep_carboxylase_constant_for_co2_at_25 => 80 ~ preserve(u"μbar", parameter)
     Kp(Kp25): pep_carboxylase_constant_for_co2 => begin
         Kp25 # T dependence yet to be determined
-    end ~ track(u"μbar")
-
-    # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
-    Kc25: rubisco_constant_for_co2_at_25 => 650 ~ preserve(u"μbar", parameter)
-    Eac: activation_energy_for_co2 => 59.4 ~ preserve(u"kJ/mol", parameter)
-    Kc(T_dep, Kc25, Eac): rubisco_constant_for_co2 => begin
-        Kc25 * T_dep(Eac)
-    end ~ track(u"μbar")
-
-    # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
-    Ko25: rubisco_constant_for_o2_at_25 => 450 ~ preserve(u"mbar", parameter)
-    # Activation energy for Ko, Bernacchi (2001)
-    Eao: activation_energy_for_o2 => 36 ~ preserve(u"kJ/mol", parameter)
-    Ko(T_dep, Ko25, Eao): rubisco_constant_for_o2 => begin
-        Ko25 * T_dep(Eao)
-    end ~ track(u"mbar")
-
-    # mesophyll O2 partial pressure
-    Om: mesophyll_o2_partial_pressure => 210 ~ preserve(u"mbar", parameter)
-    Km(Kc, Om, Ko): rubisco_constant_for_co2_with_o2 => begin
-        # effective M-M constant for Kc in the presence of O2
-        Kc * (1 + Om / Ko)
     end ~ track(u"μbar")
 
     Vpm25: maximum_pep_carboxylation_rate_for_co2_at_25 => 70 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
@@ -83,7 +51,9 @@
     Vcmax(N_dep, T_dep, Vcm25, EaVc): maximum_carboxylation_rate => begin
         Vcm25 * N_dep * T_dep(EaVc)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
+end
 
+@system C4j(C4Base) begin
     Jm25: maximum_electron_transport_rate_at_25 => 300 ~ preserve(u"μmol/m^2/s" #= Electron =#, parameter)
     Eaj: activation_energy_for_electron_transport => 32.8 ~ preserve(u"kJ/mol", parameter)
     Sj: electron_transport_temperature_response => 702.6 ~ preserve(u"J/mol/K", parameter)
@@ -106,6 +76,30 @@
         c = I2*Jmax
         a*J^2 + b*J + c ⩵ 0
     end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
+end
+
+@system C4r(C4Base) begin
+    # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
+    Kc25: rubisco_constant_for_co2_at_25 => 650 ~ preserve(u"μbar", parameter)
+    Eac: activation_energy_for_co2 => 59.4 ~ preserve(u"kJ/mol", parameter)
+    Kc(T_dep, Kc25, Eac): rubisco_constant_for_co2 => begin
+        Kc25 * T_dep(Eac)
+    end ~ track(u"μbar")
+
+    # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
+    Ko25: rubisco_constant_for_o2_at_25 => 450 ~ preserve(u"mbar", parameter)
+    # Activation energy for Ko, Bernacchi (2001)
+    Eao: activation_energy_for_o2 => 36 ~ preserve(u"kJ/mol", parameter)
+    Ko(T_dep, Ko25, Eao): rubisco_constant_for_o2 => begin
+        Ko25 * T_dep(Eao)
+    end ~ track(u"mbar")
+
+    # mesophyll O2 partial pressure
+    Om: mesophyll_o2_partial_pressure => 210 ~ preserve(u"mbar", parameter)
+    Km(Kc, Om, Ko): rubisco_constant_for_co2_with_o2 => begin
+        # effective M-M constant for Kc in the presence of O2
+        Kc * (1 + Om / Ko)
+    end ~ track(u"μbar")
 
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     Rd25: dark_respiration_at_25 => 2 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
@@ -114,32 +108,9 @@
         Rd25 * T_dep(Ear)
     end ~ track(u"μmol/m^2/s")
     Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
+end
 
-    #FIXME: currently not used variables
-
-    # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
-    α: bundle_sheath_PSII_activity_fraction => 0.0001 ~ preserve(parameter)
-    # Bundle sheath O2 partial pressure, mbar
-    Os(A_net, gbs, Om, α): bundle_sheath_o2 => begin
-        α * A_net / (0.047gbs) + Om
-    end ~ track(u"mbar")
-
-    Cbs(A_net, Vp, Cm, Rm, gbs): bundle_sheath_co2 => begin
-        Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
-    end ~ track(u"μbar")
-
-    # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
-    # note that this become the same as that in C3 model when multiplied by [O2]
-    Γ1 => 0.193 ~ preserve(parameter)
-    Γ★(Γ1, Os) => Γ1 * Os ~ track(u"μbar")
-    Γ(Rd, Km, Vcmax, Γ★): co2_compensation_point => begin
-        (Rd*Km + Vcmax*Γ★) / (Vcmax - Rd)
-    end ~ track(u"μbar")
-
-    #########
-    # Rates #
-    #########
-
+@system C4Rate(C4c, C4j, C4r) begin
     # Enzyme limited A (Rubisco or PEP carboxylation)
     Ac1(Vp, gbs, Cm, Rm) => (Vp + gbs*Cm - Rm) ~ track(u"μmol/m^2/s" #= CO2 =#)
     Ac2(Vcmax, Rd) => (Vcmax - Rd) ~ track(u"μmol/m^2/s" #= CO2 =#)
@@ -168,4 +139,35 @@
         # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
         #max(A_gross, zero(A_gross))
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
+end
+
+@system C4(C4Rate) begin
+    #FIXME: currently not used variables
+
+    # FIXME are they even used?
+    # beta_ABA => 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
+    # delta => -1.0
+    # alpha_ABA => 1.0e-4
+    # lambda_r => 4.0e-12 # Dewar's email
+    # lambda_l => 1.0e-12
+    # K_max => 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
+
+    # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
+    α: bundle_sheath_PSII_activity_fraction => 0.0001 ~ preserve(parameter)
+    # Bundle sheath O2 partial pressure, mbar
+    Os(A_net, gbs, Om, α): bundle_sheath_o2 => begin
+        α * A_net / (0.047gbs) + Om
+    end ~ track(u"mbar")
+
+    Cbs(A_net, Vp, Cm, Rm, gbs): bundle_sheath_co2 => begin
+        Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
+    end ~ track(u"μbar")
+
+    # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
+    # note that this become the same as that in C3 model when multiplied by [O2]
+    Γ1 => 0.193 ~ preserve(parameter)
+    Γ★(Γ1, Os) => Γ1 * Os ~ track(u"μbar")
+    Γ(Rd, Km, Vcmax, Γ★): co2_compensation_point => begin
+        (Rd*Km + Vcmax*Γ★) / (Vcmax - Rd)
+    end ~ track(u"μbar")
 end
