@@ -261,23 +261,6 @@ end
     latent_heat_of_vaporiztion_at_25: λ => 44 ~ preserve(u"kJ/mol", parameter)
     specific_heat_of_air: Cp => 29.3 ~ preserve(u"J/mol/K", parameter)
 
-    # psychrometric constant (C-1) ~ 6.66e-4
-    psychometric_constant(Cp, λ): psc => (Cp / λ) ~ preserve(u"K^-1")
-
-    # apparent psychrometer constant
-    apparent_psychometric_constant(psc, ghr, gv): psc1 => (psc * ghr / gv) ~ preserve(u"K^-1")
-
-    # see Campbell and Norman (1998) pp 224-225
-    # because Stefan-Boltzman constant is for unit surface area by denifition,
-    # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
-    leaf_surface_radiative_conductance(Tk, ϵ, sbc, Cp): gr => begin
-        # radiative conductance, 2 account for both sides
-        g = 4ϵ*sbc*Tk^3 / Cp
-        2g
-    end ~ track(u"mmol/m^2/s" #= H2O =#)
-
-    total_radiative_conductance(gh, gr): ghr => gh + gr ~ track(u"mmol/m^2/s" #= H2O =#)
-
     radiation_conversion_factor: k => (1 / 4.55) ~ preserve(u"J/μmol")
     photosynthetically_active_radiation(PPFD, k): PAR => (PPFD * k) ~ track(u"W/m^2")
 
@@ -300,7 +283,7 @@ end
 
     radiation_absored(R_light, R_wall): R_in => begin
         # times 2 for projected area basis
-        2(R_light + R_wall)
+        R_light + 2R_wall
     end ~ track(u"W/m^2")
 
     radiation_emitted(ϵ, sbc, Tk): R_out => begin
@@ -309,20 +292,17 @@ end
 
     net_radiation_absorbed(R_in, R_out): R_net => R_in - R_out ~ track(u"W/m^2")
 
-    latent_heat_flux(λ, gv, VPD=weather.VPD, P_air): λE => begin
-        λ*gv*VPD / P_air
+    sensible_heat_flux(Cp, gh, T_adj): H => begin
+        Cp*gh*T_adj
     end ~ track(u"W/m^2")
 
-    #FIXME: come up with a better name? (i.e. heat capacity = J(/kg)/K))
-    sensible_heat_capacity(Cp, ghr, λ, gv, VPD_s=weather.VPD_s): C => begin
-        Cp*ghr + λ*gv*VPD_s
-    end ~ track(u"W/m^2/K")
+    latent_heat_flux(λ, ET): λE => begin
+        λ*ET
+    end ~ track(u"W/m^2")
 
-    temperature_adjustment(R_net, λE, C): T_adj => begin
-        # eqn 14.6b linearized form using first order approximation of Taylor series
-        #(psc1 / (VPD_s + psc1)) * (R_net / (Cp*ghr) - VPD/(psc1*P_air))
-        (R_net - λE) / C
-    end ~ bisect(lower=-10u"K", upper=10u"K", u"K")
+    temperature_adjustment(R_net, H, λE): T_adj => begin
+        R_net - H - λE
+    end ~ bisect(lower=-10u"K", upper=10u"K", u"K", evalunit=u"W/m^2")
 
     air_temperature(weather.T_air): T_air ~ track(u"°C")
     absolute_air_temperature(weather.Tk_air): Tk_air ~ track(u"K")
@@ -331,10 +311,19 @@ end
     leaf_temperature(T_adj, T_air): T => T_air + T_adj ~ track(u"°C")
     absolute_leaf_temperature(T): Tk ~ track(u"K")
 
-    evapotranspiration(gv, T, T_air, P_air, RH=weather.RH, ea=weather.vp.ambient, es=weather.vp.saturation): ET => begin
+    leaf_vapor_pressure_deficit(T, T_air, P_air, RH=weather.RH, ea=weather.vp.ambient, es=weather.vp.saturation): D => begin
         Ea = ea(T_air, RH)
         Es = es(T)
-        ET = gv * ((Es - Ea) / P_air) / (1 - (Es + Ea) / P_air)
+        Es - Ea # MAIZSIM: / (1 - (Es + Ea) / P_air)
+    end ~ track(u"kPa")
+
+    transpiration(gv, D, P_air): E => begin
+        gv*D / P_air
+    end ~ track(u"mmol/m^2/s" #= H2O =#)
+
+    evapotranspiration(E): ET => begin
+        #TODO: specific consideration for transpiration?
+        ET = E
         max(ET, zero(ET)) # 04/27/2011 dt took out the 1000 everything is moles now
     end ~ track(u"mmol/m^2/s" #= H2O =#)
 end
