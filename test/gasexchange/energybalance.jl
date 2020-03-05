@@ -47,7 +47,7 @@
     λE(λ, E): latent_heat_flux => λ*E ~ track(u"W/m^2")
 
     T_adj(R_net, H, λE): temperature_adjustment => begin
-        R_net - H - λE
+        R_net ⩵ H + λE
     end ~ bisect(lower=-10, upper=10, u"K", evalunit=u"W/m^2")
 
     T(T_adj, T_air): leaf_temperature => T_air + T_adj ~ track(u"°C")

@@ -238,7 +238,7 @@ end
     intercellular_co2_upper_limit(Ca): Cimax => 2Ca ~ track(u"μbar")
     intercellular_co2_lower_limit: Cimin => 0 ~ preserve(u"μbar")
     intercellular_co2(Ca, Ci, A_net, P_air, CO2=weather.CO2, rvc): Ci => begin
-        Ca - Ci - A_net * rvc * P_air
+        Ca - Ci ⩵ A_net * rvc * P_air
     end ~ bisect(lower=Cimin, upper=Cimax, u"μbar")
 
     #FIXME: confusion between PFD vs. PPFD
@@ -301,7 +301,7 @@ end
     end ~ track(u"W/m^2")
 
     temperature_adjustment(R_net, H, λE): T_adj => begin
-        R_net - H - λE
+        R_net ⩵ H + λE
     end ~ bisect(lower=-10u"K", upper=10u"K", u"K", evalunit=u"W/m^2")
 
     air_temperature(weather.T_air): T_air ~ track(u"°C")

@@ -9,8 +9,11 @@ Solve(; unit, _type, _...) = begin
     Solve{V}(v)
 end
 
-import SymPy: SymPy, sympy, ⩵
+# \Equal opeartor for both solve/bisect
+⩵(x, y) = x - y
 export ⩵
+
+import SymPy: SymPy, sympy
 genpolynomial(v::VarInfo) = begin
     x = v.name
     V = extractfuncargpair.(v.args) .|> first

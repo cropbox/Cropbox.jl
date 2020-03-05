@@ -25,4 +25,13 @@
         @test Cropbox.unit(s.x) == u"m"
         @test Cropbox.evalunit(s.x) == u"m/s"
     end
+
+    @testset "equal" begin
+        @system SBisectEqual(Controller) begin
+            x1(x1) => (x1 - 1) ~ bisect(lower=0, upper=2)
+            x2(x2) => (x2 - 1 ⩵ 0) ~ bisect(lower=0, upper=2)
+        end
+        s = instance(SBisectEqual)
+        @test s.x1' == s.x2'
+    end
 end

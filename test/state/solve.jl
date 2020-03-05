@@ -89,4 +89,13 @@
         s4 = instance(SSolveCubic, config=:SSolveCubic => (l=30, u=Inf))
         @test s4.x' == 30
     end
+
+    @testset "equal" begin
+        @system SSolveEqual(Controller) begin
+            x1 => (x1^2 + 2x1 - 3) ~ solve
+            x2 => (x2^2 + 2x2 - 3 ⩵ 0) ~ solve
+        end
+        s = instance(SSolveEqual)
+        @test s.x1' == s.x2'
+    end
 end
