@@ -19,7 +19,7 @@
     κ: thermal_diffusivity_of_air_at_20 => 21.5e-6 ~ preserve(u"m^2/s", parameter)
     Re(u, d, v): reynolds_number => u*d/v ~ track
     Nu(Re): nusselt_number => 0.60sqrt(Re) ~ track
-    gh(κ, Nu, d, scr, ocr, P_air=weather.P_air, Tk_air=weather.Tk_air): boundary_layer_heat_conductance => begin
+    gh(κ, Nu, d, scr, ocr, P_air, Tk_air): boundary_layer_heat_conductance => begin
         g = κ * Nu / d
         # multiply by ratio to get the effective blc (per projected area basis), licor 6400 manual p 1-9
         g *= scr * ocr
