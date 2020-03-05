@@ -23,6 +23,8 @@ end
 
 updatetags!(d, ::Val{:Bisect}; _...) = begin
     !haskey(d, :evalunit) && (d[:evalunit] = d[:unit])
+    !haskey(d, :maxiter) && (d[:maxiter] = 100)
+    !haskey(d, :tol) && (d[:tol] = 0.001)
 end
 
 genvartype(v::VarInfo, ::Val{:Bisect}; N, V, _...) = begin
@@ -34,8 +36,8 @@ end
 geninit(v::VarInfo, ::Val{:Bisect}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
-    N_MAX = 100
-    TOL = 0.001
+    maxiter = gettag(v, :maxiter)
+    tol = gettag(v, :tol)
     lstart = symlabel(v, PreStep())
     lexit = symlabel(v, MainStep(), :__exit)
     @gensym s u
@@ -67,13 +69,13 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         elseif $s.step == :c
             $s.fc = $(genfunc(v))
             #@show "bisect: $($s.c) => $($s.fc)"
-            if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / $s.d < $TOL
+            if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / $s.d < $tol
                 $s.step = :z
                 #@show "bisect: finished! $($C.value($s))"
                 @goto $lexit
             else
                 $s.N += 1
-                if $s.N > $N_MAX
+                if $s.N > $maxiter
                     @show #= @error =# "bisect: convergence failed!"
                     $s.step = :z
                     @goto $lexit
