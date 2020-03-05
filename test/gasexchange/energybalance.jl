@@ -48,7 +48,7 @@
 
     T_adj(R_net, H, λE): temperature_adjustment => begin
         R_net ⩵ H + λE
-    end ~ bisect(lower=-10, upper=10, u"K", evalunit=u"W/m^2")
+    end ~ bisect(lower=-5, upper=5, u"K", evalunit=u"W/m^2")
 
     T(T_adj, T_air): leaf_temperature => T_air + T_adj ~ track(u"°C")
     Tk(T): absolute_leaf_temperature ~ track(u"K")

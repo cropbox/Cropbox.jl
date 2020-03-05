@@ -302,7 +302,7 @@ end
 
     temperature_adjustment(R_net, H, λE): T_adj => begin
         R_net ⩵ H + λE
-    end ~ bisect(lower=-10u"K", upper=10u"K", u"K", evalunit=u"W/m^2")
+    end ~ bisect(lower=-5, upper=5, u"K", evalunit=u"W/m^2")
 
     air_temperature(weather.T_air): T_air ~ track(u"°C")
     absolute_air_temperature(weather.Tk_air): Tk_air ~ track(u"K")
