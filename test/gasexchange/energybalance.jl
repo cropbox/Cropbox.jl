@@ -54,20 +54,32 @@
 
     R_net(R_sw, R_thermal): net_radiation_absorbed => R_sw + R_thermal ~ track(u"W/m^2")
 
-    λE(λ, gv, VPD): latent_heat_flux => begin
-        λ*gv*VPD
+    VPD2(T, T_air, RH, ea=vp.ambient, es=vp.saturation): leaf_vapor_pressure_deficit2 => begin
+        Es = es(T)
+        Ea = ea(T_air, RH)
+        Es - Ea
+    end ~ track(u"kPa")
+    VPD2_Δ(T, Δ=vp.Δ): vapor_pressure_saturation_slope_delta2 => Δ(T) ~ track(u"kPa/K")
+
+    H(Cp, gh, T_adj): sensible_heat_flux => begin
+        Cp*gh*T_adj
     end ~ track(u"W/m^2")
 
-    #FIXME: come up with a better name? (i.e. heat capacity = J(/kg)/K))
-    C(Cp, ghr, λ, gv, VPD_Δ): sensible_heat_capacity => begin
-        Cp*ghr + λ*gv*VPD_Δ
-    end ~ track(u"W/m^2/K")
+    λE(λ, gv, VPD2): latent_heat_flux => begin
+        λ*gv*VPD2
+    end ~ track(u"W/m^2")
 
-    T_adj(R_net, λE, C): temperature_adjustment => begin
-        # eqn 14.6b linearized form using first order approximation of Taylor series
-        #(γ★ / (VPD_slope_delta + γ★)) * (R_net / (Cp*ghr) - VPD/γ★)
-        (R_net - λE) / C
-    end ~ bisect(lower=-10u"K", upper=10u"K", u"K")
+    T_adj(R_net, H, λE): temperature_adjustment => begin
+        R_net - H - λE
+    end ~ bisect(lower=-10, upper=10, u"K", evalunit=u"W/m^2")
+    #T_adj: temperature_adjustment => 0 ~ preserve(u"K")
+
+    # eqn 14.6b linearized form using first order approximation of Taylor series
+    R_abs(R_sw, ϵ, σ, Tk_air): radiation_absorbed_campbell => (R_sw + ϵ*σ*Tk_air^4) ~ track(u"W/m^2")
+    T_adj2(R_abs, ϵ, σ, Tk_air, λ, gv, VPD, Cp, ghr, gv, VPD_Δ): temperature_adjustment_linearized => begin
+        #(γ★ / (VPD_Δ + γ★)) * (R_net / (Cp*ghr) - VPD/γ★)
+        (R_abs - ϵ*σ*Tk_air^4 - λ*gv*VPD) / (Cp*ghr + λ*gv*VPD_Δ)
+    end ~ track(u"K")
 
     T(T_adj, T_air): leaf_temperature => T_air + T_adj ~ track(u"°C")
     Tk(T): absolute_leaf_temperature ~ track(u"K")
