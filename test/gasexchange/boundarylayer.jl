@@ -1,12 +1,14 @@
 @system BoundaryLayer(WeatherStub) begin
     w: leaf_width => 0.1 ~ preserve(u"m", parameter)
 
-    # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
-    #sr = 1.0
-    # switchgrass adaxial : abaxial (Awada 2002)
-    # https://doi.org/10.4141/P01-031
-    #sr = 1.28
-    sr: stomatal_ratio => 1.0 ~ preserve(parameter)
+    sr: stomatal_ratio => begin
+        # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
+        #sr = 1.0
+        # switchgrass adaxial : abaxial (Awada 2002)
+        # https://doi.org/10.4141/P01-031
+        #sr = 1.28
+        1.0
+    end ~ preserve(parameter)
     scr(sr): sides_conductance_ratio => ((sr + 1)^2 / (sr^2 + 1)) ~ preserve
 
     # multiply by 1.4 for outdoor condition, Campbell and Norman (1998), p109
