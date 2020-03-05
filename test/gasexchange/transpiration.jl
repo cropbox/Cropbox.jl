@@ -19,6 +19,5 @@
         Es - Ea
     end ~ track(u"kPa")
 
-    #TODO: figure out correct one (E from paper, ET from MAIZSIM code)
-    E(gv, D): transpiration => 2gv * D ~ track(u"mmol/m^2/s" #= H2O =#)
+    E(gv, D): transpiration => gv * D ~ track(u"mmol/m^2/s" #= H2O =#)
 end
