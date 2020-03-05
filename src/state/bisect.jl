@@ -40,10 +40,10 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
     tol = gettag(v, :tol)
     lstart = symlabel(v, PreStep())
     lexit = symlabel(v, MainStep(), :__exit)
-    @gensym s u
+    @gensym s u Δ
     @q let $s = $(symstate(v))
         if $s.step == :z
-            $s.N = 0
+            $s.N = 1
             $u = $C.value($(gettag(v, :unit)))
             $s.a = $C.unitfy($C.value($(v.tags[:lower])), $u)
             $s.b = $C.unitfy($C.value($(v.tags[:upper])), $u)
@@ -51,7 +51,15 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $s.step = :a
             $C.store!($s, $s.a)
             @goto $lstart
-        elseif $s.step == :a
+        else
+            $s.N += 1
+            if $s.N > $maxiter
+                @show #= @error =# "bisect: convergence failed!"
+                $s.step = :z
+                @goto $lexit
+            end
+        end
+        if $s.step == :a
             $s.fa = $(genfunc(v))
             #@show "bisect: $($s.a) => $($s.fa)"
             $s.step = :b
@@ -60,8 +68,17 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         elseif $s.step == :b
             $s.fb = $(genfunc(v))
             #@show "bisect: $($s.b) => $($s.fb)"
-            @assert sign($s.fa) != sign($s.fb)
-            $s.N = 1
+            if sign($s.fa) == sign($s.fb)
+                #HACK: try expanding bracket
+                #$s.N += round(Int, 0.1*$maxiter)
+                $Δ = ($s.b - $s.a) / 2
+                $s.a -= $Δ
+                $s.b += $Δ
+                #@show "bisect: $($s.a) <- a, b -> $($s.b) "
+                $s.step = :a
+                $C.store!($s, $s.a)
+                @goto $lstart
+            end
             $s.c = ($s.a + $s.b) / 2
             $C.store!($s, $s.c)
             $s.step = :c
@@ -73,26 +90,19 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
                 $s.step = :z
                 #@show "bisect: finished! $($C.value($s))"
                 @goto $lexit
-            else
-                $s.N += 1
-                if $s.N > $maxiter
-                    @show #= @error =# "bisect: convergence failed!"
-                    $s.step = :z
-                    @goto $lexit
-                end
-                if sign($s.fc) == sign($s.fa)
-                    $s.a = $s.c
-                    $s.fa = $s.fc
-                    #@show "bisect: a <- $($s.c)"
-                else
-                    $s.b = $s.c
-                    $s.fb = $s.fc
-                    #@show "bisect: b <- $($s.c)"
-                end
-                $s.c = ($s.a + $s.b) / 2
-                $C.store!($s, $s.c)
-                @goto $lstart
             end
+            if sign($s.fc) == sign($s.fa)
+                $s.a = $s.c
+                $s.fa = $s.fc
+                #@show "bisect: a <- $($s.c)"
+            else
+                $s.b = $s.c
+                $s.fb = $s.fc
+                #@show "bisect: b <- $($s.c)"
+            end
+            $s.c = ($s.a + $s.b) / 2
+            $C.store!($s, $s.c)
+            @goto $lstart
         end
         @label $lexit
         $C.value($s)
