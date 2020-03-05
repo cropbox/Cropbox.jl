@@ -13,11 +13,10 @@ include("stomata.jl")
 include("intercellularspace.jl")
 include("irradiance.jl")
 include("energybalance.jl")
-include("transpiration.jl")
 
 @system ModelBase(
     WeatherStub, SoilStub,
-    BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance, Transpiration
+    BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance
 ) begin
     weather(context) ~ ::Weather
     soil(context) ~ ::Soil
