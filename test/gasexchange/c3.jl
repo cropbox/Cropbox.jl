@@ -69,10 +69,10 @@ end
 end
 
 @system C3p(C3Base) begin
-    TPU25: triose_phosphate_limitation_at_25 => 16.03 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
-    EaTPU: activation_energy_for_TPU => 47100 ~ preserve(u"J/mol", parameter)
-    TPU(T_dep, TPU25, EaTPU): triose_phosphate_limitation => begin
-        TPU25 * T_dep(EaTPU)
+    Tp25: triose_phosphate_limitation_at_25 => 16.03 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
+    EaTp: activation_energy_for_Tp => 47.10 ~ preserve(u"kJ/mol", parameter)
+    Tp(T_dep, Tp25, EaTp): triose_phosphate_limitation => begin
+        Tp25 * T_dep(EaTp)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
 
@@ -102,8 +102,8 @@ end
         J * (Ci - Γ) / 4(Ci + 2Γ)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    Ap(TPU): triose_phosphate_limited_photosynthesis_rate => begin
-        3TPU
+    Ap(Tp): triose_phosphate_limited_photosynthesis_rate => begin
+        3Tp
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     A_gross(Ac, Aj, Ap): gross_photosynthesis => begin
