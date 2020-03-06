@@ -114,6 +114,8 @@
         end
         s = instance(SAccumulateDistribute)
         c = s.context
+        @test c.clock.tick' == 0u"hr" && s.s' == 0 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
+        update!(s)
         @test c.clock.tick' == 1u"hr" && s.s' == 100 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
         update!(s)
         @test c.clock.tick' == 2u"hr" && s.s' == 200 && s.d1' == 20 && s.d2' == 30 && s.d3' == 50

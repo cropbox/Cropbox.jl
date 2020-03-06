@@ -5,7 +5,7 @@ end
 
 instance(S::Type{<:System}; config=(), kwargs...) = begin
     s = S(; config=configure(config), kwargs...)
-    update!(s)
+    #update!(s)
 end
 
 export Controller, instance

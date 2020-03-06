@@ -202,6 +202,16 @@ gendecl(v::VarInfo, decl) = @q begin
     $(isnothing(v.alias) ? :(;) : :($(v.alias) = $(v.name)))
 end
 
+#TODO: converge with genupdate/genupdateinit
+genpostdecls(N::Vector{VarNode}) = begin
+    #HACK: call post updates for queueing
+    ispoststate(n) = n.info.state isa Symbol && n.step == PostStep()
+    genupdate.(filter(ispoststate, N))
+    # #HACK: manual flush
+    # push!(D, @q isnothing(context) && $C.postflush!(context.queue))
+end
+#genpostdecl() = ...
+
 #HACK: @capture doesn't seem to support GlobalRef
 const DOCREF = GlobalRef(Core, Symbol("@doc"))
 isdoc(ex) = isexpr(ex, :macrocall) && ex.args[1] == DOCREF
@@ -227,6 +237,7 @@ genstruct(name, type, infos, incl) = begin
     fields = MacroTools.flatten(@q begin $(genfields(infos)...) end).args
     predecl = genpredecl(name)
     decls = gendecl(nodes)
+    postdecls = genpostdecls(nodes)
     args = gennewargs(infos)
     source = gensource(infos)
     system = quote
@@ -235,6 +246,7 @@ genstruct(name, type, infos, incl) = begin
             function $name(; _kwargs...)
                 $predecl
                 $(decls...)
+                $(postdecls...)
                 new($(args...))
             end
         end
