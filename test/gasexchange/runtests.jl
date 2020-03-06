@@ -92,26 +92,30 @@ ge_df_q = DataFrame(SolRad=0:1:3000, CO2=400, RH=60, Tair=25, Wind=2.0)
 ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
 @testset "gasexchange" begin
+    # visualize(r, i, t, t0=[:A_net]) = begin
+    #     #HACK: ensure plot range is around A_net
+    #     p = Cropbox.plot(r, i, t0)
+    #     Cropbox.plot!(p, r, i, t) |> display
+    # end    
+    visualize(r, i, t) = Cropbox.plot(r, i, t) |> display
+
     @testset "C3" begin
         estimate = GasExchangeTest.estimate_c3
         target = [:A_net, :Ac, :Aj, :Ap]
 
         @testset "A-Ci" begin
-            index = :Ci
             r = estimate(ge_df_c)
-            Cropbox.plot(r, index, target) |> display
+            visualize(r, :Ci, target)
         end
 
         @testset "A-Q" begin
-            index = :PFD
             r = estimate(ge_df_q)
-            Cropbox.plot(r, index, target) |> display
+            visualize(r, :PFD, target)
         end
 
         @testset "A-T" begin
-            index = :T_air
             r = estimate(ge_df_t)
-            Cropbox.plot(r, index, target) |> display
+            visualize(r, :T_air, target)
         end
     end
 
@@ -120,21 +124,18 @@ ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
         target = [:A_net, :Ac, :Aj]
 
         @testset "A-Ci" begin
-            index = :Ci
             r = estimate(ge_df_c)
-            Cropbox.plot(r, index, target) |> display
+            visualize(r, :Ci, target)
         end
 
         @testset "A-Q" begin
-            index = :PFD
             r = estimate(ge_df_q)
-            Cropbox.plot(r, index, target) |> display
+            visualize(r, :PFD, target)
         end
 
         @testset "A-T" begin
-            index = :T_air
             r = estimate(ge_df_t)
-            Cropbox.plot(r, index, target) |> display
+            visualize(r, :T_air, target)
         end
     end
 end
