@@ -98,19 +98,19 @@ ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
         @testset "A-Ci" begin
             index = :Ci
-            r = estimate(ge_df_c; index=index, target=target)
+            r = estimate(ge_df_c)
             Cropbox.plot(r, index, target) |> display
         end
 
         @testset "A-Q" begin
             index = :PFD
-            r = estimate(ge_df_q; index=index, target=target)
+            r = estimate(ge_df_q)
             Cropbox.plot(r, index, target) |> display
         end
 
         @testset "A-T" begin
             index = :T_air
-            r = estimate(ge_df_t; index=index, target=target)
+            r = estimate(ge_df_t)
             Cropbox.plot(r, index, target) |> display
         end
     end
@@ -121,19 +121,19 @@ ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
         @testset "A-Ci" begin
             index = :Ci
-            r = estimate(ge_df_c; index=index, target=target)
+            r = estimate(ge_df_c)
             Cropbox.plot(r, index, target) |> display
         end
 
         @testset "A-Q" begin
             index = :PFD
-            r = estimate(ge_df_q; index=index, target=target)
+            r = estimate(ge_df_q)
             Cropbox.plot(r, index, target) |> display
         end
 
         @testset "A-T" begin
             index = :T_air
-            r = estimate(ge_df_t; index=index, target=target)
+            r = estimate(ge_df_t)
             Cropbox.plot(r, index, target) |> display
         end
     end

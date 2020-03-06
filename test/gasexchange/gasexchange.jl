@@ -30,14 +30,12 @@ end
 @system C3Model(ModelBase, C3, Controller)
 @system C4Model(ModelBase, C4, Controller)
 
-estimate(M, df; config=(),
-    index=[:CO2, :PFD, :T_air],
-    target=[:A_net, :Ac, :Aj, :gs, :Ci, :Ca],
-    kw...
-) = simulate(M; stop=nrow(df)-2, config=[(
-    :Weather => (:dataframe => df, :indexkey => nothing),
-    :Soil => :WP_leaf => 2.0,
-), config], index=index, target=target, kw...)
+estimate(M, df; config=(), kw...) = begin
+    simulate(M; stop=nrow(df)-2, config=[(
+        :Weather => (:dataframe => df, :indexkey => nothing),
+        :Soil => :WP_leaf => 2.0,
+    ), config], kw...)
+end
 
 estimate_c3(df; kw...) = estimate(C3Model, df; kw...)
 estimate_c4(df; kw...) = estimate(C4Model, df; kw...)
