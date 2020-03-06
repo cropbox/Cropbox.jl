@@ -93,26 +93,27 @@ end
 end
 
 @system C3Rate(C3c, C3j, C3p, C3r) begin
-    Ac(Vcmax, Ci, Γ, Km): enzyme_limited_photosynthesis_rate => begin
-        Vcmax * (Ci - Γ) / (Ci + Km)
+    Ac(Vcmax, Ci, Γ, Km, Rd): enzyme_limited_photosynthesis_rate => begin
+        Vcmax * (Ci - Γ) / (Ci + Km) - Rd
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # light and electron transport limited A mediated by J
-    Aj(J, Ci, Γ): transport_limited_photosynthesis_rate => begin
-        J * (Ci - Γ) / 4(Ci + 2Γ)
+    Aj(J, Ci, Γ, Rd): transport_limited_photosynthesis_rate => begin
+        J * (Ci - Γ) / 4(Ci + 2Γ) - Rd
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     Ap(Tp): triose_phosphate_limited_photosynthesis_rate => begin
         3Tp
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    A_gross(Ac, Aj, Ap): gross_photosynthesis => begin
+    A_net(Ac, Aj, Ap): net_photosynthesis => begin
         min(Ac, Aj, Ap)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    A_net(A_gross, Rd): net_photosynthesis => begin
+    A_gross(A_net, Rd): gross_photosynthesis => begin
         # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
-        A_gross - Rd
+        A_gross = A_net + Rd
+        #max(A_gross, zero(A_gross))
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
 
