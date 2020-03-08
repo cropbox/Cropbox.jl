@@ -10,7 +10,7 @@ genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
 
 geninit(v::VarInfo, ::Val{:Flag}) = false
 
-genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = genvalue(v)
+genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
     @gensym s f q

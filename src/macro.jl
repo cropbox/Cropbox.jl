@@ -425,7 +425,7 @@ genupdate(v::VarInfo, t::VarStep) = @q begin
     $(genupdate(v, Val(v.state), t))
 end
 
-genvalue(v::VarInfo) = :($C.value($(symstate(v))))
+genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
 genstore(v::VarInfo, val=nothing) = begin
     isnothing(val) && (val = genfunc(v))
     @gensym s
@@ -465,8 +465,8 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val, ::PreStep) = genvalue(v)
-genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? genvalue(v) : genstore(v)
+genupdate(v::VarInfo, ::Val, ::PreStep) = nothing
+genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? nothing : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
 #TODO: merge extractfuncargdep() and extractfuncargkey()?
