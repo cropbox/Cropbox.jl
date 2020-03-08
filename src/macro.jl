@@ -203,14 +203,26 @@ gendecl(v::VarInfo, decl) = @q begin
 end
 
 #TODO: converge with genupdate/genupdateinit
-genpostdecls(N::Vector{VarNode}) = begin
-    #HACK: call post updates for queueing
-    ispoststate(n) = n.info.state isa Symbol && n.step == PostStep()
-    genupdate.(filter(ispoststate, N))
-    # #HACK: manual flush
-    # push!(D, @q isnothing(context) && $C.postflush!(context.queue))
+#HACK: call post updates for queueing
+genpostdecls(N::Vector{VarNode}) = genpostdecl.(N)
+genpostdecl(n::VarNode) = genpostdecl(n.info, n.step)
+genpostdecl(v::VarInfo, t::VarStep) = @q begin
+    $(linenumber(v, "genpostdecl"))
+    @label $(symlabel(v, t))
+    $(genpostdecl(v, Val(v.state), t))
 end
-#genpostdecl() = ...
+genpostdecl(v::VarInfo, s::Val, t::VarStep) = genupdate(v, s, t)
+genpostdecl(v::VarInfo, ::Val{:Produce}, ::PostStep) = nothing
+genpostdecl(v::VarInfo, ::Val{nothing}, ::VarStep) = nothing
+genpostdecl(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
+    if istag(v, :context)
+        @gensym c
+        @q let $c = $(v.name)
+            $C.postflush!($c.queue)
+            $c
+        end
+    end
+end
 
 #HACK: @capture doesn't seem to support GlobalRef
 const DOCREF = GlobalRef(Core, Symbol("@doc"))

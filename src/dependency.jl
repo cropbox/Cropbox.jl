@@ -82,7 +82,12 @@ end
 
 add!(d::Dependency, v::VarInfo) = begin
     #@show "add! $v"
-    if v.state == :Accumulate
+    if v.state == :Advance
+        n0 = mainnode!(d, v)
+        n1 = postnode!(d, v)
+        link!(d, v, n0)
+        link!(d, n0, n1)
+    elseif v.state == :Accumulate
         # split pre/main nodes to handle self dependency
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)

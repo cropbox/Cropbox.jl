@@ -7,7 +7,7 @@ Advance(; init=nothing, step=nothing, unit, _type, _...) = begin
     t = isnothing(init) ? zero(T) : value(init)
     dt = isnothing(step) ? oneunit(T) : value(step)
     #T = promote_type(typeof(t), typeof(dt))
-    Advance{T}(Timepiece{T}(t, dt))
+    Advance{T}(Timepiece{T}(t - dt, dt))
 end
 
 value(s::Advance) = s.value.t
