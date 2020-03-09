@@ -212,7 +212,6 @@ genpostdecl(v::VarInfo, t::VarStep) = @q begin
     $(genpostdecl(v, Val(v.state), t))
 end
 genpostdecl(v::VarInfo, s::Val, t::VarStep) = genupdate(v, s, t)
-genpostdecl(v::VarInfo, ::Val{:Produce}, ::PostStep) = nothing
 genpostdecl(v::VarInfo, ::Val{nothing}, ::VarStep) = nothing
 genpostdecl(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
     if istag(v, :context)
