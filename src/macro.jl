@@ -381,20 +381,19 @@ genminmax(v::VarInfo, x) = begin
     x = isnothing(u) ? x : @q min($x, $(genunitfy(v, u)))
     x
 end
+genparameter(v::VarInfo) = begin
+    @gensym o
+    @q let $o = $C.option(config, _names, $(names(v)))
+        ismissing($o) ? $(genfunc(v)) : $o
+    end
+end
 geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true) = begin
     s(x) = sample ? gensample(v, x) : x
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
     f(x) = x |> s |> u |> m
-    if parameter && istag(v, :parameter)
-        @gensym o
-        x = @q ismissing($o) ? $(genfunc(v)) : $o
-        @q let $o = $C.option(config, _names, $(names(v)))
-            $(f(x))
-        end
-    else
-        f(genfunc(v))
-    end
+    x = parameter && istag(v, :parameter) ? genparameter(v) : genfunc(v)
+    f(x)
 end
 
 genupdate(nodes) = @q begin
