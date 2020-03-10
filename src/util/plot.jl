@@ -5,6 +5,16 @@ plot(df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot!(p, df, index, [target]; ylabel=[ylabel], kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing, xlim=nothing, ylim=nothing) = begin
+    canvas = if begin
+        # https://github.com/Evizero/UnicodePlots.jl/issues/98
+        (isdefined(Main, :IJulia) && Main.IJulia.inited) ||
+        get(ENV, "GITHUB_ACTIONS", "false") == "true"
+    end
+        UnicodePlots.DotCanvas
+    else
+        UnicodePlots.BrailleCanvas
+    end
+
     if kind == :line
         plot = UnicodePlots.lineplot
         plot! = UnicodePlots.lineplot!
@@ -44,7 +54,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
 
     if isnothing(p)
         a = Float64[]
-        p = UnicodePlots.Plot(a, a, xlabel=xlab, xlim=xlim, ylim=ylim)
+        p = UnicodePlots.Plot(a, a, canvas; xlabel=xlab, xlim=xlim, ylim=ylim)
     end
     for i in 1:n
         plot!(p, X, Ys[i], name=lab(target[i], ylabs[i]))
