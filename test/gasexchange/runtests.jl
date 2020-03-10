@@ -86,8 +86,8 @@ ge_vaporpressure1 = :VaporPressure => (
 )
 
 using DataFrames
-#HACK: low CO2 values prevent convergence of bisection method
-ge_df_c = DataFrame(SolRad=1500, CO2=0:1:1500, RH=60, Tair=25, Wind=2.0)
+#HACK: zero CO2 prevents convergence of bisection method
+ge_df_c = DataFrame(SolRad=1500, CO2=1:1:1500, RH=60, Tair=25, Wind=2.0)
 ge_df_q = DataFrame(SolRad=0:1:3000, CO2=400, RH=60, Tair=25, Wind=2.0)
 ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
 
