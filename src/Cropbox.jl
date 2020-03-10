@@ -18,9 +18,9 @@ include("system/calendar.jl")
 include("system/store.jl")
 include("system/thermaltime.jl")
 
-include("tool.jl")
-include("dive.jl")
-include("hierarchy.jl")
-include("plot.jl")
+include("util/tool.jl")
+include("util/dive.jl")
+include("util/hierarchy.jl")
+include("util/plot.jl")
 
 end
