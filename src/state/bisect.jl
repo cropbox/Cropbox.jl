@@ -54,7 +54,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         else
             $s.N += 1
             if $s.N > $maxiter
-                @show #= @error =# "bisect: convergence failed!"
+                @warn "bisect[$($s.N)]: convergence failed!" c=$s.c fc=$s.fc d=$s.d $(v.name)=$C.value($s)
                 $s.step = :z
                 @goto $lexit
             end
