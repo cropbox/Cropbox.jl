@@ -61,20 +61,20 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         end
         if $s.step == :a
             $s.fa = $(genfunc(v))
-            #@show "bisect: $($s.a) => $($s.fa)"
+            @debug "bisect[$($s.N)]: $($s.a) => $($s.fa)"
             $s.step = :b
             $C.store!($s, $s.b)
             @goto $lstart
         elseif $s.step == :b
             $s.fb = $(genfunc(v))
-            #@show "bisect: $($s.b) => $($s.fb)"
+            @debug "bisect[$($s.N)]: $($s.b) => $($s.fb)"
             if sign($s.fa) == sign($s.fb)
                 #HACK: try expanding bracket
                 #$s.N += round(Int, 0.1*$maxiter)
                 $Δ = ($s.b - $s.a) / 2
                 $s.a -= $Δ
                 $s.b += $Δ
-                #@show "bisect: $($s.a) <- a, b -> $($s.b) "
+                @debug "bisect[$($s.N)]: $($s.a) <- a, b -> $($s.b) "
                 $s.step = :a
                 $C.store!($s, $s.a)
                 @goto $lstart
@@ -85,20 +85,20 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             @goto $lstart
         elseif $s.step == :c
             $s.fc = $(genfunc(v))
-            #@show "bisect: $($s.c) => $($s.fc)"
+            @debug "bisect[$($s.N)]: $($s.c) => $($s.fc)"
             if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / $s.d < $tol
+                @debug "bisect[$($s.N)]: finished! $($C.value($s))"
                 $s.step = :z
-                #@show "bisect: finished! $($C.value($s))"
                 @goto $lexit
             end
             if sign($s.fc) == sign($s.fa)
                 $s.a = $s.c
                 $s.fa = $s.fc
-                #@show "bisect: a <- $($s.c)"
+                @debug "bisect[$($s.N)]: a <- $($s.c)"
             else
                 $s.b = $s.c
                 $s.fb = $s.fc
-                #@show "bisect: b <- $($s.c)"
+                @debug "bisect[$($s.N)]: b <- $($s.c)"
             end
             $s.c = ($s.a + $s.b) / 2
             $C.store!($s, $s.c)
