@@ -19,7 +19,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
 
-    arr(n::Symbol, u) = deunitfy(df[!, n], u)
+    arr(n::Symbol, u) = deunitfy.(df[!, n], u)
     X = arr(index, xu)
     Ys = arr.(target, yu)
     n = length(Ys)
