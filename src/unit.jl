@@ -1,4 +1,5 @@
 import Unitful: Unitful, Units, Quantity, uconvert, ustrip, @u_str
+export @u_str
 
 unitfy(::Nothing, u) = nothing
 unitfy(::Nothing, ::Nothing) = nothing
@@ -15,4 +16,3 @@ deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 
-export @u_str
