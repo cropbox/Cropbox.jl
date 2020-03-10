@@ -31,8 +31,11 @@ end
 @system C4Model(ModelBase, C4, Controller)
 
 estimate(M, df; config=(), kw...) = begin
-    simulate(M; stop=nrow(df)-2, config=[(
-        :Weather => (:dataframe => df, :indexkey => nothing),
+    #HACK: duplicate the first row discarded during initialization
+    w = append!(DataFrame(df[1, :]), df)
+    n = nrow(w) - 2 # -1 for init, -1 for interval
+    simulate(M; stop=n, config=[(
+        :Weather => (:dataframe => w, :indexkey => nothing),
         :Soil => :WP_leaf => 2.0,
     ), config], kw...)
 end
