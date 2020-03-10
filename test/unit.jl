@@ -1,3 +1,5 @@
+using DataFrames
+
 @testset "unit" begin
     @testset "unit" begin
         @system SUnit(Controller) begin
@@ -71,5 +73,32 @@
         @test s.n.a' == s.a' == u"1m"
         @test s.b' == 1
         @test s.c' == 2
+    end
+
+    @testset "dataframe" begin
+        df = DataFrame(a=[0], b=[0])
+        U = [u"s", nothing]
+        r = Cropbox.unitfy(df, U)
+        @test Cropbox.unit(eltype(r[!, 1])) == u"s"
+        @test Cropbox.unit(eltype(r[!, 2])) == u"NoUnits"
+    end
+
+    @testset "dataframe auto" begin
+        df = DataFrame()
+        z = [0]
+        df[!, Symbol("a (g/cm^2)")] = z
+        df[!, Symbol("c (a)(b)(s)")] = z
+        df[!, Symbol("b ()")] = z
+        df[!, Symbol("d")] = z
+        r = Cropbox.unitfy(df)
+        @test Cropbox.unit(eltype(r[!, 1])) == u"g/cm^2"
+        @test Cropbox.unit(eltype(r[!, 2])) == u"s"
+        @test Cropbox.unit(eltype(r[!, 3])) == u"NoUnits"
+        @test Cropbox.unit(eltype(r[!, 4])) == u"NoUnits"
+        N = names(r)
+        @test N[1] == Symbol("a")
+        @test N[2] == Symbol("c (a)(b)")
+        @test N[3] == Symbol("b ()")
+        @test N[4] == Symbol("d")
     end
 end
