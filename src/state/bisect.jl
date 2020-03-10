@@ -72,6 +72,11 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
                 #HACK: try expanding bracket
                 #$s.N += round(Int, 0.1*$maxiter)
                 $Δ = ($s.b - $s.a) / 2
+                if iszero($Δ)
+                    @warn "bisect[$($s.N)]: expansion failed!" $(v.name)=$C.value($s)
+                    $s.step = :z
+                    @goto $lexit
+                end
                 $s.a -= $Δ
                 $s.b += $Δ
                 @debug "bisect[$($s.N)]: $($s.a) <- a, b -> $($s.b) "
