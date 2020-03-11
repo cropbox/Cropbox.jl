@@ -1,30 +1,11 @@
 import DataFrames: DataFrame
+import Gadfly
 import UnicodePlots
 
 plot(df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot(df, index, [target]; ylabel=[ylabel], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot!(p, df, index, [target]; ylabel=[ylabel], kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing, xlim=nothing, ylim=nothing) = begin
-    canvas = if begin
-        # https://github.com/Evizero/UnicodePlots.jl/issues/98
-        (isdefined(Main, :IJulia) && Main.IJulia.inited) ||
-        get(ENV, "GITHUB_ACTIONS", "false") == "true"
-    end
-        UnicodePlots.DotCanvas
-    else
-        UnicodePlots.BrailleCanvas
-    end
-
-    if kind == :line
-        plot = UnicodePlots.lineplot
-        plot! = UnicodePlots.lineplot!
-    elseif kind == :scatter
-        plot = UnicodePlots.scatterplot
-        plot! = UnicodePlots.scatterplot!
-    else
-        error("unrecognized plot kind = $kind")
-    end
-
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
@@ -52,12 +33,49 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabe
     xlab = lab(index, xlabel) * '\n'
     ylabs = isnothing(ylabel) ? repeat([nothing], n) : ylabel
 
-    if isnothing(p)
-        a = Float64[]
-        p = UnicodePlots.Plot(a, a, canvas; xlabel=xlab, xlim=xlim, ylim=ylim)
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        if kind == :line
+            geom = Gadfly.Geom.line
+        elseif kind == :scatter
+            geom = Gadfly.Geom.point
+        else
+            error("unrecognized plot kind = $kind")
+        end
+
+        colors = Gadfly.Scale.default_discrete_colors(n)
+        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
+
+        Gadfly.plot(
+            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
+            Gadfly.Guide.xlabel(xlab),
+            Gadfly.Guide.ylabel("($yu)"),
+            Gadfly.Guide.manual_color_key("", String.(target), colors),
+            layers...
+        )
+    else
+        canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
+            UnicodePlots.DotCanvas
+        else
+            UnicodePlots.BrailleCanvas
+        end
+
+        if kind == :line
+            plot = UnicodePlots.lineplot
+            plot! = UnicodePlots.lineplot!
+        elseif kind == :scatter
+            plot = UnicodePlots.scatterplot
+            plot! = UnicodePlots.scatterplot!
+        else
+            error("unrecognized plot kind = $kind")
+        end
+
+        if isnothing(p)
+            a = Float64[]
+            p = UnicodePlots.Plot(a, a, canvas; xlabel=xlab, xlim=xlim, ylim=ylim)
+        end
+        for i in 1:n
+            plot!(p, X, Ys[i], name=lab(target[i], ylabs[i]))
+        end
+        p
     end
-    for i in 1:n
-        plot!(p, X, Ys[i], name=lab(target[i], ylabs[i]))
-    end
-    p
 end
