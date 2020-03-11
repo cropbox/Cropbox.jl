@@ -26,7 +26,8 @@ extract(s::System, m::Simulation) = extract(s[m.base], m.index, m.target)
 extract(s::System, index, target) = begin
     d = merge(index, target)
     K = collect(keys(d))
-    V = map(k -> value(s[k]), values(d))
+    #HACK: prevent type promotion with NoUnits
+    V = Any[value(s[k]) for k in values(d)]
     od = OrderedDict(zip(K, V))
     filter!(p -> extractable(s, p), od)
     DataFrame(od)
