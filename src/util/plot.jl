@@ -5,7 +5,7 @@ import UnicodePlots
 plot(df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot(df, index, [target]; ylabel=[ylabel], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; ylabel=nothing, kw...) = plot!(p, df, index, [target]; ylabel=[ylabel], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:line, xlabel=nothing, ylabel=nothing, xlim=nothing, ylim=nothing) = begin
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xlabel=nothing, ylabel=nothing, xlim=nothing, ylim=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
