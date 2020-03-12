@@ -1,4 +1,5 @@
 @testset "state" begin
+    include("state/hold.jl")
     include("state/track.jl")
     include("state/call.jl")
     include("state/accumulate.jl")

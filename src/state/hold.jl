@@ -1,9 +1,14 @@
 struct Hold{Any} <: State{Any}
+    name::Symbol
+    alias::Union{Symbol,Nothing}
 end
 
-Hold(; _...) = begin
-    Hold{Any}()
+Hold(; _name, _alias, _...) = begin
+    Hold{Any}(_name, _alias)
 end
+
+value(s::Hold) = error("cannot read variable on hold: $(s.name) $(isnothing(s.alias) ? "" : "($(s.alias))")")
+store!(s::Hold, _) = error("cannot store variable on hold: $(s.name) $(isnothing(s.alias) ? "" : "($(s.alias))")")
 
 genvartype(v::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
 
