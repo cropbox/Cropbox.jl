@@ -56,7 +56,7 @@ format(m::Simulation; nounit=false, long=false) = begin
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
-progress!(s::System, M::Vector{Simulation}; stop=nothing, callback=nothing, verbose=true, kwargs...) = begin
+progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, callback=nothing, verbose=true, kwargs...) = begin
     isnothing(stop) && (stop = 1)
     isnothing(callback) && (callback = s -> true)
     n = if stop isa Number
@@ -79,7 +79,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, callback=nothing, verb
         p = ProgressUnknown("Iterations:")
         () -> !s[stop]'
     end
-    update!.(M, s)
+    !skipfirst && update!.(M, s)
     while check()
         update!(s)
         callback(s) != false && update!.(M, s)

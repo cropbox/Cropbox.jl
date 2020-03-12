@@ -37,6 +37,18 @@ using Dates
         @test r[end-1, :b] != 10
     end
 
+    @testset "simulate with skipfirst" begin
+        @system SSimulateSkipFirst(Controller) begin
+            a => 1 ~ preserve
+            b(a) ~ accumulate
+        end
+        r0 = simulate(SSimulateSkipFirst, stop=1, skipfirst=false)
+        r1 = simulate(SSimulateSkipFirst, stop=1, skipfirst=true)
+        @test nrow(r0) == 2
+        @test nrow(r1) == 1
+        @test r0[end, :] == r0[end, :]
+    end
+
     @testset "simulate with callback" begin
         @system SSimulateCallback(Controller) begin
             a => 1 ~ preserve(parameter)
