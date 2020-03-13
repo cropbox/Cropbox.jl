@@ -152,6 +152,27 @@ import DataStructures: OrderedDict
         end
     end
     
+    @testset "weave" begin
+        @testset "patch" begin
+            p = :S => :a => [1, 2]
+            C = Cropbox.weave(p)
+            @test C == Cropbox.configure.([:S => :a => 1, :S => :a => 2])
+        end
+        
+        @testset "patch with base" begin
+            b = :S => :b => 0
+            p = :S => :a => [1, 2]
+            C = Cropbox.weave(p, b)
+            @test C == Cropbox.configure.([:S => (a=1, b=0), :S => (a=2, b=0)])
+        end
+        
+        @testset "range" begin
+            p = :S => :a => 1:2
+            C = Cropbox.weave(p)
+            @test C == Cropbox.configure.([:S => :a => 1, :S => :a => 2])
+        end
+    end
+    
     @testset "string" begin
         @testset "basic" begin
             c = "S.a" => 1

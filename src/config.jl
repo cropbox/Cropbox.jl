@@ -80,3 +80,13 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     end
     C
 end
+
+weave(patch, base=()) = begin
+    B = configure(base)
+    P = configure(patch)
+    @assert length(P) == 1
+    s, C = collect(P)[1]
+    @assert length(C) == 1
+    k, V = collect(C)[1]
+    configure.([[base, s => k => v] for v in V])
+end
