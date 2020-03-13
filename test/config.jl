@@ -1,6 +1,15 @@
 import DataStructures: OrderedDict
 
 @testset "config" begin
+    @testset "configure" begin
+        @testset "default" begin
+            c = Cropbox.Config()
+            @test Cropbox.configure() == c
+            @test Cropbox.configure([]) == c
+            @test Cropbox.configure(()) == c
+        end
+    end
+    
     @testset "system" begin
         @testset "pair" begin
             c = :S => :a => 1
