@@ -100,9 +100,14 @@ end
 simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target)]; kwargs...)[1]
 end
-simulate(S::Type{<:System}, layout; config=(), options=(), kwargs...) = begin
-    s = instance(S, config=config; options...)
-    simulate!(s, layout; kwargs...)
+simulate(S::Type{<:System}, layout; config=(), options=(), configs=[], kwargs...) = begin
+    if isempty(configs)
+        s = instance(S, config=config; options...)
+        simulate!(s, layout; kwargs...)
+    else
+        @assert isempty(config) && isempty(options)
+        simulate(S, layout, configs; kwargs...)
+    end
 end
 simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
     R = [simulate(S, layout; config=c, kwargs...) for c in configs]

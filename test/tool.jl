@@ -110,6 +110,19 @@ using Dates
         @test o[o[!, :tick] .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
     end
 
+    @testset "simulate with configs" begin
+        @system SSimulateConfigs(Controller) begin
+            a ~ preserve(parameter)
+            b(a) ~ accumulate
+        end
+        p = [1, 2]
+        C = Cropbox.weave(:SSimulateConfigs => :a => p)
+        n = 10
+        r = simulate(SSimulateConfigs, configs=C, stop=n)
+        @test r[r[!, :tick] .== (n+1)*u"hr", :a] == p
+        @test r[r[!, :tick] .== (n+1)*u"hr", :b] == p .* n
+    end
+
     @testset "simulate extractable" begin
         @system SSimulateExtractable(Controller) begin
             a => 1 ~ track
