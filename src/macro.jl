@@ -273,6 +273,9 @@ mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
     for m in mixins(S)
         union!(l, mixincollect(m, l))
     end
+    #HACK: ensure mixins come before composite system
+    #TODO: need testsets for mixins/mixincollect
+    push!(delete!(l, S), S)
     l
 end
 mixincollect(s) = ()
