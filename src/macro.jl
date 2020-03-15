@@ -142,7 +142,7 @@ genfield(v::VarInfo) = begin
 end
 genfields(infos) = [genfield(v) for v in infos]
 
-genpredecl(name) = @q _names = $C.names.($C.mixincollect($name)) |> Iterators.flatten |> collect |> reverse
+genpredecl(name) = @q _names = $C.names.($C.mixincollect($name)) |> reverse |> Iterators.flatten |> collect
 gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
