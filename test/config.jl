@@ -7,10 +7,10 @@ import DataStructures: OrderedDict
             @test Cropbox.configure() == c
             @test Cropbox.configure([]) == c
             @test Cropbox.configure(()) == c
+            @test Cropbox.configure(nothing) == c
         end
         
         @testset "error" begin
-            @test_throws ErrorException Cropbox.configure(nothing)
             @test_throws ErrorException Cropbox.configure(missing)
             @test_throws ErrorException Cropbox.configure(0)
             @test_throws ErrorException Cropbox.configure(:a)
