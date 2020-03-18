@@ -45,8 +45,8 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         if $s.step == :z
             $s.N = 1
             $u = $C.value($(gettag(v, :unit)))
-            $s.a = $C.unitfy($C.value($(v.tags[:lower])), $u)
-            $s.b = $C.unitfy($C.value($(v.tags[:upper])), $u)
+            $s.a = $(genminmax(v, @q $C.unitfy($C.value($(v.tags[:lower])), $u)))
+            $s.b = $(genminmax(v, @q $C.unitfy($C.value($(v.tags[:upper])), $u)))
             $s.d = $s.b - $s.a
             $s.step = :a
             $C.store!($s, $s.a)
@@ -77,8 +77,10 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
                     $s.step = :z
                     @goto $lexit
                 end
-                $s.a -= $Δ
-                $s.b += $Δ
+                #HACK: reduce redundant unitfy when generating min/max clipping
+                #TODO: check no expansion case where Δ gets clipped by min/max
+                $s.a = $(genminmax(v, @q $s.a - $Δ))
+                $s.b = $(genminmax(v, @q $s.b + $Δ))
                 @debug "bisect[$($s.N)]: $($s.a) <- a, b -> $($s.b) "
                 $s.step = :a
                 $C.store!($s, $s.a)
