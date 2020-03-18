@@ -35,6 +35,15 @@ end
 
 geninit(v::VarInfo, ::Val{:Bisect}) = nothing
 
+#HACK: needs update in case min/max variables changed during bisection loop
+#TODO: other variables wanting to use min/max would require similar work
+genupdate(v::VarInfo, ::Val{:Bisect}, ::PreStep) = begin
+    @gensym s d
+    @q let $s = $(symstate(v)),
+           $d = $(genminmax(v, @q $C.value($s)))
+        $C.store!($s, $d)
+    end
+end
 genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
     maxiter = gettag(v, :maxiter)
     tol = gettag(v, :tol)
