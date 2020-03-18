@@ -380,8 +380,8 @@ genminmax(v::VarInfo, x) = begin
     l = gettag(v, :min)
     u = gettag(v, :max)
     #TODO: validate (min <= max)
-    x = isnothing(l) ? x : @q max($(genunitfy(v, l)), $x)
-    x = isnothing(u) ? x : @q min($x, $(genunitfy(v, u)))
+    x = isnothing(l) ? x : @q max($(genunitfy(v, @q $C.value($l))), $x)
+    x = isnothing(u) ? x : @q min($x, $(genunitfy(v, @q $C.value($u))))
     x
 end
 genparameter(v::VarInfo) = begin
