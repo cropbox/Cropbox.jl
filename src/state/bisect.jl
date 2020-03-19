@@ -96,12 +96,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             if sign($s.fa) == sign($s.fb)
                 #HACK: try expanding bracket
                 #$s.N += round(Int, 0.1*$maxiter)
-                $Δ = ($s.b - $s.a) / 2
-                if iszero($Δ)
-                    @warn "bisect: $($v.name) [$($s.N)] expansion failed!" $(v.name)=$C.value($s)
-                    $s.step = :z
-                    @goto $lexit
-                end
+                $Δ = $s.d / 2
                 #HACK: reduce redundant unitfy when generating min/max clipping
                 #TODO: check no expansion case where Δ gets clipped by min/max
                 $s.a = $(genminmax(v, @q $s.a - $Δ))
