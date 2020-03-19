@@ -22,6 +22,8 @@ end
 @generated evalunit(s::Bisect{V,E}) where {V,E} = unittype(E)
 
 updatetags!(d, ::Val{:Bisect}; _...) = begin
+    !haskey(d, :lower) && haskey(d, :min) && (d[:lower] = d[:min])
+    !haskey(d, :upper) && haskey(d, :max) && (d[:upper] = d[:max])
     !haskey(d, :evalunit) && (d[:evalunit] = d[:unit])
     !haskey(d, :maxiter) && (d[:maxiter] = 100)
     !haskey(d, :tol) && (d[:tol] = 0.001)
