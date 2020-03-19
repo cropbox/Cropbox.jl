@@ -148,18 +148,6 @@ add!(d::Dependency, V::Vector{VarInfo}) = begin
     for v in V
         add!(d, v)
     end
-    postprocess!(d)
-end
-
-postprocess!(d::Dependency) = begin
-    #HACK: ensure multiple bisect variables ordered correctly
-    #TODO: figure out if this is really needed
-    #TODO: find a way to represent this more naturally
-    N = filter(n -> n.info.state == :Bisect && n.step == PreStep(), sort(d))
-    M = [mainnode!(d, n.info) for n in N]
-    for (a, b) in zip(M[1:end-1], M[2:end])
-        link!(d, a, b)
-    end
 end
 
 sort(d::Dependency) = begin
