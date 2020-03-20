@@ -16,7 +16,7 @@ include("energybalance.jl")
 
 @system ModelBase(
     WeatherStub, SoilStub,
-    BoundaryLayer, Stomata, IntercellularSpace, Irradiance, EnergyBalance
+    BoundaryLayer, StomataBallBerry, IntercellularSpace, Irradiance, EnergyBalance
 ) begin
     weather(context) ~ ::Weather
     soil(context) ~ ::Soil
