@@ -40,3 +40,24 @@ end
         (1 + exp(sf * ϕf)) / (1 + exp(sf * (ϕf - LWP)))
     end ~ track
 end
+
+@system StomataMedlyn(StomataBase) begin
+    T: leaf_temperature ~ hold
+
+    g0 => 0 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
+    g1 => 4.0 ~ preserve(u"√kPa", parameter)
+
+    pa(ea=vp.ea, T_air, RH): vapor_pressure_at_air => ea(T_air, RH) ~ track(u"kPa")
+    pi(es=vp.es, T): vapor_pressure_at_intercellular_space => es(T) ~ track(u"kPa")
+    ps(ps, pa, pi, gb, gs): vapor_pressure_at_leaf_surface => begin
+        (ps - pa)*gb ⩵ (pi - ps)*gs
+    end ~ bisect(min=0, upper=pi, u"kPa", evalunit=u"mol/m^2/s")
+    Ds(ps, pi): vapor_pressure_deficit_at_leaf_surface => begin
+        #HACK: prevent zero leading to Inf gs
+        max(pi - ps, 1u"Pa")
+    end ~ track(u"kPa")
+
+    gs(g0, g1, A_net, Ds, Cs): stomatal_conductance => begin
+        g0 + (1 + g1 / sqrt(Ds)) * (A_net / Cs)
+    end ~ track(u"mol/m^2/s/bar" #= H2O =#)
+end
