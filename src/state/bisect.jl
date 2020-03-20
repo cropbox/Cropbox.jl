@@ -50,6 +50,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
     maxiter = gettag(v, :maxiter)
     tol = gettag(v, :tol)
     lstart = symlabel(v, PreStep())
+    lrepeat = symlabel(v, MainStep(), :__repeat)
     lexit = symlabel(v, MainStep(), :__exit)
     @gensym s u Δ
     @q let $s = $(symstate(v))
@@ -61,20 +62,11 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $s.d = $s.b - $s.a
             $s.step = :a
             $C.store!($s, $s.a)
-            @goto $lstart
-        else
-            $s.N += 1
-            if $s.N > $maxiter
-                @warn "bisect: $($v.name) [$($s.N)] convergence failed!" a=$s.a b=$s.b c=$s.c fa=$s.fa fb=$s.fb fc=$s.fc d=$s.d $(v.name)=$C.value($s)
-                $s.step = :z
-                @goto $lexit
-            end
-        end
-        if $s.step == :a
+            @goto $lrepeat
+        elseif $s.step == :a
             $s.fa = $(genfunc(v))
             if $s.fa ≈ zero($s.fa)
                 @debug "bisect: $($v.name) [$($s.N)] found! $($C.value($s))"
-                $s.step = :z
                 @goto $lexit
             elseif isnan($s.fa)
                 @warn "bisect: $($v.name) [$($s.N)] $($s.a) => $($s.fa)"
@@ -83,12 +75,11 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             end
             $s.step = :b
             $C.store!($s, $s.b)
-            @goto $lstart
+            @goto $lrepeat
         elseif $s.step == :b
             $s.fb = $(genfunc(v))
             if $s.fb ≈ zero($s.fb)
                 @debug "bisect: $($v.name) [$($s.N)] found! $($C.value($s))"
-                $s.step = :z
                 @goto $lexit
             elseif isnan($s.fb)
                 @warn "bisect: $($v.name) [$($s.N)] $($s.b) => $($s.fb)"
@@ -106,12 +97,12 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
                 @debug "bisect: $($v.name) [$($s.N)] $($s.a) <- a, b -> $($s.b) "
                 $s.step = :a
                 $C.store!($s, $s.a)
-                @goto $lstart
+                @goto $lrepeat
             end
             $s.c = ($s.a + $s.b) / 2
             $C.store!($s, $s.c)
             $s.step = :c
-            @goto $lstart
+            @goto $lrepeat
         elseif $s.step == :c
             $s.fc = $(genfunc(v))
             if isnan($s.fc)
@@ -121,7 +112,6 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             end
             if $s.fc ≈ zero($s.fc) || ($s.b - $s.a) / $s.d < $tol
                 @debug "bisect: $($v.name) [$($s.N)] finished! $($C.value($s))"
-                $s.step = :z
                 @goto $lexit
             end
             if sign($s.fc) == sign($s.fa)
@@ -135,9 +125,17 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             end
             $s.c = ($s.a + $s.b) / 2
             $C.store!($s, $s.c)
+            @goto $lrepeat
+        end
+        @label $lrepeat
+        if $s.N <= $maxiter
+            $s.N += 1
             @goto $lstart
+        else
+            @warn "bisect: $($v.name) [$($s.N)] convergence failed!" a=$s.a b=$s.b c=$s.c fa=$s.fa fb=$s.fb fc=$s.fc d=$s.d $(v.name)=$C.value($s)
         end
         @label $lexit
+        $s.step = :z
         $C.value($s)
     end
 end
