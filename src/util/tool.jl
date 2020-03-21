@@ -114,34 +114,42 @@ simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
 
-import BlackBoxOptim: bboptimize, best_candidate
+import BlackBoxOptim: bboptimize, best_candidate, ParetoFitnessScheme
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
-calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, returnconfig=true, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
-    config(X) = parameterzip(K, X)
-    i = parsesimulation(index) |> keys |> collect
-    k = parsesimulationkey(target).first
-    k1 = Symbol(k, :_1)
+    I = parsesimulation(index) |> keys |> collect
+    T = parsesimulation(target) |> keys |> collect
+    n = length(T)
+    NT = DataFrames.make_unique([names(obs)..., T...], makeunique=true)
+    T1 = NT[end-n+1:end]
     residual(c) = begin
         est = simulate(S; config=c, index=index, target=target, verbose=false, kwargs...)
-        df = join(est, obs, on=i, makeunique=true)
-        df[!, k] - df[!, k1]
+        df = join(est, obs, on=I, makeunique=true)
+        r = [df[!, e] - df[!, o] for (e, o) in zip(T, T1)]
     end
+    config(X) = parameterzip(K, X)
     cost(X) = begin
         c = config(X)
-        n = length(configs)
-        T = Vector(undef, n)
-        Threads.@threads for i in 1:n
-            T[i] = residual(configure(configs[i], c))
+        l = length(configs)
+        R = Vector(undef, l)
+        Threads.@threads for i in 1:l
+            R[i] = residual(configure(configs[i], c))
         end
-        R = T |> Iterators.flatten
-        sum(R.^2) |> deunitfy
+        A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
+        e = sum(eachrow(hcat(A...) .^2))
+        n > 1 ? Tuple(e) : e[1]
     end
     #FIXME: input parameters units are ignored without conversion
     range = map(p -> Float64.(Tuple(deunitfy(p))), parametervalues(P))
-    r = bboptimize(cost; SearchRange=range, optim...)
-    best_candidate(r) |> config
+    method = n > 1 ? (Method=:borg_moea, FitnessScheme=ParetoFitnessScheme{n}()) : ()
+    r = bboptimize(cost;
+        SearchRange=range,
+        method...,
+        optim...
+    )
+    returnconfig ? best_candidate(r) |> config : r
 end
 
 export simulate, simulate!, calibrate
