@@ -1,7 +1,7 @@
 using DataFrames
 using Dates
 
-@testset "util" begin
+@testset "tool" begin
     @testset "simulate" begin
         @system SSimulate(Controller) begin
             a => 1 ~ preserve(parameter)
