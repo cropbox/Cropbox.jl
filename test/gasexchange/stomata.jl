@@ -2,6 +2,7 @@
     gs: stomatal_conductance ~ hold
     gb: boundary_layer_conductance ~ hold
     A_net: net_photosynthesis ~ hold
+    T: leaf_temperature ~ hold
 
     drb: diffusivity_ratio_boundary_layer => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
     dra: diffusivity_ratio_air => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
@@ -36,6 +37,9 @@ end
         gs = g0 + (g1 * m * (A_net * hs / Cs))
         (hs - RH)*gb ⩵ (1 - hs)*gs
     end ~ solve(lower=0, upper=1) #, u"percent")
+    Ds(D=vp.D, T, hs): vapor_pressure_deficit_at_leaf_surface => begin
+        D(T, hs |> u"percent")
+    end ~ track(u"kPa")
 
     gs(g0, g1, m, A_net, hs, Cs): stomatal_conductance => begin
         gs = g0 + (g1 * m * (A_net * hs / Cs))
@@ -46,8 +50,6 @@ end
 end
 
 @system StomataMedlyn(StomataBase) begin
-    T: leaf_temperature ~ hold
-
     g0 => 0 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
     g1 => 4.0 ~ preserve(u"√kPa", parameter)
 
@@ -60,6 +62,9 @@ end
         #HACK: prevent zero leading to Inf gs
         max(pi - ps, 1u"Pa")
     end ~ track(u"kPa")
+    hs(RH=vp.RH, T, Ds): relative_humidity_at_leaf_surface => begin
+        RH(T, Ds)
+    end ~ track
 
     gs(g0, g1, A_net, Ds, Cs): stomatal_conductance => begin
         g0 + (1 + g1 / sqrt(Ds)) * (A_net / Cs)
