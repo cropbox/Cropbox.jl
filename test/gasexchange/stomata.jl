@@ -38,7 +38,7 @@ end
         (hs - RH)*gb ⩵ (1 - hs)*gs
     end ~ solve(lower=0, upper=1) #, u"percent")
     Ds(D=vp.D, T, hs): vapor_pressure_deficit_at_leaf_surface => begin
-        D(T, hs |> u"percent")
+        D(T, hs)
     end ~ track(u"kPa")
 
     gs(g0, g1, m, A_net, hs, Cs): stomatal_conductance => begin
