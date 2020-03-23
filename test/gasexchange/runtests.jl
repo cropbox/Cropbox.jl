@@ -45,23 +45,23 @@ in P. J. Sellers, et al.Science 275, 502 (1997)
 g0 is b, of which the value for c4 plant is 0.04
 and g1 is m, of which the value for c4 plant is about 4 YY
 """
-ge_stomata1 = :Stomata => (g0 = 0.04, g1 = 4.0)
+ge_stomata1 = :StomataBallBerry => (g0 = 0.04, g1 = 4.0)
 
 """
 Ball-Berry model parameters from Miner and Bauerle 2017,
 used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
 """
-ge_stomata2 = :Stomata => (g0 = 0.017, g1 = 4.53)
+ge_stomata2 = :StomataBallBerry => (g0 = 0.017, g1 = 4.53)
 
 "calibrated above for our switchgrass dataset"
-ge_stomata3 = :Stomata => (g0 = 0.04, g1 = 1.89)
-ge_stomata4 = :Stomata => (g0 = 0.02, g1 = 2.0)
+ge_stomata3 = :StomataBallBerry => (g0 = 0.04, g1 = 1.89)
+ge_stomata4 = :StomataBallBerry => (g0 = 0.02, g1 = 2.0)
 
 "parameters from Le et. al (2010)"
-ge_stomata5 = :Stomata => (g0 = 0.008, g1 = 8.0)
+ge_stomata5 = :StomataBallBerry => (g0 = 0.008, g1 = 8.0)
 
 "for garlic"
-ge_stomata6 = :Stomata => (g0 = 0.0096, g1 = 6.824)
+ge_stomata6 = :StomataBallBerry => (g0 = 0.0096, g1 = 6.824)
 
 ge_water1 = :Stomata => (
     sf = 2.3, # sensitivity parameter Tuzet et al. 2003 Yang
