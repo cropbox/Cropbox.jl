@@ -1,4 +1,4 @@
-@system StomataBase(WeatherStub, SoilStub) begin
+@system StomataBase(WeatherStub) begin
     gs: stomatal_conductance ~ hold
     gb: boundary_layer_conductance ~ hold
     A_net: net_photosynthesis ~ hold
@@ -17,7 +17,16 @@
     rvc(rbc, rsc): total_resistance_co2 => (rbc + rsc) ~ track(u"m^2*s/mol*bar")
 end
 
-@system StomataBallBerry(StomataBase) begin
+@system StomataLeafWater(SoilStub) begin
+    LWP(WP_leaf): leaf_water_potential ~ track(u"MPa")
+    sf => 2.3 ~ preserve(u"MPa^-1", parameter)
+    ϕf => -2.0 ~ preserve(u"MPa", parameter)
+    m(LWP, sf, ϕf): transpiration_reduction_factor => begin
+        (1 + exp(sf * ϕf)) / (1 + exp(sf * (ϕf - LWP)))
+    end ~ track
+end
+
+@system StomataBallBerry(StomataBase, StomataLeafWater) begin
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
     g0 => 0.017 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
     g1 => 4.53 ~ preserve(parameter)
@@ -33,12 +42,7 @@ end
         max(gs, g0)
     end ~ track(u"mol/m^2/s/bar" #= H2O =#)
 
-    LWP(WP_leaf): leaf_water_potential ~ track(u"MPa")
-    sf => 2.3 ~ preserve(u"MPa^-1", parameter)
-    ϕf => -2.0 ~ preserve(u"MPa", parameter)
-    m(LWP, sf, ϕf): transpiration_reduction_factor => begin
-        (1 + exp(sf * ϕf)) / (1 + exp(sf * (ϕf - LWP)))
-    end ~ track
+    m: transpiration_reduction_factor ~ hold
 end
 
 @system StomataMedlyn(StomataBase) begin

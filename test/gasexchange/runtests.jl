@@ -63,13 +63,13 @@ ge_stomata5 = :StomataBallBerry => (g0 = 0.008, g1 = 8.0)
 "for garlic"
 ge_stomata6 = :StomataBallBerry => (g0 = 0.0096, g1 = 6.824)
 
-ge_water1 = :Stomata => (
+ge_water1 = :StomataLeafWater => (
     sf = 2.3, # sensitivity parameter Tuzet et al. 2003 Yang
     ϕf = -1.2, # reference potential Tuzet et al. 2003 Yang
 )
 
 "switchgrass params from Le et al. (2010)"
-ge_water2 = :Stomata => (
+ge_water2 = :StomataLeafWater => (
     #? = -1.68, # minimum sustainable leaf water potential (Albaugha 2014)
     sf = 6.5,
     ϕf = -1.3,
