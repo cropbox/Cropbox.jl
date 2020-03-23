@@ -118,6 +118,7 @@ end
 ####
 
 const C = :($(esc(:Cropbox)))
+const ϵ = @q begin end
 
 genvartype(v::VarInfo) = genvartype(v)
 genvartype(v::VarInfo{Nothing}) = esc(v.type)
@@ -131,13 +132,13 @@ end
 genfield(v::VarInfo) = begin
     type = genvartype(v)
     name = symname(v)
-    docstring = isempty(v.docstring) ? :(;) : v.docstring
+    docstring = isempty(v.docstring) ? ϵ : v.docstring
     alias = v.alias
     @q begin
         $docstring
         $name::$type
         $docstring
-        $(isnothing(alias) ? :(;) : :($alias::$type))
+        $(isnothing(alias) ? ϵ : :($alias::$type))
     end
 end
 genfields(infos) = [genfield(v) for v in infos]
@@ -199,7 +200,7 @@ end
 gendecl(v::VarInfo, decl) = @q begin
     $(linenumber(v, "gendecl"))
     $(v.name) = $decl
-    $(isnothing(v.alias) ? :(;) : :($(v.alias) = $(v.name)))
+    $(isnothing(v.alias) ? ϵ : :($(v.alias) = $(v.name)))
 end
 
 #HACK: @capture doesn't seem to support GlobalRef
@@ -416,7 +417,7 @@ genupdateinit(n::VarNode) = begin
     # implicit :expose
     @q begin
         $(v.name) = self.$(v.name)
-        $(isnothing(v.alias) ? :(;) : :($(v.alias) = $(v.name)))
+        $(isnothing(v.alias) ? ϵ : :($(v.alias) = $(v.name)))
     end
 end
 
