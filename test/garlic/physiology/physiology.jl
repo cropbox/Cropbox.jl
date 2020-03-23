@@ -8,7 +8,7 @@ include("water.jl")
 include("weight.jl")
 
 include("radiation.jl")
-include("c3.jl")
+include("gasexchange/gasexchange.jl")
 include("photosynthesis.jl")
 
 include("plant.jl")
