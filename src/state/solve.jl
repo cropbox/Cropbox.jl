@@ -53,6 +53,7 @@ end
 updatetags!(d, ::Val{:Solve}; _...) = begin
     !haskey(d, :lower) && (d[:lower] = -Inf)
     !haskey(d, :upper) && (d[:upper] = Inf)
+    !haskey(d, :pick) && (d[:pick] = QuoteNode(:maximum))
 end
 
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
@@ -67,6 +68,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     PU = genpolynomialunits(U, n)
     lower = gettag(v, :lower)
     upper = gettag(v, :upper)
+    pick = gettag(v, :pick).value
     body = if n == 2 # linear
         @gensym a b xl xu
         @q let $a = $(esc(P[2])),
@@ -76,22 +78,17 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             clamp(-$b / $a, $xl, $xu)
         end
     elseif n == 3 # quadratic
-        @gensym a b c xl xu X r x
+        @gensym a b c X xl xu l
         @q let $a = $C.deunitfy($(esc(P[3])), $(PU[3])),
                $b = $C.deunitfy($(esc(P[2])), $(PU[2])),
                $c = $C.deunitfy($(esc(P[1])), $(PU[1])),
+               $X = $C.unitfy($C.solvequadratic($a, $b, $c), $U),
                $xl = $C.unitfy($C.value($lower), $U),
                $xu = $C.unitfy($C.value($upper), $U)
-          $X = $C.unitfy($C.solvequadratic($a, $b, $c), $U)
-          $r = nothing
-          for $x in $X
-              if $xl <= $x <= $xu
-                  $r = $x
-                  break
-              end
-          end
-          isnothing($r) && ($r = clamp($X[1], $xl, $xu))
-          $r
+            #TODO: remove duplication
+            $l = filter(x -> $xl <= x <= $xu, collect($X))
+            isempty($l) && ($l = clamp.($X, $xl, $xu))
+            $l |> $pick
         end
     else # generic polynomials (slow!)
         @gensym X xl xu l
@@ -101,7 +98,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             $l = filter(x -> $xl <= x <= $xu, $X)
             #TODO: better report error instead of silent clamp?
             isempty($l) && ($l = clamp.($X, $xl, $xu))
-            $l[end]
+            $l |> $pick
         end
     end
     val = genfunc(v, body)
