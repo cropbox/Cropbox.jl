@@ -17,8 +17,8 @@ using LinearAlgebra
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use leaf_nitrogen_content, leaf_width, ET_supply
-    sunlit_gasexchange(context, soil, weather, Q_sun, photosynthetic_photon_flux_density=Q_sun) ~ ::GasExchange
-    shaded_gasexchange(context, soil, weather, Q_sh, photosynthetic_photon_flux_density=Q_sh) ~ ::GasExchange
+    sunlit_gasexchange(context, soil, weather, PPFD=Q_sun) ~ ::GasExchange
+    shaded_gasexchange(context, soil, weather, PPFD=Q_sh) ~ ::GasExchange
 
     leaf_width => begin
         # to be calculated when implemented for individal leaves
