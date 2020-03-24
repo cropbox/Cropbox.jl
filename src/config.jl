@@ -22,6 +22,7 @@ _configure(k::String, v) = begin
     end
 end
 _configure(k::Type{<:System}, v) = _configure(nameof(k), v)
+_configure(k, v) = _configure(Symbol(k), v)
 _configure(v) = Config(v)
 _configure(v::NamedTuple) = Config(pairs(v))
 
