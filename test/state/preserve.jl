@@ -52,6 +52,24 @@
         @test s.b' == 2
     end
     
+    @testset "parameter missing" begin
+        @system SParameterMissing(Controller) begin
+            a => 1 ~ preserve(parameter)
+        end
+        o = SParameterMissing => :a => missing
+        s = instance(SParameterMissing; config=o)
+        @test s.a' == 1
+    end
+
+    @testset "parameter nothing" begin
+        @system SParameterNothing(Controller) begin
+            a => 1 ~ preserve(parameter, optional)
+        end
+        o = SParameterNothing => :a => nothing
+        s = instance(SParameterNothing; config=o)
+        @test s.a' == nothing
+    end
+
     @testset "minmax" begin
         @system SPreserveMinMax(Controller) begin
             a => 0 ~ preserve(parameter, min=1)
