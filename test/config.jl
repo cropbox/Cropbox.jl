@@ -223,6 +223,16 @@ import DataStructures: OrderedDict
             @test c[:SConfigParametersUnit][:a] == 1u"m"
         end
         
+        @testset "missing" begin
+            @system SConfigParametersMissing begin
+                a => 1 ~ preserve(parameter)
+                b(a) => a ~ preserve(parameter)
+            end
+            c = Cropbox.parameters(SConfigParametersMissing)
+            @test c[:SConfigParametersMissing][:a] == 1
+            @test c[:SConfigParametersMissing][:b] === missing
+        end
+        
         @testset "alias" begin
             @system SConfigParametersAlias begin
                 a: aa => 1 ~ preserve(parameter)

@@ -64,10 +64,12 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     #HACK: default evaluation scope is the module where S was originally defined
     isnothing(scope) && (scope = S.name.module)
     V = [n.info for n in dependency(S).N]
-    #HACK: only extract parameters with no dependency on other variables
-    P = filter(v -> istag(v, :parameter) && isempty(v.args), V)
+    P = filter(v -> istag(v, :parameter), V)
     key = alias ? (v -> isnothing(v.alias) ? v.name : v.alias) : (v -> v.name)
-    val(v) = begin
+    # evaluate only if parameter has no dependency on other variables
+    val(v) = val(v, Val(isempty(v.args)))
+    val(v, ::Val{false}) = missing
+    val(v, ::Val{true}) = begin
         b = @eval scope $(v.body)
         u = @eval scope $(v.tags[:unit])
         unitfy(b, u)
