@@ -12,7 +12,7 @@
 
     # Arrhenius equation
     Tb: base_temperature => 25 ~ preserve(u"°C", parameter)
-    Tbk(Tb): absolute_base_temperature ~ preserve(u"K", parameter)
+    Tbk(Tb): absolute_base_temperature ~ preserve(u"K")
     T_dep(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): temperature_dependence_rate => begin
         exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
     end ~ call
