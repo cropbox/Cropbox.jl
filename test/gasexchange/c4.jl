@@ -17,8 +17,8 @@
         exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
     end ~ call
 
-    s => 2.9 ~ preserve(parameter)
-    N0 => 0.25 ~ preserve(parameter)
+    s => 2.9 ~ preserve(u"m^2/g", parameter)
+    N0 => 0.25 ~ preserve(u"g/m^2", parameter)
     N_dep(N, s, N0): nitrogen_limited_rate => begin
         2 / (1 + exp(-s * (max(N0, N) - N0))) - 1
     end ~ track

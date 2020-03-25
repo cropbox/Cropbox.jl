@@ -24,7 +24,7 @@ include("energybalance.jl")
     #HACK: should be PPFD from Radiation
     PPFD(weather.PFD): photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s")
 
-    N: nitrogen => 2.0 ~ preserve(parameter)
+    N: nitrogen => 2.0 ~ preserve(u"g/m^2", parameter)
 end
 
 @system C3Model(ModelBase, C3, Controller)
