@@ -4,6 +4,7 @@ export @u_str
 unitfy(::Nothing, u) = nothing
 unitfy(::Nothing, ::Nothing) = nothing
 unitfy(::Missing, u) = missing
+unitfy(::Missing, ::Nothing) = missing
 unitfy(v, ::Nothing) = v
 unitfy(v::Number, u::Units) = Quantity(v, u)
 unitfy(v::Array, u::Units) = Quantity.(v, u)
