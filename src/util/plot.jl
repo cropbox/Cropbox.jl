@@ -10,12 +10,15 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xl
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
 
-    arr(n::Symbol, u) = deunitfy.(df[!, n], u)
+    #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
+    arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
     X = arr(index, xu)
     Ys = arr.(target, yu)
     n = length(Ys)
 
-    lim(a) = let l = floor(minimum(a)), u = ceil(maximum(a))
+    lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
+                 l = floor(minimum(a)),
+                 u = ceil(maximum(a))
         #HACK: avoid empty range
         l == u ? (l, l+1) : (l, u)
     end
