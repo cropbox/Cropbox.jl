@@ -86,9 +86,11 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
 end
 
 weave(patch, base=()) = begin
-    B = configure(base)
     P = configure(patch)
+    #TODO: support weaving multiple configurations (i.e. merge, multiply)
     s, C = only(P)
     k, V = only(C)
-    configure.([[base, s => k => v] for v in V])
+    configs = [s => k => v for v in V]
+    rebase(configs, base)
 end
+rebase(configs, base=()) = configure.([base, c] for c in configs)
