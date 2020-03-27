@@ -17,8 +17,8 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xl
     n = length(Ys)
 
     lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
-                 l = floor(minimum(a)),
-                 u = ceil(maximum(a))
+                 l = isempty(a) ? 0 : floor(minimum(a)),
+                 u = isempty(a) ? 0 : ceil(maximum(a))
         #HACK: avoid empty range
         l == u ? (l, l+1) : (l, u)
     end
