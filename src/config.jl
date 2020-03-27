@@ -88,9 +88,7 @@ end
 weave(patch, base=()) = begin
     B = configure(base)
     P = configure(patch)
-    @assert length(P) == 1
-    s, C = collect(P)[1]
-    @assert length(C) == 1
-    k, V = collect(C)[1]
+    s, C = only(P)
+    k, V = only(C)
     configure.([[base, s => k => v] for v in V])
 end
