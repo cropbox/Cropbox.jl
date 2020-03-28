@@ -1,3 +1,5 @@
+import DataStructures: SortedDict
+
 mutable struct Bisect{V,E} <: State{V}
     value::V
     step::Symbol
@@ -9,6 +11,7 @@ mutable struct Bisect{V,E} <: State{V}
     fa::E
     fb::E
     fc::E
+    X::SortedDict{V,E}
 end
 
 Bisect(; unit, evalunit, _type, _...) = begin
@@ -16,7 +19,7 @@ Bisect(; unit, evalunit, _type, _...) = begin
     E = valuetype(_type, value(evalunit))
     v = zero(V)
     e = zero(E)
-    Bisect{V,E}(v, :z, 0, v, v, v, v, e, e, e)
+    Bisect{V,E}(v, :z, 0, v, v, v, v, e, e, e, SortedDict{V,E}())
 end
 
 @generated evalunit(s::Bisect{V,E}) where {V,E} = unittype(E)
@@ -52,7 +55,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
     lstart = symlabel(v, PreStep())
     lrepeat = symlabel(v, MainStep(), :__repeat)
     lexit = symlabel(v, MainStep(), :__exit)
-    @gensym s u Δ
+    @gensym s u K F i
     @q let $s = $(symstate(v))
         if $s.step == :z
             $s.N = 1
@@ -64,6 +67,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $s.fa = zero($s.fa) * NaN
             $s.fb = zero($s.fb) * NaN
             $s.fc = zero($s.fc) * NaN
+            empty!($s.X)
             $s.step = :a
             $C.store!($s, $s.a)
             @goto $lrepeat
@@ -90,22 +94,37 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             else
                 @debug "bisect: $($v.name) [$($s.N)] $($s.b) => $($s.fb)"
             end
-            if sign($s.fa) == sign($s.fb)
-                #HACK: try expanding bracket
-                #$s.N += round(Int, 0.1*$maxiter)
-                $Δ = $s.d / 2
-                #HACK: reduce redundant unitfy when generating min/max clipping
-                #TODO: check no expansion case where Δ gets clipped by min/max
-                $s.a = $(genminmax(v, @q $s.a - $Δ))
-                $s.b = $(genminmax(v, @q $s.b + $Δ))
-                @debug "bisect: $($v.name) [$($s.N)] $($s.a) <- a, b -> $($s.b) "
-                $s.step = :a
-                $C.store!($s, $s.a)
-                @goto $lrepeat
-            end
             $s.c = ($s.a + $s.b) / 2
             $C.store!($s, $s.c)
-            $s.step = :c
+            if sign($s.fa) == sign($s.fb)
+                $s.X[$s.a] = $s.fa
+                $s.X[$s.b] = $s.fb
+                @debug "bisect: $($v.name) [$($s.N)] X[$($s.a)] = $($s.fa)"
+                @debug "bisect: $($v.name) [$($s.N)] X[$($s.b)] = $($s.fb)"
+                $s.step = :x
+            else
+                $s.step = :c
+            end
+            @goto $lrepeat
+        elseif $s.step == :x
+            $s.fc = $(genfunc(v))
+            $s.X[$s.c] = $s.fc
+            @debug "bisect: $($v.name) [$($s.N)] X[$($s.c)] = $($s.fc)"
+            $F = values($s.X) |> collect
+            $i = [sign(a) != sign(b) for (a, b) in zip($F[1:end-1], $F[2:end])] |> findfirst
+            if isnothing($i)
+                $s.c = rand() * $s.d + $s.a
+            else
+                $K = keys($s.X) |> collect
+                $s.a = $K[$i]
+                $s.fa = $F[$i]
+                $s.b = $K[$i+1]
+                $s.fb = $F[$i+1]
+                $s.c = ($s.a + $s.b) / 2
+                $s.step = :c
+                @debug "bisect: $($v.name) [$($s.N)] X[i=$($i)] $($s.a) <- a, b -> $($s.b)"
+            end
+            $C.store!($s, $s.c)
             @goto $lrepeat
         elseif $s.step == :c
             $s.fc = $(genfunc(v))
