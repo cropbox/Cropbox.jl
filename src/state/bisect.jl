@@ -155,7 +155,17 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $s.N += 1
             @goto $lstart
         else
-            @warn "bisect: $($v.name) [$($s.N)] convergence failed!" a=$s.a b=$s.b c=$s.c fa=$s.fa fb=$s.fb fc=$s.fc d=$s.d $(v.name)=$C.value($s)
+            if isempty($s.X)
+                @warn "bisect: $($v.name) [$($s.N)] convergence failed!" a=$s.a b=$s.b c=$s.c fa=$s.fa fb=$s.fb fc=$s.fc d=$s.d $(v.name)=$C.value($s)
+            else
+                $K = keys($s.X) |> collect
+                $F = values($s.X) |> collect
+                $i = findmin(abs.($F))[2]
+                $s.c = $K[$i]
+                $s.fc = $F[$i]
+                $C.store!($s, $s.c)
+                @warn "bisect: $($v.name) [$($s.N)] convergence missed!" c=$s.c fc=$s.fc $(v.name)=$C.value($s)
+            end
         end
         @label $lexit
         $s.step = :z
