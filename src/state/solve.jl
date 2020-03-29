@@ -46,7 +46,10 @@ solvequadratic(a, b, c) = begin
     elseif Δ == 0
         (-b/2a,)
     else
-        error("complex roots found for quadratic equation: $a*x^2 + $b*x + $c = 0")
+        #HACK: make up a non-complex solution
+        x = -b/2a
+        @warn "ignore complex roots for quadratic equation: $a*x^2 + $b*x + $c = 0" x
+        (x,)
     end
 end
 
