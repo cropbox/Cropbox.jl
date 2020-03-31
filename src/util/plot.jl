@@ -6,7 +6,7 @@ import Unitful
 plot(df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot(df, index, [target]; name=[name], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot!(p, df, index, [target]; name=[name], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, name=nothing, xlim=nothing, ylim=nothing) = begin
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
@@ -33,6 +33,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     xlab = lab(isnothing(xlab) ? index : xlab, xu) * '\n'
     ylab = lab(isnothing(ylab) ? "" : ylab, yu)
+    legend = isnothing(legend) ? "" : string(legend)
     name = isnothing(name) ? repeat([nothing], n) : name
     names = [string(isnothing(l) ? t : l) for (t, l) in zip(target, name)]
     title = isnothing(title) ? "" : string(title)
@@ -54,7 +55,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
                 Gadfly.Guide.title(title),
                 Gadfly.Guide.xlabel(xlab),
                 Gadfly.Guide.ylabel(ylab),
-                Gadfly.Guide.manual_color_key("", names, colors),
+                Gadfly.Guide.manual_color_key(legend, names, colors),
                 layers...
             )
         else
@@ -94,6 +95,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
         if isnothing(p)
             a = Float64[]
             p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim)
+            UnicodePlots.annotate!(p, :r, legend)
         end
         for i in 1:n
             plot!(p, X, Ys[i], name=names[i])
