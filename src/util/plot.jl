@@ -6,7 +6,7 @@ import Unitful
 plot(df::DataFrame, index::Symbol, target::Symbol; legend=nothing, kw...) = plot(df, index, [target]; legend=[legend], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; legend=nothing, kw...) = plot!(p, df, index, [target]; legend=[legend], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xlabel=nothing, ylabel=nothing, legend=nothing, xlim=nothing, ylim=nothing) = begin
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlabel=nothing, ylabel=nothing, legend=nothing, xlim=nothing, ylim=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
@@ -38,6 +38,8 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xl
     leg(t, l) = string(isnothing(l) ? t : l)
     names = [leg(t, l) for (t, l) in zip(target, legs)]
 
+    title = isnothing(title) ? "" : string(title)
+
     if isdefined(Main, :IJulia) && Main.IJulia.inited
         if kind == :line
             geom = Gadfly.Geom.line
@@ -52,6 +54,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xl
             layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
             Gadfly.plot(
                 Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
+                Gadfly.Guide.title(title),
                 Gadfly.Guide.xlabel(xlab),
                 Gadfly.Guide.ylabel(ylab),
                 Gadfly.Guide.manual_color_key("", names, colors),
@@ -93,7 +96,7 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, xl
 
         if isnothing(p)
             a = Float64[]
-            p = UnicodePlots.Plot(a, a, canvas; xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim)
+            p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim)
         end
         for i in 1:n
             plot!(p, X, Ys[i], name=names[i])
