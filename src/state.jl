@@ -20,7 +20,8 @@ iterate(s::State, i) = nothing
 eltype(::Type{<:State{V}}) where V = V
 
 import Unitful: unit
-unit(::State{V}) where V = unittype(V)
+unit(::S) where {S<:State} = unit(S)
+unit(::Type{<:State{V}}) where V = unittype(V)
 unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
 
 import Unitful: isunitless, dimension
