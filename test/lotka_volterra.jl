@@ -13,5 +13,5 @@
         :Clock => (:step => 1u"minute"),
     ))
     @test r[!, :tick][end] > 20u"hr"
-    Cropbox.plot(r, :tick, [:H, :P], legend=["prey", "predator"]) |> display
+    Cropbox.plot(r, :tick, [:H, :P], name=["prey", "predator"]) |> display
 end

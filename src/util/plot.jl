@@ -3,10 +3,10 @@ import Gadfly
 import UnicodePlots
 import Unitful
 
-plot(df::DataFrame, index::Symbol, target::Symbol; legend=nothing, kw...) = plot(df, index, [target]; legend=[legend], kw...)
+plot(df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot(df, index, [target]; name=[name], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Symbol; legend=nothing, kw...) = plot!(p, df, index, [target]; legend=[legend], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, xlim=nothing, ylim=nothing) = begin
+plot!(p, df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot!(p, df, index, [target]; name=[name], kw...)
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, name=nothing, xlim=nothing, ylim=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
@@ -33,11 +33,8 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     xlab = lab(isnothing(xlab) ? index : xlab, xu) * '\n'
     ylab = lab(isnothing(ylab) ? "" : ylab, yu)
-
-    legs = isnothing(legend) ? repeat([nothing], n) : legend
-    leg(t, l) = string(isnothing(l) ? t : l)
-    names = [leg(t, l) for (t, l) in zip(target, legs)]
-
+    name = isnothing(name) ? repeat([nothing], n) : name
+    names = [string(isnothing(l) ? t : l) for (t, l) in zip(target, name)]
     title = isnothing(title) ? "" : string(title)
 
     if isdefined(Main, :IJulia) && Main.IJulia.inited
