@@ -47,6 +47,11 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
             error("unrecognized plot kind = $kind")
         end
 
+        theme = Gadfly.Theme(
+            major_label_font_size=10*Gadfly.pt,
+            key_title_font_size=9*Gadfly.pt,
+        )
+
         if isnothing(p)
             colors = Gadfly.Scale.default_discrete_colors(n)
             layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
@@ -56,7 +61,8 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
                 Gadfly.Guide.xlabel(xlab),
                 Gadfly.Guide.ylabel(ylab),
                 Gadfly.Guide.manual_color_key(legend, names, colors),
-                layers...
+                layers...,
+                theme,
             )
         else
             #TODO: very hacky approach to append new plots... definitely need a better way
@@ -72,7 +78,8 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
                 p.coord,
                 p.guides...,
                 p.layers...,
-                layers...
+                layers...,
+                theme,
             )
         end
     else
