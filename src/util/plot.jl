@@ -6,7 +6,7 @@ import Unitful
 plot(df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot(df, index, [target]; name=[name], kw...)
 plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
 plot!(p, df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot!(p, df, index, [target]; name=[name], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing) = begin
+plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, backend=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
     xu = u(index)
     yu = Unitful.promote_unit(u.(target)...)
@@ -38,14 +38,17 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
     names = [string(isnothing(l) ? t : l) for (t, l) in zip(target, name)]
     title = isnothing(title) ? "" : string(title)
 
-    if isdefined(Main, :IJulia) && Main.IJulia.inited
-        plot_gadfly!(p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
-    else
-        plot_unicode!(p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
+    if isnothing(backend)
+        backend = if isdefined(Main, :IJulia) && Main.IJulia.inited
+            :Gadfly
+        else
+            :UnicodePlots
+        end
     end
+    plot!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
 end
 
-plot_gadfly!(p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
+plot!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
     n = length(Ys)
 
     if kind == :line
@@ -93,7 +96,7 @@ plot_gadfly!(p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = beg
     end
 end
 
-plot_unicode!(p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
+plot!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
     canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
         UnicodePlots.DotCanvas
     else
