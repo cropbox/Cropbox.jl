@@ -39,74 +39,84 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
     title = isnothing(title) ? "" : string(title)
 
     if isdefined(Main, :IJulia) && Main.IJulia.inited
-        if kind == :line
-            geom = Gadfly.Geom.line
-        elseif kind == :scatter
-            geom = Gadfly.Geom.point
-        else
-            error("unrecognized plot kind = $kind")
-        end
-
-        theme = Gadfly.Theme(
-            major_label_font_size=10*Gadfly.pt,
-            key_title_font_size=9*Gadfly.pt,
-        )
-
-        if isnothing(p)
-            colors = Gadfly.Scale.default_discrete_colors(n)
-            layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
-            Gadfly.plot(
-                Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
-                Gadfly.Guide.title(title),
-                Gadfly.Guide.xlabel(xlab),
-                Gadfly.Guide.ylabel(ylab),
-                Gadfly.Guide.manual_color_key(legend, names, colors),
-                layers...,
-                theme,
-            )
-        else
-            #TODO: very hacky approach to append new plots... definitely need a better way
-            n0 = length(p.layers)
-            colors = Gadfly.Scale.default_discrete_colors(n0 + n)
-            layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
-            #HACK: extend ManualColorKey with new elements
-            mck = p.guides[end]
-            for (c, l) in zip(colors[n0+1:end], names)
-                mck.labels[c] = l
-            end
-            Gadfly.plot(
-                p.coord,
-                p.guides...,
-                p.layers...,
-                layers...,
-                theme,
-            )
-        end
+        plot_gadfly!(p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
     else
-        canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
-            UnicodePlots.DotCanvas
-        else
-            UnicodePlots.BrailleCanvas
-        end
-
-        if kind == :line
-            plot = UnicodePlots.lineplot
-            plot! = UnicodePlots.lineplot!
-        elseif kind == :scatter
-            plot = UnicodePlots.scatterplot
-            plot! = UnicodePlots.scatterplot!
-        else
-            error("unrecognized plot kind = $kind")
-        end
-
-        if isnothing(p)
-            a = Float64[]
-            p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim)
-            UnicodePlots.annotate!(p, :r, legend)
-        end
-        for i in 1:n
-            plot!(p, X, Ys[i], name=names[i])
-        end
-        p
+        plot_unicode!(p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
     end
+end
+
+plot_gadfly!(p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
+    n = length(Ys)
+
+    if kind == :line
+        geom = Gadfly.Geom.line
+    elseif kind == :scatter
+        geom = Gadfly.Geom.point
+    else
+        error("unrecognized plot kind = $kind")
+    end
+
+    theme = Gadfly.Theme(
+        major_label_font_size=10*Gadfly.pt,
+        key_title_font_size=9*Gadfly.pt,
+    )
+
+    if isnothing(p)
+        colors = Gadfly.Scale.default_discrete_colors(n)
+        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
+        Gadfly.plot(
+            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
+            Gadfly.Guide.title(title),
+            Gadfly.Guide.xlabel(xlab),
+            Gadfly.Guide.ylabel(ylab),
+            Gadfly.Guide.manual_color_key(legend, names, colors),
+            layers...,
+            theme,
+        )
+    else
+        #TODO: very hacky approach to append new plots... definitely need a better way
+        n0 = length(p.layers)
+        colors = Gadfly.Scale.default_discrete_colors(n0 + n)
+        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
+        #HACK: extend ManualColorKey with new elements
+        mck = p.guides[end]
+        for (c, l) in zip(colors[n0+1:end], names)
+            mck.labels[c] = l
+        end
+        Gadfly.plot(
+            p.coord,
+            p.guides...,
+            p.layers...,
+            layers...,
+            theme,
+        )
+    end
+end
+
+plot_unicode!(p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
+    canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
+        UnicodePlots.DotCanvas
+    else
+        UnicodePlots.BrailleCanvas
+    end
+
+    if kind == :line
+        plot = UnicodePlots.lineplot
+        plot! = UnicodePlots.lineplot!
+    elseif kind == :scatter
+        plot = UnicodePlots.scatterplot
+        plot! = UnicodePlots.scatterplot!
+    else
+        error("unrecognized plot kind = $kind")
+    end
+
+    if isnothing(p)
+        a = Float64[]
+        p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim)
+        UnicodePlots.annotate!(p, :r, legend)
+    end
+    for (Y, name) in zip(Ys, names)
+        plot!(p, X, Y; name=name)
+    end
+    p
 end
