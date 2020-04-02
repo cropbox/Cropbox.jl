@@ -67,7 +67,7 @@ plot!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, yl
     if isnothing(p)
         colors = Gadfly.Scale.default_discrete_colors(n)
         layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
-        Gadfly.plot(
+        p = Gadfly.plot(
             Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
             Gadfly.Guide.title(title),
             Gadfly.Guide.xlabel(xlab),
@@ -80,20 +80,17 @@ plot!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, yl
         #TODO: very hacky approach to append new plots... definitely need a better way
         n0 = length(p.layers)
         colors = Gadfly.Scale.default_discrete_colors(n0 + n)
-        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
         #HACK: extend ManualColorKey with new elements
         mck = p.guides[end]
         for (c, l) in zip(colors[n0+1:end], names)
             mck.labels[c] = l
         end
-        Gadfly.plot(
-            p.coord,
-            p.guides...,
-            p.layers...,
-            layers...,
-            theme,
-        )
+        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
+        for l in layers
+            Gadfly.push!(p, l)
+        end
     end
+    p
 end
 
 plot!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
