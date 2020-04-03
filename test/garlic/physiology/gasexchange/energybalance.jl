@@ -43,13 +43,13 @@
     end ~ track(u"kPa")
     E(gv, D): transpiration => gv*D ~ track(u"mmol/m^2/s" #= H2O =#)
 
-    H(Cp, gh, T_adj): sensible_heat_flux => Cp*gh*T_adj ~ track(u"W/m^2")
+    H(Cp, gh, ΔT): sensible_heat_flux => Cp*gh*ΔT ~ track(u"W/m^2")
     λE(λ, E): latent_heat_flux => λ*E ~ track(u"W/m^2")
 
-    T_adj(R_net, H, λE): temperature_adjustment => begin
+    ΔT(R_net, H, λE): temperature_adjustment => begin
         R_net ⩵ H + λE
     end ~ bisect(lower=-5, upper=5, u"K", evalunit=u"W/m^2")
 
-    T(T_adj, T_air): leaf_temperature => T_air + T_adj ~ track(u"°C")
+    T(ΔT, T_air): leaf_temperature => T_air + ΔT ~ track(u"°C")
     Tk(T): absolute_leaf_temperature ~ track(u"K")
 end
