@@ -84,7 +84,7 @@ edgestyles(h::Hierarchy) = Dict(e => edgestyle(s) for (e, s) in h.E)
 import TikzGraphs
 plot(h::Hierarchy) = begin
     #TikzGraphs.plot(h.g, labels(h), edge_styles=edgestyles(h), options="grow=right, components go down left aligned")
-    TikzGraphs.plot(h.g, TikzGraphs.Layouts.SimpleNecklace(), labels(h), edge_styles=edgestyles(h))
+    TikzGraphs.plot(h.g, TikzGraphs.Layouts.Layered(), labels(h), edge_styles=edgestyles(h))
 end
 
 import Base: write
