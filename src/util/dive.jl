@@ -17,41 +17,42 @@ text(m::MenuItem) = begin
     isempty(l) ? v : "$l $(DARK_GRAY_FG("=")) $v"
 end
 
+dive(s::System, t) = begin
+    d = Dict(fieldnamesalias(s))
+    label(k) = begin
+        n = string(k)
+        a = d[k]
+        l = "$(BLUE_FG(n))"
+        !isnothing(a) && (l *= " $(DARK_GRAY_FG("($a)"))")
+        l
+    end
+    l = fieldnamesunique(s) |> collect
+    dive(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
+end
+dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
+dive(s::Tabulate, t) = throw(s')
+dive(s::Call, t) = throw(s')
+dive(s::Produce, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
+dive(s::State, t) = dive(map(v -> MenuItem("", "", v), s'), t)
+dive(l::Vector{MenuItem}, t) = begin
+    isempty(l) && return
+    while true
+        println(t)
+        i = RadioMenu(text.(l), pagesize=40) |> request
+        println()
+        if i > 0
+            v = l[i]
+            dive(value(v), "$t $(DARK_GRAY_FG(">")) $(MAGENTA_FG(name(v)))")
+        else
+            break
+        end
+    end
+end
+dive(v, t) = throw(value(v))
+
 dive(s::System) = begin
-    nav(s::System, t) = begin
-        d = Dict(fieldnamesalias(s))
-        label(k) = begin
-            n = string(k)
-            a = d[k]
-            l = "$(BLUE_FG(n))"
-            !isnothing(a) && (l *= " $(DARK_GRAY_FG("($a)"))")
-            l
-        end
-        l = fieldnamesunique(s) |> collect
-        nav(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
-    end
-    nav(s::Vector{<:System}, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
-    nav(s::Tabulate, t) = throw(s')
-    nav(s::Call, t) = throw(s')
-    nav(s::Produce, t) = nav(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
-    nav(s::State, t) = nav(map(v -> MenuItem("", "", v), s'), t)
-    nav(l::Vector{MenuItem}, t) = begin
-        isempty(l) && return
-        while true
-            println(t)
-            i = RadioMenu(text.(l), pagesize=40) |> request
-            println()
-            if i > 0
-                v = l[i]
-                nav(value(v), "$t $(DARK_GRAY_FG(">")) $(MAGENTA_FG(name(v)))")
-            else
-                break
-            end
-        end
-    end
-    nav(v, t) = throw(value(v))
     try
-        nav(s, string(MAGENTA_FG(name(s))))
+        dive(s, string(MAGENTA_FG(name(s))))
     catch e
         !isa(e, InterruptException) && return e
     end
