@@ -19,11 +19,11 @@
 end
 
 @system StomataLeafWater(SoilStub) begin
-    LWP(WP_leaf): leaf_water_potential ~ track(u"MPa")
-    sf => 2.3 ~ preserve(u"MPa^-1", parameter)
-    ϕf => -2.0 ~ preserve(u"MPa", parameter)
-    m(LWP, sf, ϕf): transpiration_reduction_factor => begin
-        (1 + exp(sf * ϕf)) / (1 + exp(sf * (ϕf - LWP)))
+    Ψv(WP_leaf): bulk_leaf_water_potential ~ track(u"MPa")
+    Ψf: reference_leaf_water_potential => -2.0 ~ preserve(u"MPa", parameter)
+    sf: stomata_sensitivty_param => 2.3 ~ preserve(u"MPa^-1", parameter)
+    fΨv(Ψv, Ψf, sf): stomata_sensitivty => begin
+        (1 + exp(sf*Ψf)) / (1 + exp(sf*(Ψf-Ψv)))
     end ~ track
 end
 
@@ -33,23 +33,21 @@ end
     g1 => 4.53 ~ preserve(parameter)
 
     #HACK: avoid scaling issue with dimensionless unit
-    hs(g0, g1, gb, m, A_net, Cs, RH): relative_humidity_at_leaf_surface => begin
-        gs = g0 + (g1 * m * (A_net * hs / Cs))
+    hs(g0, g1, gb, A_net, Cs, fΨv, RH): relative_humidity_at_leaf_surface => begin
+        gs = g0 + g1*(A_net*hs/Cs) * fΨv
         (hs - RH)*gb ⩵ (1 - hs)*gs
     end ~ solve(lower=0, upper=1) #, u"percent")
     Ds(D=vp.D, T, hs): vapor_pressure_deficit_at_leaf_surface => begin
         D(T, hs)
     end ~ track(u"kPa")
 
-    gs(g0, g1, m, A_net, hs, Cs): stomatal_conductance => begin
-        gs = g0 + (g1 * m * (A_net * hs / Cs))
+    gs(g0, g1, A_net, hs, Cs, fΨv): stomatal_conductance => begin
+        gs = g0 + g1*(A_net*hs/Cs) * fΨv
         max(gs, g0)
     end ~ track(u"mol/m^2/s/bar" #= H2O =#)
-
-    m: transpiration_reduction_factor ~ hold
 end
 
-@system StomataMedlyn(StomataBase) begin
+@system StomataMedlyn(StomataBase, StomataLeafWater) begin
     g0 => 0 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
     g1 => 4.0 ~ preserve(u"√kPa", parameter)
 
@@ -65,8 +63,8 @@ end
     Ds(Ds¹ᐟ²): vapor_pressure_deficit_at_leaf_surface => max(Ds¹ᐟ²^2, 1u"Pa") ~ track(u"kPa")
     hs(RH=vp.RH, T, Ds): relative_humidity_at_leaf_surface => RH(T, Ds) ~ track
 
-    gs(g0, g1, A_net, Ds, Cs): stomatal_conductance => begin
-        gs = g0 + (1 + g1 / √Ds) * (A_net / Cs)
+    gs(g0, g1, A_net, Ds, Cs, fΨv): stomatal_conductance => begin
+        gs = g0 + (1 + g1/√Ds)*(A_net/Cs) * fΨv
         max(gs, g0)
     end ~ track(u"mol/m^2/s/bar" #= H2O =#)
 end
