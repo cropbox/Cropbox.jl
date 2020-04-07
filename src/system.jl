@@ -49,6 +49,16 @@ setvar!(s::System, k::Symbol, v) = begin
     nothing
 end
 
+#HACK: calculate variable body with external arguments for debugging purpose
+value(s::System, k::Symbol; kw...) = begin
+    d = dependency(s)
+    v = d.M[k]
+    emit(a) = let p = extractfuncargpair(a), k = p[1]; :($k = $(kw[k])) end
+    args = emit.(v.args)
+    body = v.body
+    eval(:(let $(args...); $body end))
+end
+
 import Base: show
 show(io::IO, s::System) = print(io, "<$(name(s))>")
 

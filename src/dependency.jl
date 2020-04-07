@@ -20,6 +20,7 @@ dependency(V::Vector{VarInfo}) = begin
     d
 end
 dependency(::Type{S}) where {S<:System} = dependency(geninfos(S))
+dependency(::S) where {S<:System} = dependency(S)
 
 node!(d::Dependency, n::VarNode) = begin
     if !haskey(d.I, n)
