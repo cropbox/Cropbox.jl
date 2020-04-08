@@ -88,9 +88,13 @@ end
 weave(patch, base=()) = begin
     P = configure(patch)
     #TODO: support weaving multiple configurations (i.e. merge, multiply)
-    s, C = only(P)
-    k, V = only(C)
-    configs = [s => k => v for v in V]
+    configs = if isempty(P)
+        P
+    else
+        s, C = only(P)
+        k, V = only(C)
+        [s => k => v for v in V]
+    end
     rebase(configs, base)
 end
-rebase(configs, base=()) = configure.([base, c] for c in configs)
+rebase(configs, base=()) = isempty(configs) ? [configure(base)] : [configure([base, c]) for c in configs]
