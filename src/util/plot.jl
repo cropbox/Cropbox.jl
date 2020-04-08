@@ -120,7 +120,7 @@ plot!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xl
 end
 
 visualize(S::Type{<:System}, x, y;
-    config=(), group=(), interval=(),
+    config=(), group=(), cover=(),
     stop=nothing, skipfirst=false, callback=nothing,
     ylab=nothing, legend=nothing, plotopts...
 ) = begin
@@ -141,7 +141,7 @@ visualize(S::Type{<:System}, x, y;
     end
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=weave(interval, c), stop=stop, skipfirst=skipfirst, callback=callback)
+    s(c) = simulate(S; configs=weave(cover, c), stop=stop, skipfirst=skipfirst, callback=callback)
     r = s(C[1])
     p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
     for i in 2:length(C)
@@ -153,7 +153,7 @@ end
 
 visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
 visualize(df::DataFrame, SS::Vector, x, y;
-    configs=(), interval=(),
+    configs=(), cover=(),
     stop=nothing, skipfirst=false, callback=nothing,
     xlab=nothing, ylab=nothing, names=nothing, plotopts...
 ) = begin
@@ -171,7 +171,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
 
     p = plot(df, xo, yo; kind=:scatter, xlab=xlab, ylab=ylab, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
-        r = simulate(S; configs=weave(interval, c), stop=stop, skipfirst=skipfirst, callback=callback)
+        r = simulate(S; configs=weave(cover, c), stop=stop, skipfirst=skipfirst, callback=callback)
         p = plot!(p, r, xe, ye; kind=:line, name=name, plotopts...)
     end
     p
