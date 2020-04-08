@@ -90,7 +90,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, callb
 end
 
 simulate!(s::System; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
-    simulate!(s, [(base=base, index=index, target=target)]; kwargs...)[1]
+    simulate!(s, [(base=base, index=index, target=target)]; kwargs...) |> only
 end
 simulate!(s::System, layout; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
@@ -98,7 +98,7 @@ simulate!(s::System, layout; kwargs...) = begin
 end
 
 simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
-    simulate(S, [(base=base, index=index, target=target)]; kwargs...)[1]
+    simulate(S, [(base=base, index=index, target=target)]; kwargs...) |> only
 end
 simulate(S::Type{<:System}, layout; config=(), options=(), configs=[], kwargs...) = begin
     if isempty(configs)
