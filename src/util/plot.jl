@@ -118,3 +118,61 @@ plot!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xl
     end
     p
 end
+
+visualize(S::Type{<:System}, x, y;
+    config=(), group=(), interval=(),
+    stop=nothing, skipfirst=false, callback=nothing,
+    ylab=nothing, legend=nothing, plotopts...
+) = begin
+    G = configure(group)
+    C = weave(G, config)
+
+    if isempty(G)
+        names = [""]
+    else
+        K, V = only(G)
+        k, v = only(V)
+        if isnothing(legend)
+            T = K == Symbol(0) ? S : type(K)
+            u = fieldtype(T, k) |> unit
+            legend = isnothing(u) ? "$k" : "$k ($u)"
+        end
+        names = string.(v)
+    end
+    isnothing(ylab) && (ylab = y)
+
+    s(c) = simulate(S; configs=weave(interval, c), stop=stop, skipfirst=skipfirst, callback=callback)
+    r = s(C[1])
+    p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
+    for i in 2:length(C)
+        r = s(C[i])
+        p = plot!(p, r, x, y; name=names[i], plotopts...)
+    end
+    p
+end
+
+visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
+visualize(df::DataFrame, SS::Vector, x, y;
+    configs=(), interval=(),
+    stop=nothing, skipfirst=false, callback=nothing,
+    xlab=nothing, ylab=nothing, names=nothing, plotopts...
+) = begin
+    x = x isa Pair ? x : x => x
+    y = y isa Pair ? y : y => y
+    xo, xe = x
+    yo, ye = y
+    xlab = isnothing(xlab) ? xe : xlab
+    ylab = isnothing(ylab) ? ye : ylab
+
+    n = length(SS)
+    isempty(configs) && (configs = repeat([()], n))
+    @assert length(configs) == n
+    isnothing(names) && (names = nameof.(SS))
+
+    p = plot(df, xo, yo; kind=:scatter, xlab=xlab, ylab=ylab, plotopts...)
+    for (S, c, name) in zip(SS, configs, names)
+        r = simulate(S; configs=weave(interval, c), stop=stop, skipfirst=skipfirst, callback=callback)
+        p = plot!(p, r, xe, ye; kind=:line, name=name, plotopts...)
+    end
+    p
+end
