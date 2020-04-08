@@ -101,10 +101,8 @@ plot!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xl
     end
 
     if kind == :line
-        plot = UnicodePlots.lineplot
         plot! = UnicodePlots.lineplot!
     elseif kind == :scatter
-        plot = UnicodePlots.scatterplot
         plot! = UnicodePlots.scatterplot!
     else
         error("unrecognized plot kind = $kind")
