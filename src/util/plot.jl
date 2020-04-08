@@ -125,7 +125,7 @@ visualize(S::Type{<:System}, x, y;
     ylab=nothing, legend=nothing, plotopts...
 ) = begin
     G = configure(group)
-    C = weave(G, config)
+    C = configexpand(G, config)
 
     if isempty(G)
         names = [""]
@@ -141,7 +141,7 @@ visualize(S::Type{<:System}, x, y;
     end
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=weave(cover, c), stop=stop, skipfirst=skipfirst, callback=callback)
+    s(c) = simulate(S; configs=configexpand(cover, c), stop=stop, skipfirst=skipfirst, callback=callback)
     r = s(C[1])
     p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
     for i in 2:length(C)
@@ -171,7 +171,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
 
     p = plot(df, xo, yo; kind=:scatter, xlab=xlab, ylab=ylab, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
-        r = simulate(S; configs=weave(cover, c), stop=stop, skipfirst=skipfirst, callback=callback)
+        r = simulate(S; configs=configexpand(cover, c), stop=stop, skipfirst=skipfirst, callback=callback)
         p = plot!(p, r, xe, ye; kind=:line, name=name, plotopts...)
     end
     p

@@ -152,36 +152,36 @@ import DataStructures: OrderedDict
         end
     end
     
-    @testset "weave" begin
+    @testset "expand" begin
         @testset "patch" begin
             p = :S => :a => [1, 2]
-            C = Cropbox.weave(p)
+            C = Cropbox.configexpand(p)
             @test C == Cropbox.configure.([:S => :a => 1, :S => :a => 2])
         end
         
         @testset "patch with base" begin
             b = :S => :b => 0
             p = :S => :a => [1, 2]
-            C = Cropbox.weave(p, b)
+            C = Cropbox.configexpand(p, b)
             @test C == Cropbox.configure.([:S => (a=1, b=0), :S => (a=2, b=0)])
         end
         
         @testset "range" begin
             p = :S => :a => 1:2
-            C = Cropbox.weave(p)
+            C = Cropbox.configexpand(p)
             @test C == Cropbox.configure.([:S => :a => 1, :S => :a => 2])
         end
         
         @testset "single" begin
             p = :S => :a => 1
-            C = Cropbox.weave(p)
+            C = Cropbox.configexpand(p)
             @test C isa Array && length(C) == 1
             @test C[1] == Cropbox.configure(p)
         end
         
         @testset "empty" begin
             p = ()
-            C = Cropbox.weave(p)
+            C = Cropbox.configexpand(p)
             @test C isa Array && length(C) == 1
             @test C[1] == Cropbox.configure(p)
         end
@@ -191,26 +191,26 @@ import DataStructures: OrderedDict
         @testset "nonempty configs + nonempty base" begin
             b = [:S => :b => 0]
             C0 = [:S => :a => 1, :S => :a => 2]
-            C1 = Cropbox.rebase(C0, b)
+            C1 = Cropbox.configrebase(C0, b)
             @test C1 == Cropbox.configure.([:S => (a=1, b=0), :S => (a=2, b=0)])
         end
         
         @testset "nonempty configs + empty base" begin
             C0 = [:S => :a => 1, :S => :a => 2]
-            C1 = Cropbox.rebase(C0)
+            C1 = Cropbox.configrebase(C0)
             @test C1 == Cropbox.configure.(C0)
         end
         
         @testset "empty configs + nonempty base" begin
             b = :S => :a => 1
             C0 = []
-            C1 = Cropbox.rebase(C0, b)
+            C1 = Cropbox.configrebase(C0, b)
             @test C1 == [Cropbox.configure(b)]
         end
         
         @testset "empty configs + empty base" begin
             C0 = []
-            C1 = Cropbox.rebase(C0)
+            C1 = Cropbox.configrebase(C0)
             @test C1 == [Cropbox.configure()]
         end
     end

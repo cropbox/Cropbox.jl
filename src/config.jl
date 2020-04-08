@@ -85,7 +85,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C
 end
 
-weave(patch, base=()) = begin
+configexpand(patch, base=()) = begin
     P = configure(patch)
     #TODO: support weaving multiple configurations (i.e. merge, multiply)
     configs = if isempty(P)
@@ -95,6 +95,6 @@ weave(patch, base=()) = begin
         k, V = only(C)
         [s => k => v for v in V]
     end
-    rebase(configs, base)
+    configrebase(configs, base)
 end
-rebase(configs, base=()) = isempty(configs) ? [configure(base)] : [configure([base, c]) for c in configs]
+configrebase(configs, base=()) = isempty(configs) ? [configure(base)] : [configure([base, c]) for c in configs]

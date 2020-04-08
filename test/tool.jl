@@ -116,7 +116,7 @@ using Dates
             b(a) ~ accumulate
         end
         p = [1, 2]
-        C = Cropbox.weave(:SSimulateConfigs => :a => p)
+        C = Cropbox.configexpand(:SSimulateConfigs => :a => p)
         n = 10
         r = simulate(SSimulateConfigs, configs=C, stop=n)
         @test r[r[!, :tick] .== (n+1)*u"hr", :a] == p
