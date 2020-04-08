@@ -3,18 +3,18 @@ import Gadfly
 import UnicodePlots
 import Unitful
 
-plot(df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot(df, index, [target]; name=[name], kw...)
-plot(df::DataFrame, index::Symbol, target::Vector{Symbol}; kw...) = plot!(nothing, df, index, target; kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Symbol; name=nothing, kw...) = plot!(p, df, index, [target]; name=[name], kw...)
-plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, backend=nothing) = begin
+plot(df::DataFrame, x::Symbol, y::Symbol; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
+plot(df::DataFrame, x::Symbol, y::Vector{Symbol}; kw...) = plot!(nothing, df, x, y; kw...)
+plot!(p, df::DataFrame, x::Symbol, y::Symbol; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
+plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, backend=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
-    xu = u(index)
-    yu = Unitful.promote_unit(u.(target)...)
+    xu = u(x)
+    yu = Unitful.promote_unit(u.(y)...)
 
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
     arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
-    X = arr(index, xu)
-    Ys = arr.(target, yu)
+    X = arr(x, xu)
+    Ys = arr.(y, yu)
     n = length(Ys)
 
     lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
@@ -31,11 +31,11 @@ plot!(p, df::DataFrame, index::Symbol, target::Vector{Symbol}; kind=:scatter, ti
 
     lab(l, u) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = lab(isnothing(xlab) ? index : xlab, xu) * '\n'
+    xlab = lab(isnothing(xlab) ? x : xlab, xu) * '\n'
     ylab = lab(isnothing(ylab) ? "" : ylab, yu)
     legend = isnothing(legend) ? "" : string(legend)
     name = isnothing(name) ? repeat([nothing], n) : name
-    names = [string(isnothing(l) ? t : l) for (t, l) in zip(target, name)]
+    names = [string(isnothing(l) ? t : l) for (t, l) in zip(y, name)]
     title = isnothing(title) ? "" : string(title)
 
     if isnothing(backend)
