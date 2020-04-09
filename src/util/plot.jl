@@ -271,11 +271,11 @@ visualize(df::DataFrame, SS::Vector, x, y;
 end
 
 visualize(S::Type{<:System}, x, y, z;
-    config=(), xrange=(), yrange=(),
+    config=(), xstep=(), ystep=(),
     stop=nothing, skipfirst=false, callback=nothing,
     plotopts...
 ) = begin
-    C = configmultiply([xrange, yrange], config)
+    C = configmultiply([xstep, ystep], config)
     r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, callback=callback)
     plot(r, x, y, z; plotopts...)
 end
