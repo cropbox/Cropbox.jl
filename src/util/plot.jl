@@ -247,7 +247,7 @@ end
 visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
 visualize(df::DataFrame, SS::Vector, x, y;
     configs=(), xstep=(),
-    stop=nothing, skipfirst=false, callback=nothing,
+    stop=nothing, skipfirst=true, callback=nothing,
     xlab=nothing, ylab=nothing, names=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
@@ -272,7 +272,7 @@ end
 
 visualize(S::Type{<:System}, x, y, z;
     config=(), xstep=(), ystep=(),
-    stop=nothing, skipfirst=false, callback=nothing,
+    stop=nothing, skipfirst=true, callback=nothing,
     plotopts...
 ) = begin
     C = configmultiply([xstep, ystep], config)
