@@ -85,9 +85,16 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C
 end
 
+configmultiply(patches, base=()) = begin
+    isempty(patches) && return [configure(base)]
+    C = configexpand(patches[1], base)
+    for p in patches[2:end]
+        C = [configexpand(p, c) for c in C] |> Iterators.flatten |> collect
+    end
+    C
+end
 configexpand(patch, base=()) = begin
     P = configure(patch)
-    #TODO: support weaving multiple configurations (i.e. merge, multiply)
     configs = if isempty(P)
         P
     else

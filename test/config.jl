@@ -152,6 +152,58 @@ import DataStructures: OrderedDict
         end
     end
     
+    @testset "multiply" begin
+        @testset "solo" begin
+            p = [:S => :a => 1:2]
+            C = Cropbox.configmultiply(p)
+            @test C == Cropbox.configure.([:S => :a => 1, :S => :a => 2])
+        end
+        
+        @testset "duo" begin
+            p = [:S => :a => 1:2, :S => :b => 3:4]
+            C = Cropbox.configmultiply(p)
+            @test C == Cropbox.configure.([
+                :S => (a=1, b=3), :S => (a=1, b=4),
+                :S => (a=2, b=3), :S => (a=2, b=4),
+            ])
+        end
+        
+        @testset "triple" begin
+            p = [:S => :a => 1:2, :S => :b => 3:4, :S => :c => 5:6]
+            C = Cropbox.configmultiply(p)
+            @test C == Cropbox.configure.([
+                :S => (a=1, b=3, c=5), :S => (a=1, b=3, c=6),
+                :S => (a=1, b=4, c=5), :S => (a=1, b=4, c=6),
+                :S => (a=2, b=3, c=5), :S => (a=2, b=3, c=6),
+                :S => (a=2, b=4, c=5), :S => (a=2, b=4, c=6),
+            ])
+        end
+        
+        @testset "base" begin
+            b = [:S => :c => 1]
+            p = [:S => :a => 1:2, :S => :b => 3:4]
+            C = Cropbox.configmultiply(p, b)
+            @test C == Cropbox.configure.([
+                :S => (c=1, a=1, b=3), :S => (c=1, a=1, b=4),
+                :S => (c=1, a=2, b=3), :S => (c=1, a=2, b=4),
+            ])
+        end
+        
+        @testset "single" begin
+            p = [:S => :a => 1]
+            C = Cropbox.configmultiply(p)
+            @test C isa Array && length(C) == 1
+            @test C[1] == Cropbox.configure(p)
+        end
+        
+        @testset "empty" begin
+            p = ()
+            C = Cropbox.configmultiply(p)
+            @test C isa Array && length(C) == 1
+            @test C[1] == Cropbox.configure(p)
+        end
+    end
+    
     @testset "expand" begin
         @testset "patch" begin
             p = :S => :a => [1, 2]
