@@ -151,6 +151,7 @@ add!(d::Dependency, V::Vector{VarInfo}) = begin
     end
 end
 
+import Base: sort
 sort(d::Dependency) = begin
     @assert isempty(simplecycles(d.g))
     J = topological_sort_by_dfs(d.g)
