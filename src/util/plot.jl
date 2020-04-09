@@ -48,6 +48,46 @@ plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothi
     plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
 end
 
+plot(df::DataFrame, x::Symbol, y::Symbol, z::Symbol; kind=:heatmap, title=nothing, xlab=nothing, ylab=nothing, zlab=nothing, xlim=nothing, ylim=nothing, zlim=nothing, backend=nothing) = begin
+    #TODO: share code with plot!() above
+    u(n) = unit(eltype(df[!, n]))
+    xu = u(x)
+    yu = u(y)
+    zu = u(z)
+
+    #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
+    arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
+    X = arr(x, xu)
+    Y = arr(y, yu)
+    Z = arr(z, zu)
+
+    lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
+                 l = isempty(a) ? 0 : floor(minimum(a)),
+                 u = isempty(a) ? 0 : ceil(maximum(a))
+        #HACK: avoid empty range
+        l == u ? (l, l+1) : (l, u)
+    end
+    isnothing(xlim) && (xlim = lim(X))
+    isnothing(ylim) && (ylim = lim(Y))
+    isnothing(zlim) && (zlim = lim(Z))
+
+    lab(l, u) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
+    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
+    xlab = lab(isnothing(xlab) ? x : xlab, xu) * '\n'
+    ylab = lab(isnothing(ylab) ? y : ylab, yu)
+    zlab = lab(isnothing(zlab) ? z : zlab, zu)
+    title = isnothing(title) ? "" : string(title)
+
+    if isnothing(backend)
+        backend = if isdefined(Main, :IJulia) && Main.IJulia.inited
+            :Gadfly
+        else
+            :UnicodePlots
+        end
+    end
+    plot3!(Val(backend), X, Y, Z; kind=kind, title=title, xlab=xlab, ylab=ylab, zlab=zlab, xlim=xlim, ylim=ylim, zlim=zlim)
+end
+
 plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
     n = length(Ys)
 
@@ -117,6 +157,53 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
         plot!(p, X, Y; name=name)
     end
     p
+end
+
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim) = begin
+    if kind == :heatmap
+        geom = Gadfly.Geom.rectbin
+    elseif kind == :contour
+        geom = Gadfly.Geom.contour
+    else
+        error("unrecognized plot kind = $kind")
+    end
+
+    Gadfly.plot(
+        x=X, y=Y,
+        z=Z, color=Z, # z for contour, color for heatmap
+        Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
+        Gadfly.Guide.title(title),
+        Gadfly.Guide.xlabel(xlab),
+        Gadfly.Guide.ylabel(ylab),
+        Gadfly.Guide.colorkey(title=zlab),
+        Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
+        geom,
+    )
+end
+
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim) = begin
+    if kind == :heatmap
+        ;
+    elseif kind == :contour
+        @warn "unsupported plot kind = $kind"
+    else
+        error("unrecognized plot kind = $kind")
+    end
+
+    arr(A) = sort(unique(A))
+    x = arr(X)
+    y = arr(Y)
+    M = reshape(Z, length(x), length(y))'
+
+    offset(a) = a[1]
+    xoffset = offset(x)
+    yoffset = offset(y)
+    scale(a) = (a[end] - offset(a)) / (length(a) - 1)
+    xscale = scale(x)
+    yscale = scale(y)
+
+    #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
+    UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset)
 end
 
 visualize(S::Type{<:System}, x, y;
