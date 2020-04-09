@@ -29,7 +29,8 @@ plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothi
         ylim = (minimum(l)[1], maximum(l)[2])
     end
 
-    lab(l, u) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
+    #HACK: add whitespace to make Pango happy and avoid text clipping
+    lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     xlab = lab(isnothing(xlab) ? x : xlab, xu) * '\n'
     ylab = lab(isnothing(ylab) ? "" : ylab, yu)
@@ -71,7 +72,8 @@ plot(df::DataFrame, x::Symbol, y::Symbol, z::Symbol; kind=:heatmap, title=nothin
     isnothing(ylim) && (ylim = lim(Y))
     isnothing(zlim) && (zlim = lim(Z))
 
-    lab(l, u) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
+    #HACK: add whitespace to make Pango happy and avoid text clipping
+    lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     xlab = lab(isnothing(xlab) ? x : xlab, xu) * '\n'
     ylab = lab(isnothing(ylab) ? y : ylab, yu)
