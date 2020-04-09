@@ -165,7 +165,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim)
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
     elseif kind == :contour
-        geom = Gadfly.Geom.contour
+        geom = Gadfly.Geom.contour(levels=50)
     else
         error("unrecognized plot kind = $kind")
     end
