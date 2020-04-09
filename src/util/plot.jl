@@ -168,6 +168,11 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim)
         error("unrecognized plot kind = $kind")
     end
 
+    theme = Gadfly.Theme(
+        major_label_font_size=10*Gadfly.pt,
+        key_title_font_size=9*Gadfly.pt,
+    )
+
     Gadfly.plot(
         x=X, y=Y,
         z=Z, color=Z, # z for contour, color for heatmap
@@ -178,6 +183,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim)
         Gadfly.Guide.colorkey(title=zlab),
         Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
         geom,
+        theme,
     )
 end
 
