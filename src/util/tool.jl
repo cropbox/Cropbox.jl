@@ -128,7 +128,7 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
     residual(c) = begin
         est = simulate(S; config=c, index=index, target=target, verbose=false, kwargs...)
         df = join(est, obs, on=I, makeunique=true)
-        r = [df[!, e] - df[!, o] for (e, o) in zip(T, T1)]
+        r = [(df[!, e] - df[!, o]).^2 for (e, o) in zip(T, T1)]
     end
     config(X) = parameterzip(K, X)
     cost(X) = begin
@@ -139,7 +139,7 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
             R[i] = residual(configure(configs[i], c))
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
-        e = sum(eachrow(hcat(A...) .^2))
+        e = eachrow(hcat(A...)) |> sum
         multi ? Tuple(e) : e[1]
     end
     #FIXME: input parameters units are ignored without conversion
