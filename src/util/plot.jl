@@ -6,15 +6,15 @@ import Unitful
 plot(df::DataFrame, x::Symbol, y::Symbol; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x::Symbol, y::Vector{Symbol}; kw...) = plot!(nothing, df, x, y; kw...)
 plot!(p, df::DataFrame, x::Symbol, y::Symbol; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
-plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, backend=nothing) = begin
+plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, xunit=nothing, yunit=nothing, backend=nothing) = begin
     u(n) = unit(eltype(df[!, n]))
-    xu = u(x)
-    yu = Unitful.promote_unit(u.(y)...)
+    isnothing(xunit) && (xunit = u(x))
+    isnothing(yunit) && (yunit = Unitful.promote_unit(u.(y)...))
 
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
     arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
-    X = arr(x, xu)
-    Ys = arr.(y, yu)
+    X = arr(x, xunit)
+    Ys = arr.(y, yunit)
     n = length(Ys)
 
     lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
@@ -32,8 +32,8 @@ plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothi
     #HACK: add whitespace to make Pango happy and avoid text clipping
     lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = lab(isnothing(xlab) ? x : xlab, xu) * '\n'
-    ylab = lab(isnothing(ylab) ? "" : ylab, yu)
+    xlab = lab(isnothing(xlab) ? x : xlab, xunit) * '\n'
+    ylab = lab(isnothing(ylab) ? "" : ylab, yunit)
     legend = isnothing(legend) ? "" : string(legend)
     name = isnothing(name) ? repeat([nothing], n) : name
     names = [string(isnothing(l) ? t : l) for (t, l) in zip(y, name)]
@@ -49,18 +49,18 @@ plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothi
     plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
 end
 
-plot(df::DataFrame, x::Symbol, y::Symbol, z::Symbol; kind=:heatmap, title=nothing, xlab=nothing, ylab=nothing, zlab=nothing, xlim=nothing, ylim=nothing, zlim=nothing, backend=nothing) = begin
+plot(df::DataFrame, x::Symbol, y::Symbol, z::Symbol; kind=:heatmap, title=nothing, xlab=nothing, ylab=nothing, zlab=nothing, xlim=nothing, ylim=nothing, zlim=nothing, xunit=nothing, yunit=nothing, zunit=nothing, backend=nothing) = begin
     #TODO: share code with plot!() above
     u(n) = unit(eltype(df[!, n]))
-    xu = u(x)
-    yu = u(y)
-    zu = u(z)
+    isnothing(xunit) && (xunit = u(x))
+    isnothing(yunit) && (yunit = u(y))
+    isnothing(zunit) && (zunit = u(z))
 
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
     arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
-    X = arr(x, xu)
-    Y = arr(y, yu)
-    Z = arr(z, zu)
+    X = arr(x, xunit)
+    Y = arr(y, yunit)
+    Z = arr(z, zunit)
 
     lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
                  l = isempty(a) ? 0 : floor(minimum(a)),
@@ -75,9 +75,9 @@ plot(df::DataFrame, x::Symbol, y::Symbol, z::Symbol; kind=:heatmap, title=nothin
     #HACK: add whitespace to make Pango happy and avoid text clipping
     lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = lab(isnothing(xlab) ? x : xlab, xu) * '\n'
-    ylab = lab(isnothing(ylab) ? y : ylab, yu)
-    zlab = lab(isnothing(zlab) ? z : zlab, zu)
+    xlab = lab(isnothing(xlab) ? x : xlab, xunit) * '\n'
+    ylab = lab(isnothing(ylab) ? y : ylab, yunit)
+    zlab = lab(isnothing(zlab) ? z : zlab, zunit)
     title = isnothing(title) ? "" : string(title)
 
     if isnothing(backend)
@@ -250,7 +250,7 @@ visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(
 visualize(df::DataFrame, SS::Vector, x, y;
     configs=(), xstep=(),
     stop=nothing, skipfirst=true, callback=nothing,
-    xlab=nothing, ylab=nothing, names=nothing, plotopts...
+    xlab=nothing, ylab=nothing, names=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
     y = y isa Pair ? y : y => y
@@ -259,15 +259,20 @@ visualize(df::DataFrame, SS::Vector, x, y;
     xlab = isnothing(xlab) ? xe : xlab
     ylab = isnothing(ylab) ? ye : ylab
 
+    #TODO: share code with other plotting functions
+    u(n) = unit(eltype(df[!, n]))
+    isnothing(xunit) && (xunit = u(xo))
+    isnothing(yunit) && (yunit = u(yo))
+
     n = length(SS)
     isempty(configs) && (configs = repeat([()], n))
     @assert length(configs) == n
     isnothing(names) && (names = nameof.(SS))
 
-    p = plot(df, xo, yo; kind=:scatter, xlab=xlab, ylab=ylab, plotopts...)
+    p = plot(df, xo, yo; kind=:scatter, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
         r = simulate(S; configs=configexpand(xstep, c), stop=stop, skipfirst=skipfirst, callback=callback)
-        p = plot!(p, r, xe, ye; kind=:line, name=name, plotopts...)
+        p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
     end
     p
 end
