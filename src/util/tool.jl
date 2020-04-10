@@ -114,14 +114,15 @@ simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
 
-import BlackBoxOptim: bboptimize, best_candidate, ParetoFitnessScheme
+import BlackBoxOptim
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
-calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, returnconfig=true, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     I = parsesimulation(index) |> keys |> collect
     T = parsesimulation(target) |> keys |> collect
     n = length(T)
+    multi = n > 1
     NT = DataFrames.make_unique([names(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
@@ -139,17 +140,27 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
         e = sum(eachrow(hcat(A...) .^2))
-        n > 1 ? Tuple(e) : e[1]
+        multi ? Tuple(e) : e[1]
     end
     #FIXME: input parameters units are ignored without conversion
     range = map(p -> Float64.(Tuple(deunitfy(p))), parametervalues(P))
-    method = n > 1 ? (Method=:borg_moea, FitnessScheme=ParetoFitnessScheme{n}()) : ()
-    r = bboptimize(cost;
+    method = if multi
+        agg = isnothing(weight) ? sum : let w = weight ./ sum(weight); f -> sum(w.*f) end
+        (Method=:borg_moea, FitnessScheme=BlackBoxOptim.ParetoFitnessScheme{n}(aggregator=agg))
+    else
+        ()
+    end
+    r = BlackBoxOptim.bboptimize(cost;
         SearchRange=range,
         method...,
         optim...
     )
-    returnconfig ? best_candidate(r) |> config : r
+    if multi && pareto
+        pf = BlackBoxOptim.pareto_frontier(r)
+        OrderedDict(BlackBoxOptim.fitness.(pf) .=> config.(BlackBoxOptim.params.(pf)))
+    else
+        config(BlackBoxOptim.best_candidate(r))
+    end
 end
 
 export simulate, simulate!, calibrate
