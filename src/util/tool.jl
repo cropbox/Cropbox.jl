@@ -116,19 +116,25 @@ end
 
 import BlackBoxOptim
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
-calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, weight=nothing, pareto=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     I = parsesimulation(index) |> keys |> collect
     T = parsesimulation(target) |> keys |> collect
     n = length(T)
     multi = n > 1
+    isnothing(metric) && (metric = :rmse)
+    if metric == :rmse
+        metric = (E, O) -> (E - O).^2
+    elseif metric == :prmse
+        metric = (E, O) -> ((E - O) ./ O).^2
+    end
     NT = DataFrames.make_unique([names(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
         est = simulate(S; config=c, index=index, target=target, verbose=false, kwargs...)
         df = join(est, obs, on=I, makeunique=true)
-        r = [(df[!, e] - df[!, o]).^2 for (e, o) in zip(T, T1)]
+        r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
     config(X) = parameterzip(K, X)
     cost(X) = begin
