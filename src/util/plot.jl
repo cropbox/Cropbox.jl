@@ -216,7 +216,7 @@ end
 
 visualize(S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
-    stop=nothing, skipfirst=false, callback=nothing,
+    stop=nothing, skipfirst=true, callback=nothing,
     ylab=nothing, legend=nothing, plotopts...
 ) = begin
     G = configure(group)
