@@ -100,13 +100,14 @@ end
 simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target)]; kwargs...) |> only
 end
-simulate(S::Type{<:System}, layout; config=(), options=(), configs=[], kwargs...) = begin
+simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), kwargs...) = begin
     if isempty(configs)
-        s = instance(S, config=config; options...)
+        s = instance(S; config=config, options...)
         simulate!(s, layout; kwargs...)
+    elseif isempty(config)
+        simulate(S, layout, configs; options=options, kwargs...)
     else
-        @assert isempty(config) && isempty(options)
-        simulate(S, layout, configs; kwargs...)
+        @error "redundant configurations" config configs
     end
 end
 simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
