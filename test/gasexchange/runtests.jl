@@ -1,3 +1,5 @@
+using Test
+
 include("gasexchange.jl")
 
 """

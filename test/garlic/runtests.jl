@@ -1,3 +1,5 @@
+using Test
+
 include("garlic.jl")
 
 using TimeZones
