@@ -1,4 +1,4 @@
-@system EnergyBalance(WeatherStub) begin
+@system EnergyBalance(Weather) begin
     gv ~ hold
     gh ~ hold
     PPFD ~ hold

@@ -1,17 +1,4 @@
-@system C3Base begin
-    Ci: intercellular_co2 ~ hold
-    I2: effective_irradiance ~ hold
-    T: leaf_temperature ~ hold
-
-    Tk(T): absolute_leaf_temperature ~ track(u"K")
-
-    # Arrhenius equation
-    Tb: base_temperature => 25 ~ preserve(u"°C", parameter)
-    Tbk(Tb): absolute_base_temperature ~ preserve(u"K")
-    T_dep(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): temperature_dependence_rate => begin
-        exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
-    end ~ call
-end
+@system C3Base(CBase)
 
 @system C3c(C3Base) begin
     # Michaelis constant of rubisco for CO2 of C3 plants, ubar, from Bernacchi et al. (2001)
@@ -39,8 +26,8 @@ end
 
     Vcm25: maximum_carboxylation_rate_at_25 => 108.4 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     EaVc: activation_energy_for_carboxylation => 52.1573 ~ preserve(u"kJ/mol", parameter)
-    Vcmax(T_dep, Vcm25, EaVc): maximum_carboxylation_rate => begin
-        Vcm25 * T_dep(EaVc)
+    Vcmax(T_dep, N_dep, Vcm25, EaVc): maximum_carboxylation_rate => begin
+        Vcm25 * T_dep(EaVc) * N_dep
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
 
@@ -49,10 +36,11 @@ end
     Eaj: activation_energy_for_electron_transport => 23.9976 ~ preserve(u"kJ/mol", parameter)
     Sj: electron_transport_temperature_response => 616.4 ~ preserve(u"J/mol/K", parameter)
     Hj: electron_transport_curvature => 200 ~ preserve(u"kJ/mol", parameter)
-    Jmax(Tk, Tbk, T_dep, Jm25, Eaj, Sj, Hj): maximum_electron_transport_rate => begin
+    Jmax(Tk, Tbk, T_dep, N_dep, Jm25, Eaj, Sj, Hj): maximum_electron_transport_rate => begin
         R = u"R"
         Jm25 * begin
             T_dep(Eaj) *
+            N_dep *
             (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
             (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
         end
@@ -71,8 +59,8 @@ end
 @system C3p(C3Base) begin
     Tp25: triose_phosphate_limitation_at_25 => 16.03 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     EaTp: activation_energy_for_Tp => 47.10 ~ preserve(u"kJ/mol", parameter)
-    Tp(T_dep, Tp25, EaTp): triose_phosphate_limitation => begin
-        Tp25 * T_dep(EaTp)
+    Tp(T_dep, N_dep, Tp25, EaTp): triose_phosphate_limitation => begin
+        Tp25 * T_dep(EaTp) * N_dep
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
 

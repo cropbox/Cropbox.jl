@@ -1,5 +1,8 @@
 @system Irradiance begin
-    PPFD ~ hold
+    PFD ~ hold
+
+    #HACK: should be PPFD from Radiation
+    PPFD(PFD): photosynthetic_photon_flux_density ~ track(u"μmol/m^2/s")
 
     #FIXME: duplicate? already considered in Radiation?
     #FIXME: how is (1 - δ) related to α in EnergyBalance?

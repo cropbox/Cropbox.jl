@@ -1,27 +1,8 @@
-@system C4Base begin
-    Ci: intercellular_co2 ~ hold
-    I2: effective_irradiance ~ hold
-    T: leaf_temperature ~ hold
-    N: nitrogen ~ hold
-
+@system C4Base(CBase) begin
     Cm(Ci): mesophyll_co2 ~ track(u"μbar")
-    Tk(T): absolute_leaf_temperature ~ track(u"K")
 
     gbs => 0.003 ~ preserve(u"mol/m^2/s/bar" #= CO2 =#, parameter) # bundle sheath conductance to CO2, mol m-2 s-1
     # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
-
-    # Arrhenius equation
-    Tb: base_temperature => 25 ~ preserve(u"°C", parameter)
-    Tbk(Tb): absolute_base_temperature ~ preserve(u"K")
-    T_dep(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): temperature_dependence_rate => begin
-        exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
-    end ~ call
-
-    s => 2.9 ~ preserve(u"m^2/g", parameter)
-    N0 => 0.25 ~ preserve(u"g/m^2", parameter)
-    N_dep(N, s, N0): nitrogen_limited_rate => begin
-        2 / (1 + exp(-s * (max(N0, N) - N0))) - 1
-    end ~ track
 end
 
 @system C4c(C4Base) begin

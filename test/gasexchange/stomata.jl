@@ -1,4 +1,4 @@
-@system StomataBase(WeatherStub) begin
+@system StomataBase(Weather) begin
     gs: stomatal_conductance ~ hold
     gb: boundary_layer_conductance ~ hold
     A_net: net_photosynthesis ~ hold
@@ -18,7 +18,8 @@
     rvc(rbc, rsc): total_resistance_co2 => (rbc + rsc) ~ track(u"m^2*s/mol*bar")
 end
 
-@system StomataLeafWater(SoilStub) begin
+@system StomataLeafWater begin
+    WP_leaf: leaf_water_potential => 0 ~ preserve(u"MPa", parameter)
     Ψv(WP_leaf): bulk_leaf_water_potential ~ track(u"MPa")
     Ψf: reference_leaf_water_potential => -2.0 ~ preserve(u"MPa", parameter)
     sf: stomata_sensitivty_param => 2.3 ~ preserve(u"MPa^-1", parameter)

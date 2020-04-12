@@ -34,13 +34,13 @@ ge_switchgrass_base = :C4 => (
 )
 
 "In Sinclair and Horie, Crop Sciences, 1989"
-ge_nitrogen1 = :C4 => (s = 4, N0 = 0.2)
+ge_ndep1 = :NitrogenDependence => (s = 4, N0 = 0.2)
 
 "In J Vos et al. Field Crop Research, 2005"
-ge_nitrogen2 = :C4 => (s = 2.9, N0 = 0.25)
+ge_ndep2 = :NitrogenDependence => (s = 2.9, N0 = 0.25)
 
 "In Lindquist, Weed Science, 2001"
-ge_nitrogen3 = :C4 => (s = 3.689, N0 = 0.5)
+ge_ndep3 = :NitrogenDependence => (s = 3.689, N0 = 0.5)
 
 """
 in P. J. Sellers, et al.Science 275, 502 (1997)
@@ -87,57 +87,59 @@ ge_vaporpressure1 = :VaporPressure => (
     c = 243.04, # C
 )
 
-using DataFrames
+ge_weather = :Weather => (
+    PFD = 1500,
+    CO2 = 400,
+    RH = 60,
+    T_air = 30,
+    wind = 2.0,
+)
+
+ge_spad = :Nitrogen => (
+    SNa = 0.0293,
+    SNb = 0,
+    SPAD = 60,
+)
+
+ge_water = :StomataLeafWater => (
+    #WP_leaf = 0,
+    sf = 2.3,
+    Ψf = -1.2,
+)
+
+ge_base = [ge_weather, ge_spad, ge_water]
+
 #HACK: zero CO2 prevents convergence of bisection method
-ge_df_c = DataFrame(SolRad=1500, CO2=1:1:1500, RH=60, Tair=25, Wind=2.0)
-ge_df_q = DataFrame(SolRad=0:1:3000, CO2=400, RH=60, Tair=25, Wind=2.0)
-ge_df_t = DataFrame(SolRad=1500, CO2=400, RH=60, Tair=-10:0.1:50, Wind=2.0)
+ge_step_c = :Weather => :CO2 => 10:10:1500
+ge_step_q = :Weather => :PFD => 0:20:2000
+ge_step_t = :Weather => :T_air => -10:1:50
 
 @testset "gasexchange" begin
-    # visualize(r, i, t, t0=[:A_net]) = begin
-    #     #HACK: ensure plot range is around A_net
-    #     p = Cropbox.plot(r, i, t0)
-    #     Cropbox.plot!(p, r, i, t) |> display
-    # end    
-    visualize(r, i, t) = Cropbox.plot(r, i, t) |> display
-
     @testset "C3" begin
-        estimate = GasExchangeTest.estimate_c3
-        target = [:A_net, :Ac, :Aj, :Ap]
-
         @testset "A-Ci" begin
-            r = estimate(ge_df_c)
-            visualize(r, :Ci, target)
+            Cropbox.visualize(GasExchangeTest.C3Model, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> display
         end
 
         @testset "A-Q" begin
-            r = estimate(ge_df_q)
-            visualize(r, :PFD, target)
+            Cropbox.visualize(GasExchangeTest.C3Model, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> display
         end
 
         @testset "A-T" begin
-            r = estimate(ge_df_t)
-            visualize(r, :T_air, target)
+            Cropbox.visualize(GasExchangeTest.C3Model, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
 
     @testset "C4" begin
-        estimate = GasExchangeTest.estimate_c4
-        target = [:A_net, :Ac, :Aj]
-
         @testset "A-Ci" begin
-            r = estimate(ge_df_c)
-            visualize(r, :Ci, target)
+            Cropbox.visualize(GasExchangeTest.C4Model, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> display
         end
 
         @testset "A-Q" begin
-            r = estimate(ge_df_q)
-            visualize(r, :PFD, target)
+            Cropbox.visualize(GasExchangeTest.C4Model, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> display
         end
 
         @testset "A-T" begin
-            r = estimate(ge_df_t)
-            visualize(r, :T_air, target)
+            Cropbox.visualize(GasExchangeTest.C4Model, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
 end

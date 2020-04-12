@@ -1,4 +1,4 @@
-@system BoundaryLayer(WeatherStub) begin
+@system BoundaryLayer(Weather) begin
     w: leaf_width => 0.1 ~ preserve(u"m", parameter)
 
     sr: stomatal_ratio => begin

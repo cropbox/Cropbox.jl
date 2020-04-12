@@ -1,4 +1,4 @@
-@system IntercellularSpace(WeatherStub) begin
+@system IntercellularSpace(Weather) begin
     A_net ~ hold
     #TODO: interface between boundary/stomata/intercellular space (i.e. soil layers?)
     rvc ~ hold
