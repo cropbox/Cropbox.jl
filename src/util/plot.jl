@@ -214,7 +214,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset)
 end
 
-visualize(S::Type{<:System}, x, y;
+visualize(S::Type{<:System}, x, y::Symbol;
     config=(), group=(), xstep=(),
     stop=nothing, skipfirst=true, callback=nothing,
     ylab=nothing, legend=nothing, plotopts...
@@ -244,6 +244,14 @@ visualize(S::Type{<:System}, x, y;
         p = plot!(p, r, x, y; name=names[i], plotopts...)
     end
     p
+end
+visualize(S::Type{<:System}, x, y::Vector{Symbol};
+    config=(), xstep=(),
+    stop=nothing, skipfirst=true, callback=nothing,
+    plotopts...
+) = begin
+    r = simulate(S; configs=configexpand(xstep, config), stop=stop, skipfirst=skipfirst, callback=callback)
+    plot(r, x, y; plotopts...)
 end
 
 visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
