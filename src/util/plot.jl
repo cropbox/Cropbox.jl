@@ -258,7 +258,7 @@ visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(
 visualize(df::DataFrame, SS::Vector, x, y;
     configs=(), xstep=(),
     stop=nothing, skipfirst=true, callback=nothing,
-    xlab=nothing, ylab=nothing, names=nothing, xunit=nothing, yunit=nothing, plotopts...
+    xlab=nothing, ylab=nothing, name=nothing, names=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
     y = y isa Pair ? y : y => y
@@ -277,7 +277,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
     @assert length(configs) == n
     isnothing(names) && (names = nameof.(SS))
 
-    p = plot(df, xo, yo; kind=:scatter, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
+    p = plot(df, xo, yo; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
         r = simulate(S; configs=configexpand(xstep, c), stop=stop, skipfirst=skipfirst, callback=callback)
         p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
