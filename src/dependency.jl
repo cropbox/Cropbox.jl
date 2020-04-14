@@ -175,7 +175,7 @@ label(n::VarNode; alias=false) = begin
 end
 
 import TikzGraphs
-plot(d::Dependency; kw...) = TikzGraphs.plot(d.g, label.(d.N; kw...))
+plot(d::Dependency; sib_dist=-1, lev_dist=-1, kw...) = TikzGraphs.plot(d.g, TikzGraphs.Layouts.Layered(; sib_dist=sib_dist, lev_dist=lev_dist), label.(d.N; kw...))
 plot(::Type{S}; kw...) where {S<:System} = plot(dependency(S); kw...)
 
 import Base: write
