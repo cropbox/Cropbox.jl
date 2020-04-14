@@ -49,7 +49,7 @@ end
 end
 
 @system StomataMedlyn(StomataBase, StomataLeafWater) begin
-    g0 => 0 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
+    g0 => 0.02 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
     g1 => 4.0 ~ preserve(u"√kPa", parameter)
 
     pa(ea=vp.ea, T_air, RH): vapor_pressure_at_air => ea(T_air, RH) ~ track(u"kPa")
