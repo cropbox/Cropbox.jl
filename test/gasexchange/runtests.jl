@@ -117,29 +117,29 @@ ge_step_t = :Weather => :T_air => -10:1:50
 @testset "gasexchange" begin
     @testset "C3" begin
         @testset "A-Ci" begin
-            Cropbox.visualize(GasExchangeTest.C3Model, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> display
+            Cropbox.visualize(GasExchangeTest.ModelC3MD, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> display
         end
 
         @testset "A-Q" begin
-            Cropbox.visualize(GasExchangeTest.C3Model, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> display
+            Cropbox.visualize(GasExchangeTest.ModelC3MD, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> display
         end
 
         @testset "A-T" begin
-            Cropbox.visualize(GasExchangeTest.C3Model, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> display
+            Cropbox.visualize(GasExchangeTest.ModelC3MD, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
 
     @testset "C4" begin
         @testset "A-Ci" begin
-            Cropbox.visualize(GasExchangeTest.C4Model, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> display
+            Cropbox.visualize(GasExchangeTest.ModelC4MD, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> display
         end
 
         @testset "A-Q" begin
-            Cropbox.visualize(GasExchangeTest.C4Model, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> display
+            Cropbox.visualize(GasExchangeTest.ModelC4MD, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> display
         end
 
         @testset "A-T" begin
-            Cropbox.visualize(GasExchangeTest.C4Model, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
+            Cropbox.visualize(GasExchangeTest.ModelC4MD, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
 end

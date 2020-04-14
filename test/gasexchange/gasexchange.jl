@@ -16,10 +16,13 @@ include("energybalance.jl")
 
 @system ModelBase(
     Weather, Nitrogen,
-    BoundaryLayer, StomataBallBerry, IntercellularSpace, Irradiance, EnergyBalance
+    BoundaryLayer, StomataBase, IntercellularSpace, Irradiance, EnergyBalance
 )
 
-@system C3Model(ModelBase, C3, Controller)
-@system C4Model(ModelBase, C4, Controller)
+@system ModelC3BB(ModelBase, StomataBallBerry, C3, Controller)
+@system ModelC4BB(ModelBase, StomataBallBerry, C4, Controller)
+
+@system ModelC3MD(ModelBase, StomataMedlyn, C3, Controller)
+@system ModelC4MD(ModelBase, StomataMedlyn, C4, Controller)
 
 end
