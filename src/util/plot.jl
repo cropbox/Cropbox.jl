@@ -17,6 +17,15 @@ extractarray(df::DataFrame, n, u) = begin
     coalesce.(deunitfy.(extractcolumn(df, n), u), NaN)
 end
 
+findlim(array) = begin
+    #HACK: lack of missing support in Gadfly
+    a = filter(!isnan, array)
+    l = isempty(a) ? 0 : floor(minimum(a))
+    u = isempty(a) ? 0 : ceil(maximum(a))
+    #HACK: avoid empty range
+    l == u ? (l, l+1) : (l, u)
+end
+
 plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
 plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
@@ -30,15 +39,9 @@ plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing
     Ys = arr.(y, yunit)
     n = length(Ys)
 
-    lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
-                 l = isempty(a) ? 0 : floor(minimum(a)),
-                 u = isempty(a) ? 0 : ceil(maximum(a))
-        #HACK: avoid empty range
-        l == u ? (l, l+1) : (l, u)
-    end
-    isnothing(xlim) && (xlim = lim(X))
+    isnothing(xlim) && (xlim = findlim(X))
     if isnothing(ylim)
-        l = lim.(Ys)
+        l = findlim.(Ys)
         ylim = (minimum(l)[1], maximum(l)[2])
     end
 
@@ -73,15 +76,9 @@ plot(df::DataFrame, x, y, z; kind=:heatmap, title=nothing, xlab=nothing, ylab=no
     Y = arr(y, yunit)
     Z = arr(z, zunit)
 
-    lim(a) = let a = filter(!isnan, a), #HACK: lack of missing support in Gadfly
-                 l = isempty(a) ? 0 : floor(minimum(a)),
-                 u = isempty(a) ? 0 : ceil(maximum(a))
-        #HACK: avoid empty range
-        l == u ? (l, l+1) : (l, u)
-    end
-    isnothing(xlim) && (xlim = lim(X))
-    isnothing(ylim) && (ylim = lim(Y))
-    isnothing(zlim) && (zlim = lim(Z))
+    isnothing(xlim) && (xlim = findlim(X))
+    isnothing(ylim) && (ylim = findlim(Y))
+    isnothing(zlim) && (zlim = findlim(Z))
 
     #HACK: add whitespace to make Pango happy and avoid text clipping
     lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
