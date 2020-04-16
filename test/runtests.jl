@@ -8,7 +8,7 @@ using Test
         include("system.jl")
         include("unit.jl")
         include("config.jl")
-        include("tool.jl")
+        include("util.jl")
     end
 
     @testset "application" begin

@@ -1,8 +1,8 @@
 using DataFrames
 using Dates
 
-@testset "tool" begin
-    @testset "simulate" begin
+@testset "simulate" begin
+    @testset "basic" begin
         @system SSimulate(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
@@ -26,7 +26,7 @@ using Dates
         @test names(r) == [:b]
     end
 
-    @testset "simulate with stop" begin
+    @testset "stop" begin
         @system SSimulateStop(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
@@ -37,7 +37,7 @@ using Dates
         @test r[end-1, :b] != 10
     end
 
-    @testset "simulate with skipfirst" begin
+    @testset "skipfirst" begin
         @system SSimulateSkipFirst(Controller) begin
             a => 1 ~ preserve
             b(a) ~ accumulate
@@ -49,7 +49,7 @@ using Dates
         @test r0[end, :] == r0[end, :]
     end
 
-    @testset "simulate with callback" begin
+    @testset "callback" begin
         @system SSimulateCallback(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
@@ -62,7 +62,7 @@ using Dates
         @test all(r1[!, :b] .% 2 .== 0)
     end
 
-    @testset "simulate with layout" begin
+    @testset "layout" begin
         @system SSimulateLayout(Controller) begin
             i => 1 ~ accumulate
             a(i) => i-1 ~ track
@@ -84,7 +84,7 @@ using Dates
         @test r[3][end, :step] == 1u"hr"
     end
 
-    @testset "simulate with layout and configs" begin
+    @testset "layout and configs" begin
         @system SSimulateLayoutConfigs(Controller) begin
             p ~ preserve(parameter)
             i => 1 ~ accumulate
@@ -110,7 +110,7 @@ using Dates
         @test o[o[!, :tick] .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
     end
 
-    @testset "simulate with configs" begin
+    @testset "configs" begin
         @system SSimulateConfigs(Controller) begin
             a ~ preserve(parameter)
             b(a) ~ accumulate
@@ -123,7 +123,7 @@ using Dates
         @test r[r[!, :tick] .== (n+1)*u"hr", :b] == p .* n
     end
 
-    @testset "simulate extractable" begin
+    @testset "extractable" begin
         @system SSimulateExtractable(Controller) begin
             a => 1 ~ track
             b => :hello ~ track::Symbol
@@ -143,75 +143,5 @@ using Dates
         @test :e ∉ N
         @test :f ∉ N
         @test :g ∉ N
-    end
-
-    @testset "calibrate" begin
-        @system SCalibrate(Controller) begin
-            a => 0 ~ preserve(parameter)
-            b(a) ~ accumulate
-        end
-        n = 10
-        t, a, b = 10.0u"hr", 20, 180
-        A = (0.0, 100.0)
-        obs = DataFrame(tick=[t], b=[b])
-        p = calibrate(SCalibrate, obs, stop=n, target=:b, parameters=("SCalibrate.a" => A))
-        @test p[:SCalibrate][:a] == a
-        r = simulate(SCalibrate, stop=n, config=p)
-        @test r[r[!, :tick] .== t, :][1, :b] == b
-    end
-
-    @testset "calibrate with unit" begin
-        @system SCalibrateUnit(Controller) begin
-            a => 0 ~ preserve(parameter, u"m/hr")
-            b(a) ~ accumulate(u"m")
-        end
-        n = 10
-        t, a, b = 10.0u"hr", 20u"m/hr", 180u"m"
-        #FIXME: parameter range units are just ignored
-        A = [0.0, 100.0]u"m/hr"
-        obs = DataFrame(tick=[t], b=[b])
-        p = calibrate(SCalibrateUnit, obs, stop=n, target=:b, parameters=("SCalibrateUnit.a" => A))
-        @test p[:SCalibrateUnit][:a] == Cropbox.deunitfy(a)
-        r = simulate(SCalibrateUnit, stop=n, config=p)
-        @test r[r[!, :tick] .== t, :][1, :b] == b
-    end
-
-    @testset "calibrate with config" begin
-        @system SCalibrateConfig(Controller) begin
-            a => 0 ~ preserve(parameter)
-            w => 1 ~ preserve(parameter)
-            b(a, w) => w*a ~ accumulate
-        end
-        n = 10
-        t, a, b = 10.0u"hr", 20, 180
-        w1, w2 = 1, 2
-        A = (0.0, 100.0)
-        obs = DataFrame(tick=[t], b=[b])
-        params = :SCalibrateConfig => :a => A
-        p1 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
-        @test p1[:SCalibrateConfig][:a] == a/w1
-        p2 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
-        @test p2[:SCalibrateConfig][:a] == a/w2
-    end
-
-    @testset "calibrate with configs as index" begin
-        @system SCalibrateConfigsIndex(Controller) begin
-            a => 0 ~ preserve(parameter)
-            w => 1 ~ preserve(parameter)
-            b(a, w) => w*a ~ accumulate
-        end
-        n = 10
-        t, w, b = [10.0u"hr", 10.0u"hr"], [1, 2], [90, 180]
-        A = (0.0, 100.0)
-        obs = DataFrame(tick=t, w=w, b=b)
-        configs = [
-            :SCalibrateConfigsIndex => :w => 1,
-            :SCalibrateConfigsIndex => :w => 2,
-        ]
-        index = ["context.clock.tick", :w]
-        target = :b
-        params = :SCalibrateConfigsIndex => :a => A
-        p = calibrate(SCalibrateConfigsIndex, obs, configs, stop=n, index=index, target=target, parameters=params)
-        @test p[:SCalibrateConfigsIndex][:a] == 10
     end
 end
