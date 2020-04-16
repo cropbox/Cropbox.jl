@@ -3,16 +3,25 @@ import Gadfly
 import UnicodePlots
 import Unitful
 
-plot(df::DataFrame, x::Symbol, y::Symbol; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
-plot(df::DataFrame, x::Symbol, y::Vector{Symbol}; kw...) = plot!(nothing, df, x, y; kw...)
-plot!(p, df::DataFrame, x::Symbol, y::Symbol; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
-plot!(p, df::DataFrame, x::Symbol, y::Vector{Symbol}; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, xunit=nothing, yunit=nothing, backend=nothing) = begin
-    u(n) = unit(eltype(df[!, n]))
+plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
+plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
+plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
+plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, xunit=nothing, yunit=nothing, backend=nothing) = begin
+    col(n::Symbol) = df[!, n]
+    #HACK: support simple expression for index/target
+    col(n::Expr) = begin
+        ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
+        te(x) = @capture(x, f_(a__)) ? :($(Symbol(:., f))($(ts.(a)...))) : x
+        e = eval(:(df -> $(MacroTools.postwalk(te, n))))
+        (() -> @eval $e($df))()
+    end
+
+    u(n) = unit(eltype(col(n)))
     isnothing(xunit) && (xunit = u(x))
     isnothing(yunit) && (yunit = Unitful.promote_unit(u.(y)...))
 
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
+    arr(n, u) = coalesce.(deunitfy.(col(n), u), NaN)
     X = arr(x, xunit)
     Ys = arr.(y, yunit)
     n = length(Ys)
