@@ -3,25 +3,29 @@ import Gadfly
 import UnicodePlots
 import Unitful
 
+extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
+extractcolumn(df::DataFrame, n::Expr) = begin
+    ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
+    te(x) = @capture(x, f_(a__)) ? :($(Symbol(:., f))($(ts.(a)...))) : x
+    #HACK: avoid world age problem for function scope eval
+    e = eval(:(df -> $(MacroTools.postwalk(te, n))))
+    (() -> @eval $e($df))()
+end
+extractunit(df::DataFrame, n) = unit(eltype(extractcolumn(df, n)))
+extractarray(df::DataFrame, n, u) = begin
+    #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
+    coalesce.(deunitfy.(extractcolumn(df, n), u), NaN)
+end
+
 plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
 plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
 plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, xunit=nothing, yunit=nothing, backend=nothing) = begin
-    col(n::Symbol) = df[!, n]
-    #HACK: support simple expression for index/target
-    col(n::Expr) = begin
-        ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
-        te(x) = @capture(x, f_(a__)) ? :($(Symbol(:., f))($(ts.(a)...))) : x
-        e = eval(:(df -> $(MacroTools.postwalk(te, n))))
-        (() -> @eval $e($df))()
-    end
-
-    u(n) = unit(eltype(col(n)))
+    u(n) = extractunit(df, n)
     isnothing(xunit) && (xunit = u(x))
     isnothing(yunit) && (yunit = Unitful.promote_unit(u.(y)...))
 
-    #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    arr(n, u) = coalesce.(deunitfy.(col(n), u), NaN)
+    arr(n, u) = extractarray(df, n, u)
     X = arr(x, xunit)
     Ys = arr.(y, yunit)
     n = length(Ys)
@@ -58,15 +62,13 @@ plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing
     plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
 end
 
-plot(df::DataFrame, x::Symbol, y::Symbol, z::Symbol; kind=:heatmap, title=nothing, xlab=nothing, ylab=nothing, zlab=nothing, xlim=nothing, ylim=nothing, zlim=nothing, xunit=nothing, yunit=nothing, zunit=nothing, backend=nothing) = begin
-    #TODO: share code with plot!() above
-    u(n) = unit(eltype(df[!, n]))
+plot(df::DataFrame, x, y, z; kind=:heatmap, title=nothing, xlab=nothing, ylab=nothing, zlab=nothing, xlim=nothing, ylim=nothing, zlim=nothing, xunit=nothing, yunit=nothing, zunit=nothing, backend=nothing) = begin
+    u(n) = extractunit(df, n)
     isnothing(xunit) && (xunit = u(x))
     isnothing(yunit) && (yunit = u(y))
     isnothing(zunit) && (zunit = u(z))
 
-    #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    arr(n::Symbol, u) = coalesce.(deunitfy.(df[!, n], u), NaN)
+    arr(n, u) = extractarray(df, n, u)
     X = arr(x, xunit)
     Y = arr(y, yunit)
     Z = arr(z, zunit)
@@ -223,7 +225,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset)
 end
 
-visualize(S::Type{<:System}, x, y::Symbol;
+visualize(S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, skipfirst=true, callback=nothing,
     ylab=nothing, legend=nothing, plotopts...
@@ -254,7 +256,7 @@ visualize(S::Type{<:System}, x, y::Symbol;
     end
     p
 end
-visualize(S::Type{<:System}, x, y::Vector{Symbol};
+visualize(S::Type{<:System}, x, y::Vector;
     config=(), xstep=(),
     stop=nothing, skipfirst=true, callback=nothing,
     plotopts...
@@ -276,8 +278,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
     xlab = isnothing(xlab) ? xe : xlab
     ylab = isnothing(ylab) ? ye : ylab
 
-    #TODO: share code with other plotting functions
-    u(n) = unit(eltype(df[!, n]))
+    u(n) = extractunit(df, n)
     isnothing(xunit) && (xunit = u(xo))
     isnothing(yunit) && (yunit = u(yo))
 
