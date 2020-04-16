@@ -26,8 +26,7 @@ findlim(array) = begin
     l == u ? (l, l+1) : (l, u)
 end
 
-#HACK: add whitespace to make Pango happy and avoid text clipping
-label(l, u::Units) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
+label(l, u::Units) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
 
 plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
