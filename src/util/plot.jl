@@ -8,7 +8,7 @@ extractcolumn(df::DataFrame, n::Expr) = begin
     ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
     te(x) = @capture(x, f_(a__)) ? :($f($(ts.(a)...))) : x
     #HACK: avoid world age problem for function scope eval
-    e = eval(:(df -> @. $(MacroTools.postwalk(te, n))))
+    e = Main.eval(:(df -> @. $(MacroTools.postwalk(te, n))))
     (() -> @eval $e($df))()
 end
 extractunit(df::DataFrame, n) = unit(eltype(extractcolumn(df, n)))
