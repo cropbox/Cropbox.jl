@@ -26,6 +26,9 @@ findlim(array) = begin
     l == u ? (l, l+1) : (l, u)
 end
 
+#HACK: add whitespace to make Pango happy and avoid text clipping
+label(l, u::Units) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
+
 plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
 plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
@@ -45,11 +48,9 @@ plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing
         ylim = (minimum(l)[1], maximum(l)[2])
     end
 
-    #HACK: add whitespace to make Pango happy and avoid text clipping
-    lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = lab(isnothing(xlab) ? x : xlab, xunit) * '\n'
-    ylab = lab(isnothing(ylab) ? "" : ylab, yunit)
+    xlab = label(isnothing(xlab) ? x : xlab, xunit) * '\n'
+    ylab = label(isnothing(ylab) ? "" : ylab, yunit)
     legend = isnothing(legend) ? "" : string(legend)
     name = isnothing(name) ? repeat([nothing], n) : name
     names = [string(isnothing(l) ? t : l) for (t, l) in zip(y, name)]
@@ -80,12 +81,10 @@ plot(df::DataFrame, x, y, z; kind=:heatmap, title=nothing, xlab=nothing, ylab=no
     isnothing(ylim) && (ylim = findlim(Y))
     isnothing(zlim) && (zlim = findlim(Z))
 
-    #HACK: add whitespace to make Pango happy and avoid text clipping
-    lab(l, u) = Unitful.isunitless(u) ? " $l " : " $l ($u) "
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = lab(isnothing(xlab) ? x : xlab, xunit) * '\n'
-    ylab = lab(isnothing(ylab) ? y : ylab, yunit)
-    zlab = lab(isnothing(zlab) ? z : zlab, zunit)
+    xlab = label(isnothing(xlab) ? x : xlab, xunit) * '\n'
+    ylab = label(isnothing(ylab) ? y : ylab, yunit)
+    zlab = label(isnothing(zlab) ? z : zlab, zunit)
     title = isnothing(title) ? "" : string(title)
 
     if isnothing(backend)
