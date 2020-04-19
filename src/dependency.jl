@@ -83,7 +83,7 @@ end
 
 add!(d::Dependency, v::VarInfo) = begin
     #@show "add! $v"
-    if v.state == :Accumulate
+    if v.state == :Accumulate || v.state == :Capture
         # split pre/main nodes to handle self dependency
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
@@ -93,12 +93,11 @@ add!(d::Dependency, v::VarInfo) = begin
         # needs `time` tags update, but equation args should be excluded due to cyclic dependency
         link!(d, v, n0; equation=false)
         link!(d, v, n2)
-    elseif v.state == :Capture
-        n0 = mainnode!(d, v)
-        n1 = postnode!(d, v)
-        link!(d, n0, n1)
-        link!(d, v, n0; equation=false)
-        link!(d, v, n1)
+        # needs access to context for post-priority queueing
+        c1 = mainnode!(d, :context)
+        link!(d, c1, n2) # for queue!
+        c2 = postnode!(d, :context)
+        link!(d, n2, c2) # for postflush!
     elseif v.state == :Bisect
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
@@ -110,10 +109,15 @@ add!(d::Dependency, v::VarInfo) = begin
         c = mainnode!(d, :context)
         link!(d, c, n0)
     elseif v.state == :Flag
-        n0 = mainnode!(d, v)
-        n1 = postnode!(d, v)
-        link!(d, n0, n1)
-        link!(d, v, n1)
+        n1 = mainnode!(d, v)
+        n2 = postnode!(d, v)
+        link!(d, n1, n2)
+        link!(d, v, n2)
+        # needs access to context for post-priority queueing
+        c1 = mainnode!(d, :context)
+        link!(d, c1, n2) # for queue!
+        c2 = postnode!(d, :context)
+        link!(d, n2, c2) # for postflush!
     elseif v.state == :Produce
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
@@ -124,9 +128,12 @@ add!(d::Dependency, v::VarInfo) = begin
         link!(d, v, n0; equation=false)
         link!(d, v, n1)
         link!(d, v, n2)
-        # needs access to context in Produce constructor
-        c = mainnode!(d, :context)
-        link!(d, c, n0)
+        # needs access to context for pre-priority queueing
+        c0 = prenode!(d, :context)
+        link!(d, c0, n0) # for preflush!
+        c1 = mainnode!(d, :context)
+        link!(d, c1, n1) # for update!
+        link!(d, c1, n2) # for queue!
     elseif isnothing(v.state) && istag(v, :context)
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
