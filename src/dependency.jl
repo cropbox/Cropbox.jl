@@ -111,7 +111,6 @@ add!(d::Dependency, v::VarInfo) = begin
         link!(d, n1, n2)
         # no tag available for produce, but just in case we need one later
         link!(d, v, n0; equation=false)
-        link!(d, v, n1)
         link!(d, v, n2)
         # make sure context get updated before updating subtree
         c = mainnode!(d, :context)
