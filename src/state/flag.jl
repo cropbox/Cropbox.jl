@@ -12,21 +12,19 @@ geninit(v::VarInfo, ::Val{:Flag}) = false
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
 
-genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
+genpostupdate(v::VarInfo, ::Val{:Flag}) = begin
     @gensym s f q
     if istag(v, :oneway)
         @q let $s = $(symstate(v)),
-               $f = $(genfunc(v)),
-               $q = context.queue
+               $f = $(genfunc(v))
             if !$C.value($s)
-                $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+                $C.store!($s, $f)
             end
         end
     else
         @q let $s = $(symstate(v)),
-               $f = $(genfunc(v)),
-               $q = context.queue
-            $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+               $f = $(genfunc(v))
+            $C.store!($s, $f)
         end
     end
 end
