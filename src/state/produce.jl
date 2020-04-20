@@ -54,7 +54,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
            $q = context.queue,
            $a = $C.value($s)
         if !(isnothing($P) || isempty($P))
-            $C.queue!($q, function ()
+            $C.queue!($q, $s, function ()
                 for $p in $P
                     if $p isa $C.Product
                         $b = $p.type(; context=$c, $p.args...)

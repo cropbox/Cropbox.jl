@@ -52,6 +52,6 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
            $f = $(genfunc(v)),
            $r = $C.unitfy($f, $C.rateunit($s)),
            $q = context.queue
-        $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
+        $C.queue!($q, $s, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
     end
 end

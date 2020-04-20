@@ -19,14 +19,14 @@ genupdate(v::VarInfo, ::Val{:Flag}, ::PostStep) = begin
                $f = $(genfunc(v)),
                $q = context.queue
             if !$C.value($s)
-                $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+                $C.queue!($q, $s, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
             end
         end
     else
         @q let $s = $(symstate(v)),
                $f = $(genfunc(v)),
                $q = context.queue
-            $C.queue!($q, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
+            $C.queue!($q, $s, () -> $C.store!($s, $f), $C.priority($C.$(v.state)))
         end
     end
 end
