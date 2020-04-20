@@ -37,7 +37,7 @@ end
 
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 
-genpreupdate(v::VarInfo, ::Val{:Produce}) = begin
+genupdate(v::VarInfo, ::Val{:Produce}, ::PreStage) = begin
     @gensym s a P c p b
     @q let $s = $(symstate(v)),
            $a = $C.value($s),
@@ -48,7 +48,7 @@ genpreupdate(v::VarInfo, ::Val{:Produce}) = begin
             push!($a, $b)
         end
         empty!($P)
-        $C.update!($a, $C.PreStep())
+        $C.update!($a, $C.PreStage())
     end
 end
 
@@ -73,10 +73,10 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     end
 end
 
-genpostupdate(v::VarInfo, ::Val{:Produce}) = begin
+genupdate(v::VarInfo, ::Val{:Produce}, ::PostStage) = begin
     @gensym s a
     @q let $s = $(symstate(v)),
            $a = $C.value($s)
-        $C.update!($a, $C.PostStep())
+        $C.update!($a, $C.PostStage())
     end
 end

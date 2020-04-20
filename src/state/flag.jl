@@ -12,7 +12,7 @@ geninit(v::VarInfo, ::Val{:Flag}) = false
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
 
-genpostupdate(v::VarInfo, ::Val{:Flag}) = begin
+genupdate(v::VarInfo, ::Val{:Flag}, ::PostStage) = begin
     @gensym s f q
     if istag(v, :oneway)
         @q let $s = $(symstate(v)),

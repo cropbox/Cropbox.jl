@@ -94,10 +94,6 @@ struct PreStep <: VarStep end
 struct MainStep <: VarStep end
 struct PostStep <: VarStep end
 
-suffix(::PreStep) = "__pre"
-suffix(::MainStep) = "__main"
-suffix(::PostStep) = "__post"
-
 struct Node{I,S}
     info::I
     step::S
@@ -244,9 +240,9 @@ genstruct(name, type, infos, incl) = begin
         $C.type(::Val{$N}) = $S
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
-        $C.update!($(esc(:self))::$S, ::MainStep) = $(genupdate(nodes))
-        $C.update!($(esc(:self))::$S, ::PreStep) = $(genpreupdate(infos))
-        $C.update!($(esc(:self))::$S, ::PostStep) = $(genpostupdate(infos))
+        $C.update!($(esc(:self))::$S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
+        $C.update!($(esc(:self))::$S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
+        $C.update!($(esc(:self))::$S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
         $S
     end
     system #|> MacroTools.flatten
@@ -292,13 +288,18 @@ fieldnamesalias(::Type{<:System}) = ()
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 
-update!(S::Vector{<:System}, t::VarStep=MainStep()) = begin
+abstract type UpdateStage end
+struct PreStage <: UpdateStage end
+struct MainStage <: UpdateStage end
+struct PostStage <: UpdateStage end
+
+update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
     #HACK: preliminary support for multi-threaded update! (could be much slower if update is small)
     Threads.@threads for s in S
         update!(s, t)
     end
 end
-update!(s, t::VarStep=MainStep()) = s
+update!(s, t::UpdateStage=MainStage()) = s
 
 parsehead(head) = begin
     # @system name[(mixins..)] [<: type]
@@ -402,16 +403,23 @@ geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true)
     f(x)
 end
 
-genupdate(nodes) = @q begin
+genupdate(nodes::Vector{VarNode}, ::MainStage) = @q begin
     $([genupdateinit(n.info) for n in nodes]...)
     $([genupdate(n) for n in nodes]...)
+    self
+end
+
+genupdate(infos::Vector{VarInfo}, t::UpdateStage) = @q begin
+    $([genupdateinit(v) for v in infos]...)
+    $([genupdate(v, t) for v in infos]...)
     self
 end
 
 symname(v::VarInfo) = symname(v.system, v.name)
 symname(s::Symbol, n::Symbol) = n #Symbol(:_, s, :__, n)
 symstate(v::VarInfo) = symname(v) #Symbol(symname(v), :__state)
-symlabel(v::VarInfo, t::VarStep, s...) = Symbol(symname(v), suffix(t), s...)
+symsuffix(::T) where {T} = "__$T"
+symlabel(v::VarInfo, t, s...) = Symbol(symname(v), symsuffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :__call)
 
 genupdateinit(v::VarInfo) = begin
@@ -423,30 +431,10 @@ genupdateinit(v::VarInfo) = begin
 end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
-genupdate(v::VarInfo, t::VarStep) = @q begin
+genupdate(v::VarInfo, t) = @q begin
     $(linenumber(v, "genupdate"))
     @label $(symlabel(v, t))
     $(genupdate(v, Val(v.state), t))
-end
-
-genpreupdate(infos) = @q begin
-    $([genupdateinit(v) for v in infos]...)
-    $([genpreupdate(v) for v in infos]...)
-    self
-end
-genpreupdate(v::VarInfo) = @q begin
-    $(linenumber(v, "genpreupdate"))
-    $(genpreupdate(v, Val(v.state)))
-end
-
-genpostupdate(infos) = @q begin
-    $([genupdateinit(v) for v in infos]...)
-    $([genpostupdate(v) for v in infos]...)
-    self
-end
-genpostupdate(v::VarInfo) = @q begin
-    $(linenumber(v, "genpostupdate"))
-    $(genpostupdate(v, Val(v.state)))
 end
 
 genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
@@ -462,7 +450,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
     if istag(v, :context)
         @gensym c
         @q let $c = $(v.name)
-            $C.update!(self, $C.PreStep())
+            $C.update!(self, $C.PreStage())
             $c
         end
     end
@@ -480,7 +468,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
         @gensym c cc
         @q let $c = $(v.name),
                $cc = $c.context
-            $C.update!(self, $C.PostStep())
+            $C.update!(self, $C.PostStage())
             if !isnothing($cc) && $C.value($c.clock.tick) < $C.value($cc.clock.tick)
                 @goto $l
             end
@@ -493,10 +481,9 @@ genupdate(v::VarInfo, ::Val, ::PreStep) = nothing
 genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? nothing : genstore(v)
 genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
 
-genpreupdate(v::VarInfo, ::Val) = nothing
-genpreupdate(v::VarInfo, ::Val{nothing}) = @q $C.update!(self.$(v.name), $C.PreStep())
-genpostupdate(v::VarInfo, ::Val) = nothing
-genpostupdate(v::VarInfo, ::Val{nothing}) = @q $C.update!(self.$(v.name), $C.PostStep())
+genupdate(v::VarInfo, ::Val, ::UpdateStage) = nothing
+genupdate(v::VarInfo, ::Val{nothing}, ::PreStage) = @q $C.update!($(v.name), $C.PreStage())
+genupdate(v::VarInfo, ::Val{nothing}, ::PostStage) = @q $C.update!($(v.name), $C.PostStage())
 
 #TODO: merge extractfuncargdep() and extractfuncargkey()?
 extractfuncargdep(v::Expr) = begin
