@@ -93,11 +93,6 @@ add!(d::Dependency, v::VarInfo) = begin
         # needs `time` tags update, but equation args should be excluded due to cyclic dependency
         link!(d, v, n0; equation=false)
         link!(d, v, n2)
-        # needs access to context for post-priority queueing
-        c1 = mainnode!(d, :context)
-        link!(d, c1, n2) # for queue!
-        c2 = postnode!(d, :context)
-        link!(d, n2, c2) # for postflush!
     elseif v.state == :Bisect
         n0 = prenode!(d, v)
         n1 = mainnode!(d, v)

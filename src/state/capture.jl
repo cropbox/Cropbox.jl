@@ -50,8 +50,8 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
     @q let $s = $(symstate(v)),
            $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
-           $r = $C.unitfy($f, $C.rateunit($s)),
-           $q = context.queue
-        $C.queue!($q, () -> ($s.tick = $t; $s.rate = $r), $C.priority($C.$(v.state)))
+           $r = $C.unitfy($f, $C.rateunit($s))
+        $s.tick = $t
+        $s.rate = $r
     end
 end
