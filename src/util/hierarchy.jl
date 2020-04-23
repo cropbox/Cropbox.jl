@@ -70,7 +70,7 @@ add!(h::Hierarchy, a::Symbol, T) = nothing
 label(n::Symbol) = string(n)
 labels(h::Hierarchy) = label.(nodes(h))
 
-edgestyle(e::Symbol) = begin
+edgestyle(h::Hierarchy, e::Symbol) = begin
     if e == :mixin
         "dotted"
     elseif e == :loop
@@ -79,7 +79,7 @@ edgestyle(e::Symbol) = begin
         "solid"
     end
 end
-edgestyles(h::Hierarchy) = Dict(e => edgestyle(s) for (e, s) in h.E)
+edgestyles(h::Hierarchy) = Dict(e => edgestyle(h, s) for (e, s) in h.E)
 
 import TikzGraphs
 plot(h::Hierarchy; sib_dist=-1, lev_dist=-1) = begin
