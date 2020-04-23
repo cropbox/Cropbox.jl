@@ -161,9 +161,13 @@ label(n::VarNode; alias=false) = begin
     end
     tag * name
 end
+labels(d::Dependency; kw...) = label.(d.N; kw...)
+
+edgestyle(d::Dependency, a::VarNode, b::VarNode) = ""
+edgestyles(d::Dependency) = Dict(let a=src(e), b=dst(e); (a, b) => edgestyle(d, d.N[a], d.N[b]) end for e in edges(d.g))
 
 import TikzGraphs
-plot(d::Dependency; sib_dist=-1, lev_dist=-1, kw...) = TikzGraphs.plot(d.g, TikzGraphs.Layouts.Layered(; sib_dist=sib_dist, lev_dist=lev_dist), label.(d.N; kw...))
+plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = TikzGraphs.plot(d.g, TikzGraphs.Layouts.Layered(; sib_dist=sib_dist, lev_dist=lev_dist), labels(d; alias=alias), edge_styles=edgestyles(d))
 plot(::Type{S}; kw...) where {S<:System} = plot(dependency(S); kw...)
 
 import Base: write
