@@ -50,14 +50,14 @@ KMSP = (
         ],
     ),
 )
-KM = [KMSP, (
+KM = (KMSP, (
     :Phenology => (initial_leaves_at_harvest = 4,), # ILN
     :Leaf => (stay_green = 1.84,), # SG
-)]
-SP = [KMSP, (
+))
+SP = (KMSP, (
     :Phenology => (initial_leaves_at_harvest = 6,), # ILN
     :Leaf => (stay_green = 1.47,), # SG
-)]
+))
 
 CUH = (
 # # LAT LONG ALT
@@ -74,7 +74,7 @@ CUH = (
     ),
     :Plant => (planting_density = 55,), # PD
 )
-CUH_2013 = [CUH, (
+CUH_2013 = (CUH, (
     :Weather => (
         filename = "$(@__DIR__)/data/CUH/2013.wea", # .dat
         timezone = tz"America/Los_Angeles",
@@ -83,8 +83,8 @@ CUH_2013 = [CUH, (
         init = ZonedDateTime(2013, 10, 30, tz"America/Los_Angeles"), # Y1 bgn
         last = ZonedDateTime(2014, 7, 28, tz"America/Los_Angeles"), #Y2 end
     ),
-)]
-CUH_2014 = [CUH, (
+))
+CUH_2014 = (CUH, (
     :Weather => (
         filename = "$(@__DIR__)/data/CUH/2014.wea", # .dat
         timezone = tz"America/Los_Angeles",
@@ -93,82 +93,82 @@ CUH_2014 = [CUH, (
         init = ZonedDateTime(2014, 9, 1, 1, tz"America/Los_Angeles"), # Y1 bgn
         last = ZonedDateTime(2015, 7, 7, tz"America/Los_Angeles"), #Y2 end
     ),
-)]
+))
 
-CUH_2013_P1 = [CUH_2013, (
+CUH_2013_P1 = (CUH_2013, (
     :Phenology => (
         storage_days = 122, # SD
         planting_date = ZonedDateTime(2013, 10, 30, tz"America/Los_Angeles"), # Y1 sow
     ),
-)]
-CUH_2013_P2 = [CUH_2013, (
+))
+CUH_2013_P2 = (CUH_2013, (
     :Phenology => (
         storage_days = 170, # SD
         planting_date = ZonedDateTime(2013, 12, 17, tz"America/Los_Angeles"), # Y1 sow
     ),
-)]
-CUH_2014_P1 = [CUH_2014, (
+))
+CUH_2014_P1 = (CUH_2014, (
     :Phenology => (
         storage_days = 93, # SD
         planting_date = ZonedDateTime(2014, 10, 1, tz"America/Los_Angeles"), # Y1 sow
     ),
-)]
-CUH_2014_P2 = [CUH_2014, (
+))
+CUH_2014_P2 = (CUH_2014, (
     :Phenology => (
         storage_days = 143, # SD
         planting_date = ZonedDateTime(2014, 11, 20, tz"America/Los_Angeles"), # Y1 sow
     ),
-)]
+))
 
-KM_2013_P1_SR0 = [KM, CUH_2013_P1, (
+KM_2013_P1_SR0 = (KM, CUH_2013_P1, (
     :Phenology => (
         emergence_date = ZonedDateTime(2013, 12, 29, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
-KM_2013_P2_SR0 = [KM, CUH_2013_P2, (
+))
+KM_2013_P2_SR0 = (KM, CUH_2013_P2, (
     :Phenology => (
         emergence_date = ZonedDateTime(2014, 1, 26, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
-KM_2014_P1_SR0 = [KM, CUH_2014_P1, (
+))
+KM_2014_P1_SR0 = (KM, CUH_2014_P1, (
     :Phenology => (
         emergence_date = ZonedDateTime(2014, 10, 26, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
-KM_2014_P2_SR0 = [KM, CUH_2014_P2, (
+))
+KM_2014_P2_SR0 = (KM, CUH_2014_P2, (
     :Phenology => (
         emergence_date = ZonedDateTime(2014, 12, 30, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
+))
 
-SP_2013_P1_SR0 = [SP, CUH_2013_P1, (
+SP_2013_P1_SR0 = (SP, CUH_2013_P1, (
     :Phenology => (
         emergence_date = ZonedDateTime(2013, 11, 14, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
-SP_2013_P2_SR0 = [SP, CUH_2013_P2, (
+))
+SP_2013_P2_SR0 = (SP, CUH_2013_P2, (
     :Phenology => (
         emergence_date = ZonedDateTime(2014, 1, 6, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
-SP_2014_P1_SR0 = [SP, CUH_2014_P1, (
+))
+SP_2014_P1_SR0 = (SP, CUH_2014_P1, (
     :Phenology => (
         emergence_date = ZonedDateTime(2014, 10, 6, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
-SP_2014_P2_SR0 = [SP, CUH_2014_P2, (
+))
+SP_2014_P2_SR0 = (SP, CUH_2014_P2, (
     :Phenology => (
         emergence_date = ZonedDateTime(2014, 11, 30, tz"America/Los_Angeles"), # Y1 emg
         scape_removal_date = nothing, # Y2 SR
     ),
-)]
+))
 
 using CSV
 using Query

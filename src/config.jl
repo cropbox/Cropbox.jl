@@ -4,7 +4,9 @@ const Config = OrderedDict{Symbol,Any}
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
 configure(c::Tuple) = configure(c...)
-configure(c::Vector) = configure(c...)
+configure(c::Vector) = error("single configuration expected: $c")
+#HACK: allow single patch (i.e. `0 => :a => 1` instead of `1:2`) in configexpand
+configure(c::Array{T,0}) where {T} = configure(c...)
 configure(c...) = merge(merge, configure.(c)...)
 configure(::Nothing) = configure()
 configure(c) = error("unrecognized configuration: $c")
@@ -85,7 +87,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C
 end
 
-configmultiply(patches, base=()) = begin
+configmultiply(patches::Vector, base=()) = begin
     isempty(patches) && return [configure(base)]
     C = configexpand(patches[1], base)
     for p in patches[2:end]
@@ -96,7 +98,7 @@ end
 configexpand(patch, base=()) = begin
     P = configure(patch)
     configs = if isempty(P)
-        P
+        []
     else
         s, C = only(P)
         k, V = only(C)
@@ -104,4 +106,5 @@ configexpand(patch, base=()) = begin
     end
     configrebase(configs, base)
 end
-configrebase(configs, base=()) = isempty(configs) ? [configure(base)] : [configure([base, c]) for c in configs]
+configrebase(configs::Vector, base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
+configrebase(config, base=()) = configrebase([config], base)

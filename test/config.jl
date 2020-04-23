@@ -5,7 +5,6 @@ import DataStructures: OrderedDict
         @testset "default" begin
             c = Cropbox.Config()
             @test Cropbox.configure() == c
-            @test Cropbox.configure([]) == c
             @test Cropbox.configure(()) == c
             @test Cropbox.configure(nothing) == c
         end
@@ -15,6 +14,7 @@ import DataStructures: OrderedDict
             @test_throws ErrorException Cropbox.configure(0)
             @test_throws ErrorException Cropbox.configure(:a)
             @test_throws ErrorException Cropbox.configure("a")
+            @test_throws ErrorException Cropbox.configure([])
         end
     end
     
@@ -34,9 +34,7 @@ import DataStructures: OrderedDict
         
         @testset "vector" begin
             c = [:S1 => :a => 1, :S2 => :a => 2]
-            C = Cropbox.configure(c)
-            @test C[:S1][:a] == 1
-            @test C[:S2][:a] == 2
+            @test_throws ErrorException Cropbox.configure(c)
         end
         
         @testset "type" begin
@@ -180,7 +178,7 @@ import DataStructures: OrderedDict
         end
         
         @testset "base" begin
-            b = [:S => :c => 1]
+            b = (:S => :c => 1)
             p = [:S => :a => 1:2, :S => :b => 3:4]
             C = Cropbox.configmultiply(p, b)
             @test C == Cropbox.configure.([
@@ -193,14 +191,19 @@ import DataStructures: OrderedDict
             p = [:S => :a => 1]
             C = Cropbox.configmultiply(p)
             @test C isa Array && length(C) == 1
-            @test C[1] == Cropbox.configure(p)
+            @test C[1] == Cropbox.configure(p[1])
         end
         
-        @testset "empty" begin
-            p = ()
+        @testset "single empty" begin
+            p = [()]
             C = Cropbox.configmultiply(p)
             @test C isa Array && length(C) == 1
-            @test C[1] == Cropbox.configure(p)
+            @test C[1] == Cropbox.configure(p[1])
+        end
+        
+        @testset "empty tuple" begin
+            p = ()
+            @test_throws MethodError Cropbox.configmultiply(p)
         end
     end
     
@@ -241,7 +244,7 @@ import DataStructures: OrderedDict
     
     @testset "rebase" begin
         @testset "nonempty configs + nonempty base" begin
-            b = [:S => :b => 0]
+            b = (:S => :b => 0)
             C0 = [:S => :a => 1, :S => :a => 2]
             C1 = Cropbox.configrebase(C0, b)
             @test C1 == Cropbox.configure.([:S => (a=1, b=0), :S => (a=2, b=0)])

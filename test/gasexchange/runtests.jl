@@ -107,7 +107,7 @@ ge_water = :StomataLeafWater => (
     Ψf = -1.2,
 )
 
-ge_base = [ge_weather, ge_spad, ge_water]
+ge_base = (ge_weather, ge_spad, ge_water)
 
 #HACK: zero CO2 prevents convergence of bisection method
 ge_step_c = :Weather => :CO2 => 10:10:1500

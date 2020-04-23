@@ -40,7 +40,7 @@ end
 
 visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
 visualize(df::DataFrame, SS::Vector, x, y;
-    configs=(), xstep=(),
+    configs=[], xstep=(),
     stop=nothing, skipfirst=true, callback=nothing,
     xlab=nothing, ylab=nothing, name=nothing, names=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
