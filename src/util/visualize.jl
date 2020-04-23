@@ -62,7 +62,8 @@ visualize(df::DataFrame, SS::Vector, x, y;
 
     p = plot(df, xo, yo; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
-        r = simulate(S; configs=configexpand(xstep, c), stop=stop, skipfirst=skipfirst, callback=callback)
+        cs = isnothing(xstep) ? c : configexpand(xstep, c)
+        r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, callback=callback)
         p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
     end
     p
