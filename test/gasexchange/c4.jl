@@ -14,8 +14,8 @@ end
 
     Vpm25: maximum_pep_carboxylation_rate_for_co2_at_25 => 70 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     EaVp: activation_energy_for_pep_carboxylation => 75.1 ~ preserve(u"kJ/mol", parameter)
-    Vpmax(N_dep, T_dep, Vpm25, EaVp): maximum_pep_carboxylation_rate => begin
-        Vpm25 * N_dep * T_dep(EaVp)
+    Vpmax(Vpm25, kT, EaVp, kN): maximum_pep_carboxylation_rate => begin
+        Vpm25 * kT(EaVp) * kN
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # PEP regeneration limited Vp, value adopted from vC book
@@ -29,8 +29,8 @@ end
     Vcm25: maximum_carboxylation_rate_at_25 => 50 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     # EaVc: Sage (2002) JXB
     EaVc: activation_energy_for_carboxylation => 55.9 ~ preserve(u"kJ/mol", parameter)
-    Vcmax(N_dep, T_dep, Vcm25, EaVc): maximum_carboxylation_rate => begin
-        Vcm25 * N_dep * T_dep(EaVc)
+    Vcmax(Vcm25, kT, EaVc, kN): maximum_carboxylation_rate => begin
+        Vcm25 * kT(EaVc) * kN
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 end
 
@@ -39,14 +39,8 @@ end
     Eaj: activation_energy_for_electron_transport => 32.8 ~ preserve(u"kJ/mol", parameter)
     Sj: electron_transport_temperature_response => 702.6 ~ preserve(u"J/mol/K", parameter)
     Hj: electron_transport_curvature => 220 ~ preserve(u"kJ/mol", parameter)
-    Jmax(Tk, Tbk, T_dep, N_dep, Jm25, Eaj, Sj, Hj): maximum_electron_transport_rate => begin
-        R = u"R"
-        Jm25 * begin
-            N_dep *
-            T_dep(Eaj) *
-            (1 + exp((Sj*Tbk - Hj) / (R*Tbk))) /
-            (1 + exp((Sj*Tk  - Hj) / (R*Tk)))
-        end
+    Jmax(Jm25, kTpeak, Eaj, Sj, Hj, kN): maximum_electron_transport_rate => begin
+        Jm25 * kTpeak(Eaj, Sj, Hj) * kN
     end ~ track(u"μmol/m^2/s" #= Electron =#)
 
     # θ: sharpness of transition from light limitation to light saturation
@@ -63,16 +57,16 @@ end
     # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
     Kc25: rubisco_constant_for_co2_at_25 => 650 ~ preserve(u"μbar", parameter)
     Eac: activation_energy_for_co2 => 59.4 ~ preserve(u"kJ/mol", parameter)
-    Kc(T_dep, Kc25, Eac): rubisco_constant_for_co2 => begin
-        Kc25 * T_dep(Eac)
+    Kc(kT, Kc25, Eac): rubisco_constant_for_co2 => begin
+        Kc25 * kT(Eac)
     end ~ track(u"μbar")
 
     # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
     Ko25: rubisco_constant_for_o2_at_25 => 450 ~ preserve(u"mbar", parameter)
     # Activation energy for Ko, Bernacchi (2001)
     Eao: activation_energy_for_o2 => 36 ~ preserve(u"kJ/mol", parameter)
-    Ko(T_dep, Ko25, Eao): rubisco_constant_for_o2 => begin
-        Ko25 * T_dep(Eao)
+    Ko(Ko25, kT, Eao): rubisco_constant_for_o2 => begin
+        Ko25 * kT(Eao)
     end ~ track(u"mbar")
 
     # mesophyll O2 partial pressure
@@ -85,8 +79,8 @@ end
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     Rd25: dark_respiration_at_25 => 2 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
     Ear: activation_energy_for_respiration => 39.8 ~ preserve(u"kJ/mol", parameter)
-    Rd(T_dep, Rd25, Ear): dark_respiration => begin
-        Rd25 * T_dep(Ear)
+    Rd(Rd25, kT, Ear): dark_respiration => begin
+        Rd25 * kT(Ear)
     end ~ track(u"μmol/m^2/s")
     Rm(Rd) => 0.5Rd ~ track(u"μmol/m^2/s")
 end

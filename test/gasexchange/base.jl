@@ -5,8 +5,13 @@
     Tb: base_temperature => 25 ~ preserve(u"°C", parameter)
     Tbk(Tb): absolute_base_temperature ~ preserve(u"K")
 
-    T_dep(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): temperature_dependence_rate => begin
+    kT(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): arrhenius_equation => begin
         exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
+    end ~ call
+
+    kTpeak(Tk, Tbk, kT; Ea(u"kJ/mol"), S(u"J/mol/K"), H(u"kJ/mol")): peaked_function => begin
+        R = u"R"
+        kT(Ea) * (1 + exp((S*Tbk - H) / (R*Tbk))) / (1 + exp((S*Tk - H) / (R*Tk)))
     end ~ call
 end
 
@@ -16,7 +21,7 @@ end
     s => 2.9 ~ preserve(u"m^2/g", parameter)
     N0 => 0.25 ~ preserve(u"g/m^2", parameter)
 
-    N_dep(N, s, N0): nitrogen_limited_rate => begin
+    kN(N, s, N0): nitrogen_limited_rate => begin
         2 / (1 + exp(-s * (max(N0, N) - N0))) - 1
     end ~ track
 end
