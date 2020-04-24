@@ -23,7 +23,7 @@ end
     Vp(Vpmax, Vpr, Cm, Kp): pep_carboxylation_rate => begin
         # PEP carboxylation rate, that is the rate of C4 acid generation
         Vp = (Cm * Vpmax) / (Cm + Kp)
-        clamp(Vp, zero(Vp), Vpr)
+        min(Vp, Vpr)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     Vcm25: maximum_carboxylation_rate_at_25 => 50 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
