@@ -13,6 +13,11 @@
         R = u"R"
         kT(Ea) * (1 + exp((S*Tbk - H) / (R*Tbk))) / (1 + exp((S*Tk - H) / (R*Tk)))
     end ~ call
+
+    Q10 => 2 ~ preserve(parameter)
+    kTQ10(T, Tb, Q10): q10_rate => begin
+        Q10^((T - Tb) / 10u"K")
+    end ~ track
 end
 
 @system NitrogenDependence begin

@@ -8,8 +8,8 @@ end
 @system C4c(C4Base) begin
     # Kp25: Michaelis constant for PEP caboxylase for CO2
     Kp25: pep_carboxylase_constant_for_co2_at_25 => 80 ~ preserve(u"μbar", parameter)
-    Kp(Kp25): pep_carboxylase_constant_for_co2 => begin
-        Kp25 # T dependence yet to be determined
+    Kp(Kp25, kTQ10): pep_carboxylase_constant_for_co2 => begin
+        Kp25 * kTQ10
     end ~ track(u"μbar")
 
     Vpm25: maximum_pep_carboxylation_rate_for_co2_at_25 => 70 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
@@ -19,7 +19,10 @@ end
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # PEP regeneration limited Vp, value adopted from vC book
-    Vpr: regeneration_limited_pep_carboxylation_rate => 80 ~ preserve(u"μmol/m^2/s", parameter)
+    Vpr25: regeneration_limited_pep_carboxylation_rate_for_co2_at_25 => 80 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
+    Vpr(Vpr25, kTQ10): regeneration_limited_pep_carboxylation_rate => begin
+        Vpr25 * kTQ10
+    end ~ track(u"μmol/m^2/s" #= CO2 =#)
     Vp(Vpmax, Vpr, Cm, Kp): pep_carboxylation_rate => begin
         # PEP carboxylation rate, that is the rate of C4 acid generation
         Vp = (Cm * Vpmax) / (Cm + Kp)
