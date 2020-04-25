@@ -8,8 +8,8 @@
     dra: diffusivity_ratio_air => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
 
     Ca(CO2, P_air): co2_air => (CO2 * P_air) ~ track(u"μbar")
-    Cs(Ca, drb, A_net, gb): co2_at_leaf_surface => begin
-        Ca - (drb * A_net / gb)
+    Cs(Ca, A_net, gbc): co2_at_leaf_surface => begin
+        Ca - A_net / gbc
     end ~ track(u"μbar")
 
     gv(gs, gb): total_conductance_h2o => (gs * gb / (gs + gb)) ~ track(u"mol/m^2/s/bar" #= H2O =#)
