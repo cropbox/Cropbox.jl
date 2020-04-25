@@ -31,7 +31,15 @@ label(l, u::Units) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
 plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
 plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
-plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing, ylab=nothing, legend=nothing, name=nothing, xlim=nothing, ylim=nothing, xunit=nothing, yunit=nothing, backend=nothing) = begin
+plot!(p, df::DataFrame, x, y::Vector;
+    kind=:scatter,
+    title=nothing,
+    xlab=nothing, ylab=nothing,
+    legend=nothing, name=nothing,
+    xlim=nothing, ylim=nothing,
+    xunit=nothing, yunit=nothing,
+    backend=nothing,
+) = begin
     u(n) = extractunit(df, n)
     isnothing(xunit) && (xunit = u(x))
     isnothing(yunit) && (yunit = Unitful.promote_unit(u.(y)...))
@@ -65,7 +73,14 @@ plot!(p, df::DataFrame, x, y::Vector; kind=:scatter, title=nothing, xlab=nothing
     plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
 end
 
-plot(df::DataFrame, x, y, z; kind=:heatmap, title=nothing, xlab=nothing, ylab=nothing, zlab=nothing, xlim=nothing, ylim=nothing, zlim=nothing, xunit=nothing, yunit=nothing, zunit=nothing, backend=nothing) = begin
+plot(df::DataFrame, x, y, z;
+    kind=:heatmap,
+    title=nothing,
+    xlab=nothing, ylab=nothing, zlab=nothing,
+    xlim=nothing, ylim=nothing, zlim=nothing,
+    xunit=nothing, yunit=nothing, zunit=nothing,
+    backend=nothing,
+) = begin
     u(n) = extractunit(df, n)
     isnothing(xunit) && (xunit = u(x))
     isnothing(yunit) && (yunit = u(y))
