@@ -6,7 +6,7 @@
     Tbk(Tb): absolute_base_temperature ~ preserve(u"K")
 
     kT(T, Tk, Tb, Tbk; Ea(u"kJ/mol")): arrhenius_equation => begin
-        exp(Ea * (T - Tb) / (Tbk * u"R" * Tk))
+        exp(Ea * (T - Tb) / (u"R" * Tk * Tbk))
     end ~ call
 
     kTpeak(Tk, Tbk, kT; Ea(u"kJ/mol"), S(u"J/mol/K"), H(u"kJ/mol")): peaked_function => begin
