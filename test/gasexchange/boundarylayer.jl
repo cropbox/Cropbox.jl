@@ -1,5 +1,5 @@
 @system BoundaryLayer(Weather) begin
-    w: leaf_width => 0.1 ~ preserve(u"m", parameter)
+    w: leaf_width => 10 ~ preserve(u"cm", parameter)
 
     sr: stomatal_ratio => begin
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
