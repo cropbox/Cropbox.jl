@@ -142,4 +142,13 @@ ge_step_t = :Weather => :T_air => -10:1:50
             Cropbox.visualize(GasExchangeTest.ModelC4MD, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
+
+    @testset "N vs Ψv" begin
+        Cropbox.visualize(GasExchangeTest.ModelC4MD, :N, :Ψv, :A_net;
+            config=ge_base,
+            kind=:heatmap,
+            xstep=:Nitrogen=>:N=>0:0.05:2,
+            ystep=:StomataLeafWater=>:WP_leaf=>-2:0.05:0,
+        ) |> display
+    end
 end
