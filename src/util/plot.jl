@@ -222,7 +222,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     arr(A) = sort(unique(A))
     x = arr(X)
     y = arr(Y)
-    M = reshape(Z, length(x), length(y))'
+    M = reshape(Z, length(y), length(x))
 
     offset(a) = a[1]
     xoffset = offset(x)
