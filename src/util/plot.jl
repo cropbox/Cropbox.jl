@@ -38,6 +38,7 @@ plot!(p, df::DataFrame, x, y::Vector;
     legend=nothing, name=nothing,
     xlim=nothing, ylim=nothing,
     xunit=nothing, yunit=nothing,
+    aspect=nothing,
     backend=nothing,
 ) = begin
     u(n) = extractunit(df, n)
@@ -70,7 +71,7 @@ plot!(p, df::DataFrame, x, y::Vector;
             :UnicodePlots
         end
     end
-    plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim)
+    plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim, aspect=aspect)
 end
 
 plot(df::DataFrame, x, y, z;
@@ -79,6 +80,7 @@ plot(df::DataFrame, x, y, z;
     xlab=nothing, ylab=nothing, zlab=nothing,
     xlim=nothing, ylim=nothing, zlim=nothing,
     xunit=nothing, yunit=nothing, zunit=nothing,
+    aspect=nothing,
     backend=nothing,
 ) = begin
     u(n) = extractunit(df, n)
@@ -108,10 +110,10 @@ plot(df::DataFrame, x, y, z;
             :UnicodePlots
         end
     end
-    plot3!(Val(backend), X, Y, Z; kind=kind, title=title, xlab=xlab, ylab=ylab, zlab=zlab, xlim=xlim, ylim=ylim, zlim=zlim)
+    plot3!(Val(backend), X, Y, Z; kind=kind, title=title, xlab=xlab, ylab=ylab, zlab=zlab, xlim=xlim, ylim=ylim, zlim=zlim, aspect=aspect)
 end
 
-plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
+plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim, aspect) = begin
     n = length(Ys)
 
     if kind == :line
@@ -131,7 +133,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
         colors = Gadfly.Scale.default_discrete_colors(n)
         layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
         p = Gadfly.plot(
-            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
+            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
             Gadfly.Guide.title(title),
             Gadfly.Guide.xlabel(xlab),
             Gadfly.Guide.ylabel(ylab),
@@ -156,7 +158,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
     p
 end
 
-plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim) = begin
+plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
         UnicodePlots.DotCanvas
     else
@@ -173,7 +175,8 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
 
     if isnothing(p)
         a = Float64[]
-        p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim)
+        !isnothing(aspect) && (width = round(Int, aspect * 2height))
+        p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim, width=width, height=height)
         UnicodePlots.annotate!(p, :r, legend)
     end
     for (Y, name) in zip(Ys, names)
@@ -182,7 +185,7 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
     p
 end
 
-plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim) = begin
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
     elseif kind == :contour
@@ -199,7 +202,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim)
     Gadfly.plot(
         x=X, y=Y,
         z=Z, color=Z, # z for contour, color for heatmap
-        Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2]),
+        Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
         Gadfly.Guide.title(title),
         Gadfly.Guide.xlabel(xlab),
         Gadfly.Guide.ylabel(ylab),
@@ -210,7 +213,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim)
     )
 end
 
-plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim) = begin
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
     if kind == :heatmap
         ;
     elseif kind == :contour
@@ -231,6 +234,8 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     xscale = scale(x)
     yscale = scale(y)
 
+    !isnothing(aspect) && (width = round(Int, aspect * height))
+
     #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
-    UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset)
+    UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset, width=width, height=height)
 end
