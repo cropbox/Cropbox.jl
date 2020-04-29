@@ -60,9 +60,9 @@ end
     pa(ea=vp.ea, T_air, RH): vapor_pressure_at_air => ea(T_air, RH) ~ track(u"kPa")
     pi(es=vp.es, T): vapor_pressure_at_intercellular_space => es(T) ~ track(u"kPa")
     ps(Ds, pi): vapor_pressure_at_leaf_surface => (pi - Ds) ~ track(u"kPa")
-    Ds¹ᐟ²(g0, g1, gb, A_net, Cs, pi, pa) => begin
+    Ds¹ᐟ²(g0, g1, gb, A_net, Cs, fΨv, pi, pa) => begin
         #HACK: SymPy couldn't extract polynomial coeffs for ps inside √
-        gs = g0 + (1 + g1 / Ds¹ᐟ²) * (A_net / Cs)
+        gs = g0 + (1 + g1 / Ds¹ᐟ²) * (A_net / Cs) * fΨv
         ps = pi - Ds¹ᐟ²^2
         (ps - pa)*gb ⩵ (pi - ps)*gs
     end ~ solve(lower=0, upper=√pi', u"√kPa")
