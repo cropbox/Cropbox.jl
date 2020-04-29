@@ -45,7 +45,7 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
         #HACK: evaluate types defined in Main module
         T = Main.eval(v.type)
         #HACK: skip Context since the graph tends to look too busy
-        #(T == Context) && continue
+        (T == Context) && continue
         add!(h, a, T)
     end
     push!(h.N, a)
