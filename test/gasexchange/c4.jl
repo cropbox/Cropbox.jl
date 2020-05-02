@@ -19,8 +19,8 @@ end
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # PEP regeneration limited Vp, value adopted from vC book
-    Vpr25: regeneration_limited_pep_carboxylation_rate_for_co2_at_25 => 80 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
-    Vpr(Vpr25, kTQ10): regeneration_limited_pep_carboxylation_rate => begin
+    Vpr25: pep_regeneration_rate_for_co2_at_25 => 80 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
+    Vpr(Vpr25, kTQ10): pep_regeneration_rate => begin
         Vpr25 * kTQ10
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
     Vp(Vpmax, Vpr, Cm, Kp): pep_carboxylation_rate => begin
