@@ -1,22 +1,22 @@
-struct Product{S<:System}
+struct Production{S<:System}
     type::Type{S}
     args
 end
-iterate(p::Product) = (p, nothing)
-iterate(p::Product, ::Nothing) = nothing
-eltype(::Type{Product}) = Product
+iterate(p::Production) = (p, nothing)
+iterate(p::Production, ::Nothing) = nothing
+eltype(::Type{Production}) = Production
 
 struct Produce{S<:System} <: State{S}
     name::Symbol # used in recurisve collecting in collect()
     value::Vector{System}
-    products::Vector{Product}
+    productions::Vector{Production}
 end
 
 Produce(; _name, _type::Type{S}, _...) where {S<:System} = begin
-    Produce{S}(_name, S[], Product[])
+    Produce{S}(_name, S[], Production[])
 end
 
-produce(s::Type{<:System}; args...) = Product(s, args)
+produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
 unit(s::Produce) = nothing
 getindex(s::Produce, i) = getindex(s.value, i)
@@ -25,9 +25,9 @@ length(s::Produce) = length(s.value)
 iterate(s::Produce, i=1) = i > length(s) ? nothing : (s[i], i+1)
 eltype(::Type{Produce{S}}) where {S<:System} = S
 priority(::Type{<:Produce}) = PrePriority()
-setproduct!(s::Produce, ::Nothing) = nothing
-setproduct!(s::Produce, p::Product) = push!(s.products, p)
-setproduct!(s::Produce, P::Vector) = setproduct!.(Ref(s), P)
+setproduction!(s::Produce, ::Nothing) = nothing
+setproduction!(s::Produce, p::Production) = push!(s.productions, p)
+setproduction!(s::Produce, P::Vector) = setproduction!.(Ref(s), P)
 
 export produce
 
@@ -41,7 +41,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PreStage) = begin
     @gensym s a P c p b
     @q let $s = $(symstate(v)),
            $a = $C.value($s),
-           $P = $s.products,
+           $P = $s.productions,
            $c = context
         for $p in $P
             $b = $p.type(; context=$c, $p.args...)
@@ -69,7 +69,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     @gensym s P
     @q let $s = $(symstate(v)),
            $P = $(genfunc(v))
-        $C.setproduct!($s, $P)
+        $C.setproduction!($s, $P)
     end
 end
 
