@@ -15,7 +15,7 @@ using Test
         include("lotka_volterra.jl")
         include("pheno/estimator.jl")
         include("gasexchange/runtests.jl")
-        include("root/root.jl")
+        include("root/runtests.jl")
         include("soil/soil.jl")
         include("garlic/runtests.jl")
     end
