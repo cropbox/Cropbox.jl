@@ -152,6 +152,54 @@ root_switchgrass_W = (
         :color => RGBA(0, 0, 1, 1),
     )
 )
+root_switchgrass_KH2PO4 = (
+    root_switchgrass_W,
+    :PrimaryRoot => (
+        :r => 1.28 ± 0.29,
+    ),
+    :FirstOrderLateralRoot => (
+        :lmax => 1.63 ± 0.61,
+        :r => 0.31 ± 0.11,
+        :θ => 84.27 ± 3.03,
+    ),
+    :SecondOrderLateralRoot => (
+        :lmax => 2.30 ± 0.65,
+        :r => 0.48 ± 0.15,
+        :θ => 41.87 ± 6.64,
+    )
+)
+root_switchgrass_AlPO4 = (
+    root_switchgrass_W,
+    :PrimaryRoot => (
+        :r => 1.10 ± 0.32,
+    ),
+    :FirstOrderLateralRoot => (
+        :lmax => 1.56 ± 0.55,
+        :r => 0.33 ± 0.11,
+        :θ => 83.53 ± 3.42,
+    ),
+    :SecondOrderLateralRoot => (
+        :lmax => 2.29 ± 0.60,
+        :r => 0.48 ± 0.13,
+        :θ => 34.87 ± 5.17,
+    )
+)
+root_switchgrass_C6H17NaO24P6 = (
+    root_switchgrass_W,
+    :PrimaryRoot => (
+        :r => 1.31 ± 0.35,
+    ),
+    :FirstOrderLateralRoot => (
+        :lmax => 2.80 ± 0.61,
+        :r => 0.57 ± 0.09,
+        :θ => 78.07 ± 5.30,
+    ),
+    :SecondOrderLateralRoot => (
+        :lmax => 3.05 ± 0.50,
+        :r => 0.65 ± 0.17,
+        :θ => 43.73 ± 6.71,
+    )
+)
 
 @testset "root" begin
     s = instance(Root.RootArchiteture, config=root_maize)
@@ -160,3 +208,18 @@ root_switchgrass_W = (
     # Root.render(s) |> open
     # Root.writevtk("test", s)
 end
+
+# @testset "switchgrass" begin
+#     C = Dict(
+#         :KH2PO4 => root_switchgrass_KH2PO4,
+#         :AlPO4 => root_switchgrass_AlPO4,
+#         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
+#     )
+#     for i in 1:3
+#         for c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
+#             s = instance(Root.RootArchiteture, config=C[c])
+#             r = simulate!(s, stop=400)
+#             Root.writevtk("$c-$i", s)
+#         end
+#     end
+# end
