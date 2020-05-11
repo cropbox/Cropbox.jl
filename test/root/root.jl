@@ -228,7 +228,7 @@ end
 @system FirstOrderLateralRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
     n: name => :FirstOrderLateralRoot ~ preserve::Symbol
 end
-@system SecondOrderLateralRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
+@system SecondOrderLateralRoot(MyBaseRoot, Tropism) <: RootSystem begin
     n: name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
 
