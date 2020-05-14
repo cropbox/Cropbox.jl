@@ -171,7 +171,7 @@ plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = TikzGraphs.plot(d.g
 
 import Base: write
 import TikzPictures
-write(filename::AbstractString, d::Dependency; kw...) = begin
+write(filename::AbstractString, d::Dependency; plotopts...) = begin
     f = TikzPictures.PDF(string(filename))
-    TikzPictures.save(f, plot(d; kw...))
+    TikzPictures.save(f, plot(d; plotopts...))
 end
