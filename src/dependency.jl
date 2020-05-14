@@ -168,7 +168,6 @@ edgestyles(d::Dependency) = Dict(let a=src(e), b=dst(e); (a, b) => edgestyle(d, 
 
 import TikzGraphs
 plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = TikzGraphs.plot(d.g, TikzGraphs.Layouts.Layered(; sib_dist=sib_dist, lev_dist=lev_dist), labels(d; alias=alias), edge_styles=edgestyles(d))
-plot(::Type{S}; kw...) where {S<:System} = plot(dependency(S); kw...)
 
 import Base: write
 import TikzPictures
@@ -176,4 +175,3 @@ write(filename::AbstractString, d::Dependency; kw...) = begin
     f = TikzPictures.PDF(string(filename))
     TikzPictures.save(f, plot(d; kw...))
 end
-write(filename::AbstractString, ::Type{S}; kw...) where {S<:System} = write(filename, dependency(S); kw...)
