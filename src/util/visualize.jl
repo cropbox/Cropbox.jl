@@ -1,6 +1,6 @@
 visualize(S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
-    stop=nothing, skipfirst=true, callback=nothing,
+    stop=nothing, skipfirst=true, filter=nothing,
     ylab=nothing, legend=nothing, plotopts...
 ) = begin
     G = configure(group)
@@ -20,7 +20,7 @@ visualize(S::Type{<:System}, x, y;
     end
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=configexpand(xstep, c), stop=stop, skipfirst=skipfirst, callback=callback)
+    s(c) = simulate(S; configs=configexpand(xstep, c), stop=stop, skipfirst=skipfirst, filter=filter)
     r = s(C[1])
     p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
     for i in 2:length(C)
@@ -31,17 +31,17 @@ visualize(S::Type{<:System}, x, y;
 end
 visualize(S::Type{<:System}, x, y::Vector;
     config=(), xstep=(),
-    stop=nothing, skipfirst=true, callback=nothing,
+    stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    r = simulate(S; configs=configexpand(xstep, config), stop=stop, skipfirst=skipfirst, callback=callback)
+    r = simulate(S; configs=configexpand(xstep, config), stop=stop, skipfirst=skipfirst, filter=filter)
     plot(r, x, y; plotopts...)
 end
 
 visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
 visualize(df::DataFrame, SS::Vector, x, y;
     configs=[], xstep=(),
-    stop=nothing, skipfirst=true, callback=nothing,
+    stop=nothing, skipfirst=true, filter=nothing,
     xlab=nothing, ylab=nothing, name=nothing, names=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
@@ -63,7 +63,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
     p = plot(df, xo, yo; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
         cs = isnothing(xstep) ? c : configexpand(xstep, c)
-        r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, callback=callback)
+        r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, filter=filter)
         p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
     end
     p
@@ -71,10 +71,10 @@ end
 
 visualize(S::Type{<:System}, x, y, z;
     config=(), xstep=(), ystep=(),
-    stop=nothing, skipfirst=true, callback=nothing,
+    stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
     C = configmultiply([xstep, ystep], config)
-    r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, callback=callback)
+    r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter)
     plot(r, x, y, z; plotopts...)
 end

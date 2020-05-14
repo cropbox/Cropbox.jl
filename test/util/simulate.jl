@@ -49,16 +49,16 @@ using Dates
         @test r0[end, :] == r0[end, :]
     end
 
-    @testset "callback" begin
-        @system SSimulateCallback(Controller) begin
+    @testset "filter" begin
+        @system SSimulateFilter(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
         end
         n = 10
-        cb(s) = s.b' % 2 == 0
-        r0 = simulate(SSimulateCallback, stop=n, callback=nothing)
+        f(s) = s.b' % 2 == 0
+        r0 = simulate(SSimulateFilter, stop=n, filter=nothing)
         @test !all(r0[!, :b] .% 2 .== 0)
-        r1 = simulate(SSimulateCallback, stop=n, callback=cb)
+        r1 = simulate(SSimulateFilter, stop=n, filter=f)
         @test all(r1[!, :b] .% 2 .== 0)
     end
 
