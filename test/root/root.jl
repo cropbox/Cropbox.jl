@@ -232,7 +232,7 @@ end
     n: name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
 
-@system RootArchiteture(Controller) begin
+@system RootArchitecture(Controller) begin
     box(context) ~ ::Rhizobox
     maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation

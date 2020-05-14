@@ -9,7 +9,7 @@ root_maize = (
         :r2 => 5,
         :height => 50,
     ),
-    :RootArchiteture => :maxB => 5,
+    :RootArchitecture => :maxB => 5,
     :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -57,7 +57,7 @@ root_maize = (
     )
 )
 root_switchgrass_N = (
-    :RootArchiteture => :maxB => 5,
+    :RootArchitecture => :maxB => 5,
     :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -105,7 +105,7 @@ root_switchgrass_N = (
     )
 )
 root_switchgrass_W = (
-    :RootArchiteture => :maxB => 15,
+    :RootArchitecture => :maxB => 15,
     :MyBaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -202,7 +202,7 @@ root_switchgrass_C6H17NaO24P6 = (
 )
 
 @testset "root" begin
-    s = instance(Root.RootArchiteture, config=root_maize)
+    s = instance(Root.RootArchitecture, config=root_maize)
     r = simulate!(s, stop=50)
     @test r[!, :tick][end] > 50u"hr"
     # Root.render(s) |> open
@@ -217,7 +217,7 @@ end
 #     )
 #     for i in 1:3
 #         for c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
-#             s = instance(Root.RootArchiteture, config=C[c])
+#             s = instance(Root.RootArchitecture, config=C[c])
 #             r = simulate!(s, stop=400)
 #             Root.writevtk("$c-$i", s)
 #         end
