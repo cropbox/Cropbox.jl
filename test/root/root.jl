@@ -275,7 +275,7 @@ gather!(::Val, V::Vector{<:System}, L) = gather!.(V, Ref(L))
 gather!(::Val, s, L) = nothing
 
 using WriteVTK
-writevtk(name::AbstractString, s::System) = begin
+gathervtk(name::AbstractString, s::System) = begin
     L = gather(s)
     P = Float32[]
     C = MeshCell[]
@@ -290,7 +290,8 @@ writevtk(name::AbstractString, s::System) = begin
     end
     P3 = reshape(P, 3, :)
     g = vtk_grid(name, P3, C)
-    vtk_save(g)
+end
+writevtk(name::AbstractString, s::System) = vtk_save(gathervtk(name, s))
 end
 
 end
