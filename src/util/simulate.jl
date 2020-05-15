@@ -56,9 +56,10 @@ format(m::Simulation; nounit=false, long=false) = begin
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
-progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, verbose=true, kwargs...) = begin
+progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, callback=nothing, verbose=true, kwargs...) = begin
     isnothing(stop) && (stop = 1)
     isnothing(filter) && (filter = s -> true)
+    isnothing(callback) && (callback = s -> nothing)
     n = if stop isa Number
         stop
     else
@@ -83,6 +84,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     while check()
         update!(s)
         filter(s) != false && update!.(M, s)
+        callback(s)
         ProgressMeter.next!(p)
     end
     ProgressMeter.finish!(p)
@@ -96,6 +98,7 @@ simulate!(s::System, layout; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
     progress!(s, M; kwargs...)
 end
+simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; callback=f, kwargs...)
 
 simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target)]; kwargs...) |> only
@@ -114,5 +117,6 @@ simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
     R = [simulate(S, layout; config=c, kwargs...) for c in configs]
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
+simulate(f::Function, S::Type{<:System}, args...; kwargs...) = simulate(S, args...; callback=f, kwargs...)
 
 export simulate, simulate!

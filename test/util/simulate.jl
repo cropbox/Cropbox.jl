@@ -62,6 +62,18 @@ using Dates
         @test all(r1[!, :b] .% 2 .== 0)
     end
 
+    @testset "callback" begin
+        @system SSimulateCallback(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a) ~ accumulate
+        end
+        n = 10
+        i = 0
+        f(s) = (i += 1)
+        simulate(SSimulateCallback, stop=n, callback=f)
+        @test i == n
+    end
+
     @testset "layout" begin
         @system SSimulateLayout(Controller) begin
             i => 1 ~ accumulate
