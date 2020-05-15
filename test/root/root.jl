@@ -292,6 +292,15 @@ gathervtk(name::AbstractString, s::System) = begin
     g = vtk_grid(name, P3, C)
 end
 writevtk(name::AbstractString, s::System) = vtk_save(gathervtk(name, s))
+writepvd(name::AbstractString, S::Type{<:System}; kwargs...) = begin
+    pvd = paraview_collection(name)
+    path = mkpath("$name-pvd")
+    i = 0
+    simulate(S; kwargs...) do s
+        pvd[i] = gathervtk("$path/$name-$i", s)
+        i += 1
+    end
+    vtk_save(pvd)
 end
 
 end
