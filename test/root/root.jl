@@ -121,10 +121,27 @@ abstract type RootSystem <: System end
         end
     end ~ preserve(u"cm")
 
+    r: maximum_elongation_rate => 1.0 ~ preserve(u"cm/d", extern, parameter, min=0)
+    GD(lmax, r): growth_duration => begin
+        d = lmax / r
+        1.5d
+    end ~ preserve(u"d")
+    ea0: initial_elongation_age => 0 ~ preserve(u"d", extern)
+    ea(l, Δx, lt, lmax): elongation_age => (l < Δx && lt < lmax ? 1 : 0) ~ accumulate(init=ea0, u"d")
+    bg(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")): beta_growth => begin
+        t = clamp(t, zero(t), t_e)
+        t_m = t_e / 2
+        t_et = t_e - t
+        t_em = t_e - t_m
+        t_tb = t - t_b
+        t_mb = t_m - t_b
+        c_m * ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
+    end ~ call(u"cm/d")
+    pr(bg, ea, GD, r): potential_elongation_rate => bg(ea, GD, r) ~ track(u"cm/d")
+
     Δt(context.clock.step): timestep ~ preserve(u"hr")
-    r: elongation_rate => 1.0 ~ preserve(u"cm/d", parameter, min=0)
-    ar(r, Δx, l, Δt): actual_elongation_rate => min(r, (Δx - l) / Δt) ~ track(u"cm/d")
-    rr(r, ar): remaining_elongation_rate => r - ar ~ track(u"cm/d")
+    ar(pr, Δx, l, Δt): actual_elongation_rate => min(pr, (Δx - l) / Δt) ~ track(u"cm/d")
+    rr(pr, ar): remaining_elongation_rate => pr - ar ~ track(u"cm/d")
     rl(rr, Δt): remaining_length => rr*Δt ~ track(u"cm")
     l0: initial_length => 0 ~ preserve(u"cm", extern)
     lp: parent_length => 0 ~ preserve(u"cm", extern)
@@ -202,10 +219,10 @@ abstract type RootSystem <: System end
     end ~ call::Symbol
 
     ms(l, Δx, lt, lmax): may_segment => (l >= Δx && lt < lmax) ~ flag
-    S(S, ms, n, box, ro, zi, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
+    S(S, ms, n, box, ro, zi, r, ea, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
         (isempty(S) && ms) ? [
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-            produce(eval(n), box=box, ro=ro, zi=zi+1, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
+            produce(eval(n), box=box, ro=ro, zi=zi+1, r=r, ea0=ea, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1),
         ] : nothing
     end ~ produce::BaseRoot
 
