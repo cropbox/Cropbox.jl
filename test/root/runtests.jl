@@ -207,6 +207,7 @@ root_switchgrass_C6H17NaO24P6 = (
     @test r[!, :tick][end] > 50u"hr"
     # Root.render(s) |> open
     # Root.writevtk("test", s)
+    # Root.writepvd("test", Root.RootArchitecture, config=root_maize, stop=50)
 end
 
 # @testset "switchgrass" begin
@@ -215,11 +216,7 @@ end
 #         :AlPO4 => root_switchgrass_AlPO4,
 #         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
 #     )
-#     for i in 1:3
-#         for c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
-#             s = instance(Root.RootArchitecture, config=C[c])
-#             r = simulate!(s, stop=400)
-#             Root.writevtk("$c-$i", s)
-#         end
+#     for i in 1:3, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
+#         Root.writepvd("$c-$i", Root.RootArchitecture, config=C[c], stop=500)
 #     end
 # end
