@@ -150,7 +150,7 @@ abstract type RootSystem <: System end
 
     Δx: axial_resolution => 1 ~ preserve(u"cm", parameter)
     σ: standard_deviation_of_angle => 30 ~ preserve(u"°", parameter)
-    σ_Δx(σ, nounit(Δx)): normalized_standard_deviation_of_angle => sqrt(Δx)*σ ~ track(u"°")
+    σ_Δx(σ, nounit(Δx)): normalized_standard_deviation_of_angle => sqrt(Δx)*σ ~ preserve(u"°")
 
     θ: insertion_angle => 30 ~ preserve(u"°", parameter)
     pα(zi, nounit(θ), nounit(σ_Δx);): pick_angular_angle => begin
@@ -185,7 +185,7 @@ abstract type RootSystem <: System end
     α(A): angular_angle => A[1] ~ preserve(u"°")
     β(A): radial_angle => A[2] ~ preserve(u"°")
 
-    RT0: parent_transformation ~ track::Transformation(override)
+    RT0: parent_transformation ~ preserve::Transformation(override)
     pp(RT0): parent_position => RT0([0, 0, 0]) ~ preserve::Point3f0
     np(pp, RT0, nounit(Δx); α, β): new_position => begin
         R = RotZX(β, α) |> LinearMap
@@ -197,9 +197,9 @@ abstract type RootSystem <: System end
         # rotate root segment
         R = RotZX(β, α) |> LinearMap
         R ∘ T
-    end ~ track::Transformation
-    RT1(RT0, RT): global_transformation => RT0 ∘ RT ~ track::Transformation
-    cp(RT1): current_position => RT1([0, 0, 0]) ~ track::Point3f0
+    end ~ preserve::Transformation
+    RT1(RT0, RT): global_transformation => RT0 ∘ RT ~ preserve::Transformation
+    cp(RT1): current_position => RT1([0, 0, 0]) ~ preserve::Point3f0
 
     a: radius => 0.05 ~ preserve(u"cm", parameter, min=0.01)
 
@@ -252,7 +252,7 @@ end
 @system RootArchitecture(Controller) begin
     box(context) ~ ::Rhizobox
     maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
-    RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
+    RT0: initial_transformation => IdentityTransformation() ~ preserve::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
         [produce(PrimaryRoot, box=box, RT0=RT0) for i in (length(roots)+1):maxB]
     end ~ produce::PrimaryRoot
