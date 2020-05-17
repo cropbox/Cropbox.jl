@@ -76,7 +76,7 @@ end
     to(RT0; α, β): tropism_objective => begin
         R = RotZX(β, α) |> LinearMap
         #-(RT0 ∘ R).linear[9]
-        p = (RT0 ∘ R)([0, 0, -1])
+        p = (RT0 ∘ R)(Point3f0(0, 0, -1))
         p[3]
     end ~ call
 end
@@ -186,10 +186,10 @@ abstract type RootSystem <: System end
     β(A): radial_angle => A[2] ~ preserve(u"°")
 
     RT0: parent_transformation ~ preserve::Transformation(override)
-    pp(RT0): parent_position => RT0([0, 0, 0]) ~ preserve::Point3f0
+    pp(RT0): parent_position => RT0(Point3f0(0, 0, 0)) ~ preserve::Point3f0
     np(pp, RT0, nounit(Δx); α, β): new_position => begin
         R = RotZX(β, α) |> LinearMap
-        pp + (RT0 ∘ R)([0, 0, -Δx])
+        pp + (RT0 ∘ R)(Point3f0(0, 0, -Δx))
     end ~ call::Point3f0
     RT(nounit(l), α, β): local_transformation => begin
         # put root segment at parent's end
@@ -199,7 +199,7 @@ abstract type RootSystem <: System end
         R ∘ T
     end ~ preserve::Transformation
     RT1(RT0, RT): global_transformation => RT0 ∘ RT ~ preserve::Transformation
-    cp(RT1): current_position => RT1([0, 0, 0]) ~ preserve::Point3f0
+    cp(RT1): current_position => RT1(Point3f0(0, 0, 0)) ~ preserve::Point3f0
 
     a: radius => 0.05 ~ preserve(u"cm", parameter, min=0.01)
 
