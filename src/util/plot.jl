@@ -29,7 +29,8 @@ end
 label(l, u::Units) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
 
 detectbackend() = begin
-    if isdefined(Main, :IJulia) && Main.IJulia.inited
+    if isdefined(Main, :IJulia) && Main.IJulia.inited ||
+       isdefined(Main, :Juno) && Main.Juno.isactive()
         :Gadfly
     else
         :UnicodePlots
