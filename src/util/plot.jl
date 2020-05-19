@@ -189,8 +189,10 @@ end
 plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
+        data = (x=X, y=Y, color=Z)
     elseif kind == :contour
         geom = Gadfly.Geom.contour(levels=50)
+        data = (x=X, y=Y, z=Z)
     else
         error("unrecognized plot kind = $kind")
     end
@@ -202,8 +204,6 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
     )
 
     Gadfly.plot(
-        x=X, y=Y,
-        z=Z, color=Z, # z for contour, color for heatmap
         Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
         Gadfly.Guide.title(title),
         Gadfly.Guide.xlabel(xlab),
@@ -211,7 +211,8 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
         Gadfly.Guide.colorkey(title=zlab),
         Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
         geom,
-        theme,
+        theme;
+        data...,
     )
 end
 
