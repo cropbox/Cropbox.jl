@@ -28,6 +28,14 @@ end
 
 label(l, u::Units) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
 
+detectbackend() = begin
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        :Gadfly
+    else
+        :UnicodePlots
+    end
+end
+
 plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
 plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
 plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
@@ -64,13 +72,7 @@ plot!(p, df::DataFrame, x, y::Vector;
     names = [string(isnothing(l) ? t : l) for (t, l) in zip(y, name)]
     title = isnothing(title) ? "" : string(title)
 
-    if isnothing(backend)
-        backend = if isdefined(Main, :IJulia) && Main.IJulia.inited
-            :Gadfly
-        else
-            :UnicodePlots
-        end
-    end
+    isnothing(backend) && (backend = detectbackend())
     plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim, aspect=aspect)
 end
 
@@ -103,13 +105,7 @@ plot(df::DataFrame, x, y, z;
     zlab = label(isnothing(zlab) ? z : zlab, zunit)
     title = isnothing(title) ? "" : string(title)
 
-    if isnothing(backend)
-        backend = if isdefined(Main, :IJulia) && Main.IJulia.inited
-            :Gadfly
-        else
-            :UnicodePlots
-        end
-    end
+    isnothing(backend) && (backend = detectbackend())
     plot3!(Val(backend), X, Y, Z; kind=kind, title=title, xlab=xlab, ylab=ylab, zlab=zlab, xlim=xlim, ylim=ylim, zlim=zlim, aspect=aspect)
 end
 
