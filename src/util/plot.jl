@@ -125,6 +125,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
     end
 
     theme = Gadfly.Theme(
+        background_color="white",
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
     )
@@ -195,6 +196,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
     end
 
     theme = Gadfly.Theme(
+        background_color="white",
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
     )
