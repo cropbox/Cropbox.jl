@@ -37,13 +37,14 @@ link!(h::Hierarchy, a::Symbol, b::Symbol, e=nothing) = begin
 end
 
 add!(h::Hierarchy, S::Type{<:System}) = begin
+    #HACK: evaluation scope is the module where S was originally defined
+    scope = S.name.module
     a = node!(h, S)
     (a in h.N || hasloop(h, a)) && return
     add!(h, a)
     V = geninfos(S)
     for v in V
-        #HACK: evaluate types defined in Main module
-        T = Main.eval(v.type)
+        T = @eval scope $(v.type)
         #HACK: skip Context since the graph tends to look too busy
         (T == Context) && continue
         add!(h, a, T)
