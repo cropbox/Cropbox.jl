@@ -3,6 +3,7 @@ module Cropbox
 include("system.jl")
 include("unit.jl")
 include("random.jl")
+include("graph.jl")
 include("macro.jl")
 include("time.jl")
 include("state.jl")

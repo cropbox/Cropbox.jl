@@ -1,6 +1,6 @@
-using LightGraphs
+import LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, has_edge, nv
 
-struct Hierarchy
+struct Hierarchy <: Graph
     g::DiGraph
     N::Vector{Symbol}
     I::Dict{Symbol,Int}
@@ -13,6 +13,8 @@ hierarchy(S::Type{<:System}) = begin
     add!(h, S)
     h
 end
+
+graph(h::Hierarchy) = h.g
 
 node!(h::Hierarchy, n::Symbol) = begin
     if !haskey(h.I, n)
@@ -82,15 +84,4 @@ edgestyle(h::Hierarchy, e::Symbol) = begin
 end
 edgestyles(h::Hierarchy) = Dict(e => edgestyle(h, s) for (e, s) in h.E)
 
-import TikzGraphs
-plot(h::Hierarchy; sib_dist=-1, lev_dist=-1) = begin
-    #TikzGraphs.plot(h.g, labels(h), edge_styles=edgestyles(h), options="grow=right, components go down left aligned")
-    TikzGraphs.plot(h.g, TikzGraphs.Layouts.Layered(; sib_dist=sib_dist, lev_dist=lev_dist), labels(h), edge_styles=edgestyles(h))
-end
-
-import Base: write
-import TikzPictures
-write(filename::AbstractString, h::Hierarchy; plotopts...) = begin
-    f = TikzPictures.PDF(string(filename))
-    TikzPictures.save(f, plot(h; plotopts...))
-end
+plot(h::Hierarchy; sib_dist=-1, lev_dist=-1) = plot(h, (; sib_dist=sib_dist, lev_dist=lev_dist))

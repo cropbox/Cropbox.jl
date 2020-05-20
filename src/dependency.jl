@@ -1,6 +1,6 @@
-using LightGraphs
+import LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, dst, edges, src
 
-struct Dependency
+struct Dependency <: Graph
     g::DiGraph
     N::Vector{VarNode}
     I::Dict{VarNode,Int}
@@ -21,6 +21,8 @@ dependency(V::Vector{VarInfo}) = begin
 end
 dependency(::Type{S}) where {S<:System} = dependency(geninfos(S))
 dependency(::S) where {S<:System} = dependency(S)
+
+graph(d::Dependency) = d.g
 
 node!(d::Dependency, n::VarNode) = begin
     if !haskey(d.I, n)
@@ -141,8 +143,8 @@ end
 
 import Base: sort
 sort(d::Dependency) = begin
-    @assert isempty(simplecycles(d.g))
-    J = topological_sort_by_dfs(d.g)
+    @assert isempty(LightGraphs.simplecycles(d.g))
+    J = LightGraphs.topological_sort_by_dfs(d.g)
     [d.N[i] for i in J]
 end
 
@@ -166,12 +168,4 @@ labels(d::Dependency; kw...) = label.(d.N; kw...)
 edgestyle(d::Dependency, a::VarNode, b::VarNode) = ""
 edgestyles(d::Dependency) = Dict(let a=src(e), b=dst(e); (a, b) => edgestyle(d, d.N[a], d.N[b]) end for e in edges(d.g))
 
-import TikzGraphs
-plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = TikzGraphs.plot(d.g, TikzGraphs.Layouts.Layered(; sib_dist=sib_dist, lev_dist=lev_dist), labels(d; alias=alias), edge_styles=edgestyles(d))
-
-import Base: write
-import TikzPictures
-write(filename::AbstractString, d::Dependency; plotopts...) = begin
-    f = TikzPictures.PDF(string(filename))
-    TikzPictures.save(f, plot(d; plotopts...))
-end
+plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = plot(d, (; sib_dist=sib_dist, lev_dist=lev_dist), (; alias=alias))
