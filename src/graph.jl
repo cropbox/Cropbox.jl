@@ -11,6 +11,8 @@ plot(g::Graph, layout=(), label=(), edgestyle=()) = begin
         TikzGraphs.Layouts.Layered(; layout...),
         labels(g; label...);
         edge_styles=edgestyles(g; edgestyle...),
+        prepend_preamble="\\usetikzlibrary{backgrounds}",
+        options="background rectangle/.style={fill=white}, show background rectangle",
     )
 end
 
