@@ -3,7 +3,7 @@ module Root
 using Cropbox
 using Distributions
 using MeshCat
-import GeometryTypes: Cylinder3, Point3f0
+import GeometryTypes: Point3f0, Rect3D
 import CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
 import Rotations: RotZX
 import Colors: RGBA
@@ -266,7 +266,8 @@ render!(V::Val{:Rendering}, r::RootSystem, vis) = begin
     l = Cropbox.deunitfy(r.l')
     a = Cropbox.deunitfy(r.a')
     (iszero(l) || iszero(a)) && return
-    g = Cylinder3{Float32}(Point3f0(0), Point3f0(0, 0, l), a)
+    d = a/2
+    g = Rect3D(Point3f0(-d, -d, -d), Point3f0(a, a, l))
     M = r.RT'
     # add root segment
     cvis = vis["$(UUIDs.uuid1())"]
