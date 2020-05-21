@@ -103,9 +103,9 @@ simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; ca
 simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target)]; kwargs...) |> only
 end
-simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), kwargs...) = begin
+simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
     if isempty(configs)
-        s = instance(S; config=config, options=options)
+        s = instance(S; config=config, options=options, seed=seed)
         simulate!(s, layout; kwargs...)
     elseif isempty(config)
         simulate(S, layout, configs; options=options, kwargs...)

@@ -148,6 +148,30 @@ using Dates
         @test r[end, :b] == b
     end
 
+    @testset "seed" begin
+        @system SSimulateSeed(Controller) begin
+            a => rand() ~ track
+            b(a) ~ accumulate
+        end
+        n = 10
+        r1 = simulate(SSimulateSeed, seed=0, stop=n)
+        @test r1[end, :a] == 0.5392892841426182
+        @test r1[end, :b] == 3.766035118243237
+        r2 = simulate(SSimulateSeed, seed=0, stop=n)
+        @test r1 == r2
+    end
+
+    @testset "no seed" begin
+        @system SSimulateNoSeed(Controller) begin
+            a => rand() ~ track
+            b(a) ~ accumulate
+        end
+        n = 10
+        r1 = simulate(SSimulateNoSeed, seed=nothing, stop=n)
+        r2 = simulate(SSimulateNoSeed, seed=nothing, stop=n)
+        @test r1 != r2
+    end
+
     @testset "extractable" begin
         @system SSimulateExtractable(Controller) begin
             a => 1 ~ track
