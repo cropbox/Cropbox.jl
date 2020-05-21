@@ -85,9 +85,9 @@ gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 names(v::VarInfo) = let n = v.name, a = v.alias
     isnothing(a) ? [n] : [n, a]
 end
-linenumber(v::VarInfo, prefix="") = begin
+linenumber(v::VarInfo, prefix="", postfix="") = begin
     n = v.linenumber
-    @set n.file = Symbol(n.file, ":$prefix|", v.name)
+    @set n.file = Symbol(n.file, ":$prefix|", v.name, "|$postfix")
 end
 
 ####
@@ -445,7 +445,7 @@ end
 
 genupdate(n::VarNode) = genupdate(n.info, n.step)
 genupdate(v::VarInfo, t) = @q begin
-    $(linenumber(v, "genupdate"))
+    $(linenumber(v, "genupdate", t))
     @label $(symlabel(v, t))
     $(genupdate(v, Val(v.state), t))
 end
