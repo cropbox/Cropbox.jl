@@ -4,7 +4,8 @@ using Cropbox
 using Distributions
 using MeshCat
 import GeometryTypes: Cylinder3, Point3f0
-import CoordinateTransformations: IdentityTransformation, LinearMap, RotZX, Transformation, Translation
+import CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
+import Rotations: RotZX
 import Colors: RGBA
 import UUIDs
 
