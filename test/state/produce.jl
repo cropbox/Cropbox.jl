@@ -18,6 +18,27 @@
         @test length(s.a[2].a) == 0
     end
 
+    @testset "single" begin
+        @system SProduceSingle begin
+            a => produce(SProduceSingle) ~ produce::SProduceSingle
+        end
+        @system SProduceSingleController(Controller) begin
+            s(context) ~ ::SProduceSingle
+        end
+        sc = instance(SProduceSingleController)
+        s = sc.s
+        @test length(s.a) == 0
+        update!(sc)
+        @test length(s.a) == 1
+        a = s.a[1]
+        @test length(s.a[1].a) == 0
+        update!(sc)
+        @test length(s.a) == 1
+        @test a === s.a[1]
+        @test length(s.a[1].a) == 1
+        @test_throws BoundsError s.a[2]
+    end
+
     @testset "kwargs" begin
         @system SProduceKwargs begin
             a => produce(SProduceKwargs) ~ produce
@@ -55,7 +76,7 @@
 
     @testset "query index" begin
         @system SProduceQueryIndex begin
-            p => produce(SProduceQueryIndex) ~ produce::SProduceQueryIndex
+            p => produce(SProduceQueryIndex) ~ produce::[SProduceQueryIndex]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
             a(x=p["*"].i) => sum(x) ~ track
             b(x=p["**"].i) => sum(x) ~ track
@@ -90,7 +111,7 @@
 
     @testset "query condition with track bool" begin
         @system SProduceQueryConditionTrackBool begin
-            p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool
+            p => produce(SProduceQueryConditionTrackBool) ~ produce::[SProduceQueryConditionTrackBool]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
             f(i) => isodd(i) ~ track::Bool
             a(x=p["*/f"].i) => sum(x) ~ track
@@ -132,7 +153,7 @@
 
     @testset "query condition with flag" begin
         @system SProduceQueryConditionFlag begin
-            p => produce(SProduceQueryConditionFlag) ~ produce::SProduceQueryConditionFlag
+            p => produce(SProduceQueryConditionFlag) ~ produce::[SProduceQueryConditionFlag]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => sum(x) ~ track
@@ -174,7 +195,7 @@
 
     @testset "adjoint" begin
         @system SProduceAdjoint begin
-            p => produce(SProduceAdjoint) ~ produce::SProduceAdjoint
+            p => produce(SProduceAdjoint) ~ produce::[SProduceAdjoint]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
         end
         @system SProduceAdjointController(Controller) begin

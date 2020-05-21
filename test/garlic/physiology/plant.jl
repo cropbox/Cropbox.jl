@@ -21,12 +21,10 @@
 
     #scape => begin end ~ produce::Scape
 
-    root(root, pheno, emerging=pheno.emerging) => begin
-        if isempty(root)
-            if emerging
-                #TODO import_carbohydrate(soil.total_root_weight)
-                produce(Root, phenology=pheno)
-            end
+    root(pheno, emerging=pheno.emerging) => begin
+        if emerging
+            #TODO import_carbohydrate(soil.total_root_weight)
+            produce(Root, phenology=pheno)
         end
     end ~ produce::Root
 
@@ -39,7 +37,7 @@
                 [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(NU)+1):l]
             end
         end
-    end ~ produce::NodalUnit
+    end ~ produce::[NodalUnit]
 
     #TODO find a better place?
     PD: planting_density => 55 ~ preserve(u"m^-2", parameter)

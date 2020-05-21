@@ -9,8 +9,8 @@ struct BundleFilter{S<:AbstractString} <: BundleOperator
     cond::S
 end
 
-struct Bundle{S<:System}
-    root::Produce{S}
+struct Bundle{S<:System,P}
+    root::Produce{P}
     ops::Vector{BundleOperator}
 end
 
@@ -33,7 +33,9 @@ resolveindex(op::AbstractString) = begin
 end
 
 import Base: getindex
-getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{S}(s, resolveindex.(split(ops, "/")))
+getindex(s::Produce{Union{S,Nothing}}, ops::AbstractString) where {S<:System} = Bundle{S,Union{S,Nothing}}(s, resolveindex.(split(ops, "/")))
+getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{S,Vector{S}}(s, resolveindex.(split(ops, "/")))
+
 fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
 
@@ -55,7 +57,8 @@ collect(p::Produce, ::BundleAll) = value(p)
 collect(p::Produce, ::BundleRecursiveAll) = begin
     l = System[]
     #TODO: possibly reduce overhead by reusing calculated values in child nodes
-    f(s) = (push!(l, s); f.(value(getfield(s, p.name))))
+    f(s::System) = (push!(l, s); f.(value(getfield(s, p.name))))
+    f(::Nothing) = nothing
     f.(value(p))
     l
 end
