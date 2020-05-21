@@ -105,7 +105,7 @@ simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=not
 end
 simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), kwargs...) = begin
     if isempty(configs)
-        s = instance(S; config=config, options...)
+        s = instance(S; config=config, options=options)
         simulate!(s, layout; kwargs...)
     elseif isempty(config)
         simulate(S, layout, configs; options=options, kwargs...)

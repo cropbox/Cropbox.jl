@@ -135,6 +135,19 @@ using Dates
         @test r[r[!, :tick] .== (n+1)*u"hr", :b] == p .* n
     end
 
+    @testset "options" begin
+        @system SSimulateOptions(Controller) begin
+            a ~ preserve(extern)
+            b ~ ::Int(override)
+        end
+        n = 10
+        a, b = 1, 2
+        o = (; a=a, b=b)
+        r = simulate(SSimulateOptions, options=o, stop=n)
+        @test r[end, :a] == a
+        @test r[end, :b] == b
+    end
+
     @testset "extractable" begin
         @system SSimulateExtractable(Controller) begin
             a => 1 ~ track
