@@ -270,7 +270,6 @@ render!(V::Val{:Rendering}, r::RootSystem, vis) = begin
     M = r.RT'
     # add root segment
     cvis = vis["$(UUIDs.uuid1())"]
-    ro = r.ro'
     c = r.color'
     m = MeshCat.defaultmaterial(color=c)
     setobject!(cvis, g, m)
