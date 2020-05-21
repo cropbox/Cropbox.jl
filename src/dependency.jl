@@ -152,15 +152,7 @@ label(n::VarNode; alias=false) = begin
     v = n.info
     name = alias && !isnothing(v.alias) ? v.alias : v.name
     name = replace(string(name), "_" => " ")
-    tag = begin
-        if n.step == PreStep()
-            "∘"
-        elseif n.step == PostStep()
-            "⋆"
-        else
-            ""
-        end
-    end
+    tag = string(n.step)
     tag * name
 end
 labels(d::Dependency; kw...) = label.(d.N; kw...)

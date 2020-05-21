@@ -97,6 +97,11 @@ struct PreStep <: VarStep end
 struct MainStep <: VarStep end
 struct PostStep <: VarStep end
 
+import Base: print
+print(io::IO, ::PreStep) = print(io, "∘")
+print(io::IO, ::MainStep) = print(io, "")
+print(io::IO, ::PostStep) = print(io, "⋆")
+
 struct Node{I,S}
     info::I
     step::S
@@ -295,6 +300,11 @@ abstract type UpdateStage end
 struct PreStage <: UpdateStage end
 struct MainStage <: UpdateStage end
 struct PostStage <: UpdateStage end
+
+import Base: print
+print(io::IO, ::PreStage) = print(io, "†")
+print(io::IO, ::MainStage) = print(io, "")
+print(io::IO, ::PostStage) = print(io, "‡")
 
 update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
     #HACK: preliminary support for multi-threaded update! (could be much slower if update is small)
