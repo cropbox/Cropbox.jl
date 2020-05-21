@@ -14,28 +14,26 @@ struct Bundle{S<:System}
     ops::Vector{BundleOperator}
 end
 
-import Base: getindex
-getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = begin
-    resolve(op::AbstractString) = begin
-        if op == "*"
-            # collecting children only at the current level
-            BundleAll()
-        elseif op == "**"
-            # collecting all children recursively
-            BundleRecursiveAll()
+resolveindex(op::AbstractString) = begin
+    if op == "*"
+        # collecting children only at the current level
+        BundleAll()
+    elseif op == "**"
+        # collecting all children recursively
+        BundleRecursiveAll()
+    else
+        i = tryparse(Int, op)
+        if !isnothing(i)
+            BundleIndex(i)
         else
-            i = tryparse(Int, op)
-            if !isnothing(i)
-                BundleIndex(i)
-            else
-                #TODO: support generic indexing function?
-                BundleFilter(op)
-            end
+            #TODO: support generic indexing function?
+            BundleFilter(op)
         end
     end
-    Bundle{S}(s, resolve.(split(ops, "/")))
 end
 
+import Base: getindex
+getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{S}(s, resolveindex.(split(ops, "/")))
 fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
 
