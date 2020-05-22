@@ -43,7 +43,7 @@ VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode, do
     args = isnothing(args) ? [] : args
     kwargs = isnothing(kwargs) ? [] : kwargs
     state = typestate(Val(state))
-    type = @capture(type, [elemtype_]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
+    type = @capture(type, elemtype_[]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
     VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
 end

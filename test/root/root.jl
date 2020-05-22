@@ -256,7 +256,7 @@ end
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
         [produce(PrimaryRoot, box=box, RT0=RT0) for i in (length(roots)+1):maxB]
-    end ~ produce::[PrimaryRoot]
+    end ~ produce::PrimaryRoot[]
 end
 
 render(s::System) = (vis = Visualizer(); render!(s, vis); vis)

@@ -37,7 +37,7 @@
                 [produce(NodalUnit, phenology=pheno, rank=i) for i in (length(NU)+1):l]
             end
         end
-    end ~ produce::[NodalUnit]
+    end ~ produce::NodalUnit[]
 
     #TODO find a better place?
     PD: planting_density => 55 ~ preserve(u"m^-2", parameter)
