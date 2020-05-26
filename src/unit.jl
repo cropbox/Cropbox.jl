@@ -37,3 +37,5 @@ unitfy(df::DataFrame) = begin
     N = filter(!isnothing, n.(M))
     DataFrames.rename(unitfy(df, U), N...)
 end
+
+export unitfy, deunitfy

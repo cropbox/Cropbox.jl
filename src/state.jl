@@ -7,6 +7,8 @@ value(v) = v
 value(s::State) = s.value
 value(S::Vector{<:State}) = value.(S)
 
+export value
+
 import Base: adjoint
 adjoint(s::State) = value(s)
 

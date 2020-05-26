@@ -103,3 +103,5 @@ visualize(S::Type{<:System}, x, y, z;
     r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter)
     plot(r, x, y, z; plotopts...)
 end
+
+export visualize

@@ -108,3 +108,7 @@ configexpand(patch, base=()) = begin
 end
 configrebase(configs::Vector, base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
 configrebase(config, base=()) = configrebase([config], base)
+
+export configure
+export parameters
+export configmultiply, configexpand, configrebase
