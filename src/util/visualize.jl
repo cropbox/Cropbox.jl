@@ -68,6 +68,31 @@ visualize(df::DataFrame, SS::Vector, x, y;
     end
     p
 end
+visualize(df::DataFrame, S::Type{<:System}, y;
+    configs=[],
+    stop=nothing, skipfirst=true, filter=nothing,
+    xlab=nothing, ylab=nothing, name=nothing, lim=nothing, plotopts...
+) = begin
+    y = y isa Pair ? y : y => y
+    yo, ye = y
+    xlab = isnothing(xlab) ? yo : xlab
+    ylab = isnothing(ylab) ? ye : ylab
+    isnothing(name) && (name = yo == ye ? string(yo) : "$yo : $ye")
+
+    X = extractarray(df, yo)
+    r = simulate(S; configs=configs, stop=stop, skipfirst=skipfirst, filter=filter)
+    Y = extractarray(r, ye)
+
+    if isnothing(lim)
+        l = findlim.(deunitfy.([X, Y]))
+        lim = (minimum(l)[1], maximum(l)[2])
+    end
+    I = [lim[1], lim[2]]
+
+    p = plot(X, Y; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    !isnothing(lim) && plot!(p, I, I, kind=:line, name="1 : 1")
+    p
+end
 
 visualize(S::Type{<:System}, x, y, z;
     config=(), xstep=(), ystep=(),
