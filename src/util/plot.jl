@@ -11,10 +11,11 @@ extractcolumn(df::DataFrame, n::Expr) = begin
     e = Main.eval(:(df -> @. $(MacroTools.postwalk(te, n))))
     (() -> @eval $e($df))()
 end
-extractunit(df::DataFrame, n) = unit(eltype(extractcolumn(df, n)))
-extractarray(df::DataFrame, n, u) = begin
+extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
+extractunit(a) = unit(eltype(a))
+extractarray(df::DataFrame, n) = begin
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    coalesce.(deunitfy.(extractcolumn(df, n), u), NaN)
+    coalesce.(extractcolumn(df, n), NaN)
 end
 
 findlim(array) = begin
@@ -37,27 +38,42 @@ detectbackend() = begin
     end
 end
 
-plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; name=[name], kw...)
-plot(df::DataFrame, x, y::Vector; kw...) = plot!(nothing, df, x, y; kw...)
-plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; name=[name], kw...)
-plot!(p, df::DataFrame, x, y::Vector;
+plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; names=[name], kw...)
+plot(df::DataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
+plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; names=[name], kw...)
+plot!(p, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, kw...) = begin
+    arr(n) = extractarray(df, n)
+    X = arr(x)
+    Ys = arr.(ys)
+
+    xlab = isnothing(xlab) ? x : xlab
+    ylab = isnothing(ylab) ? "" : ylab
+    names = isnothing(names) ? repeat([nothing], length(Ys)) : names
+    names = [string(isnothing(n) ? y : n) for (y, n) in zip(ys, names)]
+
+    plot!(p, X, Ys; xlab=xlab, ylab=ylab, names=names, kw...)
+end
+
+plot(X::Vector, Y::Vector; name=nothing, kw...) = plot(X, [Y]; names=isnothing(name) ? nothing : [name], kw...)
+plot(X::Vector, Ys::Vector{<:Vector}; kw...) = plot!(nothing, X, Ys; kw...)
+plot!(p, X::Vector, Y::Vector; name=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], kw...)
+plot!(p, X::Vector, Ys::Vector{<:Vector};
     kind=:scatter,
     title=nothing,
     xlab=nothing, ylab=nothing,
-    legend=nothing, name=nothing,
+    legend=nothing, names=nothing,
     xlim=nothing, ylim=nothing,
     xunit=nothing, yunit=nothing,
     aspect=nothing,
     backend=nothing,
 ) = begin
-    u(n) = extractunit(df, n)
-    isnothing(xunit) && (xunit = u(x))
-    isnothing(yunit) && (yunit = Unitful.promote_unit(u.(y)...))
+    u(a) = extractunit(a)
+    isnothing(xunit) && (xunit = u(X))
+    isnothing(yunit) && (yunit = Unitful.promote_unit(u.(Ys)...))
 
-    arr(n, u) = extractarray(df, n, u)
-    X = arr(x, xunit)
-    Ys = arr.(y, yunit)
-    n = length(Ys)
+    arr(a, u) = deunitfy(a, u)
+    X = arr(X, xunit)
+    Ys = arr.(Ys, yunit)
 
     isnothing(xlim) && (xlim = findlim(X))
     if isnothing(ylim)
@@ -66,11 +82,10 @@ plot!(p, df::DataFrame, x, y::Vector;
     end
 
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = label(isnothing(xlab) ? x : xlab, xunit) * '\n'
-    ylab = label(isnothing(ylab) ? "" : ylab, yunit)
+    xlab = label(xlab, xunit) * '\n'
+    ylab = label(ylab, yunit)
     legend = isnothing(legend) ? "" : string(legend)
-    name = isnothing(name) ? repeat([nothing], n) : name
-    names = [string(isnothing(l) ? t : l) for (t, l) in zip(y, name)]
+    names = isnothing(names) ? string.(1:length(Ys)) : names
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
@@ -91,7 +106,7 @@ plot(df::DataFrame, x, y, z;
     isnothing(yunit) && (yunit = u(y))
     isnothing(zunit) && (zunit = u(z))
 
-    arr(n, u) = extractarray(df, n, u)
+    arr(n, u) = deunitfy(extractarray(df, n), u)
     X = arr(x, xunit)
     Y = arr(y, yunit)
     Z = arr(z, zunit)
@@ -222,7 +237,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
         error("unrecognized plot kind = $kind")
     end
 
-    arr(A) = sort(unique(A))
+    arr(a) = sort(unique(a))
     x = arr(X)
     y = arr(Y)
     M = reshape(Z, length(y), length(x))
