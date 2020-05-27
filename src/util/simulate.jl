@@ -56,6 +56,7 @@ format(m::Simulation; nounit=false, long=false) = begin
 end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
+const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
 progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, callback=nothing, verbose=true, kwargs...) = begin
     isnothing(stop) && (stop = 1)
     isnothing(filter) && (filter = s -> true)
@@ -74,7 +75,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     end
     check = if n isa Number
         dt = verbose ? 1 : Inf
-        p = Progress(n, dt=dt)
+        p = Progress(n; dt=dt, barglyphs=barglyphs)
         () -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
