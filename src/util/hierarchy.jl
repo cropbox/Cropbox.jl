@@ -5,11 +5,12 @@ struct Hierarchy <: Graph
     N::Vector{Symbol}
     I::Dict{Symbol,Int}
     E::Dict{NTuple{2,Int},Symbol}
+    C::Dict{Symbol,Any}
 end
 
-hierarchy() = Hierarchy(DiGraph(), Symbol[], Dict{Symbol,Int}(), Dict{NTuple{2,Int},Symbol}())
-hierarchy(S::Type{<:System}) = begin
-    h = hierarchy()
+hierarchy(C=()) = Hierarchy(DiGraph(), Symbol[], Dict{Symbol,Int}(), Dict{NTuple{2,Int},Symbol}(), Dict{Symbol,Any}(C))
+hierarchy(S::Type{<:System}; kw...) = begin
+    h = hierarchy(kw)
     add!(h, S)
     h
 end
@@ -48,7 +49,7 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
     for v in V
         T = @eval scope $(v.type)
         #HACK: skip Context since the graph tends to look too busy
-        (T == Context) && continue
+        get(h.C, :skipcontext, false) && (T == Context) && continue
         add!(h, a, T)
     end
     push!(h.N, a)
