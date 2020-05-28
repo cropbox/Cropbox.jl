@@ -5,7 +5,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        version: [1.4.0]
+        version: ['1.4']
         os: [macOS-latest, ubuntu-latest, windows-latest]
         arch: [x64]
     steps:
