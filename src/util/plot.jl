@@ -154,6 +154,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
             layers...,
             theme,
         )
+        p.theme.key_position = all(isempty.(names)) ? :none : :right
     else
         #TODO: very hacky approach to append new plots... definitely need a better way
         n0 = length(p.layers)
@@ -163,6 +164,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
         for (c, l) in zip(colors[n0+1:end], names)
             mck.labels[c] = l
         end
+        p.theme.key_position = all(isempty.(values(mck.labels))) ? :none : :right
         layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
         for l in layers
             Gadfly.push!(p, l)

@@ -90,7 +90,7 @@ visualize(df::DataFrame, S::Type{<:System}, y;
     I = [lim[1], lim[2]]
 
     p = plot(X, Y; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
-    !isnothing(lim) && plot!(p, I, I, kind=:line, name="1 : 1")
+    !isnothing(lim) && plot!(p, I, I, kind=:line, name=isempty(name) ? "" : "1 : 1")
     p
 end
 
