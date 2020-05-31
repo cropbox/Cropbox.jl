@@ -1,5 +1,4 @@
-using Interpolations
-import Interpolations: Extrapolation
+import Interpolations: LinearInterpolation, Extrapolation
 import DataStructures: OrderedDict
 
 struct Interpolate{V} <: State{V}

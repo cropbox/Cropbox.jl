@@ -1,5 +1,4 @@
-using MacroTools
-import MacroTools: @q
+import MacroTools: MacroTools, isexpr, isline, @capture, @q
 import Setfield: @set
 
 struct VarInfo{S<:Union{Symbol,Nothing}}

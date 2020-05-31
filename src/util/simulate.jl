@@ -55,7 +55,7 @@ format(m::Simulation; nounit=false, long=false) = begin
     r
 end
 
-using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
+import ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
 progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, callback=nothing, verbose=true, kwargs...) = begin
     isnothing(stop) && (stop = 1)
