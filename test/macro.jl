@@ -51,4 +51,12 @@
         @test SCustomSystem <: System
         @test SCustomSystem <: SAbstractCustomSystem
     end
+
+    @testset "return" begin
+        @test_throws LoadError @eval @system SReturn begin
+            x => begin
+                return 1
+            end ~ track
+        end
+    end
 end

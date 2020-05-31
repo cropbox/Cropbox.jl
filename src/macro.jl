@@ -564,5 +564,7 @@ genfunc(v::VarInfo, body=nothing) = begin
         args = genfuncargs(v)
         isnothing(body) && (body = esc(v.body))
     end
+    #TODO: translate `return` to a local safe statement
+    MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
     MacroTools.flatten(@q let $args; $body end)
 end
