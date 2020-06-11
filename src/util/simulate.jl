@@ -49,7 +49,7 @@ format(m::Simulation; nounit=false, long=false) = begin
     end
     if long
         i = collect(keys(m.index))
-        t = setdiff(names(r), i)
+        t = setdiff(propertynames(r), i)
         r = DataFrames.stack(r, t, i)
     end
     r

@@ -16,7 +16,7 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
     elseif metric == :prmse
         metric = (E, O) -> ((E - O) ./ O).^2
     end
-    NT = DataFrames.make_unique([names(obs)..., T...], makeunique=true)
+    NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
         est = simulate(S; config=c, index=index, target=target, verbose=false, kwargs...)

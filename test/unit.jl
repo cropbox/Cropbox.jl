@@ -86,19 +86,19 @@ using DataFrames
     @testset "dataframe auto" begin
         df = DataFrame()
         z = [0]
-        df[!, Symbol("a (g/cm^2)")] = z
-        df[!, Symbol("c (a)(b)(s)")] = z
-        df[!, Symbol("b ()")] = z
-        df[!, Symbol("d")] = z
+        df."a (g/cm^2)" = z
+        df."c (a)(b)(s)" = z
+        df."b ()" = z
+        df."d" = z
         r = Cropbox.unitfy(df)
         @test Cropbox.unit(eltype(r[!, 1])) == u"g/cm^2"
         @test Cropbox.unit(eltype(r[!, 2])) == u"s"
         @test Cropbox.unit(eltype(r[!, 3])) == u"NoUnits"
         @test Cropbox.unit(eltype(r[!, 4])) == u"NoUnits"
         N = names(r)
-        @test N[1] == Symbol("a")
-        @test N[2] == Symbol("c (a)(b)")
-        @test N[3] == Symbol("b ()")
-        @test N[4] == Symbol("d")
+        @test N[1] == "a"
+        @test N[2] == "c (a)(b)"
+        @test N[3] == "b ()"
+        @test N[4] == "d"
     end
 end

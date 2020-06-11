@@ -21,14 +21,14 @@ deunitfy(v, u) = deunitfy(unitfy(v, u))
 import DataFrames: DataFrame, DataFrames
 unitfy(df::DataFrame, U::Vector) = begin
     r = DataFrame()
-    for (n, c, u) in zip(names(df), eachcol(df), U)
+    for (n, c, u) in zip(propertynames(df), eachcol(df), U)
         r[!, n] = unitfy.(c, u)
     end
     r
 end
 unitfy(df::DataFrame) = begin
     p = r"(.+)\(([^\(\)]+)\)$"
-    M = match.(p, String.(names(df)))
+    M = match.(p, names(df))
     u(m::RegexMatch) = eval(:(@u_str($(m.captures[2]))))
     u(m) = nothing
     U = u.(M)

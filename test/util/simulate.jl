@@ -11,7 +11,7 @@ using Dates
         r = simulate(SSimulate, stop=n)
         @test r isa DataFrame
         @test size(r, 1) == (n+1)
-        @test names(r) == [:tick, :a, :b]
+        @test propertynames(r) == [:tick, :a, :b]
         @test r[end, :tick] == (n+1)u"hr"
         @test r[end, :a] == 1
         @test r[end, :b] == n
@@ -20,10 +20,10 @@ using Dates
         @test r[end, :b] == 2n
         r = simulate(SSimulate, stop=n, target=[:b])
         @test size(r, 2) == 2
-        @test names(r) == [:tick, :b]
+        @test propertynames(r) == [:tick, :b]
         r = simulate(SSimulate, stop=n, index=:b, target=[:b])
         @test size(r, 2) == 1
-        @test names(r) == [:b]
+        @test propertynames(r) == [:b]
     end
 
     @testset "stop" begin
@@ -87,9 +87,9 @@ using Dates
         ]
         n = 1
         r = simulate(SSimulateLayout, L, stop=n)
-        @test names(r[1]) == [:tick, :a]
-        @test names(r[2]) == [:t, :i, :a, :B]
-        @test names(r[3]) == [:tick, :step]
+        @test propertynames(r[1]) == [:tick, :a]
+        @test propertynames(r[2]) == [:t, :i, :a, :B]
+        @test propertynames(r[3]) == [:tick, :step]
         @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == (n+1)u"hr"
         @test r[1][end, :a] == 0
         @test r[2][end, :B] == 2
@@ -183,7 +183,7 @@ using Dates
             g => (1, 2) ~ track::Tuple
         end
         r = simulate(SSimulateExtractable)
-        N = names(r)
+        N = propertynames(r)
         # default = Union{Number,Symbol,AbstractString,AbstractDateTime}
         @test :a ∈ N
         @test :b ∈ N
