@@ -13,7 +13,7 @@ using DataFrames
         p = calibrate(SCalibrate, obs, stop=n, target=:b, parameters=("SCalibrate.a" => A))
         @test p[:SCalibrate][:a] == a
         r = simulate(SCalibrate, stop=n, config=p)
-        @test r[r[!, :tick] .== t, :][1, :b] == b
+        @test r[r.tick .== t, :][1, :b] == b
     end
 
     @testset "unit" begin
@@ -29,7 +29,7 @@ using DataFrames
         p = calibrate(SCalibrateUnit, obs, stop=n, target=:b, parameters=("SCalibrateUnit.a" => A))
         @test p[:SCalibrateUnit][:a] == Cropbox.deunitfy(a)
         r = simulate(SCalibrateUnit, stop=n, config=p)
-        @test r[r[!, :tick] .== t, :][1, :b] == b
+        @test r[r.tick .== t, :][1, :b] == b
     end
 
     @testset "config" begin

@@ -57,9 +57,9 @@ using Dates
         n = 10
         f(s) = s.b' % 2 == 0
         r0 = simulate(SSimulateFilter, stop=n, filter=nothing)
-        @test !all(r0[!, :b] .% 2 .== 0)
+        @test !all(r0.b .% 2 .== 0)
         r1 = simulate(SSimulateFilter, stop=n, filter=f)
-        @test all(r1[!, :b] .% 2 .== 0)
+        @test all(r1.b .% 2 .== 0)
     end
 
     @testset "callback" begin
@@ -117,9 +117,9 @@ using Dates
         r = simulate(SSimulateLayoutConfigs, L, C, stop=n)
         @test length(r) == length(L)
         o = r[3]
-        @test o[o[!, :tick] .== (n+1)*u"hr", :i] == [n, n]
-        @test o[o[!, :tick] .== (n+1)*u"hr", :a] == [p1*(n-1), p2*(n-1)]
-        @test o[o[!, :tick] .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
+        @test o[o.tick .== (n+1)*u"hr", :i] == [n, n]
+        @test o[o.tick .== (n+1)*u"hr", :a] == [p1*(n-1), p2*(n-1)]
+        @test o[o.tick .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
     end
 
     @testset "configs" begin
@@ -131,8 +131,8 @@ using Dates
         C = Cropbox.configexpand(:SSimulateConfigs => :a => p)
         n = 10
         r = simulate(SSimulateConfigs, configs=C, stop=n)
-        @test r[r[!, :tick] .== (n+1)*u"hr", :a] == p
-        @test r[r[!, :tick] .== (n+1)*u"hr", :b] == p .* n
+        @test r[r.tick .== (n+1)*u"hr", :a] == p
+        @test r[r.tick .== (n+1)*u"hr", :b] == p .* n
     end
 
     @testset "options" begin

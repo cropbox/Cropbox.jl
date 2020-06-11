@@ -46,7 +46,7 @@ end
 estimate(S::Type{<:Estimator}, years; params, index=[:year, "calendar.time"], target=[:match], stop=:stop, kwargs...) = begin
     configs = [nameof(S) => (params..., year=y) for y in years] |> collect
     r = simulate(S, [(index=index, target=target)], configs; stop=stop, kwargs...)[1]
-    r[r[!, :match] .== 1, :]
+    r[r.match .== 1, :]
 end
 @specialize
 
@@ -86,8 +86,8 @@ import Dates
     @testset "double" begin
         r = Pheno.estimate(Pheno.BetaFuncEstimator, [2017, 2018]; params=params, target=[:ΔT, :Cg, :match, :stop])
         @test nrow(r) == 2
-        @test all(r[!, :match])
-        @test all(r[!, :stop])
+        @test all(r.match)
+        @test all(r.stop)
         @test all(r.Cg .>= Rg)
     end
 end

@@ -12,6 +12,6 @@
     r = simulate(LotkaVolterra, stop=1200, config=(
         :Clock => (:step => 1u"minute"),
     ))
-    @test r[!, :tick][end] > 20u"hr"
+    @test r.tick[end] > 20u"hr"
     Cropbox.plot(r, :tick, [:H, :P], names=["prey", "predator"]) |> display
 end
