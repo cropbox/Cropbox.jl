@@ -159,12 +159,11 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
         #TODO: very hacky approach to append new plots... definitely need a better way
         n0 = length(p.layers)
         colors = Gadfly.Scale.default_discrete_colors(n0 + n)
-        #HACK: extend ManualColorKey with new elements
-        mck = p.guides[end]
-        for (c, l) in zip(colors[n0+1:end], names)
-            mck.labels[c] = l
-        end
-        p.theme.key_position = all(isempty.(values(mck.labels))) ? :none : :right
+        #HACK: extend ManualDiscreteKey with new elements
+        mdk = p.guides[end]
+        append!(mdk.labels, names)
+        append!(mdk.colors, colors[n0+1:end])
+        p.theme.key_position = all(isempty.(values(mdk.labels))) ? :none : :right
         layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
         for l in layers
             Gadfly.push!(p, l)
