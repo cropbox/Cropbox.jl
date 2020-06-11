@@ -20,7 +20,7 @@ calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, p
     T1 = NT[end-n+1:end]
     residual(c) = begin
         est = simulate(S; config=c, index=index, target=target, verbose=false, kwargs...)
-        df = join(est, obs, on=I, makeunique=true)
+        df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
     config(X) = parameterzip(K, X)
