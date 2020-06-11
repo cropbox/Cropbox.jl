@@ -11,7 +11,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
     state::S
     type::Union{Symbol,Expr,Nothing}
     tags::Dict{Symbol,Any}
-    line::Union{Expr,Symbol}
+    line::Expr
     linenumber::LineNumberNode
     docstring::String
 end
@@ -32,7 +32,7 @@ show(io::IO, v::VarInfo) = begin
     println(io, "docstring: $(v.docstring)")
 end
 
-VarInfo(system::Symbol, line::Union{Expr,Symbol}, linenumber::LineNumberNode, docstring::String) = begin
+VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
     @capture(line, (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
