@@ -71,13 +71,13 @@ end
 visualize(df::DataFrame, S::Type{<:System}, y;
     configs=[],
     stop=nothing, skipfirst=true, filter=nothing,
-    xlab=nothing, ylab=nothing, name=nothing, lim=nothing, plotopts...
+    title=nothing, xlab=nothing, ylab=nothing, lim=nothing, plotopts...
 ) = begin
     y = y isa Pair ? y : y => y
     yo, ye = y
     xlab = isnothing(xlab) ? yo : xlab
     ylab = isnothing(ylab) ? ye : ylab
-    isnothing(name) && (name = yo == ye ? string(yo) : "$yo : $ye")
+    isnothing(title) && (title = yo == ye ? string(yo) : "$yo : $ye")
 
     X = extractarray(df, yo)
     r = simulate(S; configs=configs, stop=stop, skipfirst=skipfirst, filter=filter)
@@ -89,8 +89,8 @@ visualize(df::DataFrame, S::Type{<:System}, y;
     end
     I = [lim[1], lim[2]]
 
-    p = plot(X, Y; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
-    !isnothing(lim) && plot!(p, I, I, kind=:line, name=isempty(name) ? "" : "1 : 1")
+    p = plot(X, Y; kind=:scatter, title=title, name="", xlab=xlab, ylab=ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    !isnothing(lim) && plot!(p, I, I, kind=:line, name="")
     p
 end
 
