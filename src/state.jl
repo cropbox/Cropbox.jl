@@ -9,17 +9,15 @@ value(S::Vector{<:State}) = value.(S)
 
 export value
 
-import Base: adjoint
-adjoint(s::State) = value(s)
+Base.adjoint(s::State) = value(s)
 
 store!(s::State, v) = (s.value = unitfy(v, unit(s)))
 
-import Base: getindex, length, iterate, eltype
-getindex(s::State, i) = s
-length(s::State) = 1
-iterate(s::State) = (s, nothing)
-iterate(s::State, i) = nothing
-eltype(::Type{<:State{V}}) where V = V
+Base.getindex(s::State, i) = s
+Base.length(s::State) = 1
+Base.iterate(s::State) = (s, nothing)
+Base.iterate(s::State, i) = nothing
+Base.eltype(::Type{<:State{V}}) where V = V
 
 import Unitful: unit
 unit(::S) where {S<:State} = unit(S)
@@ -57,8 +55,7 @@ struct PostPriority <: Priority end
 priority(::S) where {S<:State} = priority(S)
 priority(::Type{<:State}) = PostPriority()
 
-import Base: show
-show(io::IO, s::S) where {S<:State} = begin
+Base.show(io::IO, s::S) where {S<:State} = begin
     v = value(s)
     r = isnothing(v) ? repr(v) : string(v)
     r = length(r) > 40 ? "<..>" : r

@@ -10,7 +10,7 @@ Call(; unit, _value, _type, _calltype, _...) = begin
 end
 
 #HACK: showing s.value could trigger StackOverflowError
-show(io::IO, s::Call) = print(io, "<call>")
+Base.show(io::IO, s::Call) = print(io, "<call>")
 
 gencallargtype(t) = isnothing(t) ? :Float64 : esc(t)
 

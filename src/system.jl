@@ -1,29 +1,24 @@
 abstract type System end
 
 name(s::S) where {S<:System} = string(S)
-import Base: names
-names(s::S) where {S<:System} = names(S)
-names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
+Base.names(s::S) where {S<:System} = names(S)
+Base.names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
-import Base: length, iterate
-length(s::System) = length(fieldnamesunique(s))
-iterate(s::System) = iterate(s, 1)
-iterate(s::System, i) = begin
+Base.length(s::System) = length(fieldnamesunique(s))
+Base.iterate(s::System) = iterate(s, 1)
+Base.iterate(s::System, i) = begin
     F = fieldnamesunique(s)
     l = length(F)
     l == 0 ? nothing : (s[F[i]], l == i ? nothing : i+1)
 end
-iterate(s::System, ::Nothing) = nothing
+Base.iterate(s::System, ::Nothing) = nothing
 
-import Base: broadcastable
-broadcastable(s::System) = Ref(s)
+Base.broadcastable(s::System) = Ref(s)
 
-import Base: getindex
-getindex(s::System, i) = getproperty(s, i)
-getindex(s::System, ::Nothing) = s
+Base.getindex(s::System, i) = getproperty(s, i)
+Base.getindex(s::System, ::Nothing) = s
 
-import Base: getproperty
-getproperty(s::System, n::String) = begin
+Base.getproperty(s::System, n::String) = begin
     reduce((a, b) -> begin
         m = match(r"([^\[\]]+)(?:\[(.+)\])?", b)
         n, i = m[1], m[2]
@@ -59,7 +54,6 @@ value(s::System, k::Symbol; kw...) = begin
     eval(:(let $(args...); $body end))
 end
 
-import Base: show
-show(io::IO, s::System) = print(io, "<$(name(s))>")
+Base.show(io::IO, s::System) = print(io, "<$(name(s))>")
 
 export System

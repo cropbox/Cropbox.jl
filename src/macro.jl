@@ -16,8 +16,7 @@ struct VarInfo{S<:Union{Symbol,Nothing}}
     docstring::String
 end
 
-import Base: show
-show(io::IO, v::VarInfo) = begin
+Base.show(io::IO, v::VarInfo) = begin
     println(io, "system: $(v.system)")
     println(io, "name: $(v.name)")
     println(io, "alias: $(v.alias)")
@@ -81,7 +80,7 @@ istag(v::VarInfo, t) = get(v.tags, t, false)
 istag(v::VarInfo, t...) = any(istag.(Ref(v), t))
 gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 
-names(v::VarInfo) = let n = v.name, a = v.alias
+Base.names(v::VarInfo) = let n = v.name, a = v.alias
     isnothing(a) ? [n] : [n, a]
 end
 linenumber(v::VarInfo, prefix="", postfix="") = begin
@@ -96,10 +95,9 @@ struct PreStep <: VarStep end
 struct MainStep <: VarStep end
 struct PostStep <: VarStep end
 
-import Base: print
-print(io::IO, ::PreStep) = print(io, "∘")
-print(io::IO, ::MainStep) = print(io, "")
-print(io::IO, ::PostStep) = print(io, "⋆")
+Base.print(io::IO, ::PreStep) = print(io, "∘")
+Base.print(io::IO, ::MainStep) = print(io, "")
+Base.print(io::IO, ::PostStep) = print(io, "⋆")
 
 struct Node{I,S}
     info::I
@@ -300,10 +298,9 @@ struct PreStage <: UpdateStage end
 struct MainStage <: UpdateStage end
 struct PostStage <: UpdateStage end
 
-import Base: print
-print(io::IO, ::PreStage) = print(io, "†")
-print(io::IO, ::MainStage) = print(io, "")
-print(io::IO, ::PostStage) = print(io, "‡")
+Base.print(io::IO, ::PreStage) = print(io, "†")
+Base.print(io::IO, ::MainStage) = print(io, "")
+Base.print(io::IO, ::PostStage) = print(io, "‡")
 
 update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
     #HACK: preliminary support for multi-threaded update! (could be much slower if update is small)

@@ -32,9 +32,8 @@ resolveindex(op::AbstractString) = begin
     end
 end
 
-import Base: getindex
-getindex(s::Produce{Union{S,Nothing}}, ops::AbstractString) where {S<:System} = Bundle{S,Union{S,Nothing}}(s, resolveindex.(split(ops, "/")))
-getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{S,Vector{S}}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{Union{S,Nothing}}, ops::AbstractString) where {S<:System} = Bundle{S,Union{S,Nothing}}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{S,Vector{S}}(s, resolveindex.(split(ops, "/")))
 
 fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
@@ -43,18 +42,16 @@ struct Bunch{V}
     list::Vector{V}
 end
 
-import Base: getproperty
-getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
-getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
-getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
-getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
+Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
+Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
+Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
+Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
 value(b::Bunch) = value.(collect(b))
 
-import Base: collect
-collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
-collect(b::Bunch) = getfield(b, :list)
-collect(p::Produce, ::BundleAll) = value(p)
-collect(p::Produce, ::BundleRecursiveAll) = begin
+Base.collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
+Base.collect(b::Bunch) = getfield(b, :list)
+Base.collect(p::Produce, ::BundleAll) = value(p)
+Base.collect(p::Produce, ::BundleRecursiveAll) = begin
     l = System[]
     #TODO: possibly reduce overhead by reusing calculated values in child nodes
     f(s::System) = (push!(l, s); f.(value(getfield(s, p.name))))
@@ -62,14 +59,13 @@ collect(p::Produce, ::BundleRecursiveAll) = begin
     f.(value(p))
     l
 end
-collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
+Base.collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
     n = length(V)
     i = o.index
     i = (i >= 0) ? i : n+i+1
     (1 <= i <= n) ? [V[i]] : S[]
 end
-collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(getfield(s, Symbol(o.cond))), V)
+Base.collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(getfield(s, Symbol(o.cond))), V)
 
-import Base: adjoint
-adjoint(b::Bundle) = collect(b)
-adjoint(b::Bunch) = [v' for v in collect(b)]
+Base.adjoint(b::Bundle) = collect(b)
+Base.adjoint(b::Bunch) = [v' for v in collect(b)]

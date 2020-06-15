@@ -2,9 +2,9 @@ struct Production{S<:System}
     type::Type{S}
     args
 end
-iterate(p::Production) = (p, nothing)
-iterate(p::Production, ::Nothing) = nothing
-eltype(::Type{Production}) = Production
+Base.iterate(p::Production) = (p, nothing)
+Base.iterate(p::Production, ::Nothing) = nothing
+Base.eltype(::Type{Production}) = Production
 
 mutable struct Produce{P,V} <: State{P}
     name::Symbol # used in recurisve collecting in collect()
@@ -30,20 +30,18 @@ produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
 unit(s::Produce) = nothing
 
-import Base: getindex, length, iterate, eltype
-getindex(s::Produce{Union{S,Nothing}}, i) where {S<:System} = i == 1 ? s.value : throw(BoundsError(s, i))
-length(s::Produce{Union{S,Nothing}}) where {S<:System} = isnothing(s.value) ? 0 : 1
-iterate(s::Produce{Union{S,Nothing}}, i=1) where {S<:System} = i > 1 ? nothing : (s.value, i+1)
-eltype(::Type{Produce{S}}) where {S} = S
+Base.getindex(s::Produce{Union{S,Nothing}}, i) where {S<:System} = i == 1 ? s.value : throw(BoundsError(s, i))
+Base.length(s::Produce{Union{S,Nothing}}) where {S<:System} = isnothing(s.value) ? 0 : 1
+Base.iterate(s::Produce{Union{S,Nothing}}, i=1) where {S<:System} = i > 1 ? nothing : (s.value, i+1)
+Base.eltype(::Type{Produce{S}}) where {S} = S
 
-getindex(s::Produce{V}, i) where {V<:Vector} = getindex(s.value, i)
-getindex(s::Produce{V}, ::Nothing) where {V<:Vector} = s
-length(s::Produce{V}) where {V<:Vector} = length(s.value)
-iterate(s::Produce{V}, i=1) where {V<:Vector} = i > length(s) ? nothing : (s[i], i+1)
-eltype(::Type{Produce{Vector{S}}}) where {S<:System} = S
+Base.getindex(s::Produce{V}, i) where {V<:Vector} = getindex(s.value, i)
+Base.getindex(s::Produce{V}, ::Nothing) where {V<:Vector} = s
+Base.length(s::Produce{V}) where {V<:Vector} = length(s.value)
+Base.iterate(s::Produce{V}, i=1) where {V<:Vector} = i > length(s) ? nothing : (s[i], i+1)
+Base.eltype(::Type{Produce{Vector{S}}}) where {S<:System} = S
 
-import Base: isempty
-isempty(s::Produce) = length(s) == 0
+Base.isempty(s::Produce) = length(s) == 0
 
 priority(::Type{<:Produce}) = PrePriority()
 

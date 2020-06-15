@@ -16,9 +16,8 @@ plot(g::Graph, layout=(), label=(), edgestyle=()) = begin
     )
 end
 
-import Base: write
 import TikzPictures
-write(filename::AbstractString, g::Graph; plotopts...) = begin
+Base.write(filename::AbstractString, g::Graph; plotopts...) = begin
     f = TikzPictures.PDF(string(filename))
     TikzPictures.save(f, plot(g; plotopts...))
 end

@@ -141,8 +141,7 @@ add!(d::Dependency, V::Vector{VarInfo}) = begin
     end
 end
 
-import Base: sort
-sort(d::Dependency) = begin
+Base.sort(d::Dependency) = begin
     @assert isempty(LightGraphs.simplecycles(d.g))
     J = LightGraphs.topological_sort_by_dfs(d.g)
     [d.N[i] for i in J]

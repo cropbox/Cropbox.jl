@@ -66,8 +66,7 @@ end
     VPD_s(weather.VPD_s): vapor_pressure_saturation_slope ~ track(u"K^-1")
 end
 
-# import Base: show
-# show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
+# Base.show(io::IO, w::Weather) = print(io, "$(w.PFD)\n$(w.CO2)\n$(w.RH)\n$(w.T_air)\n$(w.wind)\n$(w.P_air)")
 
 # o = (
 #     :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),

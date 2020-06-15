@@ -20,8 +20,7 @@ measurement(a, b) = Measurement(promote(a, b)...)
 const ± = measurement
 export ±
 
-import Base: show
-show(io::IO, m::Measurement) = print(io, "$(m.val) ± $(m.err)")
+Base.show(io::IO, m::Measurement) = print(io, "$(m.val) ± $(m.err)")
 
 sample(v::Distribution) = rand(v)
 sample(v::Measurement) = rand(Normal(v.val, v.err))
