@@ -142,30 +142,55 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
         key_title_font_size=9*Gadfly.pt,
     )
 
+    colorkey(colors) = begin
+        NC = filter(x -> let (n, c) = x; !isempty(n) end, collect(zip(names, colors)))
+        if !isempty(NC)
+            N, C = first.(NC), last.(NC)
+            Gadfly.Guide.manual_color_key(legend, N, C)
+        end
+    end
+    colorkey!(key, colors) = begin
+        k = colorkey(colors)
+        if !isnothing(k)
+            append!(key.labels, k.labels)
+            append!(key.colors, k.colors)
+        end
+        k
+    end
+    update_color!(guides, colors) = begin
+        #TODO: very hacky approach to append new plots... definitely need a better way
+        keys = filter(x -> x isa Gadfly.Guide.ManualDiscreteKey, guides)
+        if isempty(keys)
+            key = colorkey(colors)
+            !isnothing(key) && push!(guides, key)
+        else
+            key = only(keys)
+            colorkey!(key, colors)
+        end
+    end
+    create_layers(colors) = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
+
     if isnothing(p)
-        colors = Gadfly.Scale.default_discrete_colors(n)
-        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
-        p = Gadfly.plot(
-            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
+        guides = [
             Gadfly.Guide.title(title),
             Gadfly.Guide.xlabel(xlab),
             Gadfly.Guide.ylabel(ylab),
-            Gadfly.Guide.manual_color_key(legend, names, colors),
+        ]
+        colors = Gadfly.Scale.default_discrete_colors(n)
+        update_color!(guides, colors)
+        layers = create_layers(colors)
+        p = Gadfly.plot(
+            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
+            guides...,
             layers...,
             theme,
         )
-        p.theme.key_position = all(isempty.(names)) ? :none : :right
     else
-        #TODO: very hacky approach to append new plots... definitely need a better way
         n0 = length(p.layers)
-        colors = Gadfly.Scale.default_discrete_colors(n0 + n)
-        #HACK: extend ManualDiscreteKey with new elements
-        mdk = p.guides[end]
-        append!(mdk.labels, names)
-        append!(mdk.colors, colors[n0+1:end])
-        p.theme.key_position = all(isempty.(values(mdk.labels))) ? :none : :right
-        layers = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[n0 + i])) for i in 1:n]
-        for l in layers
+        colors = Gadfly.Scale.default_discrete_colors(n0+n)[n0+1:end]
+        update_color!(p.guides, colors)
+        foreach(l -> Gadfly.push!(p, l), create_layers(colors))
+        for l in create_layers(colors)
             Gadfly.push!(p, l)
         end
     end
