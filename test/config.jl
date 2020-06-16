@@ -269,14 +269,6 @@ import DataStructures: OrderedDict
             @test C1 == [Cropbox.configure()]
         end
         
-        @testset "single config + multiple bases" begin
-            c = :S => :a => 1
-            B = [:S => :b => 1, :S => :b => 2]
-            C1 = Cropbox.configrebase(c, B)
-            C2 = Cropbox.configure.([(b, c) for b in B])
-            @test C1 == C2
-        end
-        
         @testset "single config + single base" begin
             c = :S => :a => 1
             b = :S => :b => 2
