@@ -166,7 +166,7 @@ import DataStructures: OrderedDict
             ])
         end
         
-        @testset "triple" begin
+        @testset "trio" begin
             p = [:S => :a => 1:2, :S => :b => 3:4, :S => :c => 5:6]
             C = Cropbox.configmultiply(p)
             @test C == Cropbox.configure.([
