@@ -287,6 +287,57 @@ import DataStructures: OrderedDict
         end
     end
     
+    @testset "macro" begin
+        @testset "merge" begin
+            a = :S => :a => 1
+            b = :S => :b => 2
+            C1 = @config a + b
+            C2 = Cropbox.configure(a, b)
+            @test C1 == C2
+        end
+        
+        @testset "merge multiple" begin
+            a = :S => :a => 1
+            b = :S => :b => 2
+            c = :S => :c => 3
+            C1 = @config a + b + c
+            C2 = Cropbox.configure(a, b, c)
+            @test C1 == C2
+        end
+        
+        @testset "multiply" begin
+            a = :S => :a => [1, 2]
+            b = :S => :b => [3, 4]
+            C1 = @config a * b
+            C2 = Cropbox.configmultiply([a, b])
+            @test C1 == C2
+        end
+        
+        @testset "multiply with base" begin
+            a = :S => :a => [1, 2]
+            b = :S => :b => [3, 4]
+            c = :S => :c => 0
+            C1 = @config c + a * b
+            C2 = Cropbox.configmultiply([a, b], c)
+            @test C1 == C2
+        end
+        
+        @testset "expand" begin
+            a = :S => :a => [1, 2]
+            C1 = @config !a
+            C2 = Cropbox.configexpand(a)
+            @test C1 == C2
+        end
+        
+        @testset "expand with base" begin
+            a = :S => :a => [1, 2]
+            b = :S => :b => 1
+            C1 = @config b + !a
+            C2 = Cropbox.configexpand(a, b)
+            @test C1 == C2
+        end
+    end
+    
     @testset "string" begin
         @testset "basic" begin
             c = "S.a" => 1

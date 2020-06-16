@@ -110,6 +110,27 @@ configrebase(configs::Vector, base=()) = isempty(configs) ? [configure(base)] : 
 configrebase(config, bases::Vector) = configure.(config, bases)
 configrebase(config, base=()) = configrebase([config], base)
 
+configreduce(a::Vector, b) = configrebase(b, a)
+configreduce(a, b::Vector) = configrebase(b, a)
+configreduce(a, b) = configure(a, b)
+
+macro config(ex)
+    @capture(ex, +(P__) | P__)
+    P = map(P) do p
+        if @capture(p, !x_)
+            :(Cropbox.configexpand($(esc(x))))
+        elseif @capture(p, *(x__))
+            :(Cropbox.configmultiply([$(esc.(x)...)]))
+        else
+            esc(p)
+        end
+    end
+    reduce(P) do a, b
+        :(Cropbox.configreduce($a, $b))
+    end
+end
+
 export configure
 export parameters
 export configmultiply, configexpand, configrebase
+export @config
