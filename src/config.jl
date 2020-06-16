@@ -113,6 +113,8 @@ configrebase(config; base=()) = configrebase([config]; base=base)
 configreduce(a::Vector, b) = configrebase(b; base=a)
 configreduce(a, b::Vector) = configrebase(b; base=a)
 configreduce(a, b) = configure(a, b)
+configreduce(a) = configure(a)
+configreduce(a::Vector) = configure.(a)
 
 macro config(ex)
     @capture(ex, +(P__) | P__)
@@ -122,7 +124,7 @@ macro config(ex)
         elseif @capture(p, *(x__))
             :(Cropbox.configmultiply($(esc.(x)...)))
         else
-            :(Cropbox.configure($(esc(p))))
+            :(Cropbox.configreduce($(esc(p))))
         end
     end
     reduce(P) do a, b

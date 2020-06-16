@@ -313,6 +313,14 @@ import DataStructures: OrderedDict
             @test C1 == C2
         end
         
+        @testset "rebase" begin
+            a = :S => :a => 1
+            b = [:S => :b => 1, :S => :b => 2]
+            C1 = @config a + b
+            C2 = Cropbox.configrebase(b; base=a)
+            @test C1 == C2
+        end
+        
         @testset "multiply" begin
             a = :S => :a => [1, 2]
             b = :S => :b => [3, 4]
