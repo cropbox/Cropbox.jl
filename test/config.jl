@@ -268,6 +268,15 @@ import DataStructures: OrderedDict
             C1 = Cropbox.configrebase(C0)
             @test C1 == [Cropbox.configure()]
         end
+        
+        @testset "single config + single base" begin
+            c = :S => :a => 1
+            b = :S => :b => 2
+            C1 = Cropbox.configrebase(c, b)
+            C2 = Cropbox.configure(b, c)
+            @test C1 isa Array && length(C1) == 1
+            @test C1[1] == C2
+        end
     end
     
     @testset "string" begin
