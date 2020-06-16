@@ -4,7 +4,7 @@ visualize(S::Type{<:System}, x, y;
     ylab=nothing, legend=nothing, plotopts...
 ) = begin
     G = configure(group)
-    C = configexpand(G, config)
+    C = configexpand(G; base=config)
 
     if isempty(G)
         names = [""]
@@ -20,7 +20,7 @@ visualize(S::Type{<:System}, x, y;
     end
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=configexpand(xstep, c), stop=stop, skipfirst=skipfirst, filter=filter)
+    s(c) = simulate(S; configs=configexpand(xstep; base=c), stop=stop, skipfirst=skipfirst, filter=filter)
     r = s(C[1])
     p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
     for i in 2:length(C)
@@ -34,7 +34,7 @@ visualize(S::Type{<:System}, x, y::Vector;
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    r = simulate(S; configs=configexpand(xstep, config), stop=stop, skipfirst=skipfirst, filter=filter)
+    r = simulate(S; configs=configexpand(xstep; base=config), stop=stop, skipfirst=skipfirst, filter=filter)
     plot(r, x, y; plotopts...)
 end
 
@@ -62,7 +62,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
 
     p = plot(df, xo, yo; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
-        cs = isnothing(xstep) ? c : configexpand(xstep, c)
+        cs = isnothing(xstep) ? c : configexpand(xstep; base=c)
         r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, filter=filter)
         p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
     end
@@ -99,7 +99,7 @@ visualize(S::Type{<:System}, x, y, z;
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    C = configmultiply([xstep, ystep], config)
+    C = configmultiply([xstep, ystep]; base=config)
     r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter)
     plot(r, x, y, z; plotopts...)
 end

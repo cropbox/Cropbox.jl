@@ -87,15 +87,15 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C
 end
 
-configmultiply(patches::Vector, base=()) = begin
+configmultiply(patches::Vector; base=()) = begin
     isempty(patches) && return [configure(base)]
-    C = configexpand(patches[1], base)
+    C = configexpand(patches[1]; base=base)
     for p in patches[2:end]
-        C = [configexpand(p, c) for c in C] |> Iterators.flatten |> collect
+        C = [configexpand(p; base=c) for c in C] |> Iterators.flatten |> collect
     end
     C
 end
-configexpand(patch, base=()) = begin
+configexpand(patch; base=()) = begin
     P = configure(patch)
     configs = if isempty(P)
         []
@@ -104,13 +104,13 @@ configexpand(patch, base=()) = begin
         k, V = only(C)
         [s => k => v for v in V]
     end
-    configrebase(configs, base)
+    configrebase(configs; base=base)
 end
-configrebase(configs::Vector, base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
-configrebase(config, base=()) = configrebase([config], base)
+configrebase(configs::Vector; base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
+configrebase(config; base=()) = configrebase([config]; base=base)
 
-configreduce(a::Vector, b) = configrebase(b, a)
-configreduce(a, b::Vector) = configrebase(b, a)
+configreduce(a::Vector, b) = configrebase(b; base=a)
+configreduce(a, b::Vector) = configrebase(b; base=a)
 configreduce(a, b) = configure(a, b)
 
 macro config(ex)

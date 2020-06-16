@@ -180,7 +180,7 @@ import DataStructures: OrderedDict
         @testset "base" begin
             b = (:S => :c => 1)
             p = [:S => :a => 1:2, :S => :b => 3:4]
-            C = Cropbox.configmultiply(p, b)
+            C = Cropbox.configmultiply(p; base=b)
             @test C == Cropbox.configure.([
                 :S => (c=1, a=1, b=3), :S => (c=1, a=1, b=4),
                 :S => (c=1, a=2, b=3), :S => (c=1, a=2, b=4),
@@ -217,7 +217,7 @@ import DataStructures: OrderedDict
         @testset "patch with base" begin
             b = :S => :b => 0
             p = :S => :a => [1, 2]
-            C = Cropbox.configexpand(p, b)
+            C = Cropbox.configexpand(p; base=b)
             @test C == Cropbox.configure.([:S => (a=1, b=0), :S => (a=2, b=0)])
         end
         
@@ -246,7 +246,7 @@ import DataStructures: OrderedDict
         @testset "nonempty configs + nonempty base" begin
             b = (:S => :b => 0)
             C0 = [:S => :a => 1, :S => :a => 2]
-            C1 = Cropbox.configrebase(C0, b)
+            C1 = Cropbox.configrebase(C0; base=b)
             @test C1 == Cropbox.configure.([:S => (a=1, b=0), :S => (a=2, b=0)])
         end
         
@@ -259,7 +259,7 @@ import DataStructures: OrderedDict
         @testset "empty configs + nonempty base" begin
             b = :S => :a => 1
             C0 = []
-            C1 = Cropbox.configrebase(C0, b)
+            C1 = Cropbox.configrebase(C0; base=b)
             @test C1 == [Cropbox.configure(b)]
         end
         
@@ -272,7 +272,7 @@ import DataStructures: OrderedDict
         @testset "single config + single base" begin
             c = :S => :a => 1
             b = :S => :b => 2
-            C1 = Cropbox.configrebase(c, b)
+            C1 = Cropbox.configrebase(c; base=b)
             C2 = Cropbox.configure(b, c)
             @test C1 isa Array && length(C1) == 1
             @test C1[1] == C2
@@ -310,7 +310,7 @@ import DataStructures: OrderedDict
             b = :S => :b => [3, 4]
             c = :S => :c => 0
             C1 = @config c + a * b
-            C2 = Cropbox.configmultiply([a, b], c)
+            C2 = Cropbox.configmultiply([a, b]; base=c)
             @test C1 == C2
         end
         
@@ -325,7 +325,7 @@ import DataStructures: OrderedDict
             a = :S => :a => [1, 2]
             b = :S => :b => 1
             C1 = @config b + !a
-            C2 = Cropbox.configexpand(a, b)
+            C2 = Cropbox.configexpand(a; base=b)
             @test C1 == C2
         end
     end
