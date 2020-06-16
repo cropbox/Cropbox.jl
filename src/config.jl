@@ -122,7 +122,7 @@ macro config(ex)
         elseif @capture(p, *(x__))
             :(Cropbox.configmultiply($(esc.(x)...)))
         else
-            esc(p)
+            :(Cropbox.configure($(esc(p))))
         end
     end
     reduce(P) do a, b

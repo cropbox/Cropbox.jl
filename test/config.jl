@@ -344,6 +344,13 @@ import DataStructures: OrderedDict
             C2 = Cropbox.configexpand(a; base=b)
             @test C1 == C2
         end
+        
+        @testset "single" begin
+            a = :S => :a => 1
+            C1 = @config a
+            C2 = Cropbox.configure(a)
+            @test C1 == C2
+        end
     end
     
     @testset "string" begin
