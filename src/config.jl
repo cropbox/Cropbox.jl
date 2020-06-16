@@ -130,7 +130,4 @@ macro config(ex)
     end
 end
 
-export configure
-export parameters
-export configmultiply, configexpand, configrebase
-export @config
+export configure, parameters, @config
