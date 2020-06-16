@@ -87,8 +87,9 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C
 end
 
-configmultiply(patches::Vector; base=()) = begin
-    isempty(patches) && return [configure(base)]
+configmultiply(; base=()) = [configure(base)]
+configmultiply(patches::Vector; base=()) = configmultiply(patches...; base=base)
+configmultiply(patches...; base=()) = begin
     C = configexpand(patches[1]; base=base)
     for p in patches[2:end]
         C = [configexpand(p; base=c) for c in C] |> Iterators.flatten |> collect
@@ -119,7 +120,7 @@ macro config(ex)
         if @capture(p, !x_)
             :(Cropbox.configexpand($(esc(x))))
         elseif @capture(p, *(x__))
-            :(Cropbox.configmultiply([$(esc.(x)...)]))
+            :(Cropbox.configmultiply($(esc.(x)...)))
         else
             esc(p)
         end

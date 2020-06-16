@@ -99,7 +99,7 @@ visualize(S::Type{<:System}, x, y, z;
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    C = configmultiply([xstep, ystep]; base=config)
+    C = configmultiply(xstep, ystep; base=config)
     r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter)
     plot(r, x, y, z; plotopts...)
 end

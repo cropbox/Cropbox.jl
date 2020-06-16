@@ -152,14 +152,15 @@ import DataStructures: OrderedDict
     
     @testset "multiply" begin
         @testset "solo" begin
-            p = [:S => :a => 1:2]
+            p = :S => :a => 1:2
             C = Cropbox.configmultiply(p)
             @test C == Cropbox.configure.([:S => :a => 1, :S => :a => 2])
         end
         
         @testset "duo" begin
-            p = [:S => :a => 1:2, :S => :b => 3:4]
-            C = Cropbox.configmultiply(p)
+            p1 = :S => :a => 1:2
+            p2 = :S => :b => 3:4
+            C = Cropbox.configmultiply(p1, p2)
             @test C == Cropbox.configure.([
                 :S => (a=1, b=3), :S => (a=1, b=4),
                 :S => (a=2, b=3), :S => (a=2, b=4),
@@ -167,8 +168,10 @@ import DataStructures: OrderedDict
         end
         
         @testset "trio" begin
-            p = [:S => :a => 1:2, :S => :b => 3:4, :S => :c => 5:6]
-            C = Cropbox.configmultiply(p)
+            p1 = :S => :a => 1:2
+            p2 = :S => :b => 3:4
+            p3 = :S => :c => 5:6
+            C = Cropbox.configmultiply(p1, p2, p3)
             @test C == Cropbox.configure.([
                 :S => (a=1, b=3, c=5), :S => (a=1, b=3, c=6),
                 :S => (a=1, b=4, c=5), :S => (a=1, b=4, c=6),
@@ -179,22 +182,33 @@ import DataStructures: OrderedDict
         
         @testset "base" begin
             b = (:S => :c => 1)
-            p = [:S => :a => 1:2, :S => :b => 3:4]
-            C = Cropbox.configmultiply(p; base=b)
+            p1 = :S => :a => 1:2
+            p2 = :S => :b => 3:4
+            C = Cropbox.configmultiply(p1, p2; base=b)
             @test C == Cropbox.configure.([
                 :S => (c=1, a=1, b=3), :S => (c=1, a=1, b=4),
                 :S => (c=1, a=2, b=3), :S => (c=1, a=2, b=4),
             ])
         end
         
-        @testset "single" begin
+        @testset "array" begin
+            b = (:S => :c => 1)
+            p1 = :S => :a => 1:2
+            p2 = :S => :b => 3:4
+            p = [p1, p2]
+            C1 = Cropbox.configmultiply(p1, p2; base=b)
+            C2 = Cropbox.configmultiply(p; base=b)
+            @test C1 == C2
+        end
+        
+        @testset "array single" begin
             p = [:S => :a => 1]
             C = Cropbox.configmultiply(p)
             @test C isa Array && length(C) == 1
             @test C[1] == Cropbox.configure(p[1])
         end
         
-        @testset "single empty" begin
+        @testset "array single empty" begin
             p = [()]
             C = Cropbox.configmultiply(p)
             @test C isa Array && length(C) == 1
@@ -203,7 +217,9 @@ import DataStructures: OrderedDict
         
         @testset "empty tuple" begin
             p = ()
-            @test_throws MethodError Cropbox.configmultiply(p)
+            C = Cropbox.configmultiply(p)
+            @test C isa Array && length(C) == 1
+            @test C[1] == Cropbox.configure(p)
         end
     end
     
@@ -301,7 +317,7 @@ import DataStructures: OrderedDict
             a = :S => :a => [1, 2]
             b = :S => :b => [3, 4]
             C1 = @config a * b
-            C2 = Cropbox.configmultiply([a, b])
+            C2 = Cropbox.configmultiply(a, b)
             @test C1 == C2
         end
         
@@ -310,7 +326,7 @@ import DataStructures: OrderedDict
             b = :S => :b => [3, 4]
             c = :S => :c => 0
             C1 = @config c + a * b
-            C2 = Cropbox.configmultiply([a, b]; base=c)
+            C2 = Cropbox.configmultiply(a, b; base=c)
             @test C1 == C2
         end
         
