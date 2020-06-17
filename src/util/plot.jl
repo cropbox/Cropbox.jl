@@ -136,6 +136,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
 
     theme = Gadfly.Theme(
         background_color="white",
+        plot_padding=[5*Gadfly.mm, 5*Gadfly.mm, 5*Gadfly.mm, 0*Gadfly.mm],
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
     )
@@ -238,6 +239,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
 
     theme = Gadfly.Theme(
         background_color="white",
+        plot_padding=[5*Gadfly.mm, 5*Gadfly.mm, 5*Gadfly.mm, 0*Gadfly.mm],
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
     )
