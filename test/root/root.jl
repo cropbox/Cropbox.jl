@@ -140,6 +140,7 @@ abstract type RootSystem <: System end
     end ~ call(u"cm/d")
     pr(bg, ea, GD, r): potential_elongation_rate => bg(ea, GD, r) ~ track(u"cm/d")
 
+    t(context.clock.tick): timestamp ~ preserve(u"hr")
     Δt(context.clock.step): timestep ~ preserve(u"hr")
     Δl(zl, Δx) => min(zl, Δx) ~ preserve(u"cm")
     ar(pr, Δl, l, Δt): actual_elongation_rate => min(pr, (Δl - l) / Δt) ~ track(u"cm/d")
