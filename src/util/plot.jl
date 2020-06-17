@@ -81,8 +81,7 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
         ylim = (minimum(l)[1], maximum(l)[2])
     end
 
-    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = label(xlab, xunit) * '\n'
+    xlab = label(xlab, xunit)
     ylab = label(ylab, yunit)
     legend = isnothing(legend) ? "" : string(legend)
     names = isnothing(names) ? string.(1:length(Ys)) : names
@@ -115,8 +114,7 @@ plot(df::DataFrame, x, y, z;
     isnothing(ylim) && (ylim = findlim(Y))
     isnothing(zlim) && (zlim = findlim(Z))
 
-    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    xlab = label(isnothing(xlab) ? x : xlab, xunit) * '\n'
+    xlab = label(isnothing(xlab) ? x : xlab, xunit)
     ylab = label(isnothing(ylab) ? y : ylab, yunit)
     zlab = label(isnothing(zlab) ? z : zlab, zunit)
     title = isnothing(title) ? "" : string(title)
@@ -212,6 +210,9 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
         error("unrecognized plot kind = $kind")
     end
 
+    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
+    !endswith(xlab, "\n") && (xlab *= "\n")
+
     if isnothing(p)
         a = Float64[]
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
@@ -262,6 +263,9 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     else
         error("unrecognized plot kind = $kind")
     end
+
+    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
+    !endswith(xlab, "\n") && (xlab *= "\n")
 
     arr(a) = sort(unique(a))
     x = arr(X)
