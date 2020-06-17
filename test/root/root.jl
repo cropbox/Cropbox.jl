@@ -287,7 +287,11 @@ render!(::Val, s, vis) = nothing
 gather(s::System) = (L = []; gather!(s, L); L)
 gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
 gather!(V::Val{:BaseRoot}, r::RootSystem, L) = begin
-    r.zi' == 0 && push!(L, [r.pp', r.cp', r.S["**"].cp'...])
+    r.zi' == 0 && push!(L, (
+        point=[r.pp', r.cp', r.S["**"].cp'...],
+        radius=[r.a', r.a', r.S["**"].a'...] |> Cropbox.deunitfy,
+        timestamp=[r.t', r.t', r.S["**"].t'...] |> Cropbox.deunitfy,
+    ))
     gather!(Val(nothing), r, L)
 end
 gather!(::Val, s::System, L) = gather!.(Cropbox.value.(collect(s)), Ref(L))
@@ -301,8 +305,9 @@ gathervtk(name::AbstractString, s::System) = begin
     C = MeshCell[]
     i = 0
     for l in L
-        [append!(P, p) for p in l]
-        n = length(l)
+        lp = l.point
+        [append!(P, p) for p in lp]
+        n = length(lp)
         I = collect(1:n) .+ i
         i += n
         c = MeshCell(VTKCellTypes.VTK_POLY_LINE, I)
@@ -310,6 +315,10 @@ gathervtk(name::AbstractString, s::System) = begin
     end
     P3 = reshape(P, 3, :)
     g = vtk_grid(name, P3, C)
+    for k in (:radius, :timestamp)
+        g[string(k), VTKPointData()] = [l[k] for l in L] |> Iterators.flatten |> collect
+    end
+    g
 end
 writevtk(name::AbstractString, s::System) = vtk_save(gathervtk(name, s))
 writepvd(name::AbstractString, S::Type{<:System}; kwargs...) = begin
