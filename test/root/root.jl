@@ -128,7 +128,7 @@ abstract type RootSystem <: System end
         1.5d
     end ~ preserve(u"d")
     ea0: initial_elongation_age => 0 ~ preserve(u"d", extern)
-    ea(l, Δx, lt, lmax): elongation_age => (l < Δx && lt < lmax ? 1 : 0) ~ accumulate(init=ea0, u"d")
+    ea(l, Δl, lt, lmax): elongation_age => (l < Δl && lt < lmax ? 1 : 0) ~ accumulate(init=ea0, u"d")
     bg(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")): beta_growth => begin
         t = clamp(t, zero(t), t_e)
         t_m = t_e / 2
@@ -141,7 +141,8 @@ abstract type RootSystem <: System end
     pr(bg, ea, GD, r): potential_elongation_rate => bg(ea, GD, r) ~ track(u"cm/d")
 
     Δt(context.clock.step): timestep ~ preserve(u"hr")
-    ar(pr, Δx, l, Δt): actual_elongation_rate => min(pr, (Δx - l) / Δt) ~ track(u"cm/d")
+    Δl(zl, Δx) => min(zl, Δx) ~ preserve(u"cm")
+    ar(pr, Δl, l, Δt): actual_elongation_rate => min(pr, (Δl - l) / Δt) ~ track(u"cm/d")
     rr(pr, ar): remaining_elongation_rate => pr - ar ~ track(u"cm/d")
     rl(rr, Δt): remaining_length => rr*Δt ~ track(u"cm")
     l0: initial_length => 0 ~ preserve(u"cm", extern)
@@ -188,9 +189,9 @@ abstract type RootSystem <: System end
 
     RT0: parent_transformation ~ track::Transformation(override)
     pp(RT0): parent_position => RT0(Point3f0(0, 0, 0)) ~ preserve::Point3f0
-    np(pp, RT0, nounit(Δx); α, β): new_position => begin
+    np(pp, RT0, nounit(Δl); α, β): new_position => begin
         R = RotZX(β, α) |> LinearMap
-        pp + (RT0 ∘ R)(Point3f0(0, 0, -Δx))
+        pp + (RT0 ∘ R)(Point3f0(0, 0, -Δl))
     end ~ call::Point3f0
     RT(nounit(l), α, β): local_transformation => begin
         # put root segment at parent's end
@@ -219,7 +220,7 @@ abstract type RootSystem <: System end
         find(rand())
     end ~ call::Symbol
 
-    ms(l, Δx, lt, lmax): may_segment => (l >= Δx && lt < lmax) ~ flag
+    ms(l, Δl, lt, lmax): may_segment => (l >= Δl && lt < lmax) ~ flag
     S(ms, n, box, ro, zi, r, ea, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
         if ms
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
