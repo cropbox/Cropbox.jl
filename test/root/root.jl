@@ -316,7 +316,9 @@ gathervtk(name::AbstractString, s::System) = begin
     P3 = reshape(P, 3, :)
     g = vtk_grid(name, P3, C)
     for k in (:radius, :timestamp)
-        g[string(k), VTKPointData()] = [l[k] for l in L] |> Iterators.flatten |> collect
+        D = [l[k] for l in L] |> Iterators.flatten |> collect
+        isempty(D) && continue
+        g[string(k), VTKPointData()] = D
     end
     g
 end
