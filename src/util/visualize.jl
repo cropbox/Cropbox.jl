@@ -11,11 +11,11 @@ visualize(S::Type{<:System}, x, y;
     else
         K, V = only(G)
         k, v = only(V)
-        if isnothing(legend)
-            T = K == Symbol(0) ? S : type(K)
-            u = fieldtype(T, k) |> unit
-            legend = isnothing(u) ? "$k" : "$k ($u)"
-        end
+        isnothing(legend) && (legend = string(k))
+        #TODO: support custom unit for legend?
+        T = K == Symbol(0) ? S : type(K)
+        u = fieldtype(T, k) |> unit
+        !isnothing(u) && (legend *= " ($u)")
         names = string.(v)
     end
     isnothing(ylab) && (ylab = y)
