@@ -1,18 +1,18 @@
 mutable struct Advance{T} <: State{T}
-    value::Timepiece{T}
+    t::T
+    Δt::T
 end
 
 Advance(; init=nothing, step=nothing, unit, _type, _...) = begin
     T = valuetype(_type, value(unit))
     t = isnothing(init) ? zero(T) : value(init)
-    dt = isnothing(step) ? oneunit(T) : value(step)
-    #T = promote_type(typeof(t), typeof(dt))
-    Advance{T}(Timepiece{T}(t, dt))
+    Δt = isnothing(step) ? oneunit(T) : value(step)
+    #T = promote_type(typeof(t), typeof(Δt))
+    Advance{T}(t, Δt)
 end
 
-value(s::Advance) = s.value.t
-advance!(s::Advance) = advance!(s.value)
-reset!(s::Advance) = reset!(s.value)
+value(s::Advance) = s.t
+advance!(s::Advance) = s.t += s.Δt
 
 genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
 
