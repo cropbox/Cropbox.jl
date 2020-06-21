@@ -39,7 +39,7 @@ Base.getindex(s::Produce{V}, i) where {V<:Vector} = getindex(s.value, i)
 Base.getindex(s::Produce{V}, ::Nothing) where {V<:Vector} = s
 Base.length(s::Produce{V}) where {V<:Vector} = length(s.value)
 Base.iterate(s::Produce{V}, i=1) where {V<:Vector} = i > length(s) ? nothing : (s[i], i+1)
-Base.eltype(::Type{Produce{Vector{S}}}) where {S<:System} = S
+Base.eltype(::Type{<:Produce{Vector{S}}}) where {S<:System} = S
 
 Base.isempty(s::Produce) = length(s) == 0
 
