@@ -9,11 +9,14 @@
         sc = instance(SProduceController)
         s = sc.s
         @test length(s.a) == 0
+        @test collect(s.a) == []
         update!(sc)
         @test length(s.a) == 1
+        @test collect(s.a) == [s.a[1]]
         @test length(s.a[1].a) == 0
         update!(sc)
         @test length(s.a) == 2
+        @test collect(s.a) == [s.a[1], s.a[2]]
         @test length(s.a[1].a) == 1
         @test length(s.a[2].a) == 0
     end
@@ -28,12 +31,15 @@
         sc = instance(SProduceSingleController)
         s = sc.s
         @test length(s.a) == 0
+        @test collect(s.a) == []
         update!(sc)
         @test length(s.a) == 1
         a = s.a[1]
+        @test collect(s.a) == [a]
         @test length(s.a[1].a) == 0
         update!(sc)
         @test length(s.a) == 1
+        @test collect(s.a) == [a]
         @test a === s.a[1]
         @test length(s.a[1].a) == 1
         @test_throws BoundsError s.a[2]
