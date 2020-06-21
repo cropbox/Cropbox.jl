@@ -1,5 +1,6 @@
 @testset "state" begin
     include("state/hold.jl")
+    include("state/wrap.jl")
     include("state/preserve.jl")
     include("state/tabulate.jl")
     include("state/interpolate.jl")
