@@ -15,7 +15,7 @@ end
 Produce(; _name, _type, _...) = begin
     T = _type
     if T <: System
-        P = Union{T,Nothing}
+        P = T
         V = Union{System,Nothing}
         v = nothing
     elseif T <: Vector{<:System}
@@ -30,10 +30,10 @@ produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
 unit(s::Produce) = nothing
 
-Base.getindex(s::Produce{Union{S,Nothing}}, i) where {S<:System} = i == 1 ? s.value : throw(BoundsError(s, i))
-Base.length(s::Produce{Union{S,Nothing}}) where {S<:System} = isnothing(s.value) ? 0 : 1
-Base.iterate(s::Produce{Union{S,Nothing}}, i=1) where {S<:System} = isempty(s) || i > 1 ? nothing : (s.value, i+1)
-Base.eltype(::Type{Produce{S}}) where {S} = S
+Base.getindex(s::Produce{S}, i) where {S<:System} = i == 1 ? s.value : throw(BoundsError(s, i))
+Base.length(s::Produce{S}) where {S<:System} = isnothing(s.value) ? 0 : 1
+Base.iterate(s::Produce{S}, i=1) where {S<:System} = isempty(s) || i > 1 ? nothing : (s.value, i+1)
+Base.eltype(::Type{Produce{S}}) where {S<:System} = S
 
 Base.getindex(s::Produce{V}, i) where {V<:Vector} = getindex(s.value, i)
 Base.getindex(s::Produce{V}, ::Nothing) where {V<:Vector} = s
@@ -61,7 +61,7 @@ end
 
 genvartype(v::VarInfo, ::Val{:Produce}; V, _...) = begin
     if istag(v, :single)
-        @q Produce{Union{$V,Nothing},Union{System,Nothing}}
+        @q Produce{$V,Union{System,Nothing}}
     else
         @q Produce{$V,Vector{System}}
     end
