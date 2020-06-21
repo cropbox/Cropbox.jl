@@ -30,16 +30,16 @@ produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
 unit(s::Produce) = nothing
 
-Base.getindex(s::Produce{S}, i) where {S<:System} = i == 1 ? s.value : throw(BoundsError(s, i))
-Base.length(s::Produce{S}) where {S<:System} = isnothing(s.value) ? 0 : 1
-Base.iterate(s::Produce{S}) where {S<:System} = isempty(s) ? nothing : (s.value, nothing)
-Base.iterate(s::Produce{S}, ::Nothing) where {S<:System} = nothing
+Base.getindex(s::Produce{<:System}, i) = i == 1 ? s.value : throw(BoundsError(s, i))
+Base.length(s::Produce{<:System}) = isnothing(s.value) ? 0 : 1
+Base.iterate(s::Produce{<:System}) = isempty(s) ? nothing : (s.value, nothing)
+Base.iterate(s::Produce{<:System}, ::Nothing) = nothing
 Base.eltype(::Type{Produce{S}}) where {S<:System} = S
 
-Base.getindex(s::Produce{V}, i) where {V<:Vector} = getindex(s.value, i)
-Base.getindex(s::Produce{V}, ::Nothing) where {V<:Vector} = s
-Base.length(s::Produce{V}) where {V<:Vector} = length(s.value)
-Base.iterate(s::Produce{V}, i=1) where {V<:Vector} = i > length(s) ? nothing : (s[i], i+1)
+Base.getindex(s::Produce{<:Vector}, i) = getindex(s.value, i)
+Base.getindex(s::Produce{<:Vector}, ::Nothing) = s
+Base.length(s::Produce{<:Vector}) = length(s.value)
+Base.iterate(s::Produce{<:Vector}, i=1) = i > length(s) ? nothing : (s[i], i+1)
 Base.eltype(::Type{<:Produce{Vector{S}}}) where {S<:System} = S
 
 Base.isempty(s::Produce) = length(s) == 0
