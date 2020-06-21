@@ -48,6 +48,7 @@ end
 value(s::System, k::Symbol; kw...) = begin
     d = dependency(s)
     v = d.M[k]
+    @assert v.state in (:Preserve, :Track)
     emit(a) = let p = extractfuncargpair(a), k = p[1]; :($k = $(kw[k])) end
     args = emit.(v.args)
     body = v.body
