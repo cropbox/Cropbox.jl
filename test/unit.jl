@@ -1,4 +1,5 @@
 using DataFrames
+import Unitful
 
 @testset "unit" begin
     @testset "unit" begin
@@ -73,6 +74,64 @@ using DataFrames
         @test s.n.a' == s.a' == u"1m"
         @test s.b' == 1
         @test s.c' == 2
+    end
+
+    @testset "nothing" begin
+        @test Cropbox.unitfy(nothing, u"m") === nothing
+        @test Cropbox.unitfy(nothing, nothing) === nothing
+    end
+
+    @testset "missing" begin
+        @test Cropbox.unitfy(missing, u"m") === missing
+        @test Cropbox.unitfy(missing, nothing) === missing
+    end
+
+    @testset "nothing units" begin
+        @test Cropbox.unitfy(1, nothing) === 1
+        @test Cropbox.unitfy(1u"cm", nothing) === 1u"cm"
+    end
+
+    @testset "single" begin
+        @test Cropbox.unitfy(1, u"m") === 1u"m"
+        @test Cropbox.unitfy(1.0, u"m") === 1.0u"m"
+        @test Cropbox.unitfy(1u"m", u"cm") === 100u"cm"
+        @test Cropbox.unitfy(1.0u"m", u"cm") === 100.0u"cm"
+    end
+
+    @testset "percent" begin
+        @test Cropbox.unitfy(1, u"percent") === 1u"percent"
+        @test 1 |> u"percent" === 100u"percent"
+        @test Cropbox.unitfy(1u"percent", nothing) === 1u"percent"
+        @test Cropbox.unitfy(1u"percent", u"NoUnits") === 1//100
+    end
+
+    @testset "array" begin
+        @test Cropbox.unitfy([1, 2, 3], u"m") == [1, 2, 3]u"m"
+        @test Cropbox.unitfy([1, 2, 3]u"m", u"cm") == [100, 200, 300]u"cm"
+        @test Cropbox.unitfy([1u"cm", 0.02u"m", 30u"mm"], u"cm") == [1, 2, 3]u"cm"
+    end
+
+    @testset "tuple" begin
+        @test Cropbox.unitfy((1, 2, 3), u"m") === (1u"m", 2u"m", 3u"m")
+        @test Cropbox.unitfy((1u"m", 2u"m", 3u"m"), u"cm") === (100u"cm", 200u"cm", 300u"cm")
+        @test Cropbox.unitfy((1u"cm", 0.02u"m", 30u"mm"), u"cm") === (1u"cm", 2.0u"cm", 3//1*u"cm")
+    end
+
+    @testset "deunitfy" begin
+        @test Cropbox.deunitfy(1) == 1
+        @test Cropbox.deunitfy(1u"m") == 1
+        @test Cropbox.deunitfy([1, 2, 3]u"m") == [1, 2, 3]
+        @test Cropbox.deunitfy((1u"m", 2u"cm", 3)) === (1, 2, 3)
+    end
+
+    @testset "deunitfy with units" begin
+        @test Cropbox.deunitfy(1, u"m") == 1
+        @test Cropbox.deunitfy(1u"m", u"cm") == 100
+        @test Cropbox.deunitfy([1, 2, 3]u"m", u"cm") == [100, 200, 300]
+        @test Cropbox.deunitfy([1u"m", 2u"cm", 3u"mm"], u"mm") == [1000, 20, 3]
+        @test_throws Unitful.DimensionError Cropbox.deunitfy([1u"m", 2u"cm", 3], u"mm")
+        @test Cropbox.deunitfy((1u"m", 2u"cm", 3u"mm"), u"mm") === (1000, 20, 3)
+        @test_throws Unitful.DimensionError Cropbox.deunitfy((1u"m", 2u"cm", 3), u"mm")
     end
 
     @testset "dataframe" begin
