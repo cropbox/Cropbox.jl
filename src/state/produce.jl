@@ -32,7 +32,7 @@ unit(s::Produce) = nothing
 
 Base.getindex(s::Produce{Union{S,Nothing}}, i) where {S<:System} = i == 1 ? s.value : throw(BoundsError(s, i))
 Base.length(s::Produce{Union{S,Nothing}}) where {S<:System} = isnothing(s.value) ? 0 : 1
-Base.iterate(s::Produce{Union{S,Nothing}}, i=1) where {S<:System} = i > 1 ? nothing : (s.value, i+1)
+Base.iterate(s::Produce{Union{S,Nothing}}, i=1) where {S<:System} = isempty(s) || i > 1 ? nothing : (s.value, i+1)
 Base.eltype(::Type{Produce{S}}) where {S} = S
 
 Base.getindex(s::Produce{V}, i) where {V<:Vector} = getindex(s.value, i)
