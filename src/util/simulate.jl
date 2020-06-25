@@ -6,13 +6,14 @@ struct Simulation
     base::Union{String,Symbol,Nothing}
     index::OrderedDict
     target::OrderedDict
+    meta::OrderedDict
     result::DataFrame
 end
 
-simulation(s::System; base=nothing, index="context.clock.tick", target=nothing) = begin
+simulation(s::System; base=nothing, index="context.clock.tick", target=nothing, meta=()) = begin
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
-    Simulation(base, I, T, DataFrame())
+    Simulation(base, I, T, OrderedDict(meta), DataFrame())
 end
 
 parsesimulationkey(p::Pair) = p
@@ -42,8 +43,11 @@ end
 
 update!(m::Simulation, s::System) = append!(m.result, extract(s, m))
 
-format(m::Simulation; nounit=false, long=false) = begin
+format!(m::Simulation; nounit=false, long=false) = begin
     r = m.result
+    for (k, v) in m.meta
+        r[!, k] .= v 
+    end
     if nounit
         r = deunitfy.(r)
     end
@@ -93,11 +97,11 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
         ProgressMeter.next!(p)
     end
     ProgressMeter.finish!(p)
-    format.(M; kwargs...)
+    format!.(M; kwargs...)
 end
 
-simulate!(s::System; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
-    simulate!(s, [(base=base, index=index, target=target)]; kwargs...) |> only
+simulate!(s::System; base=nothing, index="context.clock.tick", target=nothing, meta=(), kwargs...) = begin
+    simulate!(s, [(base=base, index=index, target=target, meta=meta)]; kwargs...) |> only
 end
 simulate!(s::System, layout; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
@@ -105,8 +109,8 @@ simulate!(s::System, layout; kwargs...) = begin
 end
 simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; callback=f, kwargs...)
 
-simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, kwargs...) = begin
-    simulate(S, [(base=base, index=index, target=target)]; kwargs...) |> only
+simulate(S::Type{<:System}; base=nothing, index="context.clock.tick", target=nothing, meta=(), kwargs...) = begin
+    simulate(S, [(base=base, index=index, target=target, meta=meta)]; kwargs...) |> only
 end
 simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
     if isempty(configs)

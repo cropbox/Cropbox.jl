@@ -109,16 +109,19 @@ using Dates
             (target=:a,),
             (index=[:t => "context.clock.tick", "i"], target=["a", :B => :b]),
             (base="context.clock", index="tick", target="step"),
+            (target=:b, meta=(:c => 0, :d => :D)),
         ]
         n = 1
         r = simulate(SSimulateLayout, L, stop=n)
         @test propertynames(r[1]) == [:tick, :a]
         @test propertynames(r[2]) == [:t, :i, :a, :B]
         @test propertynames(r[3]) == [:tick, :step]
-        @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == (n+1)u"hr"
+        @test propertynames(r[4]) == [:tick, :b, :c, :d]
+        @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == r[4][end, :tick] == (n+1)u"hr"
         @test r[1][end, :a] == 0
         @test r[2][end, :B] == 2
         @test r[3][end, :step] == 1u"hr"
+        @test all(r[4][!, :c] .== 0) && all(r[4][!, :d] .== :D)
     end
 
     @testset "layout and configs" begin
