@@ -64,7 +64,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     n = if stop isa Number
         stop
     else
-        v = s[stop]'
+        v = stop isa Symbol || stop isa String ? s[stop]' : stop(s)
         if v isa Bool
             nothing
         elseif v isa Number
@@ -79,7 +79,11 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
         () -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
-        () -> !s[stop]'
+        if stop isa Symbol || stop isa String
+            () -> !s[stop]'
+        else
+            () -> !stop(s)
+        end
     end
     !skipfirst && update!.(M, s)
     while check()

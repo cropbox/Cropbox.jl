@@ -58,6 +58,8 @@ using Dates
         @test r1[end, :b] == 5
         r2 = simulate(SSimulateStopBoolean, stop="z")
         @test r1 == r2
+        r3 = simulate(SSimulateStopBoolean, stop=s -> s.b' >= 5)
+        @test r1 == r3
     end
 
     @testset "skipfirst" begin
