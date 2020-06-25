@@ -3,7 +3,7 @@ import DataFrames: DataFrame
 import BlackBoxOptim
 
 calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
-calibrate(S::Type{<:System}, obs, configs; index="context.clock.tick", target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     I = parsesimulation(index) |> keys |> collect
