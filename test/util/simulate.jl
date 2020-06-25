@@ -26,15 +26,38 @@ using Dates
         @test propertynames(r) == [:b]
     end
 
-    @testset "stop" begin
-        @system SSimulateStop(Controller) begin
+    @testset "stop number" begin
+        @system SSimulateStopNumber(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
-            z(b) => b >= 10 ~ flag
         end
-        r = simulate(SSimulateStop, stop="z")
-        @test r[end, :b] == 10
-        @test r[end-1, :b] != 10
+        r = simulate(SSimulateStopNumber, stop=5)
+        @test r[end-1, :b] == 4
+        @test r[end, :b] == 5
+    end
+
+    @testset "stop count" begin
+        @system SSimulateStopCount(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a) ~ accumulate
+            c => 5 ~ preserve::Int
+        end
+        r = simulate(SSimulateStopCount, stop=:c)
+        @test r[end-1, :b] == 4
+        @test r[end, :b] == 5
+    end
+
+    @testset "stop boolean" begin
+        @system SSimulateStopBoolean(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a) ~ accumulate
+            z(b) => b >= 5 ~ flag
+        end
+        r1 = simulate(SSimulateStopBoolean, stop=:z)
+        @test r1[end-1, :b] == 4
+        @test r1[end, :b] == 5
+        r2 = simulate(SSimulateStopBoolean, stop="z")
+        @test r1 == r2
     end
 
     @testset "skipfirst" begin
