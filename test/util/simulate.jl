@@ -163,6 +163,27 @@ using Dates
         @test r[r.tick .== (n+1)*u"hr", :b] == p .* n
     end
 
+    @testset "meta" begin
+        @system SSimulateMeta(Controller) begin
+            a ~ preserve(parameter)
+            b(a) ~ accumulate
+        end
+        C = (
+            :SSimulateMeta => (a=1,),
+            :Extra => (b=2, c=:C),
+        )
+        n = 10
+        r1 = simulate(SSimulateMeta, config=C, index=(), meta=:Extra, stop=n)
+        @test propertynames(r1) == [:a, :b, :c]
+        @test all(r1.b .== 2)
+        @test all(r1.c .== :C)
+        r2 = simulate(SSimulateMeta, config=C, index=(), meta=(:Extra, :d => 0), stop=n)
+        @test propertynames(r2) == [:a, :b, :c, :d]
+        @test r1.b == r2.b
+        @test r1.c == r2.c
+        @test all(r2.d .== 0)
+    end
+
     @testset "options" begin
         @system SSimulateOptions(Controller) begin
             a ~ preserve(extern)
