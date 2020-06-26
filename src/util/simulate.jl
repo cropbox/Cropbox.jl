@@ -124,7 +124,11 @@ simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=noth
     end
 end
 simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
-    R = [simulate(S, layout; config=c, kwargs...) for c in configs]
+    n = length(configs)
+    R = Vector(undef, n)
+    Threads.@threads for i in 1:n
+        R[i] = simulate(S, layout; config=configs[i], kwargs...)
+    end
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
 simulate(f::Function, S::Type{<:System}, args...; kwargs...) = simulate(S, args...; callback=f, kwargs...)
