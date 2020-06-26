@@ -303,8 +303,7 @@ Base.print(io::IO, ::MainStage) = print(io, "")
 Base.print(io::IO, ::PostStage) = print(io, "‡")
 
 update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
-    #HACK: preliminary support for multi-threaded update! (could be much slower if update is small)
-    Threads.@threads for s in S
+    for s in S
         update!(s, t)
     end
 end
