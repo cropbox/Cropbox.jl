@@ -6,14 +6,15 @@ struct Simulation
     base::Union{String,Symbol,Nothing}
     index::OrderedDict
     target::OrderedDict
-    meta::OrderedDict
+    meta::OrderedDict{Symbol,Any}
     result::DataFrame
 end
 
-simulation(s::System; base=nothing, index=nothing, target=nothing, meta=()) = begin
+simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=()) = begin
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
-    Simulation(base, I, T, OrderedDict(meta), DataFrame())
+    M = parsemeta(meta, s.context.config)
+    Simulation(base, I, T, M, DataFrame())
 end
 
 parsesimulationkey(p::Pair) = p
@@ -41,6 +42,12 @@ extractable(s::System, p) = begin
     # only pick up variables of simple types by default
     p[2] isa Union{Number,Symbol,AbstractString,AbstractDateTime}
 end
+
+parsemetadata(p::Pair, c) = p
+parsemetadata(a::Symbol, c) = c[a]
+parsemeta(a::Vector, c) = merge(OrderedDict.(parsemetadata.(a, Ref(c)))...)
+parsemeta(a::Tuple, c) = parsemeta(collect(a), c)
+parsemeta(a, c) = parsemeta([a], c)
 
 update!(m::Simulation, s::System) = append!(m.result, extract(s, m))
 
