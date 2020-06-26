@@ -10,7 +10,7 @@ struct Simulation
     result::DataFrame
 end
 
-simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=()) = begin
+simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
     M = parsemeta(meta, s.context.config)
@@ -45,9 +45,10 @@ end
 
 parsemetadata(p::Pair, c) = p
 parsemetadata(a::Symbol, c) = c[a]
-parsemeta(a::Vector, c) = merge(OrderedDict.(parsemetadata.(a, Ref(c)))...)
+parsemeta(a::Vector, c) = merge(parsemeta(nothing, c), OrderedDict.(parsemetadata.(a, Ref(c)))...)
 parsemeta(a::Tuple, c) = parsemeta(collect(a), c)
 parsemeta(a, c) = parsemeta([a], c)
+parsemeta(::Nothing, c) = OrderedDict()
 
 update!(m::Simulation, s::System) = append!(m.result, extract(s, m))
 
@@ -108,7 +109,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     format!.(M; kwargs...)
 end
 
-simulate!(s::System; base=nothing, index=nothing, target=nothing, meta=(), kwargs...) = begin
+simulate!(s::System; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate!(s, [(base=base, index=index, target=target, meta=meta)]; kwargs...) |> only
 end
 simulate!(s::System, layout; kwargs...) = begin
@@ -117,7 +118,7 @@ simulate!(s::System, layout; kwargs...) = begin
 end
 simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; callback=f, kwargs...)
 
-simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=(), kwargs...) = begin
+simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate(S, [(base=base, index=index, target=target, meta=meta)]; kwargs...) |> only
 end
 simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
