@@ -131,12 +131,16 @@ simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=noth
         @error "redundant configurations" config configs
     end
 end
-simulate(S::Type{<:System}, layout, configs; kwargs...) = begin
+simulate(S::Type{<:System}, layout, configs; verbose=true, kwargs...) = begin
     n = length(configs)
     R = Vector(undef, n)
+    dt = verbose ? 1 : Inf
+    p = Progress(n; dt=dt, barglyphs=barglyphs)
     Threads.@threads for i in 1:n
-        R[i] = simulate(S, layout; config=configs[i], kwargs...)
+        R[i] = simulate(S, layout; config=configs[i], verbose=false, kwargs...)
+        ProgressMeter.next!(p)
     end
+    ProgressMeter.finish!(p)
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
 simulate(f::Function, S::Type{<:System}, args...; kwargs...) = simulate(S, args...; callback=f, kwargs...)
