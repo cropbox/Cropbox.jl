@@ -32,7 +32,7 @@ resolveindex(op::AbstractString) = begin
     end
 end
 
-Base.getindex(s::Produce{Union{S,Nothing}}, ops::AbstractString) where {S<:System} = Bundle{S,Union{S,Nothing}}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{S,S}(s, resolveindex.(split(ops, "/")))
 Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{S,Vector{S}}(s, resolveindex.(split(ops, "/")))
 
 fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
