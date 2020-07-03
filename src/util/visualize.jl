@@ -1,13 +1,18 @@
 visualize(S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, skipfirst=true, filter=nothing,
-    ylab=nothing, legend=nothing, plotopts...
+    ylab=nothing, legend=nothing, names=nothing, plotopts...
 ) = begin
     G = configure(group)
     C = @config config + !G
 
-    if isempty(G)
-        names = [""]
+    names = if !isnothing(names)
+        names
+    elseif isempty(G)
+        [""]
+    elseif G isa Vector
+        # temporary numeric labels
+        string.(1:length(G))
     else
         K, V = only(G)
         k, v = only(V)
@@ -16,7 +21,7 @@ visualize(S::Type{<:System}, x, y;
         T = K == Symbol(0) ? S : type(K)
         u = fieldtype(T, k) |> unit
         !isnothing(u) && (legend *= " ($u)")
-        names = string.(v)
+        string.(v)
     end
     isnothing(ylab) && (ylab = y)
 
