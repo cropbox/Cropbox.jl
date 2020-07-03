@@ -4,9 +4,7 @@ const Config = OrderedDict{Symbol,Any}
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
 configure(c::Tuple) = configure(c...)
-configure(c::Vector) = error("single configuration expected: $c")
-#HACK: allow single patch (i.e. `0 => :a => 1` instead of `1:2`) in configexpand
-configure(c::Array{T,0}) where {T} = configure(c...)
+configure(c::Vector) = configure.(c)
 configure(c...) = merge(merge, configure.(c)...)
 configure(::Nothing) = configure()
 configure(c) = error("unrecognized configuration: $c")
@@ -103,15 +101,18 @@ configexpand(patch; base=()) = begin
     else
         s, C = only(P)
         k, V = only(C)
-        [s => k => v for v in V]
+        #HACK: allow single patch (i.e. `0 => :a => 1` instead of `1:2`)
+        reshape([s => k => v for v in V], :)
     end
-    configrebase(configs; base=base)
+    configexpand(configs; base=base)
 end
+configexpand(configs::Vector; base=()) = configrebase(configs; base=base)
 configrebase(configs::Vector; base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
 configrebase(config; base=()) = configrebase([config]; base=base)
 
 configreduce(a::Vector, b) = configrebase(b; base=a)
 configreduce(a, b::Vector) = configrebase(b; base=a)
+configreduce(a::Vector, b::Vector) = configreduce.(a, b)
 configreduce(a, b) = configure(a, b)
 configreduce(a) = configure(a)
 configreduce(a::Vector) = configure.(a)

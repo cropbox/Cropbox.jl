@@ -14,7 +14,6 @@ import DataStructures: OrderedDict
             @test_throws ErrorException Cropbox.configure(0)
             @test_throws ErrorException Cropbox.configure(:a)
             @test_throws ErrorException Cropbox.configure("a")
-            @test_throws ErrorException Cropbox.configure([])
         end
     end
     
@@ -34,7 +33,10 @@ import DataStructures: OrderedDict
         
         @testset "vector" begin
             c = [:S1 => :a => 1, :S2 => :a => 2]
-            @test_throws ErrorException Cropbox.configure(c)
+            C = Cropbox.configure(c)
+            C1 = Cropbox.configure(c[1])
+            C2 = Cropbox.configure(c[2])
+            @test C == [C1, C2]
         end
         
         @testset "type" begin
