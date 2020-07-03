@@ -11,6 +11,8 @@ struct Simulation
     result::DataFrame
 end
 
+@nospecialize
+
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
@@ -143,5 +145,7 @@ simulate(S::Type{<:System}, layout, configs; verbose=true, kwargs...) = begin
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
 simulate(f::Function, S::Type{<:System}, args...; kwargs...) = simulate(S, args...; callback=f, kwargs...)
+
+@specialize
 
 export simulate, simulate!

@@ -5,6 +5,8 @@ import Random
     context(config) ~ ::Cropbox.Context(context)
 end
 
+@nospecialize
+
 instance(S::Type{<:System}; config=(), options=(), seed=nothing) = begin
     !isnothing(seed) && Random.seed!(seed)
     c = configure(config)
@@ -13,5 +15,7 @@ instance(S::Type{<:System}; config=(), options=(), seed=nothing) = begin
     s = S(; config=c, options...)
     update!(s)
 end
+
+@specialize
 
 export Controller, instance

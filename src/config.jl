@@ -42,6 +42,8 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     join(io, f.(c), '\n')
 end
 
+@nospecialize
+
 configure(c::Config) = c
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
@@ -176,5 +178,7 @@ macro config(ex)
         :(Cropbox.configreduce($a, $b))
     end
 end
+
+@specialize
 
 export configure, parameters, @config

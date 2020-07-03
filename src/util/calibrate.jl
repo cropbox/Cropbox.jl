@@ -2,6 +2,8 @@ import DataStructures: OrderedDict
 import DataFrames: DataFrame
 import BlackBoxOptim
 
+@nospecialize
+
 calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     if isempty(configs)
         calibrate(S, obs, [config]; kwargs...)
@@ -65,5 +67,7 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
         config(BlackBoxOptim.best_candidate(r))
     end
 end
+
+@specialize
 
 export calibrate

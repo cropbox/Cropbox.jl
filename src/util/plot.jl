@@ -3,6 +3,8 @@ import Gadfly
 import UnicodePlots
 import Unitful
 
+@nospecialize
+
 extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
 extractcolumn(df::DataFrame, n::Expr) = begin
     ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
@@ -297,5 +299,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
     UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset, width=width, height=height)
 end
+
+@specialize
 
 export plot, plot!
