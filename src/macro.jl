@@ -31,7 +31,7 @@ Base.show(io::IO, v::VarInfo) = begin
     println(io, "docstring: $(v.docstring)")
 end
 
-VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String) = begin
+VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
     @capture(line, (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
@@ -41,13 +41,54 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     args = isnothing(args) ? [] : args
     kwargs = isnothing(kwargs) ? [] : kwargs
     state = typestate(Val(state))
-    type = @capture(type, elemtype_[]) ? :(Vector{$elemtype}) : isnothing(type) ? typetag(Val(state)) : type
+    type = parsetype(type, state, scope)
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
     VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
 end
 
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
+
+parsetype(type, state, scope) = begin
+    if @capture(type, elemtype_[])
+        :(Vector{$(prefixscope(elemtype, scope))})
+    elseif isnothing(type)
+        typetag(Val(state))
+    else
+        prefixscope(type, scope)
+    end
+end
+
+extractscope(x) = begin
+    l = []
+    if @capture(x, a_{c__})
+        x = a
+    end
+    while true
+        if @capture(x, a_.b_)
+            push!(l, b)
+            if isexpr(a)
+                x = a
+            else
+                push!(l, a)
+                break
+            end
+        else
+            push!(l, x)
+            break
+        end
+    end
+    (l=reverse(l), c=c)
+end
+genscope(lc) = genscope(lc.l, lc.c)
+genscope(l, ::Nothing) = reduce((a, b) -> Expr(:., a, QuoteNode(b)), l)
+genscope(l, c) = :($(genscope(l, nothing)){$(c...)})
+prefixscope(x, p::Module) = prefixscope(x, nameof(p))
+prefixscope(x, p::Symbol) = let (l, c) = extractscope(x)
+    genscope([p, l...], c)
+end
+
+getmodule(m::Module, i) = reduce((a, b) -> getfield(a, b), split(String(i), ".") .|> Symbol, init=m)
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
 parsetags(tags::Vector; state, type, a...) = begin
@@ -219,7 +260,7 @@ gensource(infos) = MacroTools.flatten(@q begin $(gensource.(infos)...) end)
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
-genstruct(name, type, infos, incl) = begin
+genstruct(name, type, infos, incl, scope) = begin
     S = esc(name)
     T = esc(type)
     N = Meta.quot(name)
@@ -240,11 +281,12 @@ genstruct(name, type, infos, incl) = begin
                 new($(args...))
             end
         end
-        $C.source(::Val{$N}) = $(Meta.quot(source))
-        $C.mixins(::Val{$N}) = Tuple($(esc(:eval)).($incl))
-        $C.type(::Val{$N}) = $S
+        $C.source(::Type{<:$S}) = $(Meta.quot(source))
+        $C.mixins(::Type{<:$S}) = $(getmodule.(Ref(scope), incl))
+        $C.type(::Type{<:$S}) = $S
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
+        $C.scopeof(::Type{<:$S}) = $scope
         $C.update!($(esc(:self))::$S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
         $C.update!($(esc(:self))::$S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
         $C.update!($(esc(:self))::$S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
@@ -253,21 +295,16 @@ genstruct(name, type, infos, incl) = begin
     system #|> MacroTools.flatten
 end
 
-#TODO: maybe need to prevent naming clash by assigning UUID for each System
 source(s::S) where {S<:System} = source(S)
-source(S::Type{<:System}) = source(nameof(S))
-source(s::Symbol) = source(Val(s))
-source(::Val{:System}) = quote
+source(::Type{<:System}) = quote
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
-source(::Val) = :()
+source(::Type) = :()
 
 mixins(s::S) where {S<:System} = mixins(S)
-mixins(S::Type{<:System}) = mixins(nameof(S))
-mixins(s::Symbol) = mixins(Val(s))
-mixins(::Val{:System}) = (System,)
-mixins(::Val) = ()
+mixins(::Type{<:System}) = (System,)
+mixins(::Type) = ()
 
 import DataStructures: OrderedSet
 mixincollect(s::S) where {S<:System} = mixincollect(S)
@@ -289,9 +326,11 @@ type(s::Symbol) = type(Val(s))
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()
-
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
+
+scopeof(::Type{<:System}) = @__MODULE__
+scopeof(::S) where {S<:System} = scopeof(S)
 
 abstract type UpdateStage end
 struct PreStage <: UpdateStage end
@@ -317,16 +356,16 @@ parsehead(head) = begin
     mixins = isnothing(mixins) ? [] : mixins
     incl = [:System]
     for m in mixins
-        push!(incl, m)
+        push!(incl, Symbol(m))
     end
     #TODO: use implicit named tuple once implemented: https://github.com/JuliaLang/julia/pull/34331
     (; name=name, incl=incl, type=type)
 end
 
 import DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, incl, type, _...) = genstruct(name, type, geninfos(body; name=name, incl=incl), incl)
-geninfos(body; name, incl, _...) = begin
-    con(b, s) = begin
+gensystem(body; name, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name=name, incl=incl, scope=scope), incl, scope)
+geninfos(body; name, incl, scope, _...) = begin
+    con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()
         #HACK: default in case LineNumberNode is not attached
         ln = LineNumberNode(@__LINE__, @__FILE__)
@@ -338,13 +377,13 @@ geninfos(body; name, incl, _...) = begin
             else
                 ds = ""
             end
-            v = VarInfo(s, l, ln, ds)
+            v = VarInfo(s, l, ln, ds, sc)
             d[v.name] = v
         end
         d
     end
-    add!(d, b, s) = begin
-        for (n, v) in con(b, s)
+    add!(d, b, s, sc) = begin
+        for (n, v) in con(b, s, sc)
             if haskey(d, n)
                 v0 = d[n]
                 if v.state == :Hold
@@ -361,21 +400,22 @@ geninfos(body; name, incl, _...) = begin
     end
     combine() = begin
         d = OrderedDict{Symbol,VarInfo}()
-        for m in incl
-            add!(d, source(m), m)
+        for i in incl
+            m = getmodule(scope, i)
+            add!(d, source(m), i, scopeof(m))
         end
-        add!(d, body, name)
+        add!(d, body, name, scope)
         d
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(source(S); name=nameof(S), incl=())
+geninfos(S::Type{<:System}) = geninfos(source(S); name=nameof(S), incl=(), scope=scopeof(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))
 
 macro system(head, body=:(begin end))
-    gensystem(body; parsehead(head)...)
+    gensystem(body; scope=__module__, parsehead(head)...)
 end
 
 export @system, update!
