@@ -33,11 +33,12 @@ end
 
 VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
-    @capture(line, (decl_ ~ deco_) | decl_)
+    @capture(bindscope(line, scope), (decl_ ~ deco_) | decl_)
     @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
+    #TODO: prefixscope to args/kwargs type specifier 
     args = isnothing(args) ? [] : args
     kwargs = isnothing(kwargs) ? [] : kwargs
     state = typestate(Val(state))
@@ -45,6 +46,9 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
     VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
 end
+
+#HACK: experimental support for scope placeholder `:$`
+bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) : x, l)
 
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
