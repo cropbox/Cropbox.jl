@@ -185,7 +185,7 @@ genfield(v::VarInfo) = begin
 end
 genfields(infos) = [genfield(v) for v in infos]
 
-genpredecl(name) = @q _names = $C.names.($C.mixincollect($name)) |> reverse |> Iterators.flatten |> collect
+genpredecl(name) = @q _names = $C.names.($C.mixincollect($(esc(name)))) |> reverse |> Iterators.flatten |> collect
 gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
@@ -261,6 +261,9 @@ genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
 genstruct(name, type, infos, incl, scope) = begin
+    startswith(string(name), '_') && error("system name should not start with _: $name")
+    _name = Symbol(:_, name)
+    _S = esc(_name)
     S = esc(name)
     T = esc(type)
     N = Meta.quot(name)
@@ -273,17 +276,20 @@ genstruct(name, type, infos, incl, scope) = begin
     args = gennewargs(infos)
     source = gensource(infos)
     system = quote
-        Core.@__doc__ mutable struct $S <: $T
+        Core.@__doc__ abstract type $S <: $T end
+        mutable struct $_S <: $S
             $(fields...)
-            function $name(; _kwargs...)
+            function $_name(; _kwargs...)
                 $predecl
                 $(decls...)
                 new($(args...))
             end
         end
+        $S(; kw...) = $_S(; kw...)
+        Base.nameof(::Type{$_S}) = $(Meta.quot(name))
         $C.source(::Type{<:$S}) = $(Meta.quot(source))
         $C.mixins(::Type{<:$S}) = $(getmodule.(Ref(scope), incl))
-        $C.type(::Type{<:$S}) = $S
+        $C.type(::Type{<:$S}) = $_S
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         $C.scopeof(::Type{<:$S}) = $scope
@@ -322,7 +328,9 @@ end
 mixincollect(s) = ()
 mixindispatch(s, S::Type{<:System}) = (Val(S in mixincollect(s) ? nameof(S) : nothing), s)
 
-type(s::Symbol) = type(Val(s))
+type(s::Symbol, m::Module=Main) = getmodule(m, s)
+type(T) = T
+vartype(::Type{S}, k) where {S<:System} = fieldtype(type(S), k)
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()

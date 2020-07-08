@@ -32,8 +32,8 @@ resolveindex(op::AbstractString) = begin
     end
 end
 
-Base.getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{S,S}(s, resolveindex.(split(ops, "/")))
-Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{S,Vector{S}}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{type(S),S}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{type(S),Vector{S}}(s, resolveindex.(split(ops, "/")))
 
 fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
@@ -42,8 +42,8 @@ struct Bunch{V}
     list::Vector{V}
 end
 
-Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
-Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{fieldtype(S, p)}
+Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{vartype(S, p)}
+Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{vartype(S, p)}
 Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
 Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
 value(b::Bunch) = value.(collect(b))
