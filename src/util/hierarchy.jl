@@ -24,7 +24,7 @@ node!(h::Hierarchy, n::Symbol) = begin
     end
     n
 end
-node!(h::Hierarchy, T::Type{<:System}) = node!(h, nameof(T))
+node!(h::Hierarchy, T::Type{<:System}) = node!(h, namefor(T))
 
 import DataStructures: SortedDict
 nodes(h::Hierarchy) = SortedDict(v => k for (k, v) in h.I) |> values |> collect

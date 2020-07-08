@@ -2,7 +2,12 @@
     @testset "name" begin
         @system SSystemName(Controller)
         s = instance(SSystemName)
-        @test nameof(s) == :SSystemName
+        @test Cropbox.namefor(s) == :SSystemName
+        @test Cropbox.namefor(SSystemName) == :SSystemName
+        S = typeof(s)
+        @test S === _SSystemName
+        @test S <: SSystemName
+        @test Cropbox.namefor(S) == :SSystemName
     end
 
     @testset "names" begin

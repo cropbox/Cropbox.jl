@@ -286,7 +286,7 @@ genstruct(name, type, infos, incl, scope) = begin
             end
         end
         $S(; kw...) = $_S(; kw...)
-        Base.nameof(::Type{$_S}) = $(Meta.quot(name))
+        $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.source(::Type{<:$S}) = $(Meta.quot(source))
         $C.mixins(::Type{<:$S}) = $(getmodule.(Ref(scope), incl))
         $C.type(::Type{<:$S}) = $_S
@@ -326,7 +326,7 @@ mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
     l
 end
 mixincollect(s) = ()
-mixindispatch(s, S::Type{<:System}) = (Val(S in mixincollect(s) ? nameof(S) : nothing), s)
+mixindispatch(s, S::Type{<:System}) = (Val(S in mixincollect(s) ? namefor(S) : nothing), s)
 
 type(s::Symbol, m::Module=Main) = getmodule(m, s)
 type(T) = T
@@ -417,7 +417,7 @@ geninfos(body; name, incl, scope, _...) = begin
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(source(S); name=nameof(S), incl=(), scope=scopeof(S))
+geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), incl=(), scope=scopeof(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))

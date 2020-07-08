@@ -9,7 +9,7 @@ instance(S::Type{<:System}; config=(), options=(), seed=nothing) = begin
     !isnothing(seed) && Random.seed!(seed)
     c = configure(config)
     #HACK: support placeholder (0) for the controller name
-    c = configure(((k == Symbol(0) ? nameof(S) : k) => v for (k, v) in c)...)
+    c = configure(((k == Symbol(0) ? namefor(S) : k) => v for (k, v) in c)...)
     s = S(; config=c, options...)
     update!(s)
 end

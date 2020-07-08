@@ -21,7 +21,7 @@ _configure(k::String, v) = begin
         error("unrecognized configuration key string: $k")
     end
 end
-_configure(k::Type{<:System}, v) = _configure(nameof(k), v)
+_configure(k::Type{<:System}, v) = _configure(namefor(k), v)
 _configure(k, v) = _configure(Symbol(k), v)
 _configure(v) = Config(v)
 _configure(v::NamedTuple) = Config(pairs(v))
@@ -75,7 +75,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
         u = @eval scope $(v.tags[:unit])
         unitfy(b, u)
     end
-    C = configure(nameof(S) => ((key(v) => val(v) for v in P)...,))
+    C = configure(namefor(S) => ((key(v) => val(v) for v in P)...,))
     if recursive
         T = OrderedSet([@eval scope $(v.type) for v in V])
         T = filter(t -> t <: System && t ∉ exclude, T)

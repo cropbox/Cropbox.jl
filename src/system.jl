@@ -1,7 +1,7 @@
 abstract type System end
 
-Base.nameof(s::S) where {S<:System} = nameof(S)
-Base.nameof(S::Type{<:System}) = nameof(type(S))
+namefor(s::S) where {S<:System} = namefor(S)
+namefor(S::Type{<:System}) = nameof(S)
 Base.names(s::S) where {S<:System} = names(S)
 Base.names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
@@ -56,6 +56,6 @@ value(s::System, k::Symbol; kw...) = begin
     eval(:(let $(args...); $body end))
 end
 
-Base.show(io::IO, s::System) = print(io, "<$(nameof(s))>")
+Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
 
 export System
