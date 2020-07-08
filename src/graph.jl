@@ -2,7 +2,7 @@ abstract type Graph end
 
 graph(g::Graph) = g
 labels(g::Graph; kw...) = [] #error("labels() not defined for $x")
-edgestyles(g::Graph, kw...) = Dict()
+edgestyles(g::Graph; kw...) = Dict()
 
 import TikzGraphs
 plot(g::Graph, layout=(), label=(), edgestyle=()) = begin
