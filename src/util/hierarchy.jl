@@ -76,7 +76,7 @@ labels(h::Hierarchy) = label.(nodes(h))
 
 edgestyle(h::Hierarchy, e::Symbol) = begin
     if e == :mixin
-        "dotted"
+        "dashed"
     elseif e == :loop
         "loop"
     else
