@@ -37,6 +37,7 @@ makedot(g::Graph) = begin
         height=0
         margin=0.03
         shape=plaintext
+        fontsize=10
     ]
     edge [
         arrowsize=0.2
