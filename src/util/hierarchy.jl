@@ -44,7 +44,7 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
     scope = S.name.module
     a = node!(h, S)
     (a in h.N || hasloop(h, a)) && return
-    add!(h, a)
+    add!(h, a, mixins(S))
     V = geninfos(S)
     for v in V
         T = @eval scope $(v.type)
@@ -55,11 +55,11 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
     push!(h.N, a)
 end
 
-add!(h::Hierarchy, a::Symbol) = begin
-    for M in Cropbox.mixins(Val(a))
-        (M == System) && continue
-        add!(h, M)
-        b = node!(h, M)
+add!(h::Hierarchy, a::Symbol, M::Tuple) = begin
+    for m in M
+        (m == System) && continue
+        add!(h, m)
+        b = node!(h, m)
         link!(h, b, a, :mixin)
     end
 end
