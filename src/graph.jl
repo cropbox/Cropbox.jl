@@ -32,6 +32,7 @@ makedot(g::Graph) = begin
     
     """
     digraph {
+    ranksep=0.2
     node[
         width=0
         height=0
@@ -41,7 +42,7 @@ makedot(g::Graph) = begin
     ]
     edge [
         arrowsize=0.2
-        penwidth=0.5
+        penwidth=0.2
     ]
     $(N...)
     $(E...)
