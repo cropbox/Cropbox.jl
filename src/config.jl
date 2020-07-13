@@ -19,8 +19,9 @@ Base.:(==)(c::Config, d::Config) = c.config == d.config
 Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in D]...) |> Config
 
 Base.show(io::IO, c::Config) = begin
-    for (s, C) in c
-        println(io, "$s")
+    f((s, C)) = begin
+        io = IOBuffer()
+        print(io, "$s")
         K = keys(C)
         n = maximum(length.(string.(K)))
         for (k, v) in C
@@ -28,9 +29,12 @@ Base.show(io::IO, c::Config) = begin
             rhs = repr(v)
             i = findfirst('\n', rhs)
             !isnothing(i) && (rhs = rhs[1:i-1] * "...")
-            println(io, "  $lhs = $rhs")
+            println(io)
+            print(io, "  $lhs = $rhs")
         end
+        String(take!(io))
     end
+    join(io, f.(c), '\n')
 end
 
 configure(c::Config) = c
