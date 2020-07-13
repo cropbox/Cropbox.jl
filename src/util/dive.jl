@@ -34,10 +34,8 @@ dive(s::System, t) = begin
     dive(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
 end
 dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
-dive(s::Tabulate, t) = dive(s', t)
-dive(s::Call, t) = dive(s', t)
-dive(s::Produce, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
-dive(s::State, t) = dive(map(v -> MenuItem("", "", v), s'), t)
+dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
+dive(s::State, t) = dive(s', t)
 dive(l::Vector{MenuItem}, t) = begin
     isempty(l) && return
     while true
