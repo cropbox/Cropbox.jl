@@ -11,13 +11,11 @@ import UUIDs
 
 @system Rendering
 
-abstract type ContainerSystem <: System end
-
-@system BaseContainer(Rendering) <: ContainerSystem begin
+@system Container(Rendering) begin
     dist(; p::Point3f0): distance => -Inf ~ call
 end
 
-@system PlantContainer(BaseContainer) <: ContainerSystem begin
+@system PlantContainer(Container) <: Container begin
     r1: top_radius => 5 ~ preserve(u"cm", parameter)
     r2: bottom_radius => 5 ~ preserve(u"cm", parameter)
     h: height => 100 ~ preserve(u"cm", parameter)
@@ -41,7 +39,7 @@ end
     end ~ call
 end
 
-@system Rhizobox(BaseContainer) <: ContainerSystem begin
+@system Rhizobox(Container) <: Container begin
     l: length => 16u"inch" ~ preserve(u"cm", parameter)
     w: width => 10.5u"inch" ~ preserve(u"cm", parameter)
     h: height => 42u"inch" ~ preserve(u"cm", parameter)
@@ -92,7 +90,7 @@ end
 abstract type RootSystem <: System end
 
 @system BaseRoot(Tropism, Rendering) <: RootSystem begin
-    box ~ ::ContainerSystem(override)
+    box ~ ::Container(override)
 
     ro: root_order => 1 ~ preserve::Int(extern)
     zi: zone_index => 0 ~ preserve::Int(extern)
