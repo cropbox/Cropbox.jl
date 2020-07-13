@@ -21,18 +21,12 @@ text(m::MenuItem) = begin
     isempty(l) ? v : "$l $(Box.DARK_GRAY_FG("=")) $v"
 end
 
-dive(s::System, t) = begin
-    d = Dict(fieldnamesalias(s))
-    label(k) = begin
-        n = string(k)
-        a = d[k]
-        l = "$(Box.BLUE_FG(n))"
-        !isnothing(a) && (l *= " $(Box.DARK_GRAY_FG("($a)"))")
-        l
-    end
-    l = fieldnamesunique(s) |> collect
-    dive(map(a -> MenuItem(string(a), label(a), s[a]), l), t)
-end
+dive(s::System, t) = dive(map(zip(fieldnamesalias(s), s)) do ((n, a), v)
+    k = string(n)
+    l = "$(Box.BLUE_FG(k))"
+    !isnothing(a) && (l *= " $(Box.DARK_GRAY_FG("($a)"))")
+    MenuItem(k, l, v)
+end, t)
 dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
 dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
 dive(s::State, t) = dive(s', t)
