@@ -16,7 +16,7 @@ Base.haskey(c::Config, k) = haskey(c.config, k)
 
 Base.:(==)(c::Config, d::Config) = c.config == d.config
 
-Base.merge(c::Config, D...) = merge(merge, c.config, [d.config for d in D]...) |> Config
+Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in D]...) |> Config
 
 Base.show(io::IO, c::Config) = begin
     for (s, C) in c
