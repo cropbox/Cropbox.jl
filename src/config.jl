@@ -18,7 +18,6 @@ Base.:(==)(c::Config, d::Config) = c.config == d.config
 
 Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in D]...) |> Config
 
-import Crayons.Box
 Base.show(io::IO, c::Config) = print(io, "<Config>")
 Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     n = length(c)
@@ -26,14 +25,17 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     !iszero(n) && println(io, ":")
     f((s, C)) = begin
         b = IOBuffer()
-        print(b, "  $(Box.MAGENTA_FG(string(s)))")
+        x = IOContext(b, :color => Base.have_color)
+        print(x, "  ")
+        printstyled(x, s, color=:magenta)
         K = keys(C)
         l = maximum(length.(string.(K)))
         for (k, v) in C
-            lhs = rpad(k, l)
-            rhs = labelstring(v)
-            println(b)
-            print(b, "    $(Box.BLUE_FG(lhs)) $(Box.DARK_GRAY_FG("=")) $rhs")
+            println(x)
+            print(x, "    ")
+            printstyled(x, rpad(k, l), color=:blue)
+            printstyled(x, " = ", color=:light_black)
+            print(x, labelstring(v))
         end
         String(take!(b))
     end
