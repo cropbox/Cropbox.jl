@@ -52,7 +52,7 @@ dive(v, t) = throw(value(v))
 
 dive(s::System) = begin
     try
-        dive(s, string(MAGENTA_FG(name(s))))
+        dive(s, MAGENTA_FG(string(namefor(s))))
     catch e
         !isa(e, InterruptException) && return e
     end
