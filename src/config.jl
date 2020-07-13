@@ -18,7 +18,8 @@ Base.:(==)(c::Config, d::Config) = c.config == d.config
 
 Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in D]...) |> Config
 
-Base.show(io::IO, c::Config) = begin
+Base.show(io::IO, c::Config) = print(io, "<Config>")
+Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     n = length(c)
     print(io, "Config for $n systems")
     !iszero(n) && println(io, ":")
