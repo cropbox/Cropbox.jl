@@ -70,6 +70,18 @@ Base.show(io::IO, ::MIME"text/plain", s::System) = begin
     end
 end
 
+look(s::System) = show(stdout, MIME("text/plain"), s)
+look(S::Type{<:System}) = begin
+    print("<")
+    printstyled(namefor(S), color=:magenta)
+    print(">")
+    for (n, a) in fieldnamesalias(S)
+        print("\n  ")
+        printstyled(n, color=:blue)
+        !isnothing(a) && printstyled(" (", a, ")", color=:light_black)
+    end
+end
+
 labelstring(v; maxlength=nothing) = begin
     l = string(v)
     n = length(l)
@@ -81,3 +93,4 @@ labelstring(v; maxlength=nothing) = begin
 end
 
 export System
+export look
