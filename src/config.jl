@@ -1,6 +1,43 @@
 import DataStructures: OrderedDict, DefaultOrderedDict
-const Config = OrderedDict{Symbol,Any}
+const _Config = OrderedDict{Symbol,Any}
+struct Config
+    config::_Config
+    Config(c...) = new(_Config(c...))
+end
 
+Base.getindex(c::Config, i) = c.config[i]
+Base.length(c::Config) = length(c.config)
+Base.iterate(c::Config) = iterate(c.config)
+Base.iterate(c::Config, i) = iterate(c.config, i)
+Base.eltype(::Type{Config}) = Pair{Symbol,Any}
+
+Base.get(c::Config, k, d) = get(c.config, k, d)
+Base.haskey(c::Config, k) = haskey(c.config, k)
+
+Base.:(==)(c::Config, d::Config) = c.config == d.config
+
+Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in D]...) |> Config
+
+Base.show(io::IO, c::Config) = begin
+    f((s, C)) = begin
+        io = IOBuffer()
+        print(io, "$s")
+        K = keys(C)
+        n = maximum(length.(string.(K)))
+        for (k, v) in C
+            lhs = rpad(k, n)
+            rhs = repr(v)
+            i = findfirst('\n', rhs)
+            !isnothing(i) && (rhs = rhs[1:i-1] * "...")
+            println(io)
+            print(io, "  $lhs = $rhs")
+        end
+        String(take!(io))
+    end
+    join(io, f.(c), '\n')
+end
+
+configure(c::Config) = c
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
 configure(c::Tuple) = configure(c...)
@@ -23,8 +60,8 @@ _configure(k::String, v) = begin
 end
 _configure(k::Type{<:System}, v) = _configure(namefor(k), v)
 _configure(k, v) = _configure(Symbol(k), v)
-_configure(v) = Config(v)
-_configure(v::NamedTuple) = Config(pairs(v))
+_configure(v) = _Config(v)
+_configure(v::NamedTuple) = _Config(pairs(v))
 
 parameterflatten(c::Config) = begin
     l = OrderedDict()
@@ -51,8 +88,9 @@ end
 
 option(c) = c
 option(c, keys...) = missing
-option(c::Config, key::Symbol, keys...) = option(get(c, key, missing), keys...)
-option(c::Config, key::Vector{Symbol}, keys...) = begin
+option(c::Config, keys...) = option(c.config, keys...)
+option(c::_Config, key::Symbol, keys...) = option(get(c, key, missing), keys...)
+option(c::_Config, key::Vector{Symbol}, keys...) = begin
     for k in key
         v = option(c, k, keys...)
         !ismissing(v) && return v
