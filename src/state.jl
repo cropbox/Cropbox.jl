@@ -57,7 +57,8 @@ priority(::Type{<:State}) = PostPriority()
 
 Base.show(io::IO, s::S) where {S<:State} = begin
     v = value(s)
-    r = labelstring(v; maxlength=40)
+    maxlength = get(io, :maxlength, nothing)
+    r = labelstring(v; maxlength=maxlength)
     print(io, r)
 end
 
