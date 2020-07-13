@@ -33,7 +33,7 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
             lhs = rpad(k, l)
             rhs = repr(v)
             i = findfirst('\n', rhs)
-            !isnothing(i) && (rhs = rhs[1:i-1] * "...")
+            !isnothing(i) && (rhs = rhs[1:i-1] * "…")
             println(b)
             print(b, "    $(Box.BLUE_FG(lhs)) $(Box.DARK_GRAY_FG("=")) $rhs")
         end
