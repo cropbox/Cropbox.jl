@@ -45,7 +45,7 @@ dive(l::Vector{MenuItem}, t) = begin
         println(o, t)
         M = TerminalMenus.RadioMenu(text.(l), pagesize=40)
         i = TerminalMenus.request(M)
-        n = length(l)
+        n = min(length(l), M.pagesize)
         #HACK: for single option menu?
         n == 1 && (n += 1)
         for _ in 0:n
