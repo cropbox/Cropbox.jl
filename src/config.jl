@@ -1,6 +1,38 @@
 import DataStructures: OrderedDict, DefaultOrderedDict
-const Config = OrderedDict{Symbol,Any}
+const _Config = OrderedDict{Symbol,Any}
+struct Config
+    config::_Config
+    Config(c...) = new(_Config(c...))
+end
 
+import Base: getindex, length, iterate, eltype
+getindex(c::Config, i) = c.config[i]
+length(c::Config) = length(c.config)
+iterate(c::Config) = iterate(c.config)
+iterate(c::Config, i) = iterate(c.config, i)
+eltype(::Type{Config}) = Pair{Symbol,Any}
+
+import Base: get, haskey
+get(c::Config, k, d) = get(c.config, k, d)
+haskey(c::Config, k) = haskey(c.config, k)
+
+import Base: ==
+==(c::Config, d::Config) = c.config == d.config
+
+import Base: merge
+merge(c::Config, D...) = merge(merge, c.config, [d.config for d in D]...) |> Config
+
+import Base: show
+show(io::IO, c::Config) = begin
+    for (s, C) in c
+        println(io, "<$s>")
+        for (k, v) in C
+            println(io, "  $k => $v")
+        end
+    end
+end
+
+configure(c::Config) = c
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
 configure(c::Tuple) = configure(c...)
@@ -23,8 +55,8 @@ _configure(k::String, v) = begin
 end
 _configure(k::Type{<:System}, v) = _configure(namefor(k), v)
 _configure(k, v) = _configure(Symbol(k), v)
-_configure(v) = Config(v)
-_configure(v::NamedTuple) = Config(pairs(v))
+_configure(v) = _Config(v)
+_configure(v::NamedTuple) = _Config(pairs(v))
 
 parameterflatten(c::Config) = begin
     l = OrderedDict()
@@ -51,8 +83,9 @@ end
 
 option(c) = c
 option(c, keys...) = missing
-option(c::Config, key::Symbol, keys...) = option(get(c, key, missing), keys...)
-option(c::Config, key::Vector{Symbol}, keys...) = begin
+option(c::Config, keys...) = option(c.config, keys...)
+option(c::_Config, key::Symbol, keys...) = option(get(c, key, missing), keys...)
+option(c::_Config, key::Vector{Symbol}, keys...) = begin
     for k in key
         v = option(c, k, keys...)
         !ismissing(v) && return v
