@@ -20,8 +20,8 @@ Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in
 
 Base.show(io::IO, c::Config) = begin
     f((s, C)) = begin
-        io = IOBuffer()
-        print(io, "$s")
+        b = IOBuffer()
+        print(b, "  $s")
         K = keys(C)
         n = maximum(length.(string.(K)))
         for (k, v) in C
@@ -29,10 +29,10 @@ Base.show(io::IO, c::Config) = begin
             rhs = repr(v)
             i = findfirst('\n', rhs)
             !isnothing(i) && (rhs = rhs[1:i-1] * "...")
-            println(io)
-            print(io, "  $lhs = $rhs")
+            println(b)
+            print(b, "    $lhs = $rhs")
         end
-        String(take!(io))
+        String(take!(b))
     end
     join(io, f.(c), '\n')
 end
