@@ -5,25 +5,20 @@ struct Config
     Config(c...) = new(_Config(c...))
 end
 
-import Base: getindex, length, iterate, eltype
-getindex(c::Config, i) = c.config[i]
-length(c::Config) = length(c.config)
-iterate(c::Config) = iterate(c.config)
-iterate(c::Config, i) = iterate(c.config, i)
-eltype(::Type{Config}) = Pair{Symbol,Any}
+Base.getindex(c::Config, i) = c.config[i]
+Base.length(c::Config) = length(c.config)
+Base.iterate(c::Config) = iterate(c.config)
+Base.iterate(c::Config, i) = iterate(c.config, i)
+Base.eltype(::Type{Config}) = Pair{Symbol,Any}
 
-import Base: get, haskey
-get(c::Config, k, d) = get(c.config, k, d)
-haskey(c::Config, k) = haskey(c.config, k)
+Base.get(c::Config, k, d) = get(c.config, k, d)
+Base.haskey(c::Config, k) = haskey(c.config, k)
 
-import Base: ==
-==(c::Config, d::Config) = c.config == d.config
+Base.:(==)(c::Config, d::Config) = c.config == d.config
 
-import Base: merge
-merge(c::Config, D...) = merge(merge, c.config, [d.config for d in D]...) |> Config
+Base.merge(c::Config, D...) = merge(merge, c.config, [d.config for d in D]...) |> Config
 
-import Base: show
-show(io::IO, c::Config) = begin
+Base.show(io::IO, c::Config) = begin
     for (s, C) in c
         println(io, "<$s>")
         for (k, v) in C
