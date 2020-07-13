@@ -53,7 +53,7 @@ dive(v, t) = throw(value(v))
 
 dive(s::System) = begin
     try
-        dive(s, Box.MAGENTA_FG(string(namefor(s))))
+        dive(s, "<$(Box.MAGENTA_FG("$(namefor(s))"))>")
     catch e
         !isa(e, InterruptException) && return e
     end
