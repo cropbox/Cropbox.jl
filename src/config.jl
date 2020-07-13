@@ -20,9 +20,15 @@ Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in
 
 Base.show(io::IO, c::Config) = begin
     for (s, C) in c
-        println(io, "<$s>")
+        println(io, "$s")
+        K = keys(C)
+        n = maximum(length.(string.(K)))
         for (k, v) in C
-            println(io, "  $k => $v")
+            lhs = lpad(k, n)
+            rhs = repr(v)
+            i = findfirst('\n', rhs)
+            !isnothing(i) && (rhs = rhs[1:i-1] * "...")
+            println(io, "  $lhs = $rhs")
         end
     end
 end
