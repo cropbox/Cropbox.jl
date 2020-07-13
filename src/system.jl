@@ -56,6 +56,16 @@ value(s::System, k::Symbol; kw...) = begin
     eval(:(let $(args...); $body end))
 end
 
+import Crayons.Box
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
+Base.show(io::IO, ::MIME"text/plain", s::System) = begin
+    print(io, "<$(Box.MAGENTA_FG("$(namefor(s))"))>")
+    for ((n, a), v) in zip(fieldnamesalias(s), s)
+        l = "$(Box.BLUE_FG("$n"))"
+        !isnothing(a) && (l *= " $(Box.DARK_GRAY_FG("($a)"))")
+        println(io)
+        print(io, "  $l $(Box.DARK_GRAY_FG("=")) $v")
+    end
+end
 
 export System
