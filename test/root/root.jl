@@ -62,7 +62,7 @@ end
     to(; α, β): tropism_objective => 0 ~ call
 end
 
-@system Plagiotropism(Tropism) begin
+@system Plagiotropism(Tropism) <: Tropism begin
     RT0: parent_transformation ~ hold
     to(RT0; α, β): tropism_objective => begin
         R = RotZX(β, α) |> LinearMap
@@ -70,7 +70,7 @@ end
     end ~ call
 end
 
-@system Gravitropism(Tropism) begin
+@system Gravitropism(Tropism) <: Tropism begin
     RT0: parent_transformation ~ hold
     to(RT0; α, β): tropism_objective => begin
         R = RotZX(β, α) |> LinearMap
@@ -80,7 +80,7 @@ end
     end ~ call
 end
 
-@system Exotropism(Tropism) begin
+@system Exotropism(Tropism) <: Tropism begin
     to(; α, β): tropism_objective => begin
         #HACK: not exact implementation, needs to keep initial heading
         abs(Cropbox.deunitfy(α))
