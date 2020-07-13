@@ -61,6 +61,7 @@ Base.show(io::IO, s::S) where {S<:State} = begin
     r = labelstring(v; maxlength=maxlength)
     print(io, r)
 end
+Base.show(io::IO, ::MIME"text/plain", s::S) where {S<:State} = print(io, value(s))
 
 include("state/hold.jl")
 include("state/wrap.jl")
