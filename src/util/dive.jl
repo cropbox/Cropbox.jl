@@ -38,11 +38,20 @@ dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), en
 dive(s::State, t) = dive(s', t)
 dive(l::Vector{MenuItem}, t) = begin
     isempty(l) && return
+    term = TerminalMenus.terminal
+    o = term.out_stream
     while true
-        println(t)
+        #TODO: remember current cursor position (supported by REPL.TerminalMenus in Julia 1.6)
+        println(o, t)
         M = TerminalMenus.RadioMenu(text.(l), pagesize=40)
         i = TerminalMenus.request(M)
-        println()
+        n = length(l)
+        #HACK: for single option menu?
+        n == 1 && (n += 1)
+        for _ in 0:n
+            print(o, "\x1b[999D\x1b[1A") # move up
+            print(o, "\x1b[2K") # clear line
+        end
         if i > 0
             v = l[i]
             dive(value(v), "$t $(Box.DARK_GRAY_FG(">")) $(Box.MAGENTA_FG(name(v)))")
@@ -56,13 +65,19 @@ dive(v, t) = begin
     term = TerminalMenus.terminal
     i = term.in_stream
     o = term.out_stream
-    println(o, t)
-    show(o, MIME("text/plain"), v)
-    print(o, "\n^ ")
+    b = IOBuffer()
+    println(b, t)
+    show(b, MIME("text/plain"), v)
+    println(b)
+    n = countlines(seekstart(b))
+    print(o, String(take!(b)))
     Terminals.raw!(term, true) && print(o, "\x1b[?25l") # hide cursor
     c = TerminalMenus.readKey(i)
     Terminals.raw!(term, false) && print(o, "\x1b[?25h") # unhide cursor
-    println(o)
+    for _ in 1:n
+        print(o, "\x1b[999D\x1b[1A") # move up
+        print(o, "\x1b[2K") # clear line
+    end
     if c == 13 # enter
         throw(v)
     elseif c == 3 # ctrl-c
