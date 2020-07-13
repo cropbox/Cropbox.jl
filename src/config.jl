@@ -31,9 +31,7 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
         l = maximum(length.(string.(K)))
         for (k, v) in C
             lhs = rpad(k, l)
-            rhs = repr(v)
-            i = findfirst('\n', rhs)
-            !isnothing(i) && (rhs = rhs[1:i-1] * "…")
+            rhs = labelstring(v)
             println(b)
             print(b, "    $(Box.BLUE_FG(lhs)) $(Box.DARK_GRAY_FG("=")) $rhs")
         end

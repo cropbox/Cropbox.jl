@@ -66,8 +66,18 @@ Base.show(io::IO, ::MIME"text/plain", s::System) = begin
         printstyled(io, n, color=:blue)
         !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
         printstyled(io, " = ", color=:light_black)
-        print(io, v)
+        print(io, labelstring(v))
     end
+end
+
+labelstring(v; maxlength=nothing) = begin
+    l = string(v)
+    n = length(l)
+    i = findfirst('\n', l)
+    i = isnothing(i) ? n : i-1
+    x = isnothing(maxlength) ? n : maxlength
+    i = min(i, x)
+    i < n ? l[1:i] * "…" : l
 end
 
 export System
