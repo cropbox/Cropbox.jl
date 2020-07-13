@@ -1,4 +1,4 @@
-# REPL.TerminalMenus doesn't support single-option menu
+#TODO: single-option menu from REPL.TerminalMenus: https://github.com/JuliaLang/julia/pull/36369
 import TerminalMenus
 import Crayons.Box
 
