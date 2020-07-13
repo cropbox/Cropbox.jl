@@ -1,6 +1,6 @@
 # REPL.TerminalMenus doesn't support single-option menu
-using TerminalMenus
-using Crayons.Box
+import TerminalMenus
+import Crayons.Box
 
 struct MenuItem
     name::String
@@ -14,7 +14,7 @@ value(m::MenuItem) = m.value
 text(m::MenuItem) = begin
     l = label(m)
     v = value(m) |> repr
-    isempty(l) ? v : "$l $(DARK_GRAY_FG("=")) $v"
+    isempty(l) ? v : "$l $(Box.DARK_GRAY_FG("=")) $v"
 end
 
 dive(s::System, t) = begin
@@ -22,8 +22,8 @@ dive(s::System, t) = begin
     label(k) = begin
         n = string(k)
         a = d[k]
-        l = "$(BLUE_FG(n))"
-        !isnothing(a) && (l *= " $(DARK_GRAY_FG("($a)"))")
+        l = "$(Box.BLUE_FG(n))"
+        !isnothing(a) && (l *= " $(Box.DARK_GRAY_FG("($a)"))")
         l
     end
     l = fieldnamesunique(s) |> collect
@@ -38,11 +38,12 @@ dive(l::Vector{MenuItem}, t) = begin
     isempty(l) && return
     while true
         println(t)
-        i = RadioMenu(text.(l), pagesize=40) |> request
+        M = TerminalMenus.RadioMenu(text.(l), pagesize=40)
+        i = TerminalMenus.request(M)
         println()
         if i > 0
             v = l[i]
-            dive(value(v), "$t $(DARK_GRAY_FG(">")) $(MAGENTA_FG(name(v)))")
+            dive(value(v), "$t $(Box.DARK_GRAY_FG(">")) $(Box.MAGENTA_FG(name(v)))")
         else
             break
         end
@@ -52,7 +53,7 @@ dive(v, t) = throw(value(v))
 
 dive(s::System) = begin
     try
-        dive(s, MAGENTA_FG(string(namefor(s))))
+        dive(s, Box.MAGENTA_FG(string(namefor(s))))
     catch e
         !isa(e, InterruptException) && return e
     end
