@@ -55,13 +55,13 @@ struct PostPriority <: Priority end
 priority(::S) where {S<:State} = priority(S)
 priority(::Type{<:State}) = PostPriority()
 
-Base.show(io::IO, s::S) where {S<:State} = begin
+Base.show(io::IO, s::State) = begin
     v = value(s)
     maxlength = get(io, :maxlength, nothing)
     r = labelstring(v; maxlength=maxlength)
     print(io, r)
 end
-Base.show(io::IO, ::MIME"text/plain", s::S) where {S<:State} = print(io, value(s))
+Base.show(io::IO, ::MIME"text/plain", s::State) = print(io, value(s))
 
 include("state/hold.jl")
 include("state/wrap.jl")
