@@ -23,9 +23,9 @@ Base.show(io::IO, c::Config) = begin
         b = IOBuffer()
         print(b, "  $s")
         K = keys(C)
-        n = maximum(length.(string.(K)))
+        l = maximum(length.(string.(K)))
         for (k, v) in C
-            lhs = rpad(k, n)
+            lhs = rpad(k, l)
             rhs = repr(v)
             i = findfirst('\n', rhs)
             !isnothing(i) && (rhs = rhs[1:i-1] * "...")
