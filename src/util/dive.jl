@@ -15,10 +15,9 @@ label(m::MenuItem) = isempty(m.label) ? m.name : m.label
 value(m::MenuItem) = m.value
 text(m::MenuItem) = begin
     l = label(m)
-    #HACK: prevent trimWidth from TerminalMenus (much larger padding due to color escape)
-    #TODO: remove hack no longer needed in REPL.TerminalMenus
     w = Terminals.width(TerminalMenus.terminal)
-    v = repr(value(m); context=:maxlength => w - length(l) - 20)
+    #HACK: length(l) contains escape sequences, so actual line may look shorter
+    v = repr(value(m); context=:maxlength => w - length(l))
     isempty(l) ? v : "$l $(Box.DARK_GRAY_FG("=")) $v"
 end
 
