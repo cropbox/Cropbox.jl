@@ -35,11 +35,11 @@ dive(l::Vector{MenuItem}, t) = begin
     isempty(l) && return
     term = TerminalMenus.terminal
     o = term.out_stream
+    i = 1
     while true
-        #TODO: remember current cursor position (supported by REPL.TerminalMenus in Julia 1.6)
         println(o, t)
         M = TerminalMenus.RadioMenu(text.(l); charset=:ascii, pagesize=40)
-        i = TerminalMenus.request(M)
+        i = TerminalMenus.request(M; cursor=i)
         n = min(length(l), M.pagesize)
         #HACK: for single option menu?
         n == 1 && (n += 1)
