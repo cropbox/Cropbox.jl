@@ -76,6 +76,9 @@ dive(v, t) = begin
 end
 
 dive(s::System) = begin
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        return look(s)
+    end
     try
         dive(s, "<$(Box.MAGENTA_FG("$(namefor(s))"))>")
     catch e
