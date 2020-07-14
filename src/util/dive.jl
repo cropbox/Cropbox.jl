@@ -37,9 +37,10 @@ dive(l::Vector{MenuItem}, t) = begin
     i = 1
     while true
         println(o, t)
-        M = TerminalMenus.RadioMenu(text.(l); charset=:ascii, pagesize=40)
+        N = length(l)
+        M = TerminalMenus.RadioMenu(text.(l); charset=:ascii, pagesize=N)
         i = TerminalMenus.request(M; cursor=i)
-        n = min(length(l), M.pagesize)
+        n = min(N, M.pagesize)
         #HACK: for single option menu?
         n == 1 && (n += 1)
         print(o, repeat("\x1b[9999D\x1b[1A", n+1)) # move up
