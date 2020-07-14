@@ -46,7 +46,7 @@ dive(l::Vector{MenuItem}, t) = begin
         print(o, "\x1b[J") # clear lines below
         if i > 0
             v = l[i]
-            dive(value(v), "$t $(Box.DARK_GRAY_FG(">")) $(Box.MAGENTA_FG(name(v)))")
+            dive(value(v), "$t $(Box.DARK_GRAY_FG(">")) $(Box.CYAN_FG(name(v)))")
         else
             break
         end
