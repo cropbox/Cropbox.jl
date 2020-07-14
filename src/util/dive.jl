@@ -1,5 +1,6 @@
-#TODO: single-option menu from REPL.TerminalMenus: https://github.com/JuliaLang/julia/pull/36369
-import TerminalMenus
+#TODO: use vendored TerminalMenus until new version released with Julia 1.6: https://github.com/JuliaLang/julia/pull/36369
+#import REPL.TerminalMenus
+include("../../lib/TerminalMenus/TerminalMenus.jl")
 import REPL.Terminals
 import Crayons.Box
 
@@ -37,7 +38,7 @@ dive(l::Vector{MenuItem}, t) = begin
     while true
         #TODO: remember current cursor position (supported by REPL.TerminalMenus in Julia 1.6)
         println(o, t)
-        M = TerminalMenus.RadioMenu(text.(l), pagesize=40)
+        M = TerminalMenus.RadioMenu(text.(l); charset=:ascii, pagesize=40)
         i = TerminalMenus.request(M)
         n = min(length(l), M.pagesize)
         #HACK: for single option menu?
@@ -64,7 +65,7 @@ dive(v, t) = begin
     n = countlines(seekstart(b))
     print(o, String(take!(b)))
     Terminals.raw!(term, true) && print(o, "\x1b[?25l") # hide cursor
-    c = TerminalMenus.readKey(i)
+    c = TerminalMenus.readkey(i)
     Terminals.raw!(term, false) && print(o, "\x1b[?25h") # unhide cursor
     print(o, repeat("\x1b[9999D\x1b[1A", n)) # move up
     print(o, "\x1b[J") # clear lines below
