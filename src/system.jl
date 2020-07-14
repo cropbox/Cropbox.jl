@@ -83,7 +83,7 @@ look(S::Type{<:System}) = begin
 end
 
 labelstring(v; maxlength=nothing) = begin
-    l = string(v)
+    l = repr(v; context=:compact => true)
     n = length(l)
     i = findfirst('\n', l)
     i = isnothing(i) ? n : i-1
