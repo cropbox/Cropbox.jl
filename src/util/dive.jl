@@ -42,10 +42,8 @@ dive(l::Vector{MenuItem}, t) = begin
         n = min(length(l), M.pagesize)
         #HACK: for single option menu?
         n == 1 && (n += 1)
-        for _ in 0:n
-            print(o, "\x1b[999D\x1b[1A") # move up
-            print(o, "\x1b[2K") # clear line
-        end
+        print(o, repeat("\x1b[9999D\x1b[1A", n+1)) # move up
+        print(o, "\x1b[J") # clear lines below
         if i > 0
             v = l[i]
             dive(value(v), "$t $(Box.DARK_GRAY_FG(">")) $(Box.MAGENTA_FG(name(v)))")
@@ -68,10 +66,8 @@ dive(v, t) = begin
     Terminals.raw!(term, true) && print(o, "\x1b[?25l") # hide cursor
     c = TerminalMenus.readKey(i)
     Terminals.raw!(term, false) && print(o, "\x1b[?25h") # unhide cursor
-    for _ in 1:n
-        print(o, "\x1b[999D\x1b[1A") # move up
-        print(o, "\x1b[2K") # clear line
-    end
+    print(o, repeat("\x1b[9999D\x1b[1A", n)) # move up
+    print(o, "\x1b[J") # clear lines below
     if c == 13 # enter
         throw(v)
     elseif c == 3 # ctrl-c
