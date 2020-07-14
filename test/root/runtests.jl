@@ -10,7 +10,7 @@ root_maize = (
         :height => 50,
     ),
     :RootArchitecture => :maxB => 5,
-    :MyBaseRoot => :T => [
+    :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
           0 0 1 ; # F
@@ -58,7 +58,7 @@ root_maize = (
 )
 root_switchgrass_N = (
     :RootArchitecture => :maxB => 5,
-    :MyBaseRoot => :T => [
+    :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
           0 0 1 ; # F
@@ -106,7 +106,7 @@ root_switchgrass_N = (
 )
 root_switchgrass_W = (
     :RootArchitecture => :maxB => 15,
-    :MyBaseRoot => :T => [
+    :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
           0 0 1 ; # F

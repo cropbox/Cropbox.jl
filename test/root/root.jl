@@ -87,9 +87,7 @@ end
     end ~ call
 end
 
-abstract type RootSystem <: System end
-
-@system BaseRoot(Tropism, Rendering) <: RootSystem begin
+@system RootSegment(Tropism, Rendering) begin
     box ~ ::Container(override)
 
     ro: root_order => 1 ~ preserve::Int(extern)
@@ -225,7 +223,7 @@ abstract type RootSystem <: System end
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
             produce(eval(n), box=box, ro=ro, zi=zi+1, r=r, ea0=ea, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1)
         end
-    end ~ produce::BaseRoot
+    end ~ produce::RootSegment
 
     mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
     B(mb, nb, box, ro, wrap(RT1)): branch => begin
@@ -233,20 +231,20 @@ abstract type RootSystem <: System end
             #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
             produce(eval(nb()), box=box, ro=ro+1, RT0=RT1)
         end
-    end ~ produce::BaseRoot
+    end ~ produce::RootSegment
 end
 
 #TODO: provide @macro / function to automatically build a series of related Systems
-@system MyBaseRoot(BaseRoot) <: RootSystem begin
+@system BaseRoot(RootSegment) <: RootSegment begin
     T: transition ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
 end
-@system PrimaryRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
+@system PrimaryRoot(BaseRoot, Gravitropism) <: BaseRoot begin
     n: name => :PrimaryRoot ~ preserve::Symbol
 end
-@system FirstOrderLateralRoot(MyBaseRoot, Gravitropism) <: RootSystem begin
+@system FirstOrderLateralRoot(BaseRoot, Gravitropism) <: BaseRoot begin
     n: name => :FirstOrderLateralRoot ~ preserve::Symbol
 end
-@system SecondOrderLateralRoot(MyBaseRoot, Tropism) <: RootSystem begin
+@system SecondOrderLateralRoot(BaseRoot, Tropism) <: BaseRoot begin
     n: name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
 
@@ -262,7 +260,7 @@ end
 render(s::System) = (vis = Visualizer(); render!(s, vis); vis)
 #TODO: provide macro (i.e. @mixin/@drive?) for scaffolding functions based on traits (Val)
 render!(s, vis) = render!(Cropbox.mixindispatch(s, Rendering)..., vis)
-render!(V::Val{:Rendering}, r::RootSystem, vis) = begin
+render!(V::Val{:Rendering}, r::RootSegment, vis) = begin
     l = Cropbox.deunitfy(r.l')
     a = Cropbox.deunitfy(r.a')
     (iszero(l) || iszero(a)) && return
@@ -284,7 +282,7 @@ render!(::Val, s, vis) = nothing
 
 gather(s::System) = (L = []; gather!(s, L); L)
 gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
-gather!(V::Val{:BaseRoot}, r::RootSystem, L) = begin
+gather!(V::Val{:BaseRoot}, r::BaseRoot, L) = begin
     r.zi' == 0 && push!(L, (
         point=[r.pp', r.cp', r.S["**"].cp'...],
         radius=[r.a', r.a', r.S["**"].a'...] |> Cropbox.deunitfy,
