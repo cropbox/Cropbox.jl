@@ -4,10 +4,10 @@ include("../../lib/TerminalMenus/TerminalMenus.jl")
 import REPL.Terminals
 import Crayons.Box
 
-struct MenuItem
+struct MenuItem{V}
     name::String
     label::String
-    value
+    value::V
 end
 
 name(m::MenuItem) = m.name
@@ -19,6 +19,14 @@ text(m::MenuItem) = begin
     #HACK: length(l) contains escape sequences, so actual line may look shorter
     v = repr(value(m); context=:maxlength => w - length(l))
     isempty(l) ? v : "$l $(Box.DARK_GRAY_FG("=")) $v"
+end
+
+title(m::MenuItem{<:System}) = "$(Box.MAGENTA_FG(name(m)))"
+title(m::MenuItem{<:State}) = "$(Box.CYAN_FG(name(m)))"
+title(m::MenuItem) = "$(Box.GREEN_FG(name(m)))"
+title(t::Vector{<:MenuItem}) = begin
+    sep = " $(Box.DARK_GRAY_FG(">")) "
+    join(title.(t), sep)
 end
 
 dive(s::System, t) = dive(map(zip(fieldnamesalias(s), s)) do ((n, a), v)
@@ -36,7 +44,7 @@ dive(l::Vector{MenuItem}, t) = begin
     o = term.out_stream
     i = 1
     while true
-        println(o, t)
+        println(o, title(t))
         N = length(l)
         M = TerminalMenus.RadioMenu(text.(l); charset=:ascii, pagesize=N)
         i = TerminalMenus.request(M; cursor=i)
@@ -47,7 +55,7 @@ dive(l::Vector{MenuItem}, t) = begin
         print(o, "\x1b[J") # clear lines below
         if i > 0
             v = l[i]
-            dive(value(v), "$t $(Box.DARK_GRAY_FG(">")) $(Box.CYAN_FG(name(v)))")
+            dive(value(v), [t..., v])
         else
             break
         end
@@ -59,7 +67,7 @@ dive(v, t) = begin
     i = term.in_stream
     o = term.out_stream
     b = IOBuffer()
-    println(b, t)
+    println(b, title(t))
     show(b, MIME("text/plain"), v)
     println(b)
     n = countlines(seekstart(b))
@@ -81,7 +89,7 @@ dive(s::System) = begin
         return look(s)
     end
     try
-        dive(s, "<$(Box.MAGENTA_FG("$(namefor(s))"))>")
+        dive(s, [MenuItem(string(namefor(s)), "", s)])
     catch e
         !isa(e, InterruptException) && return e
     end
