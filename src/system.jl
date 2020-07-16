@@ -68,13 +68,16 @@ Base.show(io::IO, ::MIME"text/plain", s::System) = begin
     end
 end
 
-look(s::System) = show(stdout, MIME("text/plain"), s)
-look(S::Type{<:System}) = begin
-    printstyled(namefor(S), color=:magenta)
+look(s::System) = look(stdout, s)
+look(S::Type{<:System}) = look(stdout, S)
+
+look(io::IO, s::System) = show(io, MIME("text/plain"), s)
+look(io::IO, S::Type{<:System}) = begin
+    printstyled(io, namefor(S), color=:magenta)
     for (n, a) in fieldnamesalias(S)
-        print("\n  ")
-        printstyled(n, color=:blue)
-        !isnothing(a) && printstyled(" (", a, ")", color=:light_black)
+        print(io, "\n  ")
+        printstyled(io, n, color=:blue)
+        !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
     end
 end
 
