@@ -85,6 +85,7 @@ end
 look(io::IO, s::S, k::Symbol) where {S<:System} = begin
     look(io, S, k)
     show(io, MIME("text/plain"), s[k])
+    println(io)
 end
 look(io::IO, S::Type{<:System}, k::Symbol) = begin
     d = dependency(S)
