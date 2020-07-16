@@ -2,7 +2,23 @@
 #import REPL.TerminalMenus
 include("../../lib/TerminalMenus/TerminalMenus.jl")
 import REPL.Terminals
-import Crayons.Box
+import Crayons: Crayons, Box
+import Highlights
+
+function Highlights.Format.render(io::IO, ::MIME"text/ansi", tokens::Highlights.Format.TokenIterator)
+    for (str, id, style) in tokens
+        fg = style.fg.active ? map(Int, (style.fg.r, style.fg.g, style.fg.b)) : :nothing
+        bg = style.bg.active ? map(Int, (style.bg.r, style.bg.g, style.bg.b)) : :nothing
+        crayon = Crayons.Crayon(
+            foreground = fg,
+            background = bg,
+            bold       = style.bold,
+            italics    = style.italic,
+            underline  = style.underline,
+        )
+        print(io, crayon, str, inv(crayon))
+    end
+end
 
 struct MenuItem{V}
     name::String
@@ -44,7 +60,7 @@ dive(s::State, t) = dive(t) do io
     k = Symbol(name(t[end]))
     v = d.M[k]
     println(io, "----")
-    println(io, string(v.line))
+    Highlights.highlight(io, MIME("text/ansi"), string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
     println(io, "----")
     show(io, MIME("text/plain"), s')
 end
