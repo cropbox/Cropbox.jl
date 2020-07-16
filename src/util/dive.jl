@@ -52,7 +52,7 @@ dive(s::System, t) = dive(map(zip(fieldnamesalias(s), s)) do ((n, a), v)
     MenuItem(k, l, v)
 end, t)
 dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
-dive(s::State{<:System}, t) = dive(s', t)
+dive(s::State{<:System}, t) = dive([MenuItem("1", "", s')], t)
 dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
 dive(s::State, t) = dive(t) do io
     p = value(t[end-1])
