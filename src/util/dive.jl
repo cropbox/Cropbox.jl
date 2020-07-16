@@ -56,7 +56,7 @@ dive(l::Vector{<:MenuItem}, t) = begin
     while true
         println(o, title(t))
         N = length(l)
-        M = TerminalMenus.RadioMenu(text.(l); charset=:ascii, pagesize=N)
+        M = TerminalMenus.RadioMenu(text.(l); charset=:unicode, pagesize=N)
         i = TerminalMenus.request(M; cursor=i)
         n = min(N, M.pagesize)
         #HACK: for single option menu?
