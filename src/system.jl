@@ -71,6 +71,7 @@ end
 look(s::System) = look(stdout, s)
 look(S::Type{<:System}) = look(stdout, S)
 look(s::System, k::Symbol) = look(stdout, s, k)
+look(S::Type{<:System}, k::Symbol) = look(stdout, S, k)
 
 look(io::IO, s::System) = show(io, MIME("text/plain"), s)
 look(io::IO, S::Type{<:System}) = begin
@@ -81,13 +82,16 @@ look(io::IO, S::Type{<:System}) = begin
         !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
     end
 end
-look(io::IO, s::System, k::Symbol) = begin
-    d = dependency(s)
+look(io::IO, s::S, k::Symbol) where {S<:System} = begin
+    look(io, S, k)
+    show(io, MIME("text/plain"), s[k])
+end
+look(io::IO, S::Type{<:System}, k::Symbol) = begin
+    d = dependency(S)
     v = d.M[k]
     println(io, "----")
     Highlights.highlight(io, MIME("text/ansi"), string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
     println(io, "----")
-    show(io, MIME("text/plain"), s[k])
 end
 
 labelstring(v; maxlength=nothing) = begin
