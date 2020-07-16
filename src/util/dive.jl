@@ -55,14 +55,7 @@ dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), e
 dive(s::State{<:System}, t) = dive([MenuItem("1", "", s')], t)
 dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
 dive(s::State, t) = dive(t) do io
-    p = value(t[end-1])
-    d = dependency(p)
-    k = Symbol(name(t[end]))
-    v = d.M[k]
-    println(io, "----")
-    Highlights.highlight(io, MIME("text/ansi"), string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
-    println(io, "----")
-    show(io, MIME("text/plain"), s')
+    look(io, value(t[end-1]), Symbol(name(t[end])))
 end
 dive(l::Vector{<:MenuItem}, t) = begin
     isempty(l) && return
