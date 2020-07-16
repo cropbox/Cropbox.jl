@@ -58,9 +58,7 @@ end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
 Base.show(io::IO, ::MIME"text/plain", s::System) = begin
-    print(io, "<")
     printstyled(io, namefor(s), color=:magenta)
-    print(io, ">")
     for ((n, a), v) in zip(fieldnamesalias(s), s)
         print(io, "\n  ")
         printstyled(io, n, color=:blue)
@@ -72,9 +70,7 @@ end
 
 look(s::System) = show(stdout, MIME("text/plain"), s)
 look(S::Type{<:System}) = begin
-    print("<")
     printstyled(namefor(S), color=:magenta)
-    print(">")
     for (n, a) in fieldnamesalias(S)
         print("\n  ")
         printstyled(n, color=:blue)
