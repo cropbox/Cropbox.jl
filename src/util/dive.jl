@@ -36,9 +36,19 @@ dive(s::System, t) = dive(map(zip(fieldnamesalias(s), s)) do ((n, a), v)
     MenuItem(k, l, v)
 end, t)
 dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
+dive(s::State{<:System}, t) = dive(s', t)
 dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
-dive(s::State, t) = dive(s', t)
-dive(l::Vector{MenuItem}, t) = begin
+dive(s::State, t) = dive(t) do io
+    p = value(t[end-1])
+    d = dependency(p)
+    k = Symbol(name(t[end]))
+    v = d.M[k]
+    println(io, "----")
+    println(io, string(v.line))
+    println(io, "----")
+    show(io, MIME("text/plain"), s')
+end
+dive(l::Vector{<:MenuItem}, t) = begin
     isempty(l) && return
     term = TerminalMenus.terminal
     o = term.out_stream
@@ -62,13 +72,16 @@ dive(l::Vector{MenuItem}, t) = begin
     end
 end
 dive(m::MenuItem, t) = dive(value(m), t)
-dive(v, t) = begin
+dive(v, t) = dive(t) do io
+    show(io, MIME("text/plain"), v)
+end
+dive(f::Function, t) = begin
     term = TerminalMenus.terminal
     i = term.in_stream
     o = term.out_stream
     b = IOBuffer()
     println(b, title(t))
-    show(b, MIME("text/plain"), v)
+    f(b)
     println(b)
     n = countlines(seekstart(b))
     print(o, String(take!(b)))
@@ -78,7 +91,7 @@ dive(v, t) = begin
     print(o, repeat("\x1b[9999D\x1b[1A", n)) # move up
     print(o, "\x1b[J") # clear lines below
     if c == 13 # enter
-        throw(v)
+        throw(value(t[end]))
     elseif c == 3 # ctrl-c
         throw(InterruptException())
     end
