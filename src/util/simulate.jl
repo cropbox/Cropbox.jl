@@ -101,7 +101,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     !skipfirst && update!.(M, s)
     while check()
         update!(s)
-        filter(s) != false && update!.(M, s)
+        filter(s) && update!.(M, s)
         callback(s)
         ProgressMeter.next!(p)
     end
