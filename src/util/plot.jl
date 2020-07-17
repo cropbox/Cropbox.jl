@@ -22,13 +22,19 @@ extractarray(df::DataFrame, n) = begin
     coalesce.(c, NaN)
 end
 
-findlim(array) = begin
+findlim(array::Vector{<:Number}) = begin
     #HACK: lack of missing support in Gadfly
     a = filter(!isnan, array)
     l = isempty(a) ? 0 : floor(minimum(a))
     u = isempty(a) ? 0 : ceil(maximum(a))
     #HACK: avoid empty range
     l == u ? (l, l+1) : (l, u)
+end
+findlim(array) = begin
+    check(x::Number) = !isnan(x)
+    check(x) = true
+    a = filter(check, array)
+    (minimum(a), maximum(a))
 end
 
 label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
