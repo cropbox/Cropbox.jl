@@ -23,6 +23,9 @@ promoteunit(u...) = Unitful.promote_unit(filter(!isnothing, u)...)
 promoteunit(::Nothing) = nothing
 promoteunit() = nothing
 
+hasunit(v::Units) = !Unitful.isunitless(v)
+hasunit(::Nothing) = false
+
 import DataFrames: DataFrame, DataFrames
 unitfy(df::DataFrame, U::Vector) = begin
     r = DataFrame()

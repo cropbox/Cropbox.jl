@@ -27,7 +27,7 @@ findlim(array) = begin
     l == u ? (l, l+1) : (l, u)
 end
 
-label(l, u::Units) = Unitful.isunitless(u) ? "$l" : "$l ($u)"
+label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
 
 detectbackend() = begin
     if isdefined(Main, :IJulia) && Main.IJulia.inited ||
