@@ -127,6 +127,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     end
     C
 end
+#TODO: parameters(::System) to show current configurations (need proper handling of alias)
 
 configmultiply(; base=()) = [configure(base)]
 configmultiply(patches::Vector; base=()) = configmultiply(patches...; base=base)
