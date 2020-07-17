@@ -24,18 +24,17 @@ unittype(::Type{V}) where {V<:Number} = Unitful.unit(V)
 unittype(::Type{<:State{V}}) where V = unittype(V)
 unittype(::T) where T = unittype(T)
 
-import Unitful: isunitless, dimension
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T
-valuetype(T, U::Units) = isunitless(U) ? T : Quantity{T, dimension(U), typeof(U)}
+valuetype(T, U::Units) = Unitful.isunitless(U) ? T : Quantity{T, Unitful.dimension(U), typeof(U)}
 valuetype(::Type{Array{T,N}}, U::Units) where {T,N} = Array{valuetype(T, U), N}
 
 rateunittype(U::Nothing, T::Units) = T^-1
-rateunittype(U::Units, T::Units) = (R = U/T; isunitless(R) ? nothing : R)
+rateunittype(U::Units, T::Units) = (R = U/T; Unitful.isunitless(R) ? nothing : R)
 rateunittype(U::Units, T::Nothing) = U
 rateunittype(U::Nothing, T::Nothing) = nothing
 
-timeunittype(U, TU=u"hr") = isnothing(U) ? TU : (dimension(U) == Unitful.𝐓) ? U : TU
+timeunittype(U, TU=u"hr") = isnothing(U) ? TU : (Unitful.dimension(U) == Unitful.𝐓) ? U : TU
 
 struct Nounit{S,U}
     state::S

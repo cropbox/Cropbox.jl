@@ -12,7 +12,7 @@ struct Measurement{T} <: Number
 end
 
 measurement(a::Quantity, b::Quantity) = begin
-    u = Unitful.promote_unit(unit(a), unit(b))
+    u = Unitful.promote_unit(Unitful.unit(a), Unitful.unit(b))
     measurement(deunitfy(a, u), deunitfy(b, u)) * u
 end
 measurement(a, b) = Measurement(promote(a, b)...)

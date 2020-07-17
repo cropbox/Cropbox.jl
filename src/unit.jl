@@ -1,4 +1,4 @@
-import Unitful: Unitful, Units, Quantity, uconvert, ustrip, @u_str
+import Unitful: Unitful, Units, Quantity, @u_str
 export @u_str
 
 unitfy(::Nothing, u) = nothing
@@ -9,12 +9,12 @@ unitfy(v, ::Nothing) = v
 unitfy(v::Number, u::Units) = Quantity(v, u)
 unitfy(v::Array, u::Units) = Quantity.(v, u)
 unitfy(v::Tuple, u::Units) = Quantity.(v, u)
-unitfy(v::Quantity, u::Units) = uconvert(u, v)
-unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = uconvert.(u, v)
-unitfy(v::Tuple{Vararg{<:Union{Quantity,Missing}}}, u::Units) = uconvert.(u, v)
+unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
+unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = Unitful.uconvert.(u, v)
+unitfy(v::Tuple{Vararg{<:Union{Quantity,Missing}}}, u::Units) = Unitful.uconvert.(u, v)
 
 deunitfy(v) = v
-deunitfy(v::Quantity) = ustrip(v)
+deunitfy(v::Quantity) = Unitful.ustrip(v)
 deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v, u) = deunitfy(unitfy(v, u))
