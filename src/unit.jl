@@ -19,6 +19,10 @@ deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 
+promoteunit(u...) = Unitful.promote_unit(filter(!isnothing, u)...)
+promoteunit(::Nothing) = nothing
+promoteunit() = nothing
+
 import DataFrames: DataFrame, DataFrames
 unitfy(df::DataFrame, U::Vector) = begin
     r = DataFrame()

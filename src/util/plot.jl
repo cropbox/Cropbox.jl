@@ -69,7 +69,7 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
 ) = begin
     u(a) = extractunit(a)
     isnothing(xunit) && (xunit = u(X))
-    isnothing(yunit) && (yunit = Unitful.promote_unit(u.(Ys)...))
+    isnothing(yunit) && (yunit = promoteunit(u.(Ys)...))
 
     arr(a, u) = deunitfy(a, u)
     X = arr(X, xunit)
