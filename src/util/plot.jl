@@ -11,11 +11,15 @@ extractcolumn(df::DataFrame, n::Expr) = begin
     e = Main.eval(:(df -> @. $(MacroTools.postwalk(te, n))))
     (() -> @eval $e($df))()
 end
+convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c, TimeZones.Local)
+convertcolumn(c) = c
 extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(eltype(a))
 extractarray(df::DataFrame, n) = begin
+    #HACK: Gadfly doesn't support ZonedDateTime
+    c = convertcolumn(extractcolumn(df, n))
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    coalesce.(extractcolumn(df, n), NaN)
+    coalesce.(c, NaN)
 end
 
 findlim(array) = begin
