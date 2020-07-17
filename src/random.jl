@@ -24,5 +24,5 @@ Base.show(io::IO, m::Measurement) = print(io, "$(m.val) ± $(m.err)")
 
 sample(v::Distribution) = rand(v)
 sample(v::Measurement) = rand(Normal(v.val, v.err))
-sample(v::Quantity{<:Measurement}) = sample(deunitfy(v)) * unit(v)
+sample(v::Quantity{<:Measurement}) = unitfy(sample(deunitfy(v)), unittype(v))
 sample(v) = v

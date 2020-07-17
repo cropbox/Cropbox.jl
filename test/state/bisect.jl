@@ -22,7 +22,7 @@
         end
         s = instance(SBisectEvalUnit)
         @test s.x' == 1u"m"
-        @test Cropbox.unit(s.x) == u"m"
+        @test Cropbox.unittype(s.x) == u"m"
         @test Cropbox.evalunit(s.x) == u"m/s"
     end
 

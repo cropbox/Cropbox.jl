@@ -138,8 +138,8 @@ import Unitful
         df = DataFrame(a=[0], b=[0])
         U = [u"s", nothing]
         r = Cropbox.unitfy(df, U)
-        @test Cropbox.unit(eltype(r[!, 1])) == u"s"
-        @test Cropbox.unit(eltype(r[!, 2])) == u"NoUnits"
+        @test Cropbox.unittype(eltype(r[!, 1])) == u"s"
+        @test Cropbox.unittype(eltype(r[!, 2])) == u"NoUnits"
     end
 
     @testset "dataframe auto" begin
@@ -150,10 +150,10 @@ import Unitful
         df."b ()" = z
         df."d" = z
         r = Cropbox.unitfy(df)
-        @test Cropbox.unit(eltype(r[!, 1])) == u"g/cm^2"
-        @test Cropbox.unit(eltype(r[!, 2])) == u"s"
-        @test Cropbox.unit(eltype(r[!, 3])) == u"NoUnits"
-        @test Cropbox.unit(eltype(r[!, 4])) == u"NoUnits"
+        @test Cropbox.unittype(eltype(r[!, 1])) == u"g/cm^2"
+        @test Cropbox.unittype(eltype(r[!, 2])) == u"s"
+        @test Cropbox.unittype(eltype(r[!, 3])) == u"NoUnits"
+        @test Cropbox.unittype(eltype(r[!, 4])) == u"NoUnits"
         N = names(r)
         @test N[1] == "a"
         @test N[2] == "c (a)(b)"

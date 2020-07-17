@@ -28,7 +28,7 @@ end
 
 produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
-unit(s::Produce) = nothing
+unittype(s::Produce) = nothing
 
 Base.getindex(s::Produce{<:System}, i) = i == 1 ? s.value : throw(BoundsError(s, i))
 Base.length(s::Produce{<:System}) = isnothing(s.value) ? 0 : 1

@@ -12,7 +12,7 @@ extractcolumn(df::DataFrame, n::Expr) = begin
     (() -> @eval $e($df))()
 end
 extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
-extractunit(a) = unit(eltype(a))
+extractunit(a) = unittype(eltype(a))
 extractarray(df::DataFrame, n) = begin
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
     coalesce.(extractcolumn(df, n), NaN)

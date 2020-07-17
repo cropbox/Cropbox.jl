@@ -11,7 +11,7 @@ export value
 
 Base.adjoint(s::State) = value(s)
 
-store!(s::State, v) = (s.value = unitfy(v, unit(s)))
+store!(s::State, v) = (s.value = unitfy(v, unittype(s)))
 
 Base.getindex(s::State, i) = s
 Base.length(s::State) = 1
@@ -19,10 +19,10 @@ Base.iterate(s::State) = (s, nothing)
 Base.iterate(s::State, i) = nothing
 Base.eltype(::Type{<:State{V}}) where V = V
 
-import Unitful: unit
-unit(::S) where {S<:State} = unit(S)
-unit(::Type{<:State{V}}) where V = unittype(V)
-unittype(V) = ((V <: Quantity) ? unit(V) : nothing)
+unittype(::Type{V}) where V = nothing
+unittype(::Type{V}) where {V<:Number} = Unitful.unit(V)
+unittype(::Type{<:State{V}}) where V = unittype(V)
+unittype(::T) where T = unittype(T)
 
 import Unitful: isunitless, dimension
 valuetype(::State{V}) where V = V
