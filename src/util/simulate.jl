@@ -98,7 +98,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
             () -> !stop(s)
         end
     end
-    !skipfirst && update!.(M, s)
+    !skipfirst && filter(s) && update!.(M, s)
     while check()
         update!(s)
         filter(s) && update!.(M, s)
