@@ -71,35 +71,30 @@ end
 import ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
 progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, callback=nothing, verbose=true, kwargs...) = begin
-    isnothing(stop) && (stop = 1)
-    isnothing(filter) && (filter = s -> true)
-    isnothing(callback) && (callback = s -> nothing)
-    n = if stop isa Number
-        stop
-    else
-        v = stop isa Symbol || stop isa String ? s[stop]' : stop(s)
-        if v isa Bool
-            nothing
-        elseif v isa Number
-            v
-        else
-            error("unrecognized stop condition: $stop")
-        end
-    end
-    check = if n isa Number
+    probe(a::Union{Symbol,String}) = s -> s[a]'
+    probe(a::Function) = s -> a(s)
+    probe(a) = s -> a
+
+    stop = probe(isnothing(stop) ? 1 : stop)
+    filter = probe(isnothing(filter) ? true : filter)
+    callback = probe(callback)
+
+    count(v::Number) = v
+    count(v::Bool) = nothing
+    count(v) = error("unrecognized stop condition: $v")
+    n = count(stop(s))
+
+    if n isa Number
         dt = verbose ? 1 : Inf
         p = Progress(n; dt=dt, barglyphs=barglyphs)
-        () -> p.counter < p.n
+        check = s -> p.counter < p.n
     else
         p = ProgressUnknown("Iterations:")
-        if stop isa Symbol || stop isa String
-            () -> !s[stop]'
-        else
-            () -> !stop(s)
-        end
+        check = s -> !stop(s)
     end
+
     !skipfirst && filter(s) && update!.(M, s)
-    while check()
+    while check(s)
         update!(s)
         filter(s) && update!.(M, s)
         callback(s)

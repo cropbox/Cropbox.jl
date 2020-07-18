@@ -78,6 +78,7 @@ using Dates
         @system SSimulateFilter(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
+            f(b) => (b % 2 == 0) ~ track::Bool
         end
         n = 10
         f(s) = s.b' % 2 == 0
@@ -85,6 +86,10 @@ using Dates
         @test !all(r0.b .% 2 .== 0)
         r1 = simulate(SSimulateFilter, stop=n, filter=f)
         @test all(r1.b .% 2 .== 0)
+        r2 = simulate(SSimulateFilter, stop=n, filter=:f)
+        @test all(r2.b .% 2 .== 0)
+        r3 = simulate(SSimulateFilter, stop=n, filter="f")
+        @test all(r3.b .% 2 .== 0)
     end
 
     @testset "callback" begin
