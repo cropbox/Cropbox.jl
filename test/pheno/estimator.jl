@@ -38,8 +38,7 @@ end
 
 estimate(S::Type{<:Estimator}, years; config, index=[:year, "calendar.time"], target=[:match], stop=:stop, kwargs...) = begin
     configs = @config config + !(S => :year => years)
-    r = simulate(S; index=index, target=target, configs=configs, stop=stop, kwargs...)
-    r[r.match .== true, :]
+    simulate(S; index=index, target=target, configs=configs, stop=stop, filter=:match, kwargs...)
 end
 
 @system BetaFuncEstimator(BetaFunction, Estimator, Controller) <: Estimator begin
