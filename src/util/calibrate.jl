@@ -2,7 +2,15 @@ import DataStructures: OrderedDict
 import DataFrames: DataFrame
 import BlackBoxOptim
 
-calibrate(S::Type{<:System}, obs; config=(), kwargs...) = calibrate(S, obs, [config]; kwargs...)
+calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
+    if isempty(configs)
+        calibrate(S, obs, [config]; kwargs...)
+    elseif isempty(config)
+        calibrate(S, obs, configs; kwargs...)
+    else
+        @error "redundant configurations" config configs
+    end
+end
 calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
