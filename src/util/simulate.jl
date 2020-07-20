@@ -77,7 +77,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
 
     stop = probe(isnothing(stop) ? 1 : stop)
     filter = probe(isnothing(filter) ? true : filter)
-    callback = probe(callback)
+    callback = isnothing(callback) ? (s, m) -> nothing : callback
 
     count(v::Number) = v
     count(v::Bool) = nothing
@@ -96,8 +96,10 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     !skipfirst && filter(s) && update!.(M, s)
     while check(s)
         update!(s)
-        filter(s) && update!.(M, s)
-        callback(s)
+        filter(s) && for m in M
+            update!(m, s)
+            callback(s, m)
+        end
         ProgressMeter.next!(p)
     end
     ProgressMeter.finish!(p)

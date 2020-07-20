@@ -97,9 +97,13 @@ using Dates
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
         end
-        n = 10
+        n = 3
         i = 0
-        f(s) = (i += 1)
+        f(s, m) = begin
+            r = m.result[end, :]
+            @test s.a' == r.a && s.b' == r.b
+            i += 1
+        end
         simulate(SSimulateCallback, stop=n, callback=f)
         @test i == n
     end
