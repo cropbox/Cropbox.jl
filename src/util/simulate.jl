@@ -31,9 +31,8 @@ extract(s::System, index, target) = begin
     K = collect(keys(d))
     #HACK: prevent type promotion with NoUnits
     V = Any[value(s[k]) for k in values(d)]
-    od = OrderedDict(K .=> V)
+    od = OrderedDict(zip(K, V))
     filter!(p -> extractable(s, p), od)
-    DataFrame(od)
 end
 extract(b::Bundle{S}, index, target) where {S<:System} = begin
     vcat([extract(s, index, target) for s in collect(b)]...)
