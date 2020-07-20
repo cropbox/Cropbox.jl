@@ -346,7 +346,7 @@ using CSV
     filename => "PyWaterBal.csv" ~ preserve::String(parameter)
 
     i(t=context.clock.tick): index ~ track(u"d")
-    t(; r::DataFrameRow): timestamp => begin
+    ix(; r::DataFrameRow): indexer => begin
         (r.timestamp - 1) * u"d"
     end ~ call(u"d")
 

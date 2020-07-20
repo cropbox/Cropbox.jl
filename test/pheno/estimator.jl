@@ -26,7 +26,7 @@ import Dates
 
     calendar(context, init=t0') ~ ::Calendar
     i(calendar.time): index ~ track::ZonedDateTime
-    t(; r::DataFrameRow): timestamp => begin
+    ix(; r::DataFrameRow): indexer => begin
         r.timestamp
     end ~ call::ZonedDateTime
 
@@ -57,7 +57,7 @@ import Dates
     t1 = ZonedDateTime(2018, 9, 30, tz"UTC")
     dt = Dates.Hour(1)
     T = collect(t0:dt:t1);
-    df = DataFrame(timestamp=T, tavg=25.0);
+    df = DataFrame(index=T, tavg=25.0);
 
     Rg = 1000
     config = (

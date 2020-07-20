@@ -11,7 +11,7 @@ using CSV
     tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
 
     i(calendar.time): index ~ track::ZonedDateTime
-    t(tz; r::DataFrameRow): timestamp => begin
+    ix(tz; r::DataFrameRow): indexer => begin
         #HACK: handle ambiguous time conversion under DST
         occurrence = 1
         i = DataFrames.row(r)
