@@ -4,8 +4,9 @@ import Dates: AbstractDateTime
 
 struct Simulation
     base::Union{String,Symbol,Nothing}
-    index::OrderedDict
-    target::OrderedDict
+    index::OrderedDict{Symbol,Any}
+    target::OrderedDict{Symbol,Any}
+    mapping::OrderedDict{Symbol,Any}
     meta::OrderedDict{Symbol,Any}
     result::DataFrame
 end
@@ -13,8 +14,9 @@ end
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
+    IT = merge(I, T)
     M = parsemeta(meta, s.context.config)
-    Simulation(base, I, T, M, DataFrame())
+    Simulation(base, I, T, IT, M, DataFrame())
 end
 
 parsesimulationkey(p::Pair) = p
@@ -25,15 +27,15 @@ parsesimulation(a::Tuple) = parsesimulation(collect(a))
 parsesimulation(a) = parsesimulation([a])
 parsesimulation(::Nothing) = parsesimulation("context.clock.tick")
 
-extract(s::System, m::Simulation) = extract(s[m.base], m.index, m.target)
-extract(s::System, index, target) = begin
-    d = merge(index, target)
-    K = collect(keys(d))
-    #HACK: prevent type promotion with NoUnits
-    V = Any[value(s[k]) for k in values(d)]
-    od = OrderedDict(zip(K, V))
-    filter!(p -> extractable(s, p), od)
+extract(s::System, m::Simulation) = extract(s[m.base], m.mapping)
+extract(s::System, m) = begin
+    K = keys(m)
+    V = (value(s[k]) for k in values(m))
+    #HACK: Any -- prevent type promotion with NoUnits
+    d = OrderedDict{Symbol,Any}(zip(K, V))
+    filter!(p -> extractable(s, p), d)
 end
+extract(s::System, index, target) = extract(s, merge(index, target))
 extract(b::Bundle{S}, index, target) where {S<:System} = begin
     vcat([extract(s, index, target) for s in collect(b)]...)
 end
