@@ -83,12 +83,12 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     count(v) = error("unrecognized stop condition: $v")
     n = count(stop(s))
 
+    dt = verbose ? 1 : Inf
     if n isa Number
-        dt = verbose ? 1 : Inf
         p = Progress(n; dt=dt, barglyphs=barglyphs)
         check = s -> p.counter < p.n
     else
-        p = ProgressUnknown("Iterations:")
+        p = ProgressUnknown(; dt=dt, desc="Iterations:")
         check = s -> !stop(s)
     end
 
