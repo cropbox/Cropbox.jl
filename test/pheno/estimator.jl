@@ -25,13 +25,14 @@ import Dates
     end ~ preserve::ZonedDateTime
 
     calendar(context, init=t0') ~ ::Calendar
-    i(calendar.time): index ~ track::ZonedDateTime
-    t(; r::DataFrameRow): timestamp => begin
-        r.timestamp
+
+    iv(; r::DataFrameRow): indexval => begin
+        ZonedDateTime(r[:timestamp], dateformat"yyyy-mm-dd HH:MM:SSzzzzz")
     end ~ call::ZonedDateTime
+    iv0(t0): initial_indexval ~ preserve::ZonedDateTime
 
     match => false ~ track::Bool
-    stop(m=match, t=i, t1) => (m || t >= t1) ~ flag
+    stop(m=match, t=calendar.time, t1) => (m || t >= t1) ~ flag
 
     T(s): temperature => s[:tavg] ~ track(u"°C")
 end

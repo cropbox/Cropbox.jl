@@ -3,25 +3,26 @@ import CSV
 
 @system DataFrameStore begin
     filename => "" ~ preserve::String(parameter)
-    indexkey => :timestamp ~ preserve::Symbol(optional, parameter)
 
-    i(t=nounit(context.clock.tick)): index => t + 1 ~ track::Int
-    t(; r::DataFrameRow): timestamp => DataFrames.row(r) ~ call
+    ik: indexkey => :index ~ preserve::Symbol(optional, parameter)
+    iv(; r::DataFrameRow): indexval => DataFrames.row(r) ~ call
 
-    df(filename, indexkey, t): dataframe => begin
+    df(filename, ik, iv): dataframe => begin
         df = CSV.read(filename)
-        if !isnothing(indexkey)
-            df[!, indexkey] = map(t, eachrow(df))
+        if !isnothing(ik)
+            df[!, ik] = map(iv, eachrow(df))
         end
         df
     end ~ preserve::DataFrame(extern, parameter)
 
-    s(df, indexkey, i): store => begin
-        if !isnothing(indexkey)
-            df[df[!, indexkey] .== i, :][1, :]
-        else
-            df[i, :]
-        end
+    iv0: initial_indexval => 1 ~ preserve::Int
+    i0(df, ik, iv0): initial_index => begin
+        findfirst(!iszero, df[!, ik] .== iv0)
+    end ~ preserve::Int
+    i: index => 1 ~ accumulate::Int(init=i0)
+
+    s(df, i): store => begin
+        df[i, :]
     end ~ track::DataFrameRow{DataFrame,DataFrames.Index}
 end
 

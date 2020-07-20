@@ -9,9 +9,7 @@ using CSV
     vp(context): vapor_pressure ~ ::VaporPressure
 
     tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
-
-    i(calendar.time): index ~ track::ZonedDateTime
-    t(tz; r::DataFrameRow): timestamp => begin
+    iv(tz; r::DataFrameRow): indexval => begin
         #HACK: handle ambiguous time conversion under DST
         occurrence = 1
         i = DataFrames.row(r)
@@ -21,6 +19,7 @@ using CSV
         end
         datetime_from_julian_day_WEA(r.year, r.jday, r.time, tz, occurrence)
     end ~ call::ZonedDateTime
+    iv0(calendar.time): initial_indexval ~ preserve::ZonedDateTime
 
     PFD(s): photon_flux_density ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1

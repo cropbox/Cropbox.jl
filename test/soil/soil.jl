@@ -345,10 +345,10 @@ using CSV
 @system SoilWeather(DataFrameStore) begin
     filename => "PyWaterBal.csv" ~ preserve::String(parameter)
 
-    i(t=context.clock.tick): index ~ track(u"d")
-    t(; r::DataFrameRow): timestamp => begin
+    iv(; r::DataFrameRow): indexval => begin
         (r.timestamp - 1) * u"d"
     end ~ call(u"d")
+    iv0(context.clock.tick): initial_indexval ~ preserve(u"d")
 
     R(s): precipitation => s[:precipitation] ~ track(u"mm/d")
     T(s): transpiration => s[:transpiration] ~ track(u"mm/d")
