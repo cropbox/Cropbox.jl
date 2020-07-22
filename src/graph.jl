@@ -55,11 +55,12 @@ writedot(g::Graph) = let f = "$(tempname()).dot";
     f
 end
 
-import Graphviz_jll
+#TODO: wait until Graphviz_jll adds Windows support
+import Conda
 writesvg(name::AbstractString, g::Graph) = begin
     !endswith(name, ".svg") && (name *= ".svg")
     dot = writedot(g)
-    Graphviz_jll.dot() do exe
+    let exe = joinpath(Conda.BINDIR, "dot")
         cmd = `$exe -Tsvg $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
     end
