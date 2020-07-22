@@ -39,17 +39,22 @@ fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
 
 struct Bunch{V}
-    list::Vector{V}
+    it::Base.Generator
 end
 
-Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{vartype(S, p)}
-Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = getfield.(collect(b), p) |> Bunch{vartype(S, p)}
+Base.iterate(b::Bunch, i...) = iterate(getfield(b, :it), i...)
+Base.length(b::Bunch) = length(getfield(b, :it))
+Base.eltype(::Type{<:Bunch{<:State{V}}}) where V = V
+
+Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = (getfield(x, p) for x in collect(b)) |> Bunch{vartype(S, p)}
+Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = (getfield(x, p) for x in getfield(b, :it)) |> Bunch{vartype(S, p)}
 Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
 Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
-value(b::Bunch) = value.(collect(b))
+#TODO: also make final value() based on generator, but then need sum(x; init=0) in Julia 1.6 for empty generator
+#value(b::Bunch{<:State{V}}) where V = (value(v) for v in getfield(b, :it))
+value(b::Bunch{<:State{V}}) where V = V[value(v) for v in getfield(b, :it)]
 
 Base.collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
-Base.collect(b::Bunch) = getfield(b, :list)
 Base.collect(p::Produce, ::BundleAll) = value(p)
 Base.collect(p::Produce, ::BundleRecursiveAll) = begin
     l = System[]
@@ -68,4 +73,4 @@ end
 Base.collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(getfield(s, Symbol(o.cond))), V)
 
 Base.adjoint(b::Bundle) = collect(b)
-Base.adjoint(b::Bunch) = [v' for v in collect(b)]
+Base.adjoint(b::Bunch) = value(b)
