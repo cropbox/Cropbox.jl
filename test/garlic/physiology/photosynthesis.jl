@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 @system Photosynthesis begin
     weather ~ hold
@@ -17,8 +15,8 @@ using LinearAlgebra
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use leaf_nitrogen_content, leaf_width, ET_supply
-    sunlit_gasexchange(context, soil, weather, PPFD=Q_sun) ~ ::GasExchange
-    shaded_gasexchange(context, soil, weather, PPFD=Q_sh) ~ ::GasExchange
+    sunlit_gasexchange(context, soil, weather, PPFD=Q_sun, LAI=LAI_sunlit) ~ ::GasExchange
+    shaded_gasexchange(context, soil, weather, PPFD=Q_sh, LAI=LAI_shaded) ~ ::GasExchange
 
     leaf_width => begin
         # to be calculated when implemented for individal leaves
@@ -45,32 +43,26 @@ using LinearAlgebra
     Q_sun(radiation.irradiance_Q_sunlit): sunlit_irradiance ~ track(u"μmol/m^2/s" #= Quanta =#)
     Q_sh(radiation.irradiance_Q_shaded): shaded_irradiance ~ track(u"μmol/m^2/s" #= Quanta =#)
 
-    gross_array(a=sunlit_gasexchange.A_gross, b=shaded_gasexchange.A_gross) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
-    net_array(a=sunlit_gasexchange.A_net, b=shaded_gasexchange.A_net) => [a, b] ~ track::Vector{Float64}(u"μmol/m^2/s")
-    evapotranspiration_array(a=sunlit_gasexchange.E, b=shaded_gasexchange.E) => [a, b] ~ track::Vector{Float64}(u"mmol/m^2/s")
-    #temperature_array(a=sunlit.T_leaf, b=shaded.T_leaf) => [a, b] ~ track::Vector{Float64}(u"°C")
-    conductance_array(a=sunlit_gasexchange.gs, b=shaded_gasexchange.gs) => [a, b] ~ track::Vector{Float64}(u"mol/m^2/s/bar")
-
-    A_gross(gross_array, LAI_sunlit, LAI_shaded): gross_CO2_umol_per_m2_s => begin
-        [LAI_sunlit LAI_shaded] ⋅ gross_array
+    A_gross(a=sunlit_gasexchange.A_gross_total, b=shaded_gasexchange.A_gross_total): gross_CO2_umol_per_m2_s => begin
+        a + b
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     # plantsPerMeterSquare units are umol CO2 m-2 ground s-1
     # in the following we convert to g C plant-1 per hour
     # photosynthesis_gross is umol CO2 m-2 leaf s-1
 
-    A_net(net_array, LAI_sunlit, LAI_shaded): net_CO2_umol_per_m2_s => begin
+    A_net(a=sunlit_gasexchange.A_net_total, b=shaded_gasexchange.A_net_total): net_CO2_umol_per_m2_s => begin
         # grams CO2 per plant per hour
-        [LAI_sunlit LAI_shaded] ⋅ net_array
+        a + b
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    ET(evapotranspiration_array, LAI_sunlit, LAI_shaded): transpiration_H2O_mol_per_m2_s => begin
+    ET(a=sunlit_gasexchange.E_total, b=shaded_gasexchange.E_total): transpiration_H2O_mol_per_m2_s => begin
         #TODO need to save this?
         # when outputting the previous step transpiration is compared to the current step's water uptake
         #self.transpiration_old = self.transpiration
         #FIXME need to check if LAIs are negative?
         #transpiration = sunlit_gasexchange.ET * max(0, sunlit_LAI) + shaded_gasexchange.ET * max(0, shaded_LAI)
-        [LAI_sunlit LAI_shaded] ⋅ evapotranspiration_array
+        a + b
     end ~ track(u"mmol/m^2/s" #= H2O =#)
 
     # final values
@@ -97,15 +89,12 @@ using LinearAlgebra
         ET / PD * w
     end ~ track(u"g/d")
 
-    #FIXME: no sense to weight two temperature values here?
-    #temperature(weighted, temperature_array) => weighted(temperature_array) ~ track(u"°C")
-
     vapor_pressure_deficit(weather.VPD) ~ track(u"kPa")
 
-    conductance(conductance_array, LAI_sunlit, LAI_shaded, LAI) => begin
+    conductance(gs_sun=sunlit_gasexchange.gs, LAI_sunlit, gs_sh=shaded_gasexchange.gs, LAI_shaded, LAI) => begin
         #HACK ensure 0 when one of either LAI is 0, i.e., night
         # average stomatal conductance Yang
-        c = [LAI_sunlit LAI_shaded] ⋅ conductance_array / LAI
+        c = ((gs_sun * LAI_sunlit) + (gs_sh * LAI_shaded)) / LAI
         #c = max(zero(c), c)
         iszero(LAI) ? zero(c) : c
     end ~ track(u"mol/m^2/s/bar")
