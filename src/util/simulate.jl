@@ -38,7 +38,7 @@ extract(s::System, m) = begin
 end
 extract(s::System, index, target) = extract(s, merge(index, target))
 extract(b::Bundle{S}, index, target) where {S<:System} = begin
-    vcat([extract(s, index, target) for s in collect(b)]...)
+    [extract(s, index, target) for s in collect(b)]
 end
 extractable(s::System, p) = begin
     # only pick up variables of simple types by default
