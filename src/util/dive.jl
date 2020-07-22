@@ -82,7 +82,7 @@ dive(l::Vector{<:MenuItem}, t) = begin
 end
 dive(m::MenuItem, t) = dive(value(m), t)
 dive(v, t) = dive(t) do io
-    show(io, MIME("text/plain"), v)
+    show(IOContext(io, :limit => true), MIME("text/plain"), v)
 end
 dive(f::Function, t) = begin
     term = TerminalMenus.terminal
