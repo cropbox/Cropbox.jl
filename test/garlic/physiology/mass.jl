@@ -1,6 +1,7 @@
 @system Mass begin
     pheno: phenology ~ hold
     NU: nodal_units ~ hold
+    leaves ~ hold
 
     initial_leaf_ratio ~ hold
     potential_leaf_area_increase ~ hold
@@ -57,7 +58,7 @@
     #TODO: support more referencing options (i.e. "leaf.dropped") in condition syntax?
     #dropped_leaf(x=NU["*/leaf.dropped"].leaf.mass) => sum(x) ~ track(u"g")
 
-    total_leaf_mass(x=NU["*"].leaf.mass) => begin
+    total_leaf_mass(x=leaves.mass) => begin
         # this should equal to activeLeafMass + droppedLeafMass
         sum(x)
     end ~ track(u"g")
