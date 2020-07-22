@@ -34,6 +34,7 @@ extract(s::System, m) = begin
     #HACK: Any -- prevent type promotion with NoUnits
     d = OrderedDict{Symbol,Any}(zip(K, V))
     filter!(p -> extractable(s, p), d)
+    [d]
 end
 extract(s::System, index, target) = extract(s, merge(index, target))
 extract(b::Bundle{S}, index, target) where {S<:System} = begin
