@@ -96,7 +96,7 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
 end
 
 labelstring(v; maxlength=nothing) = begin
-    l = repr(v; context=:compact => true)
+    l = repr(v; context=IOContext(devnull, :compact => true, :limit => true))
     n = length(l)
     i = findfirst('\n', l)
     i = isnothing(i) ? n : i-1
