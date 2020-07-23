@@ -498,8 +498,13 @@ genupdate(v::VarInfo, t) = @q begin
 end
 
 genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
-genstore(v::VarInfo, val=nothing) = begin
+genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true) = begin
+    u(x) = unitfy ? genunitfy(v, x) : x
+    m(x) = minmax ? genminmax(v, x) : x
+    f(x) = x |> u |> m
     isnothing(val) && (val = genfunc(v))
+    val = f(val)
+    #TODO: remove redundant unitfy() in store!()
     @gensym s
     @q let $s = $(symstate(v))
         $C.store!($s, $val)

@@ -15,8 +15,7 @@
             b(a) => a ~ track
         end
     end
-    
-    #TODO: implement min/max tags for track (should be done with genstore() in macro.jl)
+
     @testset "minmax" begin
         @system STrackMinMax(Controller) begin
             a => 0 ~ track(min=1)
@@ -24,8 +23,20 @@
             c => 0 ~ track(min=1, max=2)
         end
         s = instance(STrackMinMax)
-        @test_skip s.a' == 1
-        @test_skip s.b' == 0
-        @test_skip s.c' == 1
+        @test s.a' == 1
+        @test s.b' == 0
+        @test s.c' == 1
+    end
+
+    @testset "minmax unit" begin
+        @system STrackMinMaxUnit(Controller) begin
+            a => 0 ~ track(u"m", min=1)
+            b => 0 ~ track(u"m", max=2u"cm")
+            c => 0 ~ track(u"m", min=1u"cm", max=2)
+        end
+        s = instance(STrackMinMaxUnit)
+        @test s.a' == 1u"m"
+        @test s.b' == 0u"m"
+        @test s.c' == 1u"cm"
     end
 end
