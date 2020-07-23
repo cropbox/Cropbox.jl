@@ -1,7 +1,9 @@
 abstract type System end
 
 namefor(s::S) where {S<:System} = namefor(S)
-namefor(S::Type{<:System}) = nameof(S)
+namefor(S) = nameof(S)
+typefor(s::S) where {S<:System} = S
+typefor(S) = S
 Base.names(s::S) where {S<:System} = names(S)
 Base.names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 

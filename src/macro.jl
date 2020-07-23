@@ -182,7 +182,7 @@ genfield(v::VarInfo) = begin
     alias = v.alias
     @q begin
         $docstring
-        $name::$type
+        $name::$C.typefor($type)
         $docstring
         $(isnothing(alias) ? ϵ : :($alias::$type))
     end
@@ -291,6 +291,7 @@ genstruct(name, type, infos, incl, scope) = begin
         end
         $S(; kw...) = $_S(; kw...)
         $C.namefor(::Type{$_S}) = $C.namefor($S)
+        $C.typefor(::Type{$S}) = $_S
         $C.source(::Type{<:$S}) = $(Meta.quot(source))
         $C.mixins(::Type{<:$S}) = $(Tuple(getmodule.(Ref(scope), incl)))
         $C.type(::Type{<:$S}) = $_S
