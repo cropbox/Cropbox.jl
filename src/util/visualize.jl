@@ -18,7 +18,7 @@ visualize(S::Type{<:System}, x, y;
         k, v = only(V)
         isnothing(legend) && (legend = string(k))
         #TODO: support custom unit for legend?
-        T = K == Symbol(0) ? S : type(K, scopeof(S))
+        T = K == Symbol(0) ? S : typefor(K, scopeof(S))
         u = vartype(T, k) |> unittype
         !isnothing(u) && (legend *= " ($u)")
         string.(v)

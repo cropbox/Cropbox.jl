@@ -32,8 +32,8 @@ resolveindex(op::AbstractString) = begin
     end
 end
 
-Base.getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{type(S),S}(s, resolveindex.(split(ops, "/")))
-Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{type(S),Vector{S}}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{typefor(S),S}(s, resolveindex.(split(ops, "/")))
+Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{typefor(S),Vector{S}}(s, resolveindex.(split(ops, "/")))
 
 fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)

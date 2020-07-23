@@ -291,10 +291,9 @@ genstruct(name, type, infos, incl, scope) = begin
         end
         $S(; kw...) = $_S(; kw...)
         $C.namefor(::Type{$_S}) = $C.namefor($S)
-        $C.typefor(::Type{$S}) = $_S
+        $C.typefor(::Type{<:$S}) = $_S
         $C.source(::Type{<:$S}) = $(Meta.quot(source))
         $C.mixins(::Type{<:$S}) = $(Tuple(getmodule.(Ref(scope), incl)))
-        $C.type(::Type{<:$S}) = $_S
         $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
         $C.scopeof(::Type{<:$S}) = $scope
@@ -333,9 +332,9 @@ end
 mixincollect(s) = ()
 mixindispatch(s, S::Type{<:System}) = (Val(S in mixincollect(s) ? namefor(S) : nothing), s)
 
-type(s::Symbol, m::Module=Main) = getmodule(m, s)
-type(T) = T
-vartype(::Type{S}, k) where {S<:System} = fieldtype(type(S), k)
+typefor(s::Symbol, m::Module=Main) = getmodule(m, s) |> typefor
+typefor(T) = T
+vartype(::Type{S}, k) where {S<:System} = fieldtype(typefor(S), k) |> typefor
 
 fieldnamesunique(::Type{<:System}) = ()
 fieldnamesalias(::Type{<:System}) = ()

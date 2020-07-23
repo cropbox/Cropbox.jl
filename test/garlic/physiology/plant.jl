@@ -42,7 +42,7 @@
 
     #HACK: avoid redundant allocations
     #TODO: more native support of Bunch?
-    leaves(NU) => NU["*"].leaf ~ ::Cropbox.Bunch{Leaf}
+    leaves(NU) => NU["*"].leaf ~ ::Cropbox.Bunch{_Leaf}
 
     #TODO find a better place?
     PD: planting_density => 55 ~ preserve(u"m^-2", parameter)
