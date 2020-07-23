@@ -88,7 +88,7 @@ end
 end
 
 @system RootSegment(Tropism, Rendering) begin
-    box ~ ::Container(override)
+    box ~ ::Container(override, dynamic)
 
     ro: root_order => 1 ~ preserve::Int(extern)
     zi: zone_index => 0 ~ preserve::Int(extern)

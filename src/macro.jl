@@ -182,7 +182,7 @@ genfield(v::VarInfo) = begin
     alias = v.alias
     @q begin
         $docstring
-        $name::$C.typefor($type)
+        $name::$(istag(v, :dynamic) ? :($type) : :($C.typefor($type)))
         $docstring
         $(isnothing(alias) ? ϵ : :($alias::$type))
     end
