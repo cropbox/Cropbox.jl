@@ -5,8 +5,8 @@ struct BundleRecursiveAll <: BundleOperator end
 struct BundleIndex{I<:Number} <: BundleOperator
     index::I
 end
-struct BundleFilter{S<:AbstractString} <: BundleOperator
-    cond::S
+struct BundleFilter{T} <: BundleOperator
+    cond::T
 end
 
 struct Bundle{S<:System,P}
@@ -71,7 +71,7 @@ Base.collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
     i = (i >= 0) ? i : n+i+1
     (1 <= i <= n) ? [V[i]] : S[]
 end
-Base.collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(getfield(s, Symbol(o.cond))), V)
+Base.collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(s[o.cond]), V)
 
 Base.adjoint(b::Bundle) = collect(b)
 Base.adjoint(b::Bunch) = value(b)
