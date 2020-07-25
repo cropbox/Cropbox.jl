@@ -69,7 +69,7 @@ Base.collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
     n = length(V)
     i = o.index
     i = (i >= 0) ? i : n+i+1
-    (1 <= i <= n) ? [V[i]] : S[]
+    (1 <= i <= n) ? V[i:i] : S[]
 end
 Base.collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(s[o.cond]), V)
 
