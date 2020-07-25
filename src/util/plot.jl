@@ -41,7 +41,8 @@ label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
 
 detectbackend() = begin
     if isdefined(Main, :IJulia) && Main.IJulia.inited ||
-       isdefined(Main, :Juno) && Main.Juno.isactive()
+       isdefined(Main, :Juno) && Main.Juno.isactive() ||
+       !isnothing(get(ENV, "NJS_VERSION", nothing))
         :Gadfly
     else
         :UnicodePlots
