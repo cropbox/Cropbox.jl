@@ -14,13 +14,14 @@ end
 
 Produce(; _name, _type, _...) = begin
     T = _type
+    #TODO: maybe now we can get rid of V
     if T <: System
         P = T
-        V = Union{System,Nothing}
+        V = Union{T,Nothing}
         v = nothing
     elseif T <: Vector{<:System}
         P = T
-        V = Vector{System}
+        V = T
         v = V[]
     end
     Produce{P,V}(_name, v, Production[])
@@ -62,9 +63,9 @@ end
 
 genvartype(v::VarInfo, ::Val{:Produce}; V, _...) = begin
     if istag(v, :single)
-        @q Produce{$V,Union{System,Nothing}}
+        @q Produce{$V,Union{$V,Nothing}}
     else
-        @q Produce{$V,Vector{System}}
+        @q Produce{$V,$V}
     end
 end
 

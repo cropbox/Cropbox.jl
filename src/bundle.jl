@@ -56,12 +56,13 @@ value(b::Bunch{<:State{V}}) where V = V[value(v) for v in getfield(b, :it)]
 
 Base.collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
 Base.collect(p::Produce, ::BundleAll) = value(p)
-Base.collect(p::Produce, ::BundleRecursiveAll) = begin
-    l = System[]
+Base.collect(p::Union{Produce{S},Produce{Vector{S}}}, ::BundleRecursiveAll) where {S<:System} = begin
+    l = S[]
     #TODO: possibly reduce overhead by reusing calculated values in child nodes
-    f(s::System) = (push!(l, s); f.(value(getfield(s, p.name))))
+    f(V::Vector{<:System}) = for s in V; f(s) end
+    f(s::System) = (push!(l, s); f(value(getfield(s, p.name))))
     f(::Nothing) = nothing
-    f.(value(p))
+    f(value(p))
     l
 end
 Base.collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
