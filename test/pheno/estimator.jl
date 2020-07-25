@@ -13,7 +13,7 @@ import Dates
 
     # 150 days after the second year (around end of May)
     De: end_date_offset => 150 ~ preserve::Int
-    
+
     tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
 
     t0(year, tz, Ds): start_date => begin
