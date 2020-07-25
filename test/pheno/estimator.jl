@@ -27,6 +27,7 @@ import Dates
     calendar(context, init=t0') ~ ::Calendar
     i(calendar.time): index ~ track::ZonedDateTime
     ix(; r::DataFrameRow): indexer => begin
+        #ZonedDateTime(r.timestamp, dateformat"yyyy-mm-dd HH:MM:SSzzzzz")
         r.timestamp
     end ~ call::ZonedDateTime
 
