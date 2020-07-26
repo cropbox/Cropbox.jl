@@ -1,42 +1,31 @@
-abstract type BundleOperator end
-
-struct BundleAll <: BundleOperator end
-struct BundleRecursiveAll <: BundleOperator end
-struct BundleIndex{I<:Number} <: BundleOperator
-    index::I
-end
-struct BundleFilter{T} <: BundleOperator
-    cond::T
+struct Bundle{S<:System,P,F}
+    produce::Produce{P}
+    recursive::Bool
+    filter::F
 end
 
-struct Bundle{S<:System,P}
-    root::Produce{P}
-    ops::Vector{BundleOperator}
-end
-
-resolveindex(op::AbstractString) = begin
-    if op == "*"
-        # collecting children only at the current level
-        BundleAll()
-    elseif op == "**"
-        # collecting all children recursively
-        BundleRecursiveAll()
-    else
-        i = tryparse(Int, op)
-        if !isnothing(i)
-            BundleIndex(i)
+Bundle(p::Produce{P,V}, ops::AbstractString) where {P,V} = begin
+    recursive = false
+    filter = nothing
+    index = 0
+    for op in split(ops, "/")
+        if op == "*"
+            # collecting children only at the current level
+            recursive = false
+        elseif op == "**"
+            # collecting all children recursively
+            recursive = true
         else
             #TODO: support generic indexing function?
-            BundleFilter(op)
+            filter = op
         end
     end
+    S = eltype(p)
+    F = typeof(filter)
+    Bundle{S,P,F}(p, recursive, filter)
 end
 
-Base.getindex(s::Produce{S}, ops::AbstractString) where {S<:System} = Bundle{typefor(S),S}(s, resolveindex.(split(ops, "/")))
-Base.getindex(s::Produce{Vector{S}}, ops::AbstractString) where {S<:System} = Bundle{typefor(S),Vector{S}}(s, resolveindex.(split(ops, "/")))
-
-fieldnamesunique(::Bundle{S}) where {S<:System} = fieldnamesunique(S)
-fieldnamesalias(::Bundle{S}) where {S<:System} = fieldnamesalias(S)
+Base.getindex(s::Produce, ops::AbstractString) = Bundle(s, ops)
 
 struct Bunch{V}
     it::Base.Generator
@@ -46,32 +35,33 @@ Base.iterate(b::Bunch, i...) = iterate(getfield(b, :it), i...)
 Base.length(b::Bunch) = length(getfield(b, :it))
 Base.eltype(::Type{<:Bunch{<:State{V}}}) where V = V
 
-Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = (getfield(x, p) for x in collect(b)) |> Bunch{vartype(S, p)}
-Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = (getfield(x, p) for x in getfield(b, :it)) |> Bunch{vartype(S, p)}
+Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = (value(getfield(x, p)) for x in value(b)) |> Bunch{vartype(S, p)}
+Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = (value(getfield(x, p)) for x in b) |> Bunch{vartype(S, p)}
 Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
 Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
-#TODO: also make final value() based on generator, but then need sum(x; init=0) in Julia 1.6 for empty generator
-#value(b::Bunch{<:State{V}}) where V = (value(v) for v in getfield(b, :it))
-value(b::Bunch{<:State{V}}) where V = V[value(v) for v in getfield(b, :it)]
 
-Base.collect(b::Bundle) = reduce((a, b) -> collect(a, b), Any[getfield(b, :root), getfield(b, :ops)...])
-Base.collect(p::Produce, ::BundleAll) = value(p)
-Base.collect(p::Union{Produce{S},Produce{Vector{S}}}, ::BundleRecursiveAll) where {S<:System} = begin
-    l = S[]
-    #TODO: possibly reduce overhead by reusing calculated values in child nodes
-    f(V::Vector{<:System}) = for s in V; f(s) end
-    f(s::System) = (push!(l, s); f(value(getfield(s, p.name))))
-    f(::Nothing) = nothing
-    f(value(p))
+value(b::Bundle{S}) where {S<:System} = begin
+    p = getfield(b, :produce)
+    v = collect(p)
+    if getfield(b, :recursive)
+        l = S[]
+        #TODO: possibly reduce overhead by reusing calculated values in child nodes
+        g(V::Vector{<:System}) = for s in V; g(s) end
+        g(s::System) = (push!(l, s); g(value(getfield(s, p.name))))
+        g(::Nothing) = nothing
+        g(v)
+    else
+        l = copy(v)
+    end
+    f = getfield(b, :filter)
+    if !isnothing(f)
+        filter!(s -> value(s[f]), l)
+    end
     l
 end
-Base.collect(V::Vector{S}, o::BundleIndex) where {S<:System} = begin
-    n = length(V)
-    i = o.index
-    i = (i >= 0) ? i : n+i+1
-    (1 <= i <= n) ? V[i:i] : S[]
-end
-Base.collect(V::Vector{<:System}, o::BundleFilter) = filter(s -> value(s[o.cond]), V)
+#TODO: also make final value() based on generator, but then need sum(x; init=0) in Julia 1.6 for empty generator
+#value(b::Bunch) = (value(v) for v in b)
+value(b::Bunch) = collect(b)
 
-Base.adjoint(b::Bundle) = collect(b)
+Base.adjoint(b::Bundle) = value(b)
 Base.adjoint(b::Bunch) = value(b)
