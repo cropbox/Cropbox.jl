@@ -1,6 +1,6 @@
 import DataStructures: OrderedDict
 import DataFrames: DataFrame
-import Dates: AbstractDateTime
+import Dates: AbstractTime
 
 struct Simulation
     base::Union{String,Symbol,Nothing}
@@ -42,7 +42,7 @@ extract(b::Bundle{S}, index, target) where {S<:System} = begin
 end
 extractable(s::System, p) = begin
     # only pick up variables of simple types by default
-    p[2] isa Union{Number,Symbol,AbstractString,AbstractDateTime}
+    p[2] isa Union{Number,Symbol,AbstractString,AbstractTime}
 end
 
 parsemetadata(p::Pair, c) = p
