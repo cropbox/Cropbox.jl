@@ -31,13 +31,13 @@ produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
 unittype(s::Produce) = nothing
 
-Base.getindex(s::Produce{<:System}, i) = i == 1 ? s.value : throw(BoundsError(s, i))
+Base.getindex(s::Produce{<:System}, i::Int) = i == 1 ? s.value : throw(BoundsError(s, i))
 Base.length(s::Produce{<:System}) = isnothing(s.value) ? 0 : 1
 Base.iterate(s::Produce{<:System}) = isempty(s) ? nothing : (s.value, nothing)
 Base.iterate(s::Produce{<:System}, ::Nothing) = nothing
 Base.eltype(::Type{Produce{S}}) where {S<:System} = S
 
-Base.getindex(s::Produce{<:Vector}, i) = getindex(s.value, i)
+Base.getindex(s::Produce{<:Vector}, i::Int) = getindex(s.value, i)
 Base.getindex(s::Produce{<:Vector}, ::Nothing) = s
 Base.length(s::Produce{<:Vector}) = length(s.value)
 Base.iterate(s::Produce{<:Vector}, i=1) = i > length(s) ? nothing : (s[i], i+1)
