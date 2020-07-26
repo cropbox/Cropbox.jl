@@ -46,7 +46,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
-    @gensym s t f r q
+    @gensym s t f r
     @q let $s = $(symstate(v)),
            $t = $C.value($(v.tags[:time])),
            $f = $(genfunc(v)),
