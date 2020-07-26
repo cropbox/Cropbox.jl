@@ -59,7 +59,7 @@
             w(t, f) => t <= f ~ track::Bool
             a => 1 ~ capture
             b => 1 ~ capture(when=w)
-            c => 1 ~ capture(when=not(w))
+            c => 1 ~ capture(when=!w)
         end
         n = 5
         s = instance(SCaptureWhen; config=:0 => :f => n)

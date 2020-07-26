@@ -96,7 +96,7 @@
             w(t, f) => t <= f ~ track::Bool
             a => 1 ~ accumulate
             b => 1 ~ accumulate(when=w)
-            c => 1 ~ accumulate(when=not(w))
+            c => 1 ~ accumulate(when=!w)
         end
         n = 5
         s = instance(SAccumulateWhen; config=:0 => :f => n)

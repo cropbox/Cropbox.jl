@@ -52,7 +52,7 @@ struct Not{S}
     state::S
 end
 
-not(s::State) = Not(s)
+Base.:!(s::State) = Not(s)
 value(s::Not) = !value(s.state)
 
 export not
