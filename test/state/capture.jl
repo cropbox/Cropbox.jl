@@ -51,4 +51,25 @@
         update!(s)
         @test s.a' == 1u"hr"
     end
+
+    @testset "when" begin
+        @system SCaptureWhen(Controller) begin
+            t(nounit(context.clock.tick)) ~ track::Int
+            f ~ preserve(parameter)
+            w(t, f) => t <= f ~ track::Bool
+            a => 1 ~ capture
+            b => 1 ~ capture(when=w)
+            c => 1 ~ capture(when=not(w))
+        end
+        n = 5
+        s = instance(SCaptureWhen; config=:0 => :f => n)
+        simulate!(s, stop=n)
+        @test s.a' == 1
+        @test s.b' == 1
+        @test s.c' == 0
+        simulate!(s, stop=n)
+        @test s.a' == 1
+        @test s.b' == 0
+        @test s.c' == 1
+    end
 end

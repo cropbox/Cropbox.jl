@@ -89,6 +89,27 @@
         @test s.a' == 2u"hr"
     end
 
+    @testset "when" begin
+        @system SAccumulateWhen(Controller) begin
+            t(nounit(context.clock.tick)) ~ track::Int
+            f ~ preserve(parameter)
+            w(t, f) => t <= f ~ track::Bool
+            a => 1 ~ accumulate
+            b => 1 ~ accumulate(when=w)
+            c => 1 ~ accumulate(when=not(w))
+        end
+        n = 5
+        s = instance(SAccumulateWhen; config=:0 => :f => n)
+        simulate!(s, stop=n)
+        @test s.a' == n
+        @test s.b' == n
+        @test s.c' == 0
+        simulate!(s, stop=n)
+        @test s.a' == 2n
+        @test s.b' == n
+        @test s.c' == n
+    end
+
     @testset "transport" begin
         @system SAccumulateTransport(Controller) begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)

@@ -23,6 +23,7 @@ updatetags!(d, ::Val{:Accumulate}; _...) = begin
     !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     #TODO: automatic inference without explicit `timeunit` tag
     !haskey(d, :timeunit) && (d[:timeunit] = @q $C.timeunittype($(d[:unit])))
+    !haskey(d, :when) && (d[:when] = true)
 end
 
 genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
@@ -46,10 +47,11 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
-    @gensym s t f r
+    @gensym s t w f r
     @q let $s = $(symstate(v)),
            $t = $C.value($(v.tags[:time])),
-           $f = $(genfunc(v)),
+           $w = $C.value($(v.tags[:when])),
+           $f = $w ? $(genfunc(v)) : zero($(v.tags[:_type])),
            $r = $C.unitfy($f, $C.rateunit($s))
         $s.tick = $t
         $s.rate = $r
