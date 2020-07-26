@@ -1,4 +1,5 @@
 @testset "state" begin
+    include("state/core.jl")
     include("state/hold.jl")
     include("state/wrap.jl")
     include("state/preserve.jl")
