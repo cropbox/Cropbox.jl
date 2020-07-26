@@ -41,6 +41,8 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
         e = eachrow(hcat(A...)) |> sum
+        # BlackBoxOptim expects Float64, not even Int
+        e = Float64.(e)
         multi ? Tuple(e) : e[1]
     end
     #FIXME: input parameters units are ignored without conversion
