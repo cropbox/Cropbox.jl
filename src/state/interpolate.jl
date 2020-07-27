@@ -32,6 +32,8 @@ Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
     Interpolate{V}(v)
 end
 
+constructortags(::Val{:Interpolate}) = (:unit, :knotunit, :reverse)
+
 updatetags!(d, ::Val{:Interpolate}; _...) = begin
     !haskey(d, :reverse) && (d[:reverse] = false)
     !haskey(d, :knotunit) && (d[:knotunit] = nothing)

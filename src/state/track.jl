@@ -10,4 +10,6 @@ Track(; unit, _value, _type, _...) = begin
     Track{V}(v)
 end
 
+constructortags(::Val{:Track}) = (:unit,)
+
 genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}

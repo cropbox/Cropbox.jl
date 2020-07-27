@@ -11,6 +11,8 @@ Advance(; init=nothing, step=nothing, unit, _type, _...) = begin
     Advance{T}(t, Δt)
 end
 
+constructortags(::Val{:Advance}) = (:init, :step, :unit)
+
 value(s::Advance) = s.t
 advance!(s::Advance) = s.t += s.Δt
 

@@ -9,6 +9,8 @@ Call(; unit, _value, _type, _calltype, _...) = begin
     Call{V,F}(_value)
 end
 
+constructortags(::Val{:Call}) = (:unit,)
+
 #HACK: showing s.value could trigger StackOverflowError
 Base.show(io::IO, s::Call) = print(io, "<call>")
 

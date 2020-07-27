@@ -9,6 +9,8 @@ Solve(; unit, _type, _...) = begin
     Solve{V}(v)
 end
 
+constructortags(::Val{:Solve}) = (:unit,)
+
 # \Equal opeartor for both solve/bisect
 ⩵(x, y) = x - y
 export ⩵

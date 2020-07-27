@@ -6,6 +6,8 @@ Flag(; _value, _...) = begin
     Flag{Bool}(_value)
 end
 
+constructortags(::Val{:Flag}) = ()
+
 genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
 
 geninit(v::VarInfo, ::Val{:Flag}) = false

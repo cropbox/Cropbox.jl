@@ -8,6 +8,8 @@ Wrap(; _value, _...) = begin
     Wrap{V}(v)
 end
 
+constructortags(::Val{:Wrap}) = ()
+
 wrap(v::V) where V = Wrap{V}(v)
 
 export wrap

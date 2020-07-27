@@ -19,6 +19,8 @@ Bisect(; unit, evalunit, _type, _...) = begin
     Bisect{V,E}(v, :z, 0, v, v, v, v, e, e, e)
 end
 
+constructortags(::Val{:Bisect}) = (:unit, :evalunit)
+
 @generated evalunit(s::Bisect{V,E}) where {V,E} = unittype(E)
 
 updatetags!(d, ::Val{:Bisect}; _...) = begin

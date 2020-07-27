@@ -119,6 +119,16 @@ typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :(Vector{System})
 typetag(::Val{nothing}) = nothing
 
+supportedtags(::Val) = nothing
+
+filterconstructortags(v::VarInfo) = begin
+    stags = constructortags(Val(v.state))
+    filter(v.tags) do (k, v)
+        isnothing(stags) ? true : k in stags ||
+        startswith(String(k), "_")
+    end
+end
+
 updatetags!(d, ::Val; _...) = nothing
 
 istag(v::VarInfo, t) = get(v.tags, t, false)
@@ -214,14 +224,14 @@ end
 
 import DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
-gendecl(v::VarInfo{Symbol}) = begin
+gendecl(v::VarInfo) = begin
     name = Meta.quot(v.name)
     alias = Meta.quot(v.alias)
     decl = if istag(v, :override)
         genoverride(v)
     else
         value = istag(v, :extern) ? genextern(v, geninit(v)) : geninit(v)
-        stargs = [:($(esc(k))=$v) for (k, v) in v.tags]
+        stargs = [:($(esc(k))=$v) for (k, v) in filterconstructortags(v)]
         @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
     end
     gendecl(v, decl)

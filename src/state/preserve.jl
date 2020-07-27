@@ -12,6 +12,8 @@ Preserve(; unit, optional, _value, _type, _...) = begin
     Preserve{V}(v)
 end
 
+constructortags(::Val{:Preserve}) = (:unit, :optional)
+
 updatetags!(d, ::Val{:Preserve}; _...) = begin
     !haskey(d, :optional) && (d[:optional] = false)
 end

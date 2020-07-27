@@ -27,6 +27,8 @@ Produce(; _name, _type, _...) = begin
     Produce{P,V}(_name, v, Production[])
 end
 
+constructortags(::Val{:Produce}) = ()
+
 produce(s::Type{<:System}; args...) = Production(s, args)
 produce(::Nothing; args...) = nothing
 unittype(s::Produce) = nothing

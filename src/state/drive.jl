@@ -10,6 +10,8 @@ Drive(; unit, _value, _type, _...) = begin
     Drive{V}(v)
 end
 
+constructortags(::Val{:Drive}) = (:unit,)
+
 genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 
 geninit(v::VarInfo, ::Val{:Drive}) = begin
