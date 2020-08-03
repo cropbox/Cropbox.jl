@@ -6,6 +6,8 @@ using DataFrames
             a(t=context.clock.tick) => Dict(:a => 10t) ~ drive(u"hr")
         end
         s = instance(SDriveDict)
+        @test s.context.clock.tick' == 0u"hr" && s.a' == 0u"hr"
+        update!(s)
         @test s.context.clock.tick' == 1u"hr" && s.a' == 10u"hr"
         update!(s)
         @test s.context.clock.tick' == 2u"hr" && s.a' == 20u"hr"
@@ -25,6 +27,8 @@ using DataFrames
             a(df, t=context.clock.tick) => df[df.t .== t, :][1, :] ~ drive
         end
         s = instance(SDriveDataFrame)
+        @test s.context.clock.tick' == 0u"hr" && s.a' == 0
+        update!(s)
         @test s.context.clock.tick' == 1u"hr" && s.a' == 10
         update!(s)
         @test s.context.clock.tick' == 2u"hr" && s.a' == 20

@@ -12,7 +12,7 @@ using Dates
         @test r isa DataFrame
         @test size(r, 1) == (n+1)
         @test propertynames(r) == [:tick, :a, :b]
-        @test r[end, :tick] == (n+1)u"hr"
+        @test r[end, :tick] == n*u"hr"
         @test r[end, :a] == 1
         @test r[end, :b] == n
         r = simulate(SSimulate, stop=n, config=(:SSimulate => :a => 2))
@@ -126,7 +126,7 @@ using Dates
         @test propertynames(r[2]) == [:t, :i, :a, :B]
         @test propertynames(r[3]) == [:tick, :step]
         @test propertynames(r[4]) == [:tick, :b, :c, :d]
-        @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == r[4][end, :tick] == (n+1)u"hr"
+        @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == r[4][end, :tick] == n*u"hr"
         @test r[1][end, :a] == 0
         @test r[2][end, :B] == 2
         @test r[3][end, :step] == 1u"hr"
@@ -154,9 +154,9 @@ using Dates
         r = simulate(SSimulateLayoutConfigs, L, C, stop=n)
         @test length(r) == length(L)
         o = r[3]
-        @test o[o.tick .== (n+1)*u"hr", :i] == [n, n]
-        @test o[o.tick .== (n+1)*u"hr", :a] == [p1*(n-1), p2*(n-1)]
-        @test o[o.tick .== (n+1)*u"hr", :b] == [2p1*n, 2p2*n]
+        @test o[o.tick .== n*u"hr", :i] == [n, n]
+        @test o[o.tick .== n*u"hr", :a] == [p1*(n-1), p2*(n-1)]
+        @test o[o.tick .== n*u"hr", :b] == [2p1*n, 2p2*n]
     end
 
     @testset "configs" begin
@@ -168,8 +168,8 @@ using Dates
         C = @config !(:SSimulateConfigs => :a => p)
         n = 10
         r = simulate(SSimulateConfigs, configs=C, stop=n)
-        @test r[r.tick .== (n+1)*u"hr", :a] == p
-        @test r[r.tick .== (n+1)*u"hr", :b] == p .* n
+        @test r[r.tick .== n*u"hr", :a] == p
+        @test r[r.tick .== n*u"hr", :b] == p .* n
     end
 
     @testset "meta" begin

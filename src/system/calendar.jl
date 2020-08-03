@@ -13,7 +13,7 @@ import Dates
             nothing
         else
             # number of update!() required to reach `last` time
-            Dates.value(ceil(last - init, Dates.Second)) / Cropbox.deunitfy(Δt, u"s") - 1
+            Dates.value(ceil(last - init, Dates.Second)) / Cropbox.deunitfy(Δt, u"s")
         end
     end ~ preserve::Int(optional)
 end

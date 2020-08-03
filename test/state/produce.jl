@@ -58,12 +58,12 @@
         @test length(s.a) == 0 && s.i' == 0u"hr"
         update!(sc)
         @test length(s.a) == 1 && s.i' == 0u"hr"
-        @test length(s.a[1].a) == 0 && s.a[1].i' == 1u"hr"
+        @test length(s.a[1].a) == 0 && s.a[1].i' == 0u"hr"
         update!(sc)
         @test length(s.a) == 2 && s.i' == 0u"hr"
-        @test length(s.a[1].a) == 1 && s.a[1].i' == 1u"hr"
-        @test length(s.a[2].a) == 0 && s.a[2].i' == 2u"hr"
-        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i' == 2u"hr"
+        @test length(s.a[1].a) == 1 && s.a[1].i' == 0u"hr"
+        @test length(s.a[2].a) == 0 && s.a[2].i' == 1u"hr"
+        @test length(s.a[1].a[1].a) == 0 && s.a[1].a[1].i' == 1u"hr"
     end
 
     @testset "nothing" begin
@@ -95,16 +95,16 @@
         @test length(s.p) == 0
         update!(sc)
         @test length(s.p) == 1
-        @test s.a' == 1 # (1)
-        @test s.b' == 1 # (1)
+        @test s.a' == 0 # (0)
+        @test s.b' == 0 # (0)
         update!(sc)
         @test length(s.p) == 2
-        @test s.a' == 3 # (1 + 2)
-        @test s.b' == 5 # ((1 ~ 2) + 2)
+        @test s.a' == 1 # (0 + 1)
+        @test s.b' == 2 # ((0 ~ 1) + 1)
         update!(sc)
         @test length(s.p) == 3
-        @test s.a' == 6 # (1 + 2 + 3)
-        @test s.b' == 17 # ((1 ~ ((2 ~ 3) + 3) + (2 ~ 3) + 3)
+        @test s.a' == 3 # (0 + 1 + 2)
+        @test s.b' == 10 # ((0 ~ ((1 ~ 2) + 2) + (1 ~ 2) + 2)
     end
 
     @testset "query condition with track bool" begin
@@ -123,20 +123,20 @@
         @test length(s.p) == 0
         update!(sc)
         @test length(s.p) == 1
-        @test s.a' == 1 # (#1)
-        @test s.b' == 1 # (#1)
+        @test s.a' == 0 # (#0)
+        @test s.b' == 0 # (#0)
         update!(sc)
         @test length(s.p) == 2
-        @test s.a' == 1 # (#1 + 2)
-        @test s.b' == 1 # (#1 ~ 2) + 2)
+        @test s.a' == 1 # (0 + #1)
+        @test s.b' == 2 # (0 ~ #1) + #1)
         update!(sc)
         @test length(s.p) == 3
-        @test s.a' == 4 # (#1 + 2 + #3)
-        @test s.b' == 13 # ((#1 ~ ((2 ~ #3) + #3) + (2 ~ #3) + #3)
+        @test s.a' == 1 # (0 + #1 + 2)
+        @test s.b' == 2 # (0 ~ ((#1 ~ 2) + 2) + (#1 ~ 2) + 2)
         update!(sc)
         @test length(s.p) == 4
-        @test s.a' == 4 # (#1 + 2 + #3 + 4)
-        @test s.b' == 13 # ((#1 ~ (2 ~ (#3 ~ 4)) + (#3 ~ 4) + 4) + (2 ~ (#3 ~ 4)) + (#3 ~ 4) + 4)
+        @test s.a' == 4 # (0 + #1 + 2 + #3)
+        @test s.b' == 26 # (0 ~ ((#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3) + (#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3)
     end
 
     @testset "query condition with flag" begin
@@ -155,20 +155,20 @@
         @test length(s.p) == 0
         update!(sc)
         @test length(s.p) == 1
-        @test s.a' == 0 # (.1)
-        @test s.b' == 0 # (.1)
+        @test s.a' == 0 # (.0)
+        @test s.b' == 0 # (.0)
         update!(sc)
         @test length(s.p) == 2
-        @test s.a' == 1 # (#1 + .2)
-        @test s.b' == 1 # (#1 ~ .2) + .2)
+        @test s.a' == 0 # (0 + .1)
+        @test s.b' == 0 # (0 ~ .1) + .1)
         update!(sc)
         @test length(s.p) == 3
-        @test s.a' == 1 # (#1 + 2 + .3)
-        @test s.b' == 1 # ((#1 ~ ((2 ~ .3) + .3) + (2 ~ .3) + .3)
+        @test s.a' == 1 # (0 + #1 + .2)
+        @test s.b' == 2 # ((0 ~ ((#1 ~ .2) + .2) + (#1 ~ .2) + .2)
         update!(sc)
         @test length(s.p) == 4
-        @test s.a' == 4 # (#1 + 2 + #3 + .4)
-        @test s.b' == 13 # ((#1 ~ (2 ~ (#3 ~ .4)) + (#3 ~ .4) + .4) + (2 ~ (#3 ~ .4)) + (#3 ~ .4) + .4)
+        @test s.a' == 1 # (0 + #1 + 2 + .3)
+        @test s.b' == 2 # ((0 ~ (#1 ~ (2 ~ .3)) + (2 ~ .3) + .3) + (#1 ~ (2 ~ .3)) + (2 ~ .3) + .3)
     end
 
     @testset "adjoint" begin
@@ -184,12 +184,12 @@
         update!(sc)
         @test length(s.p["*"]') == 1
         @test length(s.p["**"]') == 1
-        @test s.p["*"].i' == [1]
-        @test s.p["**"].i' == [1]
+        @test s.p["*"].i' == [0]
+        @test s.p["**"].i' == [0]
         update!(sc)
         @test length(s.p["*"]') == 2
         @test length(s.p["**"]') == 3
-        @test s.p["*"].i' == [1, 2]
-        @test s.p["**"].i' == [1, 2, 2]
+        @test s.p["*"].i' == [0, 1]
+        @test s.p["**"].i' == [0, 1, 1]
     end
 end

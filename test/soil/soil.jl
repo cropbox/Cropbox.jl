@@ -460,6 +460,6 @@ end
             :v5 => "s.L[5].θ",
         ),
     )
-    @test r.tick[end] > 80u"d"
+    @test r.tick[end] == 80u"d"
     Cropbox.plot(r, :tick, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> display
 end

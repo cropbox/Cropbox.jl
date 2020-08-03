@@ -7,7 +7,7 @@ using DataFrames
             b(a) ~ accumulate
         end
         n = 10
-        t, a, b = 10.0u"hr", 20, 180
+        t, a, b = 10.0u"hr", 20, 200
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
         p = calibrate(SCalibrate, obs, stop=n, target=:b, parameters=("SCalibrate.a" => A))
@@ -22,7 +22,7 @@ using DataFrames
             b(a) ~ accumulate(u"m")
         end
         n = 10
-        t, a, b = 10.0u"hr", 20u"m/hr", 180u"m"
+        t, a, b = 10.0u"hr", 20u"m/hr", 200u"m"
         #FIXME: parameter range units are just ignored
         A = [0.0, 100.0]u"m/hr"
         obs = DataFrame(tick=[t], b=[b])
@@ -39,7 +39,7 @@ using DataFrames
             b(a, w) => w*a ~ accumulate
         end
         n = 10
-        t, a, b = 10.0u"hr", 20, 180
+        t, a, b = 10.0u"hr", 20, 200
         w1, w2 = 1, 2
         A = (0.0, 100.0)
         obs = DataFrame(tick=[t], b=[b])
@@ -57,7 +57,7 @@ using DataFrames
             b(a, w) => w*a ~ accumulate
         end
         n = 10
-        t, w, b = [10.0u"hr", 10.0u"hr"], [1, 2], [90, 180]
+        t, w, b = [10.0u"hr", 10.0u"hr"], [1, 2], [100, 200]
         A = (0.0, 100.0)
         obs = DataFrame(tick=t, w=w, b=b)
         configs = [
