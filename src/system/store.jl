@@ -1,4 +1,5 @@
 import DataFrames: DataFrames, DataFrame
+import TypedTables: TypedTables, Table
 import CSV
 
 @system StoreBase begin
@@ -29,4 +30,17 @@ end
     end ~ track::DataFrames.DataFrameRow{DataFrame,DataFrames.Index}
 end
 
-export DataFrameStore
+@system TableStore(StoreBase) begin
+    #TODO: avoid dynamic dispatch on Table/NamedTuple
+    ix(; i::Int, r::NamedTuple): indexer => i ~ call::Int
+    tb(filename, ik, ix): table => begin
+        tb = CSV.File(filename) |> TypedTables.FlexTable
+        setproperty!(tb, ik, map(enumerate(eachrow(tb))) do (i, r)
+            ix(i, r)
+        end)
+        Table(tb)
+    end ~ preserve::Table(extern, parameter)
+    s(tb, i): store => tb[i] ~ track::NamedTuple
+end
+
+export DataFrameStore, TableStore
