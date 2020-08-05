@@ -86,3 +86,10 @@ end
 edgestyles(h::Hierarchy) = Dict(e => edgestyle(h, s) for (e, s) in h.E)
 
 plot(h::Hierarchy; sib_dist=-1, lev_dist=-1) = plot(h, (; sib_dist=sib_dist, lev_dist=lev_dist))
+
+Base.show(io::IO, h::Hierarchy) = print(io, "Hierarchy")
+Base.show(io::IO, ::MIME"text/plain", h::Hierarchy) = begin
+    print(io, misc_color("{"))
+    print(io, join(system_color.(labels(h)), misc_color(", ")))
+    print(io, misc_color("}"))
+end
