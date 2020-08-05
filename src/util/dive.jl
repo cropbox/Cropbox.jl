@@ -2,7 +2,6 @@
 #import REPL.TerminalMenus
 include("../../lib/TerminalMenus/TerminalMenus.jl")
 import REPL.Terminals
-import Crayons: Crayons, Box
 
 struct MenuItem{V}
     name::String
@@ -18,21 +17,21 @@ text(m::MenuItem) = begin
     w = Terminals.width(TerminalMenus.terminal)
     #HACK: length(l) contains escape sequences, so actual line may look shorter
     v = repr(value(m); context=:maxlength => w - length(l))
-    isempty(l) ? v : "$l $(Box.DARK_GRAY_FG("=")) $v"
+    isempty(l) ? v : "$l $(misc_color("=")) $v"
 end
 
-title(m::MenuItem{<:System}) = "$(Box.MAGENTA_FG(name(m)))"
-title(m::MenuItem{<:State}) = "$(Box.CYAN_FG(name(m)))"
-title(m::MenuItem) = "$(Box.GREEN_FG(name(m)))"
+title(m::MenuItem{<:System}) = "$(system_color(name(m)))"
+title(m::MenuItem{<:State}) = "$(state_color(name(m)))"
+title(m::MenuItem) = "$(non_state_color(name(m)))"
 title(t::Vector{<:MenuItem}) = begin
-    sep = " $(Box.DARK_GRAY_FG(">")) "
+    sep = " $(misc_color(">")) "
     join(title.(t), sep)
 end
 
 dive(s::System, t) = dive(map(zip(fieldnamesalias(s), s)) do ((n, a), v)
     k = string(n)
-    l = "$(Box.BLUE_FG(k))"
-    !isnothing(a) && (l *= " $(Box.DARK_GRAY_FG("($a)"))")
+    l = "$(variable_color(k))"
+    !isnothing(a) && (l *= " $(misc_color("($a)"))")
     MenuItem(k, l, v)
 end, t)
 dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)

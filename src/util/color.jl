@@ -15,3 +15,9 @@ function Highlights.Format.render(io::IO, ::MIME"text/ansi", tokens::Highlights.
         print(io, crayon, str, inv(crayon))
     end
 end
+
+system_color(s) = Crayons.Box.MAGENTA_FG(s)
+variable_color(s) = Crayons.Box.BLUE_FG(s)
+state_color(s) = Crayons.Box.CYAN_FG(s)
+non_state_color(s) = Crayons.Box.GREEN_FG(s)
+misc_color(s) = Crayons.Box.DARK_GRAY_FG(s)
