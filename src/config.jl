@@ -27,13 +27,13 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
         b = IOBuffer()
         x = IOContext(b, :color => Base.have_color)
         print(x, "  ")
-        printstyled(x, s, color=:magenta)
+        printstyled(x, s, color=:light_magenta)
         K = keys(C)
         l = maximum(length.(string.(K)))
         for (k, v) in C
             println(x)
             print(x, "    ")
-            printstyled(x, rpad(k, l), color=:blue)
+            printstyled(x, rpad(k, l), color=:light_blue)
             printstyled(x, " = ", color=:light_black)
             print(x, labelstring(v))
         end
