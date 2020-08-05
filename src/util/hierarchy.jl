@@ -14,6 +14,7 @@ hierarchy(S::Type{<:System}; kw...) = begin
     add!(h, S)
     h
 end
+hierarchy(::S; kw...) where {S<:System} = hierarchy(S; kw...)
 
 graph(h::Hierarchy) = h.g
 
