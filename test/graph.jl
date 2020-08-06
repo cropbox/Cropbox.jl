@@ -3,9 +3,7 @@
     @testset "dependency" begin
         S = Cropbox.Context
         d = Cropbox.dependency(S)
-        b = IOBuffer()
-        show(b, MIME("text/plain"), d)
-        ds = String(take!(b))
+        ds = repr(MIME("text/plain"), d)
         @test ds == "[config → clock → context]"
         n = tempname()
         @test Cropbox.writesvg(n, d) == n*".svg"
@@ -14,9 +12,7 @@
     @testset "hierarchy" begin
         S = Cropbox.Context
         h = Cropbox.hierarchy(S)
-        b = IOBuffer()
-        show(b, MIME("text/plain"), h)
-        hs = String(take!(b))
+        hs = repr(MIME("text/plain"), h)
         @test hs == "{Context, Clock}"
         n = tempname()
         @test Cropbox.writesvg(n, h) == n*".svg"
