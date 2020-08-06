@@ -8,6 +8,7 @@ using Test
         include("system.jl")
         include("unit.jl")
         include("config.jl")
+        include("graph.jl")
         include("util.jl")
     end
 
