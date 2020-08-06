@@ -16,8 +16,25 @@ function Highlights.Format.render(io::IO, ::MIME"text/ansi", tokens::Highlights.
     end
 end
 
-system_color(s) = Crayons.Box.LIGHT_MAGENTA_FG(s)
-variable_color(s) = Crayons.Box.LIGHT_BLUE_FG(s)
-state_color(s) = Crayons.Box.CYAN_FG(s)
-non_state_color(s) = Crayons.Box.LIGHT_GREEN_FG(s)
-misc_color(s) = Crayons.Box.DARK_GRAY_FG(s)
+abstract type TokenColor end
+struct SystemColor <: TokenColor end
+struct VarColor <: TokenColor end
+struct StateColor <: TokenColor end
+struct NonStateColor <: TokenColor end
+struct MiscColor <: TokenColor end
+struct NoColor <: TokenColor end
+
+tokencolor(c::TokenColor; color::Bool) = tokencolor(color ? c : NoColor())
+tokencolor(::SystemColor) = Crayons.Box.LIGHT_MAGENTA_FG
+tokencolor(::VarColor) = Crayons.Box.LIGHT_BLUE_FG
+tokencolor(::StateColor) = Crayons.Box.CYAN_FG
+tokencolor(::NonStateColor) = Crayons.Box.LIGHT_GREEN_FG
+tokencolor(::MiscColor) = Crayons.Box.DARK_GRAY_FG
+tokencolor(::NoColor) = Crayons.Box.DEFAULT_FG
+
+# compatibility for dive() where escapes are mandatory
+system_color(s) = tokencolor(SystemColor())(s)
+variable_color(s) = tokencolor(VarColor())(s)
+state_color(s) = tokencolor(StateColor())(s)
+non_state_color(s) = tokencolor(NonStateColor())(s)
+misc_color(s) = tokencolor(MiscColor())(s)
