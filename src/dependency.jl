@@ -169,7 +169,10 @@ plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = plot(d, (; sib_dist
 
 Base.show(io::IO, d::Dependency) = print(io, "Dependency")
 Base.show(io::IO, ::MIME"text/plain", d::Dependency) = begin
-    print(io, misc_color("["))
-    print(io, join(variable_color.(label.(sort(d))), misc_color(" → ")))
-    print(io, misc_color("]"))
+    color = get(io, :color, false)
+    VC = tokencolor(VarColor(); color=color)
+    MC = tokencolor(MiscColor(); color=color)
+    print(io, MC("["))
+    print(io, join(VC.(label.(sort(d))), MC(" → ")))
+    print(io, MC("]"))
 end
