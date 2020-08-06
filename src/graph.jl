@@ -42,7 +42,9 @@ import Conda
 writesvg(name::AbstractString, g::Graph) = begin
     !endswith(name, ".svg") && (name *= ".svg")
     dot = writedot(g)
-    let exe = joinpath(Conda.BINDIR, "dot")
+    #HACK: "dot.bat" on Windows
+    let ext = (@static Sys.iswindows() ? ".bat" : ""),
+        exe = joinpath(Conda.BINDIR, "dot") * ext,
         cmd = `$exe -Tsvg $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
     end
