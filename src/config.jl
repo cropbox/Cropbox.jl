@@ -29,7 +29,7 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
         print(x, "  ")
         printstyled(x, s, color=:light_magenta)
         K = keys(C)
-        l = maximum(length.(string.(K)))
+        l = isempty(K) ? 0 : maximum(length.(string.(K)))
         for (k, v) in C
             println(x)
             print(x, "    ")
