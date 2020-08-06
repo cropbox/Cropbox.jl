@@ -23,9 +23,9 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     n = length(c)
     print(io, "Config for $n systems")
     !iszero(n) && println(io, ":")
-    f((s, C)) = begin
+    f((s, C); color) = begin
         b = IOBuffer()
-        x = IOContext(b, :color => Base.have_color)
+        x = IOContext(b, :color => color)
         print(x, "  ")
         printstyled(x, s, color=:light_magenta)
         K = keys(C)
@@ -39,7 +39,8 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
         end
         String(take!(b))
     end
-    join(io, f.(c), '\n')
+    color = get(io, :color, false)
+    join(io, f.(c; color=color), '\n')
 end
 
 @nospecialize
