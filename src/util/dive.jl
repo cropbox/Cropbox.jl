@@ -72,9 +72,11 @@ dive(f::Function, t) = begin
     i = term.in_stream
     o = term.out_stream
     b = IOBuffer()
-    println(b, title(t))
-    f(b)
-    println(b)
+    #HACK: dive() assumes color terminal
+    x = IOContext(b, :color => get(o, :color, true))
+    println(x, title(t))
+    f(x)
+    println(x)
     n = countlines(seekstart(b))
     print(o, String(take!(b)))
     Terminals.raw!(term, true) && print(o, "\x1b[?25l") # hide cursor
