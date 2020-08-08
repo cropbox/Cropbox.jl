@@ -27,7 +27,7 @@ visualize(S::Type{<:System}, x, y;
     end
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=@config(c + !xstep), stop=stop, skipfirst=skipfirst, filter=filter)
+    s(c) = simulate(S; configs=@config(c + !xstep), stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
     r = s(C[1])
     p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
     for i in 2:length(C)
@@ -41,7 +41,7 @@ visualize(S::Type{<:System}, x, y::Vector;
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    r = simulate(S; configs=@config(config + !xstep), stop=stop, skipfirst=skipfirst, filter=filter)
+    r = simulate(S; configs=@config(config + !xstep), stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
     plot(r, x, y; plotopts...)
 end
 
@@ -70,7 +70,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
     p = plot(df, xo, yo; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
-        r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, filter=filter)
+        r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
         p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
     end
     p
@@ -87,7 +87,7 @@ visualize(df::DataFrame, S::Type{<:System}, y;
     isnothing(title) && (title = yo == ye ? string(yo) : "$yo : $ye")
 
     X = extractarray(df, yo)
-    r = simulate(S; configs=configs, stop=stop, skipfirst=skipfirst, filter=filter)
+    r = simulate(S; configs=configs, stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
     Y = extractarray(r, ye)
 
     if isnothing(lim)
@@ -107,7 +107,7 @@ visualize(S::Type{<:System}, x, y, z;
     plotopts...
 ) = begin
     C = @config config + xstep * ystep
-    r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter)
+    r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
     plot(r, x, y, z; plotopts...)
 end
 
