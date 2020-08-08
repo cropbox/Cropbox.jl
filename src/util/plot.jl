@@ -62,7 +62,9 @@ plot!(p, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing
     xlab = isnothing(xlab) ? x : xlab
     ylab = isnothing(ylab) ? "" : ylab
     names = isnothing(names) ? repeat([nothing], length(Ys)) : names
-    names = [string(isnothing(n) ? y : n) for (y, n) in zip(ys, names)]
+    names = [isnothing(n) ? string(y) : n for (y, n) in zip(ys, names)]
+    #HACK: support indirect referencing from the given data frame if name is Symbol
+    names = [n isa Symbol ? repr(deunitfy(only(unique(df[n]))), context=:compact=>true) : n for n in names]
 
     plot!(p, X, Ys; xlab=xlab, ylab=ylab, names=names, kw...)
 end

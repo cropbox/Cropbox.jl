@@ -16,7 +16,12 @@ visualize(S::Type{<:System}, x, y;
         !isnothing(u) && (legend *= " ($u)")
     end
 
-    names = if !isnothing(names)
+    #HACK: support indirect referencing of label by variable name
+    names = if names isa Symbol
+        k = names
+        legend!(k, S)
+        repeat([k], n)
+    elseif !isnothing(names)
         names
     elseif isempty(G)
         [""]
