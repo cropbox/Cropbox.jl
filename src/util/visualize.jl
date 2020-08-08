@@ -8,6 +8,13 @@ visualize(S::Type{<:System}, x, y;
     G = configure(group)
     C = @config config + !G
 
+    legend!(k, S) = begin
+        isnothing(legend) && (legend = string(k))
+        #TODO: support custom unit for legend?
+        u = vartype(S, k) |> unittype
+        !isnothing(u) && (legend *= " ($u)")
+    end
+
     names = if !isnothing(names)
         names
     elseif isempty(G)
@@ -18,11 +25,8 @@ visualize(S::Type{<:System}, x, y;
     else
         K, V = only(G)
         k, v = only(V)
-        isnothing(legend) && (legend = string(k))
-        #TODO: support custom unit for legend?
         T = K == Symbol(0) ? S : typefor(K, scopeof(S))
-        u = vartype(T, k) |> unittype
-        !isnothing(u) && (legend *= " ($u)")
+        legend!(k, T)
         string.(v)
     end
     isnothing(ylab) && (ylab = y)
