@@ -7,6 +7,7 @@ visualize(S::Type{<:System}, x, y;
 ) = begin
     G = configure(group)
     C = @config config + !G
+    n = length(C)
 
     legend!(k, S) = begin
         isnothing(legend) && (legend = string(k))
@@ -21,7 +22,7 @@ visualize(S::Type{<:System}, x, y;
         [""]
     elseif G isa Vector
         # temporary numeric labels
-        string.(1:length(G))
+        string.(1:n)
     else
         K, V = only(G)
         k, v = only(V)
@@ -34,7 +35,7 @@ visualize(S::Type{<:System}, x, y;
     s(c) = simulate(S; configs=@config(c + !xstep), stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
     r = s(C[1])
     p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
-    for i in 2:length(C)
+    for i in 2:n
         r = s(C[i])
         p = plot!(p, r, x, y; name=names[i], plotopts...)
     end
