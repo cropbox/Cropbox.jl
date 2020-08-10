@@ -3,6 +3,25 @@ import Gadfly
 import UnicodePlots
 import Unitful
 
+struct Plot
+    obj
+    info::Dict{Symbol,Any}
+    Plot(obj; kw...) = new(obj, Dict(kw...))
+end
+update!(p::Plot; kw...) = (mergewith!(vcat, p.info, Dict(kw...)); p)
+
+Base.showable(m::MIME, p::Plot) = showable(m, p.obj)
+
+Base.show(p::Plot) = show(p.obj)
+Base.show(io::IO, p::Plot) = show(io, p.obj)
+Base.show(io::IO, m::MIME, p::Plot) = show(io, m, p.obj)
+Base.show(io::IO, ::MIME"text/plain", p::Plot) = show(io, "Cropbox.Plot")
+
+Base.display(p::Plot) = display(p.obj)
+Base.display(d::AbstractDisplay, p::Plot) = display(d, p.obj)
+Base.display(m::MIME, p::Plot) = display(m, p.obj)
+Base.display(d::AbstractDisplay, m::MIME, p::Plot) = display(d, m, p.obj)
+
 @nospecialize
 
 extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
@@ -141,6 +160,8 @@ end
 
 plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim, aspect) = begin
     n = length(Ys)
+    Xs = [X for _ in 1:n]
+    kinds = [kind for _ in 1:n]
 
     if kind == :line
         geom = Gadfly.Geom.line
@@ -194,20 +215,23 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
         colors = Gadfly.Scale.default_discrete_colors(n)
         update_color!(guides, colors)
         layers = create_layers(colors)
-        p = Gadfly.plot(
+        obj = Gadfly.plot(
             Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
             guides...,
             layers...,
             theme,
         )
+        p = Plot(obj; Xs, Ys, kinds, colors, title, xlab, ylab, legend, names, xlim, ylim, aspect)
     else
-        n0 = length(p.layers)
+        obj = p.obj
+        n0 = length(obj.layers)
         colors = Gadfly.Scale.default_discrete_colors(n0+n)[n0+1:end]
-        update_color!(p.guides, colors)
-        foreach(l -> Gadfly.push!(p, l), create_layers(colors))
+        update_color!(obj.guides, colors)
+        foreach(l -> Gadfly.push!(obj, l), create_layers(colors))
         for l in create_layers(colors)
-            Gadfly.push!(p, l)
+            Gadfly.push!(obj, l)
         end
+        update!(p; Xs, Ys, kinds, colors, names)
     end
     p
 end
@@ -233,11 +257,14 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
     if isnothing(p)
         a = Float64[]
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
-        p = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim, width=width, height=height)
-        UnicodePlots.annotate!(p, :r, legend)
+        obj = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim, width=width, height=height)
+        UnicodePlots.annotate!(obj, :r, legend)
+        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, aspect, width, height)
     end
     for (Y, name) in zip(Ys, names)
-        plot!(p, X, Y; name=name)
+        plot!(p.obj, X, Y; name=name)
+        #TODO: remember colors
+        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[])
     end
     p
 end
@@ -260,7 +287,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
         key_title_font_size=9*Gadfly.pt,
     )
 
-    Gadfly.plot(
+    obj = Gadfly.plot(
         Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
         Gadfly.Guide.title(title),
         Gadfly.Guide.xlabel(xlab),
@@ -271,6 +298,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
         theme;
         data...,
     )
+    Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
 plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
@@ -300,7 +328,8 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     !isnothing(aspect) && (width = round(Int, aspect * height))
 
     #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
-    UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset, width=width, height=height)
+    obj = UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset, width=width, height=height)
+    Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width, height)
 end
 
 @specialize
