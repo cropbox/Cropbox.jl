@@ -21,7 +21,8 @@ extractarray(df::DataFrame, n) = begin
     #HACK: Gadfly doesn't support ZonedDateTime
     c = convertcolumn(extractcolumn(df, n))
     #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    coalesce.(c, NaN)
+    u = unittype(c)
+    coalesce.(c, unitfy(NaN, u))
 end
 
 findlim(array::Vector{<:Number}) = begin
