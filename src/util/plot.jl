@@ -16,7 +16,7 @@ end
 convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c, TimeZones.Local)
 convertcolumn(c) = c
 extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
-extractunit(a) = unittype(eltype(a))
+extractunit(a) = unittype(a)
 extractarray(df::DataFrame, n) = begin
     #HACK: Gadfly doesn't support ZonedDateTime
     c = convertcolumn(extractcolumn(df, n))

@@ -22,6 +22,8 @@ Base.eltype(::Type{<:State{V}}) where V = V
 unittype(::Type{V}) where V = nothing
 unittype(::Type{V}) where {V<:Number} = Unitful.unit(V)
 unittype(::Type{<:State{V}}) where V = unittype(V)
+unittype(::Type{<:Vector{V}}) where V = unittype(V)
+unittype(::Type{<:Vector{Union{V,Missing}}}) where V = unittype(V)
 unittype(::T) where T = unittype(T)
 
 valuetype(::State{V}) where V = V
