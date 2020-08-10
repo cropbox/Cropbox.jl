@@ -175,7 +175,7 @@ using Query
 using DataFrames
 import Dates
 loaddata(cv, y, p) = begin
-    ps = CSV.read("$(@__DIR__)/data/CUH/PhenologySummary.csv")
+    ps = CSV.File("$(@__DIR__)/data/CUH/PhenologySummary.csv") |> DataFrame!
     ps |> @query(i, begin
         @where i.CV == cv && i.Year == y && i.Pgroup == p
         @select {i.DAP, i.Leaves}
