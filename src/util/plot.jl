@@ -88,12 +88,12 @@ plot!(p, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing
     names = [n isa Symbol ? repr(deunitfy(only(unique(df[n]))), context=:compact=>true) : n for n in names]
     colors = isnothing(colors) ? repeat([nothing], n) : colors
 
-    plot!(p, X, Ys; xlab=xlab, ylab=ylab, names=names, colors=colors, kw...)
+    plot!(p, X, Ys; xlab, ylab, names, colors, kw...)
 end
 
 plot(X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot(X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
 plot(X::Vector, Ys::Vector{<:Vector}; kw...) = plot!(nothing, X, Ys; kw...)
-plot!(p, X::Vector, Y::Vector; name=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
+plot!(p, X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
 plot!(p, X::Vector, Ys::Vector{<:Vector};
     kind=:scatter,
     title=nothing,
@@ -127,7 +127,7 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, colors=colors, xlim=xlim, ylim=ylim, aspect=aspect)
+    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect)
 end
 
 plot(df::DataFrame, x, y, z;
@@ -159,7 +159,7 @@ plot(df::DataFrame, x, y, z;
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot3!(Val(backend), X, Y, Z; kind=kind, title=title, xlab=xlab, ylab=ylab, zlab=zlab, xlim=xlim, ylim=ylim, zlim=zlim, aspect=aspect)
+    plot3!(Val(backend), X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
 plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect) = begin
@@ -278,14 +278,14 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, c
     if isnothing(p)
         a = Float64[]
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
-        obj = UnicodePlots.Plot(a, a, canvas; title=title, xlabel=xlab, ylabel=ylab, xlim=xlim, ylim=ylim, width=width, height=height)
+        obj = UnicodePlots.Plot(a, a, canvas; title, xlabel=xlab, ylabel=ylab, xlim, ylim, width, height)
         UnicodePlots.annotate!(obj, :r, legend)
         p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.info[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
         color = colors[i]
-        plot!(p.obj, X, Y; name=name, color=color)
+        plot!(p.obj, X, Y; name, color)
         #TODO: remember colors
         update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color])
     end
@@ -351,7 +351,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     !isnothing(aspect) && (width = round(Int, aspect * height))
 
     #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
-    obj = UnicodePlots.heatmap(M; title=title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale=xscale, yscale=yscale, xlim=xlim, ylim=ylim, xoffset=xoffset, yoffset=yoffset, width=width, height=height)
+    obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale, yscale, xlim, ylim, xoffset, yoffset, width, height)
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width, height)
 end
 

@@ -39,7 +39,7 @@ end
 
 estimate(S::Type{<:Estimator}, years; config, index=[:year, "calendar.time"], target=[:match], stop=:stop, kwargs...) = begin
     configs = @config config + !(S => :year => years)
-    simulate(S; index=index, target=target, configs=configs, stop=stop, filter=:match, kwargs...)
+    simulate(S; index, target, configs, stop, filter=:match, kwargs...)
 end
 
 @system BetaFuncEstimator(BetaFunction, Estimator, Controller) <: Estimator begin
@@ -74,7 +74,7 @@ import Dates
     )
 
     @testset "single" begin
-        r = Pheno.estimate(Pheno.BetaFuncEstimator, 2017; config=config, target=[:ΔT, :Cg, :match, :stop])
+        r = Pheno.estimate(Pheno.BetaFuncEstimator, 2017; config, target=[:ΔT, :Cg, :match, :stop])
         @test nrow(r) == 1
         r1 = r[1, :]
         @test r1.match == true
@@ -83,7 +83,7 @@ import Dates
     end
 
     @testset "double" begin
-        r = Pheno.estimate(Pheno.BetaFuncEstimator, [2017, 2018]; config=config, target=[:ΔT, :Cg, :match, :stop])
+        r = Pheno.estimate(Pheno.BetaFuncEstimator, [2017, 2018]; config, target=[:ΔT, :Cg, :match, :stop])
         @test nrow(r) == 2
         @test all(r.match)
         @test all(r.stop)

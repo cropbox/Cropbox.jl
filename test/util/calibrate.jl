@@ -59,7 +59,7 @@ using DataFrames
         n = 10
         t, w, b = [10.0u"hr", 10.0u"hr"], [1, 2], [100, 200]
         A = (0.0, 100.0)
-        obs = DataFrame(tick=t, w=w, b=b)
+        obs = DataFrame(; tick=t, w, b)
         configs = [
             :SCalibrateConfigsIndex => :w => 1,
             :SCalibrateConfigsIndex => :w => 2,
@@ -67,7 +67,7 @@ using DataFrames
         index = ["context.clock.tick", :w]
         target = :b
         params = :SCalibrateConfigsIndex => :a => A
-        p = calibrate(SCalibrateConfigsIndex, obs, configs, stop=n, index=index, target=target, parameters=params)
+        p = calibrate(SCalibrateConfigsIndex, obs, configs; stop=n, index, target, parameters=params)
         @test p[:SCalibrateConfigsIndex][:a] == 10
     end
 end

@@ -40,7 +40,7 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
         String(take!(b))
     end
     color = get(io, :color, false)
-    join(io, f.(c; color=color), '\n')
+    join(io, f.(c; color), '\n')
 end
 
 @nospecialize
@@ -126,16 +126,16 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
         T = OrderedSet([@eval scope $(v.type) for v in V])
         T = filter(t -> t <: System && t ∉ exclude, T)
         X = (S, T..., exclude...) |> Set
-        C = configure(parameters.(T, alias=alias, recursive=true, exclude=X, scope=scope)..., C)
+        C = configure(parameters.(T; alias, recursive=true, exclude=X, scope)..., C)
     end
     C
 end
 #TODO: parameters(::System) to show current configurations (need proper handling of alias)
 
 configmultiply(; base=()) = [configure(base)]
-configmultiply(patches::Vector; base=()) = configmultiply(patches...; base=base)
+configmultiply(patches::Vector; base=()) = configmultiply(patches...; base)
 configmultiply(patches...; base=()) = begin
-    C = configexpand(patches[1]; base=base)
+    C = configexpand(patches[1]; base)
     for p in patches[2:end]
         C = [configexpand(p; base=c) for c in C] |> Iterators.flatten |> collect
     end
@@ -151,11 +151,11 @@ configexpand(patch; base=()) = begin
         #HACK: allow single patch (i.e. `0 => :a => 1` instead of `1:2`)
         reshape([s => k => v for v in V], :)
     end
-    configexpand(configs; base=base)
+    configexpand(configs; base)
 end
-configexpand(configs::Vector; base=()) = configrebase(configs; base=base)
+configexpand(configs::Vector; base=()) = configrebase(configs; base)
 configrebase(configs::Vector; base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
-configrebase(config; base=()) = configrebase([config]; base=base)
+configrebase(config; base=()) = configrebase([config]; base)
 
 configreduce(a::Vector, b) = configrebase(b; base=a)
 configreduce(a, b::Vector) = configrebase(b; base=a)

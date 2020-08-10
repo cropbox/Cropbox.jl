@@ -37,9 +37,9 @@ visualize(S::Type{<:System}, x, y;
     end
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=@config(c + !xstep), stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
+    s(c) = simulate(S; configs=@config(c + !xstep), stop, skipfirst, filter, verbose=false)
     r = s(C[1])
-    p = plot(r, x, y; ylab=ylab, legend=legend, name=names[1], plotopts...)
+    p = plot(r, x, y; ylab, legend, name=names[1], plotopts...)
     for i in 2:n
         r = s(C[i])
         p = plot!(p, r, x, y; name=names[i], plotopts...)
@@ -51,7 +51,7 @@ visualize(S::Type{<:System}, x, y::Vector;
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    r = simulate(S; configs=@config(config + !xstep), stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
+    r = simulate(S; configs=@config(config + !xstep), stop, skipfirst, filter, verbose=false)
     plot(r, x, y; plotopts...)
 end
 
@@ -77,11 +77,11 @@ visualize(df::DataFrame, SS::Vector, x, y;
     @assert length(configs) == n
     isnothing(names) && (names = nameof.(SS))
 
-    p = plot(df, xo, yo; kind=:scatter, name=name, xlab=xlab, ylab=ylab, xunit=xunit, yunit=yunit, plotopts...)
+    p = plot(df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
     for (S, c, name) in zip(SS, configs, names)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
-        r = simulate(S; configs=cs, stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
-        p = plot!(p, r, xe, ye; kind=:line, name=name, xunit=xunit, yunit=yunit, plotopts...)
+        r = simulate(S; configs=cs, stop, skipfirst, filter, verbose=false)
+        p = plot!(p, r, xe, ye; kind=:line, name, xunit, yunit, plotopts...)
     end
     p
 end
@@ -97,7 +97,7 @@ visualize(df::DataFrame, S::Type{<:System}, y;
     isnothing(title) && (title = yo == ye ? string(yo) : "$yo : $ye")
 
     X = extractarray(df, yo)
-    r = simulate(S; configs=configs, stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
+    r = simulate(S; configs, stop, skipfirst, filter, verbose=false)
     Y = extractarray(r, ye)
 
     if isnothing(lim)
@@ -106,7 +106,7 @@ visualize(df::DataFrame, S::Type{<:System}, y;
     end
     I = [lim[1], lim[2]]
 
-    p = plot(X, Y; kind=:scatter, title=title, name="", xlab=xlab, ylab=ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    p = plot(X, Y; kind=:scatter, title, name="", xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
     !isnothing(lim) && plot!(p, I, I, kind=:line, name="")
     p
 end
@@ -116,8 +116,8 @@ visualize(S::Type{<:System}, x, y, z;
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
-    C = @config config + xstep * ystep
-    r = simulate(S; configs=C, stop=stop, skipfirst=skipfirst, filter=filter, verbose=false)
+    configs = @config config + xstep * ystep
+    r = simulate(S; configs, stop, skipfirst, filter, verbose=false)
     plot(r, x, y, z; plotopts...)
 end
 

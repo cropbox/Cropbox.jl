@@ -200,7 +200,7 @@ using Dates
         end
         n = 10
         a, b = 1, 2
-        o = (; a=a, b=b)
+        o = (; a, b)
         r = simulate(SSimulateOptions, options=o, stop=n)
         @test r[end, :a] == a
         @test r[end, :b] == b

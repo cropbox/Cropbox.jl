@@ -43,7 +43,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     kwargs = isnothing(kwargs) ? [] : kwargs
     state = typestate(Val(state))
     type = parsetype(type, state, scope)
-    tags = parsetags(tags; name=name, alias=alias, args=args, kwargs=kwargs, state=state, type=type)
+    tags = parsetags(tags; name, alias, args, kwargs, state, type)
     VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
 end
 
@@ -82,7 +82,7 @@ extractscope(x) = begin
             break
         end
     end
-    (l=reverse(l), c=c)
+    (; l=reverse(l), c)
 end
 genscope(lc) = genscope(lc.l, lc.c)
 genscope(l, ::Nothing) = reduce((a, b) -> Expr(:., a, QuoteNode(b)), l)
@@ -182,7 +182,7 @@ genvartype(v::VarInfo{Symbol}) = begin
     N = gettag(v, :_type)
     U = gettag(v, :unit)
     V = @q $C.valuetype($N, $U)
-    genvartype(v, Val(v.state); N=N, U=U, V=V)
+    genvartype(v, Val(v.state); N, U, V)
 end
 
 genfield(v::VarInfo) = begin
@@ -380,12 +380,11 @@ parsehead(head) = begin
     for m in mixins
         push!(incl, Symbol(m))
     end
-    #TODO: use implicit named tuple once implemented: https://github.com/JuliaLang/julia/pull/34331
-    (; name=name, incl=incl, type=type)
+    (; name, incl, type)
 end
 
 import DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name=name, incl=incl, scope=scope), incl, scope)
+gensystem(body; name, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, incl, scope), incl, scope)
 geninfos(body; name, incl, scope, _...) = begin
     con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()

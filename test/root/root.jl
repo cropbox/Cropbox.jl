@@ -221,7 +221,7 @@ end
     S(ms, n, box, ro, zi, r, ea, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
         if ms
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-            produce(eval(n), box=box, ro=ro, zi=zi+1, r=r, ea0=ea, l0=rl, lb=lb, la=la, ln=ln, lmax=lmax, lp=lt, RT0=RT1)
+            produce(eval(n); box, ro, zi=zi+1, r, ea0=ea, l0=rl, lb, la, ln, lmax, lp=lt, RT0=RT1)
         end
     end ~ produce::RootSegment
 
@@ -229,7 +229,7 @@ end
     B(mb, nb, box, ro, wrap(RT1)): branch => begin
         if mb
             #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
-            produce(eval(nb()), box=box, ro=ro+1, RT0=RT1)
+            produce(eval(nb()); box, ro=ro+1, RT0=RT1)
         end
     end ~ produce::RootSegment
 end
@@ -253,7 +253,7 @@ end
     maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
-        [produce(PrimaryRoot, box=box, RT0=RT0) for i in (length(roots)+1):maxB]
+        [produce(PrimaryRoot; box, RT0) for i in (length(roots)+1):maxB]
     end ~ produce::PrimaryRoot[]
 end
 

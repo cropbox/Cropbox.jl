@@ -69,7 +69,7 @@ priority(::Type{<:State}) = PostPriority()
 Base.show(io::IO, s::State) = begin
     v = value(s)
     maxlength = get(io, :maxlength, nothing)
-    r = labelstring(v; maxlength=maxlength)
+    r = labelstring(v; maxlength)
     print(io, r)
 end
 Base.show(io::IO, ::MIME"text/plain", s::State) = print(io, value(s))

@@ -165,13 +165,13 @@ labels(d::Dependency; kw...) = label.(d.N; kw...)
 edgestyle(d::Dependency, a::VarNode, b::VarNode) = ""
 edgestyles(d::Dependency) = Dict(let a=src(e), b=dst(e); (a, b) => edgestyle(d, d.N[a], d.N[b]) end for e in edges(d.g))
 
-plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = plot(d, (; sib_dist=sib_dist, lev_dist=lev_dist), (; alias=alias))
+plot(d::Dependency; sib_dist=-1, lev_dist=-1, alias=false) = plot(d, (; sib_dist, lev_dist), (; alias))
 
 Base.show(io::IO, d::Dependency) = print(io, "Dependency")
 Base.show(io::IO, ::MIME"text/plain", d::Dependency) = begin
     color = get(io, :color, false)
-    VC = tokencolor(VarColor(); color=color)
-    MC = tokencolor(MiscColor(); color=color)
+    VC = tokencolor(VarColor(); color)
+    MC = tokencolor(MiscColor(); color)
     print(io, MC("["))
     print(io, join(VC.(label.(sort(d))), MC(" → ")))
     print(io, MC("]"))

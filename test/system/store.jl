@@ -9,7 +9,7 @@ import TypedTables: TypedTables, Table
         end
         a = [1, 2, 3]
         b = [4.0, 5.0, 6.0]
-        df = DataFrame(a=a, b=b)
+        df = DataFrame(; a, b)
         n = DataFrames.nrow(df)
         r = simulate(SStoreDataFrame, config=:0 => (:df => df, :ik => :a), stop=n-1)
         @test r.a == a
@@ -23,7 +23,7 @@ import TypedTables: TypedTables, Table
         end
         a = [1, 2, 3]
         b = [4.0, 5.0, 6.0]
-        tb = Table(a=a, b=b)
+        tb = Table(; a, b)
         n = length(tb)
         r = simulate(SStoreTable, config=:0 => :tb => tb, stop=n-1)
         @test r.a == a

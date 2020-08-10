@@ -90,10 +90,10 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
 
     dt = verbose ? 1 : Inf
     if n isa Number
-        p = Progress(n; dt=dt, barglyphs=barglyphs)
+        p = Progress(n; dt, barglyphs)
         check = s -> p.counter < p.n
     else
-        p = ProgressUnknown(; dt=dt, desc="Iterations:")
+        p = ProgressUnknown(; dt, desc="Iterations:")
         check = s -> !stop(s)
     end
 
@@ -111,7 +111,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
 end
 
 simulate!(s::System; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
-    simulate!(s, [(base=base, index=index, target=target, meta=meta)]; kwargs...) |> only
+    simulate!(s, [(; base, index, target, meta)]; kwargs...) |> only
 end
 simulate!(s::System, layout; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
@@ -120,14 +120,14 @@ end
 simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; callback=f, kwargs...)
 
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
-    simulate(S, [(base=base, index=index, target=target, meta=meta)]; kwargs...) |> only
+    simulate(S, [(; base, index, target, meta)]; kwargs...) |> only
 end
 simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
     if isempty(configs)
-        s = instance(S; config=config, options=options, seed=seed)
+        s = instance(S; config, options, seed)
         simulate!(s, layout; kwargs...)
     elseif isempty(config)
-        simulate(S, layout, configs; options=options, kwargs...)
+        simulate(S, layout, configs; options, kwargs...)
     else
         @error "redundant configurations" config configs
     end
@@ -136,7 +136,7 @@ simulate(S::Type{<:System}, layout, configs; verbose=true, kwargs...) = begin
     n = length(configs)
     R = Vector(undef, n)
     dt = verbose ? 1 : Inf
-    p = Progress(n; dt=dt, barglyphs=barglyphs)
+    p = Progress(n; dt, barglyphs)
     Threads.@threads for i in 1:n
         R[i] = simulate(S, layout; config=configs[i], verbose=false, kwargs...)
         ProgressMeter.next!(p)

@@ -381,7 +381,7 @@ end
         L = Layer[]
         for i in 1:n
             z = ss + s/2 # depth
-            l = Layer(context=context, i=i, θ_i=θ, z=z, d_r=d_r, s=s, ss=ss)
+            l = Layer(; context, i, θ_i=θ, z, d_r, s, ss)
             push!(L, l)
             ss += s
         end
@@ -391,7 +391,7 @@ end
     surface_interface(context, layer=L[1], R, Ea, Ta) ~ ::SurfaceInterface
 
     soil_interfaces(context, L, Ta) => begin
-        [SoilInterface(context=context, l1=a, l2=b, Ta=Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
+        [SoilInterface(; context, l1=a, l2=b, Ta) for (a, b) in zip(L[1:end-1], L[2:end])]
     end ~ ::Vector{SoilInterface}
 
     bedrock_interface(context, layer=L[end]) ~ ::BedrockInterface
