@@ -71,32 +71,34 @@ detectbackend() = begin
     end
 end
 
-plot(df::DataFrame, x, y; name=nothing, kw...) = plot(df, x, [y]; names=[name], kw...)
+plot(df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot(df, x, [y]; names=[name], colors=[color], kw...)
 plot(df::DataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
-plot!(p, df::DataFrame, x, y; name=nothing, kw...) = plot!(p, df, x, [y]; names=[name], kw...)
-plot!(p, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, kw...) = begin
+plot!(p, df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot!(p, df, x, [y]; names=[name], colors=[color], kw...)
+plot!(p, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, kw...) = begin
     arr(n) = extractarray(df, n)
     X = arr(x)
     Ys = arr.(ys)
 
+    n = length(Ys)
     xlab = isnothing(xlab) ? x : xlab
     ylab = isnothing(ylab) ? "" : ylab
-    names = isnothing(names) ? repeat([nothing], length(Ys)) : names
+    names = isnothing(names) ? repeat([nothing], n) : names
     names = [isnothing(n) ? string(y) : n for (y, n) in zip(ys, names)]
     #HACK: support indirect referencing from the given data frame if name is Symbol
     names = [n isa Symbol ? repr(deunitfy(only(unique(df[n]))), context=:compact=>true) : n for n in names]
+    colors = isnothing(colors) ? repeat([nothing], n) : colors
 
-    plot!(p, X, Ys; xlab=xlab, ylab=ylab, names=names, kw...)
+    plot!(p, X, Ys; xlab=xlab, ylab=ylab, names=names, colors=colors, kw...)
 end
 
-plot(X::Vector, Y::Vector; name=nothing, kw...) = plot(X, [Y]; names=isnothing(name) ? nothing : [name], kw...)
+plot(X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot(X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
 plot(X::Vector, Ys::Vector{<:Vector}; kw...) = plot!(nothing, X, Ys; kw...)
-plot!(p, X::Vector, Y::Vector; name=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], kw...)
+plot!(p, X::Vector, Y::Vector; name=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
 plot!(p, X::Vector, Ys::Vector{<:Vector};
     kind=:scatter,
     title=nothing,
     xlab=nothing, ylab=nothing,
-    legend=nothing, names=nothing,
+    legend=nothing, names=nothing, colors=nothing,
     xlim=nothing, ylim=nothing,
     xunit=nothing, yunit=nothing,
     aspect=nothing,
@@ -116,14 +118,16 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
         ylim = (minimum(l)[1], maximum(l)[2])
     end
 
+    n = length(Ys)
     xlab = label(xlab, xunit)
     ylab = label(ylab, yunit)
     legend = isnothing(legend) ? "" : string(legend)
-    names = isnothing(names) ? string.(1:length(Ys)) : names
+    names = isnothing(names) ? string.(1:n) : names
+    colors = isnothing(colors) ? repeat([nothing], n) : colors
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, xlim=xlim, ylim=ylim, aspect=aspect)
+    plot2!(Val(backend), p, X, Ys; kind=kind, title=title, xlab=xlab, ylab=ylab, legend=legend, names=names, colors=colors, xlim=xlim, ylim=ylim, aspect=aspect)
 end
 
 plot(df::DataFrame, x, y, z;
@@ -158,7 +162,7 @@ plot(df::DataFrame, x, y, z;
     plot3!(Val(backend), X, Y, Z; kind=kind, title=title, xlab=xlab, ylab=ylab, zlab=zlab, xlim=xlim, ylim=ylim, zlim=zlim, aspect=aspect)
 end
 
-plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim, aspect) = begin
+plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect) = begin
     n = length(Ys)
     Xs = [X for _ in 1:n]
     kinds = [kind for _ in 1:n]
@@ -178,6 +182,14 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
         key_title_font_size=9*Gadfly.pt,
     )
 
+    create_colors(colors; n0=0) = begin
+        n = length(colors)
+        C = Gadfly.Scale.default_discrete_colors(n0+n)[n0+begin:end]
+        f(c::Int, _) = p.info[:colors][c]
+        f(c, _) = parse(Gadfly.Colorant, c)
+        f(::Nothing, i) = C[i]
+        [f(c, i) for (i, c) in enumerate(colors)]
+    end
     colorkey(colors) = begin
         NC = filter(x -> let (n, c) = x; !isempty(n) end, collect(zip(names, colors)))
         if !isempty(NC)
@@ -212,7 +224,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
             Gadfly.Guide.xlabel(xlab),
             Gadfly.Guide.ylabel(ylab),
         ]
-        colors = Gadfly.Scale.default_discrete_colors(n)
+        colors = create_colors(colors)
         update_color!(guides, colors)
         layers = create_layers(colors)
         obj = Gadfly.plot(
@@ -225,7 +237,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
     else
         obj = p.obj
         n0 = length(obj.layers)
-        colors = Gadfly.Scale.default_discrete_colors(n0+n)[n0+1:end]
+        colors = create_colors(colors; n0)
         update_color!(obj.guides, colors)
         foreach(l -> Gadfly.push!(obj, l), create_layers(colors))
         for l in create_layers(colors)
@@ -236,7 +248,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, y
     p
 end
 
-plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, xlim, ylim, aspect, width=40, height=15) = begin
+plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
         UnicodePlots.DotCanvas
     else
@@ -251,6 +263,15 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
         error("unrecognized plot kind = $kind")
     end
 
+    create_colors(colors; n0=0) = begin
+        n = length(colors)
+        C = collect(Iterators.take(Iterators.cycle(UnicodePlots.color_cycle), n+n0))[n0+begin:end]
+        f(c::Int, _) = p.info[:colors][c]
+        f(c, _) = c
+        f(::Nothing, i) = C[i]
+        [f(c, i) for (i, c) in enumerate(colors)]
+    end
+
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     !endswith(xlab, "\n") && (xlab *= "\n")
 
@@ -261,10 +282,12 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, x
         UnicodePlots.annotate!(obj, :r, legend)
         p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, aspect, width, height)
     end
-    for (Y, name) in zip(Ys, names)
-        plot!(p.obj, X, Y; name=name)
+    colors = create_colors(colors; n0=length(p.info[:Ys]))
+    for (i, (Y, name)) in enumerate(zip(Ys, names))
+        color = colors[i]
+        plot!(p.obj, X, Y; name=name, color=color)
         #TODO: remember colors
-        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[])
+        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color])
     end
     p
 end
