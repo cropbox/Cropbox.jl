@@ -10,6 +10,9 @@ struct Plot
 end
 update!(p::Plot; kw...) = (mergewith!(vcat, p.info, Dict(kw...)); p)
 
+value(p::Plot) = p.obj
+Base.adjoint(p::Plot) = value(p)
+
 Base.showable(m::MIME, p::Plot) = showable(m, p.obj)
 
 Base.show(p::Plot) = show(p.obj)
