@@ -156,7 +156,7 @@ end
 label(n::VarNode; alias=false) = begin
     v = n.info
     name = alias && !isnothing(v.alias) ? v.alias : v.name
-    name = replace(string(name), "_" => " ")
+    name = string(name)
     tag = string(n.step)
     tag * name
 end
