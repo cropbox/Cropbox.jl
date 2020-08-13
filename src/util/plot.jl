@@ -140,7 +140,7 @@ end
 
 plot(df::DataFrame, x, y, z;
     kind=:heatmap,
-    title=nothing,
+    title=nothing, legend=nothing,
     xlab=nothing, ylab=nothing, zlab=nothing,
     xlim=nothing, ylim=nothing, zlim=nothing,
     xunit=nothing, yunit=nothing, zunit=nothing,
@@ -165,9 +165,10 @@ plot(df::DataFrame, x, y, z;
     ylab = label(isnothing(ylab) ? y : ylab, yunit)
     zlab = label(isnothing(zlab) ? z : zlab, zunit)
     title = isnothing(title) ? "" : string(title)
+    legend = isnothing(legend) ? true : legend
 
     isnothing(backend) && (backend = detectbackend())
-    plot3!(Val(backend), X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
+    plot3!(Val(backend), X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
 plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect) = begin
@@ -300,7 +301,7 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, c
     p
 end
 
-plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
         data = (x=X, y=Y, color=Z)
@@ -316,6 +317,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
         plot_padding=[5*Gadfly.mm, 5*Gadfly.mm, 5*Gadfly.mm, 0*Gadfly.mm],
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
+        key_position=legend ? :right : :none,
     )
 
     obj = Gadfly.plot(
@@ -332,7 +334,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim,
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
-plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
     if kind == :heatmap
         ;
     elseif kind == :contour
@@ -340,6 +342,8 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, xlab, ylab, zlab, xlim, ylim,
     else
         error("unrecognized plot kind = $kind")
     end
+
+    !legend && @warn "unsupported legend = $legend"
 
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     !endswith(xlab, "\n") && (xlab *= "\n")
