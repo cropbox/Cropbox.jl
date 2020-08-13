@@ -32,9 +32,11 @@ makedot(g::Graph) = begin
     """
 end
 
-writedot(g::Graph) = let f = "$(tempname()).dot"; 
-    write(f, makedot(g))
-    f
+writedot(g::Graph) = writedot(tempname(), g)
+writedot(name::AbstractString, g::Graph) = begin
+    !endswith(name, ".dot") && (name *= ".dot")
+    write(name, makedot(g))
+    name
 end
 
 #TODO: wait until Graphviz_jll adds Windows support
