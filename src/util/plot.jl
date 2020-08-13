@@ -124,8 +124,13 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
     n = length(Ys)
     xlab = label(xlab, xunit)
     ylab = label(ylab, yunit)
-    legend = isnothing(legend) ? "" : string(legend)
-    names = isnothing(names) ? string.(1:n) : names
+    if legend === false
+        legend = ""
+        names = repeat([""], n)
+    else
+        legend = isnothing(legend) ? "" : string(legend)
+        names = isnothing(names) ? string.(1:n) : names
+    end
     colors = isnothing(colors) ? repeat([nothing], n) : colors
     title = isnothing(title) ? "" : string(title)
 
