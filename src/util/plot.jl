@@ -306,7 +306,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, yli
         geom = Gadfly.Geom.rectbin
         data = (x=X, y=Y, color=Z)
     elseif kind == :contour
-        geom = Gadfly.Geom.contour(levels=50)
+        geom = Gadfly.Geom.contour(levels=100)
         data = (x=X, y=Y, z=Z)
     else
         error("unrecognized plot kind = $kind")
