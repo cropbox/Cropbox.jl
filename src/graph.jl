@@ -44,7 +44,7 @@ writesvg(name::AbstractString, g::Graph) = begin
     dot = writedot(g)
     #HACK: "dot.bat" on Windows
     let ext = (@static Sys.iswindows() ? ".bat" : ""),
-        exe = joinpath(Conda.BINDIR, "dot") * ext,
+        exe = joinpath(Conda.bin_dir(:cropbox), "dot") * ext,
         cmd = `$exe -Tsvg $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
     end
