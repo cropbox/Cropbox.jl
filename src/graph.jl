@@ -41,20 +41,27 @@ end
 
 #TODO: wait until Graphviz_jll adds Windows support
 import Conda
-writesvg(name::AbstractString, g::Graph) = begin
-    !endswith(name, ".svg") && (name *= ".svg")
+writeimage(name::AbstractString, g::Graph; format=nothing) = begin
+    ext = splitext(name)[2]
+    if isnothing(format)
+        format = ext[2:end]
+        isempty(format) && error("format unspecified")
+    else
+        format = string(format)
+        ext != format && (name *= "."*format)
+    end
     dot = writedot(g)
     #HACK: "dot.bat" on Windows
     let ext = (@static Sys.iswindows() ? ".bat" : ""),
         exe = joinpath(Conda.bin_dir(:cropbox), "dot") * ext,
-        cmd = `$exe -Tsvg $dot -o $name`
+        cmd = `$exe -T$format $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
     end
     name
 end
 
 Base.show(io::IO, ::MIME"image/svg+xml", g::Graph) = begin
-    f = writesvg(tempname(), g)
+    f = writeimage(tempname(), g; format=:svg)
     s = read(f, String)
     print(io, s)
 end

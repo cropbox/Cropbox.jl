@@ -6,7 +6,7 @@
         ds = repr(MIME("text/plain"), d)
         @test ds == "[config → clock → context]"
         n = tempname()
-        @test Cropbox.writesvg(n, d) == n*".svg"
+        @test Cropbox.writeimage(n, d; format=:svg) == n*".svg"
     end
 
     @testset "hierarchy" begin
@@ -15,6 +15,6 @@
         hs = repr(MIME("text/plain"), h)
         @test hs == "{Context, Clock}"
         n = tempname()
-        @test Cropbox.writesvg(n, h) == n*".svg"
+        @test Cropbox.writeimage(n, h; format=:svg) == n*".svg"
     end
 end
