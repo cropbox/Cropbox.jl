@@ -20,6 +20,7 @@ makedot(g::Graph) = begin
         height=0
         margin=0.03
         shape=plaintext
+        fontname=Courier
         fontsize=10
     ]
     edge [
