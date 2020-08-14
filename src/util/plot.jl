@@ -101,7 +101,8 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
     kind=:scatter,
     title=nothing,
     xlab=nothing, ylab=nothing,
-    legend=nothing, names=nothing, colors=nothing,
+    legend=nothing, legendpos=nothing,
+    names=nothing, colors=nothing,
     xlim=nothing, ylim=nothing,
     xunit=nothing, yunit=nothing,
     aspect=nothing,
@@ -135,12 +136,13 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect)
+    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect)
 end
 
 plot(df::DataFrame, x, y, z;
     kind=:heatmap,
-    title=nothing, legend=nothing,
+    title=nothing,
+    legend=nothing, legendpos=nothing,
     xlab=nothing, ylab=nothing, zlab=nothing,
     xlim=nothing, ylim=nothing, zlim=nothing,
     xunit=nothing, yunit=nothing, zunit=nothing,
@@ -168,10 +170,10 @@ plot(df::DataFrame, x, y, z;
     legend = isnothing(legend) ? true : legend
 
     isnothing(backend) && (backend = detectbackend())
-    plot3!(Val(backend), X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
+    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
-plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect) = begin
+plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect) = begin
     n = length(Ys)
     Xs = [X for _ in 1:n]
     kinds = [kind for _ in 1:n]
@@ -184,11 +186,15 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors,
         error("unrecognized plot kind = $kind")
     end
 
+    #HACK: manual_color_key() expects [] while colorkey() expects nothing
+    keypos = isnothing(legendpos) ? [] : legendpos .* [Gadfly.w, Gadfly.h]
+
     theme = Gadfly.Theme(
         background_color="white",
         plot_padding=[5*Gadfly.mm, 5*Gadfly.mm, 5*Gadfly.mm, 0*Gadfly.mm],
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
+        key_position=isempty(keypos) ? :right : :inside,
     )
 
     create_colors(colors; n0=0) = begin
@@ -203,7 +209,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors,
         NC = filter(x -> let (n, c) = x; !isempty(n) end, collect(zip(names, colors)))
         if !isempty(NC)
             N, C = first.(NC), last.(NC)
-            Gadfly.Guide.manual_color_key(legend, N, C)
+            Gadfly.Guide.manual_color_key(legend, N, C; pos=keypos)
         end
     end
     colorkey!(key, colors) = begin
@@ -257,7 +263,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors,
     p
 end
 
-plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, colors, xlim, ylim, aspect, width=40, height=15) = begin
+plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
         UnicodePlots.DotCanvas
     else
@@ -271,6 +277,8 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, c
     else
         error("unrecognized plot kind = $kind")
     end
+
+    !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
 
     create_colors(colors; n0=0) = begin
         n = length(colors)
@@ -301,7 +309,7 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, names, c
     p
 end
 
-plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
         data = (x=X, y=Y, color=Z)
@@ -312,12 +320,15 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, yli
         error("unrecognized plot kind = $kind")
     end
 
+    #HACK: colorkey() expects nothing while manual_color_key() expects []
+    keypos = isnothing(legendpos) ? nothing : legendpos .* [Gadfly.w, Gadfly.h]
+
     theme = Gadfly.Theme(
         background_color="white",
         plot_padding=[5*Gadfly.mm, 5*Gadfly.mm, 5*Gadfly.mm, 0*Gadfly.mm],
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
-        key_position=legend ? :right : :none,
+        key_position=legend ? isnothing(keypos) ? :right : :inside : :none,
     )
 
     obj = Gadfly.plot(
@@ -325,7 +336,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, yli
         Gadfly.Guide.title(title),
         Gadfly.Guide.xlabel(xlab),
         Gadfly.Guide.ylabel(ylab),
-        Gadfly.Guide.colorkey(title=zlab),
+        Gadfly.Guide.colorkey(title=zlab; pos=keypos),
         Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
         geom,
         theme;
@@ -334,7 +345,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, yli
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
-plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
     if kind == :heatmap
         ;
     elseif kind == :contour
@@ -344,6 +355,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, xlab, ylab, zlab, xli
     end
 
     !legend && @warn "unsupported legend = $legend"
+    !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
 
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     !endswith(xlab, "\n") && (xlab *= "\n")
