@@ -146,7 +146,7 @@ plot(df::DataFrame, x, y, z;
     xlab=nothing, ylab=nothing, zlab=nothing,
     xlim=nothing, ylim=nothing, zlim=nothing,
     xunit=nothing, yunit=nothing, zunit=nothing,
-    zgap=nothing,
+    zgap=nothing, zlabgap=nothing,
     aspect=nothing,
     backend=nothing,
 ) = begin
@@ -171,7 +171,7 @@ plot(df::DataFrame, x, y, z;
     legend = isnothing(legend) ? true : legend
 
     isnothing(backend) && (backend = detectbackend())
-    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, aspect)
+    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect)
 end
 
 plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect) = begin
@@ -310,7 +310,7 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, legendpo
     p
 end
 
-plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, aspect) = begin
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
         data = (x=X, y=Y, color=Z)
@@ -333,6 +333,34 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
         key_position=legend ? isnothing(keypos) ? :right : :inside : :none,
     )
 
+    label(z) = begin
+        #TODO: remove redundant creation of Scale
+        zmin, zmax = zlim
+        zspan = zmax - zmin
+        scale = Gadfly.Scale.color_continuous(minvalue=zmin, maxvalue=zmax)
+        color = scale.f((z - zmin) / zspan)
+
+        i = findmin(abs.(Z .- z))[2]
+        #HACK: ignore lables presumably out of bound
+        if i == firstindex(Z) || i == lastindex(Z)
+            Gadfly.Guide.annotation(Gadfly.compose(Gadfly.context()))
+        else
+            x, y = X[i], Y[i]
+            Gadfly.Guide.annotation(
+                Gadfly.compose(
+                    Gadfly.context(),
+                    Gadfly.Compose.text(x, y, string(z), Gadfly.hcenter, Gadfly.vcenter),
+                    Gadfly.font(theme.minor_label_font),
+                    Gadfly.fontsize(theme.minor_label_font_size),
+                    Gadfly.fill(color),
+                    Gadfly.stroke("white"),
+                    Gadfly.linewidth(0.1*Gadfly.pt),
+                )
+            )
+        end
+    end
+    labels = isnothing(zlabgap) ? () : label.(zlim[1]:zlabgap:zlim[2])
+
     obj = Gadfly.plot(
         Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
         Gadfly.Guide.title(title),
@@ -341,13 +369,14 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
         Gadfly.Guide.colorkey(title=zlab; pos=keypos),
         Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
         geom,
+        labels...,
         theme;
         data...,
     )
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
-plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, aspect, width=0, height=30) = begin
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect, width=0, height=30) = begin
     if kind == :heatmap
         ;
     elseif kind == :contour
@@ -360,6 +389,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
 
     !isnothing(zgap) && @warn "unsupported contour interval = $zgap"
+    !isnothing(zlabgap) && @warn "unsupported countour label interval = $zlabgap"
 
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     !endswith(xlab, "\n") && (xlab *= "\n")
