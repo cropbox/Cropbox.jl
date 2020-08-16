@@ -146,6 +146,7 @@ plot(df::DataFrame, x, y, z;
     xlab=nothing, ylab=nothing, zlab=nothing,
     xlim=nothing, ylim=nothing, zlim=nothing,
     xunit=nothing, yunit=nothing, zunit=nothing,
+    zgap=nothing,
     aspect=nothing,
     backend=nothing,
 ) = begin
@@ -170,7 +171,7 @@ plot(df::DataFrame, x, y, z;
     legend = isnothing(legend) ? true : legend
 
     isnothing(backend) && (backend = detectbackend())
-    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
+    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, aspect)
 end
 
 plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect) = begin
@@ -309,12 +310,13 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, legendpo
     p
 end
 
-plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, aspect) = begin
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
         data = (x=X, y=Y, color=Z)
     elseif kind == :contour
-        geom = Gadfly.Geom.contour(levels=100)
+        levels = isnothing(zgap) ? 100 : collect(zlim[1]:zgap:zlim[2])
+        geom = Gadfly.Geom.contour(; levels)
         data = (x=X, y=Y, z=Z)
     else
         error("unrecognized plot kind = $kind")
@@ -345,7 +347,7 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
 end
 
-plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width=0, height=30) = begin
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, aspect, width=0, height=30) = begin
     if kind == :heatmap
         ;
     elseif kind == :contour
@@ -356,6 +358,8 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
 
     !legend && @warn "unsupported legend = $legend"
     !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
+
+    !isnothing(zgap) && @warn "unsupported contour interval = $zgap"
 
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     !endswith(xlab, "\n") && (xlab *= "\n")
