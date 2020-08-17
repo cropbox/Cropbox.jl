@@ -28,6 +28,6 @@
         # including a multiplier for conversion from mm s-1 to mol m-2 s-1
         g * P_air / (u"R" * Tk_air)
     end ~ track(u"mmol/m^2/s")
-    # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
+    # 1.1 is the factor to convert from heat conductance to water vapor conductance, an average between still air and laminar flow (see Table 3.2, HG Jones 2014)
     gb(gh, P_air): boundary_layer_conductance => 0.147/0.135*gh / P_air ~ track(u"mol/m^2/s/bar" #= H2O =#)
 end

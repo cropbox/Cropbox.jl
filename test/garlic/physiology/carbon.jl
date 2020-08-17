@@ -52,7 +52,7 @@ end
         #FIXME properly handle T_air
         T = Cropbox.deunitfy(T_air, u"°C")
         # this needs to be f of temperature, source/sink relations, nitrogen, and probably water
-        # a valve function is necessary because assimilates from CPool cannot be dumped instantanesly to parts
+        # a valve function is necessary because assimilates from CPool cannot be dumped instantaneously to parts
         # this may be used for implementing feedback inhibition due to high sugar content in the leaves
         # The following is based on Grant (1989) AJ 81:563-571
 

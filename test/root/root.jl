@@ -158,7 +158,7 @@ end
     end ~ call(u"°")
     pβ(;): pick_radial_angle => rand(Uniform(0, 360)) ~ call(u"°")
     αN: angular_angle_trials => 20 ~ preserve::Int(parameter)
-    βN: raidal_angle_trials => 5 ~ preserve::Int(parameter)
+    βN: radial_angle_trials => 5 ~ preserve::Int(parameter)
     A(pα, pβ, to, N, dist=box.dist, np, αN, βN): angles => begin
         n = rand() < N % 1 ? ceil(N) : floor(N)
         P = [(pα(), pβ()) for i in 0:n]

@@ -27,7 +27,7 @@ end
     WP_leaf: leaf_water_potential => 0 ~ preserve(u"MPa", parameter)
     Ψv(WP_leaf): bulk_leaf_water_potential ~ track(u"MPa")
     Ψf: reference_leaf_water_potential => -2.0 ~ preserve(u"MPa", parameter)
-    sf: stomata_sensitivty_param => 2.3 ~ preserve(u"MPa^-1", parameter)
+    sf: stomata_sensitivity_param => 2.3 ~ preserve(u"MPa^-1", parameter)
     fΨv(Ψv, Ψf, sf): stomata_sensitivty => begin
         (1 + exp(sf*Ψf)) / (1 + exp(sf*(Ψf-Ψv)))
     end ~ track

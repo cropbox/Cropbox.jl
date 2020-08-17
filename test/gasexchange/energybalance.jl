@@ -7,7 +7,7 @@
 
     ϵ: leaf_thermal_emissivity => 0.97 ~ preserve(parameter)
     σ: stefan_boltzmann_constant => u"σ" ~ preserve(u"W/m^2/K^4")
-    λ: latent_heat_of_vaporiztion_at_25 => 44 ~ preserve(u"kJ/mol", parameter)
+    λ: latent_heat_of_vaporization_at_25 => 44 ~ preserve(u"kJ/mol", parameter)
     Cp: specific_heat_of_air => 29.3 ~ preserve(u"J/mol/K", parameter)
 
     k: radiation_conversion_factor => (1 / 4.55) ~ preserve(u"J/μmol")
@@ -33,7 +33,7 @@
 
     R_wall(ϵ, σ, Tk_air): thermal_radiation_absorbed_from_wall => 2ϵ*σ*Tk_air^4 ~ track(u"W/m^2")
     R_leaf(ϵ, σ, Tk): thermal_radiation_emitted_by_leaf => 2ϵ*σ*Tk^4 ~ track(u"W/m^2")
-    R_thermal(R_wall, R_leaf): thermal_radiation_absored => R_wall - R_leaf ~ track(u"W/m^2")
+    R_thermal(R_wall, R_leaf): thermal_radiation_absorbed => R_wall - R_leaf ~ track(u"W/m^2")
     R_net(R_sw, R_thermal): net_radiation_absorbed => R_sw + R_thermal ~ track(u"W/m^2")
 
     D(T, T_air, RH, #= P_air, =# ea=vp.ambient, es=vp.saturation): leaf_vapor_pressure_deficit => begin

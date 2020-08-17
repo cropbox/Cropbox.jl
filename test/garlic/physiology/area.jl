@@ -26,7 +26,7 @@
 
     # calculate relative area increases for leaves now that they are updated
     #TODO remove if unnecessary
-    # relative_leaf_area_increase(x=NU["*"].leaf.releative_area_increase) => sum(x) ~ track(u"cm^2")
+    # relative_leaf_area_increase(x=NU["*"].leaf.relative_area_increase) => sum(x) ~ track(u"cm^2")
 
     #FIXME it doesn't seem to be 'actual' dropped leaf area
     # calculated dropped leaf area YY

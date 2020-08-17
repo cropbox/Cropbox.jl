@@ -106,7 +106,7 @@ end
         min(Aj1, Aj2)
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    # smooting the transition between Ac and Aj
+    # smoothing the transition between Ac and Aj
     β: photosynthesis_transition_factor => 0.99 ~ preserve(parameter)
     A_net(Ac, Aj, β): net_photosynthesis => begin
         ((Ac+Aj) - sqrt((Ac+Aj)^2 - 4β*Ac*Aj)) / 2β

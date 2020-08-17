@@ -16,7 +16,7 @@ end
     # This is the "potential" elongation rate with no water stress Yang
     # elongation_rate => 0.564 ~ preserve(u"cm/d", parameter)
 
-    # max elongation rate (cm per day) at optipmal temperature
+    # max elongation rate (cm per day) at optimal temperature
     # (Topt: 31C with Tbase = 9.8C using 0.564 cm/dd rate from Fournier 1998 paper above
     LER_max: maximum_elongation_rate => 12 ~ preserve(u"cm/d", parameter)
 
@@ -84,7 +84,7 @@ end
         0.954957 + 2*0.005920l
     end ~ track(u"cm^2")
 
-    #TODO better name, shared by growth_duration and pontential_area
+    #TODO better name, shared by growth_duration and potential_area
     #TODO should be a plant parameter not leaf (?)
     rank_effect(rank, n=potential_leaves, weight=1) => begin
         n_m = 5.93 + 0.33n # the rank of the largest leaf. YY
@@ -190,7 +190,7 @@ end
         #temperature_effect_func(self.p.pheno.growing_temperature, 18.7, 8.0) # for MAIZSIM
         #FIXME garlic model uses current temperature, not average growing temperature
         #temperature_effect_func(self.p.pheno.temperature, self.p.pheno.optimal_temperature, 0) # for garlic
-        #FIXME garlic model does not actually use tempeature effect on final leaf size calculation
+        #FIXME garlic model does not actually use temperature effect on final leaf size calculation
         1.0 # for garlic
     end ~ track
 
@@ -236,7 +236,7 @@ end
 
         # DT Oct 10, 2012 changed this so it was not as sensitive to stress near -0.5 lwp
         # SK Sept 16, 2014 recalibrated/rescaled parameter estimates in Yang's paper. The scale of Boyer data wasn't set correctly
-        # sensitivity = 1.92, LeafWPhalf = -1.86, the sensitivity parameter may be raised by 0.3 to 0.5 to make it less sensitivy at high LWP, SK
+        # sensitivity = 1.92, LeafWPhalf = -1.86, the sensitivity parameter may be raised by 0.3 to 0.5 to make it less sensitivity at high LWP, SK
         s_f = 0.4258 # 0.5
         psi_f = -1.4251 # -1.0
         e = (1 + exp(s_f * psi_f)) / (1 + exp(s_f * (psi_f - (psi_predawn - psi_th))))
@@ -263,7 +263,7 @@ end
 
     # actual area
     area(water_potential_effect, carbon_effect, temperature_effect, area_from_length, length) => begin
-        # See Kim et al. (2012) Agro J. for more information on how this relationship has been derermined basned on multiple studies and is applicable across environments
+        # See Kim et al. (2012) Agro J. for more information on how this relationship has been determined based on multiple studies and is applicable across environments
         #FIXME: unit of threshold kPa?
         we = water_potential_effect(-0.8657)
 
@@ -279,7 +279,7 @@ end
     #TODO remove if unnecessary
     # @property
     # def actual_area_increase(self):
-    #     #FIXME area increase tracking should be done by some gobal state tracking manager
+    #     #FIXME area increase tracking should be done by some global state tracking manager
     #     raise NotImplementedError("actual_area_increase")
     #
     # @property

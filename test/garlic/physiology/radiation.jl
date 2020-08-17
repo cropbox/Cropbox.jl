@@ -33,7 +33,7 @@ end
 end
 
 @enum WaveBand begin
-    photothetically_active_radiation = 1
+    photosynthetically_active_radiation = 1
     near_infrared = 2
     longwave = 3
 end
@@ -53,7 +53,7 @@ end
         0.7
     end ~ preserve(parameter)
 
-    wave_band => photothetically_active_radiation ~ preserve::WaveBand(parameter)
+    wave_band => photosynthetically_active_radiation ~ preserve::WaveBand(parameter)
 
     # scattering coefficient (reflectance + transmittance)
     s: scattering => 0.15 ~ preserve(parameter)
@@ -101,9 +101,9 @@ end
     end ~ call
 
     #TODO make it @property if arg is not needed
-    # Kb: Campbell, p 253, Ratio of projected area to hemi-surface area for an ellisoid
+    # Kb: Campbell, p 253, Ratio of projected area to hemi-surface area for an ellipsoid
     #TODO rename to extinction_coeff?
-    # extiction coefficient assuming spherical leaf dist
+    # extinction coefficient assuming spherical leaf dist
     Kb_at(leaf_angle_coeff, clumping; zenith_angle(u"°")): projection_ratio_at => begin
         leaf_angle_coeff(zenith_angle) * clumping
     end ~ call
@@ -112,7 +112,7 @@ end
         Kb_at(current_zenith_angle)
     end ~ track
 
-    # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
+    # diffused light ratio to ambient, integrated over all incident angles from -90 to 90
     angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve::Vector{Float64}(u"rad")
 
     fdf(a=angles; x::Vector{Float64}): diffused_fraction => begin
@@ -130,9 +130,9 @@ end
         K * clumping
     end ~ track
 
-    ##############################
-    # dePury and Farquhar (1997) #
-    ##############################
+    ###############################
+    # de Pury and Farquhar (1997) #
+    ###############################
 
     # Kb1: Kb prime in de Pury and Farquhar(1997)
     #TODO better name
@@ -222,7 +222,7 @@ end
     # I_c? #
     ########
 
-    # I_tot, I_sun, I_shade: absorved irradiance integrated over LAI per ground area
+    # I_tot, I_sun, I_shade: absorbed irradiance integrated over LAI per ground area
     #FIXME: not used, but seems producing very low values, need to check equations
 
     # I_c: Total irradiance absorbed by the canopy, de Pury and Farquhar (1997)
@@ -267,7 +267,7 @@ end
         I0_df * exp(-sqrt(1 - s) * Kd * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
-    # weighted average absorved diffuse flux over depth of L within canopy
+    # weighted average absorbed diffuse flux over depth of L within canopy
     # accounting for exponential decay, Campbell p261
     Q_dm(LAI, I0_df, s, Kd): irradiance_Q_dm => begin
         # Integral Qd / Integral L
@@ -276,7 +276,7 @@ end
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # unintercepted beam (direct beam) flux at depth of L within canopy
-    Q_b(I0_dr, Kb; L): irradinace_Q_b => begin
+    Q_b(I0_dr, Kb; L): irradiance_Q_b => begin
         I0_dr * exp(-Kb * L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
@@ -285,7 +285,7 @@ end
         I0_dr * Kb + Q_sh
     end ~ track(u"μmol/m^2/s" #= Quanta =#)
 
-    # flux density on sunlit leaves at delpth L
+    # flux density on sunlit leaves at depth L
     Q_sun_at(I0_dr, Kb; L): irradiance_Q_sunlit_at => begin
         I0_dr * Kb + Q_sh_at(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
@@ -329,7 +329,7 @@ end
         Q_bt(L) - Q_b(L)
     end ~ call(u"μmol/m^2/s" #= Quanta =#)
 
-    # total PFD at the soil sufrace under the canopy
+    # total PFD at the soil surface under the canopy
     Q_soil(LAI, Q_tot): irradiance_Q_soil => Q_tot(LAI) ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     ###################
