@@ -3,6 +3,7 @@ module Root
 using Cropbox
 using Distributions
 import Makie
+import Meshing
 import GeometryBasics: GeometryBasics, Point3f0
 import CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
 import Rotations: RotZX
@@ -39,6 +40,13 @@ end
     end ~ call
 end
 
+mesh(s::PlantContainer) = begin
+    r1 = Cropbox.deunitfy(s.r1')
+    r2 = Cropbox.deunitfy(s.r2')
+    h = Cropbox.deunitfy(s.h')
+    GeometryBasics.Mesh(x -> s.dist'(x), GeometryBasics.Rect(GeometryBasics.Vec(-2r1, -2r2, -1.5h), GeometryBasics.Vec(4r1, 4r2, 3h)), Meshing.MarchingCubes(), samples=(50, 50, 50))
+end
+
 @system Rhizobox(Container) <: Container begin
     l: length => 16u"inch" ~ preserve(u"cm", parameter)
     w: width => 10.5u"inch" ~ preserve(u"cm", parameter)
@@ -55,6 +63,14 @@ end
             d < 0 ? abs(x) - l/2 : d
         end
     end ~ call
+end
+
+mesh(s::Rhizobox) = begin
+    l = Cropbox.deunitfy(s.l')
+    w = Cropbox.deunitfy(s.w')
+    h = Cropbox.deunitfy(s.h')
+    g = GeometryBasics.Rect3D(Point3f0(-l/2, -w/2, 0), Point3f0(l, w, -h))
+    GeometryBasics.mesh(g)
 end
 
 @system Tropism begin
