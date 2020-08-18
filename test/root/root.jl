@@ -202,9 +202,9 @@ end
 
     RT0: parent_transformation ~ track::Transformation(override)
     pp(RT0): parent_position => RT0(Point3f0(0, 0, 0)) ~ preserve::Point3f0
-    np(pp, RT0, nounit(Δl); α, β): new_position => begin
+    np(RT0, nounit(Δl); α, β): new_position => begin
         R = RotZX(β, α) |> LinearMap
-        pp + (RT0 ∘ R)(Point3f0(0, 0, -Δl))
+        (RT0 ∘ R)(Point3f0(0, 0, -Δl))
     end ~ call::Point3f0
     RT(nounit(l), α, β): local_transformation => begin
         # put root segment at parent's end
