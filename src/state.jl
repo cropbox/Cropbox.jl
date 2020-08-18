@@ -45,7 +45,7 @@ end
 
 nounit(s::State, u::Units) = Nounit(s, u)
 nounit(s::State) = Nounit(s, nothing)
-value(s::Nounit) = deunitfy(unitfy(value(s.state), s.unit))
+value(s::Nounit) = deunitfy(value(s.state), s.unit)
 
 export nounit
 
