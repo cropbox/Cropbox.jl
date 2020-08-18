@@ -2,8 +2,8 @@ module Root
 
 using Cropbox
 using Distributions
-using MeshCat
-import GeometryTypes: Point3f0, Rect3D
+import Makie
+import GeometryBasics: GeometryBasics, Point3f0
 import CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
 import Rotations: RotZX
 import Colors: RGBA
@@ -257,28 +257,41 @@ end
     end ~ produce::PrimaryRoot[]
 end
 
-render(s::System) = (vis = Visualizer(); render!(s, vis); vis)
+render(s::System) = begin
+    meshes = GeometryBasics.Mesh[]
+    render!(s, meshes)
+    scene = Makie.mesh(merge(meshes))
+    #HACK: adjust mouse sensitivity: https://github.com/JuliaPlots/Makie.jl/issues/33
+    Makie.cameracontrols(scene).rotationspeed[] = 0.01
+    scene
+end
 #TODO: provide macro (i.e. @mixin/@drive?) for scaffolding functions based on traits (Val)
-render!(s, vis) = render!(Cropbox.mixindispatch(s, Rendering)..., vis)
-render!(V::Val{:Rendering}, r::RootSegment, vis) = begin
+render!(s, meshes) = render!(Cropbox.mixindispatch(s, Rendering)..., meshes)
+render!(::Val{:Rendering}, r::RootSegment, meshes) = begin
     l = Cropbox.deunitfy(r.l')
     a = Cropbox.deunitfy(r.a')
     (iszero(l) || iszero(a)) && return
     d = a/2
-    g = Rect3D(Point3f0(-d, -d, -d), Point3f0(a, a, l))
-    M = r.RT'
-    # add root segment
-    cvis = vis["$(UUIDs.uuid1())"]
+    g = GeometryBasics.Rect3D(Point3f0(-d, -d, -d), Point3f0(a, a, l))
+    m = GeometryBasics.mesh(g)
+
+    #HACK: reconstruct a mesh with transformation applied
+    mv = GeometryBasics.decompose(GeometryBasics.Point, m)
+    mf = GeometryBasics.decompose(GeometryBasics.TriangleFace{Int}, m)
+    M = r.RT1'
+    m = GeometryBasics.normal_mesh(M.(mv), mf)
+
     c = r.color'
-    m = MeshCat.defaultmaterial(color=c)
-    setobject!(cvis, g, m)
-    settransform!(cvis, M)
+    n = length(GeometryBasics.coordinates(m))
+    m = GeometryBasics.pointmeta(m; color=fill(c, n))
+    push!(meshes, m)
+
     # visit recursively
-    render!(Val(nothing), r, cvis)
+    render!(Val(nothing), r, meshes)
 end
-render!(::Val, s::System, vis) = render!.(Cropbox.value.(collect(s)), Ref(vis))
-render!(::Val, V::Vector{<:System}, vis) = render!.(V, Ref(vis))
-render!(::Val, s, vis) = nothing
+render!(::Val, s::System, meshes) = render!.(Cropbox.value.(collect(s)), Ref(meshes))
+render!(::Val, V::Vector{<:System}, meshes) = render!.(V, Ref(meshes))
+render!(::Val, s, meshes) = nothing
 
 gather(s::System) = (L = []; gather!(s, L); L)
 gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
