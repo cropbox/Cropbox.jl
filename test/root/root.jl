@@ -292,10 +292,12 @@ end
     end ~ produce::PrimaryRoot[]
 end
 
-render(s::System) = begin
+render(s::RootArchitecture) = begin
     meshes = GeometryBasics.Mesh[]
     render!(s, meshes)
     scene = Makie.mesh(merge(meshes))
+    #HACK: customization for container
+    Makie.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
     #HACK: adjust mouse sensitivity: https://github.com/JuliaPlots/Makie.jl/issues/33
     Makie.cameracontrols(scene).rotationspeed[] = 0.01
     scene
