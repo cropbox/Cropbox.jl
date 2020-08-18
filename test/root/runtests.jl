@@ -5,9 +5,9 @@ include("root.jl")
 import Colors: RGBA
 root_maize = (
     :PlantContainer => (
-        :r1 => 5,
-        :r2 => 5,
-        :height => 50,
+        :r1 => 10,
+        :r2 => 6,
+        :height => 30,
     ),
     :RootArchitecture => :maxB => 5,
     :BaseRoot => :T => [

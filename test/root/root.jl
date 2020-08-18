@@ -17,9 +17,9 @@ import UUIDs
 end
 
 @system PlantContainer(Container) <: Container begin
-    r1: top_radius => 5 ~ preserve(u"cm", parameter)
-    r2: bottom_radius => 5 ~ preserve(u"cm", parameter)
-    h: height => 100 ~ preserve(u"cm", parameter)
+    r1: top_radius => 10 ~ preserve(u"cm", parameter)
+    r2: bottom_radius => 6 ~ preserve(u"cm", parameter)
+    h: height => 30 ~ preserve(u"cm", parameter)
     sq: square => false ~ preserve::Bool(parameter)
 
     dist(nounit(r1), nounit(r2), nounit(h), sq; p::Point3f0): distance => begin
