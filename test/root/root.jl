@@ -234,6 +234,25 @@ end
     end ~ produce::RootSegment
 end
 
+mesh(s::RootSegment) = begin
+    l = Cropbox.deunitfy(s.l')
+    a = Cropbox.deunitfy(s.a')
+    (iszero(l) || iszero(a)) && return nothing
+    d = a/2
+    g = GeometryBasics.Rect3D(Point3f0(-d, -d, -d), Point3f0(a, a, l))
+    m = GeometryBasics.mesh(g)
+
+    #HACK: reconstruct a mesh with transformation applied
+    mv = GeometryBasics.decompose(GeometryBasics.Point, m)
+    mf = GeometryBasics.decompose(GeometryBasics.TriangleFace{Int}, m)
+    M = s.RT1'
+    m = GeometryBasics.normal_mesh(M.(mv), mf)
+
+    c = s.color'
+    n = length(GeometryBasics.coordinates(m))
+    GeometryBasics.pointmeta(m; color=fill(c, n))
+end
+
 #TODO: provide @macro / function to automatically build a series of related Systems
 @system BaseRoot(RootSegment) <: RootSegment begin
     T: transition ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
@@ -268,23 +287,8 @@ end
 #TODO: provide macro (i.e. @mixin/@drive?) for scaffolding functions based on traits (Val)
 render!(s, meshes) = render!(Cropbox.mixindispatch(s, Rendering)..., meshes)
 render!(::Val{:Rendering}, r::RootSegment, meshes) = begin
-    l = Cropbox.deunitfy(r.l')
-    a = Cropbox.deunitfy(r.a')
-    (iszero(l) || iszero(a)) && return
-    d = a/2
-    g = GeometryBasics.Rect3D(Point3f0(-d, -d, -d), Point3f0(a, a, l))
-    m = GeometryBasics.mesh(g)
-
-    #HACK: reconstruct a mesh with transformation applied
-    mv = GeometryBasics.decompose(GeometryBasics.Point, m)
-    mf = GeometryBasics.decompose(GeometryBasics.TriangleFace{Int}, m)
-    M = r.RT1'
-    m = GeometryBasics.normal_mesh(M.(mv), mf)
-
-    c = r.color'
-    n = length(GeometryBasics.coordinates(m))
-    m = GeometryBasics.pointmeta(m; color=fill(c, n))
-    push!(meshes, m)
+    m = mesh(r)
+    !isnothing(m) && push!(meshes, m)
 
     # visit recursively
     render!(Val(nothing), r, meshes)
