@@ -254,8 +254,8 @@ mesh(s::RootSegment) = begin
     l = Cropbox.deunitfy(s.l', u"cm")
     a = Cropbox.deunitfy(s.a', u"cm")
     (iszero(l) || iszero(a)) && return nothing
-    d = a/2
-    g = GeometryBasics.Rect3D(Point3f0(-d, -d, -d), Point3f0(a, a, l))
+    r = a/2
+    g = GeometryBasics.Rect3D(Point3f0(-r, -r, 0), Point3f0(a, a, l))
     m = GeometryBasics.mesh(g)
 
     #HACK: reconstruct a mesh with transformation applied
