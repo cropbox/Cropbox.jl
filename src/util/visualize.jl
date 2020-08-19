@@ -85,10 +85,10 @@ visualize(df::DataFrame, SS::Vector, x, y;
     end
     p
 end
-visualize(df::DataFrame, S::Type{<:System}, y;
-    configs=[],
+visualize(df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) = visualize(df, [(; system=S, configs)], y; names=[name], kw...)
+visualize(df::DataFrame, maps::Vector, y;
     stop=nothing, skipfirst=true, filter=nothing,
-    title=nothing, xlab=nothing, ylab=nothing, lim=nothing, plotopts...
+    title=nothing, xlab=nothing, ylab=nothing, names=nothing, lim=nothing, plotopts...
 ) = begin
     y = y isa Pair ? y : y => y
     yo, ye = y
@@ -97,17 +97,21 @@ visualize(df::DataFrame, S::Type{<:System}, y;
     isnothing(title) && (title = yo == ye ? string(yo) : "$yo : $ye")
 
     X = extractarray(df, yo)
-    r = simulate(S; configs, stop, skipfirst, filter, verbose=false)
-    Y = extractarray(r, ye)
+    Ys = map(maps) do m
+        r = simulate(; m..., stop, skipfirst, filter, verbose=false)
+        extractarray(r, ye)
+    end
+
+    isnothing(names) && (names = repeat([""], length(Ys)))
 
     if isnothing(lim)
-        l = findlim.(deunitfy.([X, Y]))
+        l = findlim.(deunitfy.([X, Ys...]))
         lim = (minimum(l)[1], maximum(l)[2])
     end
     I = [lim[1], lim[2]]
 
-    p = plot(X, Y; kind=:scatter, title, name="", xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
-    !isnothing(lim) && plot!(p, I, I, kind=:line, name="")
+    p = plot(X, Ys; kind=:scatter, title, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    !isnothing(lim) && plot!(p, I, I, kind=:line, color=:lightgray, name="")
     p
 end
 
