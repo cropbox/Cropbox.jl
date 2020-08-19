@@ -196,6 +196,8 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, legendpos, nam
         major_label_font_size=10*Gadfly.pt,
         key_title_font_size=9*Gadfly.pt,
         key_position=isempty(keypos) ? :right : :inside,
+        point_size=0.7*Gadfly.mm,
+        discrete_highlight_color=_->Gadfly.RGBA(1, 1, 1, 0),
     )
 
     create_colors(colors; n0=0) = begin
