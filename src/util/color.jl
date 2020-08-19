@@ -16,6 +16,19 @@ function Highlights.Format.render(io::IO, ::MIME"text/ansi", tokens::Highlights.
     end
 end
 
+writecodehtml(filename::AbstractString, source; lexer=Highlights.Lexers.JuliaLexer, theme=Highlights.Themes.TangoTheme) = begin
+    open(filename, "w") do io
+        print(io, """
+        <style>
+            @import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css);
+            pre.hljl { font-family: 'Fira Code'; font-size: x-small }
+        </style>
+        """)
+        Highlights.stylesheet(io, MIME("text/html"), theme)
+        Highlights.highlight(io, MIME("text/html"), source, lexer, theme)
+   end
+end
+
 abstract type TokenColor end
 struct SystemColor <: TokenColor end
 struct VarColor <: TokenColor end
