@@ -232,7 +232,7 @@ plot2!(::Val{:Gadfly}, p, X, Ys; kind, title, xlab, ylab, legend, legendpos, nam
             colorkey!(key, colors)
         end
     end
-    create_layers(colors) = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(default_color=colors[i])) for i in 1:n]
+    create_layers(colors) = [Gadfly.layer(x=X, y=Ys[i], geom, Gadfly.Theme(theme; default_color=colors[i])) for i in 1:n]
 
     if isnothing(p)
         guides = [
