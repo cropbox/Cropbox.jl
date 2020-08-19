@@ -119,6 +119,7 @@ simulate!(s::System, layout; kwargs...) = begin
 end
 simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; callback=f, kwargs...)
 
+simulate(; system, kw...) = simulate(system; kw...)
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate(S, [(; base, index, target, meta)]; kwargs...) |> only
 end
