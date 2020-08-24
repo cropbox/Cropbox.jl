@@ -36,12 +36,12 @@
     R_thermal(R_wall, R_leaf): thermal_radiation_absorbed => R_wall - R_leaf ~ track(u"W/m^2")
     R_net(R_sw, R_thermal): net_radiation_absorbed => R_sw + R_thermal ~ track(u"W/m^2")
 
-    D(T, T_air, RH, #= P_air, =# ea=vp.ambient, es=vp.saturation): leaf_vapor_pressure_deficit => begin
+    Δw(T, T_air, RH, #= P_air, =# ea=vp.ambient, es=vp.saturation): leaf_vapor_pressure_gradient => begin
         Es = es(T)
         Ea = ea(T_air, RH)
         Es - Ea # MAIZSIM: / (1 - (Es + Ea) / P_air)
     end ~ track(u"kPa")
-    E(gv, D): transpiration => gv*D ~ track(u"mmol/m^2/s" #= H2O =#)
+    E(gv, Δw): transpiration => gv*Δw ~ track(u"mmol/m^2/s" #= H2O =#)
 
     H(Cp, gh, ΔT): sensible_heat_flux => Cp*gh*ΔT ~ track(u"W/m^2")
     λE(λ, E): latent_heat_flux => λ*E ~ track(u"W/m^2")
