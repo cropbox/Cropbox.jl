@@ -48,9 +48,8 @@ end
     end ~ track(u"kPa")
 
     gs(g0, g1, A_net, hs, Cs, fΨv): stomatal_conductance => begin
-        gs = g0 + g1*(A_net*hs/Cs) * fΨv
-        max(gs, g0)
-    end ~ track(u"mol/m^2/s/bar" #= H2O =#)
+        g0 + g1*(A_net*hs/Cs) * fΨv
+    end ~ track(u"mol/m^2/s/bar" #= H2O =#, min=g0)
 end
 
 @system StomataMedlyn(StomataBase, StomataLeafWater) begin
@@ -70,7 +69,6 @@ end
     hs(RH=vp.RH, T, Ds): relative_humidity_at_leaf_surface => RH(T, Ds) ~ track
 
     gs(g0, g1, A_net, Ds, Cs, fΨv): stomatal_conductance => begin
-        gs = g0 + (1 + g1/√Ds)*(A_net/Cs) * fΨv
-        max(gs, g0)
-    end ~ track(u"mol/m^2/s/bar" #= H2O =#)
+        g0 + (1 + g1/√Ds)*(A_net/Cs) * fΨv
+    end ~ track(u"mol/m^2/s/bar" #= H2O =#, min=g0)
 end

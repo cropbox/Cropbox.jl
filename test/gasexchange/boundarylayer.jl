@@ -14,7 +14,7 @@
     # multiply by 1.4 for outdoor condition, Campbell and Norman (1998), p109
     ocr: outdoor_conductance_ratio => 1.4 ~ preserve
 
-    u(u=wind): wind_velocity => max(u, 0.1u"m/s") ~ track(u"m/s")
+    u(u=wind): wind_velocity ~ track(u"m/s", min=0.1)
     # characteristic dimension of a leaf, leaf width in m
     d(w): characteristic_dimension => 0.72w ~ track(u"m")
     v(Dm): kinematic_viscosity_of_air ~ preserve(u"m^2/s", parameter)
