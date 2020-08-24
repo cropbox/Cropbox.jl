@@ -12,9 +12,7 @@
 
     LIR_max: maximum_leaf_initiation_rate => 0.20 ~ preserve(u"d^-1", parameter)
 
-    leaf_initiation(r=LIR_max, β=BF.ΔT, leaf_initiating) => begin
-        leaf_initiating ? r * β : zero(r)
-    end ~ accumulate
+    leaf_initiation(r=LIR_max, β=BF.ΔT) => r*β ~ accumulate(when=leaf_initiating)
 
     #HACK original garlic model assumed leaves are being initiated when the seeds are sown
     #HACK maize model model assumed leaf initiation begins when germination is over

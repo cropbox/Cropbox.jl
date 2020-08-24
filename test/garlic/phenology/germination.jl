@@ -5,10 +5,10 @@
 
     GR_max: maximum_germination_rate => 0.45 ~ preserve(u"d^-1", parameter)
 
-    germination(r=GR_max, β=BF.ΔT, germinating) => begin
+    germination(r=GR_max, β=BF.ΔT) => begin
         #FIXME prevent extra accumulation after it's `over`
-        germinating ? r * β : zero(r)
-    end ~ accumulate
+        r * β
+    end ~ accumulate(when=germinating)
 
     germinateable(planting_date, t=calendar.time) => (t >= planting_date) ~ flag
     germinated(germination, germinateable, begin_from_emergence) => (germination >= 0.5 || (germinateable && begin_from_emergence)) ~ flag

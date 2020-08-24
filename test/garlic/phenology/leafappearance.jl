@@ -6,9 +6,7 @@
         asym / (1 + exp(-k * Cropbox.deunitfy(x - x_m)))
     end ~ preserve(u"d^-1", parameter)
 
-    leaf_tip_appearance(r=LTAR_max, β=BF.ΔT, leaf_appearing) => begin
-        leaf_appearing ? r * β : zero(r)
-    end ~ accumulate
+    leaf_tip_appearance(r=LTAR_max, β=BF.ΔT) => r*β ~ accumulate(when=leaf_appearing)
 
     leaf_appearable(emerged) ~ flag
     leaf_appeared(leaves_appeared, leaves_initiated) => begin

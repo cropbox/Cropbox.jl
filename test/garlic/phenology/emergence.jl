@@ -5,9 +5,7 @@
     emergence_date => nothing ~ preserve::ZonedDateTime(optional, parameter)
     begin_from_emergence(emergence_date) => !isnothing(emergence_date) ~ preserve::Bool
 
-    emergence(r=ER_max, β=BF.ΔT, emerging) => begin
-        emerging ? r * β : zero(r)
-    end ~ accumulate
+    emergence(r=ER_max, β=BF.ΔT) => r*β ~ accumulate(when=emerging)
 
     emergeable(germinated) ~ flag
     emerged(emergence, begin_from_emergence, emergence_date, t=calendar.time) => begin

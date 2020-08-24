@@ -6,9 +6,7 @@
     #HACK use LTAR
     SR_max(LTAR_max): maximum_scaping_rate => LTAR_max ~ track(u"d^-1")
 
-    scape(r=SR_max, β=BF.ΔT, scaping) => begin
-        scaping ? r * β : zero(r)
-    end ~ accumulate
+    scape(r=SR_max, β=BF.ΔT) => r*β ~ accumulate(when=scaping)
 
     scapeable(l=leaf_appeared, f=floral_initiated) => (l && f) ~ flag
     scaped(s=scape_removed, f=flower_appeared) => (s || f) ~ flag

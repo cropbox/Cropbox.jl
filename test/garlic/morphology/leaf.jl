@@ -294,16 +294,12 @@ end
     #     else:
     #         0
 
-    stay_green_water_stress_duration(mature, water_potential_effect, scale=0.5, threshold=-4.0) => begin
-        if mature
-            # One day of cumulative severe water stress (i.e., water_effect = 0.0 around -4MPa) would result in a reduction of leaf lifespan in relation staygreeness and growthDuration, SK
-            # if scale is 1.0, one day of severe water stress shortens one day of stayGreenDuration
-            #TODO remove WaterStress and use general Accumulator with a lambda function?
-            scale * (1 - water_potential_effect(threshold))
-        else
-            0.
-        end
-    end ~ accumulate(u"d")
+    stay_green_water_stress_duration(water_potential_effect, scale=0.5, threshold=-4.0) => begin
+        # One day of cumulative severe water stress (i.e., water_effect = 0.0 around -4MPa) would result in a reduction of leaf lifespan in relation staygreeness and growthDuration, SK
+        # if scale is 1.0, one day of severe water stress shortens one day of stayGreenDuration
+        #TODO remove WaterStress and use general Accumulator with a lambda function?
+        scale * (1 - water_potential_effect(threshold))
+    end ~ accumulate(when=mature, u"d")
 
     stay_green_duration(SG, GD, stay_green_water_stress_duration) => begin
         # SK 8/20/10: as in Sinclair and Horie, 1989 Crop sciences, N availability index scaled between 0 and 1 based on
@@ -322,14 +318,10 @@ end
         (mature && !aging) ? q : zero(q)
     end ~ accumulate(u"d")
 
-    senescence_water_stress_duration(aging, water_potential_effect, scale=0.5, threshold=-4.0) => begin
-        if aging
-            # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
-            scale * (1 - water_potential_effect(threshold))
-        else
-            0.
-        end
-    end ~ accumulate(u"d")
+    senescence_water_stress_duration(water_potential_effect, scale=0.5, threshold=-4.0) => begin
+        # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
+        scale * (1 - water_potential_effect(threshold))
+    end ~ accumulate(when=aging, u"d")
 
     senescence_duration(GD, senescence_water_stress_duration) => begin
         # end of growth period, time to maturity
