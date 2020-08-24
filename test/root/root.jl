@@ -154,8 +154,8 @@ end
 
     t(context.clock.tick): timestamp ~ preserve(u"hr")
     Δt(context.clock.step): timestep ~ preserve(u"hr")
-    Δl(zl, Δx) => min(zl, Δx) ~ preserve(u"cm")
-    ar(pr, Δl, l, Δt): actual_elongation_rate => min(pr, (Δl - l) / Δt) ~ track(u"cm/d")
+    Δl(Δx) ~ preserve(u"cm", max=zl)
+    ar(Δl, l, Δt): actual_elongation_rate => ((Δl - l) / Δt) ~ track(u"cm/d", max=pr)
     rr(pr, ar): remaining_elongation_rate => pr - ar ~ track(u"cm/d")
     rl(rr, Δt): remaining_length => rr*Δt ~ track(u"cm")
     l0: initial_length => 0 ~ preserve(u"cm", extern)

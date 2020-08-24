@@ -13,8 +13,8 @@ end
     ΔT(T, Tb, To, Tx): magnitude => begin
         T = !isnothing(To) ? min(T, To) : T
         T = !isnothing(Tx) && T >= Tx ? Tb : T
-        max(T - Tb, zero(T))
-    end ~ track(u"K")
+        T - Tb
+    end ~ track(u"K", min=0)
     r(ΔT, Δt): rate => ΔT / Δt ~ track(u"K/hr")
 end
 

@@ -69,11 +69,9 @@
         # tt: record thermal time from emergency YY
         # Calculate faction of nitrogen in leaves (leaf NFraction) as a function of thermal time from emergence
         # Equation from Lindquist et al. 2007 YY
-        fraction = 0.79688 - 0.00023747tt - 0.000000086145tt^2
-
+        0.79688 - 0.00023747tt - 0.000000086145tt^2
         # fraction of leaf n in total shoot n can't be smaller than zero. YY
-        max(0, fraction)
-    end ~ track
+    end ~ track(min=0)
 
     #TODO rename to `leaves`?
     leaf_nitrogen(leaf_nitrogen_fraction, nitrogen_pool) => begin

@@ -125,13 +125,13 @@ end
     phase1_delay(rank) => begin
         # not used in MAIZSIM because LTAR is used to initiate leaf growth.
         # Fournier's value : -5.16+1.94*rank;equa 11 Fournier and Andrieu(1998) YY, This is in plastochron unit
-        max(-5.16 + 1.94rank, 0.)
-    end ~ track
+        -5.16 + 1.94rank
+    end ~ track(min=0)
 
     leaf_number_effect(potential_leaves) => begin
         # Fig 4 of Birch et al. (1998)
-        clamp(exp(-1.17 + 0.047potential_leaves), 0.5, 1.0)
-    end ~ track
+        exp(-1.17 + 0.047potential_leaves)
+    end ~ track(min=0.5, max=1.0)
 
     potential_area(potential_length, area_from_length) => begin
         # for MAIZSIM
@@ -308,8 +308,8 @@ end
     stay_green_duration(SG, GD, stay_green_water_stress_duration) => begin
         # SK 8/20/10: as in Sinclair and Horie, 1989 Crop sciences, N availability index scaled between 0 and 1 based on
         #nitrogen_index = max(0, (2 / (1 + exp(-2.9 * (self.g_content - 0.25))) - 1))
-        max(SG * GD - stay_green_water_stress_duration, zero(GD))
-    end ~ track(u"d")
+        SG * GD - stay_green_water_stress_duration
+    end ~ track(u"d", min=0)
 
     active_age(mature, aging, q=pheno.Q10.ΔT) => begin
         # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
@@ -333,8 +333,8 @@ end
 
     senescence_duration(GD, senescence_water_stress_duration) => begin
         # end of growth period, time to maturity
-        max(GD - senescence_water_stress_duration, zero(GD))
-    end ~ track(u"d")
+        GD - senescence_water_stress_duration
+    end ~ track(u"d", min=0)
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
     senescence_age(aging, dead, q=pheno.Q10.ΔT) => begin
@@ -358,12 +358,11 @@ end
         #     clip(r, 0., 1.)
         # for garlic
         if iszero(length)
-            0.
+            0
         else
-            r = maximum_aging_rate * senescence_age / length
-            clamp(r, 0, 1)
+            maximum_aging_rate * senescence_age / length
         end
-    end ~ track
+    end ~ track(min=0, max=1)
 
     senescent_area(senescence_ratio, area) => begin
         # Leaf senescence accelerates with drought and heat. see http://www.agry.purdue.edu/ext/corn/news/timeless/TopLeafDeath.html

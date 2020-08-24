@@ -135,6 +135,8 @@ import Dates
         asind(cos(h) * cos(δ) * cos(ϕ) + sin(δ) * sin(ϕ))
     end ~ track(u"°")
 
+    ts(αs): positive_elevation_angle ~ track(u"°", min=0)
+
     θs(αs): zenith_angle => (90u"°" - αs) ~ track(u"°")
 
     # The solar azimuth angle is the angular distance between due South and the
@@ -156,23 +158,21 @@ import Dates
         101.3exp(-altitude / 8200u"m")
     end ~ track(u"kPa")
 
-    m(p, αs): optical_air_mass_number => begin
-        t_s = max(αs, zero(αs))
+    m(p, ts): optical_air_mass_number => begin
         #FIXME check 101.3 is indeed in kPa
         #iszero(t_s) ? 0. : p / (101.3u"kPa" * sin(t_s))
-        p / (101.3u"kPa" * sin(t_s))
+        p / (101.3u"kPa" * sin(ts))
     end ~ track
 
     SC: solar_constant => 1370 ~ preserve(u"W/m^2", parameter)
 
     # Campbell and Norman's global solar radiation, this approach is used here
     #TODO rename to insolation? (W/m2)
-    solar_radiation(αs, d, SC) => begin
+    solar_radiation(ts, d, SC) => begin
         # solar constant, Iqbal (1983)
         #FIXME better to be 1361 or 1362 W/m-2?
-        t_s = max(αs, zero(αs))
         g = 2pi * (d - 10)/365
-        SC * sin(t_s) * (1 + 0.033cos(g))
+        SC * sin(ts) * (1 + 0.033cos(g))
     end ~ track(u"W/m^2")
 
     directional_solar_radiation(Fdir, solar_radiation) => begin

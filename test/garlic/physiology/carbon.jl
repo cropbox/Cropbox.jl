@@ -112,9 +112,8 @@ end
     end ~ track(u"g/d")
 
     carbon_available(carbon_supply, maintenance_respiration) => begin
-        c = carbon_supply - maintenance_respiration
-        max(c, zero(c))
-    end ~ track(u"g/d")
+        carbon_supply - maintenance_respiration
+    end ~ track(u"g/d", min=0)
 
     # this is the same as (PhyllochronsSinceTI - lvsAtTI / (totalLeaves - lvsAtTI))
     carbon_scale => begin
@@ -128,9 +127,9 @@ end
 
     carbon_fraction(s=carbon_scale) => begin
         # eq 3 in Grant
-        #min(0.925, 0.50 + 0.50s) # for MAIZSIM
-        min(0.925, 0.67 + 0.33s) # for garlic
-    end ~ track
+        #0.50 + 0.50s # for MAIZSIM
+        0.67 + 0.33s # for garlic
+    end ~ track(max=0.925)
 
     Yg: synthesis_efficiency => begin
         #1 / 1.43 # equivalent Yg, Goudriaan and van Laar (1994)

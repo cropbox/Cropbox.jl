@@ -426,10 +426,9 @@ end
 
     RD_t(θ_r, θ_r_wp, θ_r_sat): transpiration_reduction_factor => begin
         θ_cr = (θ_r_wp + θ_r_sat) / 2
-        f = (θ_r - θ_r_wp) / (θ_cr - θ_r_wp)
+        (θ_r - θ_r_wp) / (θ_cr - θ_r_wp)
         #FIXME: 0 instead of 0.01?
-        clamp(f, 0.01, 1)
-    end ~ track # R_D,t
+    end ~ track(min=0.01, max=1) # R_D,t
     Tp(w.T): transpiration_potential ~ track(u"m/d")
     Ta(Tp, RD_t): transpiration_actual => Tp * RD_t ~ track(u"m/d") # T_a (m day-1)
 

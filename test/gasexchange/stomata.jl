@@ -65,7 +65,7 @@ end
         ws = wi - Ds¹ᐟ²^2
         (ws - wa)*gb ⩵ (wi - ws)*gs
     end ~ solve(lower=0, upper=√wi', u"√kPa")
-    Ds(Ds¹ᐟ²): vapor_pressure_deficit_at_leaf_surface => max(Ds¹ᐟ²^2, 1u"Pa") ~ track(u"kPa")
+    Ds(Ds¹ᐟ²): vapor_pressure_deficit_at_leaf_surface => Ds¹ᐟ²^2 ~ track(u"kPa", min=1u"Pa")
     hs(RH=vp.RH, T, Ds): relative_humidity_at_leaf_surface => RH(T, Ds) ~ track
 
     gs(g0, g1, A_net, Ds, Cs, fΨv): stomatal_conductance => begin

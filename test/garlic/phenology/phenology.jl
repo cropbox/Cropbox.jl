@@ -32,12 +32,11 @@ import Dates
 
     planting_date ~ preserve::ZonedDateTime(parameter)
     DAP(t0=planting_date, t=calendar.time): day_after_planting => begin
-        Δt = floor(t - t0, Dates.Day) |> Dates.value
-        max(Δt, 0)
-    end ~ track::Int
+        floor(t - t0, Dates.Day) |> Dates.value
+    end ~ track::Int(min=0)
 
     leaves_generic => 10 ~ preserve::Int(parameter)
-    leaves_potential(leaves_generic, leaves_total) => max(leaves_generic, leaves_total) ~ track::Int
+    leaves_potential(leaves_total) ~ track::Int(min=leaves_generic)
     leaves_total(leaves_initiated) ~ track::Int
 
     T(leaves_appeared, T_air=weather.T_air): temperature => begin

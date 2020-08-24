@@ -28,9 +28,8 @@ end
     end ~ solve(lower=0, upper=1) #, u"percent")
 
     gs(g0, g1, m, A_net, hs, Cs): stomatal_conductance => begin
-        gs = g0 + (g1 * m * (A_net * hs / Cs))
-        max(gs, g0)
-    end ~ track(u"mol/m^2/s/bar" #= H2O =#)
+        g0 + (g1 * m * (A_net * hs / Cs))
+    end ~ track(u"mol/m^2/s/bar" #= H2O =#, min=g0)
 
     m: transpiration_reduction_factor => begin
         #TODO: implement soil water module
