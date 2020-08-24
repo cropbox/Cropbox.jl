@@ -4,6 +4,7 @@ using Cropbox
 
 include("vaporpressure.jl")
 include("weather.jl")
+include("diffusion.jl")
 include("nitrogen.jl")
 include("base.jl")
 include("c3.jl")

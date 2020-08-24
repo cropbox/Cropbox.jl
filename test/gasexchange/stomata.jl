@@ -1,11 +1,11 @@
-@system StomataBase(Weather) begin
+@system StomataBase(Weather, Diffusion) begin
     gs: stomatal_conductance ~ hold
     gb: boundary_layer_conductance ~ hold
     A_net: net_photosynthesis ~ hold
     T: leaf_temperature ~ hold
 
-    drb: diffusivity_ratio_boundary_layer => 1.37 ~ preserve(#= u"H2O/CO2", =# parameter)
-    dra: diffusivity_ratio_air => 1.6 ~ preserve(#= u"H2O/CO2", =# parameter)
+    drb(Dw, Dc): diffusivity_ratio_boundary_layer => (Dw / Dc)^(2/3) ~ preserve(#= u"H2O/CO2", =# parameter)
+    dra(Dw, Dc): diffusivity_ratio_air => (Dw / Dc) ~ preserve(#= u"H2O/CO2", =# parameter)
 
     Ca(CO2, P_air): co2_air => (CO2 * P_air) ~ track(u"μbar")
     Cs(Ca, A_net, gbc): co2_at_leaf_surface => begin
