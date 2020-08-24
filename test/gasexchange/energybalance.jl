@@ -50,6 +50,6 @@
         R_net ⩵ H + λE
     end ~ bisect(lower=-5, upper=5, u"K", evalunit=u"W/m^2")
 
-    T(ΔT, T_air): leaf_temperature => T_air + ΔT ~ track(u"°C")
+    T(T_air, ΔT): leaf_temperature => (T_air + ΔT) ~ track(u"°C")
     Tk(T): absolute_leaf_temperature ~ track(u"K")
 end
