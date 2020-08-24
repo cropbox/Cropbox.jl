@@ -65,13 +65,13 @@ ge_stomata5 = :StomataBallBerry => (g0 = 0.008, g1 = 8.0)
 "for garlic"
 ge_stomata6 = :StomataBallBerry => (g0 = 0.0096, g1 = 6.824)
 
-ge_water1 = :StomataLeafWater => (
+ge_water1 = :StomataTuzet => (
     sf = 2.3, # sensitivity parameter Tuzet et al. 2003 Yang
     ϕf = -1.2, # reference potential Tuzet et al. 2003 Yang
 )
 
 "switchgrass params from Le et al. (2010)"
-ge_water2 = :StomataLeafWater => (
+ge_water2 = :StomataTuzet => (
     #? = -1.68, # minimum sustainable leaf water potential (Albaugha 2014)
     sf = 6.5,
     ϕf = -1.3,
@@ -101,7 +101,7 @@ ge_spad = :Nitrogen => (
     SPAD = 60,
 )
 
-ge_water = :StomataLeafWater => (
+ge_water = :StomataTuzet => (
     #WP_leaf = 0,
     sf = 2.3,
     Ψf = -1.2,
@@ -148,7 +148,7 @@ ge_step_t = :Weather => :T_air => -10:1:50
             config=ge_base,
             kind=:heatmap,
             xstep=:Nitrogen=>:N=>0:0.05:2,
-            ystep=:StomataLeafWater=>:WP_leaf=>-2:0.05:0,
+            ystep=:StomataTuzet=>:WP_leaf=>-2:0.05:0,
         ) |> display
     end
 end

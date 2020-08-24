@@ -23,7 +23,7 @@
     gvc(rvc): total_conductance_co2 => (1 / rvc) ~ track(u"mol/m^2/s/bar")
 end
 
-@system StomataLeafWater begin
+@system StomataTuzet begin
     WP_leaf: leaf_water_potential => 0 ~ preserve(u"MPa", parameter)
     Ψv(WP_leaf): bulk_leaf_water_potential ~ track(u"MPa")
     Ψf: reference_leaf_water_potential => -2.0 ~ preserve(u"MPa", parameter)
@@ -33,7 +33,7 @@ end
     end ~ track
 end
 
-@system StomataBallBerry(StomataBase, StomataLeafWater) begin
+@system StomataBallBerry(StomataBase, StomataTuzet) begin
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
     g0 => 0.017 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
     g1 => 4.53 ~ preserve(parameter)
@@ -52,7 +52,7 @@ end
     end ~ track(u"mol/m^2/s/bar" #= H2O =#, min=g0)
 end
 
-@system StomataMedlyn(StomataBase, StomataLeafWater) begin
+@system StomataMedlyn(StomataBase, StomataTuzet) begin
     g0 => 0.02 ~ preserve(u"mol/m^2/s/bar" #= H2O =#, parameter)
     g1 => 4.0 ~ preserve(u"√kPa", parameter)
 
