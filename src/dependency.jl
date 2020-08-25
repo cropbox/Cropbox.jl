@@ -49,14 +49,14 @@ end
 
 extract(v::VarInfo; equation=true, tag=true, include=(), exclude=()) = begin
     pick(a) = let k, v; extractfuncargdep(@capture(a, k_=v_) ? v : a) end
-    pack(A) = filter(!isnothing, pick.(A)) |> Tuple
+    pack(A) = Iterators.flatten(filter!(!isnothing, pick.(A))) |> Tuple
     eq = equation ? pack(v.args) : ()
     #@show eq
     #HACK: exclude internal tags (i.e. _type)
     #HACK: filter included/excluded tags
     #TODO: share logic with filterconstructortags() in macro?
     tagfilter(t) = !startswith(String(t), "_") && (isempty(include) ? true : t ∈ include) && (isempty(exclude) ? true : t ∉ exclude)
-    par = tag ? Tuple(filter!(!isnothing, [extractfuncargdep(p[2]) for p in v.tags if tagfilter(p[1])])) : ()
+    par = tag ? Tuple(Iterators.flatten(filter!(!isnothing, [extractfuncargdep(p[2]) for p in v.tags if tagfilter(p[1])]))) : ()
     #@show par
     Set([eq..., par...]) |> collect
 end

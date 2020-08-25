@@ -575,7 +575,7 @@ extractfuncargdep(v::Expr) = begin
         nothing
     end
 end
-extractfuncargdep(v::Symbol) = v
+extractfuncargdep(v::Symbol) = [v]
 extractfuncargdep(v) = nothing
 
 extractfuncargkey(v::Expr) = begin
