@@ -56,6 +56,20 @@ end
 Base.:!(s::State) = Not(s)
 value(s::Not) = !value(s.state)
 
+struct And{S1,S2}
+    state1::S1
+    state2::S2
+end
+
+struct Or{S1,S2}
+    state1::S1
+    state2::S2
+end
+
+Base.:&(a::Union{State,And,Or,Not}, b::Union{State,And,Or,Not}) = And(a, b)
+Base.:|(a::Union{State,And,Or,Not}, b::Union{State,And,Or,Not}) = Or(a, b)
+value(s::And) = value(s.state1) && value(s.state2)
+value(s::Or) = value(s.state1) || value(s.state2)
 
 abstract type Priority end
 struct PrePriority <: Priority end
