@@ -571,6 +571,9 @@ extractfuncargdep(v::Expr) = begin
     # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
     elseif isexpr(v, :., :ref)
         extractfuncargdep(a[1])
+    # detect boolean operators between state vars (i.e. `a`, `b` in `a && b`, `a || b`)
+    elseif isexpr(v, :||, :&&)
+        extractfuncargdep.(a) |> Iterators.flatten |> collect
     else
         nothing
     end
