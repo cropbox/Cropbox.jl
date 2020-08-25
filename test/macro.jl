@@ -20,7 +20,23 @@
         @test s.b' == 1
         @test s.c' == 1
     end
-    
+
+    @testset "bool arg" begin
+        @system SBoolArg(Controller) begin
+            t => true ~ preserve::Bool
+            f => false ~ preserve::Bool
+            a(t & f) ~ track::Bool
+            b(t | f) ~ track::Bool
+            c(t & !f) ~ track::Bool
+            d(x=t&f, y=t|f) => x | y ~ track::Bool
+        end
+        s = instance(SBoolArg)
+        @test s.a' == false
+        @test s.b' == true
+        @test s.c' == true
+        @test s.d' == true
+    end
+
     @testset "body replacement" begin
         @system SBodyReplacement1(Controller) begin
             a => 1 ~ preserve
