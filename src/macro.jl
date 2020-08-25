@@ -562,18 +562,20 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStage) = @q $C.update!($(v.name), $C
 #TODO: merge extractfuncargdep() and extractfuncargkey()?
 extractfuncargdep(v::Expr) = begin
     a = v.args
-    # detect variable inside wrapping function (i.e. `a` in `nounit(a.b, ..)`)
     if isexpr(v, :call)
-        extractfuncargdep(a[2])
+        # detect boolean operators between state vars (i.e. `a`, `b` in `a && b`, `a || b`)
+        if a[1] == :& || a[1] == :|
+            extractfuncargdep.(a[2:3]) |> Iterators.flatten |> collect
+        # detect variable inside wrapping function (i.e. `a` in `nounit(a.b, ..)`)
+        else
+            extractfuncargdep(a[2])
+        end
     # detect shorthand syntax for calling value() (i.e. `a` in `a'` = `value(a)`)
     elseif isexpr(v, Symbol("'"))
         extractfuncargdep(a[1])
     # detect first callee of dot chaining (i.e. `a` in `a.b.c`)
     elseif isexpr(v, :., :ref)
         extractfuncargdep(a[1])
-    # detect boolean operators between state vars (i.e. `a`, `b` in `a && b`, `a || b`)
-    elseif isexpr(v, :||, :&&)
-        extractfuncargdep.(a) |> Iterators.flatten |> collect
     else
         nothing
     end
@@ -583,9 +585,14 @@ extractfuncargdep(v) = nothing
 
 extractfuncargkey(v::Expr) = begin
     a = v.args
-    # detect variable inside wrapping function (i.e. `b` in `nounit(a.b, ..)`)
     if isexpr(v, :call)
-        extractfuncargkey(a[2])
+        # detect boolean operators between state vars (i.e. `a`, `b` in `a && b`, `a || b`)
+        if a[1] == :& || a[1] == :|
+            error("missing function argument key: $v")
+        # detect variable inside wrapping function (i.e. `b` in `nounit(a.b, ..)`)
+        else
+            extractfuncargkey(a[2])
+        end
     # detect shorthand syntax for calling value() (i.e. `b` in `a.b'` = `value(a.b)`)
     elseif isexpr(v, Symbol("'"))
         extractfuncargkey(a[1])
