@@ -49,7 +49,6 @@ value(s::Nounit) = deunitfy(value(s.state), s.unit)
 
 export nounit
 
-#TODO: support `!` prefix in macro?
 struct Not{S}
     state::S
 end
@@ -57,7 +56,6 @@ end
 Base.:!(s::State) = Not(s)
 value(s::Not) = !value(s.state)
 
-export not
 
 abstract type Priority end
 struct PrePriority <: Priority end
