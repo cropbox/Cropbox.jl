@@ -23,7 +23,7 @@
     # for garlic
     leaf_initiated(floral_initiated) ~ flag
 
-    leaf_initiating(a=leaf_initiateable, b=leaf_initiated) => (a && !b) ~ flag
+    leaf_initiating(leaf_initiateable & !leaf_initiated) ~ flag
 
     # no MAX_LEAF_NO implied unlike original model
     leaves_initiated(initial_leaves, leaf_initiation) => begin

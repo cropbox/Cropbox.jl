@@ -13,7 +13,7 @@
         day_length >= critPPD && day <= 171
     end ~ flag(oneway)
 
-    floral_initiating(a=floral_initiateable, b=floral_initiated) => (a && !b) ~ flag
+    floral_initiating(floral_initiateable & !floral_initiated) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

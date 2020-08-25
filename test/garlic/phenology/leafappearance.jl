@@ -13,7 +13,7 @@
         #HACK ensure leaves are initiated
         leaves_appeared >= leaves_initiated > 0
     end ~ flag
-    leaf_appearing(a=leaf_appearable, b=leaf_appeared) => (a && !b) ~ flag
+    leaf_appearing(leaf_appearable & !leaf_appeared) ~ flag
 
     leaves_appeared(leaf_tip_appearance, leaf_appearable, begin_from_emergence) => begin
         #HACK set initial leaf appearance to 1, not 0, to better describe stroage effect (2016-11-14: KDY, SK, JH)

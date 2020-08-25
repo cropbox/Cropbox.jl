@@ -12,7 +12,7 @@
 
     germinateable(planting_date, t=calendar.time) => (t >= planting_date) ~ flag
     germinated(germination, germinateable, begin_from_emergence) => (germination >= 0.5 || (germinateable && begin_from_emergence)) ~ flag
-    germinating(a=germinateable, b=germinated) => (a && !b) ~ flag
+    germinating(germinateable & !germinated) ~ flag
 
     #FIXME postprocess similar to @produce?
     # finish(GDD_sum="pheno.gdd_recorder.rate", t="context.clock.tick", dt="context.clock.step") => begin

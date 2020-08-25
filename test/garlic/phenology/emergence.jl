@@ -15,7 +15,7 @@
             emergence >= 1.0
         end
     end ~ flag
-    emerging(a=emergeable, b=emerged) => (a && !b) ~ flag
+    emerging(emergeable & !emerged) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

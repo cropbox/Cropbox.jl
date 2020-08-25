@@ -4,7 +4,7 @@
     #HACK bulbing used to begin one phyllochron after floral initiation in bolting cultivars of garlic, see Meredith 2008
     bulb_appeared(floral_initiated) ~ flag
 
-    bulb_appearing(a=bulb_appearable, b=bulb_appeared) => (a && !b) ~ flag
+    bulb_appearing(bulb_appearable & !bulb_appeared) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

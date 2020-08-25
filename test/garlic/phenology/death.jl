@@ -5,7 +5,7 @@
         #self.pheno.plant.count.dropped_leaves >= self.pheno.leaves_initiated
         false
     end ~ flag
-    dying(a=dieable, b=dead) => (a && !b) ~ flag
+    dying(dieable & !dead) ~ flag
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):
