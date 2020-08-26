@@ -46,7 +46,7 @@
 
     @testset "linear" begin
         @system SSolveLinear(Controller) begin
-            x => (2x ⩵ 1) ~ solve
+            x => (2x = 1) ~ solve
         end
         s = instance(SSolveLinear)
         @test s.x' == 0.5
@@ -54,7 +54,7 @@
 
     @testset "quadratic single" begin
         @system SSolveQuadraticSingle(Controller) begin
-            x => (x^2 ⩵ 1) ~ solve
+            x => (x^2 = 1) ~ solve
         end
         s = instance(SSolveQuadraticSingle)
         @test s.x' == 1
@@ -93,7 +93,7 @@
     @testset "equal" begin
         @system SSolveEqual(Controller) begin
             x1 => (x1^2 + 2x1 - 3) ~ solve
-            x2 => (x2^2 + 2x2 - 3 ⩵ 0) ~ solve
+            x2 => (x2^2 + 2x2 - 3 = 0) ~ solve
         end
         s = instance(SSolveEqual)
         @test s.x1' == s.x2'

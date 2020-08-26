@@ -41,7 +41,7 @@ end
     #HACK: avoid scaling issue with dimensionless unit
     hs(g0, g1, gb, A_net, Cs, fΨv, RH): relative_humidity_at_leaf_surface => begin
         gs = g0 + g1*(A_net*hs/Cs) * fΨv
-        (hs - RH)*gb ⩵ (1 - hs)*gs
+        (hs - RH)*gb = (1 - hs)*gs
     end ~ solve(lower=0, upper=1) #, u"percent")
     Ds(D=vp.D, T, hs): vapor_pressure_deficit_at_leaf_surface => begin
         D(T, hs)
@@ -63,7 +63,7 @@ end
         #HACK: SymPy couldn't extract polynomial coeffs for ps inside √
         gs = g0 + (1 + g1 / Ds¹ᐟ²) * (A_net / Cs) * fΨv
         ws = wi - Ds¹ᐟ²^2
-        (ws - wa)*gb ⩵ (wi - ws)*gs
+        (ws - wa)*gb = (wi - ws)*gs
     end ~ solve(lower=0, upper=√wi', u"√kPa")
     Ds(Ds¹ᐟ²): vapor_pressure_deficit_at_leaf_surface => Ds¹ᐟ²^2 ~ track(u"kPa", min=1u"Pa")
     hs(RH=vp.RH, T, Ds): relative_humidity_at_leaf_surface => RH(T, Ds) ~ track

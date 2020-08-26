@@ -24,7 +24,7 @@ end
     #HACK: avoid scaling issue with dimensionless unit
     hs(g0, g1, gb, m, A_net, Cs, RH): relative_humidity_at_leaf_surface => begin
         gs = g0 + (g1 * m * (A_net * hs / Cs))
-        (hs - RH)*gb ⩵ (1 - hs)*gs
+        (hs - RH)*gb = (1 - hs)*gs
     end ~ solve(lower=0, upper=1) #, u"percent")
 
     gs(g0, g1, m, A_net, hs, Cs): stomatal_conductance => begin

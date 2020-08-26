@@ -64,7 +64,7 @@ end
         a = θ
         b = -(I2+Jmax)
         c = I2*Jmax
-        a*J^2 + b*J + c ⩵ 0
+        a*J^2 + b*J + c
     end ~ solve(lower=0, upper=Jmax, u"μmol/m^2/s")
 end
 

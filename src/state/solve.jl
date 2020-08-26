@@ -11,48 +11,50 @@ end
 
 constructortags(::Val{:Solve}) = (:unit,)
 
-# \Equal opeartor for both solve/bisect
-⩵(x, y) = x - y
-export ⩵
-
-import SymPy: SymPy, sympy
-genpolynomial(v::VarInfo) = begin
-    x = v.name
-    V = extractfuncargpair.(v.args) .|> first
-    push!(V, x)
-    p = eval(@q let $(V...)
-        SymPy.@vars $(V...)
-        sympy.Poly(begin
-            $(v.body)
-        end, $x)
-    end)
-    Q = p.coeffs()
-    #HACK: normalize coefficient to avoid runtime unit generation
-    Q = Q / Q[1] |> reverse .|> SymPy.simplify
-    Q .|> repr .|> Meta.parse
-end
-genpolynomialunits(U, n) = [@q($U^$(i-1)) for i in n:-1:1]
-
-import PolynomialRoots
-solvepolynomial(p, pu) = begin
-    sp = [deunitfy(q, qu) for (q, qu) in zip(p, pu)]
-    r = PolynomialRoots.roots(sp)
-    real.(filter(isreal, r))
-end
-solvequadratic(a, b, c) = begin
-    (a == 0) && return (-c/b,)
-    Δ = b^2 - 4a*c
-    if Δ > 0
-        s = √Δ
-        ((-b - s) / 2a, (-b + s) / 2a)
-    elseif Δ == 0
-        (-b/2a,)
-    else
-        #HACK: make up a non-complex solution
-        x = -b/2a
-        @warn "ignore complex roots for quadratic equation: $a*x^2 + $b*x + $c = 0" x
-        (x,)
+#TODO: seems not working inside package?
+import Suppressor: @suppress
+@suppress import Reduce
+#TODO: precompilation error on Julia 1.5+ should be fixed: https://github.com/chakravala/Reduce.jl/issues/32
+@suppress Reduce.Preload()
+import Printf: @sprintf
+gensolution(v::VarInfo) = gensolution(v.body, v.name)
+gensolution(body, name) = begin
+    extract(ex) = begin
+        ex = ex |> MacroTools.rmlines |> MacroTools.unblock
+        if MacroTools.isexpr(ex, :block)
+            a = ex.args
+            (a[1:end-1], a[end])
+        else
+            #HACK: clean up rhs (i.e. :(2x = 1))
+            @capture(ex, f_ = g_) && (ex = @q $f = $(MacroTools.unblock(g)))
+            ([], ex)
+        end
     end
+    subs, eq = extract(body)
+
+    escape(s::Symbol) = map(x -> @sprintf("!#%04x;", x), codepoint.(collect(string(s)))) |> join
+    escape(s) = s
+
+    equation(ex) = MacroTools.postwalk(ex) do x
+        if @capture(x, f_(a__))
+            :($f($(escape.(a)...)))
+        elseif @capture(x, f_ = g_)
+            :($(escape(f)) = $g)
+        else
+            x
+        end
+    end
+    stringify(ex) = replace(string(ex), '"' => "")
+
+    rsubs = equation.(subs) .|> stringify
+    req = equation(eq) |> stringify
+
+    x = name
+    c = "solve(sub({$(join(rsubs, ','))}, $req), $x)"
+    r = c |> Reduce.rcall |> Reduce.RExpr |> Reduce.parse
+
+    rval(x) = (@capture(x, f_ = g_); g)
+    @q ($(esc.(rval.(r))...),)
 end
 
 updatetags!(d, ::Val{:Solve}; _...) = begin
@@ -68,43 +70,18 @@ geninit(v::VarInfo, ::Val{:Solve}) = nothing
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
     U = gettag(v, :unit)
     isnothing(U) && (U = @q(u"NoUnits"))
-    P = genpolynomial(v)
-    n = length(P)
-    PU = genpolynomialunits(U, n)
     lower = gettag(v, :lower)
     upper = gettag(v, :upper)
     pick = gettag(v, :pick).value
-    body = if n == 2 # linear
-        @gensym a b xl xu
-        @q let $a = $(esc(P[2])),
-               $b = $(esc(P[1])),
-               $xl = $C.unitfy($C.value($lower), $U),
-               $xu = $C.unitfy($C.value($upper), $U)
-            clamp(-$b / $a, $xl, $xu)
-        end
-    elseif n == 3 # quadratic
-        @gensym a b c X xl xu l
-        @q let $a = $C.deunitfy($(esc(P[3])), $(PU[3])),
-               $b = $C.deunitfy($(esc(P[2])), $(PU[2])),
-               $c = $C.deunitfy($(esc(P[1])), $(PU[1])),
-               $X = $C.unitfy($C.solvequadratic($a, $b, $c), $U),
-               $xl = $C.unitfy($C.value($lower), $U),
-               $xu = $C.unitfy($C.value($upper), $U)
-            #TODO: remove duplication
-            $l = filter(x -> $xl <= x <= $xu, collect($X))
-            isempty($l) && ($l = clamp.($X, $xl, $xu))
-            $l |> $pick
-        end
-    else # generic polynomials (slow!)
-        @gensym X xl xu l
-        @q let $X = $C.unitfy($C.solvepolynomial([$(esc.(P)...)], [$(PU...)]), $U),
-               $xl = $C.unitfy($C.value($lower), $U),
-               $xu = $C.unitfy($C.value($upper), $U)
-            $l = filter(x -> $xl <= x <= $xu, $X)
-            #TODO: better report error instead of silent clamp?
-            isempty($l) && ($l = clamp.($X, $xl, $xu))
-            $l |> $pick
-        end
+    solution = gensolution(v)
+    @gensym X xl xu l
+    body = @q let $X = $C.unitfy($solution, $U),
+                  $xl = $C.unitfy($C.value($lower), $U),
+                  $xu = $C.unitfy($C.value($upper), $U)
+        $l = filter(x -> $xl <= x <= $xu, $X)
+        #TODO: better report error instead of silent clamp?
+        isempty($l) && ($l = clamp.($X, $xl, $xu))
+        $l |> $pick
     end
     val = genfunc(v, body)
     genstore(v, val)

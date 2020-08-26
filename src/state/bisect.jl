@@ -11,6 +11,10 @@ mutable struct Bisect{V,E} <: State{V}
     fc::E
 end
 
+# \Equal opeartor for bisect
+⩵(x, y) = x - y
+export ⩵
+
 Bisect(; unit, evalunit, _type, _...) = begin
     V = valuetype(_type, value(unit))
     E = valuetype(_type, value(evalunit))
