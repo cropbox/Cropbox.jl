@@ -11,11 +11,8 @@ end
 
 constructortags(::Val{:Solve}) = (:unit,)
 
-#TODO: seems not working inside package?
-import Suppressor: @suppress
-@suppress import Reduce
-#TODO: precompilation error on Julia 1.5+ should be fixed: https://github.com/chakravala/Reduce.jl/issues/32
-@suppress Reduce.Preload()
+#HACK: based on a modified version of Reduce.jl: https://github.com/chakravala/Reduce.jl/pull/43
+import Reduce
 import Printf: @sprintf
 gensolution(v::VarInfo) = gensolution(v.body, v.name)
 gensolution(body, name) = begin
@@ -32,29 +29,57 @@ gensolution(body, name) = begin
     end
     subs, eq = extract(body)
 
-    escape(s::Symbol) = map(x -> @sprintf("!#%04x;", x), codepoint.(collect(string(s)))) |> join
-    escape(s) = s
+    gather(ex) = begin
+        l = []
+        add(x::Symbol) = push!(l, x)
+        add(x) = nothing
+        MacroTools.postwalk(ex) do x
+           if @capture(x, f_(a__))
+               add.(a)
+           elseif @capture(x, f_ = g_)
+               add(f)
+               add(g)
+           end
+           x
+        end
+        Set(l)
+    end
 
-    equation(ex) = MacroTools.postwalk(ex) do x
+    F = Dict()
+    B = Dict()
+    for (i, s) in enumerate(union(gather.([subs..., eq])...))
+        v = Symbol("v$i")
+        F[s] = v
+        B[v] = s
+    end
+    escape(s::Symbol) = F[s]
+    escape(s) = s
+    unescape(s::Symbol) = B[s]
+    unescape(s) = s
+
+    equation(ex, tr) = MacroTools.prewalk(ex) do x
         if @capture(x, f_(a__))
-            :($f($(escape.(a)...)))
+            :($f($(tr.(a)...)))
         elseif @capture(x, f_ = g_)
-            :($(escape(f)) = $g)
+            :($(tr(f)) = $(tr(g)))
         else
             x
         end
     end
     stringify(ex) = replace(string(ex), '"' => "")
 
-    rsubs = equation.(subs) .|> stringify
-    req = equation(eq) |> stringify
+    rsubs = equation.(subs, escape) .|> stringify
+    req = equation(eq, escape) |> stringify
 
-    x = name
+    x = escape(name)
+    #HACK: can't use Reduce.Algebra.Sub due to incompatibility with assignment expression
     c = "solve(sub({$(join(rsubs, ','))}, $req), $x)"
+    #HACK: restart REDUCE stack
+    Reduce.Reset()
     r = c |> Reduce.rcall |> Reduce.RExpr |> Reduce.parse
 
-    rval(x) = (@capture(x, f_ = g_); g)
-    @q ($(esc.(rval.(r))...),)
+    solution(ex) = (@capture(ex, f_ = g_) && @assert(f == x); equation(g, unescape))
+    @q ($(esc.(solution.(r))...),)
 end
 
 updatetags!(d, ::Val{:Solve}; _...) = begin

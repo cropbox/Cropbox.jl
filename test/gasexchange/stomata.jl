@@ -59,13 +59,11 @@ end
     wa(ea=vp.ea, T_air, RH): vapor_pressure_at_air => ea(T_air, RH) ~ track(u"kPa")
     wi(es=vp.es, T): vapor_pressure_at_intercellular_space => es(T) ~ track(u"kPa")
     ws(Ds, wi): vapor_pressure_at_leaf_surface => (wi - Ds) ~ track(u"kPa")
-    Ds¹ᐟ²(g0, g1, gb, A_net, Cs, fΨv, wi, wa) => begin
-        #HACK: SymPy couldn't extract polynomial coeffs for ps inside √
-        gs = g0 + (1 + g1 / Ds¹ᐟ²) * (A_net / Cs) * fΨv
-        ws = wi - Ds¹ᐟ²^2
+    Ds(g0, g1, gb, A_net, Cs, fΨv, wi, wa): vapor_pressure_deficit_at_leaf_surface => begin
+        gs = g0 + (1 + g1 / sqrt(Ds)) * (A_net / Cs) * fΨv
+        ws = wi - Ds
         (ws - wa)*gb = (wi - ws)*gs
-    end ~ solve(lower=0, upper=√wi', u"√kPa")
-    Ds(Ds¹ᐟ²): vapor_pressure_deficit_at_leaf_surface => Ds¹ᐟ²^2 ~ track(u"kPa", min=1u"Pa")
+    end ~ solve(lower=0, upper=wi, u"kPa", min=1u"Pa")
     hs(RH=vp.RH, T, Ds): relative_humidity_at_leaf_surface => RH(T, Ds) ~ track
 
     gs(g0, g1, A_net, Ds, Cs, fΨv): stomatal_conductance => begin
