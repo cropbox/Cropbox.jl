@@ -63,7 +63,7 @@ gensolution(body, name) = begin
         elseif @capture(x, f_ = g_)
             :($(tr(f)) = $(tr(g)))
         else
-            x
+            MacroTools.unblock(x)
         end
     end
     stringify(ex) = replace(string(ex), '"' => "")
