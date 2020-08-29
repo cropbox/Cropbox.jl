@@ -53,15 +53,37 @@ bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) 
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
 
-parsetype(type, state, scope) = begin
+parsetype(::Nothing, state, _) = typetag(Val(state))
+parsetype(type, _, scope) = begin
     if @capture(type, elemtype_[])
-        :(Vector{$(prefixscope(elemtype, scope))})
-    elseif isnothing(type)
-        typetag(Val(state))
+        :(Vector{$(parsetype(elemtype, scope))})
     else
-        prefixscope(type, scope)
+        parsetype(type, scope)
     end
 end
+parsetype(type, scope) = begin
+    l = Symbol[]
+    add(t::Symbol) = push!(l, t)
+    add(t) = nothing
+    isexpr(type, :braces) && MacroTools.postwalk(type) do ex
+        @capture(ex, $:|(T__)) && add.(T)
+        ex
+    end
+    conv(t) = prefixscope(parsetypealias(t), scope)
+    isempty(l) ? conv(type) : :(Union{$(conv.(l)...)})
+end
+
+parsetypealias(type::Symbol) = parsetypealias(Val(type), type)
+parsetypealias(type) = type
+parsetypealias(::Val{:int}, _) = :Int64
+parsetypealias(::Val{:uint}, _) = :UInt64
+parsetypealias(::Val{:float}, _) = :Float64
+parsetypealias(::Val{:bool}, _) = :Bool
+parsetypealias(::Val{:sym}, _) = :Symbol
+parsetypealias(::Val{:str}, _) = :String
+parsetypealias(::Val{:∅}, _) = :Nothing
+parsetypealias(::Val{:_}, _) = :Missing
+parsetypealias(::Val, type) = type
 
 extractscope(x) = begin
     l = []

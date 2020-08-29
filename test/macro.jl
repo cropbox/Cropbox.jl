@@ -37,6 +37,75 @@
         @test s.d' == true
     end
 
+    @testset "type alias" begin
+        @system STypeAlias(Controller) begin
+            a => -1 ~ preserve::int
+            b => 1 ~ preserve::uint
+            c => 1 ~ preserve::float
+            d => true ~ preserve::bool
+            e => :a ~ preserve::sym
+            f => "A" ~ preserve::str
+            g => nothing ~ preserve::∅
+            h => missing ~ preserve::_
+        end
+        s = instance(STypeAlias)
+        @test s.a' isa Int64 && s.a' === -1
+        @test s.b' isa UInt64 && s.b' == 1
+        @test s.c' isa Float64 && s.c' === 1.0
+        @test s.d' isa Bool && s.d' === true
+        @test s.e' isa Symbol && s.e' === :a
+        @test s.f' isa String && s.f' === "A"
+        @test s.g' isa Nothing && s.g' === nothing
+        @test s.h' isa Missing && s.h' === missing
+    end
+
+    @testset "type union nothing" begin
+        @system STypeUnionNothing(Controller) begin
+            a ~ preserve::{sym|∅}(parameter)
+        end
+        a1 = :hello
+        s1 = instance(STypeUnionNothing; config=:0 => :a => a1)
+        @test s1.a' isa Union{Symbol,Nothing}
+        @test s1.a' === a1
+        a2 = nothing
+        s2 = instance(STypeUnionNothing; config=:0 => :a => a2)
+        @test s2.a' isa Union{Symbol,Nothing}
+        @test s2.a' === a2
+    end
+
+    @testset "type union missing" begin
+        @system STypeUnionMissing(Controller) begin
+            a ~ preserve::{int|_}(parameter)
+        end
+        a1 = 0
+        s1 = instance(STypeUnionMissing; config=:0 => :a => a1)
+        @test s1.a' isa Union{Int64,Missing}
+        @test s1.a' === a1
+        a2 = missing
+        # missing filtered out by genparameter, leaving no return value (nothing)
+        @test_throws MethodError instance(STypeUnionMissing; config=:0 => :a => a2)
+    end
+
+    @testset "type vector single" begin
+        @system STypeVectorSingle(Controller) begin
+            a ~ preserve::int[](parameter)
+        end
+        a = [1, 2, 3]
+        s = instance(STypeVectorSingle; config=:0 => :a => a)
+        @test s.a' isa Vector{Int64}
+        @test s.a' === a
+    end
+
+    @testset "type vector union" begin
+        @system STypeVectorUnion(Controller) begin
+            a ~ preserve::{sym|∅}[](parameter)
+        end
+        a = [:a, nothing, :c]
+        s = instance(STypeVectorUnion; config=:0 => :a => a)
+        @test s.a' isa Vector{Union{Symbol,Nothing}}
+        @test s.a' === a
+    end
+
     @testset "body replacement" begin
         @system SBodyReplacement1(Controller) begin
             a => 1 ~ preserve
