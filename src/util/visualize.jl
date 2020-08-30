@@ -3,7 +3,7 @@
 visualize(S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, skipfirst=true, filter=nothing,
-    ylab=nothing, legend=nothing, names=nothing, plotopts...
+    ylab=nothing, legend=nothing, names=nothing, colors=nothing, plotopts...
 ) = begin
     G = configure(group)
     C = @config config + !G
@@ -35,14 +35,15 @@ visualize(S::Type{<:System}, x, y;
         legend!(k, T)
         string.(v)
     end
+    isnothing(colors) && (colors = repeat([nothing], n))
     isnothing(ylab) && (ylab = y)
 
     s(c) = simulate(S; configs=@config(c + !xstep), stop, skipfirst, filter, verbose=false)
     r = s(C[1])
-    p = plot(r, x, y; ylab, legend, name=names[1], plotopts...)
+    p = plot(r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
     for i in 2:n
         r = s(C[i])
-        p = plot!(p, r, x, y; name=names[i], plotopts...)
+        p = plot!(p, r, x, y; name=names[i], color=colors[i], plotopts...)
     end
     p
 end
@@ -59,7 +60,7 @@ visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(
 visualize(df::DataFrame, SS::Vector, x, y;
     configs=[], xstep=(),
     stop=nothing, skipfirst=true, filter=nothing,
-    xlab=nothing, ylab=nothing, name=nothing, names=nothing, xunit=nothing, yunit=nothing, plotopts...
+    xlab=nothing, ylab=nothing, name=nothing, names=nothing, colors=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
     y = y isa Pair ? y : y => y
@@ -76,19 +77,20 @@ visualize(df::DataFrame, SS::Vector, x, y;
     isempty(configs) && (configs = repeat([()], n))
     @assert length(configs) == n
     isnothing(names) && (names = nameof.(SS))
+    isnothing(colors) && (colors = repeat([nothing], n))
 
     p = plot(df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
-    for (S, c, name) in zip(SS, configs, names)
+    for (S, c, name, color) in zip(SS, configs, names, colors)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
         r = simulate(S; configs=cs, stop, skipfirst, filter, verbose=false)
-        p = plot!(p, r, xe, ye; kind=:line, name, xunit, yunit, plotopts...)
+        p = plot!(p, r, xe, ye; kind=:line, name, color, xunit, yunit, plotopts...)
     end
     p
 end
 visualize(df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) = visualize(df, [(; system=S, configs)], y; names=[name], kw...)
 visualize(df::DataFrame, maps::Vector, y;
     stop=nothing, skipfirst=true, filter=nothing,
-    title=nothing, xlab=nothing, ylab=nothing, names=nothing, lim=nothing, plotopts...
+    title=nothing, xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
 ) = begin
     y = y isa Pair ? y : y => y
     yo, ye = y
@@ -102,7 +104,9 @@ visualize(df::DataFrame, maps::Vector, y;
         extractarray(r, ye)
     end
 
-    isnothing(names) && (names = repeat([""], length(Ys)))
+    n = length(Ys)
+    isnothing(names) && (names = repeat([""], n))
+    isnothing(colors) && (colors = repeat([nothing], n))
 
     if isnothing(lim)
         l = findlim.(deunitfy.([X, Ys...]))
