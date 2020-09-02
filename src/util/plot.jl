@@ -287,7 +287,7 @@ plot2!(::Val{:UnicodePlots}, p, X, Ys; kind, title, xlab, ylab, legend, legendpo
         n = length(colors)
         C = collect(Iterators.take(Iterators.cycle(UnicodePlots.color_cycle), n+n0))[n0+begin:end]
         f(c::Int, _) = p.info[:colors][c]
-        f(c, _) = c
+        f(c, _) = c in keys(UnicodePlots.color_encode) ? c : :normal
         f(::Nothing, i) = C[i]
         [f(c, i) for (i, c) in enumerate(colors)]
     end
