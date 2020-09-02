@@ -110,7 +110,7 @@ visualize(df::DataFrame, maps::Vector, y;
 
     if isnothing(lim)
         l = findlim.(deunitfy.([X, Ys...]))
-        lim = (minimum(l)[1], maximum(l)[2])
+        lim = (minimum(minimum.(l)), maximum(maximum.(l)))
     end
     I = [lim[1], lim[2]]
 

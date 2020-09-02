@@ -119,7 +119,7 @@ plot!(p, X::Vector, Ys::Vector{<:Vector};
     isnothing(xlim) && (xlim = findlim(X))
     if isnothing(ylim)
         l = findlim.(Ys)
-        ylim = (minimum(l)[1], maximum(l)[2])
+        ylim = (minimum(minimum.(l)), maximum(maximum.(l)))
     end
 
     n = length(Ys)
