@@ -1,0 +1,13 @@
+name: Docker
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterhub/repo2docker-action@master
+        with:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          IMAGE_NAME: "tomyun/cropbox"
+          MYBINDERORG_TAG: ${{ github.event.ref }}
