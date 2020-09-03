@@ -3,4 +3,5 @@
 ln -s ${JULIA_PATH}/lib/julia/sys.so ${JULIA_DEPOT_PATH}/cropbox.so
 julia -e "import Pkg; Pkg.build(\"Cropbox\");"
 julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${JULIA_DEPOT_PATH}/cropbox.so\", precompile_execution_file=\".binder/precompile.jl\");"
-julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"-J${JULIA_DEPOT_PATH}/cropbox.so\");"
+julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"--sysimage=${JULIA_DEPOT_PATH}/cropbox.so\");"
+echo 'alias julia="julia -J${JULIA_DEPOT_PATH}/cropbox.so"' >> ~/.bash_aliases
