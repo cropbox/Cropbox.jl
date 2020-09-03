@@ -1,3 +1,5 @@
 #!/bin/bash
 
 julia -e "import Pkg; Pkg.build(\"Cropbox\");"
+julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"/srv/julia/pkg/cropbox.so\", precompile_execution_file=\".binder/precompile.jl\");"
+julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"-J/srv/julia/pkg/cropbox.so\");"
