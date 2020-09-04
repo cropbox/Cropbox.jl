@@ -12,5 +12,7 @@ julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; creat
 # update IJulia kernel with custom system image
 julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"--sysimage=${JULIA_DEPOT_PATH}/cropbox.so\");"
 
-# make an alias for Julia REPL with custom system image
-echo 'alias julia="julia -J${JULIA_DEPOT_PATH}/cropbox.so"' >> ~/.bash_aliases
+# create a wrapper of Julia REPL with custom system image
+mkdir -p ${HOME}/.local/bin
+echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${JULIA_DEPOT_PATH}/cropbox.so "$@"' > ${HOME}/.local/bin/julia
+chmod +x ${HOME}/.local/bin/julia
