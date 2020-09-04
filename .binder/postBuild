@@ -1,7 +1,16 @@
 #!/bin/bash
 
-ln -s ${JULIA_PATH}/lib/julia/sys.so ${JULIA_DEPOT_PATH}/cropbox.so
+# ensure deps/build step
 julia -e "import Pkg; Pkg.build(\"Cropbox\");"
+
+# fallback system image in case PackageCompiler fails
+ln -s ${JULIA_PATH}/lib/julia/sys.so ${JULIA_DEPOT_PATH}/cropbox.so
+
+# create a system image with Cropbox built-in
 julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${JULIA_DEPOT_PATH}/cropbox.so\", precompile_execution_file=\".binder/precompile.jl\", cpu_target=\"generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)\");"
+
+# update IJulia kernel with custom system image
 julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"--sysimage=${JULIA_DEPOT_PATH}/cropbox.so\");"
+
+# make an alias for Julia REPL with custom system image
 echo 'alias julia="julia -J${JULIA_DEPOT_PATH}/cropbox.so"' >> ~/.bash_aliases
