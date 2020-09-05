@@ -5,6 +5,7 @@ using Cropbox
     b(a) ~ track
     c(b) ~ accumulate
 end
-r = simulate(S; verbose=false);
-plot(r, :tick, :c, backend=:UnicodePlots);
-plot(r, :tick, :c, backend=:Gadfly);
+r = simulate(S);
+plot(r, :tick, :c, backend=:UnicodePlots) |> display;
+plot(r, :tick, :c, backend=:Gadfly)' |> Cropbox.Gadfly.SVGJS() |> display;
+plot(r, :tick, :c, kind=:line, backend=:Gadfly)' |> Cropbox.Gadfly.SVGJS() |> display;
