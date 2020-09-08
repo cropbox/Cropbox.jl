@@ -1,4 +1,4 @@
-import Unitful: Unitful, Units, Quantity, @u_str
+using Unitful: Unitful, Units, Quantity, @u_str
 export @u_str
 
 unitfy(::Nothing, u) = nothing
@@ -26,7 +26,7 @@ promoteunit() = nothing
 hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
 
-import DataFrames: DataFrame, DataFrames
+using DataFrames: DataFrame, DataFrames
 unitfy(df::DataFrame, U::Vector) = begin
     r = DataFrame()
     for (n, c, u) in zip(propertynames(df), eachcol(df), U)

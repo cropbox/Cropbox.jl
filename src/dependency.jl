@@ -1,4 +1,4 @@
-import LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, dst, edges, src
+using LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, dst, edges, src
 
 struct Dependency <: Graph
     g::DiGraph

@@ -1,4 +1,4 @@
-import DataStructures: OrderedDict, DefaultOrderedDict
+using DataStructures: OrderedDict, DefaultOrderedDict
 const _Config = OrderedDict{Symbol,Any}
 struct Config
     config::_Config
@@ -106,7 +106,7 @@ option(c::_Config, key::Vector{Symbol}, keys...) = begin
     missing
 end
 
-import DataStructures: OrderedSet
+using DataStructures: OrderedSet
 parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) where {S<:System} = begin
     #HACK: default evaluation scope is the module where S was originally defined
     isnothing(scope) && (scope = S.name.module)

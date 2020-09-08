@@ -1,9 +1,9 @@
-import Distributions: Distribution, Normal
+using Distributions: Distribution, Normal
 #HACK: Measurements.jl causes weird StackOverFlow error when used with other packages (i.e. Plots, UnicodePlots)
 #HACK: not exactly same, but maybe related with https://github.com/PumasAI/Pumas.jl/issues/609
 #import Measurements
-#import Measurements: Measurement, ±
-import Unitful: Quantity
+#using Measurements: Measurement, ±
+using Unitful: Quantity
 
 #HACK: define own Measurement just for supporting ± syntax
 struct Measurement{T} <: Number

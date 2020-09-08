@@ -1,4 +1,4 @@
-import LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, has_edge, nv
+using LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, has_edge, nv
 
 struct Hierarchy <: Graph
     g::DiGraph
@@ -27,7 +27,7 @@ node!(h::Hierarchy, n::Symbol) = begin
 end
 node!(h::Hierarchy, T::Type{<:System}) = node!(h, namefor(T))
 
-import DataStructures: SortedDict
+using DataStructures: SortedDict
 nodes(h::Hierarchy) = SortedDict(v => k for (k, v) in h.I) |> values |> collect
 
 hasloop(h::Hierarchy, n::Symbol) = (i = h.I[n]; has_edge(h.g, i, i))

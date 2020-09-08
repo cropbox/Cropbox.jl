@@ -1,6 +1,6 @@
-import DataStructures: OrderedDict
-import DataFrames: DataFrame
-import Dates: AbstractTime
+using DataStructures: OrderedDict
+using DataFrames: DataFrame
+using Dates: AbstractTime
 
 struct Simulation
     base::Union{String,Symbol,Nothing}
@@ -72,7 +72,7 @@ format!(m::Simulation; nounit=false, long=false) = begin
     r
 end
 
-import ProgressMeter: Progress, ProgressUnknown, ProgressMeter
+using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
 progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, callback=nothing, verbose=true, kwargs...) = begin
     probe(a::Union{Symbol,String}) = s -> s[a]'

@@ -4,10 +4,10 @@ using Cropbox
 using Distributions
 import Makie
 import Meshing
-import GeometryBasics: GeometryBasics, Point3f0
-import CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
-import Rotations: RotZX
-import Colors: RGBA
+using GeometryBasics: GeometryBasics, Point3f0
+using CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
+using Rotations: RotZX
+using Colors: RGBA
 import UUIDs
 
 @system Rendering

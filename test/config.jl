@@ -1,4 +1,4 @@
-import DataStructures: OrderedDict
+using DataStructures: OrderedDict
 
 @testset "config" begin
     @testset "configure" begin

@@ -1,5 +1,5 @@
-import MacroTools: MacroTools, isexpr, isline, @capture, @q
-import Setfield: @set
+using MacroTools: MacroTools, isexpr, isline, @capture, @q
+using Setfield: @set
 
 struct VarInfo{S<:Union{Symbol,Nothing}}
     system::Symbol
@@ -244,7 +244,7 @@ getbynames(d, K, default=nothing) = begin
     default
 end
 
-import DataStructures: OrderedSet
+using DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo) = begin
     name = Meta.quot(v.name)
@@ -348,7 +348,7 @@ mixins(s::S) where {S<:System} = mixins(S)
 mixins(::Type{<:System}) = (System,)
 mixins(::Type) = ()
 
-import DataStructures: OrderedSet
+using DataStructures: OrderedSet
 mixincollect(s::S) where {S<:System} = mixincollect(S)
 mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
     S in l && return l
@@ -405,7 +405,7 @@ parsehead(head) = begin
     (; name, incl, type)
 end
 
-import DataStructures: OrderedDict, OrderedSet
+using DataStructures: OrderedDict, OrderedSet
 gensystem(body; name, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, incl, scope), incl, scope)
 geninfos(body; name, incl, scope, _...) = begin
     con(b, s, sc) = begin

@@ -1,4 +1,4 @@
-import DataFrames: DataFrame
+using DataFrames: DataFrame
 import Gadfly
 import UnicodePlots
 import Unitful

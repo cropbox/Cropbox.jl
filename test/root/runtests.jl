@@ -2,7 +2,7 @@ using Test
 
 include("root.jl")
 
-import Colors: RGBA
+using Colors: RGBA
 root_maize = (
     :PlantContainer => (
         :r1 => 10,

@@ -1,4 +1,4 @@
-import TimeZones: TimeZones, ZonedDateTime, @tz_str
+using TimeZones: TimeZones, ZonedDateTime, @tz_str
 import Dates
 
 @system Calendar begin

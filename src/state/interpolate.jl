@@ -1,5 +1,5 @@
-import Interpolations: LinearInterpolation, Extrapolation
-import DataStructures: OrderedDict
+using Interpolations: LinearInterpolation, Extrapolation
+using DataStructures: OrderedDict
 
 struct Interpolate{V} <: State{V}
     #TODO: check performance of non-concrete type

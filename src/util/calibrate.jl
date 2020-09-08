@@ -1,5 +1,5 @@
-import DataStructures: OrderedDict
-import DataFrames: DataFrame
+using DataStructures: OrderedDict
+using DataFrames: DataFrame
 import BlackBoxOptim
 
 @nospecialize

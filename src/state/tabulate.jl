@@ -1,4 +1,4 @@
-import DataStructures: OrderedDict
+using DataStructures: OrderedDict
 
 struct Tabulate{V} <: State{V}
     value::OrderedDict{Symbol,OrderedDict{Symbol,V}}

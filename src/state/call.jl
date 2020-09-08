@@ -1,4 +1,4 @@
-import FunctionWrappers: FunctionWrapper
+using FunctionWrappers: FunctionWrapper
 struct Call{V,F<:FunctionWrapper} <: State{V}
     value::F
 end

@@ -1,5 +1,5 @@
-import DataFrames: DataFrames, DataFrame
-import TypedTables: TypedTables, Table
+using DataFrames: DataFrames, DataFrame
+using TypedTables: TypedTables, Table
 import CSV
 
 @system StoreBase begin

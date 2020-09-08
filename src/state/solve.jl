@@ -15,7 +15,7 @@ constructortags(::Val{:Solve}) = (:unit,)
 ⩵(x, y) = x - y
 export ⩵
 
-import SymPy: SymPy, sympy
+using SymPy: SymPy, sympy
 genpolynomial(v::VarInfo) = begin
     x = v.name
     V = extractfuncargpair.(v.args) .|> first
