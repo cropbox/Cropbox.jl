@@ -73,6 +73,33 @@ mesh(s::Rhizobox) = begin
     GeometryBasics.mesh(g)
 end
 
+@system SoilCore(Container) <: Container begin
+    d: diameter => 5 ~ preserve(u"cm", parameter)
+    l: length => 90 ~ preserve(u"cm", parameter)
+    x0: x_origin => 0 ~ preserve(u"cm", parameter)
+    y0: y_origin => 0 ~ preserve(u"cm", parameter)
+
+    dist(nounit(d), nounit(l), nounit(x0), nounit(y0); p::Point3f0): distance => begin
+        x, y, z = p
+        if z < -l # below
+            -z - l
+        elseif 0 < z # above
+            z
+        else # inside: -l <= z <= 0
+            sqrt((x - x0)^2 + (y - y0)^2) - d/2
+        end
+    end ~ call
+end
+
+mesh(s::SoilCore) = begin
+    d = Cropbox.deunitfy(s.d', u"cm")
+    l = Cropbox.deunitfy(s.l', u"cm")
+    x0 = Cropbox.deunitfy(s.x0', u"cm")
+    y0 = Cropbox.deunitfy(s.y0', u"cm")
+    g = GeometryBasics.Cylinder(Point3f0(x0, y0, 0), Point3f0(x0, y0, -l), Float32(d)/2)
+    GeometryBasics.mesh(g)
+end
+
 @system Tropism begin
     N: tropsim_trials => 1.0 ~ preserve(parameter)
     to(; α, β): tropism_objective => 0 ~ call
@@ -292,12 +319,13 @@ end
     end ~ produce::PrimaryRoot[]
 end
 
-render(s::RootArchitecture) = begin
+render(s::RootArchitecture; soilcore=nothing) = begin
     meshes = GeometryBasics.Mesh[]
     render!(s, meshes)
     scene = Makie.mesh(merge(meshes))
     #HACK: customization for container
     Makie.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
+    !isnothing(soilcore) && Makie.mesh!(scene, mesh(soilcore), color=(:purple, 0.1), transparency=true, shading=false)
     #HACK: adjust mouse sensitivity: https://github.com/JuliaPlots/Makie.jl/issues/33
     Makie.cameracontrols(scene).rotationspeed[] = 0.01
     scene
