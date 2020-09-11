@@ -275,6 +275,8 @@ end
             produce(eval(nb()); box, ro=ro+1, RT0=RT1)
         end
     end ~ produce::RootSegment
+
+    ii(cp; c::Container): is_inside => (c.dist'(cp) <= 0) ~ call::Bool
 end
 
 mesh(s::RootSegment) = begin
