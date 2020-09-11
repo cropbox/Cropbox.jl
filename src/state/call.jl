@@ -9,6 +9,8 @@ Call(; unit, _value, _type, _calltype, _...) = begin
     Call{V,F}(_value)
 end
 
+(c::Call)(a...) = value(c)(a...)
+
 constructortags(::Val{:Call}) = (:unit,)
 
 #HACK: showing s.value could trigger StackOverflowError
