@@ -321,7 +321,7 @@ end
 
 render(s::RootArchitecture; soilcore=nothing) = begin
     meshes = GeometryBasics.Mesh[]
-    render!(s, meshes)
+    gather!(s, Rendering; store=meshes, callback=render!)
     scene = Makie.mesh(merge(meshes))
     #HACK: customization for container
     Makie.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
@@ -330,36 +330,29 @@ render(s::RootArchitecture; soilcore=nothing) = begin
     Makie.cameracontrols(scene).rotationspeed[] = 0.01
     scene
 end
-#TODO: provide macro (i.e. @mixin/@drive?) for scaffolding functions based on traits (Val)
-render!(s, meshes) = render!(Cropbox.mixindispatch(s, Rendering)..., meshes)
-render!(::Val{:Rendering}, r::RootSegment, meshes) = begin
+render!(g::Gather, r::RootSegment, ::Val{:Rendering}) = begin
     m = mesh(r)
-    !isnothing(m) && push!(meshes, m)
-
-    # visit recursively
-    render!(Val(nothing), r, meshes)
+    !isnothing(m) && push!(g, m)
+    visit!(g, r)
 end
-render!(::Val, s::System, meshes) = render!.(Cropbox.value.(collect(s)), Ref(meshes))
-render!(::Val, V::Vector{<:System}, meshes) = render!.(V, Ref(meshes))
-render!(::Val, s, meshes) = nothing
+render!(g::Gather, a...) = visit!(g, a...)
 
-gather(s::System) = (L = []; gather!(s, L); L)
-gather!(s, L) = gather!(Cropbox.mixindispatch(s, BaseRoot)..., L)
-gather!(V::Val{:BaseRoot}, r::BaseRoot, L) = begin
-    r.zi' == 0 && push!(L, (
+gatherbaseroot!(g::Gather, s::BaseRoot, ::Val{:BaseRoot}) = (push!(g, s); visit!(g, s))
+gatherbaseroot!(g::Gather, a...) = visit!(g, a...)
+
+gathergeom!(g::Gather,  r::BaseRoot, ::Val{:BaseRoot}) = begin
+    r.zi' == 0 && push!(g, (
         point=[r.pp', r.cp', r.S["**"].cp'...],
         radius=[r.a', r.a', r.S["**"].a'...] |> Cropbox.deunitfy,
         timestamp=[r.t', r.t', r.S["**"].t'...] |> Cropbox.deunitfy,
     ))
-    gather!(Val(nothing), r, L)
+    visit!(g, r)
 end
-gather!(::Val, s::System, L) = gather!.(Cropbox.value.(collect(s)), Ref(L))
-gather!(::Val, V::Vector{<:System}, L) = gather!.(V, Ref(L))
-gather!(::Val, s, L) = nothing
+gathergeom!(g::Gather, a...) = visit!(g, a...)
 
 using WriteVTK
 gathervtk(name::AbstractString, s::System) = begin
-    L = gather(s)
+    L = gather!(s, BaseRoot; callback=gathergeom!)
     P = Float32[]
     C = MeshCell[]
     i = 0

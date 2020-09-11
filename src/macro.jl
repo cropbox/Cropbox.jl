@@ -376,7 +376,7 @@ end
 mixindispatch(s, SS::Type{<:System}...) = begin
     m = mixinof(s, SS...)
     n = isnothing(m) ? m : namefor(m)
-    (Val(n), s)
+    (s, Val(n))
 end
 
 typefor(s::Symbol, m::Module=Main) = getmodule(m, s) |> typefor
