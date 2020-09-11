@@ -40,7 +40,7 @@ Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = (value(getfield(x, 
 Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
 Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
 
-value(b::Bundle{S}) where {S<:System} = begin
+Base.collect(b::Bundle{S}) where {S<:System} = begin
     p = getfield(b, :produce)
     v = collect(p)
     if getfield(b, :recursive)
@@ -59,6 +59,7 @@ value(b::Bundle{S}) where {S<:System} = begin
     end
     l
 end
+value(b::Bundle) = collect(b)
 #TODO: also make final value() based on generator, but then need sum(x; init=0) in Julia 1.6 for empty generator
 #value(b::Bunch) = (value(v) for v in b)
 value(b::Bunch) = collect(b)
