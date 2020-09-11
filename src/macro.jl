@@ -362,7 +362,22 @@ mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
     l
 end
 mixincollect(s) = ()
-mixindispatch(s, S::Type{<:System}) = (Val(S in mixincollect(s) ? namefor(S) : nothing), s)
+
+mixinof(s, SS::Type{<:System}...) = begin
+    M = mixincollect(s)
+    for S in SS
+        for m in M
+            m <: S && return S
+        end
+    end
+    nothing
+end
+
+mixindispatch(s, SS::Type{<:System}...) = begin
+    m = mixinof(s, SS...)
+    n = isnothing(m) ? m : namefor(m)
+    (Val(n), s)
+end
 
 typefor(s::Symbol, m::Module=Main) = getmodule(m, s) |> typefor
 typefor(T) = T
