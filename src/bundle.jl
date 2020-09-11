@@ -25,21 +25,6 @@ Bundle(p::Produce{P,V}, ops::AbstractString) where {P,V} = begin
     Bundle{S,P,F}(p, recursive, filter)
 end
 
-Base.getindex(s::Produce, ops::AbstractString) = Bundle(s, ops)
-
-struct Bunch{V}
-    it::Base.Generator
-end
-
-Base.iterate(b::Bunch, i...) = iterate(getfield(b, :it), i...)
-Base.length(b::Bunch) = length(getfield(b, :it))
-Base.eltype(::Type{<:Bunch{<:State{V}}}) where V = V
-
-Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = (value(getfield(x, p)) for x in value(b)) |> Bunch{vartype(S, p)}
-Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = (value(getfield(x, p)) for x in b) |> Bunch{vartype(S, p)}
-Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
-Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
-
 Base.collect(b::Bundle{S}) where {S<:System} = begin
     p = getfield(b, :produce)
     v = collect(p)
@@ -59,6 +44,22 @@ Base.collect(b::Bundle{S}) where {S<:System} = begin
     end
     l
 end
+
+Base.getindex(s::Produce, ops::AbstractString) = Bundle(s, ops)
+
+struct Bunch{V}
+    it::Base.Generator
+end
+
+Base.iterate(b::Bunch, i...) = iterate(getfield(b, :it), i...)
+Base.length(b::Bunch) = length(getfield(b, :it))
+Base.eltype(::Type{<:Bunch{<:State{V}}}) where V = V
+
+Base.getproperty(b::Bundle{S}, p::Symbol) where {S<:System} = (value(getfield(x, p)) for x in value(b)) |> Bunch{vartype(S, p)}
+Base.getproperty(b::Bunch{S}, p::Symbol) where {S<:System} = (value(getfield(x, p)) for x in b) |> Bunch{vartype(S, p)}
+Base.getindex(b::Bundle, i::AbstractString) = getproperty(b, Symbol(i))
+Base.getindex(b::Bunch, i::AbstractString) = getproperty(b, Symbol(i))
+
 value(b::Bundle) = collect(b)
 #TODO: also make final value() based on generator, but then need sum(x; init=0) in Julia 1.6 for empty generator
 #value(b::Bunch) = (value(v) for v in b)
