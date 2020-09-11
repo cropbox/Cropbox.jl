@@ -205,7 +205,7 @@ root_switchgrass_C6H17NaO24P6 = (
     s = instance(Root.RootArchitecture, config=root_maize, seed=0)
     r = simulate!(s, stop=50)
     @test r.tick[end] == 50u"hr"
-    # Root.render(s) |> open
+    # Root.render(s)
     Root.writevtk(tempname(), s)
     # Root.writepvd("test", Root.RootArchitecture, config=root_maize, stop=50)
 end
