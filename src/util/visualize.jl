@@ -13,7 +13,7 @@ visualize(S::Type{<:System}, x, y;
         isnothing(legend) && (legend = string(k))
         #TODO: support custom unit for legend?
         u = vartype(S, k) |> unittype
-        !isnothing(u) && (legend *= " ($u)")
+        legend = label(legend, u)
     end
 
     #HACK: support indirect referencing of label by variable name
