@@ -3,7 +3,7 @@ using Test
 include("root.jl")
 
 root_maize = (
-    :PlantContainer => (
+    :Pot => (
         :r1 => 10,
         :r2 => 6,
         :height => 30,

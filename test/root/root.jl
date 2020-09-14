@@ -16,7 +16,7 @@ import UUIDs
     dist(; p::Point3f0): distance => -Inf ~ call
 end
 
-@system PlantContainer(Container) <: Container begin
+@system Pot(Container) <: Container begin
     r1: top_radius => 10 ~ preserve(u"cm", parameter)
     r2: bottom_radius => 6 ~ preserve(u"cm", parameter)
     h: height => 30 ~ preserve(u"cm", parameter)
@@ -40,7 +40,7 @@ end
     end ~ call
 end
 
-mesh(s::PlantContainer) = begin
+mesh(s::Pot) = begin
     r1 = Cropbox.deunitfy(s.r1', u"cm")
     r2 = Cropbox.deunitfy(s.r2', u"cm")
     h = Cropbox.deunitfy(s.h', u"cm")
