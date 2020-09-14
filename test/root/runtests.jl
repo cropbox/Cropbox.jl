@@ -2,7 +2,6 @@ using Test
 
 include("root.jl")
 
-using Colors: RGBA
 root_maize = (
     :PlantContainer => (
         :r1 => 10,
@@ -27,7 +26,7 @@ root_maize = (
         :θ => 80 ± 8,
         :N => 1.5,
         :a => 0.04 ± 0.004,
-        :color => RGBA(1, 0, 0, 1),
+        :color => Root.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (
         :lb => 0.2 ± 0.04,
@@ -40,7 +39,7 @@ root_maize = (
         :θ => 70 ± 15,
         :N => 1,
         :a => 0.03 ± 0.003,
-        :color => RGBA(0, 1, 0, 1),
+        :color => Root.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (
         :lb => 0,
@@ -53,7 +52,7 @@ root_maize = (
         :θ => 70 ± 10,
         :N => 2,
         :a => 0.02 ± 0.002,
-        :color => RGBA(0, 0, 1, 1),
+        :color => Root.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_N = (
@@ -75,7 +74,7 @@ root_switchgrass_N = (
         :θ => 60 ± 6,
         :N => 1.5,
         :a => (0.62 ± 0.06)u"mm",
-        :color => RGBA(1, 0, 0, 1),
+        :color => Root.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (
         :lb => 0.63 ± 0.45,
@@ -88,7 +87,7 @@ root_switchgrass_N = (
         :θ => 60 ± 6,
         :N => 1,
         :a => (0.17 ± 0.02)u"mm",
-        :color => RGBA(0, 1, 0, 1),
+        :color => Root.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (
         :lb => 0.45 ± 0.64,
@@ -101,7 +100,7 @@ root_switchgrass_N = (
         :θ => 60 ± 6,
         :N => 2,
         :a => (0.19 ± 0.02)u"mm",
-        :color => RGBA(0, 0, 1, 1),
+        :color => Root.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_W = (
@@ -123,7 +122,7 @@ root_switchgrass_W = (
         :θ => 60 ± 6,
         :N => 1.5,
         :a => (0.71 ± 0.07)u"mm",
-        :color => RGBA(1, 0, 0, 1),
+        :color => Root.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (
         :lb => 0.59 ± 0.48,
@@ -136,7 +135,7 @@ root_switchgrass_W = (
         :θ => 60 ± 6,
         :N => 1,
         :a => (0.19 ± 0.02)u"mm",
-        :color => RGBA(0, 1, 0, 1),
+        :color => Root.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (
         :lb => 0.07 ± 0.04,
@@ -149,7 +148,7 @@ root_switchgrass_W = (
         :θ => 60 ± 6,
         :N => 2,
         :a => (0.19 ± 0.02)u"mm", # 0.68
-        :color => RGBA(0, 0, 1, 1),
+        :color => Root.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_KH2PO4 = (
