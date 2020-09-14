@@ -3,11 +3,6 @@ using Test
 include("root.jl")
 
 root_maize = (
-    :Pot => (
-        :r1 => 10,
-        :r2 => 6,
-        :height => 30,
-    ),
     :RootArchitecture => :maxB => 5,
     :BaseRoot => :T => [
         # P F S
@@ -200,8 +195,26 @@ root_switchgrass_C6H17NaO24P6 = (
     )
 )
 
+container_pot = :Pot => (
+    :r1 => 10,
+    :r2 => 6,
+    :height => 30,
+)
+container_rhizobox = :Rhizobox => (
+    :l => 16u"inch",
+    :w => 10.5u"inch",
+    :h => 42u"inch",
+)
+soilcore = :SoilCore => (
+    :d => 5,
+    :l => 20,
+    :x0 => 3,
+    :y0 => 3,
+)
+
 @testset "root" begin
-    s = instance(Root.RootArchitecture, config=root_maize, seed=0)
+    b = instance(Root.Pot, config=container_pot)
+    s = instance(Root.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
     r = simulate!(s, stop=50)
     @test r.tick[end] == 50u"hr"
     # Root.render(s)

@@ -12,7 +12,7 @@ import UUIDs
 
 @system Rendering
 
-@system Container(Rendering) begin
+@system Container(Rendering, Controller) begin
     dist(; p::Point3f0): distance => -Inf ~ call
 end
 
@@ -313,7 +313,7 @@ end
 end
 
 @system RootArchitecture(Controller) begin
-    box(context) ~ ::Rhizobox
+    box(context) ~ ::Container(override, dynamic)
     maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
