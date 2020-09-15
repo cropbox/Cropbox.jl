@@ -12,6 +12,7 @@ Base.push!(g::Gather, v...) = push!(g.store, v...)
 Base.append!(g::Gather, v...) = append!(g.store, v...)
 
 value(g::Gather) = g.store
+Base.getindex(g::Gather) = value(g)
 Base.adjoint(g::Gather) = value(g)
 
 mixindispatch(s, g::Gather) = mixindispatch(s, g.types...)

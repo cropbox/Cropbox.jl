@@ -9,6 +9,7 @@ value(S::Vector{<:State}) = value.(S)
 
 export value
 
+Base.getindex(s::State) = value(s)
 Base.adjoint(s::State) = value(s)
 
 store!(s::State, v) = (s.value = unitfy(v, unittype(s)))

@@ -65,5 +65,8 @@ value(b::Bundle) = collect(b)
 #value(b::Bunch) = (value(v) for v in b)
 value(b::Bunch) = collect(b)
 
+Base.getindex(b::Bundle) = value(b)
+Base.getindex(b::Bunch) = value(b)
+
 Base.adjoint(b::Bundle) = value(b)
 Base.adjoint(b::Bunch) = value(b)
