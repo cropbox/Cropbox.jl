@@ -2,7 +2,7 @@ dependencies:
   # Cropbox.jl
   - sympy
   # Python
-  - python=3.8
+  #- python=3.8
   - numpy
   - scipy
   - pandas
