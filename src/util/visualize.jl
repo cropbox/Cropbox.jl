@@ -1,6 +1,7 @@
 @nospecialize
 
-visualize(S::Type{<:System}, x, y;
+visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
+visualize!(p, S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, skipfirst=true, filter=nothing,
     ylab=nothing, legend=nothing, names=nothing, colors=nothing, plotopts...
@@ -40,24 +41,27 @@ visualize(S::Type{<:System}, x, y;
 
     s(c) = simulate(S; configs=@config(c + !xstep), stop, skipfirst, filter, verbose=false)
     r = s(C[1])
-    p = plot(r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
+    p = plot!(p, r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
     for i in 2:n
         r = s(C[i])
         p = plot!(p, r, x, y; name=names[i], color=colors[i], plotopts...)
     end
     p
 end
-visualize(S::Type{<:System}, x, y::Vector;
+visualize(S::Type{<:System}, x, y::Vector; kw...) = visualize!(nothing, S, x, y; kw...)
+visualize!(p, S::Type{<:System}, x, y::Vector;
     config=(), xstep=(),
     stop=nothing, skipfirst=true, filter=nothing,
     plotopts...
 ) = begin
     r = simulate(S; configs=@config(config + !xstep), stop, skipfirst, filter, verbose=false)
-    plot(r, x, y; plotopts...)
+    plot!(p, r, x, y; plotopts...)
 end
 
-visualize(df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize(df, [S], x, y; configs=[config], kw...)
-visualize(df::DataFrame, SS::Vector, x, y;
+visualize(df::DataFrame, S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
+visualize!(p, df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize!(p, df, [S], x, y; configs=[config], kw...)
+visualize(df::DataFrame, SS::Vector, x, y; kw...) = visualize!(nothing, df, SS, x, y; kw...)
+visualize!(p, df::DataFrame, SS::Vector, x, y;
     configs=[], xstep=(),
     stop=nothing, skipfirst=true, filter=nothing,
     xlab=nothing, ylab=nothing, name=nothing, names=nothing, colors=nothing, xunit=nothing, yunit=nothing, plotopts...
@@ -79,7 +83,7 @@ visualize(df::DataFrame, SS::Vector, x, y;
     isnothing(names) && (names = nameof.(SS))
     isnothing(colors) && (colors = repeat([nothing], n))
 
-    p = plot(df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
+    p = plot!(p, df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
     for (S, c, name, color) in zip(SS, configs, names, colors)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
         r = simulate(S; configs=cs, stop, skipfirst, filter, verbose=false)
@@ -87,8 +91,10 @@ visualize(df::DataFrame, SS::Vector, x, y;
     end
     p
 end
-visualize(df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) = visualize(df, [(; system=S, configs)], y; names=[name], kw...)
-visualize(df::DataFrame, maps::Vector, y;
+visualize(df::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, df, S, y; kw...)
+visualize!(p, df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) = visualize!(p, df, [(; system=S, configs)], y; names=[name], kw...)
+visualize(df::DataFrame, maps::Vector, y; kw...) = visualize!(nothing, df, maps, y; kw...)
+visualize!(p, df::DataFrame, maps::Vector, y;
     stop=nothing, skipfirst=true, filter=nothing,
     title=nothing, xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
 ) = begin
@@ -114,7 +120,7 @@ visualize(df::DataFrame, maps::Vector, y;
     end
     I = [lim[1], lim[2]]
 
-    p = plot(X, Ys; kind=:scatter, title, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    p = plot!(p, X, Ys; kind=:scatter, title, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
     !isnothing(lim) && plot!(p, I, I, kind=:line, color=:lightgray, name="")
     p
 end
@@ -131,4 +137,4 @@ end
 
 @specialize
 
-export visualize
+export visualize, visualize!
