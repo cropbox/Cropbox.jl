@@ -106,6 +106,6 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
             $l |> $pick
         end
     end
-    val = genfunc(v, body)
+    val = genbody(v, body)
     genstore(v, val)
 end

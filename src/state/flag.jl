@@ -19,14 +19,14 @@ genupdate(v::VarInfo, ::Val{:Flag}, ::PostStage) = begin
     if istag(v, :oneway)
         @q let $s = $(symstate(v))
             if !$C.value($s)
-                let $f = $(genfunc(v))
+                let $f = $(genbody(v))
                     $C.store!($s, $f)
                 end
             end
         end
     else
         @q let $s = $(symstate(v)),
-               $f = $(genfunc(v))
+               $f = $(genbody(v))
             $C.store!($s, $f)
         end
     end

@@ -105,14 +105,14 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     if istag(v, :single)
         @q let $s = $(symstate(v))
             if isempty($s)
-                let $P = $(genfunc(v))
+                let $P = $(genbody(v))
                     $C.produce!($s, $P)
                 end
             end
         end
     else
         @q let $s = $(symstate(v)),
-               $P = $(genfunc(v))
+               $P = $(genbody(v))
             $C.produce!($s, $P)
         end
     end

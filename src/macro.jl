@@ -497,7 +497,7 @@ end
 genparameter(v::VarInfo) = begin
     @gensym o
     @q let $o = $C.option(config, _names, $(names(v)))
-        ismissing($o) ? $(genfunc(v)) : $o
+        ismissing($o) ? $(genbody(v)) : $o
     end
 end
 geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true) = begin
@@ -505,7 +505,7 @@ geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true)
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
     f(x) = x |> s |> u |> m
-    x = parameter && istag(v, :parameter) ? genparameter(v) : genfunc(v)
+    x = parameter && istag(v, :parameter) ? genparameter(v) : genbody(v)
     f(x)
 end
 
@@ -548,7 +548,7 @@ genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true) = begin
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
     f(x) = x |> u |> m
-    isnothing(val) && (val = genfunc(v))
+    isnothing(val) && (val = genbody(v))
     val = f(val)
     #TODO: remove redundant unitfy() in store!()
     @gensym s
@@ -648,13 +648,13 @@ extractfuncargpair(a) = let k, v
     extractfuncargkey(k) => v
 end
 
-genfuncargs(v::VarInfo) = begin
+genbodyargs(v::VarInfo) = begin
     emit(a) = let p = extractfuncargpair(a)
         @q $(esc(p[1])) = $C.value($(p[2]))
     end
     @q begin $(emit.(v.args)...) end
 end
-genfunc(v::VarInfo, body=nothing) = begin
+genbody(v::VarInfo, body=nothing) = begin
     if isnothing(v.body) && length(v.args) == 1
         a = v.args[1]
         emit(k, v) = @q $(esc(k)) = $C.value($v)
@@ -669,7 +669,7 @@ genfunc(v::VarInfo, body=nothing) = begin
         end
         body = esc(k)
     else
-        args = genfuncargs(v)
+        args = genbodyargs(v)
         isnothing(body) && (body = esc(v.body))
     end
     #TODO: translate `return` to a local safe statement

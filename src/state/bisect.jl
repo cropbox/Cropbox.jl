@@ -70,7 +70,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $C.store!($s, $s.a)
             @goto $lrepeat
         elseif $s.step == :a
-            $s.fa = $(genfunc(v))
+            $s.fa = $(genbody(v))
             if $s.fa ≈ zero($s.fa)
                 @debug "bisect: $($v.name) [$($s.N)] found! $($C.value($s))"
                 @goto $lexit
@@ -83,7 +83,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $C.store!($s, $s.b)
             @goto $lrepeat
         elseif $s.step == :b
-            $s.fb = $(genfunc(v))
+            $s.fb = $(genbody(v))
             if $s.fb ≈ zero($s.fb)
                 @debug "bisect: $($v.name) [$($s.N)] found! $($C.value($s))"
                 @goto $lexit
@@ -110,7 +110,7 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
             $s.step = :c
             @goto $lrepeat
         elseif $s.step == :c
-            $s.fc = $(genfunc(v))
+            $s.fc = $(genbody(v))
             if isnan($s.fc)
                 @warn "bisect: $($v.name) [$($s.N)] $($s.c) => $($s.fc)"
             else
