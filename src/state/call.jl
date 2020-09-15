@@ -44,9 +44,4 @@ end
 
 geninit(v::VarInfo, ::Val{:Call}) = genfunc(v)
 
-genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
-    @gensym s
-    @q let $s = $(symstate(v))
-        $C.value($s)
-    end
-end
+genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = genvalue(v)
