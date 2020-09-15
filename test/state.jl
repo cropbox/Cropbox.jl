@@ -8,6 +8,7 @@
     include("state/track.jl")
     include("state/drive.jl")
     include("state/call.jl")
+    include("state/integrate.jl")
     include("state/accumulate.jl")
     include("state/capture.jl")
     include("state/flag.jl")
