@@ -42,35 +42,7 @@ genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
     @q Call{$V,$F}
 end
 
-geninit(v::VarInfo, ::Val{:Call}) = begin
-    emiti(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $C.value($(p[2])))
-    innerargs = @q begin $(emiti.(v.args)...) end
-
-    innercall = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
-    innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
-
-    emito(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
-    outerargs = @q begin $(emito.(v.args)...) end
-
-    extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end
-    emitc(a) = @q $(esc(extract(a)))
-    callargs = emitc.(v.kwargs)
-
-    @q function $(symcall(v))($(callargs...))
-        $innerbody
-    end
-    # outerbody = MacroTools.flatten(@q let $outerargs
-    #     function $(symcall(v))($(callargs...))
-    #         $innerbody
-    #     end
-    # end)
-    #
-    # key(a) = let k, v; @capture(a, k_=v_) ? k : a end
-    # emitf(a) = @q $(esc(key(a)))
-    # fillargs = emitf.(v.args)
-    #
-    # @q function $(symcall(v))($(fillargs...); $(callargs...)) $outerbody end
-end
+geninit(v::VarInfo, ::Val{:Call}) = genfunc(v)
 
 genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = begin
     @gensym s

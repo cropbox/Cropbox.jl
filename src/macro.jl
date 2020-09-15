@@ -676,3 +676,23 @@ genbody(v::VarInfo, body=nothing) = begin
     MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
     MacroTools.flatten(@q let $args; $body end)
 end
+
+genfunc(v::VarInfo) = begin
+    #TODO: use genbodyargs()
+    emiti(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $C.value($(p[2])))
+    innerargs = @q begin $(emiti.(v.args)...) end
+
+    innercall = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
+    innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
+
+    emito(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
+    outerargs = @q begin $(emito.(v.args)...) end
+
+    extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end
+    emitc(a) = @q $(esc(extract(a)))
+    callargs = emitc.(v.kwargs)
+
+    @q function $(symcall(v))($(callargs...))
+        $innerbody
+    end
+end
