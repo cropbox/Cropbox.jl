@@ -48,6 +48,19 @@ visualize!(p, S::Type{<:System}, x, y;
     end
     p
 end
+
+visualize(SS::Vector, x, y; kw...) = visualize!(nothing, SS, x, y; kw...)
+visualize!(p, SS::Vector, x, y; names=nothing, colors=nothing, kw...) = begin
+    n = length(SS)
+    isnothing(names) && (names = nameof.(SS))
+    isnothing(colors) && (colors = repeat([nothing], n))
+
+    for (S, name, color) in zip(SS, names, colors)
+        p = visualize!(p, S, x, y; name, color, kw...)
+    end
+    p
+end
+
 visualize(S::Type{<:System}, x, y::Vector; kw...) = visualize!(nothing, S, x, y; kw...)
 visualize!(p, S::Type{<:System}, x, y::Vector;
     config=(), xstep=(),
