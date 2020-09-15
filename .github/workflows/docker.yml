@@ -13,4 +13,5 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE_NAME: "tomyun/cropbox"
+          LATEST_TAG_OFF: true
           MYBINDERORG_TAG: ${{ github.event.ref }}
