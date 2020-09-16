@@ -36,12 +36,16 @@ genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     @q Accumulate{$V,$T,$R}
 end
 
-geninit(v::VarInfo, ::Val{:Accumulate}) = @q $C.unitfy($C.value($(gettag(v, :init))), $C.value($(v.tags[:unit])))
+geninit(v::VarInfo, ::Val{:Accumulate}) = begin
+    i = gettag(v, :init)
+    u = gettag(v, :unit)
+    @q $C.unitfy($C.value($i), $C.value($u))
+end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @gensym s t t0 a
     @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
+           $t = $C.value($(gettag(v, :time))),
            $t0 = $s.tick,
            $a = $s.value + $s.rate * ($t - $t0)
         $C.store!($s, $a)
@@ -51,9 +55,9 @@ end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
     @gensym s t w f r
     @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
-           $w = $C.value($(v.tags[:when])),
-           $f = $w ? $(genbody(v)) : zero($(v.tags[:_type])),
+           $t = $C.value($(gettag(v, :time))),
+           $w = $C.value($(gettag(v, :when))),
+           $f = $w ? $(genbody(v)) : zero($(gettag(v, :_type))),
            $r = $C.unitfy($f, $C.rateunit($s))
         $s.tick = $t
         $s.rate = $r

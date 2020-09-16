@@ -118,7 +118,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     val(v, ::Val{false}) = missing
     val(v, ::Val{true}) = begin
         b = @eval scope $(v.body)
-        u = @eval scope $(v.tags[:unit])
+        u = @eval scope $(gettag(v, :unit))
         unitfy(b, u)
     end
     C = configure(namefor(S) => ((key(v) => val(v) for v in P)...,))

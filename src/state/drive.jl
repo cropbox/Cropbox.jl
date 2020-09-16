@@ -18,7 +18,9 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
     k = gettag(v, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
     k = isa(k, QuoteNode) ? k : Meta.quot(k)
-    @q $C.unitfy($C.value($(genbody(v))[$k]), $C.value($(v.tags[:unit])))
+    b = genbody(v)
+    u = gettag(v, :unit)
+    @q $C.unitfy($C.value($b[$k]), $C.value($u))
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin

@@ -59,8 +59,8 @@ genupdate(v::VarInfo, ::Val{:Bisect}, ::MainStep) = begin
         if $s.step == :z
             $s.N = 1
             $u = $C.value($(gettag(v, :unit)))
-            $s.a = $(genminmax(v, @q $C.unitfy($C.value($(v.tags[:lower])), $u)))
-            $s.b = $(genminmax(v, @q $C.unitfy($C.value($(v.tags[:upper])), $u)))
+            $s.a = $(genminmax(v, @q $C.unitfy($C.value($(gettag(v, :lower))), $u)))
+            $s.b = $(genminmax(v, @q $C.unitfy($C.value($(gettag(v, :upper))), $u)))
             $s.c = zero($s.c)
             $s.d = $s.b - $s.a
             $s.fa = zero($s.fa) * NaN

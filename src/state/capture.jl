@@ -41,7 +41,7 @@ geninit(v::VarInfo, ::Val{:Capture}) = nothing
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     @gensym s t t0 d
     @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
+           $t = $C.value($(gettag(v, :time))),
            $t0 = $s.tick,
            $d = $s.rate * ($t - $t0)
         $C.store!($s, $d)
@@ -51,9 +51,9 @@ end
 genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
     @gensym s t w f r
     @q let $s = $(symstate(v)),
-           $t = $C.value($(v.tags[:time])),
-           $w = $C.value($(v.tags[:when])),
-           $f = $w ? $(genbody(v)) : zero($(v.tags[:_type])),
+           $t = $C.value($(gettag(v, :time))),
+           $w = $C.value($(gettag(v, :when))),
+           $f = $w ? $(genbody(v)) : zero($(gettag(v, :_type))),
            $r = $C.unitfy($f, $C.rateunit($s))
         $s.tick = $t
         $s.rate = $r
