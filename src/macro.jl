@@ -688,7 +688,8 @@ emitfunckwargpair(a) = begin
     k, t, u = extractfunckwargtuple(a)
     v = esc(k)
     v = isnothing(u) ? @q($v) : @q($C.unitfy($v, $u))
-    v = @q $v::$C.valuetype($(gencallargtype(t)), $u)
+    # Skip type assertion (maybe only needed for Call, not Integrate)
+    #v = @q $v::$C.valuetype($(gencallargtype(t)), $u)
     @q $k = $v
 end
 
