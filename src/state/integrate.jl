@@ -22,12 +22,13 @@ genvartype(v::VarInfo, ::Val{:Integrate}; V, _...) = @q Integrate{$V}
 geninit(v::VarInfo, ::Val{:Integrate}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Integrate}, ::MainStep) = begin
-    @gensym s u a b f i
+    kwarg = only(v.kwargs)
+    u = extractfunckwargtuple(kwarg)[3]
+    @gensym s a b f i
     @q let $s = $(symstate(v)),
-           $u = $C.value($(gettag(v, :unit))),
            $a = $C.unitfy($C.value($(gettag(v, :from))), $u),
            $b = $C.unitfy($C.value($(gettag(v, :to))), $u),
-           $f = $(genfunc(v))
+           $f = $(genfunc(v; unitfy=false))
         $i = $C.QuadGK.quadgk($f, $a, $b) |> first
         $C.store!($s, $i)
     end
