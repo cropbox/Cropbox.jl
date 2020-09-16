@@ -36,7 +36,7 @@
         s = instance(SCallTypeUnit)
         @test s.a' === 1u"m"
         @test s.b' === 2u"m"
-        @test s.a' |> Cropbox.deunitfy |> typeof == Int
-        @test s.b' |> Cropbox.deunitfy |> typeof == Int
+        @test s.a' |> Cropbox.deunitfy isa Int
+        @test s.b' |> Cropbox.deunitfy isa Int
     end
 end
