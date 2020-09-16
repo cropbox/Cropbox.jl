@@ -647,13 +647,14 @@ extractfuncargpair(a) = let k, v
     !@capture(a, k_=v_) && (k = a; v = a)
     extractfuncargkey(k) => v
 end
-
-genbodyargs(v::VarInfo) = begin
-    emit(a) = let p = extractfuncargpair(a)
-        @q $(esc(p[1])) = $C.value($(p[2]))
+emitfuncargpair(a) = begin
+    let (k, v) = extractfuncargpair(a)
+        k = esc(k)
+        v = @q $C.value($v)
+        @q $k = $v
     end
-    @q begin $(emit.(v.args)...) end
 end
+
 genbody(v::VarInfo, body=nothing) = begin
     if isnothing(v.body) && length(v.args) == 1
         a = v.args[1]
@@ -669,7 +670,7 @@ genbody(v::VarInfo, body=nothing) = begin
         end
         body = esc(k)
     else
-        args = genbodyargs(v)
+        args = @q begin $(emitfuncargpair.(v.args)...) end
         isnothing(body) && (body = esc(v.body))
     end
     #TODO: translate `return` to a local safe statement
@@ -677,22 +678,31 @@ genbody(v::VarInfo, body=nothing) = begin
     MacroTools.flatten(@q let $args; $body end)
 end
 
-genfunc(v::VarInfo) = begin
-    #TODO: use genbodyargs()
-    emiti(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $C.value($(p[2])))
-    innerargs = @q begin $(emiti.(v.args)...) end
+extractfunckwargtuple(a) = let k, t, u
+    @capture(a, k_::t_(u_) | k_::t_ | k_(u_))
+    isnothing(k) && (k = a)
+    (k, t, u)
+end
+emitfunckwargkey(a) = @q $(esc(extractfunckwargtuple(a)[1]))
+emitfunckwargpair(a) = begin
+    k, t, u = extractfunckwargtuple(a)
+    v = esc(k)
+    v = isnothing(u) ? @q($v) : @q($C.unitfy($v, $u))
+    v = isnothing(t) ? @q($v) : @q($v::$t)
+    @q $k = $v
+end
 
-    innercall = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
-    innerbody = @q $C.unitfy($innercall, $C.value($(v.tags[:unit])))
+genfunc(v::VarInfo; unitfy=true) = begin
+    innerargs = @q begin $(emitfuncargpair.(v.args)...) end
+    innerbody = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
+    unitfy && (innerbody = @q $C.unitfy($innerbody, $C.value($(gettag(v, :unit)))))
 
-    emito(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
-    outerargs = @q begin $(emito.(v.args)...) end
-
-    extract(a) = let k, t, u; @capture(a, k_::t_(u_) | k_::t_ | k_(u_)) ? k : a end
-    emitc(a) = @q $(esc(extract(a)))
-    callargs = emitc.(v.kwargs)
+    callargs = emitfunckwargkey.(v.kwargs)
+    argsheader = emitfunckwargpair.(v.kwargs)
 
     @q function $(symcall(v))($(callargs...))
-        $innerbody
+        let $(argsheader...)
+            $innerbody
+        end
     end
 end
