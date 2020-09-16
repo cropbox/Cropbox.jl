@@ -688,7 +688,7 @@ emitfunckwargpair(a) = begin
     k, t, u = extractfunckwargtuple(a)
     v = esc(k)
     v = isnothing(u) ? @q($v) : @q($C.unitfy($v, $u))
-    v = isnothing(t) ? @q($v) : @q($v::$t)
+    v = @q $v::$C.valuetype($(gencallargtype(t)), $u)
     @q $k = $v
 end
 
