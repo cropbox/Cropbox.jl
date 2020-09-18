@@ -16,7 +16,3 @@ julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"--
 mkdir -p ${HOME}/.local/bin
 echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${JULIA_DEPOT_PATH}/cropbox.so "$@"' > ${HOME}/.local/bin/julia
 chmod +x ${HOME}/.local/bin/julia
-
-# remove Cropbox.jl source from user home directory
-rm -rf ${HOME}/deps ${HOME}/lib ${HOME}/src ${HOME}/test
-rm ${HOME}/Manifest.toml ${HOME}/Project.toml
