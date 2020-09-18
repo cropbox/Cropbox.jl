@@ -416,6 +416,21 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width, height)
 end
 
+import ImageMagick_jll
+sixel(p::Plot) = begin
+    svg = tempname()
+    # assume Gadfly backend
+    p[] |> Gadfly.SVG(svg)
+    six = tempname()
+    #HACK: unable to use ImageMagick.load() for reading SVG stream
+    ImageMagick_jll.imagemagick_convert() do exe
+        #TODO: increase output dimension (-density 144), but somehow not working with 6.9.10-12
+        success(`$exe svg:$svg six:$six`)
+    end
+    write(stdout, read(six))
+    nothing
+end
+
 @specialize
 
 export plot, plot!
