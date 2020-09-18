@@ -11,3 +11,5 @@ dependencies:
   # R
   - r-base=3.6
   - r-tidyverse
+  # JupyterHub
+  - jupyterhub=1.1.0
