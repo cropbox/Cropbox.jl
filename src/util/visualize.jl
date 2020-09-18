@@ -93,7 +93,7 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     n = length(SS)
     isempty(configs) && (configs = repeat([()], n))
     @assert length(configs) == n
-    isnothing(names) && (names = nameof.(SS))
+    isnothing(names) && (names = string.(nameof.(SS)))
     isnothing(colors) && (colors = repeat([nothing], n))
 
     p = plot!(p, df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
