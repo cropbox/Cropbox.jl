@@ -50,13 +50,15 @@ visualize!(p, S::Type{<:System}, x, y;
 end
 
 visualize(SS::Vector, x, y; kw...) = visualize!(nothing, SS, x, y; kw...)
-visualize!(p, SS::Vector, x, y; names=nothing, colors=nothing, kw...) = begin
+visualize!(p, SS::Vector, x, y; configs=[], names=nothing, colors=nothing, kw...) = begin
     n = length(SS)
-    isnothing(names) && (names = nameof.(SS))
+    isempty(configs) && (configs = repeat([()], n))
+    @assert length(configs) == n
+    isnothing(names) && (names = string.(nameof.(SS)))
     isnothing(colors) && (colors = repeat([nothing], n))
 
-    for (S, name, color) in zip(SS, names, colors)
-        p = visualize!(p, S, x, y; name, color, kw...)
+    for (S, config, name, color) in zip(SS, configs, names, colors)
+        p = visualize!(p, S, x, y; config, name, color, kw...)
     end
     p
 end
