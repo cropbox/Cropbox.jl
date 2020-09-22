@@ -108,9 +108,13 @@ end
     # smoothing the transition between Ac and Aj
     β: photosynthesis_transition_factor => 0.99 ~ preserve(parameter)
     A_net(Ac, Aj, β): net_photosynthesis => begin
-        ((Ac+Aj) - sqrt((Ac+Aj)^2 - 4β*Ac*Aj)) / 2β
-    end ~ track(u"μmol/m^2/s" #= CO2 =#)
-    
+        x = A_net
+        a = β
+        b = -(Ac+Aj)
+        c = Ac*Aj
+        a*x^2 + b*x + c ⩵ 0
+    end ~ solve(pick=:minimum, u"μmol/m^2/s")
+
     A_gross(A_net, Rd): gross_photosynthesis => begin
         A_gross = A_net + Rd
         # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
