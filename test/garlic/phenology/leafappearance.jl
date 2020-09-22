@@ -1,7 +1,7 @@
 @system LeafAppearance(Stage, Germination, Emergence, LeafInitiation) begin
     LTARa_max: maximum_leaf_tip_appearance_rate_asymptote => 0.4421 ~ preserve(u"d^-1", parameter)
-    LTAR_SDm => 117.7523 ~ preserve(u"d", paramter)
-    LTAR_k => 0.0256 ~ preserve(paramter)
+    LTAR_SDm => 117.7523 ~ preserve(u"d", parameter)
+    LTAR_k => 0.0256 ~ preserve(parameter)
     LTAR_max(asym=LTARa_max, x=SD, x_m=LTAR_SDm, k=LTAR_k): maximum_leaf_tip_appearance_rate => begin
         asym / (1 + exp(-k * Cropbox.deunitfy(x - x_m)))
     end ~ preserve(u"d^-1", parameter)
