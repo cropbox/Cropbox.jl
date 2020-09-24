@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # ensure Cropbox.jl added/built and available outside home directory
-export CROPBOX_DIR=${JULIA_DEPOT_PATH}/Cropbox.jl
-cp -pR ${REPO_DIR} ${CROPBOX_DIR}
+export CROPBOX_DIR=${REPO_DIR}
 JULIA_PROJECT="" julia -e "import Pkg; Pkg.add(url=\"${CROPBOX_DIR}\"); Pkg.build(\"Cropbox\");"
 
 # fallback system image in case PackageCompiler fails

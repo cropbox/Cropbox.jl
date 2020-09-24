@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CROPBOX_DIR=${JULIA_DEPOT_PATH}/Cropbox.jl
+export CROPBOX_DIR=${REPO_DIR}
 export CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
 
 # in case $HOME and $REPO_DIR are different
