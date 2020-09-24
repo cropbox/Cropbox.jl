@@ -15,6 +15,6 @@ julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; creat
 JULIA_PROJECT="" julia -e "using IJulia; installkernel(\"Julia\", \"--project=${HOME}\", \"--sysimage=${CROPBOX_IMG}\");"
 
 # create a wrapper of Julia REPL with custom system image
-mkdir -p ${HOME}/.local/bin
-echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${CROPBOX_IMG} "$@"' > ${HOME}/.local/bin/julia
-chmod +x ${HOME}/.local/bin/julia
+mkdir -p ${REPO_DIR}/.local/bin
+echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${CROPBOX_IMG} "$@"' > ${REPO_DIR}/.local/bin/julia
+chmod +x ${REPO_DIR}/.local/bin/julia
