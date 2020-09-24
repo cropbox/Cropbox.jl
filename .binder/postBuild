@@ -6,15 +6,16 @@ cp -pR ${REPO_DIR} ${CROPBOX_DIR}
 julia -e "import Pkg; Pkg.add(url=\"${CROPBOX_DIR}\"); Pkg.build(\"Cropbox\");"
 
 # fallback system image in case PackageCompiler fails
-ln -s ${JULIA_PATH}/lib/julia/sys.so ${JULIA_DEPOT_PATH}/cropbox.so
+export CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
+ln -s ${JULIA_PATH}/lib/julia/sys.so ${CROPBOX_IMG}
 
 # create a system image with Cropbox built-in
-julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${JULIA_DEPOT_PATH}/cropbox.so\", precompile_execution_file=\".binder/precompile.jl\", cpu_target=\"generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)\");"
+julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${CROPBOX_IMG}\", precompile_execution_file=\".binder/precompile.jl\", cpu_target=\"generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)\");"
 
 # update IJulia kernel with custom system image
-julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"--sysimage=${JULIA_DEPOT_PATH}/cropbox.so\");"
+julia -e "using IJulia; installkernel(\"Julia\", \"--project=${REPO_DIR}\", \"--sysimage=${CROPBOX_IMG}\");"
 
 # create a wrapper of Julia REPL with custom system image
 mkdir -p ${HOME}/.local/bin
-echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${JULIA_DEPOT_PATH}/cropbox.so "$@"' > ${HOME}/.local/bin/julia
+echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${CROPBOX_IMG} "$@"' > ${HOME}/.local/bin/julia
 chmod +x ${HOME}/.local/bin/julia
