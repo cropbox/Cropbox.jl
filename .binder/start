@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export CROPBOX_DIR=${JULIA_DEPOT_PATH}/Cropbox.jl
+export CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
+
+exec "$@"
