@@ -13,3 +13,4 @@ dependencies:
   - r-tidyverse
   # JupyterHub
   - jupyterhub=1.1.0
+  - nbgitpuller
