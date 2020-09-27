@@ -16,5 +16,5 @@ JULIA_PROJECT="" julia -e "using IJulia; installkernel(\"Julia\", \"--project=${
 
 # create a wrapper of Julia REPL with custom system image
 mkdir -p ${REPO_DIR}/.local/bin
-echo -e '#!/bin/bash\n${JULIA_PATH}/bin/julia -J${CROPBOX_IMG} "$@"' > ${REPO_DIR}/.local/bin/julia
+echo -e '#!/bin/bash\n'"${JULIA_PATH}/bin/julia -J${CROPBOX_IMG}" '"$@"' > ${REPO_DIR}/.local/bin/julia
 chmod +x ${REPO_DIR}/.local/bin/julia
