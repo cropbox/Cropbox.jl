@@ -79,7 +79,7 @@ end
     end ~ track(u"μbar")
 
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
-    Rd25: dark_respiration_at_25 => 2 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
+    Rd25: dark_respiration_at_25 => 2 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     Ear: activation_energy_for_respiration => 39.8 ~ preserve(u"kJ/mol", parameter)
     Rd(Rd25, kT, Ear): dark_respiration => begin
         Rd25 * kT(Ear)

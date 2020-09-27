@@ -77,7 +77,7 @@ end
 end
 
 @system C3r(C3Base) begin
-    Rd25: dark_respiration_at_25 => 1.08 ~ preserve(u"μmol/m^2/s" #= O2 =#, parameter)
+    Rd25: dark_respiration_at_25 => 1.08 ~ preserve(u"μmol/m^2/s" #= CO2 =#, parameter)
     Ear: activation_energy_for_respiration => 49.39 ~ preserve(u"kJ/mol", parameter)
     Rd(T_dep, Rd25, Ear): dark_respiration => begin
         Rd25 * T_dep(Ear)
