@@ -1,7 +1,7 @@
 @system C4Base(CBase) begin
     Cm(Ci): mesophyll_co2 ~ track(u"μbar")
 
-    gbs => 0.003 ~ preserve(u"mol/m^2/s/bar" #= CO2 =#, parameter) # bundle sheath conductance to CO2, mol m-2 s-1
+    gbs: bundle_sheath_conductance => 0.003 ~ preserve(u"mol/m^2/s/bar" #= CO2 =#, parameter) # bundle sheath conductance to CO2, mol m-2 s-1
     # gi => 1.0 ~ preserve(parameter) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 end
 
