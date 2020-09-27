@@ -144,7 +144,7 @@ settings = (;
     scenario = [:RCP45, :RCP85],
     station = keys(STATION_NAMES),
     year = 2020:10:2090,
-    repetition = 1:10,
+    repetition = 0:9,
     sowing_day = 250:10:350, # 280:30:340
     scape_removal_day = [nothing],
 )
