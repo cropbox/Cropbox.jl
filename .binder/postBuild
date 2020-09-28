@@ -18,3 +18,6 @@ JULIA_PROJECT="" julia -e "using IJulia; installkernel(\"Julia\", \"--project=${
 mkdir -p ${REPO_DIR}/.local/bin
 echo -e '#!/bin/bash\n'"${JULIA_PATH}/bin/julia -J${CROPBOX_IMG}" '"$@"' > ${REPO_DIR}/.local/bin/julia
 chmod +x ${REPO_DIR}/.local/bin/julia
+
+# trigger build of JupyterLab for Jupytext
+jupyter lab build
