@@ -90,6 +90,7 @@ CUH_2014 = (CUH, (
         timezone = tz"America/Los_Angeles",
     ),
     :Calendar => (
+        # 2014.wea starts from 2014-09-01 01:00, not 00:00
         init = ZonedDateTime(2014, 9, 1, 1, tz"America/Los_Angeles"), # Y1 bgn
         last = ZonedDateTime(2015, 7, 7, tz"America/Los_Angeles"), #Y2 end
     ),
