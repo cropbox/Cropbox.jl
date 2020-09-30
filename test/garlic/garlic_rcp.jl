@@ -133,7 +133,7 @@ end
 
 #setting = (; scenario=:RCP45, station=165, year=2021, repetition=1, sowing_day=250, scape_removal_day=nothing)
 
-rcp_simulate(; target=:total_mass, setting) = begin
+rcp_simulate(; target=[:bulb_mass, :total_mass, :leaf_area], setting) = begin
     #println((; setting...))
     config = rcp_config(; setting...)
     callback(s) = s.calendar.time' == s.config[:Phenology][:harvest_date]
