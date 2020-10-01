@@ -148,17 +148,22 @@ settings = (;
     sowing_day = 250:10:350, # 280:30:340
     scape_removal_day = [nothing],
 )
-rcp_run(; settings, verbose=true) = begin
+rcp_run(; settings, cache=nothing, verbose=true) = begin
     K = keys(settings)
     V = values(settings)
     P = Iterators.product(V...) |> collect
     n = length(P)
-    R = Vector(undef, n)
+    R = isnothing(cache) ? Vector(undef, n) : cache
+    @assert length(R) == n
     dt = verbose ? 1 : Inf
     p = Cropbox.Progress(n; dt, Cropbox.barglyphs)
-    Threads.@threads for i in 1:n
-        R[i] = rcp_simulate(; setting=zip(K, P[i]))
-        Cropbox.ProgressMeter.next!(p)
+    try
+        Threads.@threads for i in 1:n
+            !isassigned(R, i) && (R[i] = rcp_simulate(; setting=zip(K, P[i])))
+            Cropbox.ProgressMeter.next!(p)
+        end
+    catch
+        return R
     end
     Cropbox.ProgressMeter.finish!(p)
     reduce(vcat, R)
