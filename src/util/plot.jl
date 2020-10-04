@@ -139,7 +139,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect)
+    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect)
 end
 
 plot(df::DataFrame, x, y, z;
@@ -177,7 +177,7 @@ plot(df::DataFrame, x, y, z;
     plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect)
 end
 
-plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect) = begin
+plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect) = begin
     n = length(Ys)
     Xs = [X for _ in 1:n]
     kinds = [kind for _ in 1:n]
@@ -254,7 +254,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
             layers...,
             theme,
         )
-        p = Plot(obj; Xs, Ys, kinds, colors, title, xlab, ylab, legend, names, xlim, ylim, aspect)
+        p = Plot(obj; Xs, Ys, kinds, colors, title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect)
     else
         obj = p.obj
         n0 = length(obj.layers)
@@ -269,7 +269,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     p
 end
 
-plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, aspect, width=40, height=15) = begin
+plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
         UnicodePlots.DotCanvas
     else
@@ -303,7 +303,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
         obj = UnicodePlots.Plot(a, a, canvas; title, xlabel=xlab, ylabel=ylab, xlim, ylim, width, height)
         UnicodePlots.annotate!(obj, :r, legend)
-        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, aspect, width, height)
+        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
