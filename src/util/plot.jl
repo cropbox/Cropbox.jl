@@ -112,6 +112,8 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     backend=nothing,
 ) = begin
     u(a) = extractunit(a)
+    xunit = getplotopt(p, :xunit, xunit)
+    yunit = getplotopt(p, :yunit, yunit)
     isnothing(xunit) && (xunit = u(X))
     isnothing(yunit) && (yunit = promoteunit(u.(Ys)...))
 
