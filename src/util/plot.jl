@@ -5,10 +5,10 @@ import Unitful
 
 struct Plot
     obj
-    info::Dict{Symbol,Any}
+    opt::Dict{Symbol,Any}
     Plot(obj; kw...) = new(obj, Dict(kw...))
 end
-update!(p::Plot; kw...) = (mergewith!(vcat, p.info, Dict(kw...)); p)
+update!(p::Plot; kw...) = (mergewith!(vcat, p.opt, Dict(kw...)); p)
 
 value(p::Plot) = p.obj
 Base.getindex(p::Plot) = value(p)
@@ -204,7 +204,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     create_colors(colors; n0=0) = begin
         n = length(colors)
         C = Gadfly.Scale.default_discrete_colors(n0+n)[n0+begin:end]
-        f(c::Int, _) = p.info[:colors][c]
+        f(c::Int, _) = p.opt[:colors][c]
         f(c, _) = parse(Gadfly.Colorant, c)
         f(::Nothing, i) = C[i]
         [f(c, i) for (i, c) in enumerate(colors)]
@@ -287,7 +287,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     create_colors(colors; n0=0) = begin
         n = length(colors)
         C = collect(Iterators.take(Iterators.cycle(UnicodePlots.color_cycle), n+n0))[n0+begin:end]
-        f(c::Int, _) = p.info[:colors][c]
+        f(c::Int, _) = p.opt[:colors][c]
         f(c, _) = c in keys(UnicodePlots.color_encode) ? c : :normal
         f(::Nothing, i) = C[i]
         [f(c, i) for (i, c) in enumerate(colors)]
@@ -303,7 +303,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         UnicodePlots.annotate!(obj, :r, legend)
         p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, aspect, width, height)
     end
-    colors = create_colors(colors; n0=length(p.info[:Ys]))
+    colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
         color = colors[i]
         plot!(p.obj, X, Y; name, color)
