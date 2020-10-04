@@ -9,6 +9,8 @@ struct Plot
     Plot(obj; kw...) = new(obj, Dict(kw...))
 end
 update!(p::Plot; kw...) = (mergewith!(vcat, p.opt, Dict(kw...)); p)
+getplotopt(p::Plot, k, v=nothing) = get(p.opt, k, v)
+getplotopt(::Nothing, k, v=nothing) = v
 
 value(p::Plot) = p.obj
 Base.getindex(p::Plot) = value(p)
