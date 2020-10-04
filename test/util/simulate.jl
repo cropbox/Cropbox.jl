@@ -36,6 +36,19 @@ using Dates
         @test r[end, :b] == 5
     end
 
+    @testset "stop number unit" begin
+        @system SSimulateStopNumberUnit(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a) ~ accumulate
+        end
+        r1 = simulate(SSimulateStopNumberUnit, stop=2u"hr")
+        @test r1[end, :b] == 2 * 1
+        r2 = simulate(SSimulateStopNumberUnit, stop=2u"d")
+        @test r2[end, :b] == 2 * 24
+        r3 = simulate(SSimulateStopNumberUnit, stop=2u"yr")
+        @test r3[end, :b] == 2 * 24 * 365.25
+    end
+
     @testset "stop count" begin
         @system SSimulateStopCount(Controller) begin
             a => 1 ~ preserve(parameter)
@@ -45,6 +58,20 @@ using Dates
         r = simulate(SSimulateStopCount, stop=:c)
         @test r[end-1, :b] == 4
         @test r[end, :b] == 5
+    end
+
+    @testset "stop count unit" begin
+        @system SSimulateStopCountUnit(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a) ~ accumulate
+            c ~ preserve::Cropbox.Quantity(parameter)
+        end
+        r1 = simulate(SSimulateStopCountUnit, stop=:c, config=:0 => :c => 2u"hr")
+        @test r1[end, :b] == 2 * 1
+        r2 = simulate(SSimulateStopCountUnit, stop=:c, config=:0 => :c => 2u"d")
+        @test r2[end, :b] == 2 * 24
+        r3 = simulate(SSimulateStopCountUnit, stop=:c, config=:0 => :c => 2u"yr")
+        @test r3[end, :b] == 2 * 24 * 365.25
     end
 
     @testset "stop boolean" begin

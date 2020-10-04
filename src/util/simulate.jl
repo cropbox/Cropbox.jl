@@ -84,6 +84,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     callback = isnothing(callback) ? (s, m) -> nothing : callback
 
     count(v::Number) = v
+    count(v::Quantity) = v / s.context.clock.step' |> Unitful.upreferred |> Int
     count(v::Bool) = nothing
     count(v) = error("unrecognized stop condition: $v")
     n = count(stop(s))
