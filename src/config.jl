@@ -180,6 +180,10 @@ macro config(ex)
     end
 end
 
+macro config()
+    :(Cropbox.@config(()))
+end
+
 @specialize
 
 export configure, parameters, @config
