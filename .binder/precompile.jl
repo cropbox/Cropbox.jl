@@ -7,6 +7,7 @@ using Cropbox
 end
 c = @config
 r = simulate(S, config=c)
+simulate(S, configs=[c])
 plot(r, :tick, :c; backend=:UnicodePlots) |> display
 plot(r, :tick, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
 plot(r, :tick, :c; kind=:line, backend=:Gadfly)' |> Cropbox.Gadfly.SVG() |> display
