@@ -1,5 +1,6 @@
 using DataFrames
 import Unitful
+import Dates: Date
 
 @testset "unit" begin
     @testset "unit" begin
@@ -142,7 +143,7 @@ import Unitful
         @test Cropbox.unittype(eltype(r[!, 2])) == u"NoUnits"
     end
 
-    @testset "dataframe auto" begin
+    @testset "dataframe auto unit" begin
         df = DataFrame()
         z = [0]
         df."a (g/cm^2)" = z
@@ -159,5 +160,27 @@ import Unitful
         @test N[2] == "c (a)(b)"
         @test N[3] == "b ()"
         @test N[4] == "d"
+    end
+
+    @testset "dataframe auto type" begin
+        df = DataFrame()
+        z = ["2020-10-08"]
+        df."a (:Date)" = z
+        df."b (:String)" = z
+        df."c (:Symbol)" = z
+        df."d ()" = z
+        df."e" = z
+        r = Cropbox.unitfy(df)
+        @test eltype(r[!, 1]) == Date
+        @test eltype(r[!, 2]) == String
+        @test eltype(r[!, 3]) == Symbol
+        @test eltype(r[!, 4]) == String
+        @test eltype(r[!, 5]) == String
+        N = names(r)
+        @test N[1] == "a"
+        @test N[2] == "b"
+        @test N[3] == "c"
+        @test N[4] == "d ()"
+        @test N[5] == "e"
     end
 end

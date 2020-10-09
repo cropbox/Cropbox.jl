@@ -29,8 +29,11 @@ hasunit(::Nothing) = false
 using DataFrames: DataFrame, DataFrames
 unitfy(df::DataFrame, U::Vector) = begin
     r = DataFrame()
+    f(c, u::Units) = unitfy.(c, u)
+    f(c, u) = u.(c)
+    f(c, ::Nothing) = c
     for (n, c, u) in zip(propertynames(df), eachcol(df), U)
-        r[!, n] = unitfy.(c, u)
+        r[!, n] = f(c, u)
     end
     r
 end
@@ -41,7 +44,11 @@ unitfy(df::DataFrame) = begin
     n(m) = nothing
     N = filter(!isnothing, n.(M))
     isempty(N) && return df
-    u(m::RegexMatch) = eval(:(@u_str($(m.captures[2]))))
+    u(m::RegexMatch) = begin
+        s = m.captures[2]
+        e = startswith(s, ":") ? Symbol(s[2:end]) : :(@u_str($s))
+        eval(e)
+    end
     u(m) = nothing
     U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
