@@ -37,12 +37,13 @@ end
 unitfy(df::DataFrame) = begin
     p = r"(.+)\(([^\(\)]+)\)$"
     M = match.(p, names(df))
-    u(m::RegexMatch) = eval(:(@u_str($(m.captures[2]))))
-    u(m) = nothing
-    U = u.(M)
     n(m::RegexMatch) = m.match => strip(m.captures[1])
     n(m) = nothing
     N = filter(!isnothing, n.(M))
+    isempty(N) && return df
+    u(m::RegexMatch) = eval(:(@u_str($(m.captures[2]))))
+    u(m) = nothing
+    U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
 end
 
