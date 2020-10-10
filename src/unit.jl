@@ -46,7 +46,8 @@ unitfy(df::DataFrame) = begin
         s = m.captures[2]
         #HACK: assume type constructor if the label starts with `:`
         e = startswith(s, ":") ? Symbol(s[2:end]) : :(@u_str($s))
-        eval(e)
+        #HACK: use Main scope for type constructor evaluation
+        Main.eval(e)
     end
     u(m) = nothing
     U = u.(M)
