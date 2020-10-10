@@ -12,6 +12,7 @@ unitfy(v::Tuple, u::Units) = Quantity.(v, u)
 unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
 unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = Unitful.uconvert.(u, v)
 unitfy(v::Tuple{Vararg{<:Union{Quantity,Missing}}}, u::Units) = Unitful.uconvert.(u, v)
+unitfy(v, u) = u(v)
 
 deunitfy(v) = v
 deunitfy(v::Quantity) = Unitful.ustrip(v)
@@ -29,11 +30,8 @@ hasunit(::Nothing) = false
 using DataFrames: DataFrame, DataFrames
 unitfy(df::DataFrame, U::Vector) = begin
     r = DataFrame()
-    f(c, u::Units) = unitfy.(c, u)
-    f(c, u) = u.(c)
-    f(c, ::Nothing) = c
     for (n, c, u) in zip(propertynames(df), eachcol(df), U)
-        r[!, n] = f(c, u)
+        r[!, n] = unitfy.(c, u)
     end
     r
 end
