@@ -79,8 +79,14 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     probe(a::Function) = s -> a(s)
     probe(a) = s -> a
 
-    stop = probe(isnothing(stop) ? 1 : stop)
-    filter = probe(isnothing(filter) ? true : filter)
+    stopprobe(::Nothing) = probe(1)
+    stopprobe(a) = probe(a)
+
+    filterprobe(::Nothing) = probe(true)
+    filterprobe(a) = probe(a)
+
+    stop = stopprobe(stop)
+    filter = filterprobe(filter)
     callback = isnothing(callback) ? (s, m) -> nothing : callback
 
     count(v::Number) = v
