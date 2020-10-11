@@ -23,9 +23,9 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
     if metric == :rmse
-        metric = (E, O) -> (E - O).^2
+        metric = (E, O) -> √(mean((E - O).^2))
     elseif metric == :prmse
-        metric = (E, O) -> ((E - O) ./ O).^2
+        metric = (E, O) -> √(mean(((E - O) ./ O).^2))
     end
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
