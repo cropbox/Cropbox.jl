@@ -1,5 +1,6 @@
 using DataStructures: OrderedDict
 using DataFrames: DataFrame
+using StatsBase: StatsBase, mean
 import BlackBoxOptim
 
 @nospecialize
@@ -50,7 +51,7 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     #FIXME: input parameters units are ignored without conversion
     range = map(p -> Float64.(Tuple(deunitfy(p))), parametervalues(P))
     method = if multi
-        agg = isnothing(weight) ? sum : let w = weight ./ sum(weight); f -> sum(w.*f) end
+        agg = isnothing(weight) ? mean : let w = StatsBase.weights(weight); f -> mean(f, w) end
         (Method=:borg_moea, FitnessScheme=BlackBoxOptim.ParetoFitnessScheme{n}(aggregator=agg))
     else
         ()
