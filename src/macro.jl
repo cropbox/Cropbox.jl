@@ -494,17 +494,39 @@ genminmax(v::VarInfo, x) = begin
     x = isnothing(u) ? x : @q min($x, $(genunitfy(v, @q $C.value($u))))
     x
 end
+genround(v::VarInfo, x) = begin
+    f = gettag(v, :round)
+    isnothing(f) && return x
+    f = if f isa Bool
+        f ? :round : return x
+    elseif f isa QuoteNode
+        f.value
+    else
+        error("unsupported value for tag `round`: $f")
+    end
+    U = gettag(v, :roundunit)
+    U = isnothing(U) ? gettag(v, :unit) : U
+    N = gettag(v, :_type)
+    if isnothing(U)
+        #HACK: rounding functions with explicit type only supports Integer target
+        # https://github.com/JuliaLang/julia/issues/37984
+        @q $N <: Integer ? $f($N, $x) : $f($x)
+    else
+        @q $f($C.valuetype($N, $U), $x)
+    end
+end
 genparameter(v::VarInfo) = begin
     @gensym o
     @q let $o = $C.option(config, _names, $(names(v)))
         ismissing($o) ? $(genbody(v)) : $o
     end
 end
-geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true) = begin
+geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true, round=true) = begin
     s(x) = sample ? gensample(v, x) : x
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
-    f(x) = x |> s |> u |> m
+    r(x) = round ? genround(v, x) : x
+    f(x) = x |> s |> u |> m |> r
     x = parameter && istag(v, :parameter) ? genparameter(v) : genbody(v)
     f(x)
 end
@@ -544,10 +566,11 @@ genupdate(v::VarInfo, t) = @q begin
 end
 
 genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
-genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true) = begin
+genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true, round=true) = begin
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
-    f(x) = x |> u |> m
+    r(x) = round ? genround(v, x) : x
+    f(x) = x |> u |> m |> r
     isnothing(val) && (val = genbody(v))
     val = f(val)
     #TODO: remove redundant unitfy() in store!()

@@ -99,4 +99,35 @@
         @test s2.b' == -2
         @test s2.c' == -1
     end
+
+    @testset "round" begin
+        @system SPreserveRound(Controller) begin
+            a => 1.4 ~ preserve(round)
+            b => 1.4 ~ preserve(round=:round)
+            c => 1.4 ~ preserve(round=:ceil)
+            d => 1.4 ~ preserve(round=:floor)
+            e => 1.4 ~ preserve(round=:trunc)
+        end
+        s = instance(SPreserveRound)
+        @test s.a' === s.b'
+        @test s.b' === 1.0
+        @test s.c' === 2.0
+        @test s.d' === 1.0
+        @test s.e' === 1.0
+    end
+
+    @testset "parameter round" begin
+        @system SParameterRound(Controller) begin
+            a ~ preserve::Int(parameter, round=:floor)
+            b ~ preserve::Int(parameter, round=:trunc)
+        end
+        o1 = :0 => (a = 1.4, b = 1.4)
+        s1 = instance(SParameterRound; config=o1)
+        @test s1.a' === 1
+        @test s1.b' === 1
+        o2 = :0 => (a = -1.4, b = -1.4)
+        s2 = instance(SParameterRound; config=o2)
+        @test s2.a' === -2
+        @test s2.b' === -1
+    end
 end

@@ -39,4 +39,52 @@
         @test s.b' == 0u"m"
         @test s.c' == 1u"cm"
     end
+
+    @testset "round" begin
+        @system STrackRound(Controller) begin
+            a => 1.5 ~ track(round)
+            b => 1.5 ~ track(round=:round)
+            c => 1.5 ~ track(round=:ceil)
+            d => -1.5 ~ track(round=:floor)
+            e => -1.5 ~ track(round=:trunc)
+        end
+        s = instance(STrackRound)
+        @test s.a' === s.b'
+        @test s.b' === 2.0
+        @test s.c' === 2.0
+        @test s.d' === -2.0
+        @test s.e' === -1.0
+    end
+
+    @testset "round int" begin
+        @system STrackRoundInt(Controller) begin
+            a => 1.5 ~ track::Int(round)
+            b => 1.5 ~ track::Int(round=:round)
+            c => 1.5 ~ track::Int(round=:ceil)
+            d => -1.5 ~ track::Int(round=:floor)
+            e => -1.5 ~ track::Int(round=:trunc)
+        end
+        s = instance(STrackRoundInt)
+        @test s.a' === s.b'
+        @test s.b' === 2
+        @test s.c' === 2
+        @test s.d' === -2
+        @test s.e' === -1
+    end
+
+    @testset "round int unit" begin
+        @system STrackRoundIntUnit(Controller) begin
+            a => 1.5 ~ track::Int(u"d", round)
+            b => 1.5 ~ track::Int(u"d", round=:round)
+            c => 1.5 ~ track::Int(u"d", round=:ceil)
+            d => -1.5 ~ track::Int(u"d", round=:floor)
+            e => -1.5 ~ track::Int(u"d", round=:trunc)
+        end
+        s = instance(STrackRoundIntUnit)
+        @test s.a' === s.b'
+        @test s.b' === 2u"d"
+        @test s.c' === 2u"d"
+        @test s.d' === -2u"d"
+        @test s.e' === -1u"d"
+    end
 end
