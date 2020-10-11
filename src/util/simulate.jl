@@ -83,6 +83,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     stopprobe(a) = probe(a)
 
     filterprobe(::Nothing) = probe(true)
+    filterprobe(a::Quantity) = s -> s.context.clock.tick' % a |> iszero
     filterprobe(a) = probe(a)
 
     stop = stopprobe(stop)
