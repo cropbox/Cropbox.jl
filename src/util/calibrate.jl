@@ -28,10 +28,14 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     elseif metric == :prmse
         metric = (E, O) -> √(mean(((E - O) ./ O).^2))
     end
+    IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
+    IV = parsesimulation(index) |> values |> Tuple
+    snap(s) = getproperty.(s, IV) .|> value in IC
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
-        est = simulate(S; config=c, index, target, verbose=false, kwargs...)
+        est = simulate(S; config=c, index, target, filter=snap, verbose=false, kwargs...)
+        isempty(est) && return [Inf]
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
