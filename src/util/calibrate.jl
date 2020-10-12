@@ -1,6 +1,7 @@
 using DataStructures: OrderedDict
 using DataFrames: DataFrame
 using StatsBase: StatsBase, mean
+import Random
 import BlackBoxOptim
 
 @nospecialize
@@ -56,6 +57,9 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     else
         ()
     end
+    #HACK: always initialize random seed first on our end regardless of RandomizeRngSeed option
+    # https://github.com/robertfeldt/BlackBoxOptim.jl/issues/158
+    Random.seed!(0)
     r = BlackBoxOptim.bboptimize(cost;
         SearchRange=range,
         method...,
