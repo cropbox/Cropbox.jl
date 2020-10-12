@@ -1,17 +1,30 @@
 @testset "lotka volterra" begin
     @system LotkaVolterra(Controller) begin
-        a: prey_birth_rate => 1.0 ~ preserve(u"hr^-1", parameter)
-        b: prey_death_rate => 0.1 ~ preserve(u"hr^-1", parameter)
-        c: predator_death_rate => 1.5 ~ preserve(u"hr^-1", parameter)
-        d: predator_reproduction_rate => 0.75 ~ preserve(parameter)
-        H0: prey_initial_population => 10.0 ~ preserve(parameter)
-        P0: predator_initial_population => 5.0 ~ preserve(parameter)
-        H(a, b, H, P): prey_population => a*H - b*H*P ~ accumulate(init=H0)
-        P(b, c, d, H, P): predator_population => d*b*H*P - c*P ~ accumulate(init=P0)
+        t(context.clock.tick) ~ track(u"yr")
+        N(N, P, b, a): prey_population => b*N - a*N*P ~ accumulate(init=N0)
+        P(N, P, c, a, m): predator_population => c*a*N*P - m*P ~ accumulate(init=P0)
+        N0: prey_initial_population ~ preserve(parameter)
+        P0: predator_initial_population ~ preserve(parameter)
+        b: prey_birth_rate ~ preserve(u"yr^-1", parameter)
+        a: predation_rate ~ preserve(u"yr^-1", parameter)
+        c: predator_reproduction_rate ~ preserve(parameter)
+        m: predator_mortality_rate ~ preserve(u"yr^-1", parameter)
     end
-    r = simulate(LotkaVolterra, stop=1200, config=(
-        :Clock => (:step => 1u"minute"),
-    ))
-    @test r.tick[end] > 20u"hr"
-    Cropbox.plot(r, :tick, [:H, :P], names=["prey", "predator"]) |> display
+    config = @config (
+        :Clock => (;
+            step = 1u"d",
+        ),
+        :LotkaVolterra => (;
+            b = 0.6,
+            a = 0.02,
+            c = 0.5,
+            m = 0.5,
+            N0 = 20,
+            P0 = 30,
+        ),
+    )
+    stop = 20u"yr"
+    r = simulate(LotkaVolterra; config, stop)
+    @test r.t[end] >= stop
+    Cropbox.plot(r, :t, [:N, :P], names=["prey", "predator"]) |> display
 end
