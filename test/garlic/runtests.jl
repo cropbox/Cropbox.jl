@@ -172,15 +172,12 @@ SP_2014_P2_SR0 = (SP, CUH_2014_P2, (
 ))
 
 using CSV
-using Query
 using DataFrames
+using DataFramesMeta
 import Dates
 loaddata(cv, y, p) = begin
     ps = CSV.File("$(@__DIR__)/data/CUH/PhenologySummary.csv") |> DataFrame!
-    ps |> @query(i, begin
-        @where i.CV == cv && i.Year == y && i.Pgroup == p
-        @select {i.DAP, i.Leaves}
-    end) |> DataFrame
+    @linq ps |> where(:CV .== cv, :Year .== y, :Pgroup .== p) |> select(:DAP, :Leaves)
 end
 
 calibrate_LTAR(cv, y, p) = begin
