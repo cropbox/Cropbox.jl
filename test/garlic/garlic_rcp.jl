@@ -137,7 +137,7 @@ rcp_simulate(; target=[:bulb_mass, :total_mass, :leaf_area], setting) = begin
     #println((; setting...))
     config = rcp_config(; setting...)
     callback(s) = s.calendar.time' == s.config[:Phenology][:harvest_date]
-    r = simulate(Garlic.Model; config, target, meta=:Meta, stop=callback, filter=callback, verbose=false)
+    r = simulate(Garlic.Model; config, target, meta=:Meta, stop=callback, snap=callback, verbose=false)
 end
 
 settings = (;

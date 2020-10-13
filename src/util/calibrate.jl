@@ -34,7 +34,7 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
-        est = simulate(S; config=c, index, target, filter=snap, verbose=false, kwargs...)
+        est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
         isempty(est) && return [Inf]
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]

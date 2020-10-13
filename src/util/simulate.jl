@@ -74,7 +74,7 @@ end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
-progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filter=nothing, callback=nothing, verbose=true, kwargs...) = begin
+progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, snap=nothing, callback=nothing, verbose=true, kwargs...) = begin
     probe(a::Union{Symbol,String}) = s -> s[a]'
     probe(a::Function) = s -> a(s)
     probe(a) = s -> a
@@ -82,12 +82,12 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
     stopprobe(::Nothing) = probe(1)
     stopprobe(a) = probe(a)
 
-    filterprobe(::Nothing) = probe(true)
-    filterprobe(a::Quantity) = s -> s.context.clock.tick' % a |> iszero
-    filterprobe(a) = probe(a)
+    snapprobe(::Nothing) = probe(true)
+    snapprobe(a::Quantity) = s -> s.context.clock.tick' % a |> iszero
+    snapprobe(a) = probe(a)
 
     stop = stopprobe(stop)
-    filter = filterprobe(filter)
+    snap = snapprobe(snap)
     callback = isnothing(callback) ? (s, m) -> nothing : callback
 
     count(v::Number) = v
@@ -105,10 +105,10 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, filte
         check = s -> !stop(s)
     end
 
-    !skipfirst && filter(s) && update!.(M, s)
+    !skipfirst && snap(s) && update!.(M, s)
     while check(s)
         update!(s)
-        filter(s) && for m in M
+        snap(s) && for m in M
             update!(m, s)
             callback(s, m)
         end

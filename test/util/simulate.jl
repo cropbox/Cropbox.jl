@@ -101,21 +101,21 @@ using Dates
         @test r0[end, :] == r0[end, :]
     end
 
-    @testset "filter" begin
-        @system SSimulateFilter(Controller) begin
+    @testset "snap" begin
+        @system SSimulateSnap(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
             f(b) => (b % 2 == 0) ~ track::Bool
         end
         n = 10
         f(s) = s.b' % 2 == 0
-        r0 = simulate(SSimulateFilter, stop=n, filter=nothing)
+        r0 = simulate(SSimulateSnap, stop=n, snap=nothing)
         @test !all(r0.b .% 2 .== 0)
-        r1 = simulate(SSimulateFilter, stop=n, filter=f)
+        r1 = simulate(SSimulateSnap, stop=n, snap=f)
         @test all(r1.b .% 2 .== 0)
-        r2 = simulate(SSimulateFilter, stop=n, filter=:f)
+        r2 = simulate(SSimulateSnap, stop=n, snap=:f)
         @test all(r2.b .% 2 .== 0)
-        r3 = simulate(SSimulateFilter, stop=n, filter="f")
+        r3 = simulate(SSimulateSnap, stop=n, snap="f")
         @test all(r3.b .% 2 .== 0)
     end
 

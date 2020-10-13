@@ -3,7 +3,7 @@
 visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
 visualize!(p, S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
-    stop=nothing, skipfirst=true, filter=nothing,
+    stop=nothing, skipfirst=true, snap=nothing,
     ylab=nothing, legend=nothing, names=nothing, colors=nothing, plotopts...
 ) = begin
     G = configure(group)
@@ -39,7 +39,7 @@ visualize!(p, S::Type{<:System}, x, y;
     isnothing(colors) && (colors = repeat([nothing], n))
     isnothing(ylab) && (ylab = y)
 
-    s(c) = simulate(S; configs=@config(c + !xstep), stop, skipfirst, filter, verbose=false)
+    s(c) = simulate(S; configs=@config(c + !xstep), stop, skipfirst, snap, verbose=false)
     r = s(C[1])
     p = plot!(p, r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
     for i in 2:n
@@ -66,10 +66,10 @@ end
 visualize(S::Type{<:System}, x, y::Vector; kw...) = visualize!(nothing, S, x, y; kw...)
 visualize!(p, S::Type{<:System}, x, y::Vector;
     config=(), xstep=(),
-    stop=nothing, skipfirst=true, filter=nothing,
+    stop=nothing, skipfirst=true, snap=nothing,
     plotopts...
 ) = begin
-    r = simulate(S; configs=@config(config + !xstep), stop, skipfirst, filter, verbose=false)
+    r = simulate(S; configs=@config(config + !xstep), stop, skipfirst, snap, verbose=false)
     plot!(p, r, x, y; plotopts...)
 end
 
@@ -78,7 +78,7 @@ visualize!(p, df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visual
 visualize(df::DataFrame, SS::Vector, x, y; kw...) = visualize!(nothing, df, SS, x, y; kw...)
 visualize!(p, df::DataFrame, SS::Vector, x, y;
     configs=[], xstep=(),
-    stop=nothing, skipfirst=true, filter=nothing,
+    stop=nothing, skipfirst=true, snap=nothing,
     xlab=nothing, ylab=nothing, name=nothing, names=nothing, colors=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
@@ -101,7 +101,7 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     p = plot!(p, df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
     for (S, c, name, color) in zip(SS, configs, names, colors)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
-        r = simulate(S; configs=cs, stop, skipfirst, filter, verbose=false)
+        r = simulate(S; configs=cs, stop, skipfirst, snap, verbose=false)
         p = plot!(p, r, xe, ye; kind=:line, name, color, xunit, yunit, plotopts...)
     end
     p
@@ -110,7 +110,7 @@ visualize(df::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, df, 
 visualize!(p, df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) = visualize!(p, df, [(; system=S, configs)], y; names=[name], kw...)
 visualize(df::DataFrame, maps::Vector, y; kw...) = visualize!(nothing, df, maps, y; kw...)
 visualize!(p, df::DataFrame, maps::Vector, y;
-    stop=nothing, skipfirst=true, filter=nothing,
+    stop=nothing, skipfirst=true, snap=nothing,
     title=nothing, xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
 ) = begin
     y = y isa Pair ? y : y => y
@@ -121,7 +121,7 @@ visualize!(p, df::DataFrame, maps::Vector, y;
 
     X = extractarray(df, yo)
     Ys = map(maps) do m
-        r = simulate(; m..., stop, skipfirst, filter, verbose=false)
+        r = simulate(; m..., stop, skipfirst, snap, verbose=false)
         extractarray(r, ye)
     end
 
@@ -142,11 +142,11 @@ end
 
 visualize(S::Type{<:System}, x, y, z;
     config=(), xstep=(), ystep=(),
-    stop=nothing, skipfirst=true, filter=nothing,
+    stop=nothing, skipfirst=true, snap=nothing,
     plotopts...
 ) = begin
     configs = @config config + xstep * ystep
-    r = simulate(S; configs, stop, skipfirst, filter, verbose=false)
+    r = simulate(S; configs, stop, skipfirst, snap, verbose=false)
     plot(r, x, y, z; plotopts...)
 end
 
