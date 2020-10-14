@@ -18,6 +18,7 @@ include("system/thermaltime.jl")
 
 include("util/simulate.jl")
 include("util/calibrate.jl")
+include("util/validate.jl")
 include("util/gather.jl")
 include("util/color.jl")
 include("util/dive.jl")
