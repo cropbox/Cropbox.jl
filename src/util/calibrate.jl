@@ -15,7 +15,7 @@ calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         @error "redundant configurations" config configs
     end
 end
-calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, normalize_index=false, optim=(), kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     I = parsesimulation(index) |> keys |> collect
@@ -33,9 +33,22 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     snap(s) = getproperty.(s, IV) .|> value in IC
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
+    #HACK: handle index columns with non-identical, but compatible units
+    # https://github.com/JuliaData/DataFrames.jl/issues/2486
+    normalize(dfs...) = begin
+        for i in I
+            cols = getindex.(dfs, !, i)
+            elts = eltype.(cols)
+            t = promote_type(elts...)
+            for (d, c, e) in zip(dfs, cols, elts)
+                e != t && setindex!(d, convert.(t, c), !, i)
+            end
+        end
+    end
     residual(c) = begin
         est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
         isempty(est) && return repeat([Inf], n)
+        normalize_index && normalize(est, obs)
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
