@@ -1,5 +1,5 @@
 using DataStructures: OrderedDict
-using DataFrames: DataFrame
+import DataFrames
 using StatsBase: StatsBase, mean
 import Random
 import BlackBoxOptim
