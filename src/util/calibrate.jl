@@ -23,10 +23,27 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
-    if metric == :rmse
-        metric = (E, O) -> √mean((E - O).^2)
-    elseif metric == :prmse
-        metric = (E, O) -> √mean(((E - O) ./ O).^2)
+    metric = if metric == :rmse
+        (E, O) -> √mean((E .- O).^2)
+    elseif metric == :nrmse
+        (E, O) -> √mean((E .- O).^2) / mean(O)
+    elseif metric == :rmspe
+        (E, O) -> √mean(((E .- O) ./ O).^2)
+    elseif metric == :mae
+        (E, O) -> mean(abs.(E .- O))
+    elseif metric == :mape
+        (E, O) -> mean(abs.((E .- O) ./ O))
+    # Nash-Sutcliffe model efficiency coefficient (NSE)
+    elseif metric == :ef
+        (E, O) -> 1 - sum((E .- O).^2) / sum((O .- mean(O)).^2)
+    # Willmott's refined index of agreement (d_r)
+    elseif metric == :dr
+        (E, O) -> let a = sum(abs.(E .- O)),
+            b = 2sum(abs.(O .- mean(O)))
+            a <= b ? 1 - a/b : b/a - 1
+        end
+    else
+        metric
     end
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parsesimulation(index) |> values |> Tuple
