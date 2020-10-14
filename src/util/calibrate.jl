@@ -24,9 +24,9 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
     if metric == :rmse
-        metric = (E, O) -> √(mean((E - O).^2))
+        metric = (E, O) -> √mean((E - O).^2)
     elseif metric == :prmse
-        metric = (E, O) -> √(mean(((E - O) ./ O).^2))
+        metric = (E, O) -> √mean(((E - O) ./ O).^2)
     end
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parsesimulation(index) |> values |> Tuple
