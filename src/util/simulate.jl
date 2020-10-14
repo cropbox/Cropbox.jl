@@ -83,7 +83,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, snap=
     stopprobe(a) = probe(a)
 
     snapprobe(::Nothing) = probe(true)
-    snapprobe(a::Quantity) = s -> s.context.clock.tick' % a |> iszero
+    snapprobe(a::Quantity) = s -> let c = s.context.clock; (c.tick' - c.init') % a |> iszero end
     snapprobe(a) = probe(a)
 
     stop = stopprobe(stop)
