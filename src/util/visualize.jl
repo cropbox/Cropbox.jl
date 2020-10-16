@@ -73,7 +73,7 @@ visualize!(p, S::Type{<:System}, x, y::Vector;
     plot!(p, r, x, y; plotopts...)
 end
 
-visualize(df::DataFrame, S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
+visualize(df::DataFrame, S::Type{<:System}, x, y; kw...) = visualize!(nothing, df, S, x, y; kw...)
 visualize!(p, df::DataFrame, S::Type{<:System}, x, y; config=(), kw...) = visualize!(p, df, [S], x, y; configs=[config], kw...)
 visualize(df::DataFrame, SS::Vector, x, y; kw...) = visualize!(nothing, df, SS, x, y; kw...)
 visualize!(p, df::DataFrame, SS::Vector, x, y;
