@@ -133,10 +133,10 @@ visualize!(p, df::DataFrame, maps::Vector, y;
         l = findlim.(deunitfy.([X, Ys...]))
         lim = (minimum(minimum.(l)), maximum(maximum.(l)))
     end
-    I = [lim[1], lim[2]]
+    L = [lim[1], lim[2]]
 
     p = plot!(p, X, Ys; kind=:scatter, title, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
-    !isnothing(lim) && plot!(p, I, I, kind=:line, color=:lightgray, name="")
+    !isnothing(lim) && plot!(p, L, L, kind=:line, color=:lightgray, name="")
     p
 end
 
