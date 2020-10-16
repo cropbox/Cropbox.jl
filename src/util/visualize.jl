@@ -107,6 +107,46 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     p
 end
 
+visualize(obs::DataFrame, S::Type{<:System}, y::Vector; kw...) = visualize!(nothing, obs, S, y; kw...)
+visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
+    index,
+    config=(), configs=[],
+    stop=nothing, skipfirst=true, snap=nothing,
+    xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
+) = begin
+    #HACK: use copy due to normalize!
+    obs = copy(obs)
+    I = parsesimulation(index) |> keys |> collect
+    T = parsesimulation(y)
+    Yo = T |> keys |> collect
+    Ye = T |> values |> collect
+
+    est = simulate(S; config, configs, index, target=Ye, stop, skipfirst, snap, verbose=false)
+    normalize!(obs, est, on=I)
+    df = DataFrames.join(obs, est, on=I)
+    Xs = extractarray.(Ref(df), Yo)
+    Ys = extractarray.(Ref(df), Ye)
+
+    isnothing(xlab) && (xlab = "Observation")
+    isnothing(ylab) && (ylab = "Model")
+
+    n = length(Ys)
+    isnothing(names) && (names = [o == e ? "$o" : "$o ⇒ $e" for (o, e) in T])
+    isnothing(colors) && (colors = repeat([nothing], n))
+
+    if isnothing(lim)
+        l = findlim.(deunitfy.([Xs..., Ys...]))
+        lim = (minimum(minimum.(l)), maximum(maximum.(l)))
+    end
+    L = [lim[1], lim[2]]
+
+    for (X, Y, name) in zip(Xs, Ys, names)
+        p = plot!(p, X, Y; kind=:scatter, name, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    end
+    !isnothing(lim) && plot!(p, L, L, kind=:line, color=:lightgray, name="")
+    p
+end
+
 visualize(obs::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, obs, S, y; kw...)
 visualize!(p, obs::DataFrame, S::Type{<:System}, y; config=(), configs=[], name="", kw...) = visualize!(p, obs, [(; system=S, config, configs)], y; names=[name], kw...)
 visualize(obs::DataFrame, maps::Vector{<:NamedTuple}, y; kw...) = visualize!(nothing, obs, maps, y; kw...)
