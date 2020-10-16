@@ -111,13 +111,12 @@ visualize!(p, df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) =
 visualize(df::DataFrame, maps::Vector, y; kw...) = visualize!(nothing, df, maps, y; kw...)
 visualize!(p, df::DataFrame, maps::Vector, y;
     stop=nothing, skipfirst=true, snap=nothing,
-    title=nothing, xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
+    xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
 ) = begin
     y = y isa Pair ? y : y => y
     yo, ye = y
     xlab = isnothing(xlab) ? yo : xlab
     ylab = isnothing(ylab) ? ye : ylab
-    isnothing(title) && (title = yo == ye ? string(yo) : "$yo : $ye")
 
     X = extractarray(df, yo)
     Ys = map(maps) do m
@@ -135,7 +134,7 @@ visualize!(p, df::DataFrame, maps::Vector, y;
     end
     L = [lim[1], lim[2]]
 
-    p = plot!(p, X, Ys; kind=:scatter, title, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    p = plot!(p, X, Ys; kind=:scatter, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
     !isnothing(lim) && plot!(p, L, L, kind=:line, color=:lightgray, name="")
     p
 end
