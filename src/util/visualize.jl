@@ -106,23 +106,27 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     end
     p
 end
-visualize(df::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, df, S, y; kw...)
-visualize!(p, df::DataFrame, S::Type{<:System}, y; configs=[], name="", kw...) = visualize!(p, df, [(; system=S, configs)], y; names=[name], kw...)
-visualize(df::DataFrame, maps::Vector, y; kw...) = visualize!(nothing, df, maps, y; kw...)
-visualize!(p, df::DataFrame, maps::Vector, y;
+
+visualize(obs::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, obs, S, y; kw...)
+visualize!(p, obs::DataFrame, S::Type{<:System}, y; config=(), configs=[], name="", kw...) = visualize!(p, obs, [(; system=S, config, configs)], y; names=[name], kw...)
+visualize(obs::DataFrame, maps::Vector{<:NamedTuple}, y; kw...) = visualize!(nothing, obs, maps, y; kw...)
+visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
+    index,
+    config=(), configs=[],
     stop=nothing, skipfirst=true, snap=nothing,
     xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
 ) = begin
-    y = y isa Pair ? y : y => y
-    yo, ye = y
+    I = parsesimulation(index) |> keys |> collect
+    yo, ye = parsesimulation(y) |> collect |> only
     xlab = isnothing(xlab) ? yo : xlab
     ylab = isnothing(ylab) ? ye : ylab
 
-    X = extractarray(df, yo)
-    Ys = map(maps) do m
-        r = simulate(; m..., stop, skipfirst, snap, verbose=false)
-        extractarray(r, ye)
-    end
+    ests = map(m -> simulate(; m..., index, target=ye, stop, skipfirst, snap, verbose=false), maps)
+    normalize!(obs, ests..., on=I)
+    dfs = map(est -> DataFrames.join(obs, est, on=I), ests)
+    Xs = extractarray.(dfs, yo)
+    X = Xs |> unique |> only
+    Ys = extractarray.(dfs, ye)
 
     n = length(Ys)
     isnothing(names) && (names = repeat([""], n))
