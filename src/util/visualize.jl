@@ -112,7 +112,7 @@ visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
     index,
     config=(), configs=[],
     stop=nothing, skipfirst=true, snap=nothing,
-    xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
+    names=nothing, plotopts...
 ) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
@@ -127,24 +127,9 @@ visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
     Xs = extractarray.(Ref(df), Yo)
     Ys = extractarray.(Ref(df), Ye)
 
-    isnothing(xlab) && (xlab = "Observation")
-    isnothing(ylab) && (ylab = "Model")
-
-    n = length(Ys)
     isnothing(names) && (names = [o == e ? "$o" : "$o ⇒ $e" for (o, e) in T])
-    isnothing(colors) && (colors = repeat([nothing], n))
 
-    if isnothing(lim)
-        l = findlim.(deunitfy.([Xs..., Ys...]))
-        lim = (minimum(minimum.(l)), maximum(maximum.(l)))
-    end
-    L = [lim[1], lim[2]]
-
-    for (X, Y, name) in zip(Xs, Ys, names)
-        p = plot!(p, X, Y; kind=:scatter, name, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
-    end
-    !isnothing(lim) && plot!(p, L, L, kind=:line, color=:lightgray, name="")
-    p
+    _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
 end
 
 visualize(obs::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, obs, S, y; kw...)
@@ -154,7 +139,7 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
     index,
     config=(), configs=[],
     stop=nothing, skipfirst=true, snap=nothing,
-    xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
+    names=nothing, plotopts...
 ) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
@@ -167,11 +152,17 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
     Xs = extractarray.(dfs, yo)
     Ys = extractarray.(dfs, ye)
 
+    isnothing(names) && (names = ["$(m.system)" for m in maps])
+
+    _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
+end
+
+_visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...) = begin
     isnothing(xlab) && (xlab = "Observation")
     isnothing(ylab) && (ylab = "Model")
 
     n = length(Ys)
-    isnothing(names) && (names = ["$(m.system)" for m in maps])
+    isnothing(names) && (names = repeat([""], n))
     isnothing(colors) && (colors = repeat([nothing], n))
 
     if isnothing(lim)
