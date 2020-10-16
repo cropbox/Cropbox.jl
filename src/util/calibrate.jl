@@ -54,7 +54,7 @@ calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         @error "redundant configurations" config configs
     end
 end
-calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, normalize_index=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
     P = configure(parameters)
@@ -73,7 +73,7 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     residual(c) = begin
         est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
         isempty(est) && return repeat([Inf], n)
-        normalize_index && normalize!(est, obs, on=I)
+        normalize!(est, obs, on=I)
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end

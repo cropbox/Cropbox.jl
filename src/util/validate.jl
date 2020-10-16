@@ -11,7 +11,7 @@ validate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         @error "redundant configurations" config configs
     end
 end
-validate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, weight=nothing, normalize_index=false, kwargs...) = begin
+validate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, weight=nothing, kwargs...) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
     I = parsesimulation(index) |> keys |> collect
@@ -28,7 +28,7 @@ validate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     residual(c) = begin
         est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
         isempty(est) && return repeat([Inf], n)
-        normalize_index && normalize!(est, obs, on=I)
+        normalize!(est, obs, on=I)
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
