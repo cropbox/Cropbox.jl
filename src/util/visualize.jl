@@ -116,6 +116,8 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
     stop=nothing, skipfirst=true, snap=nothing,
     xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...
 ) = begin
+    #HACK: use copy due to normalize!
+    obs = copy(obs)
     I = parsesimulation(index) |> keys |> collect
     yo, ye = parsesimulation(y) |> collect |> only
     xlab = isnothing(xlab) ? yo : xlab
