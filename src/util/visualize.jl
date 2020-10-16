@@ -160,27 +160,29 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
     obs = copy(obs)
     I = parsesimulation(index) |> keys |> collect
     yo, ye = parsesimulation(y) |> collect |> only
-    xlab = isnothing(xlab) ? yo : xlab
-    ylab = isnothing(ylab) ? ye : ylab
 
     ests = map(m -> simulate(; m..., index, target=ye, stop, skipfirst, snap, verbose=false), maps)
     normalize!(obs, ests..., on=I)
     dfs = map(est -> DataFrames.join(obs, est, on=I), ests)
     Xs = extractarray.(dfs, yo)
-    X = Xs |> unique |> only
     Ys = extractarray.(dfs, ye)
 
+    isnothing(xlab) && (xlab = "Observation")
+    isnothing(ylab) && (ylab = "Model")
+
     n = length(Ys)
-    isnothing(names) && (names = repeat([""], n))
+    isnothing(names) && (names = ["$(m.system)" for m in maps])
     isnothing(colors) && (colors = repeat([nothing], n))
 
     if isnothing(lim)
-        l = findlim.(deunitfy.([X, Ys...]))
+        l = findlim.(deunitfy.([Xs..., Ys...]))
         lim = (minimum(minimum.(l)), maximum(maximum.(l)))
     end
     L = [lim[1], lim[2]]
 
-    p = plot!(p, X, Ys; kind=:scatter, names, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    for (X, Y, name) in zip(Xs, Ys, names)
+        p = plot!(p, X, Y; kind=:scatter, name, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    end
     !isnothing(lim) && plot!(p, L, L, kind=:line, color=:lightgray, name="")
     p
 end
