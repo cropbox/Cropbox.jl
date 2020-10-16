@@ -6,24 +6,8 @@ import BlackBoxOptim
 
 @nospecialize
 
-calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
-    if isempty(configs)
-        calibrate(S, obs, [config]; kwargs...)
-    elseif isempty(config)
-        calibrate(S, obs, configs; kwargs...)
-    else
-        @error "redundant configurations" config configs
-    end
-end
-calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, normalize_index=false, optim=(), kwargs...) = begin
-    P = configure(parameters)
-    K = parameterkeys(P)
-    I = parsesimulation(index) |> keys |> collect
-    T = parsesimulation(target) |> keys |> collect
-    n = length(T)
-    multi = n > 1
-    isnothing(metric) && (metric = :rmse)
-    metric = if metric == :rmse
+metricfunc(metric) = begin
+    if metric == :rmse
         (E, O) -> √mean((E .- O).^2)
     elseif metric == :nrmse
         (E, O) -> √mean((E .- O).^2) / mean(O)
@@ -45,6 +29,26 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     else
         metric
     end
+end
+
+calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
+    if isempty(configs)
+        calibrate(S, obs, [config]; kwargs...)
+    elseif isempty(config)
+        calibrate(S, obs, configs; kwargs...)
+    else
+        @error "redundant configurations" config configs
+    end
+end
+calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, normalize_index=false, optim=(), kwargs...) = begin
+    P = configure(parameters)
+    K = parameterkeys(P)
+    I = parsesimulation(index) |> keys |> collect
+    T = parsesimulation(target) |> keys |> collect
+    n = length(T)
+    multi = n > 1
+    isnothing(metric) && (metric = :rmse)
+    metric = metricfunc(metric)
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parsesimulation(index) |> values |> Tuple
     snap(s) = getproperty.(s, IV) .|> value in IC
