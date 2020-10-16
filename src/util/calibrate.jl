@@ -55,6 +55,8 @@ calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     end
 end
 calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, normalize_index=false, optim=(), kwargs...) = begin
+    #HACK: use copy due to normalize!
+    obs = copy(obs)
     P = configure(parameters)
     K = parameterkeys(P)
     I = parsesimulation(index) |> keys |> collect

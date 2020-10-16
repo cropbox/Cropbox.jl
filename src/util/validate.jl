@@ -12,6 +12,8 @@ validate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     end
 end
 validate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, weight=nothing, normalize_index=false, kwargs...) = begin
+    #HACK: use copy due to normalize!
+    obs = copy(obs)
     I = parsesimulation(index) |> keys |> collect
     T = parsesimulation(target) |> keys |> collect
     n = length(T)
