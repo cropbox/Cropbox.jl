@@ -79,7 +79,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, callback
     probe(a::Function) = s -> a(s)
     probe(a) = s -> a
 
-    stopprobe(::Nothing) = probe(1)
+    stopprobe(::Nothing) = probe(0)
     stopprobe(a) = probe(a)
 
     snapprobe(::Nothing) = probe(true)
