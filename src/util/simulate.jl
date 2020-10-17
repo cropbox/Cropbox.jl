@@ -136,7 +136,7 @@ simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=noth
         s = instance(S; config, options, seed)
         simulate!(s, layout; kwargs...)
     elseif isempty(config)
-        simulate(S, layout, configs; options, kwargs...)
+        simulate(S, layout, configs; options, seed, kwargs...)
     else
         @error "redundant configurations" config configs
     end
