@@ -74,7 +74,7 @@ end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
-progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, snap=nothing, callback=nothing, verbose=true, kwargs...) = begin
+progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, callback=nothing, verbose=true, kwargs...) = begin
     probe(a::Union{Symbol,String}) = s -> s[a]'
     probe(a::Function) = s -> a(s)
     probe(a) = s -> a
@@ -105,7 +105,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, skipfirst=false, snap=
         check = s -> !stop(s)
     end
 
-    !skipfirst && snap(s) && update!.(M, s)
+    snap(s) && update!.(M, s)
     while check(s)
         update!(s)
         snap(s) && for m in M

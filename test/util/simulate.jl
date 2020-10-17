@@ -89,18 +89,6 @@ using Dates
         @test r1 == r3
     end
 
-    @testset "skipfirst" begin
-        @system SSimulateSkipFirst(Controller) begin
-            a => 1 ~ preserve
-            b(a) ~ accumulate
-        end
-        r0 = simulate(SSimulateSkipFirst, stop=1, skipfirst=false)
-        r1 = simulate(SSimulateSkipFirst, stop=1, skipfirst=true)
-        @test nrow(r0) == 2
-        @test nrow(r1) == 1
-        @test r0[end, :] == r0[end, :]
-    end
-
     @testset "snap" begin
         @system SSimulateSnap(Controller) begin
             a => 1 ~ preserve(parameter)
