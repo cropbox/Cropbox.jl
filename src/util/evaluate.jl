@@ -2,16 +2,16 @@ import DataFrames
 using StatsBase: StatsBase, mean
 
 #TODO: share code with calibrate()
-validate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
+evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     if isempty(configs)
-        validate(S, obs, [config]; kwargs...)
+        evaluate(S, obs, [config]; kwargs...)
     elseif isempty(config)
-        validate(S, obs, configs; kwargs...)
+        evaluate(S, obs, configs; kwargs...)
     else
         @error "redundant configurations" config configs
     end
 end
-validate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, weight=nothing, kwargs...) = begin
+evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, weight=nothing, kwargs...) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
     I = parsesimulation(index) |> keys |> collect
@@ -55,4 +55,9 @@ validate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     cost() |> agg
 end
 
-export validate
+validate(S::Type{<:System}, args...; kwargs...) = begin
+    @warn "use evaluate() instead"
+    evaluate(S, args...; kwargs...)
+end
+
+export evaluate, validate
