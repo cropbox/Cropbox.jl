@@ -99,12 +99,18 @@ calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, me
     else
         ()
     end
+    optim_default = (;
+        MaxSteps=5000,
+        TraceInterval=10,
+        RandomizeRngSeed=false,
+    )
     #HACK: always initialize random seed first on our end regardless of RandomizeRngSeed option
     # https://github.com/robertfeldt/BlackBoxOptim.jl/issues/158
     Random.seed!(0)
     r = BlackBoxOptim.bboptimize(cost;
         SearchRange=range,
         method...,
+        optim_default...,
         optim...
     )
     if multi && pareto
