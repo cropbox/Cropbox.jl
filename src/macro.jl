@@ -313,7 +313,7 @@ genstruct(name, type, infos, incl, scope) = begin
     source = gensource(infos)
     system = quote
         Core.@__doc__ abstract type $S <: $T end
-        mutable struct $_S <: $S
+        Core.@__doc__ mutable struct $_S <: $S
             $(fields...)
             function $_name(; _kwargs...)
                 $predecl
