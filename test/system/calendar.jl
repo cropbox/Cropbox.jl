@@ -51,7 +51,7 @@ import Dates
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
         o = :Calendar => (init=t0, last=nothing)
         s = instance(SCalendarCountNothing; config=o)
-        @test s.count' == nothing
+        @test s.count' === nothing
         @test s.stop' == false
     end
     

@@ -67,7 +67,7 @@
         end
         o = SParameterNothing => :a => nothing
         s = instance(SParameterNothing; config=o)
-        @test s.a' == nothing
+        @test s.a' === nothing
     end
 
     @testset "minmax" begin
