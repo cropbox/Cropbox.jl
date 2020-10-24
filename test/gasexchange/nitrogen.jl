@@ -6,4 +6,7 @@
     N(SPAD, a=SNa, b=SNb, c=SNc): leaf_nitrogen_content => begin
         a*SPAD^2 + b*SPAD + c
     end ~ preserve(u"g/m^2", parameter)
+
+    Np(N, SLA) => N * SLA ~ track(u"percent")
+    SLA: specific_leaf_area => 200 ~ preserve(u"cm^2/g")
 end
