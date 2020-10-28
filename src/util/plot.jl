@@ -70,6 +70,7 @@ label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
 detectbackend() = begin
     if isdefined(Main, :IJulia) && Main.IJulia.inited ||
        isdefined(Main, :Juno) && Main.Juno.isactive() ||
+       isdefined(Main, :PlutoRunner) ||
        haskey(ENV, "NJS_VERSION")
         :Gadfly
     else
