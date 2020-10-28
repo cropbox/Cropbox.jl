@@ -510,7 +510,7 @@ genround(v::VarInfo, x) = begin
     if isnothing(U)
         #HACK: rounding functions with explicit type only supports Integer target
         # https://github.com/JuliaLang/julia/issues/37984
-        @q $N <: Integer ? $f($N, $x) : $f($x)
+        @q convert($N, $f($x))
     else
         @q $f($C.valuetype($N, $U), $x)
     end
