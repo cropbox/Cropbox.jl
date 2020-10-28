@@ -6,6 +6,8 @@ struct Config
 end
 
 Base.getindex(c::Config, i) = c.config[i]
+#HACK: handle :0
+Base.getindex(c::Config, i::Int) = c.config[Symbol(i)]
 Base.length(c::Config) = length(c.config)
 Base.iterate(c::Config) = iterate(c.config)
 Base.iterate(c::Config, i) = iterate(c.config, i)
