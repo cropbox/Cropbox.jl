@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# set up WebIO.jl for Interact.jl support
+JULIA_PROJECT="" julia -e "using Pkg; Pkg.add(\"WebIO\"); using WebIO; WebIO.install_jupyter_nbextension(nbextension_flags=\`--sys-prefix\`); WebIO.install_jupyter_labextension();"
+
+# trigger build of JupyterLab for Jupytext
+#HACK: triggered by WebIO.install_jupyter_labextension()
+#jupyter lab build
+
 # ensure Cropbox.jl added/built and available outside home directory
 export CROPBOX_DIR=${REPO_DIR}
 JULIA_PROJECT="" julia -e "import Pkg; Pkg.add(url=\"${CROPBOX_DIR}\"); Pkg.build(\"Cropbox\");"
@@ -18,6 +25,3 @@ JULIA_PROJECT="" julia -e "using IJulia; installkernel(\"Julia\", \"--project=${
 mkdir -p ${REPO_DIR}/.local/bin
 echo -e '#!/bin/bash\n'"${JULIA_PATH}/bin/julia -J${CROPBOX_IMG}" '"$@"' > ${REPO_DIR}/.local/bin/julia
 chmod +x ${REPO_DIR}/.local/bin/julia
-
-# trigger build of JupyterLab for Jupytext
-jupyter lab build
