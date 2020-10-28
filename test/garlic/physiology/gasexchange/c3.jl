@@ -102,8 +102,8 @@ end
         J * (Ci - Γ) / 4(Ci + 2Γ) - Rd
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
-    Ap(Tp): triose_phosphate_limited_photosynthesis_rate => begin
-        3Tp
+    Ap(Tp, Rd): triose_phosphate_limited_photosynthesis_rate => begin
+        3Tp - Rd
     end ~ track(u"μmol/m^2/s" #= CO2 =#)
 
     A_net(Ac, Aj, Ap): net_photosynthesis => begin
