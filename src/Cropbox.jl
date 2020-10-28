@@ -25,5 +25,6 @@ include("util/dive.jl")
 include("util/hierarchy.jl")
 include("util/plot.jl")
 include("util/visualize.jl")
+include("util/manipulate.jl")
 
 end
