@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # set up WebIO.jl for Interact.jl support
+export JUPYTER_CONFIG_DIR=${NB_PYTHON_PREFIX}/etc/jupyter
 JULIA_PROJECT="" julia -e "using Pkg; Pkg.add(\"WebIO\"); using WebIO; WebIO.install_jupyter_nbextension(nbextension_flags=\`--sys-prefix\`); WebIO.install_jupyter_labextension();"
 
 # trigger build of JupyterLab for Jupytext
