@@ -1,11 +1,4 @@
-#HACK: manually initialize IJulia so it can be picked up by WebIO.__init__
-using IJulia
-IJulia.init(ARGS)
-
 using Cropbox
-
-#HACK: manually trigger WebIO.__init__
-Cropbox.Interact.WebIO.__init__()
 
 @system S(Controller) begin
     a => 1 ~ preserve
