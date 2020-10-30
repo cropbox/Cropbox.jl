@@ -4,6 +4,9 @@ IJulia.init(ARGS)
 
 using Cropbox
 
+#HACK: manually trigger WebIO.__init__
+Cropbox.Interact.WebIO.__init__()
+
 @system S(Controller) begin
     a => 1 ~ preserve
     b(a) ~ track
