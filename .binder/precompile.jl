@@ -1,4 +1,7 @@
+#HACK: manually initialize IJulia so it can be picked up by WebIO.__init__
 using IJulia
+IJulia.init(ARGS)
+
 using Cropbox
 
 @system S(Controller) begin
