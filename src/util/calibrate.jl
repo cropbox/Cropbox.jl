@@ -4,8 +4,6 @@ using StatsBase: StatsBase, mean
 import Random
 import BlackBoxOptim
 
-@nospecialize
-
 metricfunc(metric::Symbol) = begin
     if metric == :rmse
         (E, O) -> √mean((E .- O).^2)
@@ -121,7 +119,5 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         config(BlackBoxOptim.best_candidate(r))
     end
 end
-
-@specialize
 
 export calibrate
