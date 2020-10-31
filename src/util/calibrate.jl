@@ -46,7 +46,7 @@ normalize!(dfs::DataFrame...; on) = begin
 end
 
 
-calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
+calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) = begin
     if isempty(configs)
         calibrate(S, obs, [config]; kwargs...)
     elseif isempty(config)
@@ -55,7 +55,7 @@ calibrate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         @error "redundant configurations" config configs
     end
 end
-calibrate(S::Type{<:System}, obs, configs; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
     P = configure(parameters)
