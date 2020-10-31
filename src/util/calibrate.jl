@@ -6,7 +6,7 @@ import BlackBoxOptim
 
 @nospecialize
 
-metricfunc(metric) = begin
+metricfunc(metric::Symbol) = begin
     if metric == :rmse
         (E, O) -> √mean((E .- O).^2)
     elseif metric == :nrmse
@@ -27,9 +27,10 @@ metricfunc(metric) = begin
             a <= b ? 1 - a/b : b/a - 1
         end
     else
-        metric
+        error("unsupported metric: $metric")
     end
 end
+metricfunc(metric) = metric
 
 #HACK: handle index columns with non-identical, but compatible units
 # https://github.com/JuliaData/DataFrames.jl/issues/2486
