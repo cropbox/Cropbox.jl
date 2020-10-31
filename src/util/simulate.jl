@@ -30,7 +30,7 @@ parsesimulation(a) = parsesimulation([a])
 parsesimulation(::Nothing) = parsesimulation("context.clock.tick")
 
 extract(s::System, m::Simulation) = extract(s[m.base], m.mapping)
-extract(s::System, m) = begin
+extract(s::System, m::OrderedDict{Symbol,Any}) = begin
     K = keys(m)
     V = (value(s[k]) for k in values(m))
     #HACK: Any -- prevent type promotion with NoUnits
