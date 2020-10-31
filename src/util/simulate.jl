@@ -38,9 +38,8 @@ extract(s::System, m::OrderedDict{Symbol,Any}) = begin
     filter!(p -> extractable(s, p), d)
     [d]
 end
-extract(s::System, index, target) = extract(s, merge(index, target))
-extract(b::Bundle{S}, index, target) where {S<:System} = begin
-    [extract(s, index, target) for s in collect(b)]
+extract(b::Bundle{S}, m::OrderedDict{Symbol,Any}) where {S<:System} = begin
+    [extract(s, m) for s in collect(b)]
 end
 extractable(s::System, p) = begin
     # only pick up variables of simple types by default
