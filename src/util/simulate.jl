@@ -121,7 +121,7 @@ end
 simulate!(s::System; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate!(s, [(; base, index, target, meta)]; kwargs...) |> only
 end
-simulate!(s::System, layout; kwargs...) = begin
+simulate!(s::System, layout::Vector; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
     progress!(s, M; kwargs...)
 end
@@ -131,7 +131,7 @@ simulate(; system, kw...) = simulate(system; kw...)
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate(S, [(; base, index, target, meta)]; kwargs...) |> only
 end
-simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
+simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
     if isempty(configs)
         s = instance(S; config, options, seed)
         simulate!(s, layout; kwargs...)
@@ -141,7 +141,7 @@ simulate(S::Type{<:System}, layout; config=(), configs=[], options=(), seed=noth
         @error "redundant configurations" config configs
     end
 end
-simulate(S::Type{<:System}, layout, configs; verbose=true, kwargs...) = begin
+simulate(S::Type{<:System}, layout::Vector, configs::Vector; verbose=true, kwargs...) = begin
     n = length(configs)
     R = Vector(undef, n)
     dt = verbose ? 1 : Inf
