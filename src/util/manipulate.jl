@@ -5,10 +5,17 @@ manipulate(args...; parameters, config=(), kwargs...) = begin
     W = []
     L = []
     for (s, Q) in P
-        push!(L, Interact.node(:div, string(s)))
+        n = Interact.node(:div, string(s))
+        #HACK: use similar style/color (:light_magenta) to Config
+        l = Interact.style(n, "font-family" => "monospace", "color" => :darkorchid)
+        push!(L, l)
         for (k, v) in Q
             #TODO: deunitfy() based on known units from parameters()
             w = Interact.widget(v; label=string(k))
+            #HACK: use similar style/color (:light_blue) to Config
+            d = w.layout(w).children[1].dom
+            d.props[:style] = Dict("font-family" => "monospace", "width" => "25%")
+            d.children[1].children[1].props[:style]["color"] = :royalblue
             push!(W, w)
             push!(L, w)
         end
