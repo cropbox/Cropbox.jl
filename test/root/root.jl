@@ -2,7 +2,7 @@ module Root
 
 using Cropbox
 using Distributions
-import Makie
+import AbstractPlotting
 import Meshing
 using GeometryBasics: GeometryBasics, Point3f0
 using CoordinateTransformations: IdentityTransformation, LinearMap, Transformation, Translation
@@ -324,12 +324,12 @@ end
 render(s::RootArchitecture; soilcore=nothing) = begin
     meshes = GeometryBasics.Mesh[]
     gather!(s, Rendering; store=meshes, callback=render!)
-    scene = Makie.mesh(merge(meshes))
+    scene = AbstractPlotting.mesh(merge(meshes))
     #HACK: customization for container
-    Makie.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
-    !isnothing(soilcore) && Makie.mesh!(scene, mesh(soilcore), color=(:purple, 0.1), transparency=true, shading=false)
+    AbstractPlotting.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
+    !isnothing(soilcore) && AbstractPlotting.mesh!(scene, mesh(soilcore), color=(:purple, 0.1), transparency=true, shading=false)
     #HACK: adjust mouse sensitivity: https://github.com/JuliaPlots/Makie.jl/issues/33
-    Makie.cameracontrols(scene).rotationspeed[] = 0.01
+    AbstractPlotting.cameracontrols(scene).rotationspeed[] = 0.01
     scene
 end
 render!(g::Gather, r::RootSegment, ::Val{:Rendering}) = begin
