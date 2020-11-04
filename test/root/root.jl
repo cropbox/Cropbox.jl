@@ -149,7 +149,7 @@ end
     lb: length_of_basal_zone => 0.4 ~ preserve(u"cm", extern, parameter, min=0)
     la: length_of_apical_zone => 0.5 ~ preserve(u"cm", extern, parameter, min=0)
     ln: length_between_lateral_branches => 0.3 ~ preserve(u"cm", extern, parameter, min=0)
-    lmax: maximal_length => 3.9 ~ preserve(u"cm", extern, parameter, min=0)
+    lmax: maximal_length => 3.9 ~ preserve(u"cm", extern, parameter, min=0.1)
 
     zl(zt, lb, ln, la, lmax, lp): zone_length => begin
         l = if zt == :basal
