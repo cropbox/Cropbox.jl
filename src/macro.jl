@@ -515,18 +515,26 @@ genround(v::VarInfo, x) = begin
         @q $f($C.valuetype($N, $U), $x)
     end
 end
+genwhen(v::VarInfo, x) = begin
+    w = gettag(v, :when)
+    isnothing(w) && return x
+    N = gettag(v, :_type)
+    @q $C.value($w) ? $x : zero($N)
+end
+
 genparameter(v::VarInfo) = begin
     @gensym o
     @q let $o = $C.option(config, _names, $(names(v)))
         ismissing($o) ? $(genbody(v)) : $o
     end
 end
-geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true, round=true) = begin
+geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
     s(x) = sample ? gensample(v, x) : x
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
     r(x) = round ? genround(v, x) : x
-    f(x) = x |> s |> u |> m |> r
+    w(x) = when ? genwhen(v, x) : x
+    f(x) = x |> s |> u |> m |> r |> w
     x = parameter && istag(v, :parameter) ? genparameter(v) : genbody(v)
     f(x)
 end
@@ -566,11 +574,12 @@ genupdate(v::VarInfo, t) = @q begin
 end
 
 genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
-genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true, round=true) = begin
+genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true, round=true, when=true) = begin
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
     r(x) = round ? genround(v, x) : x
-    f(x) = x |> u |> m |> r
+    w(x) = when ? genwhen(v, x) : x
+    f(x) = x |> u |> m |> r |> w
     isnothing(val) && (val = genbody(v))
     val = f(val)
     #TODO: remove redundant unitfy() in store!()

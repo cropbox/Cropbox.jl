@@ -87,4 +87,24 @@
         @test s.d' === -2u"d"
         @test s.e' === -1u"d"
     end
+
+    @testset "when" begin
+        @system STrackWhen(Controller) begin
+            T => true ~ preserve::Bool
+            F => false ~ preserve::Bool
+            a => 1 ~ track
+            b => 1 ~ track(when=true)
+            c => 1 ~ track(when=false)
+            d => 1 ~ track(when=T)
+            e => 1 ~ track(when=F)
+            f => 1 ~ track(when=!F)
+        end
+        s = instance(STrackWhen)
+        @test s.a' == 1
+        @test s.b' == 1
+        @test s.c' == 0
+        @test s.d' == 1
+        @test s.e' == 0
+        @test s.f' == 1
+    end
 end
