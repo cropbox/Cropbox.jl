@@ -44,7 +44,8 @@ mesh(s::Pot) = begin
     r1 = Cropbox.deunitfy(s.r1', u"cm")
     r2 = Cropbox.deunitfy(s.r2', u"cm")
     h = Cropbox.deunitfy(s.h', u"cm")
-    GeometryBasics.Mesh(x -> s.dist'(x), GeometryBasics.Rect(GeometryBasics.Vec(-2r1, -2r2, -1.5h), GeometryBasics.Vec(4r1, 4r2, 3h)), Meshing.MarchingCubes(), samples=(50, 50, 50))
+    m = GeometryBasics.Mesh(x -> s.dist'(x), GeometryBasics.Rect(GeometryBasics.Vec(-2r1, -2r2, -1.5h), GeometryBasics.Vec(4r1, 4r2, 3h)), Meshing.MarchingCubes(), samples=(50, 50, 50))
+    GeometryBasics.meta(m; color=(:black, 0.02))
 end
 
 @system Rhizobox(Container) <: Container begin
@@ -70,7 +71,8 @@ mesh(s::Rhizobox) = begin
     w = Cropbox.deunitfy(s.w', u"cm")
     h = Cropbox.deunitfy(s.h', u"cm")
     g = GeometryBasics.Rect3D(Point3f0(-l/2, -w/2, 0), Point3f0(l, w, -h))
-    GeometryBasics.mesh(g)
+    m = GeometryBasics.mesh(g)
+    GeometryBasics.meta(m, color=(:black, 0.02))
 end
 
 @system SoilCore(Container) <: Container begin
@@ -97,7 +99,8 @@ mesh(s::SoilCore) = begin
     x0 = Cropbox.deunitfy(s.x0', u"cm")
     y0 = Cropbox.deunitfy(s.y0', u"cm")
     g = GeometryBasics.Cylinder(Point3f0(x0, y0, 0), Point3f0(x0, y0, -l), Float32(d)/2)
-    GeometryBasics.mesh(g)
+    m = GeometryBasics.mesh(g)
+    GeometryBasics.meta(m, color=(:purple, 0.1))
 end
 
 @system Tropism begin
@@ -294,8 +297,7 @@ mesh(s::RootSegment) = begin
     m = GeometryBasics.normal_mesh(M.(mv), mf)
 
     c = s.color'
-    n = length(GeometryBasics.coordinates(m))
-    GeometryBasics.pointmeta(m; color=fill(c, n))
+    GeometryBasics.meta(m; color=c)
 end
 
 #TODO: provide @macro / function to automatically build a series of related Systems
@@ -322,12 +324,19 @@ end
 end
 
 render(s::RootArchitecture; soilcore=nothing) = begin
-    meshes = GeometryBasics.Mesh[]
-    gather!(s, Rendering; store=meshes, callback=render!)
-    scene = Makie.mesh(merge(meshes))
+    metas = GeometryBasics.MeshMeta[]
+    gather!(s, Rendering; store=metas, callback=render!)
+    scene = Makie.Scene(resolution=(500, 500))
+    for m in metas
+        Makie.mesh!(scene, m.mesh, color=m.color)
+    end
     #HACK: customization for container
-    Makie.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
-    !isnothing(soilcore) && Makie.mesh!(scene, mesh(soilcore), color=(:purple, 0.1), transparency=true, shading=false)
+    let m = mesh(s.box)
+        Makie.mesh!(scene, m.mesh, color=m.color, transparency=true, shading=false)
+    end
+    !isnothing(soilcore) && let m = mesh(soilcore)
+        Makie.mesh!(scene, m.mesh, color=m.color, transparency=true, shading=false)
+    end
     #HACK: adjust mouse sensitivity: https://github.com/JuliaPlots/Makie.jl/issues/33
     Makie.cameracontrols(scene).rotationspeed[] = 0.01
     scene
