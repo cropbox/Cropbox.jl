@@ -523,7 +523,8 @@ genwhen(v::VarInfo, x) = begin
     w = gettag(v, :when)
     isnothing(w) && return x
     N = gettag(v, :_type)
-    @q $C.value($w) ? $x : zero($N)
+    U = gettag(v, :unit)
+    @q $C.value($w) ? $x : zero($C.valuetype($N, $U))
 end
 
 genparameter(v::VarInfo) = begin
