@@ -44,7 +44,11 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     state = typestate(Val(state))
     type = parsetype(type, state, scope)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
-    VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
+    try
+        VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
+    catch
+        error("unrecognized variable declaration: $line")
+    end
 end
 
 #HACK: experimental support for scope placeholder `:$`
