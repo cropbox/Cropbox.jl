@@ -61,8 +61,7 @@ end
 findlim(array) = begin
     check(x::Number) = !isnan(x)
     check(x) = true
-    a = filter(check, array)
-    (minimum(a), maximum(a))
+    filter(check, array) |> extrema
 end
 
 label(l, u) = hasunit(u) ? "$l ($u)" : "$l"

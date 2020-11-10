@@ -103,5 +103,5 @@ plot_pheno(v) = begin
         push!(V, s.p[v]')
         update!(s)
     end
-    plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.((minimum(V), maximum(V))))
+    plot(T, V, xlab="tick", ylab=String(v), xlim=ustrip.((T[1], T[end])), ylim=ustrip.(extrema(V)))
 end
