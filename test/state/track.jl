@@ -107,4 +107,24 @@
         @test s.e' == 0
         @test s.f' == 1
     end
+
+    @testset "when unit" begin
+        @system STrackWhenUnit(Controller) begin
+            T => true ~ preserve::Bool
+            F => false ~ preserve::Bool
+            a => 1 ~ track(u"d")
+            b => 1 ~ track(u"d", when=true)
+            c => 1 ~ track(u"d", when=false)
+            d => 1 ~ track(u"d", when=T)
+            e => 1 ~ track(u"d", when=F)
+            f => 1 ~ track(u"d", when=!F)
+        end
+        s = instance(STrackWhenUnit)
+        @test s.a' == 1u"d"
+        @test s.b' == 1u"d"
+        @test s.c' == 0u"d"
+        @test s.d' == 1u"d"
+        @test s.e' == 0u"d"
+        @test s.f' == 1u"d"
+    end
 end
