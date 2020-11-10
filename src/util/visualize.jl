@@ -1,10 +1,13 @@
 @nospecialize
 
+step2lim(step) = configure(step) |> parametervalues |> only |> collect |> extrema
+step2lim(::Nothing) = nothing
+
 visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
 visualize!(p, S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, snap=nothing,
-    ylab=nothing, legend=nothing, names=nothing, colors=nothing, plotopts...
+    ylab=nothing, legend=nothing, names=nothing, colors=nothing, xlim=nothing, plotopts...
 ) = begin
     G = configure(group)
     C = @config config + !G
@@ -38,13 +41,14 @@ visualize!(p, S::Type{<:System}, x, y;
     end
     isnothing(colors) && (colors = repeat([nothing], n))
     isnothing(ylab) && (ylab = y)
+    isnothing(xlim) && (xlim = step2lim(xstep))
 
     s(c) = simulate(S; configs=@config(c + !xstep), stop, snap, verbose=false)
     r = s(C[1])
-    p = plot!(p, r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
+    p = plot!(p, r, x, y; ylab, legend, name=names[1], color=colors[1], xlim, plotopts...)
     for i in 2:n
         r = s(C[i])
-        p = plot!(p, r, x, y; name=names[i], color=colors[i], plotopts...)
+        p = plot!(p, r, x, y; name=names[i], color=colors[i], xlim, plotopts...)
     end
     p
 end
@@ -67,10 +71,11 @@ visualize(S::Type{<:System}, x, y::Vector; kw...) = visualize!(nothing, S, x, y;
 visualize!(p, S::Type{<:System}, x, y::Vector;
     config=(), xstep=(),
     stop=nothing, snap=nothing,
-    plotopts...
+    xlim=nothing, plotopts...
 ) = begin
+    isnothing(xlim) && (xlim = step2lim(xstep))
     r = simulate(S; configs=@config(config + !xstep), stop, snap, verbose=false)
-    plot!(p, r, x, y; plotopts...)
+    plot!(p, r, x, y; xlim, plotopts...)
 end
 
 visualize(df::DataFrame, S::Type{<:System}, x, y; kw...) = visualize!(nothing, df, S, x, y; kw...)
@@ -79,7 +84,7 @@ visualize(df::DataFrame, SS::Vector, x, y; kw...) = visualize!(nothing, df, SS, 
 visualize!(p, df::DataFrame, SS::Vector, x, y;
     configs=[], xstep=(),
     stop=nothing, snap=nothing,
-    xlab=nothing, ylab=nothing, name=nothing, names=nothing, colors=nothing, xunit=nothing, yunit=nothing, plotopts...
+    xlab=nothing, ylab=nothing, name=nothing, names=nothing, colors=nothing, xlim=nothing, xunit=nothing, yunit=nothing, plotopts...
 ) = begin
     x = x isa Pair ? x : x => x
     y = y isa Pair ? y : y => y
@@ -87,6 +92,8 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     yo, ye = y
     xlab = isnothing(xlab) ? xe : xlab
     ylab = isnothing(ylab) ? ye : ylab
+
+    isnothing(xlim) && (xlim = step2lim(xstep))
 
     u(n) = extractunit(df, n)
     isnothing(xunit) && (xunit = u(xo))
@@ -102,7 +109,7 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     for (S, c, name, color) in zip(SS, configs, names, colors)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
         r = simulate(S; configs=cs, stop, snap, verbose=false)
-        p = plot!(p, r, xe, ye; kind=:line, name, color, xunit, yunit, plotopts...)
+        p = plot!(p, r, xe, ye; kind=:line, name, color, xlim, xunit, yunit, plotopts...)
     end
     p
 end
@@ -181,11 +188,13 @@ end
 visualize(S::Type{<:System}, x, y, z;
     config=(), xstep=(), ystep=(),
     stop=nothing, snap=nothing,
-    plotopts...
+    xlim=nothing, ylim=nothing, plotopts...
 ) = begin
+    isnothing(xlim) && (xlim = step2lim(xstep))
+    isnothing(ylim) && (ylim = step2lim(ystep))
     configs = @config config + xstep * ystep
     r = simulate(S; configs, stop, snap, verbose=false)
-    plot(r, x, y, z; plotopts...)
+    plot(r, x, y, z; xlim, ylim, plotopts...)
 end
 
 @specialize
