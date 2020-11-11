@@ -183,4 +183,28 @@ using Dates: Date
         @test N[4] == "d ()"
         @test N[5] == "e"
     end
+
+    @testset "dataframe auto datetime" begin
+        df = DataFrame()
+        d = Date("2020-11-10")
+        t = Time("10:12")
+        df."d1 (:Date)" = [d]
+        df."d2" = [d]
+        df."t1 (:Time)" = [t]
+        df."t2" = [t]
+        r = Cropbox.unitfy(df)
+        @test r[1, 1] == d
+        @test r[1, 2] == d
+        @test r[1, 3] == t
+        @test r[1, 4] == t
+        @test eltype(r[!, 1]) == Date
+        @test eltype(r[!, 2]) == Date
+        @test eltype(r[!, 3]) == Time
+        @test eltype(r[!, 4]) == Time
+        N = names(r)
+        @test N[1] == "d1"
+        @test N[2] == "d2"
+        @test N[3] == "t1"
+        @test N[4] == "t2"
+    end
 end

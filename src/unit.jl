@@ -13,6 +13,7 @@ unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
 unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = Unitful.uconvert.(u, v)
 unitfy(v::Tuple{Vararg{<:Union{Quantity,Missing}}}, u::Units) = Unitful.uconvert.(u, v)
 unitfy(v, u) = u(v)
+unitfy(v::V, ::Type{V}) where V = v
 
 deunitfy(v) = v
 deunitfy(v::Quantity) = Unitful.ustrip(v)
