@@ -16,7 +16,7 @@ end
     ix(; r::DataFrames.DataFrameRow): indexer => DataFrames.row(r) ~ call::Int
 
     df(filename, ik, ix): dataframe => begin
-        df = CSV.File(filename) |> DataFrames.DataFrame!
+        df = CSV.File(filename) |> DataFrames.DataFrame! |> unitfy
         df[!, ik] = map(ix, eachrow(df))
         df
     end ~ preserve::DataFrame(extern, parameter)
