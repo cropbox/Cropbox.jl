@@ -44,25 +44,17 @@ extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(a)
 extractarray(df::DataFrame, n) = begin
     #HACK: Gadfly doesn't support ZonedDateTime
-    c = convertcolumn(extractcolumn(df, n))
-    #HACK: Gadfly doesn't handle missing properly: https://github.com/GiovineItalia/Gadfly.jl/issues/1267
-    u = unittype(c)
-    coalesce.(c, unitfy(NaN, u))
+    convertcolumn(extractcolumn(df, n))
 end
 
 findlim(array::Vector{<:Number}) = begin
-    #HACK: lack of missing support in Gadfly
-    a = filter(!isnan, array)
+    a = skipmissing(array)
     l = isempty(a) ? 0 : floor(minimum(a))
     u = isempty(a) ? 0 : ceil(maximum(a))
     #HACK: avoid empty range
     l == u ? (l, l+1) : (l, u)
 end
-findlim(array) = begin
-    check(x::Number) = !isnan(x)
-    check(x) = true
-    filter(check, array) |> extrema
-end
+findlim(array) = extrema(skipmissing(array))
 
 label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
 
@@ -311,6 +303,8 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
+        #HACK: UnicodePlots can't handle missing
+        Y = coalesce.(Y, NaN)
         color = colors[i]
         plot!(p.obj, X, Y; name, color)
         #TODO: remember colors
