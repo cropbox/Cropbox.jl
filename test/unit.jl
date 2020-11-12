@@ -118,6 +118,25 @@ using Dates: Date
         @test Cropbox.unitfy((1u"cm", 0.02u"m", 30u"mm"), u"cm") === (1u"cm", 2.0u"cm", 3//1*u"cm")
     end
 
+    @testset "array with missing" begin
+        @test isequal(Cropbox.unitfy([1, 2, missing], u"m"), [1, 2, missing]u"m")
+        @test isequal(Cropbox.unitfy([1, 2, missing]u"m", u"cm"), [100, 200, missing]u"cm")
+        @test isequal(Cropbox.unitfy([1u"cm", 0.02u"m", missing], u"cm"), [1, 2, missing]u"cm")
+    end
+
+    @testset "tuple with missing" begin
+        @test isequal(Cropbox.unitfy((1, 2, missing), u"m"), (1u"m", 2u"m", missing))
+        @test isequal(Cropbox.unitfy((1u"m", 2u"m", missing), u"cm"), (100u"cm", 200u"cm", missing))
+        @test isequal(Cropbox.unitfy((1u"cm", 0.02u"m", missing), u"cm"), (1u"cm", 2.0u"cm", missing))
+    end
+
+    @testset "mixed units" begin
+        #TODO: reduce subtlety
+        @test_throws Unitful.DimensionError Cropbox.unitfy([1u"m", 2u"cm", 3], u"mm")
+        @test Cropbox.unitfy(Any[1u"m", 2u"cm", 3], u"mm") == [1000u"mm", 20u"mm", 3u"mm"]
+        @test Cropbox.unitfy((1u"m", 2u"cm", 3), u"mm") == (1000u"mm", 20u"mm", 3u"mm")
+    end
+
     @testset "deunitfy" begin
         @test Cropbox.deunitfy(1) == 1
         @test Cropbox.deunitfy(1u"m") == 1
@@ -130,9 +149,7 @@ using Dates: Date
         @test Cropbox.deunitfy(1u"m", u"cm") == 100
         @test Cropbox.deunitfy([1, 2, 3]u"m", u"cm") == [100, 200, 300]
         @test Cropbox.deunitfy([1u"m", 2u"cm", 3u"mm"], u"mm") == [1000, 20, 3]
-        @test_throws Unitful.DimensionError Cropbox.deunitfy([1u"m", 2u"cm", 3], u"mm")
         @test Cropbox.deunitfy((1u"m", 2u"cm", 3u"mm"), u"mm") === (1000, 20, 3)
-        @test_throws Unitful.DimensionError Cropbox.deunitfy((1u"m", 2u"cm", 3), u"mm")
     end
 
     @testset "dataframe" begin
