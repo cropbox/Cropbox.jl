@@ -30,7 +30,7 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
         isempty(est) && return repeat([Inf], n)
         normalize!(est, obs, on=I)
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
-        r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
+        r = [(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
     cost() = begin
         l = length(configs)
@@ -38,9 +38,9 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
         Threads.@threads for i in 1:l
             R[i] = residual(configs[i])
         end
-        A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect #|> deunitfy
-        e = eachrow(hcat(A...)) #|> sum
-        e = sum(e)
+        e = map(getindex.(R, i) for i in 1:n) do r
+            metric(vcat(first.(r)...), vcat(last.(r)...))
+        end
         multi ? Tuple(e) : e[1]
     end
     agg = if multi
