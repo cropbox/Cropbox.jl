@@ -1,5 +1,4 @@
 import DataFrames
-using StatsBase: StatsBase, mean
 
 #TODO: share code with calibrate()
 evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
@@ -11,7 +10,7 @@ evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         @error "redundant configurations" config configs
     end
 end
-evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, weight=nothing, kwargs...) = begin
+evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, kwargs...) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
     I = parsesimulation(index) |> keys |> collect
@@ -43,16 +42,7 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
         end
         multi ? Tuple(e) : only(e)
     end
-    agg = if multi
-        if isnothing(weight)
-            mean
-        else
-            let w = StatsBase.weights(weight); f -> mean(f, w) end
-        end
-    else
-        identity
-    end
-    cost() |> agg
+    cost()
 end
 
 validate(S::Type{<:System}, args...; kwargs...) = begin
