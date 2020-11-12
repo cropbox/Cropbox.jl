@@ -1,4 +1,6 @@
 using DataFrames: DataFrames, DataFrame
+import Dates
+using TimeZones: TimeZones, ZonedDateTime, @tz_str
 using TypedTables: TypedTables, Table
 import CSV
 
@@ -30,6 +32,34 @@ end
     end ~ track::DataFrames.DataFrameRow{DataFrame,DataFrames.Index}
 end
 
+@system DateStore(DataFrameStore) begin
+    calendar(context) ~ ::Calendar
+    i(t=calendar.time): index => Dates.Date(t) ~ track::Dates.Date
+
+    datekey => :date ~ preserve::Symbol(parameter)
+    ix(datekey; r::DataFrames.DataFrameRow): indexer => r[datekey] ~ call::Dates.Date
+end
+
+@system TimeStore(DataFrameStore) begin
+    calendar(context) ~ ::Calendar
+    i(calendar.time): index ~ track::ZonedDateTime
+
+    datekey => :date ~ preserve::Symbol(parameter)
+    timekey => :time ~ preserve::Symbol(parameter)
+    tz: timezone => tz"UTC" ~ preserve::TimeZones.TimeZone(parameter)
+    ix(datekey, timekey, tz; r::DataFrames.DataFrameRow): indexer => begin
+        #HACK: handle ambiguous time conversion under DST
+        occurrence = 1
+        i = DataFrames.row(r)
+        if i > 1
+            r0 = parent(r)[i-1, :]
+            r0[timekey] == r[timekey] && (occurrence = 2)
+        end
+        dt = DateTime(r[datekey], r[timekey])
+        ZonedDateTime(dt, tz, occurrence)
+    end ~ call::ZonedDateTime
+end
+
 @system TableStore(StoreBase) begin
     #TODO: avoid dynamic dispatch on Table/NamedTuple
     ix(; i::Int, r::NamedTuple): indexer => i ~ call::Int
@@ -43,4 +73,4 @@ end
     s(tb, i): store => tb[i] ~ track::NamedTuple
 end
 
-export DataFrameStore, TableStore
+export DataFrameStore, DateStore, TimeStore, TableStore
