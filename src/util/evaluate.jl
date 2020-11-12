@@ -41,7 +41,7 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
         e = map(getindex.(R, i) for i in 1:n) do r
             metric(vcat(first.(r)...), vcat(last.(r)...))
         end
-        multi ? Tuple(e) : e[1]
+        multi ? Tuple(e) : only(e)
     end
     agg = if multi
         if isnothing(weight)
