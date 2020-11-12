@@ -15,18 +15,16 @@ constructortags(::Val{:Drive}) = (:unit,)
 genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 
 geninit(v::VarInfo, ::Val{:Drive}) = begin
-    k = gettag(v, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
-    k = isa(k, QuoteNode) ? k : Meta.quot(k)
+    k = gettag(v, :key, Meta.quot(v.name))
     b = genbody(v)
     u = gettag(v, :unit)
     @q $C.unitfy($C.value($b[$k]), $C.value($u))
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    k = gettag(v, :key, v.name)
     #HACK: needs quot if key is a symbol from VarInfo name
-    k = isa(k, QuoteNode) ? k : Meta.quot(k)
+    k = gettag(v, :key, Meta.quot(v.name))
     @gensym s f d
     @q let $s = $(symstate(v)),
            $f = $(genbody(v)),
