@@ -177,7 +177,7 @@ using DataFrames
 using DataFramesMeta
 import Dates
 loaddata(cv, y, p) = begin
-    ps = CSV.File("$(@__DIR__)/data/CUH/PhenologySummary.csv") |> DataFrame!
+    ps = CSV.File("$(@__DIR__)/data/CUH/PhenologySummary.csv") |> DataFrame
     @linq ps |> where(:CV .== cv, :Year .== y, :Pgroup .== p) |> select(:DAP, :Leaves)
 end
 
