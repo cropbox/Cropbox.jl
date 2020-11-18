@@ -8,10 +8,15 @@ dependencies:
   - pandas
   - matplotlib
   - seaborn
+  - tensorflow>=2.0
   # R
   - r-base>=4
   - r-irkernel>=1.1
   - r-tidyverse
+  - r-tensorflow
+  - r-keras
+  - r-tfdatasets
+  - r-randomForest
   # JupyterHub
   - jupyterhub=1.1.0
   - nbgitpuller
