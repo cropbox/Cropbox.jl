@@ -1,4 +1,5 @@
 channels:
+  - tomyun
   - conda-forge
   - defaults
 dependencies:
@@ -20,6 +21,7 @@ dependencies:
   - r-keras
   - r-tfdatasets
   - r-randomforest
+  - r-hydrogof
   # JupyterHub
   - jupyterhub=1.1.0
   - nbgitpuller
