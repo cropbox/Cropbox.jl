@@ -16,7 +16,7 @@ dependencies:
   - r-tensorflow
   - r-keras
   - r-tfdatasets
-  - r-randomForest
+  - r-randomforest
   # JupyterHub
   - jupyterhub=1.1.0
   - nbgitpuller
