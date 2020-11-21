@@ -40,7 +40,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
     args = parseargs(args)
     kwargs = parsekwargs(kwargs)
-    state = typestate(Val(state))
+    state = parsestate(state)
     type = parsetype(type, state, scope)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
     try
@@ -60,6 +60,7 @@ parseargs(::Nothing) = []
 parsekwargs(kwargs) = kwargs
 parsekwargs(::Nothing) = []
 
+parsestate(state) = typestate(Val(state))
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
 
