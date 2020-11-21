@@ -38,9 +38,8 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
-    #TODO: prefixscope to args/kwargs type specifier 
-    args = isnothing(args) ? [] : args
-    kwargs = isnothing(kwargs) ? [] : kwargs
+    args = parseargs(args)
+    kwargs = parsekwargs(kwargs)
     state = typestate(Val(state))
     type = parsetype(type, state, scope)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
@@ -53,6 +52,13 @@ end
 
 #HACK: experimental support for scope placeholder `:$`
 bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) : x, l)
+
+#TODO: prefixscope to args/kwargs type specifier?
+parseargs(args) = args
+parseargs(::Nothing) = []
+
+parsekwargs(kwargs) = kwargs
+parsekwargs(::Nothing) = []
 
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
