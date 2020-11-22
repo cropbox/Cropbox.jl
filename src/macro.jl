@@ -38,7 +38,8 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
-    args = parseargs(args)
+    name = parsename(name, system)
+    args = parseargs(args, system)
     kwargs = parsekwargs(kwargs)
     state = parsestate(state)
     type = parsetype(type, state, scope)
@@ -53,9 +54,19 @@ end
 #HACK: experimental support for scope placeholder `:$`
 bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) : x, l)
 
+parsename(name, system) = canonicalname(name, system)
+canonicalname(name::Symbol, system::Symbol) = begin
+    n = String(name)
+    #HACK: support private variable name with single prefix `_` (i.e. _a => __S__a, __b => __b)
+    startswith(n, "_") && !startswith(n, "__") ? Symbol("__$(system)_$n") : name
+end
+
 #TODO: prefixscope to args/kwargs type specifier?
-parseargs(args) = args
-parseargs(::Nothing) = []
+parseargs(args, system) = parsearg.(args, system)
+#HACK: support private variable name in the dependency list
+parsearg(a::Symbol, system) = canonicalname(a, system)
+parsearg(a::Expr, system) = @capture(a, k_=v_) ? Expr(:kw, canonicalname(k, system), v) : a
+parseargs(::Nothing, _) = []
 
 parsekwargs(kwargs) = kwargs
 parsekwargs(::Nothing) = []

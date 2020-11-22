@@ -1,4 +1,48 @@
 @testset "macro" begin
+    @testset "private name" begin
+        @system SPrivateName(Controller) begin
+            _a: _aa => 1 ~ preserve
+            __b: __bb => 2 ~ preserve
+        end
+        s = instance(SPrivateName)
+        @test_throws ErrorException s._a
+        @test s.__SPrivateName__a' == 1
+        @test s._aa === s.__SPrivateName__a
+        @test s.__b' == 2
+        @test s.__bb === s.__b
+    end
+
+    @testset "private name mixin" begin
+        @system SPrivateNameMixin1 begin
+            _a: aa1 => 1 ~ preserve
+            b(_a) ~ track
+        end
+        @system SPrivateNameMixin2 begin
+            _a: aa2 => 2 ~ preserve
+            c(_a) ~ track
+        end
+        @eval @system SPrivateNameMixed1(SPrivateNameMixin1, SPrivateNameMixin2, Controller)
+        s1 = instance(SPrivateNameMixed1)
+        @test_throws ErrorException s1._a
+        @test s1.__SPrivateNameMixin1__a' == 1
+        @test s1.__SPrivateNameMixin2__a' == 2
+        @test s1.b' == 1
+        @test s1.c' == 2
+        @test_throws ErrorException @eval @system SPrivateNameMixed2(SPrivateNameMixin1, Controller) begin
+            _a: aa1 => 3 ~ preserve
+        end
+        @test_throws LoadError @eval @system SPrivateNameMixed3(SPrivateNameMixin1, Controller) begin
+            d(_a) ~ track
+        end
+        @eval @system SPrivateNameMixed4(SPrivateNameMixin1, SPrivateNameMixin2, Controller) begin
+            d(a=__SPrivateNameMixin1__a) ~ track
+            e(a=__SPrivateNameMixin2__a) ~ track
+        end
+        s4 = instance(SPrivateNameMixed4)
+        @test s4.d' == 1
+        @test s4.e' == 2
+    end
+
     @testset "alias" begin
         @system SAlias(Controller) begin
             a: aa => 1 ~ track
