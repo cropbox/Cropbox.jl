@@ -55,17 +55,20 @@ end
 bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) : x, l)
 
 parsename(name, system) = canonicalname(name, system)
-canonicalname(name::Symbol, system::Symbol) = begin
-    n = String(name)
+canonicalname(n::Symbol, s::Symbol) = isprivatename(n) ? Symbol("__$(s)_$(n)") : n
+canonicalname(n, _) = n
+isprivatename(n) = begin
+    s = string(n)
     #HACK: support private variable name with single prefix `_` (i.e. _a => __S__a, __b => __b)
-    startswith(n, "_") && !startswith(n, "__") ? Symbol("__$(system)_$n") : name
+    startswith(s, "_") && !startswith(s, "__")
 end
+privatename(n::Symbol) = isprivatename(n) ? Symbol(string(n)[2:end]) : n
 
 #TODO: prefixscope to args/kwargs type specifier?
 parseargs(args, system) = parsearg.(args, system)
 #HACK: support private variable name in the dependency list
-parsearg(a::Symbol, system) = canonicalname(a, system)
-parsearg(a::Expr, system) = @capture(a, k_=v_) ? Expr(:kw, canonicalname(k, system), v) : a
+parsearg(a::Symbol, system) = Expr(:kw, privatename(a), canonicalname(a, system))
+parsearg(a::Expr, system) = @capture(a, k_=v_) ? Expr(:kw, k, canonicalname(v, system)) : a
 parseargs(::Nothing, _) = []
 
 parsekwargs(kwargs) = kwargs

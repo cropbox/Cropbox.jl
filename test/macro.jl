@@ -12,6 +12,23 @@
         @test s.__bb === s.__b
     end
 
+    @testset "private name args" begin
+        @system SPrivateNameArgs(Controller) begin
+            _x: xx => 1 ~ preserve
+            a(_x) ~ preserve
+            b(_x) => x ~ preserve
+            c(y=_x) => y ~ preserve
+            d(_y=_x) => _y ~ preserve
+            e(xx) ~ preserve
+        end
+        s = instance(SPrivateNameArgs)
+        @test s.a' == 1
+        @test s.b' == 1
+        @test s.c' == 1
+        @test s.d' == 1
+        @test s.e' == 1
+    end
+
     @testset "private name mixin" begin
         @system SPrivateNameMixin1 begin
             _a: aa1 => 1 ~ preserve
