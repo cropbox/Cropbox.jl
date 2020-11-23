@@ -4,6 +4,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: tomyun/maximize-build-space@chown-volume
       - uses: actions/checkout@v2
       - uses: jupyterhub/repo2docker-action@master
         with:
