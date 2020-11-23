@@ -5,6 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: tomyun/maximize-build-space@chown-volume
+        with:
+          remove-dotnet: 'true'
+          remove-android: 'true'
       - uses: actions/checkout@v2
       - uses: jupyterhub/repo2docker-action@master
         with:
