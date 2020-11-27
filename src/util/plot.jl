@@ -246,6 +246,8 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         layers = create_layers(colors)
         obj = Gadfly.plot(
             Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
+            Gadfly.Scale.x_continuous,
+            Gadfly.Scale.y_continuous,
             guides...,
             layers...,
             theme,
@@ -371,6 +373,8 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
         Gadfly.Guide.ylabel(ylab),
         Gadfly.Guide.colorkey(title=zlab; pos=keypos),
         Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
+        Gadfly.Scale.x_continuous,
+        Gadfly.Scale.y_continuous,
         geom,
         labels...,
         theme;
