@@ -324,6 +324,7 @@ genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 genstruct(name, type, infos, incl, scope) = begin
     startswith(string(name), '_') && error("system name should not start with _: $name")
     _name = Symbol(:_, name)
+    __S = esc(gensym(_name))
     _S = esc(_name)
     S = esc(name)
     T = esc(type)
@@ -338,39 +339,42 @@ genstruct(name, type, infos, incl, scope) = begin
     source = gensource(infos)
     system = quote
         Core.@__doc__ abstract type $S <: $T end
-        Core.@__doc__ mutable struct $_S <: $S
+        Core.@__doc__ mutable struct $__S <: $S
             $(fields...)
-            function $_name(; _kwargs...)
+            function $__S(; _kwargs...)
                 $predecl
                 $(decls...)
                 new($(args...))
             end
         end
         $S(; kw...) = $_S(; kw...)
+        $_S = $__S
         $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.typefor(::Type{<:$S}) = $_S
-        $C.source(::Type{<:$S}) = $(Meta.quot(source))
-        $C.mixins(::Type{<:$S}) = $(Tuple(getmodule.(Ref(scope), incl)))
-        $C.fieldnamesunique(::Type{<:$S}) = $(genfieldnamesunique(infos))
-        $C.fieldnamesalias(::Type{<:$S}) = $(genfieldnamesalias(infos))
-        $C.scopeof(::Type{<:$S}) = $scope
-        $C.update!($(esc(:self))::$S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
-        $C.update!($(esc(:self))::$S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
-        $C.update!($(esc(:self))::$S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
+        $C.source(::Type{$_S}) = $(Meta.quot(source))
+        $C.mixins(::Type{$_S}) = $(Tuple(getmodule.(Ref(scope), incl)))
+        $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
+        $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
+        $C.scopeof(::Type{$_S}) = $scope
+        $C.update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
+        $C.update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
+        $C.update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
         $S
     end
     system #|> MacroTools.flatten
 end
 
 source(s::S) where {S<:System} = source(S)
-source(::Type{<:System}) = quote
+source(::Type{S}) where {S<:System} = source(typefor(S))
+source(::Type{System}) = quote
     context ~ ::Cropbox.Context(override)
     config(context) => context.config ~ ::Cropbox.Config
 end
 source(::Type) = :()
 
 mixins(s::S) where {S<:System} = mixins(S)
-mixins(::Type{<:System}) = (System,)
+mixins(::Type{S}) where {S<:System} = mixins(typefor(S))
+mixins(::Type{System}) = (System,)
 mixins(::Type) = ()
 
 using DataStructures: OrderedSet
@@ -408,13 +412,16 @@ typefor(s::Symbol, m::Module=Main) = getmodule(m, s) |> typefor
 typefor(T) = T
 vartype(::Type{S}, k) where {S<:System} = fieldtype(typefor(S), k) |> typefor
 
-fieldnamesunique(::Type{<:System}) = ()
-fieldnamesalias(::Type{<:System}) = ()
+fieldnamesunique(::Type{System}) = ()
+fieldnamesalias(::Type{System}) = ()
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
+fieldnamesunique(::Type{S}) where {S<:System} = fieldnamesunique(typefor(S))
+fieldnamesalias(::Type{S}) where {S<:System} = fieldnamesalias(typefor(S))
 
-scopeof(::Type{<:System}) = @__MODULE__
+scopeof(::Type{System}) = @__MODULE__
 scopeof(::S) where {S<:System} = scopeof(S)
+scopeof(::Type{S}) where {S<:System} = scopeof(typefor(S))
 
 abstract type UpdateStage end
 struct PreStage <: UpdateStage end
