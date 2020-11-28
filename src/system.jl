@@ -58,7 +58,14 @@ value(s::System, k::Symbol; kw...) = begin
 end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
-Base.show(io::IO, ::MIME"text/plain", s::System) = begin
+Base.show(io::IO, ::MIME"text/plain", s::System) = look(io, s)
+
+look(s::System) = look(stdout, s)
+look(S::Type{<:System}) = look(stdout, S)
+look(s::System, k::Symbol) = look(stdout, s, k)
+look(S::Type{<:System}, k::Symbol) = look(stdout, S, k)
+
+look(io::IO, s::System) = begin
     printstyled(io, namefor(s), color=:light_magenta)
     for ((n, a), v) in zip(fieldnamesalias(s), s)
         print(io, "\n  ")
@@ -68,13 +75,6 @@ Base.show(io::IO, ::MIME"text/plain", s::System) = begin
         print(io, labelstring(v))
     end
 end
-
-look(s::System) = look(stdout, s)
-look(S::Type{<:System}) = look(stdout, S)
-look(s::System, k::Symbol) = look(stdout, s, k)
-look(S::Type{<:System}, k::Symbol) = look(stdout, S, k)
-
-look(io::IO, s::System) = show(io, MIME("text/plain"), s)
 look(io::IO, S::Type{<:System}) = begin
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
