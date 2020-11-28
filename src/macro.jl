@@ -324,7 +324,7 @@ genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 genstruct(name, type, infos, incl, scope) = begin
     startswith(string(name), '_') && error("system name should not start with _: $name")
     _name = Symbol(:_, name)
-    __S = esc(gensym(_name))
+    _S = esc(gensym(_name))
     S = esc(name)
     T = esc(type)
     N = Meta.quot(name)
@@ -338,25 +338,25 @@ genstruct(name, type, infos, incl, scope) = begin
     source = gensource(infos)
     system = quote
         Core.@__doc__ abstract type $S <: $T end
-        Core.@__doc__ mutable struct $__S <: $S
+        Core.@__doc__ mutable struct $_S <: $S
             $(fields...)
-            function $__S(; _kwargs...)
+            function $_S(; _kwargs...)
                 $predecl
                 $(decls...)
                 new($(args...))
             end
         end
-        $S(; kw...) = $__S(; kw...)
-        $C.namefor(::Type{$__S}) = $C.namefor($S)
-        $C.typefor(::Type{<:$S}) = $__S
-        $C.source(::Type{$__S}) = $(Meta.quot(source))
-        $C.mixins(::Type{$__S}) = $(Tuple(getmodule.(Ref(scope), incl)))
-        $C.fieldnamesunique(::Type{$__S}) = $(genfieldnamesunique(infos))
-        $C.fieldnamesalias(::Type{$__S}) = $(genfieldnamesalias(infos))
-        $C.scopeof(::Type{$__S}) = $scope
-        $C.update!($(esc(:self))::$__S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
-        $C.update!($(esc(:self))::$__S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
-        $C.update!($(esc(:self))::$__S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
+        $S(; kw...) = $_S(; kw...)
+        $C.namefor(::Type{$_S}) = $C.namefor($S)
+        $C.typefor(::Type{<:$S}) = $_S
+        $C.source(::Type{$_S}) = $(Meta.quot(source))
+        $C.mixins(::Type{$_S}) = $(Tuple(getmodule.(Ref(scope), incl)))
+        $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
+        $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
+        $C.scopeof(::Type{$_S}) = $scope
+        $C.update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
+        $C.update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
+        $C.update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
         $S
     end
     system #|> MacroTools.flatten
