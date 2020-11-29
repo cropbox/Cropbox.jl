@@ -60,6 +60,8 @@ end
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
 Base.show(io::IO, ::MIME"text/plain", s::System) = look(io, s)
 
+import Markdown
+
 look(s::System) = look(stdout, s)
 look(S::Type{<:System}) = look(stdout, S)
 look(s::System, k::Symbol) = look(stdout, s, k)
@@ -76,6 +78,14 @@ look(io::IO, s::System) = begin
     end
 end
 look(io::IO, S::Type{<:System}) = begin
+    try
+        #HACK: mimic REPL.doc(b) with no dynamic concatenation
+        md = Docs.formatdoc(fetchdocstr(S))
+        show(io, MIME("text/plain"), md)
+        println(io)
+        println(io, "----")
+    catch
+    end
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
@@ -89,11 +99,28 @@ look(io::IO, s::S, k::Symbol) where {S<:System} = begin
     println(io)
 end
 look(io::IO, S::Type{<:System}, k::Symbol) = begin
+    try
+        #HACK: mimic REPL.fielddoc(b, k) with no default description
+        ds = fetchdocstr(S).data[:fields][k]
+        md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
+        show(io, MIME("text/plain"), md)
+        println(io)
+    catch
+    end
     d = dependency(S)
     v = d.M[k]
     println(io, "----")
     Highlights.highlight(io, MIME("text/ansi"), string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
     println(io, "----")
+end
+
+fetchdocstr(S::Type{<:System}) = begin
+    b = Docs.Binding(scopeof(S), nameof(typefor(S)))
+    for m in Docs.modules
+        d = Docs.meta(m)
+        haskey(d, b) && return d[b].docs[Union{}]
+    end
+    nothing
 end
 
 labelstring(v; maxlength=nothing) = begin
