@@ -362,6 +362,21 @@ using DataStructures: OrderedDict
             @test C1 == C2
         end
 
+        @testset "multi" begin
+            c1 = :S => :a => 1
+            c2 = :S => :b => 2
+            c3 = :S => :c => 3
+            c = Cropbox.configure(c1, c2, c3)
+            C1 = @config(c1, c2, c3)
+            C2 = @config((c1, c2, c3))
+            C3 = @config (c1, c2, c3)
+            C4 = @config c1, c2, c3
+            @test C1 == c
+            @test C2 == c
+            @test C3 == c
+            @test C4 == c
+        end
+
         @testset "empty" begin
             c = Cropbox.Config()
             C1 = @config

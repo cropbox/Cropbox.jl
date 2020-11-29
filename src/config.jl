@@ -182,6 +182,10 @@ macro config(ex)
     end
 end
 
+macro config(ex, exs...)
+    :(Cropbox.@config(($ex, $(exs...))))
+end
+
 macro config()
     :(Cropbox.@config(()))
 end
