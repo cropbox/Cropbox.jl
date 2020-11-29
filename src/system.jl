@@ -110,7 +110,7 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
     d = dependency(S)
     v = d.M[k]
     println(io, "----")
-    Highlights.highlight(io, MIME("text/ansi"), string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
+    Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
     println(io, "----")
 end
 
