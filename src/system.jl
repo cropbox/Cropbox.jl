@@ -68,6 +68,7 @@ look(s::System, k::Symbol) = look(stdout, s, k)
 look(S::Type{<:System}, k::Symbol) = look(stdout, S, k)
 
 look(io::IO, s::System) = begin
+    println(io, "state:")
     printstyled(io, namefor(s), color=:light_magenta)
     for ((n, a), v) in zip(fieldnamesalias(s), s)
         print(io, "\n  ")
@@ -82,11 +83,13 @@ look(io::IO, S::Type{<:System}) = begin
     try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
+        println(io, "doc:")
         show(io, MIME("text/plain"), md)
         println(io)
         println(io, "")
     catch
     end
+    println(io, "struct:")
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
@@ -98,6 +101,7 @@ end
 look(io::IO, s::S, k::Symbol) where {S<:System} = begin
     look(io, S, k)
     println(io, "")
+    println(io, "value:")
     show(io, MIME("text/plain"), s[k])
     println(io)
 end
@@ -106,6 +110,7 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
         #HACK: mimic REPL.fielddoc(b, k) with no default description
         ds = fetchdocstr(S).data[:fields][k]
         md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
+        println(io, "doc:")
         show(io, MIME("text/plain"), md)
         println(io)
         println(io, "")
@@ -113,6 +118,7 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
     end
     d = dependency(S)
     v = d.M[k]
+    println(io, "code:")
     Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
 end
 
