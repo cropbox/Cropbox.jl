@@ -71,13 +71,13 @@ look(io::IO, s::Union{S,Type{S}}; doc=true, header=true, endnewline=true, kw...)
     doc && try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
-        header && println(io, "doc:")
+        header && printstyled(io, "[doc]\n", color=:light_black)
         show(io, MIME("text/plain"), md)
         println(io)
         println(io, "")
     catch
     end
-    header && println(io, "system:")
+    header && printstyled(io, "[system]\n", color=:light_black)
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
@@ -93,7 +93,7 @@ end
 look(io::IO, s::S, k::Symbol; header=true, endnewline=true, kw...) where {S<:System} = begin
     look(io, S, k; header, endnewline, kw...)
     println(io, "")
-    header && println(io, "value:")
+    printstyled(io, "[value]\n", color=:light_black)
     show(io, MIME("text/plain"), s[k])
     endnewline && println(io)
     nothing
@@ -103,7 +103,7 @@ look(io::IO, S::Type{<:System}, k::Symbol; doc=true, header=true, endnewline=tru
         #HACK: mimic REPL.fielddoc(b, k) with no default description
         ds = fetchdocstr(S).data[:fields][k]
         md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
-        header && println(io, "doc:")
+        printstyled(io, "[doc]\n", color=:light_black)
         show(io, MIME("text/plain"), md)
         println(io)
         println(io, "")
@@ -111,7 +111,7 @@ look(io::IO, S::Type{<:System}, k::Symbol; doc=true, header=true, endnewline=tru
     end
     d = dependency(S)
     v = d.M[k]
-    header && println(io, "code:")
+    printstyled(io, "[code]\n", color=:light_black)
     Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
     endnewline && println(io)
     nothing
