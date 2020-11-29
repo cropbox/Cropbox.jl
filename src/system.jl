@@ -58,26 +58,26 @@ value(s::System, k::Symbol; kw...) = begin
 end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
-Base.show(io::IO, ::MIME"text/plain", s::System) = look(io, s)
+Base.show(io::IO, ::MIME"text/plain", s::System) = look(io, s; doc=false, header=false, endnewline=false)
 
 import Markdown
 
-look(s::System) = look(stdout, s)
-look(S::Type{<:System}) = look(stdout, S)
-look(s::System, k::Symbol) = look(stdout, s, k)
-look(S::Type{<:System}, k::Symbol) = look(stdout, S, k)
+look(s::System; kw...) = look(stdout, s; kw...)
+look(S::Type{<:System}; kw...) = look(stdout, S; kw...)
+look(s::System, k::Symbol; kw...) = look(stdout, s, k; kw...)
+look(S::Type{<:System}, k::Symbol; kw...) = look(stdout, S, k; kw...)
 
-look(io::IO, s::Union{S,Type{<:S}}) where {S<:System} = begin
-    try
+look(io::IO, s::Union{S,Type{S}}; doc=true, header=true, endnewline=true, kw...) where {S<:System} = begin
+    doc && try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
-        println(io, "doc:")
+        header && println(io, "doc:")
         show(io, MIME("text/plain"), md)
         println(io)
         println(io, "")
     catch
     end
-    println(io, "system:")
+    header && println(io, "system:")
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
@@ -87,21 +87,23 @@ look(io::IO, s::Union{S,Type{<:S}}) where {S<:System} = begin
         printstyled(io, " = ", color=:light_black)
         print(io, labelstring(s[n]))
     end
-    println(io)
+    endnewline && println(io)
+    nothing
 end
-look(io::IO, s::S, k::Symbol) where {S<:System} = begin
-    look(io, S, k)
+look(io::IO, s::S, k::Symbol; header=true, endnewline=true, kw...) where {S<:System} = begin
+    look(io, S, k; header, endnewline, kw...)
     println(io, "")
-    println(io, "value:")
+    header && println(io, "value:")
     show(io, MIME("text/plain"), s[k])
-    println(io)
+    endnewline && println(io)
+    nothing
 end
-look(io::IO, S::Type{<:System}, k::Symbol) = begin
-    try
+look(io::IO, S::Type{<:System}, k::Symbol; doc=true, header=true, endnewline=true, kw...) = begin
+    doc && try
         #HACK: mimic REPL.fielddoc(b, k) with no default description
         ds = fetchdocstr(S).data[:fields][k]
         md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
-        println(io, "doc:")
+        header && println(io, "doc:")
         show(io, MIME("text/plain"), md)
         println(io)
         println(io, "")
@@ -109,8 +111,10 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
     end
     d = dependency(S)
     v = d.M[k]
-    println(io, "code:")
-    Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
+    header && println(io, "code:")
+    Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
+    endnewline && println(io)
+    nothing
 end
 
 fetchdocstr(S::Type{<:System}) = begin
