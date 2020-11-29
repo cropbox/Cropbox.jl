@@ -346,6 +346,7 @@ genstruct(name, type, infos, incl, scope) = begin
         end
         $S(; kw...) = $_S(; kw...)
         $C.namefor(::Type{$_S}) = $C.namefor($S)
+        $C.typefor(::Type{$_S}) = $_S
         $C.typefor(::Type{<:$S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
         $C.mixins(::Type{$_S}) = $(Tuple(getmodule.(Ref(scope), incl)))
