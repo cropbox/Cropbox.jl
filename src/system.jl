@@ -76,6 +76,7 @@ look(io::IO, s::System) = begin
         printstyled(io, " = ", color=:light_black)
         print(io, labelstring(v))
     end
+    println(io)
 end
 look(io::IO, S::Type{<:System}) = begin
     try
@@ -92,6 +93,7 @@ look(io::IO, S::Type{<:System}) = begin
         printstyled(io, n, color=:light_blue)
         !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
     end
+    println(io)
 end
 look(io::IO, s::S, k::Symbol) where {S<:System} = begin
     look(io, S, k)
