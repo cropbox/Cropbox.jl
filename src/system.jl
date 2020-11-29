@@ -84,7 +84,7 @@ look(io::IO, S::Type{<:System}) = begin
         md = Docs.formatdoc(fetchdocstr(S))
         show(io, MIME("text/plain"), md)
         println(io)
-        println(io, "----")
+        println(io, "")
     catch
     end
     printstyled(io, namefor(S), color=:light_magenta)
@@ -97,7 +97,7 @@ look(io::IO, S::Type{<:System}) = begin
 end
 look(io::IO, s::S, k::Symbol) where {S<:System} = begin
     look(io, S, k)
-    println(io, "----")
+    println(io, "")
     show(io, MIME("text/plain"), s[k])
     println(io)
 end
@@ -108,7 +108,7 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
         md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
         show(io, MIME("text/plain"), md)
         println(io)
-        println(io, "----")
+        println(io, "")
     catch
     end
     d = dependency(S)
