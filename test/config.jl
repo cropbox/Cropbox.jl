@@ -361,6 +361,16 @@ using DataStructures: OrderedDict
             C2 = Cropbox.configure(a)
             @test C1 == C2
         end
+
+        @testset "empty" begin
+            c = Cropbox.Config()
+            C1 = @config
+            C2 = @config()
+            C3 = @config ()
+            @test C1 == c
+            @test C2 == c
+            @test C3 == c
+        end
     end
     
     @testset "string" begin
