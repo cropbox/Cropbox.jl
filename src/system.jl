@@ -105,11 +105,11 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
         md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
         show(io, MIME("text/plain"), md)
         println(io)
+        println(io, "----")
     catch
     end
     d = dependency(S)
     v = d.M[k]
-    println(io, "----")
     Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
     println(io, "----")
 end
