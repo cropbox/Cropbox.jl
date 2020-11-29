@@ -55,6 +55,20 @@ look(io::IO, S::Type{<:System}, k::Symbol; doc=true, header=true, endnewline=tru
     nothing
 end
 
+using MacroTools: @capture
+
+macro look(ex)
+    if @capture(ex, s_.k_)
+        :(Cropbox.look($(esc(s)), $(Meta.quot(k))))
+    else
+        :(Cropbox.look($(esc(ex))))
+    end
+end
+
+macro look(s, k)
+    :(Cropbox.look($(esc(s)), $(Meta.quot(k))))
+end
+
 fetchdocstr(S::Type{<:System}) = begin
     b = Docs.Binding(scopeof(S), nameof(typefor(S)))
     for m in Docs.modules
@@ -64,4 +78,4 @@ fetchdocstr(S::Type{<:System}) = begin
     nothing
 end
 
-export look
+export look, @look
