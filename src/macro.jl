@@ -322,9 +322,7 @@ genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
 genstruct(name, type, infos, incl, scope) = begin
-    startswith(string(name), '_') && error("system name should not start with _: $name")
-    _name = Symbol(:_, name)
-    _S = esc(gensym(_name))
+    _S = esc(gensym(name))
     S = esc(name)
     T = esc(type)
     N = Meta.quot(name)
