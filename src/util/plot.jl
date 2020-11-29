@@ -1,5 +1,6 @@
 using DataFrames: DataFrame
 import Gadfly
+using MacroTools: @capture
 import UnicodePlots
 import Unitful
 

@@ -166,6 +166,7 @@ configreduce(a, b) = configure(a, b)
 configreduce(a) = configure(a)
 configreduce(a::Vector) = configure.(a)
 
+using MacroTools: @capture
 macro config(ex)
     @capture(ex, +(P__) | P__)
     P = map(P) do p
