@@ -67,19 +67,7 @@ look(S::Type{<:System}) = look(stdout, S)
 look(s::System, k::Symbol) = look(stdout, s, k)
 look(S::Type{<:System}, k::Symbol) = look(stdout, S, k)
 
-look(io::IO, s::System) = begin
-    println(io, "state:")
-    printstyled(io, namefor(s), color=:light_magenta)
-    for ((n, a), v) in zip(fieldnamesalias(s), s)
-        print(io, "\n  ")
-        printstyled(io, n, color=:light_blue)
-        !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
-        printstyled(io, " = ", color=:light_black)
-        print(io, labelstring(v))
-    end
-    println(io)
-end
-look(io::IO, S::Type{<:System}) = begin
+look(io::IO, s::Union{S,Type{<:S}}) where {S<:System} = begin
     try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
@@ -89,12 +77,15 @@ look(io::IO, S::Type{<:System}) = begin
         println(io, "")
     catch
     end
-    println(io, "struct:")
+    println(io, "system:")
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
         printstyled(io, n, color=:light_blue)
         !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
+        s isa Type && continue
+        printstyled(io, " = ", color=:light_black)
+        print(io, labelstring(s[n]))
     end
     println(io)
 end
