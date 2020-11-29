@@ -95,6 +95,7 @@ look(io::IO, S::Type{<:System}) = begin
 end
 look(io::IO, s::S, k::Symbol) where {S<:System} = begin
     look(io, S, k)
+    println(io, "----")
     show(io, MIME("text/plain"), s[k])
     println(io)
 end
@@ -111,7 +112,6 @@ look(io::IO, S::Type{<:System}, k::Symbol) = begin
     d = dependency(S)
     v = d.M[k]
     Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line) * '\n', Highlights.Lexers.JuliaLexer)
-    println(io, "----")
 end
 
 fetchdocstr(S::Type{<:System}) = begin
