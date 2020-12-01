@@ -25,5 +25,7 @@ jobs:
         env:
           PYTHON: ""
       - uses: julia-actions/julia-runtest@latest
+        with:
+          depwarn: error
       - uses: julia-actions/julia-processcoverage@latest
       - uses: codecov/codecov-action@v1
