@@ -3,13 +3,20 @@ using Test
 
 include("gasexchange.jl")
 
-"""
-Kim et al. (2007), Kim et al. (2006)
-In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
-In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
-"""
-ge_maize = :C4 => (
+"Kim et al. (2007), Kim et al. (2006)"
+ge_maize1 = :C4 => (
     Vpm25 = 70, Vcm25 = 50, Jm25 = 300,
+    Rd25 = 2
+)
+
+"In von Cammerer (2000)"
+ge_maize2 = :C4 => (
+    Vpm25 = 120, Vcm25 = 60, Jm25 = 400,
+)
+
+"In Kim et al.(2006), under elevated CO2, YY"
+ge_maize3 = :C4 => (
+    Vpm25 = 91.9, Vcm25 = 71.6, Jm25 = 354.2,
     Rd25 = 2, # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
 )
 
