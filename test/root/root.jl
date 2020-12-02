@@ -325,7 +325,7 @@ render(s::RootArchitecture; soilcore=nothing) = begin
     meshes = GeometryBasics.Mesh[]
     gather!(s, Rendering; store=meshes, callback=render!)
     #HACK: comfortable default size when using WGLMakie inside Jupyter Notebook
-    scene = Scene(resolution=(500, 500))
+    scene = AbstractPlotting.Scene(resolution=(500, 500))
     AbstractPlotting.mesh!(scene, merge(meshes))
     #HACK: customization for container
     AbstractPlotting.mesh!(scene, mesh(s.box), color=(:black, 0.02), transparency=true, shading=false)
