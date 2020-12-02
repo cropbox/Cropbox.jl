@@ -14,7 +14,7 @@ ge_maize = :C4 => (
 )
 
 """
-switgrass params from Albaugha et al. (2014)
+switchgrass params from Albaugha et al. (2014)
 https://doi.org/10.1016/j.agrformet.2014.02.013
 """
 ge_switchgrass1 = :C4 => (Vpm25 = 52, Vcm25 = 26, Jm25 = 145)
