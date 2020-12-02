@@ -4,6 +4,7 @@ look(s::System; kw...) = look(stdout, s; kw...)
 look(S::Type{<:System}; kw...) = look(stdout, S; kw...)
 look(s::System, k::Symbol; kw...) = look(stdout, s, k; kw...)
 look(S::Type{<:System}, k::Symbol; kw...) = look(stdout, S, k; kw...)
+look(m::Module, s::Symbol; kw...) = look(getfield(m, s); kw...)
 
 look(io::IO, s::Union{S,Type{S}}; doc=true, header=true, endnewline=true, kw...) where {S<:System} = begin
     doc && try
