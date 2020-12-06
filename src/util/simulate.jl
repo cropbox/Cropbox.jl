@@ -53,7 +53,11 @@ parsemeta(a::Tuple, c) = parsemeta(collect(a), c)
 parsemeta(a, c) = parsemeta([a], c)
 parsemeta(::Nothing, c) = OrderedDict()
 
-update!(m::Simulation, s::System) = append!(m.result, extract(s, m))
+update!(m::Simulation, s::System, snatch!) = begin
+    D = extract(s, m)
+    snatch!(D, s)
+    append!(m.result, D)
+end
 
 format!(m::Simulation; nounit=false, long=false) = begin
     r = m.result
@@ -73,7 +77,7 @@ end
 
 using ProgressMeter: Progress, ProgressUnknown, ProgressMeter
 const barglyphs = ProgressMeter.BarGlyphs("[=> ]")
-progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, callback=nothing, verbose=true, kwargs...) = begin
+progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, snatch=nothing, callback=nothing, verbose=true, kwargs...) = begin
     probe(a::Union{Symbol,String}) = s -> s[a]'
     probe(a::Function) = s -> a(s)
     probe(a) = s -> a
@@ -87,6 +91,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, callback
 
     stop = stopprobe(stop)
     snap = snapprobe(snap)
+    snatch = isnothing(snatch) ? (D, s) -> nothing : snatch
     callback = isnothing(callback) ? (s, m) -> nothing : callback
 
     count(v::Number) = v
@@ -104,11 +109,11 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, callback
         check = s -> !stop(s)
     end
 
-    snap(s) && update!.(M, s)
+    snap(s) && update!.(M, s, snatch)
     while check(s)
         update!(s)
         snap(s) && for m in M
-            update!(m, s)
+            update!(m, s, snatch)
             callback(s, m)
         end
         ProgressMeter.next!(p)

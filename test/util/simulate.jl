@@ -107,6 +107,24 @@ using Dates
         @test all(r3.b .% 2 .== 0)
     end
 
+    @testset "snatch" begin
+        @system SSimulateSnatch(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a) ~ accumulate
+        end
+        n = 3
+        i = 0
+        f(D, s) = begin
+            d = D[1]
+            @test s.a' == d[:a] && s.b' == d[:b]
+            i += 1
+            d[:c] = i
+        end
+        r = simulate(SSimulateSnatch, stop=n, snatch=f)
+        @test i == 1 + n
+        @test r[!, :c] == [1, 2, 3, 4]
+    end
+
     @testset "callback" begin
         @system SSimulateCallback(Controller) begin
             a => 1 ~ preserve(parameter)
