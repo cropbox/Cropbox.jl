@@ -100,6 +100,24 @@ mesh(s::SoilCore) = begin
     GeometryBasics.mesh(g)
 end
 
+@system SoilLayer(Container) <: Container begin
+    d: depth => 0 ~ preserve(u"cm", parameter)
+    t: thickness => 10 ~ preserve(u"cm", parameter)
+
+    dist(nounit(d), nounit(t); p::Point3f0): distance => begin
+        x, y, z = p
+        a = -d
+        b = a - t
+        if a <= z # above
+            z - a
+        elseif z < b # below
+            -(z - b)
+        else # inside: b <= z < a
+            z
+        end
+    end ~ call
+end
+
 @system Tropism begin
     N: tropsim_trials => 1.0 ~ preserve(parameter)
     to(; α, β): tropism_objective => 0 ~ call
@@ -171,12 +189,12 @@ end
     bg(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")): beta_growth => begin
         #HACK: prevent NaN when r = 0, thus GD = Inf
         w = if !isinf(t_e)
-        t = clamp(t, zero(t), t_e)
-        t_m = t_e / 2
-        t_et = t_e - t
-        t_em = t_e - t_m
-        t_tb = t - t_b
-        t_mb = t_m - t_b
+            t = clamp(t, zero(t), t_e)
+            t_m = t_e / 2
+            t_et = t_e - t
+            t_em = t_e - t_m
+            t_tb = t - t_b
+            t_mb = t_m - t_b
             ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
         else
             0
