@@ -437,13 +437,12 @@ import Cairo
 import ImageMagick
 import FileIO
 # https://github.com/tshort/SixelTerm.jl
-sixel(p::Plot) = begin
+sixel(p::Gadfly.Plot) = begin
     png = IOBuffer()
-    # assume Gadfly backend
     #HACK: needs to set emit_on_finish false
     w = Gadfly.Compose.default_graphic_width
     h = Gadfly.Compose.default_graphic_height
-    p[] |> Gadfly.PNG(png, w, h, false; dpi=144)
+    p |> Gadfly.PNG(png, w, h, false; dpi=144)
     im = ImageMagick.load(png)
     six = IOBuffer()
     st = FileIO.Stream(FileIO.format"six", six)
@@ -451,6 +450,7 @@ sixel(p::Plot) = begin
     write(stdout, take!(six))
     nothing
 end
+sixel(p::Plot) = sixel(p[])
 
 @specialize
 
