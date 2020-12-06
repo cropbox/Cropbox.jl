@@ -129,7 +129,7 @@ simulate!(s::System, layout::Vector; kwargs...) = begin
     M = [simulation(s; l...) for l in layout]
     progress!(s, M; kwargs...)
 end
-simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; callback=f, kwargs...)
+simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; snatch=f, kwargs...)
 
 simulate(; system, kw...) = simulate(system; kw...)
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
@@ -157,7 +157,7 @@ simulate(S::Type{<:System}, layout::Vector, configs::Vector; verbose=true, kwarg
     ProgressMeter.finish!(p)
     [vcat(r...) for r in eachrow(hcat(R...))]
 end
-simulate(f::Function, S::Type{<:System}, args...; kwargs...) = simulate(S, args...; callback=f, kwargs...)
+simulate(f::Function, S::Type{<:System}, args...; kwargs...) = simulate(S, args...; snatch=f, kwargs...)
 
 @specialize
 
