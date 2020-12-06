@@ -238,6 +238,8 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
 
     if isnothing(p)
         scales = [
+            Gadfly.Scale.x_continuous,
+            Gadfly.Scale.y_continuous,
             Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
         ]
         guides = [
@@ -369,6 +371,8 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
     labels = isnothing(zlabgap) ? () : label.(zlim[1]:zlabgap:zlim[2])
 
     scales = [
+        Gadfly.Scale.x_continuous,
+        Gadfly.Scale.y_continuous,
         Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
         Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
     ]
