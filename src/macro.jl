@@ -41,6 +41,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     name = parsename(name, system)
     args = parseargs(args, system)
     kwargs = parsekwargs(kwargs)
+    body = parsebody(body)
     state = parsestate(state)
     type = parsetype(type, state, scope)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
@@ -73,6 +74,13 @@ parseargs(::Nothing, _) = []
 
 parsekwargs(kwargs) = kwargs
 parsekwargs(::Nothing) = []
+
+parsebody(body) = begin
+    #TODO: translate `return` to a local safe statement
+    MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
+    body
+end
+parsebody(::Nothing) = nothing
 
 parsestate(state) = typestate(Val(state))
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
@@ -735,8 +743,6 @@ genbody(v::VarInfo, body=nothing) = begin
         args = @q begin $(emitfuncargpair.(v.args)...) end
         isnothing(body) && (body = esc(v.body))
     end
-    #TODO: translate `return` to a local safe statement
-    MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
     MacroTools.flatten(@q let $args; $body end)
 end
 
