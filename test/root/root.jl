@@ -169,13 +169,19 @@ end
     ea0: initial_elongation_age => 0 ~ preserve(u"d", extern)
     ea(l, Δl, lt, lmax): elongation_age => (l < Δl && lt < lmax ? 1 : 0) ~ accumulate(init=ea0, u"d")
     bg(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")): beta_growth => begin
+        #HACK: prevent NaN when r = 0, thus GD = Inf
+        w = if !isinf(t_e)
         t = clamp(t, zero(t), t_e)
         t_m = t_e / 2
         t_et = t_e - t
         t_em = t_e - t_m
         t_tb = t - t_b
         t_mb = t_m - t_b
-        c_m * ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
+            ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
+        else
+            0
+        end
+        c_m * w
     end ~ call(u"cm/d")
     pr(bg, ea, GD, r): potential_elongation_rate => bg(ea, GD, r) ~ track(u"cm/d")
 
