@@ -237,6 +237,9 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     create_layers(colors) = [Gadfly.layer(x=Xs[i], y=Ys[i], geoms..., Gadfly.Theme(theme; default_color=colors[i])) for i in 1:n]
 
     if isnothing(p)
+        scales = [
+            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
+        ]
         guides = [
             Gadfly.Guide.title(title),
             Gadfly.Guide.xlabel(xlab),
@@ -246,7 +249,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         update_color!(guides, colors)
         layers = create_layers(colors)
         obj = Gadfly.plot(
-            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
+            scales...,
             guides...,
             layers...,
             theme,
@@ -365,13 +368,20 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
     end
     labels = isnothing(zlabgap) ? () : label.(zlim[1]:zlabgap:zlim[2])
 
-    obj = Gadfly.plot(
+    scales = [
+        Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
         Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
+    ]
+    guides = [
         Gadfly.Guide.title(title),
         Gadfly.Guide.xlabel(xlab),
         Gadfly.Guide.ylabel(ylab),
         Gadfly.Guide.colorkey(title=zlab; pos=keypos),
-        Gadfly.Scale.color_continuous(minvalue=zlim[1], maxvalue=zlim[2]),
+    ]
+
+    obj = Gadfly.plot(
+        scales...,
+        guides...,
         geom,
         labels...,
         theme;
