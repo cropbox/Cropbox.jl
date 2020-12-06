@@ -76,8 +76,9 @@ parsekwargs(kwargs) = kwargs
 parsekwargs(::Nothing) = []
 
 parsebody(body) = begin
+    #HACK: disable return checking for now, too aggressive for local scope return
     #TODO: translate `return` to a local safe statement
-    MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
+    #MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
     body
 end
 parsebody(::Nothing) = nothing
