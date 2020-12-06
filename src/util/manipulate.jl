@@ -1,5 +1,7 @@
 import Interact
 
+@nospecialize
+
 manipulate(args...; parameters, config=(), kwargs...) = begin
     P = configure(parameters)
     W = []
@@ -30,5 +32,7 @@ manipulate(args...; parameters, config=(), kwargs...) = begin
     z = Interact.Widget{:Cropbox}(Dict(zip(K, W)); output)
     Interact.@layout!(z, Interact.vbox(L..., output))
 end
+
+@specialize
 
 export manipulate
