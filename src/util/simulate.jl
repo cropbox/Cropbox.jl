@@ -16,6 +16,9 @@ end
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
+    #HACK: ignore unavailable properties (i.e. handle default :tick in target)
+    I = filtersimulationdict(I, s)
+    T = filtersimulationdict(T, s)
     IT = merge(I, T)
     M = parsemeta(meta, s.context.config)
     Simulation(base, I, T, IT, M, DataFrame())
@@ -30,6 +33,8 @@ parsesimulation(a::Tuple) = parsesimulation(collect(a))
 parsesimulation(::Tuple{}) = parsesimulation([])
 parsesimulation(a) = parsesimulation([a])
 parsesimulation(::Nothing) = parsesimulation("context.clock.tick")
+
+filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
 
 extract(s::System, m::Simulation) = extract(s[m.base], m.mapping)
 extract(s::System, m::OrderedDict{Symbol,Any}) = begin
