@@ -21,10 +21,11 @@ simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, me
     Simulation(base, I, T, IT, M, DataFrame())
 end
 
-parsesimulationkey(p::Pair) = p
-parsesimulationkey(a::Symbol) = (a => a)
-parsesimulationkey(a::String) = (Symbol(split(a, ".")[end]) => a)
-parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a))
+parsesimulationkey(p::Pair) = [p]
+parsesimulationkey(a::Symbol) = [a => a]
+parsesimulationkey(a::String) = [Symbol(split(a, ".")[end]) => a]
+parsesimulationkey(a::Vector) = parsesimulationkey.(a) |> Iterators.flatten |> collect
+parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a) |> Iterators.flatten)
 parsesimulation(a::Tuple) = parsesimulation(collect(a))
 parsesimulation(a) = parsesimulation([a])
 parsesimulation(::Nothing) = parsesimulation("context.clock.tick")
