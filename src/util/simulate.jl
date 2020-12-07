@@ -14,11 +14,12 @@ end
 @nospecialize
 
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
+    sb = s[base]
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
     #HACK: ignore unavailable properties (i.e. handle default :tick in target)
-    I = filtersimulationdict(I, s)
-    T = filtersimulationdict(T, s)
+    I = filtersimulationdict(I, sb)
+    T = filtersimulationdict(T, sb)
     IT = merge(I, T)
     M = parsemeta(meta, s.context.config)
     Simulation(base, I, T, IT, M, DataFrame())
