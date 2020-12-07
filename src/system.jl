@@ -38,6 +38,15 @@ Base.getproperty(s::System, n::AbstractString) = begin
     end, [s, split(n, ".")...])
 end
 
+Base.hasproperty(s::System, n::AbstractString) = begin
+    try
+        getproperty(s, n)
+    catch
+        return false
+    end
+    true
+end
+
 #HACK: swap out state variable of mutable System after initialization
 setvar!(s::System, k::Symbol, v) = begin
     setfield!(s, k, v)
