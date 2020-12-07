@@ -16,7 +16,7 @@ end
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
     sb = s[base]
     I = parsesimulation(index)
-    T = parsesimulation(isnothing(target) ? fieldnamesunique(s[base]) : target)
+    T = parsesimulation(isnothing(target) ? fieldnamesunique(sb) : target)
     #HACK: ignore unavailable properties (i.e. handle default :tick in target)
     I = filtersimulationdict(I, sb)
     T = filtersimulationdict(T, sb)
