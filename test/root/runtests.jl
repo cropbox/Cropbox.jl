@@ -303,3 +303,83 @@ end
 #         Root.writepvd("$c-$i", Root.RootArchitecture, config=C[c], seed=i, stop=500)
 #     end
 # end
+
+# using DataStructures: OrderedDict
+# @testset "switchgrass rhizobox" begin
+#     C = OrderedDict(
+#         :W => root_switchgrass_W,
+#         :N => root_switchgrass_N,
+#     )
+#     R = []
+#     for (k, c) in C
+#         n = "switchgrass_$k"
+#         b = instance(Root.Rhizobox, config=container_rhizobox)
+#         s = instance(Root.RootArchitecture; config=c, options=(; box=b), seed=0)
+#         r = simulate!(s, stop=1000) do D, s
+#             G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#             D[1][:length] = !isempty(G) ? sum([s.length' for s in G]) : 0.0u"cm"
+#             D[1][:volume] = !isempty(G) ? sum([s.length' * s.radius'^2 for s in G]) : 0.0u"mm^3"
+#             D[1][:count] = length(G)
+#         end
+#         push!(R, r)
+#         plot(r, :tick, :length, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-length.pdf")
+#         plot(r, :tick, :volume, yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-volume.pdf")
+#         plot(r, :tick, :count, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-count.pdf")
+#         Root.writevtk(n, s)
+#     end    
+#     save(x, y, f; kw...) = begin
+#         K = collect(keys(C))
+#         p = plot(R[1], x, y; name=string(K[1]), title=string(y), kind=:line, backend=:Gadfly, kw...)
+#         for i in 2:length(R)
+#             p = plot!(p, R[i], x, y; name=string(K[i]), kind=:line, backend=:Gadfly, kw...)
+#         end
+#         p[] |> Cropbox.Gadfly.PDF(f)
+#     end
+#     save(:tick, :length, "switchgrass-length.pdf")
+#     save(:tick, :volume, "switchgrass-volume.pdf"; yunit=u"mm^3")
+#     save(:tick, :count, "switchgrass-count.pdf")
+# end
+
+# @testset "switchgrass layer" begin
+#     C = Dict(
+#         :W => root_switchgrass_W,
+#         :N => root_switchgrass_N,
+#     )
+#     for (k, c) in C
+#         n = "switchgrass_$k"
+#         b = instance(Root.Rhizobox, config=container_rhizobox)
+#         L = [instance(Root.SoilLayer, config=:SoilLayer => (; d, t=1)) for d in 0:1:10]
+#         s = instance(Root.RootArchitecture; config=c, options=(; box=b), seed=0)
+#         r = simulate!(s, stop=300) do D, s
+#             G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#             for (i, l) in enumerate(L)
+#                 V = [s.length' for s in G if s.ii(l)]
+#                 D[1][Symbol("L$(i-1)")] = !isempty(V) ? sum(V) : 0.0u"cm"
+#             end
+#         end
+#         plot(r, :tick, [Symbol("L$(i-1)") for i in 1:length(L)], kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
+#         Root.writevtk(n, s)
+#     end
+# end
+
+# @testset "maize layer" begin
+#     n = "maize"
+#     b = instance(Root.Pot, config=container_pot)
+#     t = 5
+#     L = [instance(Root.SoilLayer, config=:SoilLayer => (; d, t)) for d in 0:t:30-t]
+#     s = instance(Root.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
+#     r = simulate!(s, stop=500) do D, s
+#         G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#         for (i, l) in enumerate(L)
+#             ll = [s.length' for s in G if s.ii(l)]
+#             D[1][Symbol("L$(i-1)")] = !isempty(ll) ? sum(ll) : 0.0u"cm"
+#             vl = [s.length' * s.radius'^2 for s in G if s.ii(l)]
+#             D[1][Symbol("V$(i-1)")] = !isempty(vl) ? sum(vl) : 0.0u"cm^3"
+#             D[1][Symbol("C$(i-1)")] = length(vl)
+#         end
+#     end
+#     plot(r, :tick, [Symbol("L$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total length", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
+#     plot(r, :tick, [Symbol("V$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total volume", yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("V$n.pdf")
+#     plot(r, :tick, [Symbol("C$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="count", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("C$n.pdf")
+#     Root.writevtk(n, s)
+# end
