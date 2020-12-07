@@ -11,44 +11,44 @@ root_maize = (
           0 0 1 ; # F
           0 0 0 ; # S
     ],
-    :PrimaryRoot => (
-        :lb => 0.1 ± 0.01,
-        :la => 18.0 ± 1.8,
-        :ln => 0.6 ± 0.06,
-        :lmax => 89.7 ± 7.4,
-        :r => 6.0 ± 0.6,
-        :Δx => 0.5,
-        :σ => 10,
-        :θ => 80 ± 8,
-        :N => 1.5,
-        :a => 0.04 ± 0.004,
-        :color => Root.RGBA(1, 0, 0, 1),
+    :PrimaryRoot => (;
+        lb = 0.1 ± 0.01,
+        la = 18.0 ± 1.8,
+        ln = 0.6 ± 0.06,
+        lmax = 89.7 ± 7.4,
+        r = 6.0 ± 0.6,
+        Δx = 0.5,
+        σ = 10,
+        θ = 80 ± 8,
+        N = 1.5,
+        a = 0.04 ± 0.004,
+        color = Root.RGBA(1, 0, 0, 1),
     ),
-    :FirstOrderLateralRoot => (
-        :lb => 0.2 ± 0.04,
-        :la => 0.4 ± 0.04,
-        :ln => 0.4 ± 0.03,
-        :lmax => 0.6 ± 1.6,
-        :r => 2.0 ± 0.2,
-        :Δx => 0.1,
-        :σ => 20,
-        :θ => 70 ± 15,
-        :N => 1,
-        :a => 0.03 ± 0.003,
-        :color => Root.RGBA(0, 1, 0, 1),
+    :FirstOrderLateralRoot => (;
+        lb = 0.2 ± 0.04,
+        la = 0.4 ± 0.04,
+        ln = 0.4 ± 0.03,
+        lmax = 0.6 ± 1.6,
+        r = 2.0 ± 0.2,
+        Δx = 0.1,
+        σ = 20,
+        θ = 70 ± 15,
+        N = 1,
+        a = 0.03 ± 0.003,
+        color = Root.RGBA(0, 1, 0, 1),
     ),
-    :SecondOrderLateralRoot => (
-        :lb => 0,
-        :la => 0.4 ± 0.02,
-        :ln => 0,
-        :lmax => 0.4,
-        :r => 2.0 ± 0.2,
-        :Δx => 0.1,
-        :σ => 20,
-        :θ => 70 ± 10,
-        :N => 2,
-        :a => 0.02 ± 0.002,
-        :color => Root.RGBA(0, 0, 1, 1),
+    :SecondOrderLateralRoot => (;
+        lb = 0,
+        la = 0.4 ± 0.02,
+        ln = 0,
+        lmax = 0.4,
+        r = 2.0 ± 0.2,
+        Δx = 0.1,
+        σ = 20,
+        θ = 70 ± 10,
+        N = 2,
+        a = 0.02 ± 0.002,
+        color = Root.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_N = (
@@ -59,44 +59,44 @@ root_switchgrass_N = (
           0 0 1 ; # F
           0 0 0 ; # S
     ],
-    :PrimaryRoot => (
-        :lb => 0.41 ± 0.26,
-        :la => 0.63 ± 0.50,
-        :ln => 0.27 ± 0.07,
-        :lmax => 33.92 ± 22.60,
-        :r => 1 ± 0.1,
-        :Δx => 0.5,
-        :σ => 9,
-        :θ => 60 ± 6,
-        :N => 1.5,
-        :a => (0.62 ± 0.41)u"mm",
-        :color => Root.RGBA(1, 0, 0, 1),
+    :PrimaryRoot => (;
+        lb = 0.41 ± 0.26,
+        la = 0.63 ± 0.50,
+        ln = 0.27 ± 0.07,
+        lmax = 33.92 ± 22.60,
+        r = 1 ± 0.1,
+        Δx = 0.5,
+        σ = 9,
+        θ = 60 ± 6,
+        N = 1.5,
+        a = (0.62 ± 0.41)u"mm",
+        color = Root.RGBA(1, 0, 0, 1),
     ),
-    :FirstOrderLateralRoot => (
-        :lb => 0.63 ± 0.45,
-        :la => 1.12 ± 1.42,
-        :ln => 0.23 ± 0.11,
-        :lmax => 7.03 ± 6.84,
-        :r => 0.21 ± 0.02,
-        :Δx => 0.1,
-        :σ => 18,
-        :θ => 60 ± 6,
-        :N => 1,
-        :a => (0.22 ± 0.07)u"mm",
-        :color => Root.RGBA(0, 1, 0, 1),
+    :FirstOrderLateralRoot => (;
+        lb = 0.63 ± 0.45,
+        la = 1.12 ± 1.42,
+        ln = 0.23 ± 0.11,
+        lmax = 7.03 ± 6.84,
+        r = 0.21 ± 0.02,
+        Δx = 0.1,
+        σ = 18,
+        θ = 60 ± 6,
+        N = 1,
+        a = (0.22 ± 0.07)u"mm",
+        color = Root.RGBA(0, 1, 0, 1),
     ),
-    :SecondOrderLateralRoot => (
-        :lb => 0.45 ± 0.64,
-        :la => 0.71 ± 0.64,
-        :ln => 0.14 ± 0.10,
-        :lmax => 2.77 ± 2.68,
-        :r => 0.08 ± 0.01,
-        :Δx => 0.1,
-        :σ => 20,
-        :θ => 60 ± 6,
-        :N => 2,
-        :a => (0.19 ± 0.10)u"mm",
-        :color => Root.RGBA(0, 0, 1, 1),
+    :SecondOrderLateralRoot => (;
+        lb = 0.45 ± 0.64,
+        la = 0.71 ± 0.64,
+        ln = 0.14 ± 0.10,
+        lmax = 2.77 ± 2.68,
+        r = 0.08 ± 0.01,
+        Δx = 0.1,
+        σ = 20,
+        θ = 60 ± 6,
+        N = 2,
+        a = (0.19 ± 0.10)u"mm",
+        color = Root.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_W = (
@@ -107,44 +107,44 @@ root_switchgrass_W = (
           0 0 1 ; # F
           0 0 0 ; # S
     ],
-    :PrimaryRoot => (
-        :lb => 0.40 ± 0.45,
-        :la => 3.37 ± 2.89,
-        :ln => 0.31 ± 0.06,
-        :lmax => 42.33 ± 30.54,
-        :r => 1 ± 0.1,
-        :Δx => 0.5,
-        :σ => 9,
-        :θ => 60 ± 6,
-        :N => 1.5,
-        :a => (0.71 ± 0.65)u"mm",
-        :color => Root.RGBA(1, 0, 0, 1),
+    :PrimaryRoot => (;
+        lb = 0.40 ± 0.45,
+        la = 3.37 ± 2.89,
+        ln = 0.31 ± 0.06,
+        lmax = 42.33 ± 30.54,
+        r = 1 ± 0.1,
+        Δx = 0.5,
+        σ = 9,
+        θ = 60 ± 6,
+        N = 1.5,
+        a = (0.71 ± 0.65)u"mm",
+        color = Root.RGBA(1, 0, 0, 1),
     ),
-    :FirstOrderLateralRoot => (
-        :lb => 0.59 ± 0.48,
-        :la => 0.74 ± 0.87,
-        :ln => 0.09 ± 0.09,
-        :lmax => 1.79 ± 1.12,
-        :r => 0.04 ± 0.01,
-        :Δx => 0.1,
-        :σ => 18,
-        :θ => 60 ± 6,
-        :N => 1,
-        :a => (0.19 ± 0.08)u"mm",
-        :color => Root.RGBA(0, 1, 0, 1),
+    :FirstOrderLateralRoot => (;
+        lb = 0.59 ± 0.48,
+        la = 0.74 ± 0.87,
+        ln = 0.09 ± 0.09,
+        lmax = 1.79 ± 1.12,
+        r = 0.04 ± 0.01,
+        Δx = 0.1,
+        σ = 18,
+        θ = 60 ± 6,
+        N = 1,
+        a = (0.19 ± 0.08)u"mm",
+        color = Root.RGBA(0, 1, 0, 1),
     ),
-    :SecondOrderLateralRoot => (
-        :lb => 0.07 ± 0.04,
-        :la => 0,
-        :ln => 0,
-        :lmax => 0.07 ± 0.04,
-        :r => 0.002 ± 0.001,
-        :Δx => 0.01,
-        :σ => 20,
-        :θ => 60 ± 6,
-        :N => 2,
-        :a => (0.19 ± 0.08)u"mm", # 0.68 ± 0.77
-        :color => Root.RGBA(0, 0, 1, 1),
+    :SecondOrderLateralRoot => (;
+        lb = 0.07 ± 0.04,
+        la = 0,
+        ln = 0,
+        lmax = 0.07 ± 0.04,
+        r = 0.002 ± 0.001,
+        Δx = 0.01,
+        σ = 20,
+        θ = 60 ± 6,
+        N = 2,
+        a = (0.19 ± 0.08)u"mm", # 0.68 ± 0.77
+        color = Root.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_N2 = (
@@ -155,31 +155,31 @@ root_switchgrass_N2 = (
           0 0 0 ; # F
           0 0 0 ; # S
     ],
-    :PrimaryRoot => (
-        :lb => 0.67 ± 0.25,
-        :la => 0.58 ± 0.96,
-        :ln => 0.25 ± 0.06,
-        :lmax => 11.85 ± 12.63,
-        :r => 1 ± 0.1,
-        :Δx => 0.5,
-        :σ => 9,
-        :θ => 60 ± 6,
-        :N => 1.5,
-        :a => (0.78 ± 0.27)u"mm",
-        :color => Root.RGBA(1, 0, 0, 1),
+    :PrimaryRoot => (;
+        lb = 0.67 ± 0.25,
+        la = 0.58 ± 0.96,
+        ln = 0.25 ± 0.06,
+        lmax = 11.85 ± 12.63,
+        r = 1 ± 0.1,
+        Δx = 0.5,
+        σ = 9,
+        θ = 60 ± 6,
+        N = 1.5,
+        a = (0.78 ± 0.27)u"mm",
+        color = Root.RGBA(1, 0, 0, 1),
     ),
-    :FirstOrderLateralRoot => (
-        :lb => 0.20 ± 0.15,
-        :la => 0.94 ± 1.12,
-        :ln => 0.12 ± 0.06,
-        :lmax => 8.04 ± 7.57,
-        :r => 0.68 ± 0.07,
-        :Δx => 0.1,
-        :σ => 18,
-        :θ => 60 ± 6,
-        :N => 1,
-        :a => (0.35 ± 0.38)u"mm",
-        :color => Root.RGBA(0, 1, 0, 1),
+    :FirstOrderLateralRoot => (;
+        lb = 0.20 ± 0.15,
+        la = 0.94 ± 1.12,
+        ln = 0.12 ± 0.06,
+        lmax = 8.04 ± 7.57,
+        r = 0.68 ± 0.07,
+        Δx = 0.1,
+        σ = 18,
+        θ = 60 ± 6,
+        N = 1,
+        a = (0.35 ± 0.38)u"mm",
+        color = Root.RGBA(0, 1, 0, 1),
     ),
 )
 root_switchgrass_W2 = (
@@ -190,97 +190,97 @@ root_switchgrass_W2 = (
           0 0 0 ; # F
           0 0 0 ; # S
     ],
-    :PrimaryRoot => (
-        :lb => 0.08 ± 0.07,
-        :la => 4.32 ± 1.86,
-        :ln => 0.21 ± 0.05,
-        :lmax => 22.80 ± 11.94,
-        :r => 1 ± 0.1,
-        :Δx => 0.5,
-        :σ => 9,
-        :θ => 60 ± 6,
-        :N => 1.5,
-        :a => (0.40 ± 0.15)u"mm",
-        :color => Root.RGBA(1, 0, 0, 1),
+    :PrimaryRoot => (;
+        lb = 0.08 ± 0.07,
+        la = 4.32 ± 1.86,
+        ln = 0.21 ± 0.05,
+        lmax = 22.80 ± 11.94,
+        r = 1 ± 0.1,
+        Δx = 0.5,
+        σ = 9,
+        θ = 60 ± 6,
+        N = 1.5,
+        a = (0.40 ± 0.15)u"mm",
+        color = Root.RGBA(1, 0, 0, 1),
     ),
-    :FirstOrderLateralRoot => (
-        :lb => 0.41 ± 0.35,
-        :la => 1.39 ± 1.00,
-        :ln => 0.10 ± 0.13,
-        :lmax => 2.37 ± 1.41,
-        :r => 0.10 ± 0.01,
-        :Δx => 0.1,
-        :σ => 18,
-        :θ => 60 ± 6,
-        :N => 1,
-        :a => (0.21 ± 0.06)u"mm",
-        :color => Root.RGBA(0, 1, 0, 1),
+    :FirstOrderLateralRoot => (;
+        lb = 0.41 ± 0.35,
+        la = 1.39 ± 1.00,
+        ln = 0.10 ± 0.13,
+        lmax = 2.37 ± 1.41,
+        r = 0.10 ± 0.01,
+        Δx = 0.1,
+        σ = 18,
+        θ = 60 ± 6,
+        N = 1,
+        a = (0.21 ± 0.06)u"mm",
+        color = Root.RGBA(0, 1, 0, 1),
     ),
 )
 root_switchgrass_KH2PO4 = (
     root_switchgrass_W,
-    :PrimaryRoot => (
-        :r => 1.28 ± 0.29,
+    :PrimaryRoot => (;
+        r = 1.28 ± 0.29,
     ),
-    :FirstOrderLateralRoot => (
-        :lmax => 1.63 ± 0.61,
-        :r => 0.31 ± 0.11,
-        :θ => 84.27 ± 3.03,
+    :FirstOrderLateralRoot => (;
+        lmax = 1.63 ± 0.61,
+        r = 0.31 ± 0.11,
+        θ = 84.27 ± 3.03,
     ),
-    :SecondOrderLateralRoot => (
-        :lmax => 2.30 ± 0.65,
-        :r => 0.48 ± 0.15,
-        :θ => 41.87 ± 6.64,
+    :SecondOrderLateralRoot => (;
+        lmax = 2.30 ± 0.65,
+        r = 0.48 ± 0.15,
+        θ = 41.87 ± 6.64,
     )
 )
 root_switchgrass_AlPO4 = (
     root_switchgrass_W,
-    :PrimaryRoot => (
-        :r => 1.10 ± 0.32,
+    :PrimaryRoot => (;
+        r = 1.10 ± 0.32,
     ),
-    :FirstOrderLateralRoot => (
-        :lmax => 1.56 ± 0.55,
-        :r => 0.33 ± 0.11,
-        :θ => 83.53 ± 3.42,
+    :FirstOrderLateralRoot => (;
+        lmax = 1.56 ± 0.55,
+        r = 0.33 ± 0.11,
+        θ = 83.53 ± 3.42,
     ),
-    :SecondOrderLateralRoot => (
-        :lmax => 2.29 ± 0.60,
-        :r => 0.48 ± 0.13,
-        :θ => 34.87 ± 5.17,
+    :SecondOrderLateralRoot => (;
+        lmax = 2.29 ± 0.60,
+        r = 0.48 ± 0.13,
+        θ = 34.87 ± 5.17,
     )
 )
 root_switchgrass_C6H17NaO24P6 = (
     root_switchgrass_W,
-    :PrimaryRoot => (
-        :r => 1.31 ± 0.35,
+    :PrimaryRoot => (;
+        r = 1.31 ± 0.35,
     ),
-    :FirstOrderLateralRoot => (
-        :lmax => 2.80 ± 0.61,
-        :r => 0.57 ± 0.09,
-        :θ => 78.07 ± 5.30,
+    :FirstOrderLateralRoot => (;
+        lmax = 2.80 ± 0.61,
+        r = 0.57 ± 0.09,
+        θ = 78.07 ± 5.30,
     ),
-    :SecondOrderLateralRoot => (
-        :lmax => 3.05 ± 0.50,
-        :r => 0.65 ± 0.17,
-        :θ => 43.73 ± 6.71,
+    :SecondOrderLateralRoot => (;
+        lmax = 3.05 ± 0.50,
+        r = 0.65 ± 0.17,
+        θ = 43.73 ± 6.71,
     )
 )
 
-container_pot = :Pot => (
-    :r1 => 10,
-    :r2 => 6,
-    :height => 30,
+container_pot = :Pot => (;
+    r1 = 10,
+    r2 = 6,
+    height = 30,
 )
-container_rhizobox = :Rhizobox => (
-    :l => 16u"inch",
-    :w => 10.5u"inch",
-    :h => 42u"inch",
+container_rhizobox = :Rhizobox => (;
+    l = 16u"inch",
+    w = 10.5u"inch",
+    h = 42u"inch",
 )
-soilcore = :SoilCore => (
-    :d => 5,
-    :l => 20,
-    :x0 => 3,
-    :y0 => 3,
+soilcore = :SoilCore => (;
+    d = 5,
+    l = 20,
+    x0 = 3,
+    y0 = 3,
 )
 
 @testset "root" begin
