@@ -27,6 +27,7 @@ parsesimulationkey(a::String) = [Symbol(split(a, ".")[end]) => a]
 parsesimulationkey(a::Vector) = parsesimulationkey.(a) |> Iterators.flatten |> collect
 parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a) |> Iterators.flatten)
 parsesimulation(a::Tuple) = parsesimulation(collect(a))
+parsesimulation(::Tuple{}) = parsesimulation([])
 parsesimulation(a) = parsesimulation([a])
 parsesimulation(::Nothing) = parsesimulation("context.clock.tick")
 
