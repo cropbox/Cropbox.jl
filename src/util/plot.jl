@@ -171,6 +171,7 @@ plot(df::DataFrame, x, y, z;
 end
 
 sixel(p::Plot) = sixel(p[])
+sixel(::P) where P = error("sixel not supported: $P")
 
 include("plot/UnicodePlots.jl")
 include("plot/Gadfly.jl")
