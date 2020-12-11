@@ -32,6 +32,13 @@ end
     end ~ track::DataFrames.DataFrameRow{DataFrame,DataFrames.Index}
 end
 
+@system DayStore(DataFrameStore) begin
+    i(context.clock.tick): index ~ track::Int(u"d")
+
+    daykey => :day ~ preserve::Symbol(parameter)
+    ix(daykey; r::DataFrames.DataFrameRow): indexer => r[daykey] ~ call::Int(u"d")
+end
+
 @system DateStore(DataFrameStore) begin
     calendar(context) ~ ::Calendar
     i(t=calendar.time): index => Dates.Date(t) ~ track::Dates.Date
@@ -73,4 +80,4 @@ end
     s(tb, i): store => tb[i] ~ track::NamedTuple
 end
 
-export DataFrameStore, DateStore, TimeStore, TableStore
+export DataFrameStore, DayStore, DateStore, TimeStore, TableStore

@@ -1,3 +1,4 @@
+using CSV
 using DataFrames: DataFrames, DataFrame
 using TypedTables: TypedTables, Table
 
@@ -14,6 +15,21 @@ using TypedTables: TypedTables, Table
         r = simulate(SStoreDataFrame, config=:0 => (:df => df, :ik => :a), stop=n-1)
         @test r.a == a
         @test r.b == b
+    end
+
+    @testset "day" begin
+        @system SStoreDay(DayStore, Controller) begin
+            a(s) ~ drive
+        end
+        r = mktemp() do f, io
+            write(io, "day (d),a\n0,0\n1,10\n2,20")
+            close(io)
+            c = (:Clock => :step => 1u"d", :0 => :filename => f)
+            simulate(SStoreDay, config=c, stop=2)
+        end
+        @test r.a[1] == 0
+        @test r.a[2] == 10
+        @test r.a[end] == 20
     end
 
     @testset "table" begin
