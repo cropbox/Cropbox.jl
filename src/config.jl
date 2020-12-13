@@ -156,7 +156,7 @@ configexpand(patch; base=()) = begin
     configexpand(configs; base)
 end
 configexpand(configs::Vector; base=()) = configrebase(configs; base)
-configrebase(configs::Vector; base=()) = isempty(configs) ? [configure(base)] : [configure((base, c)) for c in configs]
+configrebase(configs::Vector; base=()) = isempty(configs) ? [configure(base)] : [configure(base, c) for c in configs]
 configrebase(config; base=()) = configrebase([config]; base)
 
 configreduce(a::Vector, b) = configrebase(b; base=a)
