@@ -159,7 +159,7 @@ configexpand(configs::Vector; base=()) = configrebase(configs; base)
 configrebase(configs::Vector; base=()) = isempty(configs) ? [configure(base)] : [configure(base, c) for c in configs]
 configrebase(config; base=()) = configrebase([config]; base)
 
-configreduce(a::Vector, b) = configrebase(b; base=a)
+configreduce(a::Vector, b) = configure.(a, b)
 configreduce(a, b::Vector) = configrebase(b; base=a)
 configreduce(a::Vector, b::Vector) = configreduce.(a, b)
 configreduce(a, b) = configure(a, b)
