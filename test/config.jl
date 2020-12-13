@@ -296,7 +296,41 @@ using DataStructures: OrderedDict
             @test C1[1] == C2
         end
     end
-    
+
+    @testset "reduce" begin
+        @testset "array + single" begin
+            a = [:S => :a => 1, :S => :a => 2]
+            b = :S => :a => 0
+            C1 = Cropbox.configreduce(a, b)
+            C2 = Cropbox.configure.([b, b])
+            @test C1 == C2
+        end
+
+        @testset "single + array" begin
+            a = :S => :a => 0
+            b = [:S => :a => 1, :S => :a => 2]
+            C1 = Cropbox.configreduce(a, b)
+            C2 = Cropbox.configure(b)
+            @test C1 == C2
+        end
+
+        @testset "array + array" begin
+            a = [:S => :a => 1, :S => :a => 2]
+            b = [:S => :a => 3, :S => :a => 4]
+            C1 = Cropbox.configreduce(a, b)
+            C2 = Cropbox.configure(b)
+            @test C1 == C2
+        end
+
+        @testset "single + single" begin
+            a = :S => :a => 1
+            b = :S => :a => 2
+            C1 = Cropbox.configreduce(a, b)
+            C2 = Cropbox.configure(b)
+            @test C1 == C2
+        end
+    end
+
     @testset "macro" begin
         @testset "merge" begin
             a = :S => :a => 1
@@ -323,6 +357,17 @@ using DataStructures: OrderedDict
             @test C1 == C2
         end
         
+        @testset "reduce" begin
+            a = :S => :a => 0
+            b = [:S => :a => 1, :S => :a => 2]
+            c1(a, b) = @config a + b
+            c2(a, b) = Cropbox.configreduce(a, b)
+            @test c1(a, b) == c2(a, b)
+            @test c1(b, a) == c2(b, a)
+            @test c1(b, b) == c2(b, b)
+            @test c1(a, a) == c2(a, a)
+        end
+
         @testset "multiply" begin
             a = :S => :a => [1, 2]
             b = :S => :b => [3, 4]
