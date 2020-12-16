@@ -23,8 +23,13 @@ Base.merge(f::Function, c::Config, D...) = merge(f, c.config, [d.config for d in
 Base.show(io::IO, c::Config) = print(io, "<Config>")
 Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     n = length(c)
-    print(io, "Config for $n systems")
-    !iszero(n) && println(io, ":")
+    if n == 0
+        print(io, "Config empty")
+    elseif n == 1
+        println(io, "Config for $n system:")
+    else
+        println(io, "Config for $n systems:")
+    end
     f((s, C); color) = begin
         b = IOBuffer()
         x = IOContext(b, :color => color)
