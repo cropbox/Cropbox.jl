@@ -30,6 +30,7 @@ Base.display(d::AbstractDisplay, m::MIME, p::Plot) = display(d, m, p.obj)
 @nospecialize
 
 extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
+extractcolumn(df::DataFrame, n::String) = extractcolumn(df, parsesimulationkey(n)[1][1])
 extractcolumn(df::DataFrame, n::Expr) = begin
     ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
     te(x) = @capture(x, f_(a__)) ? :($f($(ts.(a)...))) : x
