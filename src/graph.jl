@@ -14,6 +14,8 @@ makedot(g::Graph) = begin
     
     """
     digraph {
+    ratio=compress
+    size="8,6"
     ranksep=0.2
     node[
         width=0
