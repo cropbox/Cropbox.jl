@@ -69,7 +69,7 @@ add!(h::Hierarchy, a::Symbol, T::Type{<:System}) = begin
     link!(h, b, a)
     add!(h, T)
 end
-add!(h::Hierarchy, a::Symbol, T::Type{Vector{<:System}}) = foreach(b -> add!(h, a, b), T)
+add!(h::Hierarchy, a::Symbol, T::Type{Vector{S}}) where {S<:System} = add!(h, a, S)
 add!(h::Hierarchy, a::Symbol, T) = nothing
 
 label(n::Symbol) = string(n)
