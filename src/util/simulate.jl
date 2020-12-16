@@ -51,7 +51,7 @@ extract(b::Bundle{S}, m::OrderedDict{Symbol,Any}) where {S<:System} = begin
 end
 extractable(s::System, p) = begin
     # only pick up variables of simple types by default
-    p[2] isa Union{Number,Symbol,AbstractString,AbstractTime,Nothing}
+    p[2] isa Union{Number,Symbol,AbstractString,AbstractTime}
 end
 
 parsemetadata(p::Pair, c) = p
