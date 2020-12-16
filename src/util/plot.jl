@@ -82,7 +82,7 @@ plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=n
     names = isnothing(names) ? repeat([nothing], n) : names
     names = [isnothing(n) ? string(y) : n for (y, n) in zip(ys, names)]
     #HACK: support indirect referencing from the given data frame if name is Symbol
-    names = [n isa Symbol ? repr(deunitfy(only(unique(df[n]))), context=:compact=>true) : n for n in names]
+    names = [n isa Symbol ? repr(deunitfy(only(unique(df[!, n]))), context=:compact=>true) : n for n in names]
     colors = isnothing(colors) ? repeat([nothing], n) : colors
 
     plot!(p, X, Ys; xlab, ylab, names, colors, kw...)
