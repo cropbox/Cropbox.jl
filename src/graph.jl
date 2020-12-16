@@ -14,8 +14,7 @@ makedot(g::Graph) = begin
     
     """
     digraph {
-    ratio=compress
-    size="8,6"
+    ratio=0.5
     ranksep=0.2
     node[
         width=0
@@ -23,7 +22,7 @@ makedot(g::Graph) = begin
         margin=0.03
         shape=plaintext
         fontname=Courier
-        fontsize=10
+        fontsize=9
     ]
     edge [
         arrowsize=0.2
