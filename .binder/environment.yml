@@ -6,7 +6,7 @@ dependencies:
   # Cropbox.jl
   - sympy
   # Python
-  #- python=3.8
+  - python=3.8
   - numpy
   - scipy
   - pandas
@@ -34,3 +34,8 @@ dependencies:
   - nbresuse=0.3.*
   - notebook=6.0.*
   - nteract_on_jupyter=2.1.*
+  # reinstall jupyter_offlinenotebook for custom python environment
+  # https://github.com/jupyterhub/repo2docker/issues/961
+  - pip
+  - pip:
+    - jupyter-offlinenotebook==0.1.0
