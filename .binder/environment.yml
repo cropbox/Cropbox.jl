@@ -23,6 +23,6 @@ dependencies:
   - r-randomforest
   - r-hydrogof
   # JupyterHub
-  - jupyterhub=1.1.0
+  - jupyterhub
   - nbgitpuller
   - jupytext
