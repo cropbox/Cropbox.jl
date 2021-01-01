@@ -26,3 +26,11 @@ dependencies:
   - jupyterhub
   - nbgitpuller
   - jupytext
+  # override repo2docker environment.yml
+  - ipywidgets=7.5.*
+  - jupyterlab=2.2.*
+  - jupyterhub-singleuser=1.1.*
+  - nbconvert=5.6.*
+  - nbresuse=0.3.*
+  - notebook=6.0.*
+  - nteract_on_jupyter=2.1.*
