@@ -321,8 +321,18 @@ end
 #         :AlPO4 => root_switchgrass_AlPO4,
 #         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
 #     )
+#     b = instance(Root.Rhizobox, config=container_rhizobox)
 #     for i in 1:3, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
-#         Root.writepvd("$c-$i", Root.RootArchitecture, config=C[c], seed=i, stop=500)
+#         n = "$c-$i"
+#         s = instance(Root.RootArchitecture; config=C[c], options=(; box=b), seed=i)
+#         simulate!(s, stop=u"4*7d")
+#         Root.writevtk("$n-4w", s)
+#         simulate!(s, stop=u"4*7d")
+#         Root.writevtk("$n-8w", s)
+#         simulate!(s, stop=u"4*7d")
+#         Root.writevtk("$n-12w", s)
+#         simulate!(s, stop=u"12*7d")
+#         Root.writevtk("$n-24w", s)
 #     end
 # end
 
