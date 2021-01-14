@@ -407,7 +407,7 @@ writepvd(name::AbstractString, S::Type{<:System}; kwargs...) = begin
     pvd = paraview_collection(name)
     path = mkpath("$name-pvd")
     i = 0
-    simulate(S; kwargs...) do s
+    simulate(S; kwargs...) do D, s
         pvd[i] = gathervtk("$path/$name-$i", s)
         i += 1
     end
