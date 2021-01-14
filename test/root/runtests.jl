@@ -217,8 +217,30 @@ root_switchgrass_W2 = (
         color = Root.RGBA(0, 1, 0, 1),
     ),
 )
+
+root_switchgrass_P = (root_switchgrass_W,
+    :Clock => (;
+        step = 1u"hr",
+    ),
+    :RootArchitecture => :maxB => 15,
+    :BaseRoot => :T => [
+        # P F S
+          0 1 0 ; # P
+          0 0 1 ; # F
+          0 0 0 ; # S
+    ],
+    :PrimaryRoot => (;
+        Δx = 0.5,
+    ),
+    :FirstOrderLateralRoot => (;
+        Δx = 0.1,
+    ),
+    :SecondOrderLateralRoot => (;
+        Δx = 0.01,
+    )
+)
 root_switchgrass_KH2PO4 = (
-    root_switchgrass_W,
+    root_switchgrass_P,
     :PrimaryRoot => (;
         r = 1.28 ± 0.29,
     ),
@@ -234,7 +256,7 @@ root_switchgrass_KH2PO4 = (
     )
 )
 root_switchgrass_AlPO4 = (
-    root_switchgrass_W,
+    root_switchgrass_P,
     :PrimaryRoot => (;
         r = 1.10 ± 0.32,
     ),
@@ -250,7 +272,7 @@ root_switchgrass_AlPO4 = (
     )
 )
 root_switchgrass_C6H17NaO24P6 = (
-    root_switchgrass_W,
+    root_switchgrass_P,
     :PrimaryRoot => (;
         r = 1.31 ± 0.35,
     ),
