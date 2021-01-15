@@ -55,4 +55,13 @@ unitfy(df::DataFrame) = begin
     DataFrames.rename(unitfy(df, U), N...)
 end
 
+deunitfy(df::DataFrame, U::Vector) = begin
+    r = DataFrame()
+    for (n, c, u) in zip(propertynames(df), eachcol(df), U)
+        r[!, n] = deunitfy.(c, u)
+    end
+    r
+end
+deunitfy(df::DataFrame) = deunitfy(df, repeat([nothing], DataFrames.ncol(df)))
+
 export unitfy, deunitfy
