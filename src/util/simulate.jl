@@ -64,7 +64,7 @@ parsemeta(::Nothing, c) = OrderedDict()
 update!(m::Simulation, s::System, snatch!) = begin
     D = extract(s, m)
     snatch!(D, s)
-    append!(m.result, D)
+    !isempty(D) && append!(m.result, D)
 end
 
 format!(m::Simulation; nounit=false, long=false) = begin
