@@ -29,12 +29,14 @@ hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
 
 using DataFrames: DataFrame, DataFrames
-unitfy(df::DataFrame, U::Vector) = begin
-    r = DataFrame()
-    for (n, c, u) in zip(propertynames(df), eachcol(df), U)
-        r[!, n] = unitfy.(c, u)
+for f in (:unitfy, :deunitfy)
+    @eval $f(df::DataFrame, U::Vector) = begin
+        r = DataFrame()
+        for (n, c, u) in zip(propertynames(df), eachcol(df), U)
+            r[!, n] = $f.(c, u)
+        end
+        r
     end
-    r
 end
 unitfy(df::DataFrame) = begin
     p = r"(.+)\(([^\(\)]+)\)$"
@@ -53,14 +55,6 @@ unitfy(df::DataFrame) = begin
     u(m) = nothing
     U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
-end
-
-deunitfy(df::DataFrame, U::Vector) = begin
-    r = DataFrame()
-    for (n, c, u) in zip(propertynames(df), eachcol(df), U)
-        r[!, n] = deunitfy.(c, u)
-    end
-    r
 end
 deunitfy(df::DataFrame) = deunitfy(df, repeat([nothing], DataFrames.ncol(df)))
 
