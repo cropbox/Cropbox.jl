@@ -322,18 +322,29 @@ end
 #         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
 #     )
 #     b = instance(Root.Rhizobox, config=container_rhizobox)
-#     for i in 1:3, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
+#     w = 7u"d"
+#     P = [4, 8, 12, 24]w
+#     R = []
+#     for i in 1:10, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
 #         n = "$c-$i"
-#         s = instance(Root.RootArchitecture; config=C[c], options=(; box=b), seed=i)
-#         simulate!(s, stop=u"4*7d")
-#         Root.writevtk("$n-4w", s)
-#         simulate!(s, stop=u"4*7d")
-#         Root.writevtk("$n-8w", s)
-#         simulate!(s, stop=u"4*7d")
-#         Root.writevtk("$n-12w", s)
-#         simulate!(s, stop=u"12*7d")
-#         Root.writevtk("$n-24w", s)
+#         r = simulate(Root.RootArchitecture; config=C[c], options=(; box=b), seed=i, stop=P[end]) do D, s
+#             t = s.context.clock.tick' |> Cropbox.unittype(w)
+#             if t in P
+#                 p = t / w |> deunitfy |> Int
+#                 Root.writevtk("$n-w$p", s)
+#                 G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#                 D[1][:treatment] = c
+#                 D[1][:repetition] = i
+#                 D[1][:length] = !isempty(G) ? sum([s.length' for s in G]) : 0.0u"cm"
+#                 D[1][:volume] = !isempty(G) ? sum([s.length' * s.radius'^2 for s in G]) : 0.0u"mm^3"
+#                 D[1][:count] = length(G)
+#             else
+#                 empty!(D)
+#             end
+#         end
+#         push!(R, r)
 #     end
+#     vcat(R...)
 # end
 
 # using DataStructures: OrderedDict
