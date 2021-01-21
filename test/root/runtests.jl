@@ -343,7 +343,16 @@ end
 #         end
 #         push!(R, r)
 #     end
-#     vcat(R...)
+#     df = vcat(R...)
+#     combine(groupby(df, [:treatment, :tick]), :length => mean, :length => (x -> std(x)))
+#     Gadfly.plot(df, x=:time, y=:length, color=:treatment,
+#         Gadfly.Geom.boxplot,
+#         Gadfly.Scale.x_discrete,
+#         Gadfly.Guide.xlabel("Time"),
+#         Gadfly.Guide.ylabel("Total Root Length Per Plant"),
+#         Gadfly.Guide.colorkey(title="", pos=[0.05*Gadfly.w, -0.4*Gadfly.h]),
+#         Gadfly.Theme(boxplot_spacing=7mm)
+#     ) |> SVG("switchgrass_P.svg")
 # end
 
 # using DataStructures: OrderedDict
