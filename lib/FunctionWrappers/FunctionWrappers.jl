@@ -29,9 +29,9 @@ else
     end
 end
 
-#HACK: avoid strange LocalScan error on Julia 1.5
+#HACK: avoid strange LocalScan error on Julia 1.5, 1.7
 # https://github.com/yuyichao/FunctionWrappers.jl/issues/17
-if VERSION >= v"1.6.0"
+if VERSION >= v"1.8.0"
     Base.@pure pass_by_value(T) = Base.allocatedinline(T)
 else
     Base.@pure pass_by_value(T) = isbitstype(T)
