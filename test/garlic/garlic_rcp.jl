@@ -45,7 +45,6 @@ KMSP = (
 ND = (KMSP,
     :Phenology => (;
         initial_leaves_at_harvest = 5, # ILN
-        storage_days = 100, # SD
     ),
     :Leaf => (;
         minimum_length_of_longest_leaf = 50.0, # LL
@@ -101,6 +100,9 @@ rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day)
     scape_removal_date = date_from_doy(scape_removal_day)
     harvest_date = ZonedDateTime(year+1, 5, 15, tz)
 
+    storage_day_from_date(t) = (t - ZonedDateTime(year, 6, 30, tz)) |> Day |> Dates.value
+    storage_days = storage_day_from_date(planting_date)
+
     (ND,
         :Location => (;
             LATLONGS[station]...,
@@ -119,6 +121,7 @@ rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day)
             planting_date,
             scape_removal_date,
             harvest_date,
+            storage_days,
         ),
         :Meta => (;
             scenario,
