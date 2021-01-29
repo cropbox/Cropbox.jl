@@ -123,7 +123,7 @@ visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
 
     est = simulate(S; config, configs, index, target=Ye, stop, snap, verbose=false)
     normalize!(obs, est, on=I)
-    df = DataFrames.join(obs, est, on=I)
+    df = DataFrames.innerjoin(obs, est, on=I)
     Xs = extractarray.(Ref(df), Yo)
     Ys = extractarray.(Ref(df), Ye)
 
@@ -148,7 +148,7 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
 
     ests = map(m -> simulate(; m..., index, target=ye, stop, snap, verbose=false), maps)
     normalize!(obs, ests..., on=I)
-    dfs = map(est -> DataFrames.join(obs, est, on=I), ests)
+    dfs = map(est -> DataFrames.innerjoin(obs, est, on=I), ests)
     Xs = extractarray.(dfs, yo)
     Ys = extractarray.(dfs, ye)
 
