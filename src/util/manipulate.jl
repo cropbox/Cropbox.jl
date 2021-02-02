@@ -2,7 +2,7 @@ import Interact
 
 @nospecialize
 
-manipulate(args...; parameters, config=(), kwargs...) = begin
+manipulate(f::Function; parameters, config=()) = begin
     P = configure(parameters)
     W = []
     L = []
@@ -28,10 +28,14 @@ manipulate(args...; parameters, config=(), kwargs...) = begin
         V = getindex.(W)
         configure(config, parameterzip(K, V))
     end
-    output = Interact.@map visualize(args...; config=&c, kwargs...)
+    output = Interact.@map f(&c)
     z = Interact.Widget{:Cropbox}(Dict(zip(K, W)); output)
     Interact.@layout!(z, Interact.vbox(L..., output))
 end
+
+manipulate(args...; parameters, config=(), kwargs...) = manipulate(function (c)
+    visualize(args...; config=c, kwargs...)
+end; parameters, config)
 
 @specialize
 
