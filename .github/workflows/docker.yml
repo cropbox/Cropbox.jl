@@ -4,7 +4,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: tomyun/maximize-build-space@chown-volume
+      - uses: easimon/maximize-build-space@master
         with:
           remove-dotnet: 'true'
           remove-android: 'true'
