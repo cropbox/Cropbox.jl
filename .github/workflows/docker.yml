@@ -2,7 +2,7 @@ name: Docker
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: easimon/maximize-build-space@master
         with:
