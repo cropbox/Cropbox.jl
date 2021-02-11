@@ -4,6 +4,7 @@ import Interact
 
 manipulate(f::Function; parameters, config=()) = begin
     P = configure(parameters)
+    C = configure(config)
     W = []
     L = []
     for (s, Q) in P
@@ -11,9 +12,12 @@ manipulate(f::Function; parameters, config=()) = begin
         #HACK: use similar style/color (:light_magenta) to Config
         l = Interact.style(n, "font-family" => "monospace", "color" => :darkorchid)
         push!(L, l)
-        for (k, v) in Q
+        for (k, V) in Q
+            label = string(k)
+            v = option(C, s, k)
+            kw = ismissing(v) ? (; label) : (; label, value=v)
             #TODO: deunitfy() based on known units from parameters()
-            w = Interact.widget(v; label=string(k))
+            w = Interact.widget(V; kw...)
             #HACK: use similar style/color (:light_blue) to Config
             d = w.layout(w).children[1].dom
             d.props[:style] = Dict("font-family" => "monospace", "width" => "25%")
