@@ -358,7 +358,7 @@ genstruct(name, type, infos, incl, scope) = begin
         $C.typefor(::Type{$_S}) = $_S
         $C.typefor(::Type{<:$S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
-        $C.mixins(::Type{$_S}) = $(Tuple(getmodule.(Ref(scope), incl)))
+        $C.mixins(::Type{$_S}) = $(mixins(scope, incl))
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
         $C.scopeof(::Type{$_S}) = $scope
@@ -382,6 +382,7 @@ mixins(s::S) where {S<:System} = mixins(S)
 mixins(::Type{S}) where {S<:System} = mixins(typefor(S))
 mixins(::Type{System}) = (System,)
 mixins(::Type) = ()
+mixins(scope::Module, incl) = Tuple(getmodule.(Ref(scope), incl))
 
 using DataStructures: OrderedSet
 mixincollect(s::S) where {S<:System} = mixincollect(S)
