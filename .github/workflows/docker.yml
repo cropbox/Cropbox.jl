@@ -2,9 +2,9 @@ name: Docker
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: easimon/maximize-build-space@master
+      - uses: easimon/maximize-build-space@fix/ubuntu-20.04
         with:
           remove-dotnet: 'true'
           remove-android: 'true'
