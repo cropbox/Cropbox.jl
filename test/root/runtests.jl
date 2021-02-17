@@ -327,7 +327,7 @@ end
 #     for i in 1:10, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
 #         n = "$c-$i"
 #         r = simulate(Root.RootArchitecture; config=C[c], options=(; box=b), seed=i, stop=P[end]) do D, s
-#             t = s.context.clock.tick' |> Cropbox.unittype(w)
+#             t = s.context.clock.tick' |> u"wk"
 #             if t in P
 #                 p = deunitfy(t, u"wk") |> Int
 #                 Root.writevtk("$n-w$p", s)
