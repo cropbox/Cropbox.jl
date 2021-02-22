@@ -226,7 +226,7 @@ root_switchgrass_P = (root_switchgrass_W,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
-          0 0 0 ; # F
+          0 0 1 ; # F
           0 0 0 ; # S
     ],
     :PrimaryRoot => (;
@@ -322,7 +322,7 @@ end
 #         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
 #     )
 #     b = instance(Root.Rhizobox, config=container_rhizobox)
-#     P = [4, 8, 12, 24]u"wk"
+#     P = [1, 2, 3, 4, 5]u"wk"
 #     R = []
 #     for i in 1:10, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
 #         n = "$c-$i"
@@ -330,7 +330,7 @@ end
 #             t = s.context.clock.tick' |> u"wk"
 #             if t in P
 #                 p = deunitfy(t, u"wk") |> Int
-#                 Root.writevtk("$n-w$p", s)
+#                 Root.writevtk("$n-2-w$p", s)
 #                 G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
 #                 D[1][:treatment] = c
 #                 D[1][:repetition] = i
