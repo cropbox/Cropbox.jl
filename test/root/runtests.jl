@@ -226,7 +226,7 @@ root_switchgrass_P = (root_switchgrass_W,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
-          0 0 1 ; # F
+          0 0 0 ; # F
           0 0 0 ; # S
     ],
     :PrimaryRoot => (;
@@ -330,7 +330,7 @@ end
 #             t = s.context.clock.tick' |> u"wk"
 #             if t in P
 #                 p = deunitfy(t, u"wk") |> Int
-#                 Root.writevtk("$n-2-w$p", s)
+#                 Root.writevtk("$n-w$p", s)
 #                 G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
 #                 D[1][:treatment] = c
 #                 D[1][:repetition] = i
