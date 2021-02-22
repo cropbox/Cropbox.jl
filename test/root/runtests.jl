@@ -336,6 +336,7 @@ end
 #                 p = deunitfy(t, u"wk") |> Int
 #                 Root.writevtk("$n-w$p", s)
 #                 G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#                 D[1][:time] = t
 #                 D[1][:treatment] = c
 #                 D[1][:repetition] = i
 #                 D[1][:length] = !isempty(G) ? sum([s.length' for s in G]) : 0.0u"cm"
@@ -348,7 +349,7 @@ end
 #         push!(R, r)
 #     end
 #     df = vcat(R...)
-#     combine(groupby(df, [:treatment, :tick]), :length => mean, :length => std)
+#     combine(groupby(df, [:treatment, :time]), :length => mean, :length => std)
 #     Gadfly.plot(df, x=:time, y=:length, color=:treatment,
 #         Gadfly.Geom.boxplot,
 #         Gadfly.Scale.x_discrete,
