@@ -355,8 +355,8 @@ end
 #         Gadfly.Guide.xlabel("Time"),
 #         Gadfly.Guide.ylabel("Total Root Length Per Plant"),
 #         Gadfly.Guide.colorkey(title="", pos=[0.05*Gadfly.w, -0.4*Gadfly.h]),
-#         Gadfly.Theme(boxplot_spacing=7mm)
-#     ) |> SVG("switchgrass_P.svg")
+#         Gadfly.Theme(boxplot_spacing=7*Gadfly.mm)
+#     ) |> Gadfly.SVG("switchgrass_P.svg")
 # end
 
 # using DataStructures: OrderedDict
