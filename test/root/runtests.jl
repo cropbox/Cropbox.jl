@@ -3,6 +3,10 @@ using Test
 
 include("root.jl")
 
+using DataFrames
+using Statistics
+import Gadfly
+
 root_maize = (
     :RootArchitecture => :maxB => 5,
     :BaseRoot => :T => [
