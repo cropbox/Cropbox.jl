@@ -167,6 +167,24 @@
         @test s.a' === a
     end
 
+    @testset "dynamic type" begin
+        @system SDynamicTypeBase(Controller)
+        @system SDynamicTypeChild(Controller) <: SDynamicTypeBase
+        @test SDynamicTypeChild <: SDynamicTypeBase
+        @system SDynamicTypeBaseDynamic(Controller) begin
+            x ~ <:SDynamicTypeBase(override)
+        end
+        @system SDynamicTypeBaseStatic(Controller) begin
+            x ~ ::SDynamicTypeBase(override)
+        end
+        b = instance(SDynamicTypeBase)
+        c = instance(SDynamicTypeChild)
+        @test instance(SDynamicTypeBaseDynamic; options=(; x = b)).x === b
+        @test instance(SDynamicTypeBaseDynamic; options=(; x = c)).x === c
+        @test instance(SDynamicTypeBaseStatic; options=(; x = b)).x === b
+        @test_throws MethodError instance(SDynamicTypeBaseStatic; options=(; x = c))
+    end
+
     @testset "body replacement" begin
         @system SBodyReplacement1(Controller) begin
             a => 1 ~ preserve

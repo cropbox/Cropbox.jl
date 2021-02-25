@@ -34,7 +34,11 @@ end
 VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
     @capture(bindscope(line, scope), (decl_ ~ deco_) | decl_)
-    @capture(deco, state_::type_(tags__) | ::type_(tags__) | state_(tags__) | state_::type_ | ::type_ | state_)
+    @capture(deco,
+        (state_::stype_(tags__)) | (::stype_(tags__)) | (state_::stype_) | (::stype_) |
+        (state_<:dtype_(tags__)) | (<:dtype_(tags__)) | (state_<:dtype_) | (<:dtype_) |
+        state_(tags__) | state_
+    )
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
@@ -43,7 +47,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     kwargs = parsekwargs(kwargs)
     body = parsebody(body)
     state = parsestate(state)
-    type = parsetype(type, state, scope)
+    type = parsetype(stype, dtype, state, scope)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
@@ -87,15 +91,18 @@ parsestate(state) = typestate(Val(state))
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
 
-parsetype(::Nothing, state, _) = typetag(Val(state))
-parsetype(type, _, scope) = begin
-    if @capture(type, elemtype_[])
-        :(Vector{$(parsetype(elemtype, scope))})
+parsetype(::Nothing, ::Nothing, state, _) = typetag(Val(state))
+parsetype(stype, ::Nothing, state, scope) = parsetype(stype, scope, Val(:static))
+parsetype(::Nothing, dtype, state, scope) = parsetype(dtype, scope, Val(:dynamic))
+parsetype(type, scope, trait) = begin
+    T = if @capture(type, elemtype_[])
+        :(Vector{$(gentype(elemtype, scope, trait))})
     else
-        parsetype(type, scope)
+        gentype(type, scope, trait)
     end
 end
-parsetype(type, scope) = begin
+gentype(type, scope, trait) = genactualtype(genscopedtype(type, scope), trait)
+genscopedtype(type, scope) = begin
     l = Symbol[]
     add(t::Symbol) = push!(l, t)
     add(t) = nothing
@@ -106,6 +113,8 @@ parsetype(type, scope) = begin
     conv(t) = prefixscope(parsetypealias(t), scope)
     isempty(l) ? conv(type) : :(Union{$(conv.(l)...)})
 end
+genactualtype(type, ::Val{:static}) = :($C.typefor($type))
+genactualtype(type, ::Val{:dynamic}) = type
 
 parsetypealias(type::Symbol) = parsetypealias(Val(type), type)
 parsetypealias(type) = type
@@ -229,7 +238,7 @@ end
 
 ####
 
-const C = :($(esc(:Cropbox)))
+const C = :Cropbox
 const ϵ = @q begin end
 
 genvartype(v::VarInfo) = genvartype(v)
@@ -248,7 +257,7 @@ genfield(v::VarInfo) = begin
     alias = v.alias
     @q begin
         $docstring
-        $name::$(istag(v, :dynamic) ? :($type) : :($C.typefor($type)))
+        $name::$type
         $docstring
         $(isnothing(alias) ? ϵ : :($alias::$type))
     end

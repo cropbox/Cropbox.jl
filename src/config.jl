@@ -131,7 +131,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C = configure(namefor(S) => ((key(v) => val(v) for v in P)...,))
     if recursive
         T = OrderedSet([@eval scope $(v.type) for v in V])
-        T = filter(t -> t <: System && t ∉ exclude, T)
+        T = filter(t -> t <: System && !any(t .<: exclude), T)
         X = (S, T..., exclude...) |> Set
         C = configure(parameters.(T; alias, recursive=true, exclude=X, scope)..., C)
     end

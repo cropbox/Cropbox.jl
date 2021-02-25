@@ -149,7 +149,7 @@ end
 end
 
 @system RootSegment(Tropism, Rendering) begin
-    box ~ ::Container(override, dynamic)
+    box ~ <:Container(override)
 
     ro: root_order => 1 ~ preserve::Int(extern)
     zi: zone_index => 0 ~ preserve::Int(extern)
@@ -290,7 +290,7 @@ end
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
             produce(eval(n); box, ro, zi=zi+1, r, ea0=ea, l0=rl, lb, la, ln, lmax, lp=lt, RT0=RT1)
         end
-    end ~ produce::RootSegment
+    end ~ produce<:RootSegment
 
     mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
     B(mb, nb, box, ro, wrap(RT1)): branch => begin
@@ -298,7 +298,7 @@ end
             #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
             produce(eval(nb()); box, ro=ro+1, RT0=RT1)
         end
-    end ~ produce::RootSegment
+    end ~ produce<:RootSegment
 
     ii(cp; c::Container): is_inside => (c.dist'(cp) <= 0) ~ call::Bool
 end
@@ -337,7 +337,7 @@ end
 end
 
 @system RootArchitecture(Controller) begin
-    box(context) ~ ::Container(override, dynamic)
+    box(context) ~ <:Container(override)
     maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
