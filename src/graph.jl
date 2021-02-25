@@ -53,9 +53,7 @@ writeimage(name::AbstractString, g::Graph; format=nothing) = begin
         ext != format && (name *= "."*format)
     end
     dot = writedot(g)
-    #HACK: "dot.bat" on Windows
-    let ext = (@static Sys.iswindows() ? ".bat" : ""),
-        exe = joinpath(Conda.bin_dir(:cropbox), "dot") * ext,
+    let exe = joinpath(Conda.bin_dir(:cropbox), "dot"),
         cmd = `$exe -T$format $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
     end
