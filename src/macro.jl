@@ -354,6 +354,7 @@ genstruct(name, type, infos, incl, scope) = begin
     source = gensource(infos)
     system = quote
         Core.@__doc__ abstract type $S <: $T end
+        $C.typefor(::Type{<:$S}) = $_S
         Core.@__doc__ mutable struct $_S <: $S
             $(fields...)
             function $_S(; _kwargs...)
@@ -365,7 +366,6 @@ genstruct(name, type, infos, incl, scope) = begin
         $S(; kw...) = $_S(; kw...)
         $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.typefor(::Type{$_S}) = $_S
-        $C.typefor(::Type{<:$S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
         $C.mixins(::Type{$_S}) = $(mixins(scope, incl))
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
