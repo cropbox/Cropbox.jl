@@ -32,7 +32,7 @@ Base.show(io::IO, v::VarInfo) = begin
 end
 
 VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module) = begin
-    # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::type][(tags..)]]
+    # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::stype|<:dtype][(tags..)]]
     @capture(bindscope(line, scope), (decl_ ~ deco_) | decl_)
     @capture(deco,
         (state_::stype_(tags__)) | (::stype_(tags__)) | (state_::stype_) | (::stype_) |
