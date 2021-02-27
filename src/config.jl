@@ -198,4 +198,4 @@ end
 
 @specialize
 
-export configure, parameters, @config
+export Config, configure, parameters, @config

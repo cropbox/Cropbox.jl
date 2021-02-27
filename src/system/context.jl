@@ -1,5 +1,7 @@
 @system Context begin
     context ~ ::Nothing
-    config ~ ::Cropbox.Config(override)
-    clock(config) ~ ::Cropbox.Clock
+    config ~ ::Config(override)
+    clock(config) ~ ::Clock
 end
+
+export Context

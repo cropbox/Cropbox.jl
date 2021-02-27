@@ -1,8 +1,8 @@
 import Random
 
 @system Controller begin
-    config ~ ::Cropbox.Config(override)
-    context(config) ~ ::Cropbox.Context(context)
+    config ~ ::Config(override)
+    context(config) ~ ::Context(context)
 end
 
 @nospecialize
