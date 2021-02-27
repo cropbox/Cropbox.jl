@@ -167,6 +167,18 @@
         @test s.a' === a
     end
 
+    @testset "type patch" begin
+        @system SPatch{A => Int, Int => Float32, int => Float64}(Controller) begin
+            a => 1 ~ preserve::A
+            b => 1 ~ preserve::Int
+            c => 1 ~ preserve::int
+        end
+        s = instance(SPatch)
+        @test s.a' isa Int
+        @test s.b' isa Float32
+        @test s.c' isa Float64
+    end
+
     @testset "dynamic type" begin
         @system SDynamicTypeBase(Controller)
         @system SDynamicTypeChild(Controller) <: SDynamicTypeBase
