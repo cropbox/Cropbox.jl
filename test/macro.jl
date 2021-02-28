@@ -48,9 +48,10 @@
         @test_throws ErrorException @eval @system SPrivateNameMixed2(SPrivateNameMixin1, Controller) begin
             _a: aa1 => 3 ~ preserve
         end
-        @test_throws LoadError @eval @system SPrivateNameMixed3(SPrivateNameMixin1, Controller) begin
+        @eval @system SPrivateNameMixed3(SPrivateNameMixin1, Controller) begin
             d(_a) ~ track
         end
+        @test_throws UndefVarError instance(SPrivateNameMixed3)
         @eval @system SPrivateNameMixed4(SPrivateNameMixin1, SPrivateNameMixin2, Controller) begin
             d(a=__SPrivateNameMixin1__a) ~ track
             e(a=__SPrivateNameMixin2__a) ~ track

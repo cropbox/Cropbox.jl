@@ -63,7 +63,8 @@ end
 
 link!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
     A = extract(v; kwargs...)
-    V = [d.M[a] for a in A]
+    #HACK: skip missing refs to allow const variable patch syntax (i.e. @system S{x=1})
+    V = [d.M[a] for a in A if haskey(d.M, a)]
     for v0 in V
         if v0 == v || v0.state == :Bisect
             n0 = prenode!(d, v0)
