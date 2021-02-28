@@ -31,7 +31,7 @@ Base.show(io::IO, v::VarInfo) = begin
     println(io, "docstring: $(v.docstring)")
 end
 
-VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module, subs::Dict, subsscope::Module) = begin
+VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module, substs::Dict, substsscope::Module) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::stype|<:dtype][(tags..)]]
     @capture(bindscope(line, scope), (decl_ ~ deco_) | decl_)
     @capture(deco,
@@ -47,7 +47,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     kwargs = parsekwargs(kwargs)
     body = parsebody(body)
     state = parsestate(state)
-    type = parsetype(stype, dtype, state, scope, subs, subsscope)
+    type = parsetype(stype, dtype, state, scope, substs, substsscope)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
@@ -94,10 +94,10 @@ typestate(::Val{nothing}) = nothing
 parsetype(::Nothing, ::Nothing, state, _, _, _) = typetag(Val(state))
 parsetype(stype, ::Nothing, _, args...) = parsetype(Val(:static), stype, args...)
 parsetype(::Nothing, dtype, _, args...) = parsetype(Val(:dynamic), dtype, args...)
-parsetype(trait, type, scope, subs, subsscope) = begin
-    if haskey(subs, type)
-        type = subs[type]
-        scope = subsscope
+parsetype(trait, type, scope, substs, substsscope) = begin
+    if haskey(substs, type)
+        type = substs[type]
+        scope = substsscope
     end
     parsetype(type, scope, trait)
 end
@@ -471,32 +471,32 @@ parsehead(head) = begin
     type = isnothing(type) ? :System : type
     patches = isnothing(patches) ? [] : patches
     mixins = isnothing(mixins) ? [] : mixins
-    consts, subs = parsepatches(patches)
+    consts, substs = parsepatches(patches)
     incl = [:System]
     for m in mixins
         push!(incl, Symbol(m))
     end
-    (; name, consts, subs, incl, type)
+    (; name, consts, substs, incl, type)
 end
 
 parsepatches(patches::Vector) = begin
     consts = []
-    subs = Dict()
+    substs = Dict()
     for p in patches
         if @capture(p, o_ => n_)
-            subs[o] = n
+            substs[o] = n
         elseif @capture(p, o_ = n_)
             push!(consts, p)
         else
             error("unsupported patch format: $p")
         end
     end
-    (consts, subs)
+    (consts, substs)
 end
 
 using DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, consts, subs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, subs, incl, scope), consts, incl, scope)
-geninfos(body; name, subs, incl, scope, _...) = begin
+gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, incl, scope)
+geninfos(body; name, substs, incl, scope, _...) = begin
     con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()
         #HACK: default in case LineNumberNode is not attached
@@ -509,7 +509,7 @@ geninfos(body; name, subs, incl, scope, _...) = begin
             else
                 ds = ""
             end
-            v = VarInfo(s, l, ln, ds, sc, subs, scope)
+            v = VarInfo(s, l, ln, ds, sc, substs, scope)
             d[v.name] = v
         end
         d
@@ -541,7 +541,7 @@ geninfos(body; name, subs, incl, scope, _...) = begin
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), subs=Dict(), incl=(), scope=scopeof(S))
+geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=Dict(), incl=(), scope=scopeof(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))
