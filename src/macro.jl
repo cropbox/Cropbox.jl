@@ -346,7 +346,7 @@ gensource(infos) = MacroTools.flatten(@q begin $(gensource.(infos)...) end)
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
-genstruct(name, type, infos, incl, scope) = begin
+genstruct(name, type, infos, consts, incl, scope) = begin
     _S = esc(gensym(name))
     S = esc(name)
     T = esc(type)
@@ -362,12 +362,14 @@ genstruct(name, type, infos, incl, scope) = begin
     system = quote
         Core.@__doc__ abstract type $S <: $T end
         $C.typefor(::Type{<:$S}) = $_S
-        Core.@__doc__ mutable struct $_S <: $S
-            $(fields...)
-            function $_S(; _kwargs...)
-                $predecl
-                $(decls...)
-                new($(args...))
+        let $(consts...)
+            Core.@__doc__ mutable struct $_S <: $S
+                $(fields...)
+                function $_S(; _kwargs...)
+                    $predecl
+                    $(decls...)
+                    new($(args...))
+                end
             end
         end
         $S(; kw...) = $_S(; kw...)
@@ -469,19 +471,31 @@ parsehead(head) = begin
     type = isnothing(type) ? :System : type
     patches = isnothing(patches) ? [] : patches
     mixins = isnothing(mixins) ? [] : mixins
-    subs = parsesubs(patches)
+    consts, subs = parsepatches(patches)
     incl = [:System]
     for m in mixins
         push!(incl, Symbol(m))
     end
-    (; name, subs, incl, type)
+    (; name, consts, subs, incl, type)
 end
 
-parsesubs(patches::Vector) = Dict(parsesubs.(patches))
-parsesubs(p) = @capture(p, o_ => n_) ? (o => n) : error("unsupported patch format: $p")
+parsepatches(patches::Vector) = begin
+    consts = []
+    subs = Dict()
+    for p in patches
+        if @capture(p, o_ => n_)
+            subs[o] = n
+        elseif @capture(p, o_ = n_)
+            push!(consts, p)
+        else
+            error("unsupported patch format: $p")
+        end
+    end
+    (consts, subs)
+end
 
 using DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, subs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, subs, incl, scope), incl, scope)
+gensystem(body; name, consts, subs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, subs, incl, scope), consts, incl, scope)
 geninfos(body; name, subs, incl, scope, _...) = begin
     con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()

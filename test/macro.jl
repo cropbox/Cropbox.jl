@@ -168,16 +168,27 @@
         @test s.a' === a
     end
 
-    @testset "type patch" begin
-        @system SPatch{A => Int, Int => Float32, int => Float64}(Controller) begin
+    @testset "patch type" begin
+        @system SPatchType{A => Int, Int => Float32, int => Float64}(Controller) begin
             a => 1 ~ preserve::A
             b => 1 ~ preserve::Int
             c => 1 ~ preserve::int
         end
-        s = instance(SPatch)
+        s = instance(SPatchType)
         @test s.a' isa Int
         @test s.b' isa Float32
         @test s.c' isa Float64
+    end
+
+    @testset "patch const" begin
+        @system SPatchConst{x = 1, y = u"m"}(Controller) begin
+            a => 1 ~ accumulate(init=x, unit=y)
+        end
+        s = instance(SPatchConst)
+        @test Cropbox.unittype(s.a) === u"m"
+        @test s.a' == 1u"m"
+        update!(s)
+        @test s.a' == 2u"m"
     end
 
     @testset "dynamic type" begin
