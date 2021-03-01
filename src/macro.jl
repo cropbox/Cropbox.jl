@@ -346,7 +346,7 @@ gensource(infos) = MacroTools.flatten(@q begin $(gensource.(infos)...) end)
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
-genstruct(name, type, infos, consts, incl, scope) = begin
+genstruct(name, type, infos, consts, substs, incl, scope) = begin
     _S = esc(gensym(name))
     S = esc(name)
     T = esc(type)
@@ -359,10 +359,18 @@ genstruct(name, type, infos, consts, incl, scope) = begin
     decls = gendecl(nodes)
     args = gennewargs(infos)
     source = gensource(infos)
+    mixinlist = mixins(scope, incl)
+    #HACK: keep type of Context in case needed for field construction (i.e. timeunit for Accumulate)
+    context = filter(v -> v.name == :context, infos) |> only
+    consts = merge(consts, Dict(:__Context__ => context.type))
+    consts0 = merge(Cropbox.consts.(_mixincollect(mixins(scope, incl)))...)
+    @gensym CS
+    constsbase = @q $CS = merge(consts.(_mixincollect(mixins($scope, $incl)))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...)))
+    constslist = (:($k = $CS[$(Meta.quot(k))]) for k in vcat(keys(consts0)..., keys(consts)...))
     system = quote
         Core.@__doc__ abstract type $S <: $T end
         $C.typefor(::Type{<:$S}) = $_S
-        let $(consts...)
+        let $constsbase, $(constslist...)
             Core.@__doc__ mutable struct $_S <: $S
                 $(fields...)
                 function $_S(; _kwargs...)
@@ -376,6 +384,8 @@ genstruct(name, type, infos, consts, incl, scope) = begin
         $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.typefor(::Type{$_S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
+        $C.consts(::Type{$_S}) = merge(consts.(_mixincollect(mixins($S)))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...)))
+        $C.substs(::Type{$_S}) = $substs
         $C.mixins(::Type{$_S}) = $(mixins(scope, incl))
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
@@ -396,6 +406,14 @@ source(::Type{System}) = quote
 end
 source(::Type) = :()
 
+consts(s::S) where {S<:System} = consts(S)
+consts(::Type{S}) where {S<:System} = consts(typefor(S))
+consts(::Type{System}) = Dict()
+
+substs(s::S) where {S<:System} = substs(S)
+substs(::Type{S}) where {S<:System} = substs(typefor(S))
+substs(::Type{System}) = Dict()
+
 mixins(s::S) where {S<:System} = mixins(S)
 mixins(::Type{S}) where {S<:System} = mixins(typefor(S))
 mixins(::Type{System}) = (System,)
@@ -407,12 +425,16 @@ mixincollect(s::S) where {S<:System} = mixincollect(S)
 mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
     S in l && return l
     push!(l, S)
-    for m in mixins(S)
-        union!(l, mixincollect(m, l))
-    end
+    _mixincollect(mixins(S), l)
     #HACK: ensure mixins come before composite system
     #TODO: need testsets for mixins/mixincollect
     push!(delete!(l, S), S)
+    l
+end
+_mixincollect(M::Tuple, l=OrderedSet()) = begin
+    for m in M
+        union!(l, mixincollect(m, l))
+    end
     l
 end
 mixincollect(s) = ()
@@ -480,13 +502,13 @@ parsehead(head) = begin
 end
 
 parsepatches(patches::Vector) = begin
-    consts = []
+    consts = Dict()
     substs = Dict()
     for p in patches
         if @capture(p, o_ => n_)
             substs[o] = n
         elseif @capture(p, o_ = n_)
-            push!(consts, p)
+            consts[o] = n
         else
             error("unsupported patch format: $p")
         end
@@ -495,7 +517,7 @@ parsepatches(patches::Vector) = begin
 end
 
 using DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, incl, scope)
+gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, substs, incl, scope)
 geninfos(body; name, substs, incl, scope, _...) = begin
     con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()
@@ -541,7 +563,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=Dict(), incl=(), scope=scopeof(S))
+geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=substs(S), incl=(), scope=scopeof(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))
