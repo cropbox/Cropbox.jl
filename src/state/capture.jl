@@ -24,7 +24,7 @@ constructortags(::Val{:Capture}) = (:unit, :time, :timeunit)
 updatetags!(d, ::Val{:Capture}; _...) = begin
     !haskey(d, :time) && (d[:time] = :(context.clock.tick))
     #TODO: automatic inference without explicit `timeunit` tag
-    !haskey(d, :timeunit) && (d[:timeunit] = @q $C.timeunittype($(d[:unit])))
+    !haskey(d, :timeunit) && (d[:timeunit] = @q $C.timeunittype($(d[:unit]), $C.timeunit(__Context__)))
 end
 
 genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
