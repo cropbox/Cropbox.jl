@@ -343,6 +343,22 @@ gensource(v::VarInfo) = begin
 end
 gensource(infos) = MacroTools.flatten(@q begin $(gensource.(infos)...) end)
 
+updateconsts(consts, infos) = begin
+    #HACK: keep type of Context in case needed for field construction (i.e. timeunit for Accumulate)
+    context = filter(v -> v.name == :context, infos) |> only
+    merge(consts, Dict(:__Context__ => context.type))
+end
+genconstpatches(consts, scope, incl) = begin
+    @gensym CS
+    consts0 = merge(Cropbox.consts.(_mixincollect(mixins(scope, incl)))...)
+    K = [keys(consts0)..., keys(consts)...]
+    [
+        :($CS = $(genconstbase(:(mixins($scope, $incl)), consts))),
+        (:($k = $CS[$(Meta.quot(k))]) for k in K)...
+    ]
+end
+genconstbase(M, consts) = :(merge(consts.(_mixincollect($M))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...))))
+
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
@@ -359,18 +375,13 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
     decls = gendecl(nodes)
     args = gennewargs(infos)
     source = gensource(infos)
-    mixinlist = mixins(scope, incl)
-    #HACK: keep type of Context in case needed for field construction (i.e. timeunit for Accumulate)
-    context = filter(v -> v.name == :context, infos) |> only
-    consts = merge(consts, Dict(:__Context__ => context.type))
-    consts0 = merge(Cropbox.consts.(_mixincollect(mixins(scope, incl)))...)
-    @gensym CS
-    constsbase = @q $CS = merge(consts.(_mixincollect(mixins($scope, $incl)))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...)))
-    constslist = (:($k = $CS[$(Meta.quot(k))]) for k in vcat(keys(consts0)..., keys(consts)...))
+    consts = updateconsts(consts, infos)
+    constpatches = genconstpatches(consts, scope, incl)
+
     system = quote
         Core.@__doc__ abstract type $S <: $T end
         $C.typefor(::Type{<:$S}) = $_S
-        let $constsbase, $(constslist...)
+        let $(constpatches...)
             Core.@__doc__ mutable struct $_S <: $S
                 $(fields...)
                 function $_S(; _kwargs...)
@@ -384,7 +395,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.typefor(::Type{$_S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
-        $C.consts(::Type{$_S}) = merge(consts.(_mixincollect(mixins($S)))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...)))
+        $C.consts(::Type{$_S}) = $(genconstbase(:(mixins($S)), consts))
         $C.substs(::Type{$_S}) = $substs
         $C.mixins(::Type{$_S}) = $(mixins(scope, incl))
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
