@@ -201,11 +201,10 @@ end
 
 #TODO: support convenient way to set up custom Clock
 #TODO: support unit reference again?
-using Cropbox: Clock, Context
-@system SoilClock(Clock) begin
+@system SoilClock(Clock) <: Clock begin
     step => 15u"minute" ~ preserve(u"hr", parameter)
 end
-@system SoilContext(Context) begin
+@system SoilContext(Context) <: Context begin
     context ~ ::Context(override)
     clock(config) ~ ::SoilClock
 end
