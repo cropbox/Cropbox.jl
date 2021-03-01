@@ -350,14 +350,14 @@ updateconsts(consts, infos) = begin
 end
 genconstpatches(consts, scope, incl) = begin
     @gensym CS
-    consts0 = merge(Cropbox.consts.(_mixincollect(mixins(scope, incl)))...)
+    consts0 = merge(constsof.(_mixincollect(mixinsof(scope, incl)))...)
     K = [keys(consts0)..., keys(consts)...]
     [
-        :($CS = $(genconstbase(:(mixins($scope, $incl)), consts))),
+        :($CS = $(genconstbase(:(mixinsof($scope, $incl)), consts))),
         (:($k = $CS[$(Meta.quot(k))]) for k in K)...
     ]
 end
-genconstbase(M, consts) = :(merge(consts.(_mixincollect($M))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...))))
+genconstbase(M, consts) = :(merge(constsof.(_mixincollect($M))..., Dict($((@q($(Meta.quot(p[1])) => $(esc(p[2]))) for p in consts)...))))
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
@@ -395,9 +395,9 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.typefor(::Type{$_S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
-        $C.consts(::Type{$_S}) = $(genconstbase(:(mixins($S)), consts))
-        $C.substs(::Type{$_S}) = $substs
-        $C.mixins(::Type{$_S}) = $(mixins(scope, incl))
+        $C.constsof(::Type{$_S}) = $(genconstbase(:(mixinsof($S)), consts))
+        $C.substsof(::Type{$_S}) = $substs
+        $C.mixinsof(::Type{$_S}) = $(mixinsof(scope, incl))
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
         $C.scopeof(::Type{$_S}) = $scope
@@ -417,26 +417,26 @@ source(::Type{System}) = quote
 end
 source(::Type) = :()
 
-consts(s::S) where {S<:System} = consts(S)
-consts(::Type{S}) where {S<:System} = consts(typefor(S))
-consts(::Type{System}) = Dict()
+constsof(s::S) where {S<:System} = constsof(S)
+constsof(::Type{S}) where {S<:System} = constsof(typefor(S))
+constsof(::Type{System}) = Dict()
 
-substs(s::S) where {S<:System} = substs(S)
-substs(::Type{S}) where {S<:System} = substs(typefor(S))
-substs(::Type{System}) = Dict()
+substsof(s::S) where {S<:System} = substsof(S)
+substsof(::Type{S}) where {S<:System} = substsof(typefor(S))
+substsof(::Type{System}) = Dict()
 
-mixins(s::S) where {S<:System} = mixins(S)
-mixins(::Type{S}) where {S<:System} = mixins(typefor(S))
-mixins(::Type{System}) = (System,)
-mixins(::Type) = ()
-mixins(scope::Module, incl) = Tuple(getmodule.(Ref(scope), incl))
+mixinsof(s::S) where {S<:System} = mixinsof(S)
+mixinsof(::Type{S}) where {S<:System} = mixinsof(typefor(S))
+mixinsof(::Type{System}) = (System,)
+mixinsof(::Type) = ()
+mixinsof(scope::Module, incl) = Tuple(getmodule.(Ref(scope), incl))
 
 using DataStructures: OrderedSet
 mixincollect(s::S) where {S<:System} = mixincollect(S)
 mixincollect(S::Type{<:System}, l=OrderedSet()) = begin
     S in l && return l
     push!(l, S)
-    _mixincollect(mixins(S), l)
+    _mixincollect(mixinsof(S), l)
     #HACK: ensure mixins come before composite system
     #TODO: need testsets for mixins/mixincollect
     push!(delete!(l, S), S)
@@ -574,7 +574,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=substs(S), incl=(), scope=scopeof(S))
+geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=substsof(S), incl=(), scope=scopeof(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))

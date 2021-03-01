@@ -45,7 +45,7 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
     scope = S.name.module
     a = node!(h, S)
     (a in h.N || hasloop(h, a)) && return
-    add!(h, a, mixins(S))
+    add!(h, a, mixinsof(S))
     V = geninfos(S)
     for v in V
         T = @eval scope $(v.type)

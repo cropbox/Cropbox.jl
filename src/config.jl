@@ -120,15 +120,15 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     V = [n.info for n in dependency(S).N]
     P = filter(v -> istag(v, :parameter), V)
     key = alias ? (v -> isnothing(v.alias) ? v.name : v.alias) : (v -> v.name)
-    K = Cropbox.consts(S) |> keys
+    K = constsof(S) |> keys
     # evaluate only if parameter has no dependency on other variables
     val(v) = val(v, Val(isempty(v.args)))
     val(v, ::Val{false}) = missing
     val(v, ::Val{true}) = begin
         @gensym CS
         l = (:($k = $CS[$(Meta.quot(k))]) for k in K)
-        b = @eval scope let $CS = Cropbox.consts($S), $(l...); $(v.body) end
-        u = @eval scope let $CS = Cropbox.consts($S), $(l...); $(gettag(v, :unit)) end
+        b = @eval scope let $CS = Cropbox.constsof($S), $(l...); $(v.body) end
+        u = @eval scope let $CS = Cropbox.constsof($S), $(l...); $(gettag(v, :unit)) end
         unitfy(b, u)
     end
     C = configure(namefor(S) => ((key(v) => val(v) for v in P)...,))
