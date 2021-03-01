@@ -8,6 +8,10 @@ timeunit(::Type{<:Clock}) = u"hr"
     tick => nothing ~ advance(init=init, step=step, unit=timeunit)
 end
 
+abstract type DailyClock <: Clock end
+timeunit(::Type{<:DailyClock}) = u"d"
+@system DailyClock{timeunit = timeunit(DailyClock)}(Clock) <: Clock
+
 timeunit(c::C) where {C<:Clock} = timeunit(C)
 
 export Clock

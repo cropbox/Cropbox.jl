@@ -4,6 +4,9 @@
     clock(config) ~ ::Clock
 end
 
+#TODO: remove once Context and Clock get merged
+@system DailyContext{Clock => DailyClock}(Context) <: Context
+
 timeunit(c::Context) = timeunit(c.clock)
 
 #HACK: explicitly set up timeunit for default Context

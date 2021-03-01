@@ -19,4 +19,16 @@
         update!(s)
         @test s.context.clock.tick' == 20u"hr"
     end
+
+    @testset "daily" begin
+        @system SClockDaily{Context => Cropbox.DailyContext}(Controller) begin
+            a => 1 ~ accumulate
+        end
+        s = instance(SClockDaily)
+        @test s.context isa Cropbox.DailyContext
+        @test s.context.clock isa Cropbox.DailyClock
+        update!(s)
+        @test s.context.clock.tick' == 1u"d"
+        @test s.a' == 1
+    end
 end
