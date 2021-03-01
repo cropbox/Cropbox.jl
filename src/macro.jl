@@ -284,7 +284,7 @@ genextern(v::VarInfo, default) = gengetkwargs(v, default)
 gengetkwargs(v::VarInfo, default) = begin
     K = [Meta.quot(n) for n in names(v)]
     K = names(v)
-    @q $C.getbynames(_kwargs, $K, $default)
+    @q $C.getbynames(__kwargs__, $K, $default)
 end
 
 getbynames(d, K, default=nothing) = begin
@@ -312,7 +312,7 @@ gendecl(v::VarInfo{Nothing}) = begin
     emit(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
     args = emit.(v.args)
     if istag(v, :option)
-        push!(args, @q $(esc(:option)) = _kwargs)
+        push!(args, @q $(esc(:option)) = __kwargs__)
     end
     decl = if istag(v, :override)
         genoverride(v)
@@ -384,7 +384,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         let $(constpatches...)
             Core.@__doc__ mutable struct $_S <: $S
                 $(fields...)
-                function $_S(; _kwargs...)
+                function $_S(; __kwargs__...)
                     $predecl
                     $(decls...)
                     new($(args...))
