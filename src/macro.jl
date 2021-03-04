@@ -531,6 +531,8 @@ end
 using DataStructures: OrderedDict, OrderedSet
 gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, substs, incl, scope)
 geninfos(body; name, substs, incl, scope, _...) = begin
+    # update type substitution dict cascaded over all participating mixins
+    substs = merge(substsof.(_mixincollect(mixinsof(scope, incl)))..., substs)
     con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()
         #HACK: default in case LineNumberNode is not attached

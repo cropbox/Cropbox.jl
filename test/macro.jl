@@ -180,6 +180,18 @@
         @test s.c' isa Float64
     end
 
+    @testset "patch type cascade" begin
+        @system SPatchTypeCascade0{A => Int} begin
+            a => 1 ~ preserve::A
+        end
+        @eval @system SPatchTypeCascade(SPatchTypeCascade0, Controller) begin
+            b => 1 ~ preserve::A
+        end
+        s = instance(SPatchTypeCascade)
+        @test s.a' isa Int
+        @test s.b' isa Int
+    end
+
     @testset "patch const" begin
         @system SPatchConst{x = 1, y = u"m"}(Controller) begin
             a => 1 ~ accumulate(init=x, unit=y)
