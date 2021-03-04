@@ -497,7 +497,7 @@ _update!(S::Vector{<:System}, t) = begin
     end
 end
 _update!(s, t) = s
-update!(s, t::UpdateStage=MainStage()) = _update!(s, t)
+update!(s, t=MainStage()) = _update!(s, t)
 
 parsehead(head; scope) = begin
     # @system name[{patches..}][(mixins..)] [<: type]
