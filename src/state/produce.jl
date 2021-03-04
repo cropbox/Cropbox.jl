@@ -6,10 +6,10 @@ Base.iterate(p::Production) = (p, nothing)
 Base.iterate(p::Production, ::Nothing) = nothing
 Base.eltype(::Type{Production}) = Production
 
-mutable struct Produce{P,V} <: State{P}
+mutable struct Produce{P,V,S} <: State{P}
     name::Symbol # used in recurisve collecting in collect()
     value::V
-    productions::Vector{Production}
+    productions::Vector{Production{<:S}}
 end
 
 Produce(; _name, _type, _...) = begin
@@ -19,17 +19,19 @@ Produce(; _name, _type, _...) = begin
         P = T
         V = Union{T,Nothing}
         v = nothing
+        S = typefor(P)
     elseif T <: Vector{<:System}
         P = T
         V = T
         v = V[]
+        S = typefor(eltype(P))
     end
-    Produce{P,V}(_name, v, Production[])
+    Produce{P,V,S}(_name, v, Production{S}[])
 end
 
 constructortags(::Val{:Produce}) = ()
 
-produce(s::Type{<:System}; args...) = Production(s, args)
+produce(s::Type{<:System}; args...) = Production(typefor(s), args)
 produce(::Nothing; args...) = nothing
 unittype(s::Produce) = nothing
 
@@ -65,9 +67,9 @@ end
 
 genvartype(v::VarInfo, ::Val{:Produce}; V, _...) = begin
     if istag(v, :single)
-        @q Produce{$V,Union{$V,Nothing}}
+        @q Produce{$V,Union{$V,Nothing},typefor($V)}
     else
-        @q Produce{$V,$V}
+        @q Produce{$V,$V,typefor(eltype($V))}
     end
 end
 
