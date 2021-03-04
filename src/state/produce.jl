@@ -102,7 +102,7 @@ end
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     @gensym s P
-    if istag(v, :single)
+    q = if istag(v, :single)
         @q let $s = $(symstate(v))
             if isempty($s)
                 let $P = $(genbody(v))
@@ -116,6 +116,8 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
             $C.produce!($s, $P)
         end
     end
+    w = gettag(v, :when)
+    isnothing(w) ? q : @q if $C.value($w); $q end
 end
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::PostStage) = begin

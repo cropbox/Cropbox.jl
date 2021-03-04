@@ -192,4 +192,34 @@
         @test s.p["*"].i' == [0, 1]
         @test s.p["**"].i' == [0, 1, 1]
     end
+
+    @testset "when" begin
+        @system SProduceWhen begin
+            t(nounit(context.clock.tick)) ~ track::Int
+            w(t) => isodd(t) ~ track::Bool
+            a => produce(SProduceWhen) ~ produce(when=w)
+        end
+        @system SProduceWhenController(Controller) begin
+            s(context) ~ ::SProduceWhen
+        end
+        sc = instance(SProduceWhenController)
+        s = sc.s
+        @test length(s.a) == 0
+        update!(sc)
+        @test length(s.a) == 0
+        update!(sc)
+        @test length(s.a) == 1
+        @test length(s.a[1].a) == 0
+        update!(sc)
+        @test length(s.a) == 1
+        @test length(s.a[1].a) == 0
+        update!(sc)
+        @test length(s.a) == 2
+        @test length(s.a[1].a) == 1
+        @test length(s.a[2].a) == 0
+        update!(sc)
+        @test length(s.a) == 2
+        @test length(s.a[1].a) == 1
+        @test length(s.a[2].a) == 0
+    end
 end
