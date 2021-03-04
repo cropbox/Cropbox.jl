@@ -402,9 +402,9 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
         $C.scopeof(::Type{$_S}) = $scope
-        $C.update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
-        $C.update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
-        $C.update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
+        $C._update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
+        $C._update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
+        $C._update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
         $S
     end
     system #|> MacroTools.flatten
@@ -491,12 +491,13 @@ Base.print(io::IO, ::PreStage) = print(io, "†")
 Base.print(io::IO, ::MainStage) = print(io, "")
 Base.print(io::IO, ::PostStage) = print(io, "‡")
 
-update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
+_update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
     for s in S
         update!(s, t)
     end
 end
-update!(s, t::UpdateStage=MainStage()) = s
+_update!(s, t::UpdateStage=MainStage()) = s
+update!(s, t::UpdateStage=MainStage()) = _update!(s, t)
 
 parsehead(head; scope) = begin
     # @system name[{patches..}][(mixins..)] [<: type]
