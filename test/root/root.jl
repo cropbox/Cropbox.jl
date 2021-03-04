@@ -288,20 +288,16 @@ end
     end ~ call::Symbol
 
     ms(l, Δl, lt, lmax): may_segment => (l >= Δl && lt < lmax) ~ flag
-    S(ms, n, box, ro, zi, r, ea, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
-        if ms
-            #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-            produce(eval(n); box, ro, zi=zi+1, r, ea0=ea, l0=rl, lb, la, ln, lmax, lp=lt, RT0=RT1)
-        end
-    end ~ produce::Segment
+    S(n, box, ro, zi, r, ea, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
+        #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
+        produce(eval(n); box, ro, zi=zi+1, r, ea0=ea, l0=rl, lb, la, ln, lmax, lp=lt, RT0=RT1)
+    end ~ produce::Segment(when=ms)
 
     mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
-    B(mb, nb, box, ro, wrap(RT1)): branch => begin
-        if mb
-            #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
-            produce(eval(nb()); box, ro=ro+1, RT0=RT1)
-        end
-    end ~ produce::Branch
+    B(nb, box, ro, wrap(RT1)): branch => begin
+        #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
+        produce(eval(nb()); box, ro=ro+1, RT0=RT1)
+    end ~ produce::Branch(when=mb)
 
     ii(cp; c::Container): is_inside => (c.dist'(cp) <= 0) ~ call::Bool
 end

@@ -15,14 +15,12 @@
     soil(context) ~ ::Soil
     phenology(context, calendar, weather, sun, soil): pheno ~ ::Phenology
 
-    root(root, pheno, emerging=pheno.emerging) => begin
+    root(root, pheno) => begin
         if isempty(root)
-            if emerging
-                #TODO import_carbohydrate(soil.total_root_weight)
-                produce(Root, phenology=pheno)
-            end
+            #TODO import_carbohydrate(soil.total_root_weight)
+            produce(Root, phenology=pheno)
         end
-    end ~ produce::Root
+    end ~ produce::Root(when=pheno.emerging)
     
     tillers(tillers, pheno, growing=pheno.growing, l=pheno.leaves_initiated) => begin
         [produce(Tiller, phenology=pheno, index=i) for i in (length(tillers)+1):l]
