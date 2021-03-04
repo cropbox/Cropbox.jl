@@ -148,7 +148,10 @@ end
     end ~ call
 end
 
-@system RootSegment(Tropism, Rendering) begin
+@system RootSegment{
+    Segment => RootSegment,
+    Branch => RootSegment,
+}(Tropism, Rendering) begin
     box ~ <:Container(override)
 
     ro: root_order => 1 ~ preserve::Int(extern)
@@ -290,7 +293,7 @@ end
             #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
             produce(eval(n); box, ro, zi=zi+1, r, ea0=ea, l0=rl, lb, la, ln, lmax, lp=lt, RT0=RT1)
         end
-    end ~ produce<:RootSegment
+    end ~ produce::Segment
 
     mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
     B(mb, nb, box, ro, wrap(RT1)): branch => begin
@@ -298,7 +301,7 @@ end
             #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
             produce(eval(nb()); box, ro=ro+1, RT0=RT1)
         end
-    end ~ produce<:RootSegment
+    end ~ produce::Branch
 
     ii(cp; c::Container): is_inside => (c.dist'(cp) <= 0) ~ call::Bool
 end
@@ -326,14 +329,22 @@ end
 @system BaseRoot(RootSegment) <: RootSegment begin
     T: transition ~ tabulate(rows=(:PrimaryRoot, :FirstOrderLateralRoot, :SecondOrderLateralRoot), parameter)
 end
-@system PrimaryRoot(BaseRoot, Gravitropism) <: BaseRoot begin
-    n: name => :PrimaryRoot ~ preserve::Symbol
+@system SecondOrderLateralRoot{
+    Segment => SecondOrderLateralRoot,
+}(BaseRoot, Tropism) <: BaseRoot begin
+    n: name => :SecondOrderLateralRoot ~ preserve::Symbol
 end
-@system FirstOrderLateralRoot(BaseRoot, Gravitropism) <: BaseRoot begin
+@system FirstOrderLateralRoot{
+    Segment => FirstOrderLateralRoot,
+    Branch => SecondOrderLateralRoot,
+}(BaseRoot, Gravitropism) <: BaseRoot begin
     n: name => :FirstOrderLateralRoot ~ preserve::Symbol
 end
-@system SecondOrderLateralRoot(BaseRoot, Tropism) <: BaseRoot begin
-    n: name => :SecondOrderLateralRoot ~ preserve::Symbol
+@system PrimaryRoot{
+    Segment => PrimaryRoot,
+    Branch => FirstOrderLateralRoot,
+}(BaseRoot, Gravitropism) <: BaseRoot begin
+    n: name => :PrimaryRoot ~ preserve::Symbol
 end
 
 @system RootArchitecture(Controller) begin
