@@ -491,12 +491,12 @@ Base.print(io::IO, ::PreStage) = print(io, "†")
 Base.print(io::IO, ::MainStage) = print(io, "")
 Base.print(io::IO, ::PostStage) = print(io, "‡")
 
-_update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
+_update!(S::Vector{<:System}, t) = begin
     for s in S
         update!(s, t)
     end
 end
-_update!(s, t::UpdateStage=MainStage()) = s
+_update!(s, t) = s
 update!(s, t::UpdateStage=MainStage()) = _update!(s, t)
 
 parsehead(head; scope) = begin
