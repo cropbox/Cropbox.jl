@@ -11,7 +11,7 @@ unitfy(v::Array, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple, u::Units) = unitfy.(v, u)
 unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
 unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = unitfy.(v, u)
-unitfy(v::Tuple{Vararg{<:Union{Quantity,Missing}}}, u::Units) = unitfy.(v, u)
+unitfy(v::Tuple{Vararg{Union{Quantity,Missing}}}, u::Units) = unitfy.(v, u)
 unitfy(v, u) = u(v)
 unitfy(v::V, ::Type{V}) where V = v
 
