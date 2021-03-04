@@ -31,7 +31,7 @@ Base.show(io::IO, v::VarInfo) = begin
     println(io, "docstring: $(v.docstring)")
 end
 
-VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module, substs::Dict, substsscope::Module) = begin
+VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module, substs::Dict) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::stype|<:dtype][(tags..)]]
     @capture(bindscope(line, scope), (decl_ ~ deco_) | decl_)
     @capture(deco,
@@ -47,7 +47,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     kwargs = parsekwargs(kwargs)
     body = parsebody(body)
     state = parsestate(state)
-    type = parsetype(stype, dtype, state, scope, substs, substsscope)
+    type = parsetype(stype, dtype, state, scope, substs)
     tags = parsetags(tags; name, alias, args, kwargs, state, type)
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
@@ -91,13 +91,14 @@ parsestate(state) = typestate(Val(state))
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
 
-parsetype(::Nothing, ::Nothing, state, _, _, _) = typetag(Val(state))
+parsetype(::Nothing, ::Nothing, state, _, _) = typetag(Val(state))
 parsetype(stype, ::Nothing, _, args...) = parsetype(Val(:static), stype, args...)
 parsetype(::Nothing, dtype, _, args...) = parsetype(Val(:dynamic), dtype, args...)
-parsetype(trait, type, scope, substs, substsscope) = begin
+parsetype(trait, type, scope, substs) = begin
     if haskey(substs, type)
-        type = substs[type]
-        scope = substsscope
+        s = substs[type]
+        type = s.type
+        scope = s.scope
     end
     parsetype(type, scope, trait)
 end
@@ -497,14 +498,14 @@ update!(S::Vector{<:System}, t::UpdateStage=MainStage()) = begin
 end
 update!(s, t::UpdateStage=MainStage()) = s
 
-parsehead(head) = begin
+parsehead(head; scope) = begin
     # @system name[{patches..}][(mixins..)] [<: type]
     @capture(head, (decl_ <: type_) | decl_)
     @capture(decl, name_{patches__}(mixins__) | name_{patches__} | name_(mixins__) | name_)
     type = isnothing(type) ? :System : type
     patches = isnothing(patches) ? [] : patches
     mixins = isnothing(mixins) ? [] : mixins
-    consts, substs = parsepatches(patches)
+    consts, substs = parsepatches(patches, scope)
     incl = [:System]
     for m in mixins
         push!(incl, Symbol(m))
@@ -512,12 +513,12 @@ parsehead(head) = begin
     (; name, consts, substs, incl, type)
 end
 
-parsepatches(patches::Vector) = begin
+parsepatches(patches::Vector, scope::Module) = begin
     consts = Dict()
     substs = Dict()
     for p in patches
         if @capture(p, o_ => n_)
-            substs[o] = n
+            substs[o] = (; type=n, scope)
         elseif @capture(p, o_ = n_)
             consts[o] = n
         else
@@ -542,7 +543,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
             else
                 ds = ""
             end
-            v = VarInfo(s, l, ln, ds, sc, substs, scope)
+            v = VarInfo(s, l, ln, ds, sc, substs)
             d[v.name] = v
         end
         d
@@ -580,7 +581,8 @@ include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))
 
 macro system(head, body=:(begin end))
-    gensystem(body; scope=__module__, parsehead(head)...)
+    scope = __module__
+    gensystem(body; scope, parsehead(head; scope)...)
 end
 
 export @system, update!
