@@ -300,6 +300,7 @@ end
     end ~ produce::Branch(when=mb)
 
     ii(cp; c::Container): is_inside => (c.dist'(cp) <= 0) ~ call::Bool
+    m(S): mature => !isnothing(S) ~ flag
 end
 
 mesh(s::RootSegment) = begin
@@ -341,6 +342,15 @@ end
     Branch => FirstOrderLateralRoot,
 }(BaseRoot, Gravitropism) <: BaseRoot begin
     n: name => :PrimaryRoot ~ preserve::Symbol
+end
+
+Cropbox.update!(s::BaseRoot, t) = begin
+    if s.m'
+        update!(s.S', t)
+        update!(s.B', t)
+    else
+        Cropbox._update!(s, t)
+    end
 end
 
 @system RootArchitecture(Controller) begin
