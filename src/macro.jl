@@ -99,6 +99,8 @@ parsetype(trait, type, scope, substs) = begin
         s = substs[type]
         type = s.type
         scope = s.scope
+        #HACK: force static type when substituion takes place
+        trait = Val(:static)
     end
     parsetype(type, scope, trait)
 end
