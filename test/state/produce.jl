@@ -107,7 +107,7 @@
         @test s.b' == 10 # ((0 ~ ((1 ~ 2) + 2) + (1 ~ 2) + 2)
     end
 
-    @testset "query condition with track bool flag" begin
+    @testset "query condition with flag" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool[]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
@@ -137,38 +137,6 @@
         @test length(s.p) == 4
         @test s.a' == 4 # (0 + #1 + 2 + #3)
         @test s.b' == 26 # (0 ~ ((#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3) + (#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3)
-    end
-
-    @testset "query condition with lazy flag" begin
-        @system SProduceQueryConditionFlag begin
-            p => produce(SProduceQueryConditionFlag) ~ produce::SProduceQueryConditionFlag[]
-            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
-            f(i) => isodd(i) ~ flag(lazy)
-            a(x=p["*/f"].i) => sum(x) ~ track
-            b(x=p["**/f"].i) => sum(x) ~ track
-        end
-        @system SProduceQueryConditionFlagController(Controller) begin
-            s(context) ~ ::SProduceQueryConditionFlag
-        end
-        sc = instance(SProduceQueryConditionFlagController)
-        s = sc.s
-        @test length(s.p) == 0
-        update!(sc)
-        @test length(s.p) == 1
-        @test s.a' == 0 # (.0)
-        @test s.b' == 0 # (.0)
-        update!(sc)
-        @test length(s.p) == 2
-        @test s.a' == 0 # (0 + .1)
-        @test s.b' == 0 # (0 ~ .1) + .1)
-        update!(sc)
-        @test length(s.p) == 3
-        @test s.a' == 1 # (0 + #1 + .2)
-        @test s.b' == 2 # ((0 ~ ((#1 ~ .2) + .2) + (#1 ~ .2) + .2)
-        update!(sc)
-        @test length(s.p) == 4
-        @test s.a' == 1 # (0 + #1 + 2 + .3)
-        @test s.b' == 2 # ((0 ~ (#1 ~ (2 ~ .3)) + (2 ~ .3) + .3) + (#1 ~ (2 ~ .3)) + (2 ~ .3) + .3)
     end
 
     @testset "adjoint" begin
