@@ -250,6 +250,7 @@ root_switchgrass_KH2PO4 = (
     ),
     :FirstOrderLateralRoot => (;
         lmax = 1.63 ± 0.61,
+        #ln = 0.163 ± 0.061,
         r = 0.31 ± 0.11,
         θ = 84.27 ± 3.03,
     ),
@@ -266,6 +267,7 @@ root_switchgrass_AlPO4 = (
     ),
     :FirstOrderLateralRoot => (;
         lmax = 1.56 ± 0.55,
+        #ln = 0.156 ± 0.055,
         r = 0.33 ± 0.11,
         θ = 83.53 ± 3.42,
     ),
@@ -282,6 +284,7 @@ root_switchgrass_C6H17NaO24P6 = (
     ),
     :FirstOrderLateralRoot => (;
         lmax = 2.80 ± 0.61,
+        #ln = 0.28 ± 0.061,
         r = 0.57 ± 0.09,
         θ = 78.07 ± 5.30,
     ),
