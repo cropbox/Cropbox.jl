@@ -240,7 +240,7 @@ root_switchgrass_P = (root_switchgrass_W,
         Δx = 0.1,
     ),
     :SecondOrderLateralRoot => (;
-        Δx = 0.01,
+        Δx = 1,
     )
 )
 root_switchgrass_KH2PO4 = (
