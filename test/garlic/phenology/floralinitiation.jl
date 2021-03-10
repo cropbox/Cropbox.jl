@@ -11,7 +11,7 @@
         # # no MAX_LEAF_NO implied unlike original model
         # w.time <= solstice and w.day_length >= self.critical_photoperiod
         day_length >= critPPD && day <= 171
-    end ~ flag(oneway)
+    end ~ flag(once)
 
     floral_initiating(floral_initiateable & !floral_initiated) ~ flag
 

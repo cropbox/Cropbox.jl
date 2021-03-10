@@ -18,7 +18,7 @@ genupdate(v::VarInfo, ::Val{:Flag}, ::PostStage) = istag(v, :lazy) ? genflag(v) 
 
 genflag(v::VarInfo) = begin
     @gensym s f q
-    if istag(v, :oneway)
+    if istag(v, :once)
         @q let $s = $(symstate(v))
             if !$C.value($s)
                 let $f = $(genbody(v))
