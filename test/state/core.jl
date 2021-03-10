@@ -2,8 +2,8 @@
     @testset "not" begin
         @system SStateNot(Controller) begin
             f => false ~ preserve::Bool
-            a(f) ~ track::Bool
-            b(!f) ~ track::Bool
+            a(f) ~ flag
+            b(!f) ~ flag
         end
         s = instance(SStateNot)
         @test s.a' == false && s.b' == true

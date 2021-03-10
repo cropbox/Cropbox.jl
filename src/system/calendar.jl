@@ -7,7 +7,7 @@ import Dates
     time(t0=init, t=context.clock.tick) => t0 + (Cropbox.deunitfy(t, u"s") |> round |> Dates.Second) ~ track::ZonedDateTime
     stop(time, last) => begin
         isnothing(last) ? false : (time >= last)
-    end ~ track::Bool
+    end ~ flag
     count(init, last, Δt=context.clock.step) => begin
         if isnothing(last)
             nothing

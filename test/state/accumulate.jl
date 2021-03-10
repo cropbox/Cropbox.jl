@@ -93,7 +93,7 @@
         @system SAccumulateWhen(Controller) begin
             t(nounit(context.clock.tick)) ~ track::Int
             f ~ preserve(parameter)
-            w(t, f) => t < f ~ track::Bool
+            w(t, f) => t < f ~ flag
             a => 1 ~ accumulate
             b => 1 ~ accumulate(when=w)
             c => 1 ~ accumulate(when=!w)

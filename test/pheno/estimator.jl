@@ -31,7 +31,7 @@ import Dates
         r.timestamp
     end ~ call::ZonedDateTime
 
-    match => false ~ track::Bool
+    match => false ~ flag
     stop(m=match, t=i, t1) => (m || t >= t1) ~ flag
 
     T(s): temperature => s[:tavg] ~ track(u"°C")
@@ -45,7 +45,7 @@ end
 @system BetaFuncEstimator(BetaFunction, Estimator, Controller) <: Estimator begin
     Rg: growth_requirement ~ preserve(parameter)
     Cg(ΔT): growth_cumulated ~ accumulate
-    match(Cg, Rg) => Cg >= Rg ~ track::Bool
+    match(Cg, Rg) => Cg >= Rg ~ flag
 end
 
 end

@@ -196,7 +196,7 @@
     @testset "when" begin
         @system SProduceWhen begin
             t(nounit(context.clock.tick)) ~ track::Int
-            w(t) => isodd(t) ~ track::Bool
+            w(t) => isodd(t) ~ flag
             a => produce(SProduceWhen) ~ produce(when=w)
         end
         @system SProduceWhenController(Controller) begin

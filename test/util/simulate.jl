@@ -93,7 +93,7 @@ using Dates
         @system SSimulateSnap(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
-            f(b) => (b % 2 == 0) ~ track::Bool
+            f(b) => (b % 2 == 0) ~ flag
         end
         n = 10
         f(s) = s.b' % 2 == 0
