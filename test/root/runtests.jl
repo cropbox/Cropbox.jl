@@ -138,8 +138,8 @@ root_switchgrass_W = (
         color = Root.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (;
-        lb = 0.07 ± 0.04,
-        la = 0,
+        lb = 0,
+        la = 0.07 ± 0.04,
         ln = 0,
         lmax = 0.07 ± 0.04,
         r = 0.002 ± 0.001,
