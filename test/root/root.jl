@@ -157,13 +157,14 @@ end
     ro: root_order => 1 ~ preserve::Int(extern)
     zi: zone_index => 0 ~ preserve::Int(extern)
 
-    zt(lmax, la, lb, lp): zone_type => begin
+    zt(lmax, la, lb, lp, ln): zone_type => begin
         if (lmax - la) <= lp
             :apical
         elseif lp < lb
             :basal
         else
-            :lateral
+            #HACK: assume apical when no lateral branching zone exists
+            iszero(ln) ? :apical : :lateral
         end
     end ~ preserve::Symbol
 
@@ -172,50 +173,18 @@ end
     ln: length_between_lateral_branches => 0.3 ~ preserve(u"cm", extern, parameter, min=0)
     lmax: maximal_length => 3.9 ~ preserve(u"cm", extern, parameter, min=0.1)
 
-    zl(zt, lb, ln, la, lmax, lp): zone_length => begin
-        l = if zt == :basal
-            lb
-        elseif zt == :apical
-            la
-        else
-            ln
-        end
-    end ~ preserve(u"cm")
-
     r: maximum_elongation_rate => 1.0 ~ preserve(u"cm/d", extern, parameter, min=0)
-    GD(lmax, r): growth_duration => begin
-        d = lmax / r
-        1.5d
-    end ~ preserve(u"d")
-    ea0: initial_elongation_age => 0 ~ preserve(u"d", extern)
-    ea(l, Δl, lt, lmax): elongation_age => (l < Δl && lt < lmax ? 1 : 0) ~ accumulate(init=ea0, u"d")
-    bg(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")): beta_growth => begin
-        #HACK: prevent NaN when r = 0, thus GD = Inf
-        w = if !isinf(t_e)
-            t = clamp(t, zero(t), t_e)
-            t_m = t_e / 2
-            t_et = t_e - t
-            t_em = t_e - t_m
-            t_tb = t - t_b
-            t_mb = t_m - t_b
-            ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
-        else
-            0
-        end
-        c_m * w
-    end ~ call(u"cm/d")
-    pr(bg, ea, GD, r): potential_elongation_rate => bg(ea, GD, r) ~ track(u"cm/d")
+    pr(r): potential_elongation_rate ~ track(u"cm/d")
 
     t(context.clock.tick): timestamp ~ preserve(u"hr")
-    Δt(context.clock.step): timestep ~ preserve(u"hr")
-    Δl(Δx) ~ preserve(u"cm", max=zl)
-    ar(Δl, l, Δt): actual_elongation_rate => ((Δl - l) / Δt) ~ track(u"cm/d", max=pr)
-    rr(pr, ar): remaining_elongation_rate => pr - ar ~ track(u"cm/d")
-    rl(rr, Δt): remaining_length => rr*Δt ~ track(u"cm")
-    l0: initial_length => 0 ~ preserve(u"cm", extern)
+    Δl(Δx) ~ preserve(u"cm", max=lr)
     lp: parent_length => 0 ~ preserve(u"cm", extern)
-    l(ar): length ~ accumulate(init=l0, u"cm")
+    ls: sibling_length => 0 ~ preserve(u"cm", extern)
+    l(pr): length ~ accumulate(u"cm", when=!im)
+    lr(lp, lmax): remaining_length => lmax - lp ~ track(u"cm")
     lt(lp, l): total_length => lp + l ~ track(u"cm")
+    li(ls, l): interleaving_length => ls + l ~ track(u"cm")
+    ls1(li): next_sibling_length ~ track(u"cm", when=!ib)
 
     Δx: axial_resolution => 1 ~ preserve(u"cm", parameter)
     σ: standard_deviation_of_angle => 30 ~ preserve(u"°", parameter)
@@ -237,7 +206,8 @@ end
         (α, β) = P[i]
         d = dist(np(α, β))
         for i in 1:αN
-            α1 = α + 90u"°" * (i-1)/αN
+            #HACK: look around 360° rather than original 90° in case the segment already is out of boundary
+            α1 = α + 360u"°" * (i-1)/αN
             for j in 1:βN
                 d < 0 && break
                 β1 = pβ()
@@ -288,19 +258,22 @@ end
     end ~ call::Symbol
 
     ms(l, Δl, lt, lmax): may_segment => (l >= Δl && lt < lmax) ~ flag
-    S(n, box, ro, zi, r, ea, rl, lb, la, ln, lmax, lt, wrap(RT1)): segment => begin
+    S(n, box, ro, zi, r, lb, la, ln, lmax, lt, ls1, wrap(RT1)): segment => begin
         #HACK: keep lb/la/ln/lmax parameters same for consecutive segments
-        produce(eval(n); box, ro, zi=zi+1, r, ea0=ea, l0=rl, lb, la, ln, lmax, lp=lt, RT0=RT1)
+        produce(eval(n); box, ro, zi=zi+1, r, lb, la, ln, lmax, lp=lt, ls=ls1, RT0=RT1)
     end ~ produce::Segment(when=ms)
 
-    mb(lt, zl, zt): may_branch => (lt >= zl && zt != :apical) ~ flag
+    mb(zt, li, ln): may_branch => (zt == :lateral && li >= ln) ~ flag
     B(nb, box, ro, wrap(RT1)): branch => begin
         #HACK: eval() for Symbol-based instantiation based on tabulate-d matrix
         produce(eval(nb()); box, ro=ro+1, RT0=RT1)
     end ~ produce::Branch(when=mb)
 
     ii(cp; c::Container): is_inside => (c.dist'(cp) <= 0) ~ call::Bool
-    m(S): mature => !isnothing(S) ~ flag
+    im(l, Δl, lt, lmax): is_mature => (l >= Δl || lt >= lmax) ~ flag
+
+    is(S): is_segmented => !isnothing(S) ~ flag
+    ib(B): is_branched => !isnothing(B) ~ flag
 end
 
 mesh(s::RootSegment) = begin
@@ -345,7 +318,8 @@ end
 end
 
 Cropbox.update!(s::BaseRoot, t) = begin
-    if s.m'
+    #HACK: merely checking im flag would miss pre-stage update for producing S
+    if s.is'
         update!(s.S', t)
         update!(s.B', t)
     else
