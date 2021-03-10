@@ -230,7 +230,7 @@ root_switchgrass_P = (root_switchgrass_W,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
-          0 0 0 ; # F
+          0 0 1 ; # F
           0 0 0 ; # S
     ],
     :PrimaryRoot => (;
