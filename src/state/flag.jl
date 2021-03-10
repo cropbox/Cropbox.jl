@@ -12,9 +12,11 @@ genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
 
 geninit(v::VarInfo, ::Val{:Flag}) = false
 
-genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep) = istag(v, :lazy) ? nothing : genflag(v)
 
-genupdate(v::VarInfo, ::Val{:Flag}, ::PostStage) = begin
+genupdate(v::VarInfo, ::Val{:Flag}, ::PostStage) = istag(v, :lazy) ? genflag(v) : nothing
+
+genflag(v::VarInfo) = begin
     @gensym s f q
     if istag(v, :oneway)
         @q let $s = $(symstate(v))

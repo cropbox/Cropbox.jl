@@ -107,11 +107,11 @@
         @test s.b' == 10 # ((0 ~ ((1 ~ 2) + 2) + (1 ~ 2) + 2)
     end
 
-    @testset "query condition with track bool" begin
+    @testset "query condition with track bool flag" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool[]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
-            f(i) => isodd(i) ~ track::Bool
+            f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => sum(x) ~ track
             b(x=p["**/f"].i) => sum(x) ~ track
         end
@@ -139,11 +139,11 @@
         @test s.b' == 26 # (0 ~ ((#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3) + (#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3)
     end
 
-    @testset "query condition with flag" begin
+    @testset "query condition with lazy flag" begin
         @system SProduceQueryConditionFlag begin
             p => produce(SProduceQueryConditionFlag) ~ produce::SProduceQueryConditionFlag[]
             i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
-            f(i) => isodd(i) ~ flag
+            f(i) => isodd(i) ~ flag(lazy)
             a(x=p["*/f"].i) => sum(x) ~ track
             b(x=p["**/f"].i) => sum(x) ~ track
         end
