@@ -56,7 +56,7 @@ root_maize = (
     )
 )
 root_switchgrass_N = (
-    :RootArchitecture => :maxB => 5,
+    :RootArchitecture => :maxB => 24,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -104,7 +104,7 @@ root_switchgrass_N = (
     )
 )
 root_switchgrass_W = (
-    :RootArchitecture => :maxB => 15,
+    :RootArchitecture => :maxB => 22,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -152,7 +152,7 @@ root_switchgrass_W = (
     )
 )
 root_switchgrass_N2 = (
-    :RootArchitecture => :maxB => 5,
+    :RootArchitecture => :maxB => 24,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -187,7 +187,7 @@ root_switchgrass_N2 = (
     ),
 )
 root_switchgrass_W2 = (
-    :RootArchitecture => :maxB => 15,
+    :RootArchitecture => :maxB => 22,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
@@ -226,7 +226,6 @@ root_switchgrass_P = (root_switchgrass_W,
     :Clock => (;
         step = 1u"hr",
     ),
-    :RootArchitecture => :maxB => 5,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
