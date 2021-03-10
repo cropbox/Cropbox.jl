@@ -226,7 +226,7 @@ root_switchgrass_P = (root_switchgrass_W,
     :Clock => (;
         step = 1u"hr",
     ),
-    :RootArchitecture => :maxB => 15,
+    :RootArchitecture => :maxB => 5,
     :BaseRoot => :T => [
         # P F S
           0 1 0 ; # P
