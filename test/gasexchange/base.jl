@@ -9,9 +9,10 @@
         exp(Ea * (T - Tb) / (u"R" * Tk * Tbk))
     end ~ call
 
-    kTpeak(Tk, Tbk, kT; Ea(u"kJ/mol"), S(u"J/mol/K"), H(u"kJ/mol")): peaked_function => begin
+    kTpeak(Tk, Tbk, kT; Ha(u"kJ/mol"), Hd(u"kJ/mol"), To(u"K")): peaked_function => begin
         R = u"R"
-        kT(Ea) * (1 + exp((S*Tbk - H) / (R*Tbk))) / (1 + exp((S*Tk - H) / (R*Tk)))
+        ΔS = Hd / To + R * log(Ha / (Hd - Ha))
+        kT(Ha) * (1 + exp((ΔS*Tbk - Hd) / (R*Tbk))) / (1 + exp((ΔS*Tk - Hd) / (R*Tk)))
     end ~ call
 
     Q10 => 2 ~ preserve(parameter)

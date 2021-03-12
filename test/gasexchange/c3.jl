@@ -33,11 +33,11 @@ end
 
 @system C3j(C3Base) begin
     Jm25: maximum_electron_transport_rate_at_25 => 169.0 ~ preserve(u"μmol/m^2/s" #= Electron =#, parameter)
-    Eaj: activation_energy_for_electron_transport => 23.9976 ~ preserve(u"kJ/mol", parameter)
-    Sj: electron_transport_temperature_response => 616.4 ~ preserve(u"J/mol/K", parameter)
-    Hj: electron_transport_curvature => 200 ~ preserve(u"kJ/mol", parameter)
-    Jmax(Jm25, kTpeak, Eaj, Sj, Hj, kN): maximum_electron_transport_rate => begin
-        Jm25 * kTpeak(Eaj, Sj, Hj) * kN
+    Haj: activation_enthalpy_for_electron_transport => 23.9976 ~ preserve(u"kJ/mol", parameter)
+    Hdj: deactivation_enthalpy_for_electron_transport => 200 ~ preserve(u"kJ/mol", parameter)
+    Toj: optimum_temperature_for_electron_transport => 42.8 ~ preserve(u"°C", parameter)
+    Jmax(Jm25, kTpeak, Haj, Hdj, Toj, kN): maximum_electron_transport_rate => begin
+        Jm25 * kTpeak(Haj, Hdj, Toj) * kN
     end ~ track(u"μmol/m^2/s" #= Electron =#)
 
     # θ: sharpness of transition from light limitation to light saturation
