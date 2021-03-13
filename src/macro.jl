@@ -192,6 +192,7 @@ typetag(::Val) = :Float64
 typetag(::Val{:Advance}) = :Float64 #HACK: avoid unexpected promotion (i.e. Rational) when using :Int
 typetag(::Val{:Flag}) = :Bool
 typetag(::Val{:Produce}) = :(Vector{System})
+typetag(::Val{:Provide}) = :(Cropbox.DataFrame)
 typetag(::Val{nothing}) = nothing
 
 supportedtags(::Val) = nothing
