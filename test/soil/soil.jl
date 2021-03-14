@@ -341,17 +341,11 @@ end
 
 using DataFrames
 using CSV
-@system SoilWeather(DataFrameStore) begin
-    filename => "PyWaterBal.csv" ~ preserve::String(parameter)
-
-    i(t=context.clock.time): index ~ track(u"d")
-    ix(; r::DataFrameRow): indexer => begin
-        (r.timestamp - 1) * u"d"
-    end ~ call(u"d")
-
-    R(s): precipitation => s[:precipitation] ~ track(u"mm/d")
-    T(s): transpiration => s[:transpiration] ~ track(u"mm/d")
-    E(s): evaporation => s[:evaporation] ~ track(u"mm/d")
+@system SoilWeather begin
+    s: store ~ provide(index=:timestamp, init=1u"d", parameter)
+    R: precipitation ~ drive(from=s, by=:precipitation, u"mm/d")
+    T: transpiration ~ drive(from=s, by=:transpiration, u"mm/d")
+    E: evaporation ~ drive(from=s, by=:evaporation, u"mm/d")
 end
 
 # w = instance(SoilWeather, config=(
@@ -444,11 +438,11 @@ end
 end
 
 @testset "soil" begin
-    r = simulate(SoilWater.SoilController, stop=80,
+    r = simulate(SoilWater.SoilController, stop=80u"d",
         config=(
             :Clock => (:step => 1u"d"),
             :SoilClock => (:step => 15u"minute"),
-            :SoilWeather => (:filename => "$(@__DIR__)/PyWaterBal.csv"),
+            :SoilWeather => (:store => "$(@__DIR__)/PyWaterBal.csv"),
         ),
         target=(
             :v1 => "s.L[1].θ",
