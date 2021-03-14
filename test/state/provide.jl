@@ -45,7 +45,7 @@ using TimeZones
 
     @testset "tick" begin
         @system SProvideTick(Controller) begin
-            a => DataFrame(index=0:3, value=0:10:30) ~ provide(time=context.clock.tick, step=1)
+            a => DataFrame(index=0:3, value=0:10:30) ~ provide(init=context.clock.tick, step=1)
         end
         s = instance(SProvideTick)
         @test s.a'.index == [0, 1, 2, 3]
@@ -55,7 +55,7 @@ using TimeZones
         Δt = Hour(1)
         @system SProvideCalendar{step=Δt}(Controller) begin
             calendar(context) ~ ::Calendar
-            a ~ provide(time=calendar.time, step=step, parameter)
+            a ~ provide(init=calendar.time, step=step, parameter)
         end
         t0 = ZonedDateTime(2011, 10, 29, 0, tz"Asia/Seoul")
         t1 = ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")

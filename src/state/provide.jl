@@ -5,9 +5,9 @@ mutable struct Provide{V} <: State{V}
     value::V
 end
 
-Provide(; index, time, step, autounit, _value, _type, _...) = begin
+Provide(; index, init, step, autounit, _value, _type, _...) = begin
     i = value(index)
-    t = value(time)
+    t = value(init)
     Δt = value(step)
     df = DataFrame(_value isa String ? CSV.File(_value) : _value)
     df = autounit ? unitfy(df) : df
@@ -18,11 +18,11 @@ Provide(; index, time, step, autounit, _value, _type, _...) = begin
     Provide{V}(v)
 end
 
-constructortags(::Val{:Provide}) = (:index, :time, :step, :autounit)
+constructortags(::Val{:Provide}) = (:index, :init, :step, :autounit)
 
 updatetags!(d, ::Val{:Provide}; _...) = begin
     !haskey(d, :index) && (d[:index] = QuoteNode(:index))
-    !haskey(d, :time) && (d[:time] = :(context.clock.time))
+    !haskey(d, :init) && (d[:init] = :(context.clock.time))
     !haskey(d, :step) && (d[:step] = :(context.clock.step))
     !haskey(d, :autounit) && (d[:autounit] = true)
 end

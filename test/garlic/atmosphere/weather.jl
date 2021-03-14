@@ -7,7 +7,7 @@ using CSV
     vp(context): vapor_pressure ~ ::VaporPressure
 
     #TODO: remove Hour(1) once Unitful gets Dates compatibility
-    s: store ~ provide(time=calendar.time, step=Cropbox.Dates.Hour(1), parameter)
+    s: store ~ provide(init=calendar.time, step=Cropbox.Dates.Hour(1), parameter)
 
     PFD: photon_flux_density ~ drive(from=s, by=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
