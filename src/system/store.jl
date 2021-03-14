@@ -8,7 +8,7 @@ import CSV
     filename => "" ~ preserve::String(parameter)
     ik: indexkey => :index ~ preserve::Symbol(parameter)
 
-    i(t=nounit(context.clock.time)): index => t + 1 ~ track::Int
+    i(t=context.clock.tick): index => t + 1 ~ track::Int
     ix: indexer ~ hold
 
     s: store ~ hold

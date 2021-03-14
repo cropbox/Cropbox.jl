@@ -91,7 +91,7 @@
 
     @testset "when" begin
         @system SAccumulateWhen(Controller) begin
-            t(nounit(context.clock.time)) ~ track::Int
+            t(context.clock.tick) ~ track::Int
             f ~ preserve(parameter)
             w(t, f) => t < f ~ flag
             a => 1 ~ accumulate

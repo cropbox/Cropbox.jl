@@ -1,7 +1,7 @@
 @testset "remember" begin
     @testset "basic" begin
         @system SRemember(Controller) begin
-            t(nounit(context.clock.time)) ~ track
+            t(context.clock.tick) ~ track
             w(t) => t >= 2 ~ flag
             i => -1 ~ preserve
             r(t) ~ remember(init=i, when=w)

@@ -43,11 +43,11 @@ using TimeZones
         @test_throws ErrorException instance(SProvideTime)
     end
 
-    @testset "time nounit" begin
-        @system SProvideTimeNoUnit(Controller) begin
-            a => DataFrame(index=0:3, value=0:10:30) ~ provide(time=nounit(context.clock.time), step=nounit(context.clock.step))
+    @testset "tick" begin
+        @system SProvideTick(Controller) begin
+            a => DataFrame(index=0:3, value=0:10:30) ~ provide(time=context.clock.tick, step=1)
         end
-        s = instance(SProvideTimeNoUnit)
+        s = instance(SProvideTick)
         @test s.a'.index == [0, 1, 2, 3]
     end
 
