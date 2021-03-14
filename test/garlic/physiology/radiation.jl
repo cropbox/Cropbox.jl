@@ -5,10 +5,6 @@
 # Intercropping canopy: Height1, Width1, LA1 for Crop1, and so on
 # Rose bent canopy: Height1=Upright canopy, Height2 = bent portion height, 10/16/02 S.Kim
 
-# abscissas
-const GAUSS3 = [-0.774597, 0, 0.774597]
-const WEIGHT3 = [0.555556 0.888889 0.555556]
-
 # absorptance not explicitly considered here because it's a leaf characteristic not canopy
 # Scattering is considered as canopy characteristics and reflectance is computed based on canopy scattering
 # 08-20-12, SK
@@ -112,20 +108,16 @@ end
         Kb_at(current_zenith_angle)
     end ~ track
 
-    # diffused light ratio to ambient, integrated over all incident angles from -90 to 90
-    angles => [π/4 * (g+1) for g in GAUSS3] ~ preserve::Vector{Float64}(u"rad")
-
-    fdf(a=angles; x::Vector{Float64}): diffused_fraction => begin
+    # diffused light ratio to ambient, integrated over all incident angles from 0 to 90
+    Kd_F(leaf_angle_coeff, LAI; a): diffused_fraction_for_Kd => begin
+        c = leaf_angle_coeff(a)
+        x = exp(-c * LAI)
         # Why multiplied by 2?
-        df = WEIGHT3 * ((π/4) * (2x .* sin.(a) .* cos.(a)))
-        #FIXME better way to handling 1-element array value?
-        df[1]
-    end ~ call
+        2x * sin(a) * cos(a)
+    end ~ integrate(from=0, to=π/2)
 
     # Kd: K for diffuse light, the same literature as above
-    Kd(LAI, angles, leaf_angle_coeff, fdf, clumping): diffusion_ratio => begin
-        coeffs = [leaf_angle_coeff(a) for a in angles]
-        F = fdf(exp.(-coeffs * LAI))
+    Kd(F=Kd_F, LAI, clumping): diffusion_ratio => begin
         K = -log(F) / LAI
         K * clumping
     end ~ track
@@ -170,10 +162,16 @@ end
         rho_cb_at(current_zenith_angle)
     end ~ track
 
+    rho_cd_F(rho_cb_at; a): diffused_fraction_for_rho_cd => begin
+        x = rho_cb_at(a)
+        # Why multiplied by 2?
+        2x * sin(a) * cos(a)
+    end ~ integrate(from=0, to=π/2)
+
     # rho_cd: canopy reflectance of diffuse irradiance, de Pury and Farquhar (1997) Table A2
-    rho_cd(I0_df, angles, rho_cb_at, fdf): canopy_reflectivity_diffusion => begin
+    rho_cd(I0_df, rho_cd_F): canopy_reflectivity_diffusion => begin
         # Probably the eqn A21 in de Pury is missing the integration terms of the angles??
-        iszero(I0_df) ? 0. : fdf([rho_cb_at(a) for a in angles])
+        iszero(I0_df) ? 0. : rho_cd_F
     end ~ track
 
     # rho_soil: soil reflectivity for PAR band
