@@ -21,7 +21,7 @@ using TypedTables: TypedTables, Table
 
     @testset "day" begin
         @system SStoreDay(DayStore, Controller) begin
-            a(s) ~ drive
+            a(s) => s.a ~ track
         end
         r = mktemp() do f, io
             write(io, "day (d),a\n0,0\n1,10\n2,20")
@@ -36,7 +36,7 @@ using TypedTables: TypedTables, Table
 
     @testset "date" begin
         @system SStoreDate(DateStore, Controller) begin
-            a(s) ~ drive
+            a(s) => s.a ~ track
         end
         r = mktemp() do f, io
             write(io, "date (:Date),a\n2020-12-09,0\n2020-12-10,10\n2020-12-11,20")
@@ -55,7 +55,7 @@ using TypedTables: TypedTables, Table
 
     @testset "time" begin
         @system SStoreTime(TimeStore, Controller) begin
-            a(s) ~ drive
+            a(s) => s.a ~ track
         end
         r = mktemp() do f, io
             write(io, "date (:Date),time (:Time),a\n2020-11-15,01:00,0\n2020-11-15,02:00,10\n2020-11-15,03:00,20")

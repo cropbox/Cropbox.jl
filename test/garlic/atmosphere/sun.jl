@@ -32,12 +32,12 @@ import Dates
     d(t): day => Dates.dayofyear(t) ~ track::Int
     h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
 
-    ϕ(loc): latitude ~ drive(key=:lat, u"°") # DO NOT convert to radians for consistency
-    λ(loc): longitude ~ drive(key=:long, u"°") # leave it as in degrees, used only once for solar noon calculation
-    alt(loc): altitude ~ drive(u"m")
+    ϕ(loc.lat): latitude ~ track(u"°") # DO NOT convert to radians for consistency
+    λ(loc.long): longitude ~ track(u"°") # leave it as in degrees, used only once for solar noon calculation
+    alt(loc.alt): altitude ~ track(u"m")
 
     #TODO: fix inconsistent naming of PAR vs. PFD
-    PAR(weather): photosynthetic_active_radiation ~ drive(key=:PFD, u"μmol/m^2/s") # Quanta
+    PAR(weather.PFD): photosynthetic_active_radiation ~ track(u"μmol/m^2/s") # Quanta
     τ: transmissivity => 0.5 ~ preserve(parameter) # atmospheric transmissivity, Goudriaan and van Laar (1994) p 30
 
     #####################

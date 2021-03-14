@@ -2,7 +2,6 @@
     pheno: phenology ~ ::Phenology(override)
 
     # organ temperature, C
-    #T(pheno): temperature ~ drive(u"°C")
     T(pheno.T): temperature ~ track(u"°C")
 
     # glucose, MW = 180.18 / 6 = 30.03 g

@@ -68,9 +68,9 @@ end
 
     #TODO better name to make it drive?
     current_zenith_angle(sun.zenith_angle) ~ track(u"°")
-    elevation_angle(sun) ~ drive(u"°")
-    I0_dr(sun): directional_photosynthetic_radiation ~ drive(key=:PARdir, u"μmol/m^2/s" #= Quanta =#)
-    I0_df(sun): diffusive_photosynthetic_radiation ~ drive(key=:PARdif, u"μmol/m^2/s" #= Quanta =#)
+    elevation_angle(sun.αs) ~ track(u"°")
+    I0_dr(sun.PARdir): directional_photosynthetic_radiation ~ track(u"μmol/m^2/s" #= Quanta =#)
+    I0_df(sun.PARdif): diffusive_photosynthetic_radiation ~ track(u"μmol/m^2/s" #= Quanta =#)
 
     # Leaf angle stuff?
 

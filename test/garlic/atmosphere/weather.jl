@@ -22,21 +22,20 @@ using CSV
         datetime_from_julian_day_WEA(r.year, r.jday, r.time, tz, occurrence)
     end ~ call::ZonedDateTime
 
-    PFD(s): photon_flux_density ~ drive(key=:SolRad, u"μmol/m^2/s") #Quanta
+    PFD(s): photon_flux_density => s.SolRad ~ track(u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
 
     CO2 => 400 ~ preserve(u"μmol/mol", parameter)
 
-    #RH(s): relative_humidity ~ drive(key="RH", u"percent")
-    RH(s): relative_humidity => s[:RH] ~ track(u"percent")
+    RH(s): relative_humidity => s.RH ~ track(u"percent")
     #RH => 0.6 ~ track # 0~1
 
-    T_air(s): air_temperature ~ drive(key=:Tair, u"°C")
+    T_air(s): air_temperature => s.Tair ~ track(u"°C")
     #T_air => 25 ~ track # C
 
     Tk_air(T_air): absolute_air_temperature ~ track(u"K")
 
-    wind(s): wind_speed ~ drive(key=:Wind, u"m/s")
+    wind(s): wind_speed => s.Wind ~ track(u"m/s")
     #wind => 2.0 ~ track # meters s-1
 
     #TODO: make P_air parameter?
