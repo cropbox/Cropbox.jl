@@ -1,18 +1,23 @@
 mutable struct Drive{V} <: State{V}
     value::V
     array::Vector{V}
-    index::Int
+    tick::Int
 end
 
-Drive(; unit, _value, _type, _...) = begin
+Drive(; tick, unit, _value, _type, _...) = begin
+    t = value(tick)
     U = value(unit)
     V = valuetype(_type, U)
     a = _value
     v = a[1]
-    Drive{V}(v, a, 1)
+    Drive{V}(v, a, t)
 end
 
-constructortags(::Val{:Drive}) = (:from, :by, :unit,)
+constructortags(::Val{:Drive}) = (:tick, :unit)
+
+updatetags!(d, ::Val{:Drive}; _...) = begin
+    !haskey(d, :tick) && (d[:tick] = :(context.clock.tick))
+end
 
 genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 
@@ -34,10 +39,13 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
-    @gensym s e
+    t = gettag(v, :tick)
+    @gensym s t0 t1 i e
     @q let $s = $(symstate(v)),
-           $e = $s.array[$s.index]
-        $s.index += 1
+           $t0 = $s.tick,
+           $t1 = $C.value($t),
+           $i = $t1 - $t0 + 1,
+           $e = $s.array[$i]
         $C.store!($s, $e)
     end
 end

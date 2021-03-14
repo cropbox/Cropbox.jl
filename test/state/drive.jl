@@ -72,6 +72,28 @@ using DataFrames: DataFrame
         @test s.c' == 6u"m"
     end
 
+    @testset "produce" begin
+        @system SDriveProduce begin
+            i(context.clock.tick) ~ preserve::Int
+            a => 0:3 ~ drive::Int
+        end
+        @system SDriveProduceController(Controller) begin
+            p => produce(SDriveProduce) ~ produce
+        end
+        s = instance(SDriveProduceController)
+        p = s.p'
+        @test isempty(p)
+        update!(s)
+        @test p[1].i' == 0 && p[1].a' == 1
+        update!(s)
+        @test p[1].i' == 0 && p[1].a' == 2
+        @test p[2].i' == 1 && p[2].a' == 1
+        update!(s)
+        @test p[1].i' == 0 && p[1].a' == 3
+        @test p[2].i' == 1 && p[2].a' == 2
+        @test p[3].i' == 2 && p[3].a' == 1
+    end
+
     @testset "error" begin
         @test_throws LoadError @eval @system SDriveErrorMissingFrom(Controller) begin
             a ~ drive(by=:a)
