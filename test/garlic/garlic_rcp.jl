@@ -109,8 +109,7 @@ rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day)
             altitude = 20.0,
         ),
         :Weather => (;
-            filename = "$(@__DIR__)/data/RCP/$(name).wea",
-            timezone = tz,
+            store = Garlic.loadwea("$(@__DIR__)/data/RCP/$name.wea", tz),
             CO2 = rcp_co2(scenario, year),
         ),
         :Calendar => (;

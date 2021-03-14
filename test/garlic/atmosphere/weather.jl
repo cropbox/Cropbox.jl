@@ -2,40 +2,27 @@ using TimeZones
 using DataFrames
 using CSV
 
-#TODO: use improved @drive
-#TODO: implement @unit
-@system Weather(DataFrameStore) begin
+@system Weather begin
     calendar(context) ~ ::Calendar(override)
     vp(context): vapor_pressure ~ ::VaporPressure
 
-    tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
+    #TODO: remove Hour(1) once Unitful gets Dates compatibility
+    s: store ~ provide(time=calendar.time, step=Cropbox.Dates.Hour(1), parameter)
 
-    i(calendar.time): index ~ track::ZonedDateTime
-    ix(tz; r::DataFrameRow): indexer => begin
-        #HACK: handle ambiguous time conversion under DST
-        occurrence = 1
-        i = DataFrames.row(r)
-        if i > 1
-            r0 = parent(r)[i-1, :]
-            r0.time == r.time && (occurrence = 2)
-        end
-        datetime_from_julian_day_WEA(r.year, r.jday, r.time, tz, occurrence)
-    end ~ call::ZonedDateTime
-
-    PFD(s): photon_flux_density => s.SolRad ~ track(u"μmol/m^2/s") #Quanta
+    PFD: photon_flux_density ~ drive(from=s, by=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1
 
     CO2 => 400 ~ preserve(u"μmol/mol", parameter)
 
-    RH(s): relative_humidity => s.RH ~ track(u"percent")
+    RH: relative_humidity ~ drive(from=s, by=:RH, u"percent")
     #RH => 0.6 ~ track # 0~1
 
-    T_air(s): air_temperature => s.Tair ~ track(u"°C")
+    T_air: air_temperature ~ drive(from=s, by=:Tair, u"°C")
     #T_air => 25 ~ track # C
 
     Tk_air(T_air): absolute_air_temperature ~ track(u"K")
 
-    wind(s): wind_speed => s.Wind ~ track(u"m/s")
+    wind: wind_speed ~ drive(from=s, by=:Wind, u"m/s")
     #wind => 2.0 ~ track # meters s-1
 
     #TODO: make P_air parameter?

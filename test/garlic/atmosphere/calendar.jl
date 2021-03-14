@@ -31,3 +31,20 @@ end
 
 julian_hour_from_datetime_2DSOIL(clock::ZonedDateTime) =
     julian_day_from_datetime_2DSOIL(clock; hourly=true) - julian_day_from_datetime_2DSOIL(clock; hourly=false)
+
+using CSV
+using DataFrames: DataFrames, DataFrame
+
+loadwea(filename, timezone; indexkey=:index) = begin
+    df = CSV.File(filename) |> DataFrame
+    df[!, indexkey] = map(r -> begin
+        occurrence = 1
+        i = DataFrames.row(r)
+        if i > 1
+            r0 = parent(r)[i-1, :]
+            r0.time == r.time && (occurrence = 2)
+        end
+        datetime_from_julian_day_WEA(r.year, r.jday, r.time, timezone, occurrence)
+    end, eachrow(df))
+    df
+end

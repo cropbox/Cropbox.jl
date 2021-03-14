@@ -274,8 +274,8 @@ end
 
 plot_sun(v, d=3; kw...) = begin
     o = (
-        :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
-        :Weather => (:filename => "garlic/data/2007.wea"),
+        :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"Asia/Seoul")),
+        :Weather => (:store => loadwea("$(@__DIR__)/../data/2007.wea", tz"Asia/Seoul")),
         :SunController => (:duration => d),
     )
     r = simulate(SunController, stop=:stop, config=o, base=:sun)

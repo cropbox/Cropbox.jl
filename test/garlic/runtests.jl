@@ -7,11 +7,11 @@ using TimeZones
 
 ND = (
     :Calendar => (
-        :init => ZonedDateTime(2007, 9, 1, tz"UTC"),
-        :last => ZonedDateTime(2008, 8, 31, tz"UTC"),
+        :init => ZonedDateTime(2007, 9, 1, tz"Asia/Seoul"),
+        :last => ZonedDateTime(2008, 8, 31, tz"Asia/Seoul"),
     ),
-    :Weather => (:filename => "$(@__DIR__)/data/2007.wea"),
-    :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"UTC")),
+    :Weather => (:store => Garlic.loadwea("$(@__DIR__)/data/2007.wea", tz"Asia/Seoul")),
+    :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"Asia/Seoul")),
 )
 
 KMSP = (
@@ -77,8 +77,7 @@ CUH = (
 )
 CUH_2013 = (CUH, (
     :Weather => (
-        filename = "$(@__DIR__)/data/CUH/2013.wea", # .dat
-        timezone = tz"America/Los_Angeles",
+        store = Garlic.loadwea("$(@__DIR__)/data/CUH/2013.wea", tz"America/Los_Angeles"),
     ),
     :Calendar => (
         init = ZonedDateTime(2013, 10, 30, tz"America/Los_Angeles"), # Y1 bgn
@@ -87,8 +86,7 @@ CUH_2013 = (CUH, (
 ))
 CUH_2014 = (CUH, (
     :Weather => (
-        filename = "$(@__DIR__)/data/CUH/2014.wea", # .dat
-        timezone = tz"America/Los_Angeles",
+        store = Garlic.loadwea("$(@__DIR__)/data/CUH/2014.wea", tz"America/Los_Angeles"),
     ),
     :Calendar => (
         # 2014.wea starts from 2014-09-01 01:00, not 00:00

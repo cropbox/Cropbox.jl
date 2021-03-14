@@ -110,9 +110,9 @@ end
 
 plot_pheno(v, d=300) = begin
     o = (
-        :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"UTC")),
-        :Weather => (:filename => "test/garlic/data/2007.wea"),
-        :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"UTC")),
+        :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"Asia/Seoul")),
+        :Weather => (:store => loadwea("$(@__DIR__)/../data/2007.wea", tz"Asia/Seoul")),
+        :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"Asia/Seoul")),
         :PhenologyController => (:duration => d),
     )
     r = simulate(PhenologyController, stop=:stop, config=o, base=:phenology)
