@@ -78,21 +78,21 @@ end
     leaf_angle_coeff(a=leaf_angle, leaf_angle_factor; zenith_angle(u"°")) => begin
         elevation_angle = 90u"°" - zenith_angle
         #FIXME need to prevent zero like sin_beta / cot_beta?
-        a = elevation_angle
+        α = elevation_angle
         t = zenith_angle
         # leaf angle distribution parameter
         x = leaf_angle_factor
         if a == spherical
             # When Lt accounts for total path length, division by sin(elev) isn't necessary
-            1 / (2sin(a))
+            1 / (2sin(α))
         elseif a == horizontal
             1.
         elseif a == vertical
-            1 / (tan(a) * π/2)
+            1 / (tan(α) * π/2)
         elseif a == empirical
             0.667
         elseif a == diaheliotropic
-            1 / sin(a)
+            1 / sin(α)
         elseif a == ellipsoidal
             sqrt(x^2 + tan(t)^2) / (x + 1.774 * (x+1.182)^-0.733)
         else
