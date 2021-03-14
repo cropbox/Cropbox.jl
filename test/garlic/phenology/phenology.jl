@@ -104,17 +104,14 @@ end
     sun(context, calendar, weather) ~ ::Sun
     soil(context) ~ ::Soil
     phenology(context, calendar, weather, sun, soil): p ~ ::Phenology
-    duration: d => 100 ~ preserve(u"d", parameter)
-    stop(context.clock.tick, d) => tick >= d ~ flag
 end
 
-plot_pheno(v, d=300) = begin
+plot_pheno(v, d=300u"d") = begin
     o = (
         :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"Asia/Seoul")),
         :Weather => (:store => loadwea("$(@__DIR__)/../data/2007.wea", tz"Asia/Seoul")),
         :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"Asia/Seoul")),
-        :PhenologyController => (:duration => d),
     )
-    r = simulate(PhenologyController, stop=:stop, config=o, base=:phenology)
+    r = simulate(PhenologyController, stop=d, config=o, base=:phenology)
     Cropbox.plot(r, :tick, v)
 end

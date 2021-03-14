@@ -268,21 +268,18 @@ end
     calendar(context) ~ ::Calendar
     weather(context, calendar) ~ ::Weather
     s(context, calendar, weather): sun ~ ::Sun
-    d: duration => 1 ~ preserve(u"d", parameter)
-    stop(context.clock.tick, d) => tick >= d ~ flag
 end
 
-plot_sun(v, d=3; kw...) = begin
+plot_sun(v, d=3u"d"; kw...) = begin
     o = (
         :Calendar => (:init => ZonedDateTime(2007, 9, 1, tz"Asia/Seoul")),
         :Weather => (:store => loadwea("$(@__DIR__)/../data/2007.wea", tz"Asia/Seoul")),
-        :SunController => (:duration => d),
     )
-    r = simulate(SunController, stop=:stop, config=o, base=:sun)
+    r = simulate(SunController, stop=d, config=o, base=:sun)
     Cropbox.plot(r, :tick, v; kw...)
 end
 
-test_sun(d=3) = foreach(v -> display(plot_sun(v, d)), [
+test_sun(d=3u"d") = foreach(v -> display(plot_sun(v, d)), [
     :δ, # declination_angle
     :αs, # elevation_angle
     :Fdir, # directional_coeff
