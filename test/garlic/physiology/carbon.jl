@@ -48,9 +48,8 @@ end
     end ~ track(u"g/d")
 
     # to be used by allocate_carbon()
-    carbon_temperature_effect(T_air=weather.T_air, β=pheno.BF.ΔT) => begin
+    carbon_temperature_effect(T=nounit(weather.T_air, u"°C"), β=pheno.BF.ΔT) => begin
         #FIXME properly handle T_air
-        T = Cropbox.deunitfy(T_air, u"°C")
         # this needs to be f of temperature, source/sink relations, nitrogen, and probably water
         # a valve function is necessary because assimilates from CPool cannot be dumped instantaneously to parts
         # this may be used for implementing feedback inhibition due to high sugar content in the leaves

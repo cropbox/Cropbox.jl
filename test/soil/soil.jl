@@ -174,8 +174,7 @@ end
         -21.674S - 27.932C - 81.975θ + 71.121S*θ + 8.294C*θ + 14.05S*C + 27.161
     end ~ preserve(u"kPa") # psi_et (kPa)
 
-    Ψ_e(Ψ_et): tension_air_entry => begin
-        Ψ = Cropbox.deunitfy(Ψ_et, u"kPa")
+    Ψ_e(Ψ=nounit(Ψ_et, u"kPa")): tension_air_entry => begin
         Ψ_e = Ψ + (0.02Ψ^2 - 0.113Ψ - 0.70)
         #TODO: need bounds check?
         # max(Ψ_e, zero(Ψ_e))
