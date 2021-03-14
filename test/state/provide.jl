@@ -52,14 +52,14 @@ using TimeZones
     end
 
     @testset "calendar" begin
-        Δt = Hour(1)
-        @system SProvideCalendar{step=Δt}(Controller) begin
+        @system SProvideCalendar(Controller) begin
             calendar(context) ~ ::Calendar
-            a ~ provide(init=calendar.time, step=step, parameter)
+            a ~ provide(init=calendar.time, step=calendar.step, parameter)
         end
         t0 = ZonedDateTime(2011, 10, 29, 0, tz"Asia/Seoul")
         t1 = ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")
         t2 = ZonedDateTime(2011, 10, 29, 3, tz"Asia/Seoul")
+        Δt = Hour(1)
         df = DataFrame(index=t0:Δt:t2, value=0:3)
         c = (:Calendar => :init => t1, :0 => :a => df)
         s = instance(SProvideCalendar; config=c)

@@ -9,6 +9,7 @@ import Dates
         s = instance(SCalendar; config=o)
         @test s.init' == t0
         @test s.time' == t0
+        @test s.step' == Dates.Hour(1)
         update!(s)
         @test s.time' == t0 + Dates.Hour(1)
         update!(s)
@@ -24,6 +25,7 @@ import Dates
         @test s.init' == t0
         @test s.last' == t1
         @test s.time' == t0
+        @test s.step' == Dates.Hour(1)
         @test s.stop' == false
         for i in 1:24
             update!(s)
