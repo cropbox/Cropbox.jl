@@ -1,18 +1,18 @@
 mutable struct Carry{V} <: State{V}
-    value::Vector{V}
+    value::V
+    array::Vector{V}
     index::Int
 end
 
 Carry(; unit, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
-    v = _value
-    Carry{V}(v, 0)
+    a = _value
+    v = a[1]
+    Carry{V}(v, a, 1)
 end
 
 constructortags(::Val{:Carry}) = (:from, :by, :unit,)
-
-value(s::Carry) = s.value[s.index]
 
 genvartype(v::VarInfo, ::Val{:Carry}; V, _...) = @q Carry{$V}
 
@@ -34,9 +34,10 @@ geninit(v::VarInfo, ::Val{:Carry}) = begin
 end
 
 genupdate(v::VarInfo, ::Val{:Carry}, ::MainStep) = begin
-    @gensym s
-    @q let $s = $(symstate(v))
+    @gensym s e
+    @q let $s = $(symstate(v)),
+           $e = $s.array[$s.index]
         $s.index += 1
-        $C.value($s)
+        $C.store!($s, $e)
     end
 end
