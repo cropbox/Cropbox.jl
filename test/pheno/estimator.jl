@@ -5,7 +5,7 @@ using DataFrames
 using TimeZones
 import Dates
 
-@system Estimator(DataFrameStore) begin
+@system Estimator begin
     year ~ preserve::Int(parameter)
 
     # 270(+1)th days of the first year (around end of September)
@@ -25,16 +25,14 @@ import Dates
     end ~ preserve::ZonedDateTime
 
     calendar(context, init=t0') ~ ::Calendar
-    i(calendar.time): index ~ track::ZonedDateTime
-    ix(; r::DataFrameRow): indexer => begin
-        #ZonedDateTime(r.timestamp, dateformat"yyyy-mm-dd HH:MM:SSzzzzz")
-        r.timestamp
-    end ~ call::ZonedDateTime
+    t(calendar.time): current_date ~ track::ZonedDateTime
+
+    s: store ~ provide(init=t, step=calendar.step, parameter)
 
     match => false ~ flag
-    stop(m=match, t=i, t1) => (m || t >= t1) ~ flag
+    stop(m=match, t, t1) => (m || t >= t1) ~ flag
 
-    T(s): temperature => s[:tavg] ~ track(u"°C")
+    T: temperature ~ drive(from=s, by=:tavg, u"°C")
 end
 
 estimate(S::Type{<:Estimator}, years; config, index=[:year, "calendar.time"], target=[:match], stop=:stop, kwargs...) = begin
@@ -63,8 +61,8 @@ import Dates
     Rg = 1000
     config = (
         :Estimator => (
-            :tz => tz"America/New_York",
-            :df => df,
+            :tz => tz"UTC",
+            :store => df,
         ),
         :BetaFuncEstimator => (
             :To => 20,
