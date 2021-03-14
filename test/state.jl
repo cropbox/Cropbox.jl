@@ -2,6 +2,7 @@
     include("state/core.jl")
     include("state/hold.jl")
     include("state/wrap.jl")
+    include("state/advance.jl")
     include("state/preserve.jl")
     include("state/tabulate.jl")
     include("state/interpolate.jl")
