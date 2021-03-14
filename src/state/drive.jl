@@ -1,22 +1,22 @@
-mutable struct Carry{V} <: State{V}
+mutable struct Drive{V} <: State{V}
     value::V
     array::Vector{V}
     index::Int
 end
 
-Carry(; unit, _value, _type, _...) = begin
+Drive(; unit, _value, _type, _...) = begin
     U = value(unit)
     V = valuetype(_type, U)
     a = _value
     v = a[1]
-    Carry{V}(v, a, 1)
+    Drive{V}(v, a, 1)
 end
 
-constructortags(::Val{:Carry}) = (:from, :by, :unit,)
+constructortags(::Val{:Drive}) = (:from, :by, :unit,)
 
-genvartype(v::VarInfo, ::Val{:Carry}; V, _...) = @q Carry{$V}
+genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 
-geninit(v::VarInfo, ::Val{:Carry}) = begin
+geninit(v::VarInfo, ::Val{:Drive}) = begin
     s = gettag(v, :from)
     x = if isnothing(s)
         k = gettag(v, :by)
@@ -33,7 +33,7 @@ geninit(v::VarInfo, ::Val{:Carry}) = begin
     @q $C.unitfy($x, $C.value($u))
 end
 
-genupdate(v::VarInfo, ::Val{:Carry}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
     @gensym s e
     @q let $s = $(symstate(v)),
            $e = $s.array[$s.index]

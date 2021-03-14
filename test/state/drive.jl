@@ -1,11 +1,11 @@
 using DataFrames: DataFrame
 
-@testset "carry" begin
+@testset "drive" begin
     @testset "basic" begin
-        @system SCarry(Controller) begin
-            a => [2, 4, 6] ~ carry
+        @system SDrive(Controller) begin
+            a => [2, 4, 6] ~ drive
         end
-        s = instance(SCarry)
+        s = instance(SDrive)
         @test s.a' == 2
         update!(s)
         @test s.a' == 4
@@ -14,10 +14,10 @@ using DataFrames: DataFrame
     end
 
     @testset "unit" begin
-        @system SCarryUnit(Controller) begin
-            a => [2, 4, 6] ~ carry(u"m")
+        @system SDriveUnit(Controller) begin
+            a => [2, 4, 6] ~ drive(u"m")
         end
-        s = instance(SCarryUnit)
+        s = instance(SDriveUnit)
         @test s.a' == 2u"m"
         update!(s)
         @test s.a' == 4u"m"
@@ -26,10 +26,10 @@ using DataFrames: DataFrame
     end
 
     @testset "type" begin
-        @system SCarryType(Controller) begin
-            a => [2, 4, 6] ~ carry::Int(u"m")
+        @system SDriveType(Controller) begin
+            a => [2, 4, 6] ~ drive::Int(u"m")
         end
-        s = instance(SCarryType)
+        s = instance(SDriveType)
         @test s.a' === 2u"m"
         update!(s)
         @test s.a' === 4u"m"
@@ -38,12 +38,12 @@ using DataFrames: DataFrame
     end
 
     @testset "parameter" begin
-        @system SCarryParameter(Controller) begin
-            a ~ carry(parameter)
+        @system SDriveParameter(Controller) begin
+            a ~ drive(parameter)
         end
         a = [2, 4, 6]
         c = :0 => :a => a
-        s = instance(SCarryParameter; config=c)
+        s = instance(SDriveParameter; config=c)
         @test s.a' == 2
         update!(s)
         @test s.a' == 4
@@ -52,13 +52,13 @@ using DataFrames: DataFrame
     end
 
     @testset "provide" begin
-        @system SCarryProvide(Controller) begin
+        @system SDriveProvide(Controller) begin
             p => DataFrame(index=(0:2)u"hr", a=[2,4,6], x=1:3, c=(4:6)u"m") ~ provide
-            a ~ carry(from=p)
-            b ~ carry(from=p, by=:x)
-            c ~ carry(from=p, u"m")
+            a ~ drive(from=p)
+            b ~ drive(from=p, by=:x)
+            c ~ drive(from=p, u"m")
         end
-        s = instance(SCarryProvide)
+        s = instance(SDriveProvide)
         @test s.a' == 2
         @test s.b' == 1
         @test s.c' == 4u"m"
@@ -73,18 +73,18 @@ using DataFrames: DataFrame
     end
 
     @testset "error" begin
-        @test_throws LoadError @eval @system SCarryErrorMissingFrom(Controller) begin
-            a ~ carry(by=:a)
+        @test_throws LoadError @eval @system SDriveErrorMissingFrom(Controller) begin
+            a ~ drive(by=:a)
         end
 
-        @test_throws LoadError @eval @system SCarryErrorProvideParameter(Controller) begin
+        @test_throws LoadError @eval @system SDriveErrorProvideParameter(Controller) begin
             p => DataFrame(index=(0:2)u"hr", a=[2,4,6]) ~ provide
-            a ~ carry(from=p, parameter)
+            a ~ drive(from=p, parameter)
         end
 
-        @test_throws LoadError @eval @system SCarryErrorProvideBody(Controller) begin
+        @test_throws LoadError @eval @system SDriveErrorProvideBody(Controller) begin
             p => DataFrame(index=(0:2)u"hr", a=[2,4,6]) ~ provide
-            a => [1, 2, 3] ~ carry(from=p)
+            a => [1, 2, 3] ~ drive(from=p)
         end
     end
 end
