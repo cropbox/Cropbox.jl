@@ -344,7 +344,7 @@ using CSV
 @system SoilWeather(DataFrameStore) begin
     filename => "PyWaterBal.csv" ~ preserve::String(parameter)
 
-    i(t=context.clock.tick): index ~ track(u"d")
+    i(t=context.clock.time): index ~ track(u"d")
     ix(; r::DataFrameRow): indexer => begin
         (r.timestamp - 1) * u"d"
     end ~ call(u"d")
@@ -458,6 +458,6 @@ end
             :v5 => "s.L[5].θ",
         ),
     )
-    @test r.tick[end] == 80u"d"
-    Cropbox.plot(r, :tick, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> display
+    @test r.time[end] == 80u"d"
+    Cropbox.plot(r, :time, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> display
 end

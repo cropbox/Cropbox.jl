@@ -11,8 +11,8 @@ using Dates
         r = simulate(SSimulate, stop=n)
         @test r isa DataFrame
         @test size(r, 1) == (n+1)
-        @test propertynames(r) == [:tick, :a, :b]
-        @test r[end, :tick] == n*u"hr"
+        @test propertynames(r) == [:time, :a, :b]
+        @test r[end, :time] == n*u"hr"
         @test r[end, :a] == 1
         @test r[end, :b] == n
         r = simulate(SSimulate, stop=n, config=(:SSimulate => :a => 2))
@@ -20,7 +20,7 @@ using Dates
         @test r[end, :b] == 2n
         r = simulate(SSimulate, stop=n, target=[:b])
         @test size(r, 2) == 2
-        @test propertynames(r) == [:tick, :b]
+        @test propertynames(r) == [:time, :b]
         r = simulate(SSimulate, stop=n, index=:b, target=[:b])
         @test size(r, 2) == 1
         @test propertynames(r) == [:b]
@@ -149,17 +149,17 @@ using Dates
         end
         L = [
             (target=:a,),
-            (index=[:t => "context.clock.tick", "i"], target=["a", :B => :b]),
-            (base="context.clock", index="tick", target="step"),
+            (index=[:t => "context.clock.time", "i"], target=["a", :B => :b]),
+            (base="context.clock", index="time", target="step"),
             (target=:b, meta=(:c => 0, :d => :D)),
         ]
         n = 1
         r = simulate(SSimulateLayout, L, stop=n)
-        @test propertynames(r[1]) == [:tick, :a]
+        @test propertynames(r[1]) == [:time, :a]
         @test propertynames(r[2]) == [:t, :i, :a, :B]
-        @test propertynames(r[3]) == [:tick, :step]
-        @test propertynames(r[4]) == [:tick, :b, :c, :d]
-        @test r[1][end, :tick] == r[2][end, :t] == r[3][end, :tick] == r[4][end, :tick] == n*u"hr"
+        @test propertynames(r[3]) == [:time, :step]
+        @test propertynames(r[4]) == [:time, :b, :c, :d]
+        @test r[1][end, :time] == r[2][end, :t] == r[3][end, :time] == r[4][end, :time] == n*u"hr"
         @test r[1][end, :a] == 0
         @test r[2][end, :B] == 2
         @test r[3][end, :step] == 1u"hr"
@@ -175,7 +175,7 @@ using Dates
         end
         L = [
             (index=:i, target=:a),
-            (index=:t => "context.clock.tick", target=:b),
+            (index=:t => "context.clock.time", target=:b),
             (target=[:i, :a, :b],),
         ]
         p1, p2 = 1, 2
@@ -187,9 +187,9 @@ using Dates
         r = simulate(SSimulateLayoutConfigs, L, C, stop=n)
         @test length(r) == length(L)
         o = r[3]
-        @test o[o.tick .== n*u"hr", :i] == [n, n]
-        @test o[o.tick .== n*u"hr", :a] == [p1*(n-1), p2*(n-1)]
-        @test o[o.tick .== n*u"hr", :b] == [2p1*n, 2p2*n]
+        @test o[o.time .== n*u"hr", :i] == [n, n]
+        @test o[o.time .== n*u"hr", :a] == [p1*(n-1), p2*(n-1)]
+        @test o[o.time .== n*u"hr", :b] == [2p1*n, 2p2*n]
     end
 
     @testset "configs" begin
@@ -201,8 +201,8 @@ using Dates
         C = @config !(:SSimulateConfigs => :a => p)
         n = 10
         r = simulate(SSimulateConfigs, configs=C, stop=n)
-        @test r[r.tick .== n*u"hr", :a] == p
-        @test r[r.tick .== n*u"hr", :b] == p .* n
+        @test r[r.time .== n*u"hr", :a] == p
+        @test r[r.time .== n*u"hr", :b] == p .* n
     end
 
     @testset "meta" begin

@@ -48,7 +48,7 @@
     @testset "kwargs" begin
         @system SProduceKwargs begin
             a => produce(SProduceKwargs) ~ produce
-            i(t=context.clock.tick) => t ~ preserve(u"hr")
+            i(t=context.clock.time) => t ~ preserve(u"hr")
         end
         @system SProduceKwargsController(Controller) begin
             s(context) ~ ::SProduceKwargs
@@ -83,7 +83,7 @@
     @testset "query index" begin
         @system SProduceQueryIndex begin
             p => produce(SProduceQueryIndex) ~ produce::SProduceQueryIndex[]
-            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
+            i(t=nounit(context.clock.time)) => Int(t) ~ preserve::Int
             a(x=p["*"].i) => sum(x) ~ track
             b(x=p["**"].i) => sum(x) ~ track
         end
@@ -110,7 +110,7 @@
     @testset "query condition with flag" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool[]
-            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
+            i(t=nounit(context.clock.time)) => Int(t) ~ preserve::Int
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => sum(x) ~ track
             b(x=p["**/f"].i) => sum(x) ~ track
@@ -142,7 +142,7 @@
     @testset "adjoint" begin
         @system SProduceAdjoint begin
             p => produce(SProduceAdjoint) ~ produce::SProduceAdjoint[]
-            i(t=nounit(context.clock.tick)) => Int(t) ~ preserve::Int
+            i(t=nounit(context.clock.time)) => Int(t) ~ preserve::Int
         end
         @system SProduceAdjointController(Controller) begin
             s(context) ~ ::SProduceAdjoint
@@ -163,7 +163,7 @@
 
     @testset "when" begin
         @system SProduceWhen begin
-            t(nounit(context.clock.tick)) ~ track::Int
+            t(nounit(context.clock.time)) ~ track::Int
             w(t) => isodd(t) ~ flag
             a => produce(SProduceWhen) ~ produce(when=w)
         end

@@ -45,7 +45,7 @@ using TimeZones
 
     @testset "time nounit" begin
         @system SProvideTimeNoUnit(Controller) begin
-            a => DataFrame(index=0:3, value=0:10:30) ~ provide(time=nounit(context.clock.tick), step=nounit(context.clock.step))
+            a => DataFrame(index=0:3, value=0:10:30) ~ provide(time=nounit(context.clock.time), step=nounit(context.clock.step))
         end
         s = instance(SProvideTimeNoUnit)
         @test s.a'.index == [0, 1, 2, 3]

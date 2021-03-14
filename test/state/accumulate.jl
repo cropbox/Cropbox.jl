@@ -50,7 +50,7 @@
 
     @testset "time" begin
         @system SAccumulateTime(Controller) begin
-            t(x=context.clock.tick) => 0.5x ~ track(u"hr")
+            t(x=context.clock.time) => 0.5x ~ track(u"hr")
             a => 1 ~ track
             b(a) => a + 1 ~ accumulate
             c(a) => a + 1 ~ accumulate(time=t)
@@ -91,7 +91,7 @@
 
     @testset "when" begin
         @system SAccumulateWhen(Controller) begin
-            t(nounit(context.clock.tick)) ~ track::Int
+            t(nounit(context.clock.time)) ~ track::Int
             f ~ preserve(parameter)
             w(t, f) => t < f ~ flag
             a => 1 ~ accumulate
@@ -128,21 +128,21 @@
 
     @testset "distribute" begin
         @system SAccumulateDistribute(Controller) begin
-            s(x=context.clock.tick) => (100u"hr^-1" * x) ~ track
+            s(x=context.clock.time) => (100u"hr^-1" * x) ~ track
             d1(s) => 0.2s ~ accumulate
             d2(s) => 0.3s ~ accumulate
             d3(s) => 0.5s ~ accumulate
         end
         s = instance(SAccumulateDistribute)
         c = s.context
-        @test c.clock.tick' == 0u"hr" && s.s' == 0 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
+        @test c.clock.time' == 0u"hr" && s.s' == 0 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
         update!(s)
-        @test c.clock.tick' == 1u"hr" && s.s' == 100 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
+        @test c.clock.time' == 1u"hr" && s.s' == 100 && s.d1' == 0 && s.d2' == 0 && s.d3' == 0
         update!(s)
-        @test c.clock.tick' == 2u"hr" && s.s' == 200 && s.d1' == 20 && s.d2' == 30 && s.d3' == 50
+        @test c.clock.time' == 2u"hr" && s.s' == 200 && s.d1' == 20 && s.d2' == 30 && s.d3' == 50
         update!(s)
-        @test c.clock.tick' == 3u"hr" && s.s' == 300 && s.d1' == 60 && s.d2' == 90 && s.d3' == 150
+        @test c.clock.time' == 3u"hr" && s.s' == 300 && s.d1' == 60 && s.d2' == 90 && s.d3' == 150
         update!(s)
-        @test c.clock.tick' == 4u"hr" && s.s' == 400 && s.d1' == 120 && s.d2' == 180 && s.d3' == 300
+        @test c.clock.time' == 4u"hr" && s.s' == 400 && s.d1' == 120 && s.d2' == 180 && s.d3' == 300
     end
 end

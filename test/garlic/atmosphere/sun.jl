@@ -276,7 +276,7 @@ plot_sun(v, d=3u"d"; kw...) = begin
         :Weather => (:store => loadwea("$(@__DIR__)/../data/2007.wea", tz"Asia/Seoul")),
     )
     r = simulate(SunController, stop=d, config=o, base=:sun)
-    Cropbox.plot(r, :tick, v; kw...)
+    Cropbox.plot(r, :time, v; kw...)
 end
 
 test_sun(d=3u"d") = foreach(v -> display(plot_sun(v, d)), [

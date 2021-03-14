@@ -8,11 +8,11 @@ end
 c = @config
 r = simulate(S, config=c)
 simulate(S, configs=[c])
-plot(r, :tick, :c; backend=:UnicodePlots) |> display
-plot(r, :tick, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
-plot(r, :tick, :c; kind=:line, backend=:Gadfly)' |> Cropbox.Gadfly.SVG() |> display
-visualize(S, :tick, :c; backend=:UnicodePlots) |> display
-visualize(S, :tick, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
+plot(r, :time, :c; backend=:UnicodePlots) |> display
+plot(r, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
+plot(r, :time, :c; kind=:line, backend=:Gadfly)' |> Cropbox.Gadfly.SVG() |> display
+visualize(S, :time, :c; backend=:UnicodePlots) |> display
+visualize(S, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
 r |> display
 display(MIME("text/html"), r)
 

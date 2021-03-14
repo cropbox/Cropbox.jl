@@ -176,7 +176,7 @@ end
     r: maximum_elongation_rate => 1.0 ~ preserve(u"cm/d", extern, parameter, min=0)
     pr(r): potential_elongation_rate ~ track(u"cm/d")
 
-    t(context.clock.tick): timestamp ~ preserve(u"hr")
+    t(context.clock.time): timestamp ~ preserve(u"hr")
     Δl(Δx) ~ preserve(u"cm", max=lr)
     lp: parent_length => 0 ~ preserve(u"cm", extern)
     ls: sibling_length => 0 ~ preserve(u"cm", extern)

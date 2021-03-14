@@ -113,5 +113,5 @@ plot_pheno(v, d=300u"d") = begin
         :Phenology => (:planting_date => ZonedDateTime(2007, 11, 1, tz"Asia/Seoul")),
     )
     r = simulate(PhenologyController, stop=d, config=o, base=:phenology)
-    Cropbox.plot(r, :tick, v)
+    Cropbox.plot(r, :time, v)
 end

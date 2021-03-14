@@ -22,7 +22,7 @@ constructortags(::Val{:Provide}) = (:index, :time, :step, :autounit)
 
 updatetags!(d, ::Val{:Provide}; _...) = begin
     !haskey(d, :index) && (d[:index] = QuoteNode(:index))
-    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
+    !haskey(d, :time) && (d[:time] = :(context.clock.time))
     !haskey(d, :step) && (d[:step] = :(context.clock.step))
     !haskey(d, :autounit) && (d[:autounit] = true)
 end

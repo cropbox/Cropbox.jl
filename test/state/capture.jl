@@ -15,7 +15,7 @@
 
     @testset "time" begin
         @system SCaptureTime(Controller) begin
-            t(x=context.clock.tick) => 2x ~ track(u"hr")
+            t(x=context.clock.time) => 2x ~ track(u"hr")
             a => 1 ~ track
             b(a) => a + 1 ~ capture(time=t)
             c(a) => a + 1 ~ accumulate(time=t)
@@ -54,7 +54,7 @@
 
     @testset "when" begin
         @system SCaptureWhen(Controller) begin
-            t(nounit(context.clock.tick)) ~ track::Int
+            t(nounit(context.clock.time)) ~ track::Int
             f ~ preserve(parameter)
             w(t, f) => t <= f ~ flag
             a => 1 ~ capture

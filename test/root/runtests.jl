@@ -315,7 +315,7 @@ soilcore = :SoilCore => (;
     b = instance(Root.Pot, config=container_pot)
     s = instance(Root.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
     r = simulate!(s, stop=50)
-    @test r.tick[end] == 50u"hr"
+    @test r.time[end] == 50u"hr"
     # Root.render(s)
     Root.writevtk(tempname(), s)
     # Root.writepvd("test", Root.RootArchitecture, config=root_maize, stop=50)
@@ -333,7 +333,7 @@ end
 #     for i in 1:10, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
 #         n = "$c-$i"
 #         r = simulate(Root.RootArchitecture; config=C[c], options=(; box=b), seed=i, stop=P[end]) do D, s
-#             t = s.context.clock.tick' |> u"wk"
+#             t = s.context.clock.time' |> u"wk"
 #             if t in P
 #                 p = deunitfy(t, u"wk") |> Int
 #                 Root.writevtk("$n-w$p", s)
@@ -380,9 +380,9 @@ end
 #             D[1][:count] = length(G)
 #         end
 #         push!(R, r)
-#         plot(r, :tick, :length, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-length.pdf")
-#         plot(r, :tick, :volume, yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-volume.pdf")
-#         plot(r, :tick, :count, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-count.pdf")
+#         plot(r, :time, :length, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-length.pdf")
+#         plot(r, :time, :volume, yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-volume.pdf")
+#         plot(r, :time, :count, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-count.pdf")
 #         Root.writevtk(n, s)
 #     end    
 #     save(x, y, f; kw...) = begin
@@ -393,9 +393,9 @@ end
 #         end
 #         p[] |> Cropbox.Gadfly.PDF(f)
 #     end
-#     save(:tick, :length, "switchgrass-length.pdf")
-#     save(:tick, :volume, "switchgrass-volume.pdf"; yunit=u"mm^3")
-#     save(:tick, :count, "switchgrass-count.pdf")
+#     save(:time, :length, "switchgrass-length.pdf")
+#     save(:time, :volume, "switchgrass-volume.pdf"; yunit=u"mm^3")
+#     save(:time, :count, "switchgrass-count.pdf")
 # end
 
 # @testset "switchgrass layer" begin
@@ -415,7 +415,7 @@ end
 #                 D[1][Symbol("L$(i-1)")] = !isempty(V) ? sum(V) : 0.0u"cm"
 #             end
 #         end
-#         plot(r, :tick, [Symbol("L$(i-1)") for i in 1:length(L)], kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
+#         plot(r, :time, [Symbol("L$(i-1)") for i in 1:length(L)], kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
 #         Root.writevtk(n, s)
 #     end
 # end
@@ -436,8 +436,8 @@ end
 #             D[1][Symbol("C$(i-1)")] = length(vl)
 #         end
 #     end
-#     plot(r, :tick, [Symbol("L$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total length", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
-#     plot(r, :tick, [Symbol("V$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total volume", yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("V$n.pdf")
-#     plot(r, :tick, [Symbol("C$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="count", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("C$n.pdf")
+#     plot(r, :time, [Symbol("L$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total length", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
+#     plot(r, :time, [Symbol("V$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total volume", yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("V$n.pdf")
+#     plot(r, :time, [Symbol("C$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="count", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("C$n.pdf")
 #     Root.writevtk(n, s)
 # end

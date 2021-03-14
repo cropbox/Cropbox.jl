@@ -728,7 +728,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
         @q let $c = $(v.name),
                $cc = $c.context
             $C.update!(self, $C.PostStage())
-            if !isnothing($cc) && $C.value($c.clock.tick) < $C.value($cc.clock.tick)
+            if !isnothing($cc) && $C.value($c.clock.time) < $C.value($cc.clock.time)
                 @goto $l
             end
             $c

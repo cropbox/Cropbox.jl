@@ -1,6 +1,6 @@
 mutable struct Accumulate{V,T,R} <: State{V}
     value::V
-    tick::T
+    time::T
     rate::R
 end
 
@@ -22,7 +22,7 @@ constructortags(::Val{:Accumulate}) = (:unit, :time, :timeunit)
 @generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 
 updatetags!(d, ::Val{:Accumulate}; _...) = begin
-    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
+    !haskey(d, :time) && (d[:time] = :(context.clock.time))
     #TODO: automatic inference without explicit `timeunit` tag
     !haskey(d, :timeunit) && (d[:timeunit] = @q $C.timeunittype($(d[:unit]), $C.timeunit(__Context__)))
 end
@@ -45,7 +45,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     @gensym s t t0 a
     @q let $s = $(symstate(v)),
            $t = $C.value($(gettag(v, :time))),
-           $t0 = $s.tick,
+           $t0 = $s.time,
            $a = $s.value + $s.rate * ($t - $t0)
         $C.store!($s, $a)
     end
@@ -58,7 +58,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
     @q let $s = $(symstate(v)),
            $t = $C.value($(gettag(v, :time))),
            $r = $C.unitfy($f, $C.rateunit($s))
-        $s.tick = $t
+        $s.time = $t
         $s.rate = $r
     end
 end

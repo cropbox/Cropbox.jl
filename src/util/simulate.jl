@@ -17,7 +17,7 @@ simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, me
     sb = s[base]
     I = parsesimulation(index)
     T = parsesimulation(isnothing(target) ? fieldnamesunique(sb) : target)
-    #HACK: ignore unavailable properties (i.e. handle default :tick in target)
+    #HACK: ignore unavailable properties (i.e. handle default :time in target)
     I = filtersimulationdict(I, sb)
     T = filtersimulationdict(T, sb)
     IT = merge(I, T)
@@ -33,7 +33,7 @@ parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a) |> Iterators.fla
 parsesimulation(a::Tuple) = parsesimulation(collect(a))
 parsesimulation(::Tuple{}) = parsesimulation([])
 parsesimulation(a) = parsesimulation([a])
-parsesimulation(::Nothing) = parsesimulation("context.clock.tick")
+parsesimulation(::Nothing) = parsesimulation("context.clock.time")
 
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
 
@@ -94,7 +94,7 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, snatch=n
     stopprobe(a) = probe(a)
 
     snapprobe(::Nothing) = probe(true)
-    snapprobe(a::Quantity) = s -> let c = s.context.clock; (c.tick' - c.init') % a |> iszero end
+    snapprobe(a::Quantity) = s -> let c = s.context.clock; (c.time' - c.init') % a |> iszero end
     snapprobe(a) = probe(a)
 
     stop = stopprobe(stop)

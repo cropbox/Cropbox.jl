@@ -1,6 +1,6 @@
 mutable struct Capture{V,T,R} <: State{V}
     value::V
-    tick::T
+    time::T
     rate::R
 end
 
@@ -22,7 +22,7 @@ constructortags(::Val{:Capture}) = (:unit, :time, :timeunit)
 @generated rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)
 
 updatetags!(d, ::Val{:Capture}; _...) = begin
-    !haskey(d, :time) && (d[:time] = :(context.clock.tick))
+    !haskey(d, :time) && (d[:time] = :(context.clock.time))
     #TODO: automatic inference without explicit `timeunit` tag
     !haskey(d, :timeunit) && (d[:timeunit] = @q $C.timeunittype($(d[:unit]), $C.timeunit(__Context__)))
 end
@@ -41,7 +41,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     @gensym s t t0 d
     @q let $s = $(symstate(v)),
            $t = $C.value($(gettag(v, :time))),
-           $t0 = $s.tick,
+           $t0 = $s.time,
            $d = $s.rate * ($t - $t0)
         $C.store!($s, $d)
     end
@@ -54,7 +54,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
     @q let $s = $(symstate(v)),
            $t = $C.value($(gettag(v, :time))),
            $r = $C.unitfy($f, $C.rateunit($s))
-        $s.tick = $t
+        $s.time = $t
         $s.rate = $r
     end
 end

@@ -1,6 +1,6 @@
 @testset "lotka volterra" begin
     @system LotkaVolterra(Controller) begin
-        t(context.clock.tick) ~ track(u"yr")
+        t(context.clock.time) ~ track(u"yr")
         N(N, P, b, a): prey_population => b*N - a*N*P ~ accumulate(init=N0)
         P(N, P, c, a, m): predator_population => c*a*N*P - m*P ~ accumulate(init=P0)
         N0: prey_initial_population ~ preserve(parameter)

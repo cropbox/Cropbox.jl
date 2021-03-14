@@ -5,7 +5,7 @@ timeunit(::Type{<:Clock}) = u"hr"
     config ~ ::Config(override)
     init => 0 ~ preserve(unit=timeunit, parameter)
     step => 1 ~ preserve(unit=timeunit, parameter)
-    tick => nothing ~ advance(init=init, step=step, unit=timeunit)
+    time => nothing ~ advance(init=init, step=step, unit=timeunit)
 end
 
 abstract type DailyClock <: Clock end

@@ -8,7 +8,7 @@ import CSV
     filename => "" ~ preserve::String(parameter)
     ik: indexkey => :index ~ preserve::Symbol(parameter)
 
-    i(t=nounit(context.clock.tick)): index => t + 1 ~ track::Int
+    i(t=nounit(context.clock.time)): index => t + 1 ~ track::Int
     ix: indexer ~ hold
 
     s: store ~ hold
@@ -33,7 +33,7 @@ end
 end
 
 @system DayStore(DataFrameStore) begin
-    i(context.clock.tick): index ~ track::Int(u"d")
+    i(context.clock.time): index ~ track::Int(u"d")
 
     daykey => :day ~ preserve::Symbol(parameter)
     ix(daykey; r::DataFrames.DataFrameRow): indexer => r[daykey] ~ call::Int(u"d")

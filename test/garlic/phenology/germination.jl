@@ -15,7 +15,7 @@
     germinating(germinateable & !germinated) ~ flag
 
     #FIXME postprocess similar to @produce?
-    # finish(GDD_sum="pheno.gdd_recorder.rate", t="context.clock.tick", dt="context.clock.step") => begin
+    # finish(GDD_sum="pheno.gdd_recorder.rate", t="context.clock.time", dt="context.clock.step") => begin
     #     dt = dt * 24 * 60 # per min
     #     println("* Germinated: time = $t, GDDsum = $GDD_sum, time step (min) = $dt")
     # end ~ ?

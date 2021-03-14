@@ -9,11 +9,11 @@ using DataFrames
         n = 10
         t, a, b = 10.0u"hr", 20, 200
         A = (0.0, 100.0)
-        obs = DataFrame(tick=[t], b=[b])
+        obs = DataFrame(time=[t], b=[b])
         p = calibrate(SCalibrate, obs, stop=n, target=:b, parameters=("SCalibrate.a" => A))
         @test p[:SCalibrate][:a] == a
         r = simulate(SCalibrate, stop=n, config=p)
-        @test r[r.tick .== t, :][1, :b] == b
+        @test r[r.time .== t, :][1, :b] == b
     end
 
     @testset "unit" begin
@@ -25,11 +25,11 @@ using DataFrames
         t, a, b = 10.0u"hr", 20u"m/hr", 200u"m"
         #FIXME: parameter range units are just ignored
         A = [0.0, 100.0]u"m/hr"
-        obs = DataFrame(tick=[t], b=[b])
+        obs = DataFrame(time=[t], b=[b])
         p = calibrate(SCalibrateUnit, obs, stop=n, target=:b, parameters=("SCalibrateUnit.a" => A))
         @test p[:SCalibrateUnit][:a] == Cropbox.deunitfy(a)
         r = simulate(SCalibrateUnit, stop=n, config=p)
-        @test r[r.tick .== t, :][1, :b] == b
+        @test r[r.time .== t, :][1, :b] == b
     end
 
     @testset "config" begin
@@ -42,7 +42,7 @@ using DataFrames
         t, a, b = 10.0u"hr", 20, 200
         w1, w2 = 1, 2
         A = (0.0, 100.0)
-        obs = DataFrame(tick=[t], b=[b])
+        obs = DataFrame(time=[t], b=[b])
         params = :SCalibrateConfig => :a => A
         p1 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w1), parameters=params)
         @test p1[:SCalibrateConfig][:a] == a/w1
@@ -59,12 +59,12 @@ using DataFrames
         n = 10
         t, w, b = [10.0u"hr", 10.0u"hr"], [1, 2], [100, 200]
         A = (0.0, 100.0)
-        obs = DataFrame(; tick=t, w, b)
+        obs = DataFrame(; time=t, w, b)
         configs = [
             :SCalibrateConfigsIndex => :w => 1,
             :SCalibrateConfigsIndex => :w => 2,
         ]
-        index = ["context.clock.tick", :w]
+        index = ["context.clock.time", :w]
         target = :b
         params = :SCalibrateConfigsIndex => :a => A
         p = calibrate(SCalibrateConfigsIndex, obs, configs; stop=n, index, target, parameters=params)
