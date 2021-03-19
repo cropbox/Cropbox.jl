@@ -328,7 +328,7 @@ end
 #         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
 #     )
 #     b = instance(Root.Rhizobox, config=container_rhizobox)
-#     P = [1, 2, 3, 4, 5]u"wk"
+#     P = [1, 4, 8, 12, 16, 20, 24]u"wk"
 #     R = []
 #     for i in 1:10, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
 #         n = "$c-$i"
