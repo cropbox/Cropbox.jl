@@ -67,7 +67,7 @@ value(s::System, k::Symbol; kw...) = begin
 end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
-Base.show(io::IO, ::MIME"text/plain", s::System) = look(io, s; doc=false, header=false, endnewline=false)
+Base.show(io::IO, ::MIME"text/plain", s::System) = look(io, s; header=false, doc=false)
 
 #TODO: see if we can move it to util/look.jl
 include("look.jl")

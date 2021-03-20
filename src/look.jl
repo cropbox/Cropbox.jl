@@ -6,16 +6,35 @@ look(s::System, k::Symbol; kw...) = look(stdout, s, k; kw...)
 look(S::Type{<:System}, k::Symbol; kw...) = look(stdout, S, k; kw...)
 look(m::Module, s::Symbol; kw...) = look(getfield(m, s); kw...)
 
-look(io::IO, s::Union{S,Type{S}}; doc=true, header=true, endnewline=true, kw...) where {S<:System} = begin
-    doc && try
+look(io::IO, ::Union{S,Type{S}}; header=true, doc=true, system=true) where {S<:System} = begin
+    print(io, join(filter(!isempty, strip.([
+        doc ? buf2str(lookdoc, S; header) : "",
+        system ? buf2str(looksystem, S; header) : "",
+    ])), "\n\n"))
+end
+look(io::IO, S::Type{<:System}, k::Symbol; header=true, doc=true, code=true) = begin
+    print(io, join(filter(!isempty, strip.([
+        doc ? buf2str(lookdoc, S, k; header) : "",
+        code ? buf2str(lookcode, S, k; header) : "",
+    ])), "\n\n"))
+end
+look(io::IO, s::S, k::Symbol; header=true, value=true, kw...) where {S<:System} = begin
+    print(io, join(filter(!isempty, strip.([
+        buf2str(look, S, k; header, kw...),
+        value ? buf2str(lookvalue, s, k; header) : "",
+    ])), "\n\n"))
+end
+
+lookdoc(io::IO, ::Union{S,Type{S}}; header=false) where {S<:System} = begin
+    header && printstyled(io, "[doc]\n", color=:light_black)
+    try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
-        header && printstyled(io, "[doc]\n", color=:light_black)
         show(io, MIME("text/plain"), md)
-        println(io)
-        println(io, "")
     catch
     end
+end
+looksystem(io::IO, s::Union{S,Type{S}}; header=false) where {S<:System} = begin
     header && printstyled(io, "[system]\n", color=:light_black)
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
@@ -26,34 +45,36 @@ look(io::IO, s::Union{S,Type{S}}; doc=true, header=true, endnewline=true, kw...)
         printstyled(io, " = ", color=:light_black)
         print(io, labelstring(s[n]))
     end
-    endnewline && println(io)
-    nothing
 end
-look(io::IO, s::S, k::Symbol; header=true, endnewline=true, kw...) where {S<:System} = begin
-    look(io, S, k; header, endnewline, kw...)
-    println(io, "")
-    printstyled(io, "[value]\n", color=:light_black)
-    show(io, MIME("text/plain"), s[k])
-    endnewline && println(io)
-    nothing
-end
-look(io::IO, S::Type{<:System}, k::Symbol; doc=true, header=true, endnewline=true, kw...) = begin
-    doc && try
+
+lookdoc(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false) where {S<:System} = begin
+    header && printstyled(io, "[doc]\n", color=:light_black)
+    try
         #HACK: mimic REPL.fielddoc(b, k) with no default description
         ds = fetchdocstr(S).data[:fields][k]
         md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
-        printstyled(io, "[doc]\n", color=:light_black)
         show(io, MIME("text/plain"), md)
-        println(io)
-        println(io, "")
     catch
     end
+end
+lookcode(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false) where {S<:System} = begin
+    header && printstyled(io, "[code]\n", color=:light_black)
     d = dependency(S)
     v = d.M[k]
-    printstyled(io, "[code]\n", color=:light_black)
     Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
-    endnewline && println(io)
-    nothing
+end
+lookvalue(io::IO, s::System, k::Symbol; header=false) = begin
+    header && printstyled(io, "[value]\n", color=:light_black)
+    show(io, MIME("text/plain"), s[k])
+end
+
+buf2str(f, s, a...; kw...) = buf2str(io -> f(io, s, a...; kw...))
+buf2str(f; color=true, kw...) = begin
+    d = Dict(:color => color, kw...)
+    b = IOBuffer()
+    x = IOContext(b, d...)
+    f(x)
+    String(take!(b))
 end
 
 using MacroTools: @capture
