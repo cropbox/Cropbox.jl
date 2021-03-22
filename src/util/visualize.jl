@@ -1,6 +1,51 @@
 @nospecialize
 
+"""
+    visualize(<arguments>; <keyword arguments>) -> Plot
+
+Make a plot from an output collected by running necessary simulations. A convenient function to run both `simulate` and `plot` together.
+
+See also: [`visualize!`](@ref), [`simulate`](@ref), [`plot`](@ref), [`manipulate`](@ref)
+
+# Examples
+```julia-repl
+julia> @system S(Controller) begin
+           a(a) => a ~ accumulate(init=1)
+       end;
+
+julia> visualize(S, :time, :a; stop=5, kind=:line)
+       ┌────────────────────────────────────────┐
+    32 │                                       :│
+       │                                      : │
+       │                                     :  │
+       │                                    :   │
+       │                                   :    │
+       │                                  :     │
+       │                                 :      │
+  a    │                                :       │
+       │                              .'        │
+       │                            .'          │
+       │                          .'            │
+       │                       ..'              │
+       │                   ..''                 │
+       │             ....''                     │
+     1 │.........''''                           │
+       └────────────────────────────────────────┘
+       0                                        5
+                      time (hr)
+```
+"""
 visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
+"""
+    visualize!(p, <arguments>; <keyword arguments>) -> Plot
+
+Update an existing `Plot` object `p` by appending a new graph made with `visualize`.
+
+See also: [`visualize`](@ref)
+
+# Arguments
+- `p::Union{Plot,Nothing}`: plot object to be updated; `nothing` creates a new plot.
+"""
 visualize!(p, S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, snap=nothing,

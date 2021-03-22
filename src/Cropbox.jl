@@ -1,3 +1,10 @@
+"""
+    Cropbox
+
+Declarative crop modeling framework. https://github.com/tomyun/Cropbox.jl
+
+See also: [`@system`](@ref), [`@config`](@ref), [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref), [`visualize`](@ref), [`manipulate`](@ref)
+"""
 module Cropbox
 
 include("system.jl")

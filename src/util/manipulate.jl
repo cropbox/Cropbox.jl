@@ -2,6 +2,16 @@ import Interact
 
 @nospecialize
 
+"""
+    manipulate(f::Function; parameters, config=())
+
+Create an interactive plot updated by callback `f`. Only works in Jupyter Notebook.
+
+# Arguments
+- `f::Function`: callback for generating a plot; interactively updated configuration `c` is provided.
+- `parameters`: parameters adjustable with interactive widgets; value should be an iterable.
+- `config=()`: a baseline configuration.
+"""
 manipulate(f::Function; parameters, config=()) = begin
     P = configure(parameters)
     C = configure(config)
@@ -37,6 +47,18 @@ manipulate(f::Function; parameters, config=()) = begin
     Interact.@layout!(z, Interact.vbox(L..., output))
 end
 
+"""
+    manipulate(args...; parameters, kwargs...)
+
+Create an interactive plot by calling `manipulate` with `visualize` as a callback.
+
+See also: [`visualize`](@ref)
+
+# Arguments
+- `args`: positional arguments for `visualize`.
+- `parameters`: parameters for `manipulate`.
+- `kwargs`: keyword arguments for `visualize`.
+"""
 manipulate(args...; parameters, config=(), kwargs...) = manipulate(function (c)
     visualize(args...; config=c, kwargs...)
 end; parameters, config)

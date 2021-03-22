@@ -1,5 +1,47 @@
 import Markdown
 
+"""
+    look(s[, k])
+
+Look up information about system or variable. Both system type `S` and instance `s` are accepted. For looking up a variable, the name of variable `k` needs to be specified in a symbol.
+
+See also: [`@look`](@ref), [`dive`](@ref)
+
+# Arguments
+- `s::Union{System,Type{<:System}}`: target system.
+- `k::Symbol`: name of variable.
+
+# Examples
+```julia-repl
+julia> "my system"
+       @system S(Controller) begin
+           "a param"
+           a => 1 ~ preserve(parameter)
+       end;
+
+julia> s = instance(S);
+
+julia> look(s)
+[doc]
+    my system
+
+[system]
+S
+    context
+    config
+    a
+julia> look(s, :a)
+[doc]
+    a param
+
+[code]
+    a => 1 ~ preserve(parameter)
+
+[value]
+1.0
+```
+
+"""
 look(s::System; kw...) = look(stdout, s; kw...)
 look(S::Type{<:System}; kw...) = look(stdout, S; kw...)
 look(s::System, k::Symbol; kw...) = look(stdout, s, k; kw...)
@@ -79,6 +121,31 @@ end
 
 using MacroTools: @capture
 
+"""
+    @look ex
+    @look s[, k]
+
+Macro version of `look` supports a convenient way of accessing variable without relying on symbol. Both `@look s.a` and `@look s a` work the same as `look(s, :a)`.
+
+See also: [`look`](@ref)
+
+# Examples
+```julia-repl
+julia> "my system"
+       @system S(Controller) begin
+           "a param"
+           a => 1 ~ preserve(parameter)
+       end;
+
+julia> @look S.a
+[doc]
+    a param
+
+[code]
+    a => 1 ~ preserve(parameter)
+```
+
+"""
 macro look(ex)
     if @capture(ex, s_.k_)
         :(Cropbox.look($(esc(s)), $(Meta.quot(k))))

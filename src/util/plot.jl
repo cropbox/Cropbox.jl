@@ -69,8 +69,27 @@ detectbackend() = begin
     end
 end
 
+"""
+    plot(df::DataFrame, x, y; <keyword arguments>) -> Plot
+    plot(X::Vector, Y::Vector; <keyword arguments>) -> Plot
+    plot(df::DataFrame, x, y, z; <keyword arguments>) -> Plot
+
+Plot a graph from provided data source. The type of graph is selected based on arguments.
+
+See also: [`plot!`](@ref), [`visualize`](@ref)
+"""
 plot(df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot(df, x, [y]; names=[name], colors=[color], kw...)
 plot(df::DataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
+"""
+    plot!(p, <arguments>; <keyword arguments>) -> Plot
+
+Update an existing `Plot` object `p` by appending a new graph made with `plot`.
+
+See also: [`plot`](@ref)
+
+# Arguments
+- `p::Union{Plot,Nothing}`: plot object to be updated; `nothing` creates a new plot.
+"""
 plot!(p::Union{Plot,Nothing}, df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot!(p, df, x, [y]; names=[name], colors=[color], kw...)
 plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, kw...) = begin
     arr(n) = extractarray(df, n)
