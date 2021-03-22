@@ -85,9 +85,4 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     cost()
 end
 
-validate(S::Type{<:System}, args...; kwargs...) = begin
-    @warn "use evaluate() instead"
-    evaluate(S, args...; kwargs...)
-end
-
-export evaluate, validate
+export evaluate
