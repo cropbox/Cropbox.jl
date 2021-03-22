@@ -304,4 +304,4 @@ end
 
 @specialize
 
-export Config, configure, parameters, @config
+export Config, parameters, @config
