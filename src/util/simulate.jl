@@ -151,7 +151,7 @@ simulate!(f::Function, s::System, args...; kwargs...) = simulate!(s, args...; sn
 
 Run simulations by making instance of system `S` with given configuration to generate an output in the form of DataFrame. `layout` contains a list of variables to be saved in the output. A layout of single simulation can be specified in the layout arguments placed as keyword arguments. `configs` contains a list of configurations for each run of simulation. Total number of simulation runs equals to the size of `configs`. For a single configuration, `config` keyword argument may be preferred. Optional callback function `f` allows do-block syntax to specify `snatch` argument for finer control of output format.
 
-See also: [`@config`](@ref)
+See also: [`instance`](@ref), [`@config`](@ref)
 
 # Arguments
 - `S::Type{<:System}`: type of system to be simulated.
