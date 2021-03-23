@@ -23,19 +23,19 @@ julia> s = instance(S);
 
 julia> look(s)
 [doc]
-    my system
+  my system
 
 [system]
 S
-    context
-    config
-    a
+  context = <Context>
+  config = <Config>
+  a = 1.0
 julia> look(s, :a)
 [doc]
-    a param
+  a param
 
 [code]
-    a => 1 ~ preserve(parameter)
+  a => 1 ~ preserve(parameter)
 
 [value]
 1.0
@@ -48,10 +48,10 @@ look(s::System, k::Symbol; kw...) = look(stdout, s, k; kw...)
 look(S::Type{<:System}, k::Symbol; kw...) = look(stdout, S, k; kw...)
 look(m::Module, s::Symbol; kw...) = look(getfield(m, s); kw...)
 
-look(io::IO, ::Union{S,Type{S}}; header=true, doc=true, system=true) where {S<:System} = begin
+look(io::IO, s::Union{S,Type{S}}; header=true, doc=true, system=true) where {S<:System} = begin
     print(io, join(filter(!isempty, strip.([
-        doc ? buf2str(lookdoc, S; header) : "",
-        system ? buf2str(looksystem, S; header) : "",
+        doc ? buf2str(lookdoc, s; header) : "",
+        system ? buf2str(looksystem, s; header) : "",
     ])), "\n\n"))
 end
 look(io::IO, S::Type{<:System}, k::Symbol; header=true, doc=true, code=true) = begin
@@ -139,10 +139,10 @@ julia> "my system"
 
 julia> @look S.a
 [doc]
-    a param
+  a param
 
 [code]
-    a => 1 ~ preserve(parameter)
+  a => 1 ~ preserve(parameter)
 ```
 
 """

@@ -31,10 +31,10 @@ julia> @system S(Controller) begin
 
 julia> instance(S)
 S
-    context
-    config
-    a
-    b
+  context = <Context>
+  config = <Config>
+  a = 1.0
+  b = 0.0
 ```
 """
 instance(S::Type{<:System}; config=(), options=(), seed=nothing) = begin
