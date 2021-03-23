@@ -154,7 +154,7 @@ Run simulations by making instance of system `S` with given configuration to gen
 See also: [`@config`](@ref)
 
 # Arguments
-- `S::Type{<:System}`: type of system to be calibrated.
+- `S::Type{<:System}`: type of system to be simulated.
 - `layout::Vector`: list of output layout definition in a named tuple `(; base, index, target, meta)`.
 - `configs::Vector`: list of configurations for defining multiple runs of simluations.
 
