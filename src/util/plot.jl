@@ -19,7 +19,9 @@ Base.showable(m::MIME, p::Plot) = showable(m, p.obj)
 
 Base.show(p::Plot) = show(p.obj)
 Base.show(io::IO, p::Plot) = show(io, p.obj)
-Base.show(io::IO, m::MIME, p::Plot) = show(io, m, p.obj)
+#HACK: custom hook for intercepting 3-args show() from each backend (i.e. Gadfly)
+Base.show(io::IO, m::MIME, p::Plot) = _show(io, m, p.obj)
+_show(io::IO, m::MIME, o) = show(io, m, o)
 Base.show(io::IO, ::MIME"text/plain", p::Plot) = show(io, "Cropbox.Plot")
 
 Base.display(p::Plot) = display(p.obj)
