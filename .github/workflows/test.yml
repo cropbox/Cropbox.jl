@@ -1,7 +1,7 @@
-name: CI
+name: test
 on: [push, pull_request]
 jobs:
-  test:
+  run:
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:

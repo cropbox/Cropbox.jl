@@ -1,4 +1,4 @@
-name: Docs
+name: docs
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 jobs:
-  docs:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
