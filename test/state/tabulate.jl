@@ -69,4 +69,20 @@
         @test s.ab' == 2
         @test s.bb' == 3
     end
+
+    @testset "arg" begin
+        @system STabulateArg(Controller) begin
+            x => 0 ~ preserve(parameter)
+            T(x) => [
+                # a b
+                  x   x+2 ; # A
+                  x+1 x+3 ; # B
+            ] ~ tabulate(rows=(:A, :B), columns=(:a, :b))
+        end
+        s = instance(STabulateArg)
+        @test s.T'[:A][:a] == 0
+        @test s.T'[:B][:a] == 1
+        @test s.T'[:A][:b] == 2
+        @test s.T'[:B][:b] == 3
+    end
 end
