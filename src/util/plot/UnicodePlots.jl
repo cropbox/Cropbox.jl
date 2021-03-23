@@ -1,7 +1,7 @@
 import UnicodePlots
 
 plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect, width=40, height=15) = begin
-    canvas = if get(ENV, "GITHUB_ACTIONS", "false") == "true"
+    canvas = if get(ENV, "CI", nothing) == "true"
         UnicodePlots.DotCanvas
     else
         UnicodePlots.BrailleCanvas
