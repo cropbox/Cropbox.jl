@@ -1,0 +1,6 @@
+# Declaration
+
+```@docs
+@system
+@config
+```
