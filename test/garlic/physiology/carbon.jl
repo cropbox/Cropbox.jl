@@ -18,7 +18,7 @@ end
     total_mass ~ hold
     green_leaf_ratio ~ hold
 
-    development_phase(pheno.development_phase) ~ track::Symbol
+    dp(pheno.development_phase): development_phase ~ track::Symbol
 
     C_conc: carbon_concentration => begin
         # maize: 40% C, See Kim et al. (2007) EEB
@@ -159,7 +159,7 @@ end
         (1 - carbon_fraction) * Yg * c # gCH2O partitioned to roots
     end ~ track(u"g/d")
 
-    partitioning_table => [
+    pt: partitioning_table => [
         # root shoot leaf sheath scape bulb
           0.00  0.00 0.00   0.00  0.00 0.00 ; # seed
           0.10  0.00 0.45   0.45  0.00 0.00 ; # vegetative
@@ -172,21 +172,19 @@ end
         parameter
     )
 
-    partition(t=partitioning_table, dp=development_phase; c::Symbol) => t[dp][c] ~ call
-
-    leaf_carbon(shoot_carbon, p=partition) => begin
-        shoot_carbon * p(:leaf)
+    leaf_carbon(shoot_carbon, pt, dp) => begin
+        shoot_carbon * pt[dp].leaf
     end ~ track(u"g/d")
 
-    sheath_carbon(shoot_carbon, p=partition) => begin
-        shoot_carbon * p(:sheath)
+    sheath_carbon(shoot_carbon, pt, dp) => begin
+        shoot_carbon * pt[dp].sheath
     end ~ track(u"g/d")
 
-    scape_carbon(shoot_carbon, p=partition) => begin
-        shoot_carbon * p(:scape)
+    scape_carbon(shoot_carbon, pt, dp) => begin
+        shoot_carbon * pt[dp].scape
     end ~ track(u"g/d")
 
-    bulb_carbon(shoot_carbon, p=partition) => begin
-        shoot_carbon * p(:bulb)
+    bulb_carbon(shoot_carbon, pt, dp) => begin
+        shoot_carbon * pt[dp].bulb
     end ~ track(u"g/d")
 end
