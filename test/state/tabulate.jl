@@ -63,7 +63,7 @@
             bb(T) => T[:b][:b] ~ track
         end
         s = instance(STabulateDefaultColumns)
-        @test s.T.rows == s.T.columns == (:a, :b)
+        @test getfield(s.T, :rows) == getfield(s.T, :columns) == (:a, :b)
         @test s.aa' == 0
         @test s.ba' == 1
         @test s.ab' == 2
