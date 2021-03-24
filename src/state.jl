@@ -12,7 +12,7 @@ export value
 Base.getindex(s::State) = value(s)
 Base.adjoint(s::State) = value(s)
 
-store!(s::State, v) = setfield!(s, :value, unitfy(v, unittype(s)))
+store!(s::State, v) = setfield!(s, :value, convert(valuetype(s), unitfy(v, unittype(s))))
 
 Base.getindex(s::State, i) = s
 Base.length(s::State) = 1
