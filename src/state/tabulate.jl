@@ -6,6 +6,8 @@ value(t::Tabulation) = getfield(t, :value)
 Base.adjoint(t::Tabulation) = value(t)
 Base.getproperty(t::Tabulation, k::Symbol) = value(t)[k]
 Base.getindex(t::Tabulation, k::Symbol) = getproperty(t, k)
+Base.iterate(t::Tabulation) = iterate(value(t))
+Base.iterate(t::Tabulation, i) = iterate(value(t), i)
 
 struct TabulationCols{V} <: Tabulation{V}
     value::OrderedDict{Symbol,V}
