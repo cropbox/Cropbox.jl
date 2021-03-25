@@ -1,4 +1,4 @@
-#TODO: use vendored FunctionWrappers until new version released for Julia 1.6: https://github.com/yuyichao/FunctionWrappers.jl/issues/16
+#TODO: use vendored FunctionWrappers for now: https://github.com/JuliaLang/julia/issues/40187
 include("../../lib/FunctionWrappers/FunctionWrappers.jl")
 using .FunctionWrappers: FunctionWrapper
 struct Call{V,F<:FunctionWrapper} <: State{V}
