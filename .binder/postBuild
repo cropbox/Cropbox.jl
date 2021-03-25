@@ -8,9 +8,6 @@ JULIA_PROJECT="" julia -e "using Pkg; Pkg.add(\"WebIO\"); using WebIO; WebIO.ins
 #HACK: triggered by WebIO.install_jupyter_labextension()
 #jupyter lab build
 
-#HACK: force update manually installed jupyter-offlinenotebook
-jupyter labextension update jupyter-offlinenotebook
-
 # ensure Cropbox.jl added/built and available outside home directory
 export CROPBOX_DIR=${REPO_DIR}
 JULIA_PROJECT="" julia -e "import Pkg; Pkg.add(url=\"${CROPBOX_DIR}\"); Pkg.build(\"Cropbox\");"
