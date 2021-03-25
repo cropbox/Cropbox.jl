@@ -1,6 +1,4 @@
-#TODO: use vendored TerminalMenus until new version released with Julia 1.6: https://github.com/JuliaLang/julia/pull/36369
-#import REPL.TerminalMenus
-include("../../lib/TerminalMenus/TerminalMenus.jl")
+import REPL.TerminalMenus
 import REPL.Terminals
 
 struct MenuItem{V}
