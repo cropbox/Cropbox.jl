@@ -6,6 +6,7 @@ jobs:
     steps:
       - uses: easimon/maximize-build-space@master
         with:
+          overprovision-lvm: 'true'
           remove-dotnet: 'true'
           remove-android: 'true'
       - uses: actions/checkout@v2
