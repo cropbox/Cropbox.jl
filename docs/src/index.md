@@ -4,7 +4,7 @@ Cropbox is a declarative modeling framework specifically designed for developing
 
 ## Installation
 
-[Cropbox.jl](https://github.com/tomyun/Cropbox.jl) is available through Julia package manager.
+[Cropbox.jl](https://github.com/cropbox/Cropbox.jl) is available through Julia package manager.
 
 ```julia
 using Pkg

@@ -4,7 +4,7 @@ using Cropbox
 makedocs(
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
-        canonical = "https://tomyun.github.io/Cropbox.jl/stable/",
+        canonical = "https://cropbox.github.io/Cropbox.jl/stable/",
         assets = ["assets/favicon.ico"],
         analytics = "UA-192782823-1",
     ),
@@ -26,6 +26,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/tomyun/Cropbox.jl.git",
+    repo = "github.com/cropbox/Cropbox.jl.git",
     devbranch = "main",
 )
