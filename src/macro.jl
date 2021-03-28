@@ -208,7 +208,8 @@ end
 updatetags!(d, ::Val; _...) = nothing
 
 istag(v::VarInfo, t) = get(v.tags, t, false)
-istag(v::VarInfo, t...) = any(istag.(Ref(v), t))
+istag(v::VarInfo, t::Tuple) = any(istag.(Ref(v), t))
+istag(v::VarInfo, t...) = istag(v, t)
 gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 
 Base.names(v::VarInfo) = let n = v.name, a = v.alias
