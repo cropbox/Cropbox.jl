@@ -178,7 +178,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     #HACK: default evaluation scope is the module where S was originally defined
     isnothing(scope) && (scope = S.name.module)
     V = [n.info for n in dependency(S).N]
-    P = filter(v -> istag(v, :parameter), V)
+    P = filter(istag(:parameter), V)
     key = alias ? (v -> isnothing(v.alias) ? v.name : v.alias) : (v -> v.name)
     K = constsof(S) |> keys
     # evaluate only if parameter has no dependency on other variables
