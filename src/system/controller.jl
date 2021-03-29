@@ -5,8 +5,6 @@ import Random
     context(config) ~ ::Context(context)
 end
 
-@nospecialize
-
 """
     instance(S; <keyword arguments>) -> S
 
@@ -45,7 +43,5 @@ instance(S::Type{<:System}; config=(), options=(), seed=nothing) = begin
     s = S(; config=c, options...)
     update!(s)
 end
-
-@specialize
 
 export Controller, instance

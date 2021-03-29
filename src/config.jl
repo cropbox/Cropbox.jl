@@ -65,8 +65,6 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     join(io, f.(c; color), '\n')
 end
 
-@nospecialize
-
 configure(c::Config) = c
 configure(c::AbstractDict) = configure(c...)
 configure(c::Pair) = _configure(c.first, c.second)
@@ -301,7 +299,5 @@ end
 macro config()
     :(Cropbox.@config(()))
 end
-
-@specialize
 
 export Config, parameters, @config

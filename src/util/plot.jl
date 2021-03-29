@@ -29,8 +29,6 @@ Base.display(d::AbstractDisplay, p::Plot) = display(d, p.obj)
 Base.display(m::MIME, p::Plot) = display(m, p.obj)
 Base.display(d::AbstractDisplay, m::MIME, p::Plot) = display(d, m, p.obj)
 
-@nospecialize
-
 extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
 extractcolumn(df::DataFrame, n::String) = extractcolumn(df, parsesimulationkey(n)[1][1])
 extractcolumn(df::DataFrame, n::Expr) = begin
@@ -198,7 +196,5 @@ sixel(::P) where P = error("sixel not supported: $P")
 
 include("plot/UnicodePlots.jl")
 include("plot/Gadfly.jl")
-
-@specialize
 
 export plot, plot!

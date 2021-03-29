@@ -1,5 +1,3 @@
-@nospecialize
-
 """
     visualize(<arguments>; <keyword arguments>) -> Plot
 
@@ -232,7 +230,5 @@ visualize(S::Type{<:System}, x, y, z;
     r = simulate(S; index=[x, y], target=z, configs, stop, snap, verbose=false)
     plot(r, x, y, z; plotopts...)
 end
-
-@specialize
 
 export visualize, visualize!

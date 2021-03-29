@@ -1,7 +1,5 @@
 import Interact
 
-@nospecialize
-
 """
     manipulate(f::Function; parameters, config=())
 
@@ -62,7 +60,5 @@ See also: [`visualize`](@ref)
 manipulate(args...; parameters, config=(), kwargs...) = manipulate(function (c)
     visualize(args...; config=c, kwargs...)
 end; parameters, config)
-
-@specialize
 
 export manipulate
