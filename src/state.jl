@@ -14,7 +14,7 @@ Base.adjoint(s::State) = value(s)
 
 store!(s::State, v) = setfield!(s, :value, convert(valuetype(s), unitfy(v, unittype(s))))
 
-Base.getindex(s::State, i) = s
+Base.getindex(s::State, i) = value(s)[i]
 Base.length(s::State) = 1
 Base.iterate(s::State) = (s, nothing)
 Base.iterate(s::State, i) = nothing
