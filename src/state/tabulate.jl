@@ -40,8 +40,7 @@ struct Tabulate{V} <: State{V}
     columns::Tuple{Vararg{Symbol}}
 end
 
-Base.getproperty(t::Tabulate, k::Symbol) = value(t)[k]
-Base.getindex(t::Tabulate, k::Symbol) = getproperty(t, k)
+Base.getproperty(t::Tabulate, k::Symbol) = t[k]
 Base.show(io::IO, t::Tabulate) = show(io, Matrix(value(t)))
 Base.show(io::IO, ::MIME"text/plain", t::Tabulate) = show(io, value(t))
 
