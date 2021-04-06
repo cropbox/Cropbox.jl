@@ -41,7 +41,7 @@ geninit(v::VarInfo, ::Val{:Accumulate}) = begin
     @q $C.unitfy($C.value($i), $C.value($u))
 end
 
-genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep; kw...) = begin
     @gensym s t t0 a
     @q let $s = $(symstate(v)),
            $t = $C.value($(gettag(v, :time))),
@@ -51,7 +51,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep) = begin
+genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep; kw...) = begin
     w = gettag(v, :when)
     f = isnothing(w) ? genbody(v) : @q $C.value($w) ? $(genbody(v)) : zero($(gettag(v, :_type)))
     @gensym s t r

@@ -43,4 +43,4 @@ genvartype(v::VarInfo, ::Val{:Interpolate}; V, U, _...) = @q Interpolate{$V}
 
 geninit(v::VarInfo, ::Val{:Interpolate}) = geninitvalue(v, parameter=true, unitfy=false)
 
-genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Interpolate}, ::MainStep; kw...) = nothing

@@ -702,15 +702,15 @@ geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true,
     f(x)
 end
 
-genupdate(nodes::Vector{VarNode}, ::MainStage) = @q begin
-    $([genupdateinit(n.info) for n in nodes]...)
-    $([genupdate(n) for n in nodes]...)
+genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = @q begin
+    $([genupdateinit(n.info; kw...) for n in nodes]...)
+    $([genupdate(n; kw...) for n in nodes]...)
     self
 end
 
-genupdate(infos::Vector{VarInfo}, t::UpdateStage) = @q begin
-    $([genupdateinit(v) for v in infos]...)
-    $([genupdate(v, t) for v in infos]...)
+genupdate(infos::Vector{VarInfo}, t::UpdateStage; kw...) = @q begin
+    $([genupdateinit(v; kw...) for v in infos]...)
+    $([genupdate(v, t; kw...) for v in infos]...)
     self
 end
 
@@ -721,7 +721,7 @@ symsuffix(::T) where {T} = "__$T"
 symlabel(v::VarInfo, t, s...) = Symbol(symname(v), symsuffix(t), s...)
 symcall(v::VarInfo) = Symbol(v.name, :__call)
 
-genupdateinit(v::VarInfo) = begin
+genupdateinit(v::VarInfo; kw...) = begin
     # implicit :expose
     @q begin
         $(v.name) = self.$(v.name)
@@ -729,11 +729,11 @@ genupdateinit(v::VarInfo) = begin
     end
 end
 
-genupdate(n::VarNode) = genupdate(n.info, n.step)
-genupdate(v::VarInfo, t) = @q begin
+genupdate(n::VarNode; kw...) = genupdate(n.info, n.step; kw...)
+genupdate(v::VarInfo, t; kw...) = @q begin
     $(linenumber(v, "genupdate", t))
     @label $(symlabel(v, t))
-    $(genupdate(v, Val(v.state), t))
+    $(genupdate(v, Val(v.state), t; kw...))
 end
 
 genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
@@ -752,7 +752,7 @@ genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true, round=true, when=tru
     end
 end
 
-genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
+genupdate(v::VarInfo, ::Val{nothing}, ::PreStep; kw...) = begin
     if istag(v, :context)
         @gensym c
         @q let $c = $(v.name)
@@ -761,14 +761,14 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PreStep) = begin
         end
     end
 end
-genupdate(v::VarInfo, ::Val{nothing}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{nothing}, ::MainStep; kw...) = begin
     if istag(v, :override, :skip)
         nothing
     else
         @q $C.update!($(v.name))
     end
 end
-genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
+genupdate(v::VarInfo, ::Val{nothing}, ::PostStep; kw...) = begin
     if istag(v, :context)
         l = symlabel(v, PreStep())
         @gensym c cc
@@ -783,13 +783,13 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val, ::PreStep) = nothing
-genupdate(v::VarInfo, ::Val, ::MainStep) = istag(v, :override, :skip) ? nothing : genstore(v)
-genupdate(v::VarInfo, ::Val, ::PostStep) = nothing
+genupdate(v::VarInfo, ::Val, ::PreStep; kw...) = nothing
+genupdate(v::VarInfo, ::Val, ::MainStep; kw...) = istag(v, :override, :skip) ? nothing : genstore(v)
+genupdate(v::VarInfo, ::Val, ::PostStep; kw...) = nothing
 
-genupdate(v::VarInfo, ::Val, ::UpdateStage) = nothing
-genupdate(v::VarInfo, ::Val{nothing}, ::PreStage) = @q $C.update!($(v.name), $C.PreStage())
-genupdate(v::VarInfo, ::Val{nothing}, ::PostStage) = @q $C.update!($(v.name), $C.PostStage())
+genupdate(v::VarInfo, ::Val, ::UpdateStage; kw...) = nothing
+genupdate(v::VarInfo, ::Val{nothing}, ::PreStage; kw...) = @q $C.update!($(v.name), $C.PreStage())
+genupdate(v::VarInfo, ::Val{nothing}, ::PostStage; kw...) = @q $C.update!($(v.name), $C.PostStage())
 
 #TODO: merge extractfuncargdep() and extractfuncargkey()?
 extractfuncargdep(v::Expr) = begin

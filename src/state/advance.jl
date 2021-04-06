@@ -19,7 +19,7 @@ genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
 
 geninit(v::VarInfo, ::Val{:Advance}) = missing
 
-genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep; kw...) = begin
     @gensym s t
     @q let $s = $(symstate(v)),
            $t = $s.t

@@ -21,7 +21,7 @@ genvartype(v::VarInfo, ::Val{:Integrate}; V, _...) = @q Integrate{$V}
 
 geninit(v::VarInfo, ::Val{:Integrate}) = nothing
 
-genupdate(v::VarInfo, ::Val{:Integrate}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Integrate}, ::MainStep; kw...) = begin
     kwarg = only(v.kwargs)
     u = extractfunckwargtuple(kwarg)[3]
     @gensym s a b f i

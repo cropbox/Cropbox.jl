@@ -27,4 +27,4 @@ end
 
 geninit(v::VarInfo, ::Val{:Preserve}) = geninitvalue(v, parameter=true)
 
-genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep; kw...) = nothing

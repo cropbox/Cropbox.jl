@@ -37,7 +37,7 @@ end
 
 geninit(v::VarInfo, ::Val{:Capture}) = nothing
 
-genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep; kw...) = begin
     @gensym s t t0 d
     @q let $s = $(symstate(v)),
            $t = $C.value($(gettag(v, :time))),
@@ -47,7 +47,7 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep) = begin
+genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep; kw...) = begin
     w = gettag(v, :when)
     f = isnothing(w) ? genbody(v) : @q $C.value($w) ? $(genbody(v)) : zero($(gettag(v, :_type)))
     @gensym s t r

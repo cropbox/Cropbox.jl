@@ -58,4 +58,4 @@ genvartype(v::VarInfo, ::Val{:Tabulate}; V, _...) = @q Tabulate{$V}
 
 geninit(v::VarInfo, ::Val{:Tabulate}) = geninitvalue(v, parameter=true)
 
-genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep) = nothing
+genupdate(v::VarInfo, ::Val{:Tabulate}, ::MainStep; kw...) = nothing

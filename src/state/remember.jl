@@ -25,7 +25,7 @@ geninit(v::VarInfo, ::Val{:Remember}) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{:Remember}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Remember}, ::MainStep; kw...) = begin
     w = gettag(v, :when)
     @gensym s
     @q let $s = $(symstate(v))

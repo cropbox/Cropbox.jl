@@ -75,7 +75,7 @@ end
 
 geninit(v::VarInfo, ::Val{:Produce}) = nothing
 
-genupdate(v::VarInfo, ::Val{:Produce}, ::PreStage) = begin
+genupdate(v::VarInfo, ::Val{:Produce}, ::PreStage; kw...) = begin
     @gensym s a P c p b
     @q let $s = $(symstate(v)),
            $a = $C.value($s),
@@ -91,9 +91,9 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PreStage) = begin
 end
 
 # Produce referenced in args expected to be raw state, not extracted by value(), for querying
-genupdate(v::VarInfo, ::Val{:Produce}, ::PreStep) = symstate(v)
+genupdate(v::VarInfo, ::Val{:Produce}, ::PreStep; kw...) = symstate(v)
 
-genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep; kw...) = begin
     @gensym s a
     @q let $s = $(symstate(v)),
            $a = $C.value($s)
@@ -102,7 +102,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::MainStep) = begin
     end
 end
 
-genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
+genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep; kw...) = begin
     @gensym s P
     q = if istag(v, :single)
         @q let $s = $(symstate(v))
@@ -122,7 +122,7 @@ genupdate(v::VarInfo, ::Val{:Produce}, ::PostStep) = begin
     isnothing(w) ? q : @q if $C.value($w); $q end
 end
 
-genupdate(v::VarInfo, ::Val{:Produce}, ::PostStage) = begin
+genupdate(v::VarInfo, ::Val{:Produce}, ::PostStage; kw...) = begin
     @gensym s a
     @q let $s = $(symstate(v)),
            $a = $C.value($s)

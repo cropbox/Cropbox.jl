@@ -38,7 +38,7 @@ geninit(v::VarInfo, ::Val{:Drive}) = begin
     @q $C.unitfy($x, $C.value($u))
 end
 
-genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Drive}, ::MainStep; kw...) = begin
     t = gettag(v, :tick)
     @gensym s t0 t1 i e
     @q let $s = $(symstate(v)),

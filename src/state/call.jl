@@ -44,4 +44,4 @@ end
 
 geninit(v::VarInfo, ::Val{:Call}) = genfunc(v)
 
-genupdate(v::VarInfo, ::Val{:Call}, ::MainStep) = genvalue(v)
+genupdate(v::VarInfo, ::Val{:Call}, ::MainStep; kw...) = genvalue(v)

@@ -65,7 +65,7 @@ genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
 
-genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep) = begin
+genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; kw...) = begin
     U = gettag(v, :unit)
     isnothing(U) && (U = @q(u"NoUnits"))
     P = genpolynomial(v)
