@@ -28,12 +28,19 @@ Base.getproperty(s::System, n::AbstractString) = begin
         if isnothing(i)
             v
         else
-            #HACK: support indexing of non-Variable (i.e. Vector{Layer})
-            try
-                v[parse(Int, i)]
-            catch
-                v[i]
+            #HACK: support symbol as-is (i.e. "a[:i]" vs. "a[i]")
+            k = if startswith(i, ":")
+                i
+            else
+                try
+                    #HACK: support indexing of non-Variable (i.e. "a[1]" for Vector{Layer})
+                    parse(Int, i)
+                catch
+                    #HACK: support accessing index (i.e. "a[i]")
+                    getfield(a, Symbol(i)) |> value
+                end
             end
+            v[k]
         end
     end, [s, split(n, ".")...])
 end
