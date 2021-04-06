@@ -159,7 +159,7 @@ visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
 ) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
-    I = parsesimulation(index) |> keys |> collect
+    I = parsesimulation(defaultindex(index, S)) |> keys |> collect
     T = parsesimulation(y)
     Yo = T |> keys |> collect
     Ye = T |> values |> collect
@@ -186,7 +186,7 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
 ) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
-    I = parsesimulation(index) |> keys |> collect
+    I = parsesimulation(defaultindex(index, S)) |> keys |> collect
     yo, ye = parsesimulation(y) |> collect |> only
 
     ests = map(m -> simulate(; m..., index, target=ye, stop, snap, verbose=false), maps)
