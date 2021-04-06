@@ -16,13 +16,14 @@ constructortags(::Val{:Solve}) = (:unit,)
 export ⩵
 
 using SymPy: SymPy, sympy
-genpolynomial(v::VarInfo) = begin
+genpolynomial(v::VarInfo; scope) = begin
     x = v.name
     V = extractfuncargpair.(v.args) .|> first
     push!(V, x)
-    p = eval(@q let $(V...)
-        SymPy.@vars $(V...)
-        sympy.Poly(begin
+    #HACK: use scope of caller, avoiding eval into precompiled Cropbox module
+    p = scope.eval(@q let $(V...)
+        Cropbox.SymPy.@vars $(V...)
+        Cropbox.sympy.Poly(begin
             $(v.body)
         end, $x)
     end)
@@ -65,10 +66,10 @@ genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
 geninit(v::VarInfo, ::Val{:Solve}) = nothing
 
-genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; kw...) = begin
+genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; scope, kw...) = begin
     U = gettag(v, :unit)
     isnothing(U) && (U = @q(u"NoUnits"))
-    P = genpolynomial(v)
+    P = genpolynomial(v; scope)
     n = length(P)
     PU = genpolynomialunits(U, n)
     lower = gettag(v, :lower)

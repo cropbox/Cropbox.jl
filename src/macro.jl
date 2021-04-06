@@ -407,9 +407,9 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
         $C.scopeof(::Type{$_S}) = $scope
-        $C._update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage()))
-        $C._update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage()))
-        $C._update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage()))
+        $C._update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage(); scope))
+        $C._update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage(); scope))
+        $C._update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage(); scope))
         $S
     end
     system #|> MacroTools.flatten
