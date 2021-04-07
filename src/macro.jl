@@ -271,7 +271,7 @@ genfield(v::VarInfo) = begin
     @q begin
         $docstring
         $name::$type
-        $docstring
+        $(isnothing(alias) ? ϵ : docstring)
         $(isnothing(alias) ? ϵ : :($alias::$type))
     end
 end
