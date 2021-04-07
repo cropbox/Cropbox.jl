@@ -106,14 +106,14 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     obs = copy(obs)
     P = configure(parameters)
     K = parameterkeys(P)
-    I = parsesimulation(defaultindex(index, S)) |> keys |> collect
-    T = parsesimulation(defaulttarget(target, S)) |> keys |> collect
+    I = parseindex(index, S) |> keys |> collect
+    T = parsetarget(target, S) |> keys |> collect
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
     metric = metricfunc(metric)
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
-    IV = parsesimulation(defaultindex(index, S)) |> values |> Tuple
+    IV = parseindex(index, S) |> values |> Tuple
     snap(s) = getproperty.(s, IV) .|> value in IC
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]

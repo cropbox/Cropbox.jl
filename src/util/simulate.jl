@@ -13,8 +13,8 @@ end
 
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
     sb = s[base]
-    I = parsesimulation(defaultindex(index, sb))
-    T = parsesimulation(defaulttarget(target, sb))
+    I = parseindex(index, sb)
+    T = parsetarget(target, sb)
     #HACK: ignore unavailable properties (i.e. handle default :time in target)
     I = filtersimulationdict(I, sb)
     T = filtersimulationdict(T, sb)
@@ -32,10 +32,11 @@ parsesimulation(a::Tuple) = parsesimulation(collect(a))
 parsesimulation(::Tuple{}) = parsesimulation([])
 parsesimulation(a) = parsesimulation([a])
 
-defaultindex(::Nothing, s) = :time => "context.clock.time"
-defaultindex(I, s) = I
-defaulttarget(::Nothing, s) = fieldnamesunique(s)
-defaulttarget(T, s) = T
+parseindex(::Nothing, s) = parsesimulation(:time => "context.clock.time")
+parseindex(I, s) = parsesimulation(I)
+
+parsetarget(::Nothing, s) = parsesimulation(fieldnamesunique(s))
+parsetarget(T, s) = parsesimulation(T)
 
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
 
