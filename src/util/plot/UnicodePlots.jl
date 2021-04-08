@@ -29,11 +29,19 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     #HACK: add newline to ensure clearing (i.e. test summary right after plot)
     !endswith(xlab, "\n") && (xlab *= "\n")
 
+    #HACK: handle x-axis type of Date/DateTime adapted from UnicodePlots.lineplot()
+    xlim_value(v::Dates.TimeType) = Dates.value(v)
+    xlim_value(v) = v
+    xlimval = xlim_value.(xlim)
+
     if isnothing(p)
         a = Float64[]
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
-        obj = UnicodePlots.Plot(a, a, canvas; title, xlabel=xlab, ylabel=ylab, xlim, ylim, width, height)
+        obj = UnicodePlots.Plot(a, a, canvas; title, xlabel=xlab, ylabel=ylab, xlim=xlimval, ylim, width, height)
         UnicodePlots.annotate!(obj, :r, legend)
+        #HACK: override xlim string (for Date/DateTime)
+        UnicodePlots.annotate!(obj, :bl, string(xlim[1]), color=:light_black)
+        UnicodePlots.annotate!(obj, :br, string(xlim[2]), color=:light_black)
         p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
