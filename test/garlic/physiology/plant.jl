@@ -7,6 +7,7 @@
     #Nitrogen,
     Water,
     Weight,
+    Density,
     Photosynthesis
 ) begin
     calendar(context) ~ ::Calendar
@@ -40,8 +41,6 @@
         end
     end ~ produce::NodalUnit[]
 
-    #TODO find a better place?
-    PD: planting_density => 55 ~ preserve(u"m^-2", parameter)
     DAP(pheno.DAP): day_after_planting ~ track::Int
     time(calendar.time) ~ track::ZonedDateTime
 end

@@ -6,6 +6,7 @@ include("carbon.jl")
 #include("nitrogen.jl")
 include("water.jl")
 include("weight.jl")
+include("density.jl")
 
 include("radiation.jl")
 include("gasexchange/gasexchange.jl")
