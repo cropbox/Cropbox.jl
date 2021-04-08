@@ -25,7 +25,7 @@ end
 
 parsesimulationkey(p::Pair) = [p]
 parsesimulationkey(a::Symbol) = [a => a]
-parsesimulationkey(a::String) = [Symbol(split(a, ".")[end]) => a]
+parsesimulationkey(a::String) = [Symbol(a) => a]
 parsesimulationkey(a::Vector) = parsesimulationkey.(a) |> Iterators.flatten |> collect
 parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a) |> Iterators.flatten)
 parsesimulation(a::Tuple) = parsesimulation(collect(a))

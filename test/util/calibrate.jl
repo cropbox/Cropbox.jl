@@ -64,7 +64,7 @@ using DataFrames
             :SCalibrateConfigsIndex => :w => 1,
             :SCalibrateConfigsIndex => :w => 2,
         ]
-        index = ["context.clock.time", :w]
+        index = [:time => "context.clock.time", :w]
         target = :b
         params = :SCalibrateConfigsIndex => :a => A
         p = calibrate(SCalibrateConfigsIndex, obs, configs; stop=n, index, target, parameters=params)
