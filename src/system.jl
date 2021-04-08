@@ -21,6 +21,7 @@ Base.getindex(s::System, i) = getproperty(s, i)
 Base.getindex(s::System, ::Nothing) = s
 
 Base.getproperty(s::System, n::AbstractString) = begin
+    isempty(n) && return s
     reduce((a, b) -> begin
         m = match(r"([^\[\]]+)(?:\[(.+)\])?", b)
         n, i = m[1], m[2]

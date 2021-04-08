@@ -31,6 +31,7 @@
         @test s["context.clock"] == s.context.clock
         @test s."context.clock" == s.context.clock
         @test s[nothing] == s
+        @test s[""] == s
     end
 
     @testset "setvar!" begin
