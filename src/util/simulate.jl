@@ -25,7 +25,20 @@ end
 
 parsesimulationkey(p::Pair, s) = [p]
 parsesimulationkey(a::Symbol, s) = [a => a]
-parsesimulationkey(a::String, s) = [Symbol(a) => a]
+parsesimulationkey(a::String, s) = begin
+    A = split(a, '.')
+    # support wildcard names (i.e. "s.*" expands to ["s.a", "s.b", ...])
+    if A[end] == "*"
+        a0 = join(A[1:end-1], '.')
+        ss = s[a0]
+        p(n) = let k = join(filter(!isempty, [a0, string(n)]), '.')
+            Symbol(k) => k
+        end
+        [p(n) for n in fieldnamesunique(ss)]
+    else
+        [Symbol(a) => a]
+    end
+end
 parsesimulationkey(a::Vector, s) = parsesimulationkey.(a, Ref(s)) |> Iterators.flatten |> collect
 
 parsesimulation(a::Vector, s) = OrderedDict(parsesimulationkey.(a, Ref(s)) |> Iterators.flatten)
@@ -36,7 +49,7 @@ parsesimulation(a, s) = parsesimulation([a], s)
 parseindex(::Nothing, s) = parsesimulation(:time => "context.clock.time", s)
 parseindex(I, s) = parsesimulation(I, s)
 
-parsetarget(::Nothing, s) = parsesimulation(fieldnamesunique(s), s)
+parsetarget(::Nothing, s) = parsesimulation("*", s)
 parsetarget(T, s) = parsesimulation(T, s)
 
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end

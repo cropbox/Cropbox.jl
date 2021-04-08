@@ -226,6 +226,30 @@ using Dates
         @test all(r2.d .== 0)
     end
 
+    @testset "wildcard" begin
+        @system SSimulateWildcardA begin
+            x => 1 ~ preserve
+            y => 2 ~ preserve
+        end
+        @system SSimulateWildcard(Controller) begin
+            A(context) ~ ::SSimulateWildcardA
+            a => 3 ~ preserve
+            b => 4 ~ preserve
+        end
+        r1 = simulate(SSimulateWildcard; target="*")
+        @test names(r1) == ["time", "a", "b"]
+        @test collect(r1[1,:]) == [0u"hr", 3, 4]
+        r2 = simulate(SSimulateWildcard; target="A.*")
+        @test names(r2) == ["time", "A.x", "A.y"]
+        @test collect(r2[1,:]) == [0u"hr", 1, 2]
+        r3 = simulate(SSimulateWildcard; target=["*", "A.*"])
+        @test names(r3) == ["time", "a", "b", "A.x", "A.y"]
+        @test collect(r3[1,:]) == [0u"hr", 3, 4, 1, 2]
+        r4 = simulate(SSimulateWildcard; target=["A.*", "*"])
+        @test names(r4) == ["time", "A.x", "A.y", "a", "b"]
+        @test collect(r4[1,:]) == [0u"hr", 1, 2, 3, 4]
+    end
+
     @testset "options" begin
         @system SSimulateOptions(Controller) begin
             a ~ preserve(extern)
