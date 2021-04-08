@@ -65,12 +65,22 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     create_layers(colors) = [Gadfly.layer(x=Xs[i], y=Ys[i], geoms..., Gadfly.Theme(theme; default_color=colors[i])) for i in 1:n]
 
     if isnothing(p)
-        scales = [
-            #TODO: fix performance regression with custom system image
-            #Gadfly.Scale.x_continuous,
-            #Gadfly.Scale.y_continuous,
-            Gadfly.Coord.cartesian(xmin=xlim[1], ymin=ylim[1], xmax=xlim[2], ymax=ylim[2], aspect_ratio=aspect),
-        ]
+        xmin, xmax = xlim
+        ymin, ymax = ylim
+
+        #HACK: aesthetic adjustment for boolean (flag) plots
+        scales = if eltype(ylim) == Bool
+            [
+                #HACK: ensure correct level order (false low, true high)
+                Gadfly.Scale.y_discrete(levels=[false, true]),
+                #HACK: shift ylim to avoid clipping true values (discrete false=1, true=2)
+                Gadfly.Coord.cartesian(; xmin, xmax, ymin=1, ymax=2, aspect_ratio=aspect),
+            ]
+        else
+            [
+                Gadfly.Coord.cartesian(; xmin, xmax, ymin, ymax, aspect_ratio=aspect),
+            ]
+        end
         guides = [
             Gadfly.Guide.title(title),
             Gadfly.Guide.xlabel(xlab),
