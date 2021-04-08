@@ -23,20 +23,21 @@ simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, me
     Simulation(base, I, T, IT, M, DataFrame())
 end
 
-parsesimulationkey(p::Pair) = [p]
-parsesimulationkey(a::Symbol) = [a => a]
-parsesimulationkey(a::String) = [Symbol(a) => a]
-parsesimulationkey(a::Vector) = parsesimulationkey.(a) |> Iterators.flatten |> collect
-parsesimulation(a::Vector) = OrderedDict(parsesimulationkey.(a) |> Iterators.flatten)
-parsesimulation(a::Tuple) = parsesimulation(collect(a))
-parsesimulation(::Tuple{}) = parsesimulation([])
-parsesimulation(a) = parsesimulation([a])
+parsesimulationkey(p::Pair, s) = [p]
+parsesimulationkey(a::Symbol, s) = [a => a]
+parsesimulationkey(a::String, s) = [Symbol(a) => a]
+parsesimulationkey(a::Vector, s) = parsesimulationkey.(a, Ref(s)) |> Iterators.flatten |> collect
 
-parseindex(::Nothing, s) = parsesimulation(:time => "context.clock.time")
-parseindex(I, s) = parsesimulation(I)
+parsesimulation(a::Vector, s) = OrderedDict(parsesimulationkey.(a, Ref(s)) |> Iterators.flatten)
+parsesimulation(a::Tuple, s) = parsesimulation(collect(a), s)
+parsesimulation(::Tuple{}, s) = parsesimulation([], s)
+parsesimulation(a, s) = parsesimulation([a], s)
 
-parsetarget(::Nothing, s) = parsesimulation(fieldnamesunique(s))
-parsetarget(T, s) = parsesimulation(T)
+parseindex(::Nothing, s) = parsesimulation(:time => "context.clock.time", s)
+parseindex(I, s) = parsesimulation(I, s)
+
+parsetarget(::Nothing, s) = parsesimulation(fieldnamesunique(s), s)
+parsetarget(T, s) = parsesimulation(T, s)
 
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
 
