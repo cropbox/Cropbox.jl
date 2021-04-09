@@ -211,6 +211,7 @@ istag(v::VarInfo, t) = get(v.tags, t, false)
 istag(v::VarInfo, t::Tuple) = any(istag.(Ref(v), t))
 istag(v::VarInfo, t...) = istag(v, t)
 istag(t) = Base.Fix2(istag, t)
+hastag(v::VarInfo, t) = haskey(v.tags, t)
 gettag(v::VarInfo, t, d=nothing) = get(v.tags, t, d)
 
 Base.names(v::VarInfo) = let n = v.name, a = v.alias
