@@ -73,7 +73,7 @@ CUH = (
     :Weather => (
         CO2 = 390, # CO2
     ),
-    :Plant => (planting_density = 55,), # PD
+    :Plant => (initial_planting_density = 55,), # PD0
 )
 CUH_2013 = (CUH, (
     :Weather => (
