@@ -10,7 +10,7 @@ constructortags(::Val{:Flag}) = ()
 
 genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
 
-geninit(v::VarInfo, ::Val{:Flag}) = false
+gendefault(v::VarInfo, ::Val{:Flag}) = false
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep; kw...) = begin
     @gensym s f q

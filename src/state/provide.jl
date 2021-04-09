@@ -29,6 +29,6 @@ end
 
 genvartype(v::VarInfo, ::Val{:Provide}; V, _...) = @q Provide{$V}
 
-geninit(v::VarInfo, ::Val{:Provide}) = istag(v, :parameter) ? genparameter(v) : genbody(v)
+gendefault(v::VarInfo, ::Val{:Provide}) = istag(v, :parameter) ? genparameter(v) : genbody(v)
 
 genupdate(v::VarInfo, ::Val{:Provide}, ::MainStep; kw...) = nothing

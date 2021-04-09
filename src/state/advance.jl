@@ -17,7 +17,7 @@ constructortags(::Val{:Advance}) = (:init, :step, :unit)
 
 genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}
 
-geninit(v::VarInfo, ::Val{:Advance}) = missing
+gendefault(v::VarInfo, ::Val{:Advance}) = missing
 
 genupdate(v::VarInfo, ::Val{:Advance}, ::MainStep; kw...) = begin
     @gensym s t

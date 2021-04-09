@@ -40,7 +40,7 @@ genvartype(v::VarInfo, ::Val{:Accumulate}; N, U, V, _...) = begin
     @q Accumulate{$V,$T,$R}
 end
 
-geninit(v::VarInfo, ::Val{:Accumulate}) = begin
+gendefault(v::VarInfo, ::Val{:Accumulate}) = begin
     i = gettag(v, :init)
     u = gettag(v, :unit)
     @q $C.unitfy($C.value($i), $C.value($u))
@@ -49,7 +49,7 @@ end
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep; kw...) = begin
     @gensym s a0 t t0 a
     @q let $s = $(symstate(v)),
-           $a0 = $s.reset ? $(geninit(v)) : $s.value,
+           $a0 = $s.reset ? $(gendefault(v)) : $s.value,
            $t = $C.value($(gettag(v, :time))),
            $t0 = $s.time,
            $a = $a0 + $s.rate * ($t - $t0)

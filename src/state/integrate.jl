@@ -19,7 +19,7 @@ end
 
 genvartype(v::VarInfo, ::Val{:Integrate}; V, _...) = @q Integrate{$V}
 
-geninit(v::VarInfo, ::Val{:Integrate}) = nothing
+gendefault(v::VarInfo, ::Val{:Integrate}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Integrate}, ::MainStep; kw...) = begin
     kwarg = only(v.kwargs)

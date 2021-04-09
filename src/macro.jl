@@ -308,7 +308,7 @@ gendecl(v::VarInfo) = begin
     decl = if istag(v, :override)
         genoverride(v)
     else
-        value = istag(v, :extern) ? genextern(v, geninit(v)) : geninit(v)
+        value = istag(v, :extern) ? genextern(v, gendefault(v)) : gendefault(v)
         stargs = [:($(esc(k))=$v) for (k, v) in filterconstructortags(v)]
         @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
     end
@@ -639,8 +639,8 @@ end
 
 export @system, update!
 
-geninit(v::VarInfo) = geninit(v, Val(v.state))
-geninit(v::VarInfo, ::Val) = geninitvalue(v)
+gendefault(v::VarInfo) = gendefault(v, Val(v.state))
+gendefault(v::VarInfo, ::Val) = gendefaultvalue(v)
 
 gensample(v::VarInfo, x) = @q $C.sample($x)
 genunitfy(v::VarInfo, x) = begin
@@ -690,7 +690,7 @@ genparameter(v::VarInfo) = begin
         ismissing($o) ? $(genbody(v)) : $o
     end
 end
-geninitvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
+gendefaultvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
     s(x) = sample ? gensample(v, x) : x
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x

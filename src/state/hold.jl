@@ -14,4 +14,4 @@ store!(s::Hold, _) = error("cannot store variable on hold: $(s.name) $(isnothing
 
 genvartype(v::VarInfo, ::Val{:Hold}; _...) = @q Hold{Any}
 
-geninit(v::VarInfo, ::Val{:Hold}) = nothing
+gendefault(v::VarInfo, ::Val{:Hold}) = nothing

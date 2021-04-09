@@ -64,7 +64,7 @@ end
 
 genvartype(v::VarInfo, ::Val{:Solve}; V, _...) = @q Solve{$V}
 
-geninit(v::VarInfo, ::Val{:Solve}) = nothing
+gendefault(v::VarInfo, ::Val{:Solve}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; scope, kw...) = begin
     U = gettag(v, :unit)

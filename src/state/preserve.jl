@@ -25,6 +25,6 @@ genvartype(v::VarInfo, ::Val{:Preserve}; V, _...) = begin
     @q Preserve{$V}
 end
 
-geninit(v::VarInfo, ::Val{:Preserve}) = geninitvalue(v, parameter=true)
+gendefault(v::VarInfo, ::Val{:Preserve}) = gendefaultvalue(v, parameter=true)
 
 genupdate(v::VarInfo, ::Val{:Preserve}, ::MainStep; kw...) = nothing

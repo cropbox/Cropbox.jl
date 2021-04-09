@@ -35,7 +35,7 @@ genvartype(v::VarInfo, ::Val{:Capture}; N, U, V, _...) = begin
     @q Capture{$V,$T,$R}
 end
 
-geninit(v::VarInfo, ::Val{:Capture}) = nothing
+gendefault(v::VarInfo, ::Val{:Capture}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep; kw...) = begin
     @gensym s t t0 d

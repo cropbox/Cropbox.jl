@@ -42,6 +42,6 @@ genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
     @q Call{$V,$F}
 end
 
-geninit(v::VarInfo, ::Val{:Call}) = genfunc(v)
+gendefault(v::VarInfo, ::Val{:Call}) = genfunc(v)
 
 genupdate(v::VarInfo, ::Val{:Call}, ::MainStep; kw...) = genvalue(v)

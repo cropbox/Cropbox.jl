@@ -21,7 +21,7 @@ end
 
 genvartype(v::VarInfo, ::Val{:Drive}; V, _...) = @q Drive{$V}
 
-geninit(v::VarInfo, ::Val{:Drive}) = begin
+gendefault(v::VarInfo, ::Val{:Drive}) = begin
     s = gettag(v, :from)
     x = if isnothing(s)
         k = gettag(v, :by)

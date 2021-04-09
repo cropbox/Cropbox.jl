@@ -37,7 +37,7 @@ genvartype(v::VarInfo, ::Val{:Bisect}; N, V, _...) = begin
     @q Bisect{$V,$E}
 end
 
-geninit(v::VarInfo, ::Val{:Bisect}) = nothing
+gendefault(v::VarInfo, ::Val{:Bisect}) = nothing
 
 #HACK: needs update in case min/max variables changed during bisection loop
 #TODO: other variables wanting to use min/max would require similar work

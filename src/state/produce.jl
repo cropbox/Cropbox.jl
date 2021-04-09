@@ -73,7 +73,7 @@ genvartype(v::VarInfo, ::Val{:Produce}; V, _...) = begin
     end
 end
 
-geninit(v::VarInfo, ::Val{:Produce}) = nothing
+gendefault(v::VarInfo, ::Val{:Produce}) = nothing
 
 genupdate(v::VarInfo, ::Val{:Produce}, ::PreStage; kw...) = begin
     @gensym s a P c p b

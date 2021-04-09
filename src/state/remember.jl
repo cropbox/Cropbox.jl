@@ -14,7 +14,7 @@ constructortags(::Val{:Remember}) = (:unit,)
 
 genvartype(v::VarInfo, ::Val{:Remember}; V, _...) = @q Remember{$V}
 
-geninit(v::VarInfo, ::Val{:Remember}) = begin
+gendefault(v::VarInfo, ::Val{:Remember}) = begin
     N = gettag(v, :_type)
     U = gettag(v, :unit)
     i = gettag(v, :init)
