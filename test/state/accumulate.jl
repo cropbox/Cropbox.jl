@@ -110,6 +110,20 @@
         @test s.c' == n
     end
 
+    @testset "reset" begin
+        @system SAccumulateReset(Controller) begin
+            t(context.clock.tick) ~ track::Int
+            r(t) => t % 4 == 0 ~ flag
+            a => 1 ~ accumulate
+            b => 1 ~ accumulate(reset=r)
+            c => 1 ~ accumulate(reset=r, init=10)
+        end
+        r = simulate(SAccumulateReset, stop=10)
+        @test r[!, :a] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        @test r[!, :b] == [0, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2]
+        @test r[!, :c] == [10, 11, 12, 13, 14, 11, 12, 13, 14, 11, 12]
+    end
+
     @testset "transport" begin
         @system SAccumulateTransport(Controller) begin
             a(a, b) => -max(a - b, 0) ~ accumulate(init=10)
