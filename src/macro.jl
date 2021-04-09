@@ -315,8 +315,7 @@ gendecl(v::VarInfo) = begin
     gendecl(v, decl)
 end
 gendecl(v::VarInfo{Nothing}) = begin
-    emit(a) = (p = extractfuncargpair(a); @q $(esc(p[1])) = $(p[2]))
-    args = emit.(v.args)
+    args = emitfuncargpair.(v.args; value=false)
     if istag(v, :option)
         push!(args, @q $(esc(:option)) = __kwargs__)
     end
@@ -842,26 +841,24 @@ extractfuncargpair(a) = let k, v
     !@capture(a, k_=v_) && (k = a; v = a)
     extractfuncargkey(k) => v
 end
-emitfuncargpair(a) = begin
-    let (k, v) = extractfuncargpair(a)
-        k = esc(k)
-        v = @q $C.value($v)
-        @q $k = $v
-    end
+emitfuncargpair(a; kw...) = emitfuncargpair(extractfuncargpair(a)...; kw...)
+emitfuncargpair(k, v; value=true) = begin
+    k = esc(k)
+    v = value ? @q($C.value($v)) : v
+    @q $k = $v
 end
 
 genbody(v::VarInfo, body=nothing) = begin
     if isnothing(v.body) && length(v.args) == 1
         a = v.args[1]
-        emit(k, v) = @q $(esc(k)) = $C.value($v)
         #HACK: can't use or (|) syntax: https://github.com/MikeInnes/MacroTools.jl/issues/36
         if @capture(a, k_=v_)
-            args = emit(k, v)
+            args = emitfuncargpair(k, v)
         elseif @capture(a, k_Symbol)
-            args = emit(k, k)
+            args = emitfuncargpair(k, k)
         else
             @gensym k
-            args = emit(k, a)
+            args = emitfuncargpair(k, a)
         end
         body = esc(k)
     else
