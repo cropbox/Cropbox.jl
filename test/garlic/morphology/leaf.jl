@@ -147,15 +147,10 @@ end
 
     green_area(green_ratio, area) => (green_ratio * area) ~ track(u"cm^2")
 
-    elongation_age(growing, β=pheno.BF.ΔT) => begin #TODO add dt in the args?
-        #TODO implement Parent and Tardieu (2011, 2012) approach for leaf elongation in response to T and VPD, and normalized at 20C, SK, Nov 2012
-        # elongAge indicates where it is now along the elongation stage or duration.
-        # duration is determined by totallengh/maxElongRate which gives the shortest duration to reach full elongation in the unit of days.
-        #FIXME no need to check here, as it will be compared against duration later anyways
-        #min(self._elongation_tracker.rate, self.growth_duration)
-        #FIXME how to define unit for this?
-        growing ? β : zero(β)
-    end ~ accumulate(u"d")
+    #TODO implement Parent and Tardieu (2011, 2012) approach for leaf elongation in response to T and VPD, and normalized at 20C, SK, Nov 2012
+    # elongAge indicates where it is now along the elongation stage or duration.
+    # duration is determined by totallengh/maxElongRate which gives the shortest duration to reach full elongation in the unit of days.
+    elongation_age(pheno.BF.ΔT) ~ accumulate(when=growing, u"d")
 
     #TODO move to common module (i.e. Organ?)
     beta_growth(t_b=0u"d", delta=1; t(u"d"), t_e(u"d"), c_m(u"cm/d")) => begin
@@ -168,10 +163,10 @@ end
         c_m * ((t_et / t_em) * (t_tb / t_mb)^(t_mb / t_em))^delta
     end ~ call(u"cm/d")
 
-    potential_elongation_rate(growing, beta_growth, elongation_age, LER_max, GD) => begin
+    potential_elongation_rate(beta_growth, elongation_age, LER_max, GD) => begin
         #TODO proper integration with scipy.integrate?
-        growing ? beta_growth(elongation_age, GD, LER_max) : 0.0u"cm/d"
-    end ~ track(u"cm/d")
+        beta_growth(elongation_age, GD, LER_max)
+    end ~ track(when=growing, u"cm/d")
 
     temperature_effect_func(; T_grow(u"°C"), T_peak(u"°C"), T_base(u"°C")) => begin
         # T_peak is the optimal growth temperature at which the potential leaf size determined in calc_mophology achieved.
@@ -209,22 +204,18 @@ end
         c_m * r # dw/dt
     end ~ track(u"cm^2/d")
 
-    potential_area_increase(growing, area_from_length, length, actual_length_increase, area) => begin
+    potential_area_increase(area_from_length, length, actual_length_increase, area) => begin
         ##area = max(0, water_effect * T_effect * self.potential_area * (1 + (t_e - self.elongation_age) / (t_e - t_m)) * (self.elongation_age / t_e)**(t_e / (t_e - t_m)))
         #maximum_expansion_rate = T_effect * self.potential_area * (2*t_e - t_m) / (t_e * (t_e - t_m)) * (t_m / t_e)**(t_m / (t_e - t_m))
         # potential leaf area increase without any limitations
         #max(0, maximum_expansion_rate * max(0, (t_e - self.elongation_age) / (t_e - t_m) * (self.elongation_age / t_m)**(t_m / (t_e - t_m))) * self.timestep)
-        if growing
-            # for MAIZSIM
-            #self.potential_expansion_rate * self.timestep
-            # for garlic
-            #TODO need common framework dealing with derivatives
-            #area_increase_from_length(actual_length_increase)
-            area_from_length(length+actual_length_increase) - area
-        else
-            zero(area)
-        end
-    end ~ track(u"cm^2")
+        # for MAIZSIM
+        #self.potential_expansion_rate * self.timestep
+        # for garlic
+        #TODO need common framework dealing with derivatives
+        #area_increase_from_length(actual_length_increase)
+        area_from_length(length + actual_length_increase) - area
+    end ~ track(when=growing, u"cm^2")
 
     # create a function which simulates the reducing in leaf expansion rate
     # when predawn leaf water potential decreases. Parameterization of rf_psil
@@ -325,16 +316,10 @@ end
         SG * GD - stay_green_water_stress_duration
     end ~ track(u"d", min=0)
 
-    active_age(mature, aging, q=pheno.Q10.ΔT) => begin
-        # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
-        # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
-        # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
-        #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
-        #FIXME no need to check here, as it will be compared against duration later anyways
-        #min(self._aging_tracker.rate, self.stay_green_duration)
-        #TODO only for MAIZSIM
-        (mature && !aging) ? q : zero(q)
-    end ~ accumulate(u"d")
+    # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
+    # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
+    # instead a q10 fn normalized to be 1 at T_opt is used, this means above Top aging accelerates.
+    active_age(pheno.Q10.ΔT) ~ accumulate(when=mature & !aging, u"d")
 
     senescence_water_stress_duration(water_potential_effect, scale=0.5, threshold=-4.0) => begin
         # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
@@ -347,13 +332,8 @@ end
     end ~ track(u"d", min=0)
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
-    senescence_age(aging, dead, q=pheno.Q10.ΔT) => begin
-        #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
-        #FIXME no need to check here, as it will be compared against duration later anyways
-        #min(self._senescence_tracker.rate, self.senescence_duration)
-        #FIXME need to remove dependency cycle? (senescence_age -> senescence_ratio -> dead -> senescence_age)
-        (aging && !dead) ? q : zero(q)
-    end ~ accumulate(u"d")
+    #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
+    senescence_age(pheno.Q10.ΔT) ~ accumulate(when=aging & !dead, u"d")
 
     #TODO confirm if it really means the senescence ratio, not rate
     senescence_ratio(maximum_aging_rate, senescence_age, length) => begin
@@ -389,10 +369,8 @@ end
 
     # Maturity
 
-    maturity(emerged=pheno.emerged, mature, r=pheno.GD.r) => begin
-        #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
-        (emerged && !mature) ? r : zero(r)
-    end ~ accumulate(u"K")
+    #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
+    maturity(pheno.GD.r) ~ accumulate(when=pheno.emerged & !mature, u"K")
 
     # Nitrogen
 

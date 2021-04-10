@@ -15,10 +15,8 @@
     end ~ accumulate(u"g") # Nitrogen
 
     # physiological age accounting for temperature effect (in reference to endGrowth and lifeSpan, days)
-    physiological_age(e=pheno.emerged, r=pheno.GD.r) => begin
-        #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
-        e ? r : zero(r)
-    end ~ accumulate(u"K")
+    #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
+    physiological_age(pheno.GD.r) ~ accumulate(when=pheno.emerged, u"K")
 
     # chronological age of an organ, days
     chronological_age => 1 ~ accumulate(u"d")
