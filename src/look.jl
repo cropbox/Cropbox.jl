@@ -89,15 +89,21 @@ looksystem(io::IO, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} =
     end
 end
 
-lookdoc(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:System} = begin
+lookdoc(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[doc]\n", color=:light_black)
-    try
-        #HACK: mimic REPL.fielddoc(b, k) with no default description
-        ds = fetchdocstr(S).data[:fields][k]
-        md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
-        show(io, MIME("text/plain"), md)
-    catch
+    #HACK: mimic REPL.fielddoc(b, k) with no default description
+    docstr = fetchdocstr(S)
+    isnothing(docstr) && return
+    ds = get(docstr.data[:fields], k, nothing)
+    isnothing(ds) && return
+    md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
+    s = if excerpt
+        ts = Markdown.terminline_string(io, md)
+        split(strip(ts), '\n')[1] |> Text
+    else
+        md
     end
+    show(io, MIME("text/plain"), s)
 end
 lookcode(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[code]\n", color=:light_black)
@@ -164,6 +170,32 @@ fetchdocstr(S::Type{<:System}) = begin
         haskey(d, b) && return d[b].docs[Union{}]
     end
     nothing
+end
+
+getdoc(S::Type{<:System}) = begin
+    docstr = fetchdocstr(S)
+    isnothing(docstr) && return Markdown.parse("""
+    No documentation found.
+    
+    Type `@look $(scopeof(S)).$(namefor(S))` for more information.
+    """)
+    b = IOBuffer()
+    io = IOContext(b, :color => true)
+    header = false
+    doc = true
+    look(io, S; header, doc, system=false)
+    fields = docstr.data[:fields]
+    if !isempty(fields)
+        for (n, a) in fieldnamesalias(S)
+            !haskey(fields, n) && continue
+            println(io, '\n')
+            entry = isnothing(a) ? "- `$n`" : "- `$n` (`$a`)"
+            show(io, MIME("text/plain"), Markdown.parse(entry))
+            print(io, ": ")
+            look(io, S, n; header, doc, excerpt=true, code=false)
+        end
+    end
+    String(take!(b)) |> Text
 end
 
 export look, @look

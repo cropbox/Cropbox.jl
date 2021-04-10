@@ -410,6 +410,8 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C._update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage(); scope))
         $C._update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage(); scope))
         $C._update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage(); scope))
+        Base.Docs.getdoc(::Type{$S}) = $C.getdoc($_S)
+        Base.Docs.getdoc(::Type{$_S}) = $C.getdoc($_S)
         $S
     end
     system #|> MacroTools.flatten
