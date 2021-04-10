@@ -483,6 +483,10 @@ fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
 fieldnamesunique(::Type{S}) where {S<:System} = fieldnamesunique(typefor(S))
 fieldnamesalias(::Type{S}) where {S<:System} = fieldnamesalias(typefor(S))
 
+subsystemsof(::Type{System}) = ()
+subsystemsof(::S) where {S<:System} = subsystemsof(S)
+subsystemsof(::Type{S}) where {S<:System} = filter(n -> fieldtype(typefor(S), n) <: System, fieldnamesunique(S))
+
 scopeof(::Type{System}) = @__MODULE__
 scopeof(::S) where {S<:System} = scopeof(S)
 scopeof(::Type{S}) where {S<:System} = scopeof(typefor(S))
