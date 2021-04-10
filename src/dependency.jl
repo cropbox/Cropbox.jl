@@ -66,7 +66,10 @@ link!(d::Dependency, v::VarInfo, n::VarNode; kwargs...) = begin
     #HACK: skip missing refs to allow const variable patch syntax (i.e. @system S{x=1})
     V = [d.M[a] for a in A if haskey(d.M, a)]
     for v0 in V
-        if v0 == v || v0.state == :Bisect
+        # self reference is handled within a single node
+        if v0 == v
+            continue
+        elseif v0.state == :Bisect
             n0 = prenode!(d, v0)
             link!(d, n0, n)
         elseif isnothing(v0.state) && istag(v0, :context)
@@ -89,16 +92,13 @@ end
 add!(d::Dependency, v::VarInfo) = begin
     #@show "add! $v"
     if v.state == :Accumulate || v.state == :Capture
-        # split pre/main nodes to handle self dependency
-        n0 = prenode!(d, v)
         n1 = mainnode!(d, v)
         n2 = postnode!(d, v)
-        link!(d, n0, n1)
         link!(d, n1, n2)
         # needs `time` tags update, but equation args should be excluded due to cyclic dependency
         #HACK: support `when` tag while avoiding cyclic dependency
         #TODO: more elegant way to handle tags include/exclude
-        link!(d, v, n0; equation=false, exclude=(:when,))
+        link!(d, v, n1; equation=false, exclude=(:when,))
         link!(d, v, n2; equation=false, include=(:when,))
         link!(d, v, n2)
     elseif v.state == :Bisect
