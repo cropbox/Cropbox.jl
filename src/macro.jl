@@ -691,14 +691,23 @@ genparameter(v::VarInfo) = begin
         ismissing($o) ? $(genbody(v)) : $o
     end
 end
-gendefaultvalue(v::VarInfo; parameter=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
+geninit(v::VarInfo) = @q $C.value($(gettag(v, :init)))
+
+gendefaultvalue(v::VarInfo; parameter=false, init=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
     s(x) = sample ? gensample(v, x) : x
     u(x) = unitfy ? genunitfy(v, x) : x
     m(x) = minmax ? genminmax(v, x) : x
     r(x) = round ? genround(v, x) : x
     w(x) = when ? genwhen(v, x) : x
+    #HACK: inlining f(x) results in a strange constant redefinition error on Julia 1.6.0
     f(x) = x |> s |> u |> m |> r |> w
-    x = parameter && istag(v, :parameter) ? genparameter(v) : genbody(v)
+    x = if parameter && istag(v, :parameter)
+        genparameter(v)
+    elseif init && hastag(v, :init)
+        geninit(v)
+    else
+        genbody(v)
+    end
     f(x)
 end
 

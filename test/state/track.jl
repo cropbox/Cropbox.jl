@@ -16,6 +16,36 @@
         end
     end
 
+    @testset "self reference without init" begin
+        @eval @system STrackSRefWithoutInit(Controller) begin
+            a(a) => 2a ~ track
+        end
+        @test_throws UndefVarError instance(STrackSRefWithoutInit)
+    end
+
+    @testset "self reference with init" begin
+        @system STrackSRefWithInit(Controller) begin
+            a(a) => 2a ~ track(init=1)
+        end
+        r = simulate(STrackSRefWithInit, stop=3)
+        @test r[!, :a] == [2, 4, 8, 16]
+    end
+
+    @testset "init" begin
+        @system STrackInit(Controller) begin
+            a(a) => a + 1 ~ track(init=0)
+            b(b) => b + 1 ~ track(init=1)
+            c(c) => c + 1 ~ track(init=i)
+            d => 1 ~ track(init=i)
+            i(t=context.clock.tick) => t + 1 ~ track
+        end
+        r = simulate(STrackInit, stop=3)
+        @test r[!, :a] == [1, 2, 3, 4]
+        @test r[!, :b] == [2, 3, 4, 5]
+        @test r[!, :c] == [2, 3, 4, 5]
+        @test r[!, :d] == [1, 1, 1, 1]
+    end
+
     @testset "minmax" begin
         @system STrackMinMax(Controller) begin
             a => 0 ~ track(min=1)

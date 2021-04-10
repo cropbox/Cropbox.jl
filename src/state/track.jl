@@ -13,3 +13,5 @@ end
 constructortags(::Val{:Track}) = (:unit,)
 
 genvartype(v::VarInfo, ::Val{:Track}; V, _...) = @q Track{$V}
+
+gendefault(v::VarInfo, ::Val{:Track}) = gendefaultvalue(v, init=true)
