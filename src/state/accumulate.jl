@@ -53,7 +53,7 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep; kw...) = begin
            $t = $C.value($(gettag(v, :time))),
            $t0 = $s.time,
            $a = $a0 + $s.rate * ($t - $t0)
-        $C.store!($s, $a)
+        $(genstore(v, a; unitfy=false, minmax=true, round=false, when=false))
     end
 end
 

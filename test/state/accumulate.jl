@@ -110,6 +110,14 @@
         @test s.c' == n
     end
 
+    @testset "minmax" begin
+        @system SAccumulateMinMax(Controller) begin
+            a => 1 ~ accumulate(min=2, max=5)
+        end
+        r = simulate(SAccumulateMinMax, stop=4)
+        @test r[!, :a] == [2, 3, 4, 5, 5]
+    end
+
     @testset "reset" begin
         @system SAccumulateReset(Controller) begin
             t(context.clock.tick) ~ track::Int
