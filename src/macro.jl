@@ -386,6 +386,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
 
     system = quote
         Core.@__doc__ abstract type $S <: $T end
+        $S(; kw...) = $_S(; kw...)
         $C.typefor(::Type{<:$S}) = $_S
         let $(constpatches...)
             Core.@__doc__ mutable struct $_S <: $S
@@ -397,7 +398,6 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
                 end
             end
         end
-        $S(; kw...) = $_S(; kw...)
         $C.namefor(::Type{$_S}) = $C.namefor($S)
         $C.typefor(::Type{$_S}) = $_S
         $C.source(::Type{$_S}) = $(Meta.quot(source))
