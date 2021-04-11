@@ -700,13 +700,6 @@ end
 geninit(v::VarInfo) = @q $C.value($(gettag(v, :init)))
 
 gendefaultvalue(v::VarInfo; parameter=false, init=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
-    s(x) = sample ? gensample(v, x) : x
-    u(x) = unitfy ? genunitfy(v, x) : x
-    m(x) = minmax ? genminmax(v, x) : x
-    r(x) = round ? genround(v, x) : x
-    w(x) = when ? genwhen(v, x) : x
-    #HACK: inlining f(x) results in a strange constant redefinition error on Julia 1.6.0
-    f(x) = x |> s |> u |> m |> r |> w
     x = if parameter && istag(v, :parameter)
         genparameter(v)
     elseif init && hastag(v, :init)
@@ -714,7 +707,12 @@ gendefaultvalue(v::VarInfo; parameter=false, init=false, sample=true, unitfy=tru
     else
         genbody(v)
     end
-    f(x)
+    sample && (x = gensample(v, x))
+    unitfy && (x = genunitfy(v, x))
+    minmax && (x = genminmax(v, x))
+    round && (x = genround(v, x))
+    when && (x = genwhen(v, x))
+    x
 end
 
 genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = @q begin
@@ -753,13 +751,11 @@ end
 
 genvalue(v::VarInfo) = @q $C.value($(symstate(v)))
 genstore(v::VarInfo, val=nothing; unitfy=true, minmax=true, round=true, when=true) = begin
-    u(x) = unitfy ? genunitfy(v, x) : x
-    m(x) = minmax ? genminmax(v, x) : x
-    r(x) = round ? genround(v, x) : x
-    w(x) = when ? genwhen(v, x) : x
-    f(x) = x |> u |> m |> r |> w
     isnothing(val) && (val = genbody(v))
-    val = f(val)
+    unitfy && (val = genunitfy(v, val))
+    minmax && (val = genminmax(v, val))
+    round && (val = genround(v, val))
+    when && (val = genwhen(v, val))
     #TODO: remove redundant unitfy() in store!()
     @gensym s
     @q let $s = $(symstate(v))
