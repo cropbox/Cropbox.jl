@@ -29,4 +29,16 @@
         @test s.f1' == true && s.f2' == true
         @test s.x1' == 1 && s.x2' == 1
     end
+
+    @testset "flag parameter" begin
+        @system SFlagParameter(Controller) begin
+            a => true ~ flag(parameter)
+            b => false ~ flag(parameter)
+        end
+        s1 = instance(SFlagParameter)
+        @test s1.a' == true && s1.b' == false
+        c = :SFlagParameter => (a = false, b = true)
+        s2 = instance(SFlagParameter; config=c)
+        @test s2.a' == false && s2.b' == true
+    end
 end

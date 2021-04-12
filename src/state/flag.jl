@@ -10,11 +10,13 @@ constructortags(::Val{:Flag}) = ()
 
 genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}
 
-gendefault(v::VarInfo, ::Val{:Flag}) = false
+gendefault(v::VarInfo, ::Val{:Flag}) = istag(v, :parameter) ? genparameter(v) : false
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep; kw...) = begin
     @gensym s f q
-    if istag(v, :once)
+    if istag(v, :parameter)
+        nothing
+    elseif istag(v, :once)
         @q let $s = $(symstate(v))
             if !$C.value($s)
                 let $f = $(genbody(v))
