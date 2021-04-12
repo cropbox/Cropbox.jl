@@ -114,16 +114,19 @@ end
 # using TOML
 # loadconfig(c::AbstractString) = configure(TOML.parse(c))
 
-option(c) = c
-option(c, keys...) = missing
-option(c::Config, keys...) = option(c.config, keys...)
-option(c::_Config, key::Symbol, keys...) = option(get(c, key, missing), keys...)
-option(c::_Config, key::Vector{Symbol}, keys...) = begin
-    for k in key
-        v = option(c, k, keys...)
-        !ismissing(v) && return v
+option(c::Config, s::Symbol, k::Symbol) = begin
+    v = get(c, s, missing)
+    ismissing(v) ? v : get(v, k, missing)
+end
+option(c::Config, S::Vector{Symbol}, k::Symbol) = option(c, S, [k])
+option(c::Config, s::Symbol, K::Vector{Symbol}) = option(c, [s], K)
+option(c::Config, S::Vector{Symbol}, K::Vector{Symbol}) = begin
+    v = missing
+    for (s, k) in Iterators.product(S, K)
+        v = option(c, s, k)
+        !ismissing(v) && break
     end
-    missing
+    v
 end
 
 using DataStructures: OrderedSet
