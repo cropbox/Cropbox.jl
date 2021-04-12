@@ -12,16 +12,16 @@ end
 @system LeafColdInjury begin
     T: temperature ~ hold
 
-    CIF1: cold_injury_factor1 => -0.1 ~ preserve(u"K^-1", parameter)
-    CIF2: cold_injury_factor2 => 1.6 ~ preserve(parameter)
-    CICT: cold_injury_critical_temperature => 0 ~ preserve(u"°C", parameter)
+    _a: cold_injury_factor1 => -0.1 ~ preserve(u"K^-1", parameter)
+    _b: cold_injury_factor2 => 1.6 ~ preserve(parameter)
+    _Tc: cold_injury_critical_temperature => 0 ~ preserve(u"°C", parameter)
 
-    CID(T, CICT): cold_injury_duration => begin
-        T < CICT ? 1 : -1
+    CID(T, _Tc): cold_injury_duration => begin
+        T < Tc ? 1 : -1
     end ~ accumulate(min=0)
 
     "preliminary cold injury effect (2019-05-23: KDY)"
-    ACIE(a=CIF1, b=CIF2, Tc=CICT, T, CID): apparent_cold_injury_effect => begin
+    ACIE(_a, _b, _Tc, T, CID): apparent_cold_injury_effect => begin
         a = T < Tc ? log(a * (T - Tc) + b) : 0
         1 - a / exp(1 / CID)
     end ~ track(min=0, max=1)
