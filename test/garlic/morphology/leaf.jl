@@ -190,6 +190,9 @@ end
         beta_growth(elongation_age, GD, LER_max)
     end ~ track(when=growing, u"cm/d")
 
+    #TODO: incorporate stress effects
+    actual_elongation_rate(potential_elongation_rate) ~ track(u"cm/d")
+
     temperature_effect_func(; T_grow(u"°C"), T_peak(u"°C"), T_base(u"°C")) => begin
         # T_peak is the optimal growth temperature at which the potential leaf size determined in calc_mophology achieved.
         # Similar concept to fig 3 of Fournier and Andreiu (1998)
@@ -265,14 +268,8 @@ end
 
     carbon_effect => 1.0 ~ track
 
-    length(potential_elongation_rate) => begin
-        #TODO: incorporate stress effects as done in actual_area_increase()
-        potential_elongation_rate
-    end ~ accumulate(u"cm", time=elongation_age, timeunit=u"d")
-
-    actual_length_increase(potential_elongation_rate) => begin
-        potential_elongation_rate
-    end ~ capture(u"cm", time=elongation_age, timeunit=u"d")
+    length(actual_elongation_rate) ~ accumulate(u"cm", time=elongation_age, timeunit=u"d")
+    actual_length_increase(actual_elongation_rate) ~ capture(u"cm", time=elongation_age, timeunit=u"d")
 
     # actual area
     area(water_potential_effect, carbon_effect, temperature_effect, area_from_length, length) => begin
