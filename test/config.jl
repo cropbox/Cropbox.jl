@@ -528,4 +528,19 @@ using DataStructures: OrderedDict
             @test c[:SConfigParametersExclude][:a] == 1
         end
     end
+
+    @testset "option" begin
+        @testset "private" begin
+            @system SConfigOptionPrivate(Controller) begin
+                _a ~ preserve(parameter)
+                a ~ preserve(parameter)
+                b(_a) => 2a ~ track
+                c(a) => 3a ~ track
+            end
+            c = :SConfigOptionPrivate => (_a = 1, a = 2)
+            s = instance(SConfigOptionPrivate, config=c)
+            @test s.b' == 2
+            @test s.c' == 6
+        end
+    end
 end

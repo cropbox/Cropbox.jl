@@ -123,6 +123,9 @@ option(c::Config, s::Symbol, K::Vector{Symbol}) = option(c, [s], K)
 option(c::Config, S::Vector{Symbol}, K::Vector{Symbol}) = begin
     v = missing
     for (s, k) in Iterators.product(S, K)
+        #HACK: support private parameter (i.e. :S => :_a for S._a)
+        cs, ck = splitcanonicalname(k)
+        k = (s == cs) ? ck : k
         v = option(c, s, k)
         !ismissing(v) && break
     end

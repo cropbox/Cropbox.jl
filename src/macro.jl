@@ -62,6 +62,10 @@ bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) 
 parsename(name, system) = canonicalname(name, system)
 canonicalname(n::Symbol, s::Symbol) = isprivatename(n) ? Symbol("__$(s)_$(n)") : n
 canonicalname(n, _) = n
+splitcanonicalname(n::Symbol) = begin
+    m = match(r"__(.+)__(.+)", string(n))
+    isnothing(m) ? (nothing, n) : Symbol.((m[1], '_' * m[2]))
+end
 isprivatename(n) = begin
     s = string(n)
     #HACK: support private variable name with single prefix `_` (i.e. _a => __S__a, __b => __b)
