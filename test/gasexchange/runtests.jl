@@ -104,9 +104,9 @@ ge_weather = :Weather => (
 )
 
 ge_spad = :Nitrogen => (
-    SNa = 0.0004,
-    SNb = 0.0120,
-    SNc = 0,
+    _a = 0.0004,
+    _b = 0.0120,
+    _c = 0,
     SPAD = 60,
 )
 
