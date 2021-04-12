@@ -32,6 +32,8 @@ Base.getproperty(s::System, n::AbstractString) = begin
             #HACK: support symbol as-is (i.e. "a[:i]" vs. "a[i]")
             k = if startswith(i, ":")
                 i
+            elseif isprivatename(i)
+                canonicalname(i, n)
             else
                 try
                     #HACK: support indexing of non-Variable (i.e. "a[1]" for Vector{Layer})
