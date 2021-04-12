@@ -60,7 +60,8 @@ end
 bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) : x, l)
 
 parsename(name, system) = canonicalname(name, system)
-canonicalname(n::Symbol, s::Symbol) = isprivatename(n) ? Symbol("__$(s)_$(n)") : n
+canonicalname(n::Symbol, s) = Symbol(isprivatename(n) ? "__$(s)_$(n)" : n)
+canonicalname(n::Symbol, ::Union{S,Type{S}}) where {S<:System} = canonicalname(n, namefor(S))
 canonicalname(n, _) = n
 splitcanonicalname(n::Symbol) = begin
     m = match(r"__(.+)__(.+)", string(n))
