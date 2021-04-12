@@ -9,7 +9,29 @@
     Tx(n): maximum_temperature => 1.64n ~ preserve
 end
 
-@system Leaf(Organ) begin
+@system LeafColdInjury begin
+    T: temperature ~ hold
+
+    CIF1: cold_injury_factor1 => -0.1 ~ preserve(u"K^-1", parameter)
+    CIF2: cold_injury_factor2 => 1.6 ~ preserve(parameter)
+    CICT: cold_injury_critical_temperature => 0 ~ preserve(u"°C", parameter)
+
+    CID(T, CICT): cold_injury_duration => begin
+        T < CICT ? 1 : -1
+    end ~ accumulate(min=0)
+
+    "preliminary cold injury effect (2019-05-23: KDY)"
+    ACIE(a=CIF1, b=CIF2, Tc=CICT, T, CID): apparent_cold_injury_effect => begin
+        a = T < Tc ? log(a * (T - Tc) + b) : 0
+        1 - a / exp(1 / CID)
+    end ~ track(min=0, max=1)
+
+    CIE(CIE, ACIE, CID): cold_injury_effect => begin
+        CID == 0 ? 1 : min(CIE, ACIE)
+    end ~ track(init=1)
+end
+
+@system Leaf(Organ, LeafColdInjury) begin
     rank ~ ::Int(override) # preserve
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
@@ -242,24 +264,6 @@ end
     end ~ call
 
     carbon_effect => 1.0 ~ track
-
-    CIF1: cold_injury_factor1 => -0.1 ~ preserve(u"K^-1", parameter)
-    CIF2: cold_injury_factor2 => 1.6 ~ preserve(parameter)
-    CICT: cold_injury_critical_temperature => 0 ~ preserve(u"°C", parameter)
-
-    CID(T, CICT): cold_injury_duration => begin
-        T < CICT ? 1 : -1
-    end ~ accumulate(min=0)
-
-    "preliminary cold injury effect (2019-05-23: KDY)"
-    ACIE(a=CIF1, b=CIF2, Tc=CICT, T, CID): apparent_cold_injury_effect => begin
-        a = T < Tc ? log(a * (T - Tc) + b) : 0
-        1 - a / exp(1 / CID)
-    end ~ track(min=0, max=1)
-
-    CIE(CIE, ACIE, CID): cold_injury_effect => begin
-        CID == 0 ? 1 : min(CIE, ACIE)
-    end ~ track(init=1)
 
     length(potential_elongation_rate) => begin
         #TODO: incorporate stress effects as done in actual_area_increase()
