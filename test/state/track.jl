@@ -157,4 +157,21 @@
         @test s.e' == 0u"d"
         @test s.f' == 1u"d"
     end
+
+    @testset "when init" begin
+        @system STrackWhenInit(Controller) begin
+            T => true ~ preserve::Bool
+            F => false ~ preserve::Bool
+            I => 1 ~ preserve
+            a => 0 ~ track(init=1, when=true)
+            b => 0 ~ track(init=1, when=false)
+            c => 0 ~ track(init=I, when=T)
+            d => 0 ~ track(init=I, when=F)
+        end
+        s = instance(STrackWhenInit)
+        @test s.a' == 0
+        @test s.b' == 1
+        @test s.c' == 0
+        @test s.d' == 1
+    end
 end
