@@ -26,9 +26,11 @@ end
         1 - a / exp(1u"hr" / CID)
     end ~ track(min=0, max=1)
 
+    _enable => true ~ flag(parameter)
+
     CIE(CIE, ACIE, CID): cold_injury_effect => begin
         iszero(CID) ? 1 : min(CIE, ACIE)
-    end ~ track(init=1)
+    end ~ track(init=1, when=_enable)
 end
 
 @system Leaf(Organ, LeafColdInjury) begin
