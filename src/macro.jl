@@ -171,7 +171,7 @@ prefixscope(x, p::Symbol) = let (l, c) = extractscope(x)
     genscope([p, l...], c)
 end
 
-getmodule(m::Module, i) = reduce((a, b) -> getfield(a, b), split(String(i), ".") .|> Symbol, init=m)
+getsystem(m::Module, i) = reduce((a, b) -> getfield(a, b), split(String(i), ".") .|> Symbol, init=m)
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
 parsetags(tags::Vector; state, type, a...) = begin
@@ -442,7 +442,7 @@ mixinsof(s::S) where {S<:System} = mixinsof(S)
 mixinsof(::Type{S}) where {S<:System} = mixinsof(typefor(S))
 mixinsof(::Type{System}) = (System,)
 mixinsof(::Type) = ()
-mixinsof(scope::Module, incl) = Tuple(getmodule.(Ref(scope), incl))
+mixinsof(scope::Module, incl) = Tuple(getsystem.(Ref(scope), incl))
 
 using DataStructures: OrderedSet
 mixincollect(s::S) where {S<:System} = mixincollect(S)
@@ -479,7 +479,7 @@ mixindispatch(s, SS::Type{<:System}...) = begin
     (s, Val(n))
 end
 
-typefor(s::Symbol, m::Module=Main) = getmodule(m, s) |> typefor
+typefor(s::Symbol, m::Module=Main) = getsystem(m, s) |> typefor
 typefor(T) = T
 vartype(::Type{S}, k) where {S<:System} = fieldtype(typefor(S), k) |> typefor
 
@@ -586,7 +586,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
     combine() = begin
         d = OrderedDict{Symbol,VarInfo}()
         for i in incl
-            S = getmodule(scope, i)
+            S = getsystem(scope, i)
             for m in mixincollect(S)
                 add!(d, source(m), namefor(m), scopeof(m))
             end
