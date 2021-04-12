@@ -81,7 +81,7 @@ looksystem(io::IO, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} =
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
-        printstyled(io, n, color=:light_blue)
+        printstyled(io, uncanonicalname(n), color=:light_blue)
         !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
         s isa Type && continue
         printstyled(io, " = ", color=:light_black)
@@ -94,7 +94,8 @@ lookdoc(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw..
     #HACK: mimic REPL.fielddoc(b, k) with no default description
     docstr = fetchdocstr(S)
     isnothing(docstr) && return
-    ds = get(docstr.data[:fields], k, nothing)
+    n = canonicalname(k, S)
+    ds = get(docstr.data[:fields], n, nothing)
     isnothing(ds) && return
     md = ds isa Markdown.MD ? ds : Markdown.parse(ds)
     s = if excerpt
@@ -108,12 +109,14 @@ end
 lookcode(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[code]\n", color=:light_black)
     d = dependency(S)
-    v = d.M[k]
+    n = canonicalname(k, S)
+    v = d.M[n]
     Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
 end
 lookvalue(io::IO, s::System, k::Symbol; header=false, kw...) = begin
     header && printstyled(io, "[value]\n", color=:light_black)
-    show(io, MIME("text/plain"), s[k])
+    n = canonicalname(k, s)
+    show(io, MIME("text/plain"), s[n])
 end
 
 buf2str(f; color=true, kw...) = begin
