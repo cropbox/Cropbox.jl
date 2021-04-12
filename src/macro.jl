@@ -67,6 +67,7 @@ splitcanonicalname(n) = begin
     m = match(r"__(.+)__(.+)", string(n))
     isnothing(m) ? (nothing, n) : Symbol.((m[1], '_' * m[2]))
 end
+uncanonicalname(n) = splitcanonicalname(n)[2]
 isprivatename(n) = begin
     s = string(n)
     #HACK: support private variable name with single prefix `_` (i.e. _a => __S__a, __b => __b)
