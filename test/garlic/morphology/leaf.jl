@@ -191,7 +191,9 @@ end
     end ~ track(when=growing, u"cm/d")
 
     #TODO: incorporate stress effects
-    actual_elongation_rate(potential_elongation_rate) ~ track(u"cm/d")
+    actual_elongation_rate(potential_elongation_rate, cold_injury_effect) => begin
+        potential_elongation_rate * cold_injury_effect
+    end ~ track(u"cm/d")
 
     temperature_effect_func(; T_grow(u"°C"), T_peak(u"°C"), T_base(u"°C")) => begin
         # T_peak is the optimal growth temperature at which the potential leaf size determined in calc_mophology achieved.
