@@ -586,8 +586,10 @@ geninfos(body; name, substs, incl, scope, _...) = begin
     combine() = begin
         d = OrderedDict{Symbol,VarInfo}()
         for i in incl
-            m = getmodule(scope, i)
-            add!(d, source(m), i, scopeof(m))
+            S = getmodule(scope, i)
+            for m in mixincollect(S)
+                add!(d, source(m), namefor(m), scopeof(m))
+            end
         end
         add!(d, body, name, scope)
         d
