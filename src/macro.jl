@@ -344,14 +344,15 @@ end
 #HACK: @capture doesn't seem to support GlobalRef
 const DOCREF = GlobalRef(Core, Symbol("@doc"))
 isdoc(ex) = isexpr(ex, :macrocall) && ex.args[1] == DOCREF
-gensource(v::VarInfo) = begin
+gensource(v::VarInfo, name) = begin
+    v.system != name && return ϵ
     if isempty(v.docstring)
         @q begin $(v.linenumber); $(v.line) end
     else
         Expr(:macrocall, DOCREF, v.linenumber, v.docstring, v.line)
     end
 end
-gensource(infos) = MacroTools.flatten(@q begin $(gensource.(infos)...) end)
+gensource(infos, name) = MacroTools.flatten(@q begin $(gensource.(infos, name)...) end)
 
 updateconsts(consts, infos) = begin
     #HACK: keep type of Context in case needed for field construction (i.e. timeunit for Accumulate)
@@ -384,7 +385,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
     predecl = genpredecl(name)
     decls = gendecl(nodes)
     args = gennewargs(infos)
-    source = gensource(infos)
+    source = gensource(infos, name)
     consts = updateconsts(consts, infos)
     constpatches = genconstpatches(consts, scope, incl)
 
