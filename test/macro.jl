@@ -45,6 +45,13 @@
         @test s1.__SPrivateNameMixin2__a' == 2
         @test s1.b' == 1
         @test s1.c' == 2
+        @eval @system SPrivateNameMixed11(SPrivateNameMixed1, Controller)
+        s11 = instance(SPrivateNameMixed11)
+        @test_throws ErrorException s11._a
+        @test s11.__SPrivateNameMixin1__a' == 1
+        @test s11.__SPrivateNameMixin2__a' == 2
+        @test s11.b' == 1
+        @test s11.c' == 2
         @test_throws ErrorException @eval @system SPrivateNameMixed2(SPrivateNameMixin1, Controller) begin
             _a: aa1 => 3 ~ preserve
         end
