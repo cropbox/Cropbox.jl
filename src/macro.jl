@@ -63,7 +63,7 @@ parsename(name, system) = canonicalname(name, system)
 canonicalname(n::Symbol, s) = Symbol(isprivatename(n) ? "__$(s)_$(n)" : n)
 canonicalname(n::Symbol, ::Union{S,Type{S}}) where {S<:System} = canonicalname(n, namefor(S))
 canonicalname(n, _) = n
-splitcanonicalname(n::Symbol) = begin
+splitcanonicalname(n) = begin
     m = match(r"__(.+)__(.+)", string(n))
     isnothing(m) ? (nothing, n) : Symbol.((m[1], '_' * m[2]))
 end
@@ -72,7 +72,7 @@ isprivatename(n) = begin
     #HACK: support private variable name with single prefix `_` (i.e. _a => __S__a, __b => __b)
     startswith(s, "_") && !startswith(s, "__")
 end
-privatename(n::Symbol) = isprivatename(n) ? Symbol(string(n)[2:end]) : n
+privatename(n) = Symbol(isprivatename(n) ? string(n)[2:end] : n)
 
 #TODO: prefixscope to args/kwargs type specifier?
 parseargs(args, system) = parsearg.(args, system)
