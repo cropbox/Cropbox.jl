@@ -18,16 +18,16 @@ end
 
     CID(T, _Tc): cold_injury_duration => begin
         T < Tc ? 1 : -1
-    end ~ accumulate(min=0)
+    end ~ accumulate(u"hr", min=0)
 
     "preliminary cold injury effect (2019-05-23: KDY)"
     ACIE(_a, _b, _Tc, T, CID): apparent_cold_injury_effect => begin
         a = T < Tc ? log(a * (T - Tc) + b) : 0
-        1 - a / exp(1 / CID)
+        1 - a / exp(1u"hr" / CID)
     end ~ track(min=0, max=1)
 
     CIE(CIE, ACIE, CID): cold_injury_effect => begin
-        CID == 0 ? 1 : min(CIE, ACIE)
+        iszero(CID) ? 1 : min(CIE, ACIE)
     end ~ track(init=1)
 end
 
