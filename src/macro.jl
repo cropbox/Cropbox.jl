@@ -596,7 +596,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
     end
     combine() |> values |> collect
 end
-geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=substsof(S), incl=(), scope=scopeof(S))
+geninfos(S::Type{<:System}) = geninfos(source(S); name=namefor(S), substs=substsof(S), incl=Symbol.(mixinsof(S)), scope=scopeof(S))
 
 include("dependency.jl")
 sortednodes(infos) = sort(dependency(infos))
