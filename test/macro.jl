@@ -29,6 +29,20 @@
         @test s.e' == 1
     end
 
+    @testset "private name tags" begin
+        @system SPrivateNameTags(Controller) begin
+            _t => true ~ flag
+            _f => false ~ flag
+            a => 1 ~ track(when=_t)
+            b => 1 ~ track(when=_t|_f)
+            c => 1 ~ track(when=_t&_f)
+        end
+        s = instance(SPrivateNameTags)
+        @test s.a' == 1
+        @test s.b' == 1
+        @test s.c' == 0
+    end
+
     @testset "private name mixin" begin
         @system SPrivateNameMixin1 begin
             _a: aa1 => 1 ~ preserve

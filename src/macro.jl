@@ -48,7 +48,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     body = parsebody(body)
     state = parsestate(state)
     type = parsetype(stype, dtype, state, scope, substs)
-    tags = parsetags(tags; name, alias, args, kwargs, state, type)
+    tags = parsetags(tags; name, alias, args, kwargs, system, state, type)
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
     catch
@@ -74,6 +74,7 @@ isprivatename(n) = begin
     startswith(s, "_") && !startswith(s, "__")
 end
 privatename(n) = Symbol(isprivatename(n) ? string(n)[2:end] : n)
+bindname(ex, s) = MacroTools.postwalk(x -> x isa Symbol ? canonicalname(x, s) : x, ex)
 
 #TODO: prefixscope to args/kwargs type specifier?
 parseargs(args, system) = parsearg.(args, system)
@@ -176,12 +177,12 @@ end
 getsystem(m::Module, i) = reduce((a, b) -> getfield(a, b), split(String(i), ".") .|> Symbol, init=m)
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
-parsetags(tags::Vector; state, type, a...) = begin
+parsetags(tags::Vector; system, state, type, a...) = begin
     s = Val(state)
     d = Dict{Symbol,Any}()
     for t in tags
         if @capture(t, k_=v_)
-            d[k] = v
+            d[k] = bindname(v, system)
         elseif @capture(t, @u_str(v_))
             d[:unit] = @q @u_str($v)
         else
