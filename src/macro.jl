@@ -383,7 +383,8 @@ genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 
 genstruct(name, type, infos, consts, substs, incl, scope) = begin
-    _S = esc(gensym(name))
+    #FIXME: simple `gensym(name)` leads to very strange invalid redefinition of constant error on Julia 1.6.0
+    _S = esc(gensym(Symbol(:_, name)))
     S = esc(name)
     T = esc(type)
     N = Meta.quot(name)
