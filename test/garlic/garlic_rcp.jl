@@ -55,14 +55,25 @@ KMSP = (
 ND = (KMSP,
     :Phenology => (;
         initial_leaves_at_harvest = 5, # ILN
+        maximum_leaf_tip_appearance_rate_asymptote = 0.60, # LTARa
     ),
     :Leaf => (;
-        minimum_length_of_longest_leaf = 50.0, # LL
-        stay_green = 1.50, # SG
+        #minimum_length_of_longest_leaf = 65.0, # LL
+        stay_green = 1.80, # SG
     ),
     :Plant => (;
         planting_density = 55.5, # PD
     ),
+    :Carbon => (
+        partitioning_table = [
+        # root shoot leaf sheath scape bulb
+          0.00  0.00 0.00   0.00  0.00 0.00 ; # seed
+          0.45  0.00 0.25   0.25  0.00 0.05 ; # vegetative
+          0.20  0.00 0.10   0.05  0.20 0.45 ; # bulb growth with scape
+          0.10  0.00 0.00   0.00  0.00 0.90 ; # bulb growth without scape
+          0.00  0.00 0.00   0.00  0.00 0.00 ; # dead
+        ],
+    )
 )
 
 GL = (
