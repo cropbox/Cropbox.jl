@@ -82,7 +82,7 @@ looksystem(io::IO, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} =
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
         printstyled(io, uncanonicalname(n), color=:light_blue)
-        !isnothing(a) && printstyled(io, " (", a, ")", color=:light_black)
+        !isnothing(a) && printstyled(io, " (", uncanonicalname(a), ")", color=:light_black)
         s isa Type && continue
         printstyled(io, " = ", color=:light_black)
         print(io, labelstring(s[n]))
