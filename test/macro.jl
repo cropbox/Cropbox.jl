@@ -14,33 +14,41 @@
 
     @testset "private name args" begin
         @system SPrivateNameArgs(Controller) begin
-            _x: xx => 1 ~ preserve
+            _x: _xx => 1 ~ preserve
             a(_x) ~ preserve
             b(_x) => x ~ preserve
             c(y=_x) => y ~ preserve
             d(_y=_x) => _y ~ preserve
-            e(xx) ~ preserve
+            aa(_xx) ~ preserve
+            bb(_xx) => xx ~ preserve
+            cc(y=_xx) => y ~ preserve
+            dd(_y=_xx) => _y ~ preserve
         end
         s = instance(SPrivateNameArgs)
         @test s.a' == 1
         @test s.b' == 1
         @test s.c' == 1
         @test s.d' == 1
-        @test s.e' == 1
+        @test s.aa' == 1
+        @test s.bb' == 1
+        @test s.cc' == 1
+        @test s.dd' == 1
     end
 
     @testset "private name tags" begin
         @system SPrivateNameTags(Controller) begin
-            _t => true ~ flag
-            _f => false ~ flag
+            _t: _true => true ~ flag
+            _f: _false => false ~ flag
             a => 1 ~ track(when=_t)
             b => 1 ~ track(when=_t|_f)
             c => 1 ~ track(when=_t&_f)
+            d => 1 ~ track(when=_false)
         end
         s = instance(SPrivateNameTags)
         @test s.a' == 1
         @test s.b' == 1
         @test s.c' == 0
+        @test s.d' == 0
     end
 
     @testset "private name mixin" begin
