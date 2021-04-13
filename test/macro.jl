@@ -7,7 +7,7 @@
         s = instance(SPrivateName)
         @test_throws ErrorException s._a
         @test s.__SPrivateName__a' == 1
-        @test s._aa === s.__SPrivateName__a
+        @test s.__SPrivateName__aa === s.__SPrivateName__a
         @test s.__b' == 2
         @test s.__bb === s.__b
     end

@@ -43,6 +43,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
     name = parsename(name, system)
+    alias = parsealias(alias, system)
     args = parseargs(args, system)
     kwargs = parsekwargs(kwargs)
     body = parsebody(body)
@@ -60,6 +61,7 @@ end
 bindscope(l, s::Module) =  MacroTools.postwalk(x -> @capture(x, :$) ? nameof(s) : x, l)
 
 parsename(name, system) = canonicalname(name, system)
+parsealias(alias, system) = parsename(alias, system)
 canonicalname(n::Symbol, s) = Symbol(isprivatename(n) ? "__$(s)_$(n)" : n)
 canonicalname(n::Symbol, ::Union{S,Type{S}}) where {S<:System} = canonicalname(n, namefor(S))
 canonicalname(n, _) = n
