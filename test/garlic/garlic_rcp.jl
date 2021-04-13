@@ -90,6 +90,31 @@ ND_GL_2012 = let planting_date = date(2012, 10, 4)
     )
 end
 
+JS = (
+    :Location => (; latitude = 33.46835535536083, longitude = 126.51765156091567),
+    :Plant => (; initial_planting_density = 55.5),
+)
+JS_2009 = (JS,
+    :Weather => (
+        store = Garlic.loadwea("$(@__DIR__)/data/Korea/jungsil_2009.wea", tz),
+    ),
+    :Calendar => (
+        init = date(2009, 9, 1),
+        last = date(2010, 6, 30),
+    ),
+)
+ND_JS_2009 = let planting_date = date(2009, 9, 15)
+    (
+        ND, JS_2009,
+        :Phenology => (;
+            planting_date,
+            scape_removal_date = nothing,
+            harvest_date = date(2010, 6, 18),
+            storage_days = storagedays(planting_date),
+        )
+    )
+end
+
 STATION_NAMES = Dict(
     165 => :Mokpo,
     185 => :Gosan,
