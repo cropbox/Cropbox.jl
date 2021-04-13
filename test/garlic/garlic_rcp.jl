@@ -4,6 +4,16 @@ using TimeZones
 using Dates
 using Interpolations: LinearInterpolation
 
+tz = tz"Asia/Seoul"
+
+date(year, month::Int, day::Int; tz=tz) = ZonedDateTime(year, month, day, tz)
+date(year, doy::Int; tz=tz) = ZonedDateTime(year, 1, 1, tz) + Dates.Day(doy - 1)
+date(year, d::ZonedDateTime; tz=tz) = d
+date(year, d::DateTime; tz=tz) = ZonedDateTime(d, tz)
+date(year, ::Nothing; tz=tz) = nothing
+
+storagedays(t::ZonedDateTime) = (t - ZonedDateTime(year(t), 6, 30, timezone(t))) |> Day |> Dates.value
+
 KMSP = (
 # # CV PHYL ILN GLN LL LER SG SD LTAR LTARa LIR Topt Tceil critPPD
 # KM1 134 4 10 65.0 4.70 1.84 122 0 0.4421 0.1003 22.28 34.23 12
@@ -91,17 +101,13 @@ end
 
 rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day) = begin
     name = "$(scenario)_$(station)_$(year)_$(repetition)"
-    tz = tz"Asia/Seoul"
-    start_date = ZonedDateTime(year, 9, 1, tz)
-    end_date = ZonedDateTime(year+1, 6, 30, tz)
+    start_date = date(year, 9, 1)
+    end_date = date(year+1, 6, 30)
 
-    date_from_doy(doy) = isnothing(doy) ? doy : ZonedDateTime(year, 1, 1, tz) + Dates.Day(doy - 1)
-    planting_date = date_from_doy(sowing_day)
-    scape_removal_date = date_from_doy(scape_removal_day)
-    harvest_date = ZonedDateTime(year+1, 5, 15, tz)
-
-    storage_day_from_date(t) = (t - ZonedDateTime(year, 6, 30, tz)) |> Day |> Dates.value
-    storage_days = storage_day_from_date(planting_date)
+    planting_date = date(year, sowing_day)
+    scape_removal_date = date(year, scape_removal_day)
+    harvest_date = date(year+1, 5, 15)
+    storage_days = storagedays(planting_date)
 
     (ND,
         :Location => (;
