@@ -65,6 +65,31 @@ ND = (KMSP,
     ),
 )
 
+GL = (
+    :Location => (; latitude = 37.1288422, longitude = 128.3628756),
+    :Plant => (; initial_planting_density = 55.5),
+)
+GL_2012 = (GL,
+    :Weather => (
+        store = Garlic.loadwea("$(@__DIR__)/data/Korea/garliclab_2012.wea", tz),
+    ),
+    :Calendar => (
+        init = date(2012, 10, 1),
+        last = date(2013, 6, 30),
+    ),
+)
+ND_GL_2012 = let planting_date = date(2012, 10, 4)
+    (
+        ND, GL_2012,
+        :Phenology => (;
+            planting_date,
+            scape_removal_date = nothing,
+            harvest_date = date(2013, 6, 15),
+            storage_days = storagedays(planting_date),
+        )
+    )
+end
+
 STATION_NAMES = Dict(
     165 => :Mokpo,
     185 => :Gosan,
