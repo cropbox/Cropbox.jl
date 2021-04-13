@@ -28,8 +28,10 @@ end
 
 dive(s::System, t) = dive(map(zip(fieldnamesalias(s), s)) do ((n, a), v)
     k = string(n)
-    l = "$(variable_color(k))"
-    !isnothing(a) && (l *= " $(misc_color("($a)"))")
+    cn = string(uncanonicalname(n))
+    ca = string(uncanonicalname(a))
+    l = "$(variable_color(cn))"
+    !isnothing(a) && (l *= " $(misc_color("($ca)"))")
     MenuItem(k, l, v)
 end, t)
 dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s)), t)
