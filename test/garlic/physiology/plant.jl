@@ -41,6 +41,8 @@
         end
     end ~ produce::NodalUnit[]
 
+    yield(bulb_mass, PD) => bulb_mass * PD ~ track(u"g/m^2")
+
     DAP(pheno.DAP): day_after_planting ~ track::Int
     time(calendar.time) ~ track::ZonedDateTime
 end
