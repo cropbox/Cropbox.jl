@@ -3,6 +3,7 @@ include("garlic.jl")
 using TimeZones
 using Dates
 using Interpolations: LinearInterpolation
+using BSON
 
 tz = tz"Asia/Seoul"
 
@@ -237,4 +238,35 @@ rcp_run(; config=(), settings, cache=nothing, verbose=true) = begin
     end
     Cropbox.ProgressMeter.finish!(p)
     reduce(vcat, R)
+end
+
+rcp_run_storage() = begin
+    s = (; settings..., station = [185]) # 고산
+    c0 = :Meta => :storage => true
+    c1 = (
+        :Phenology => :storage_days => 100,
+        :Meta => :storage => false,
+    )
+    r0 = rcp_run(; config=c0, settings=s)
+    bson("garlic_rcp-storage-on.bson", df = r0)
+    r1 = rcp_run(; config=c1, settings=s)
+    bson("garlic_rcp-storage-off.bson", df = r1)
+    r = [r0; r1]
+    bson("garlic_rcp-storage.bson", df = r)
+end
+
+rcp_run_cold() = begin
+    s = (; settings..., station = [221, 272, 601]) # 제천, 영주, 단양
+    c0 = :Meta => :cold => true
+    c1 = (
+        :Density => :enable_cold_damage => false,
+        :LeafColdInjury => :_enable => false,
+        :Meta => :cold => false,
+    )
+    r0 = rcp_run(; config=c0, settings=s)
+    bson("garlic_rcp-cold-on.bson", df = r0)
+    r1 = rcp_run(; config=c1, settings=s)
+    bson("garlic_rcp-cold-off.bson", df = r1)
+    r = [r0; r1]
+    bson("garlic_rcp-cold.bson", df = r)
 end
