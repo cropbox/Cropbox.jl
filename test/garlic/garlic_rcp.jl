@@ -160,7 +160,7 @@ rcp_co2(scenario, year) = begin
     LinearInterpolation(x, Float64.(y))(year)
 end
 
-rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day) = begin
+rcp_config(; config=(), scenario, station, year, repetition, sowing_day, scape_removal_day) = begin
     name = "$(scenario)_$(station)_$(year)_$(repetition)"
     start_date = date(year, 9, 1)
     end_date = date(year+1, 6, 30)
@@ -170,7 +170,7 @@ rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day)
     harvest_date = date(year+1, 5, 15)
     storage_days = storagedays(planting_date)
 
-    (ND,
+    @config (ND,
         :Location => (;
             LATLONGS[station]...,
             altitude = 20.0,
@@ -196,15 +196,16 @@ rcp_config(; scenario, station, year, repetition, sowing_day, scape_removal_day)
             repetition,
             sowing_day,
             scape_removal_day,
-        )
+        ),
+        config,
     )
 end
 
 #setting = (; scenario=:RCP45, station=165, year=2021, repetition=1, sowing_day=250, scape_removal_day=nothing)
 
-rcp_simulate(; target=[:bulb_mass, :total_mass, :leaf_area], setting) = begin
+rcp_simulate(; config=(), target=[:bulb_mass, :total_mass, :planting_density, :yield, :leaf_area], setting) = begin
     #println((; setting...))
-    config = rcp_config(; setting...)
+    config = rcp_config(; config, setting...)
     callback(s) = s.calendar.time' == s.config[:Phenology][:harvest_date]
     r = simulate(Garlic.Model; config, target, meta=:Meta, stop=callback, snap=callback, verbose=false)
 end
@@ -217,7 +218,7 @@ settings = (;
     sowing_day = 250:10:350, # 280:30:340
     scape_removal_day = [nothing],
 )
-rcp_run(; settings, cache=nothing, verbose=true) = begin
+rcp_run(; config=(), settings, cache=nothing, verbose=true) = begin
     K = keys(settings)
     V = values(settings)
     P = Iterators.product(V...) |> collect
@@ -228,7 +229,7 @@ rcp_run(; settings, cache=nothing, verbose=true) = begin
     p = Cropbox.Progress(n; dt, Cropbox.barglyphs)
     try
         Threads.@threads for i in 1:n
-            !isassigned(R, i) && (R[i] = rcp_simulate(; setting=zip(K, P[i])))
+            !isassigned(R, i) && (R[i] = rcp_simulate(; config, setting=zip(K, P[i])))
             Cropbox.ProgressMeter.next!(p)
         end
     catch
