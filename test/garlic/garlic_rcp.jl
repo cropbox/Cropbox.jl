@@ -215,7 +215,7 @@ settings = (;
     station = keys(STATION_NAMES),
     year = 2020:10:2090,
     repetition = 0:9,
-    sowing_day = 250:10:350, # 280:30:340
+    sowing_day = 240:10:350,
     scape_removal_day = [nothing],
 )
 rcp_run(; config=(), settings, cache=nothing, verbose=true) = begin
