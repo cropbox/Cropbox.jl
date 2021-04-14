@@ -63,7 +63,7 @@ ND = (KMSP,
         stay_green = 1.80, # SG
     ),
     :Plant => (;
-        planting_density = 55.5, # PD
+        initial_planting_density = 55.5, # PD0
     ),
     :Carbon => (
         partitioning_table = [
