@@ -12,9 +12,9 @@
     CDM(s=CDSF, Tc=CDCT, T=weather.T_air): cold_damage_mortality => begin
         x = exp(-s * (T - Tc))
         x / (1 + x)
-    end ~ track(when=enable_cold_damage)
+    end ~ track(u"d^-1", when=enable_cold_damage)
 
-    CDS(CDM): cold_damage_survival_rate => (1 - CDM) ~ track
+    CDS(CDS, CDM): cold_damage_survival_rate => (CDS * -CDM) ~ accumulate(init=1, min=0)
 
     PD(PD0, CDS): planting_density => (PD0 * CDS) ~ track(u"m^-2")
 end
