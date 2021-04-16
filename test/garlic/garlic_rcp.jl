@@ -128,6 +128,7 @@ ND_JS_2009 = let planting_date = date(2009, 9, 15)
 end
 
 STATION_NAMES = Dict(
+    101 => :Chuncheon,
     165 => :Mokpo,
     185 => :Gosan,
     221 => :Jechun,
@@ -140,6 +141,7 @@ STATION_NAMES = Dict(
 )
 
 LATLONGS = Dict(
+    101 => (; latitude = 37.90262, longitude = 127.7357),
     165 => (; latitude = 34.81689, longitude = 126.38121),
     185 => (; latitude = 33.29382, longitude = 126.16283),
     221 => (; latitude = 37.15927, longitude = 128.1943),
