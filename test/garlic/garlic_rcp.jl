@@ -287,6 +287,9 @@ garlic_run_storage(; configurator, settings, name, kw...) = begin
     bson("garlic_$name-storage.bson", df = r)
 end
 
+#garlic_run_storage(configurator=korea_config, settings=(; korea_settings..., station=[185]), name=:korea)
+#garlic_run_storage(configurator=rcp_config, settings=(; rcp_settings..., station=[185]), name=:rcp)
+
 garlic_run_cold(; configurator, settings, name, kw...) = begin
     c0 = :Meta => :cold => true
     c1 = (
@@ -301,5 +304,8 @@ garlic_run_cold(; configurator, settings, name, kw...) = begin
     r = [r0; r1]
     bson("garlic_$name-cold.bson", df = r)
 end
+
+#garlic_run_cold(configurator=korea_config, settings=(; korea_settings..., station=[101]), name=:korea)
+#garlic_run_cold(configurator=rcp_config, settings=(; rcp_settings..., station=[101]), name=:rcp)
 
 Garlic
