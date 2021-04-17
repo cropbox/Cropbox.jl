@@ -163,8 +163,16 @@ rcp_co2(scenario, year) = begin
     LinearInterpolation(x, Float64.(y))(year)
 end
 
-rcp_config(; config=(), scenario, station, year, repetition, sowing_day, scape_removal_day) = begin
+rcp_config(; config=(), tz=tz, kw...) = _rcp_config(; config, meta=kw, tz, kw...)
+_rcp_config(; config=(), meta=(), tz=tz, scenario, station, year, repetition, sowing_day, scape_removal_day) = begin
+    latlongs = LATLONGS[station]
     name = "$(scenario)_$(station)_$(year)_$(repetition)"
+    weaname = "$(@__DIR__)/data/RCP/$name.wea"
+    CO2 = rcp_co2(scenario, year)
+    garlic_config(; config, meta, tz, latlongs..., weaname, CO2, year, sowing_day, scape_removal_day)
+end
+
+garlic_config(; config=(), meta=(), tz=tz, latitude, longitude, altitude=20, weaname, CO2=390, year, sowing_day, scape_removal_day) = begin
     start_date = date(year, 9, 1)
     end_date = date(year+1, 6, 30)
 
@@ -175,12 +183,13 @@ rcp_config(; config=(), scenario, station, year, repetition, sowing_day, scape_r
 
     @config (ND,
         :Location => (;
-            LATLONGS[station]...,
-            altitude = 20.0,
+            latitude,
+            longitude,
+            altitude,
         ),
         :Weather => (;
-            store = Garlic.loadwea("$(@__DIR__)/data/RCP/$name.wea", tz),
-            CO2 = rcp_co2(scenario, year),
+            store = Garlic.loadwea(weaname, tz),
+            CO2,
         ),
         :Calendar => (;
             init = start_date,
@@ -192,28 +201,19 @@ rcp_config(; config=(), scenario, station, year, repetition, sowing_day, scape_r
             harvest_date,
             storage_days,
         ),
-        :Meta => (;
-            scenario,
-            station,
-            year,
-            repetition,
-            sowing_day,
-            scape_removal_day,
-        ),
+        :Meta => meta,
         config,
     )
 end
 
 #setting = (; scenario=:RCP45, station=165, year=2021, repetition=1, sowing_day=250, scape_removal_day=nothing)
 
-rcp_simulate(; config=(), target=[:bulb_mass, :total_mass, :planting_density, :yield, :leaf_area], setting) = begin
-    #println((; setting...))
-    config = rcp_config(; config, setting...)
+garlic_simulate(; config, target) = begin
     callback(s) = s.calendar.time' == s.config[:Phenology][:harvest_date]
-    r = simulate(Garlic.Model; config, target, meta=:Meta, stop=callback, snap=callback, verbose=false)
+    simulate(Garlic.Model; config, target, meta=:Meta, stop=callback, snap=callback, verbose=false)
 end
 
-settings = (;
+rcp_settings = (;
     scenario = [:RCP45, :RCP85],
     station = keys(STATION_NAMES),
     year = 2020:10:2090,
@@ -221,18 +221,33 @@ settings = (;
     sowing_day = 240:10:350,
     scape_removal_day = [1],
 )
-rcp_run(; config=(), settings, cache=nothing, verbose=true) = begin
+rcp_run(; configurator=rcp_config, settings=rcp_settings, kw...) = garlic_run(; configurator, settings, kw...)
+
+garlic_compose(; config=(), configurator, settings) = begin
     K = keys(settings)
     V = values(settings)
     P = Iterators.product(V...) |> collect
-    n = length(P)
+    [configurator(; config, zip(K, p)...) for p in P]
+end
+
+garlic_run(;
+    target=[:bulb_mass, :total_mass, :planting_density, :yield, :leaf_area],
+    config=(),
+    configurator,
+    settings,
+    cache=nothing,
+    verbose=true,
+) = begin
+    C = garlic_compose(; config, configurator, settings)
+    n = length(C)
     R = isnothing(cache) ? Vector(undef, n) : cache
     @assert length(R) == n
     dt = verbose ? 1 : Inf
     p = Cropbox.Progress(n; dt, Cropbox.barglyphs)
     try
         Threads.@threads for i in 1:n
-            !isassigned(R, i) && (R[i] = rcp_simulate(; config, setting=zip(K, P[i])))
+            config = C[i]
+            !isassigned(R, i) && (R[i] = garlic_simulate(; config, target))
             Cropbox.ProgressMeter.next!(p)
         end
     catch
@@ -242,33 +257,31 @@ rcp_run(; config=(), settings, cache=nothing, verbose=true) = begin
     reduce(vcat, R)
 end
 
-rcp_run_storage() = begin
-    s = (; settings..., station = [185]) # 고산
+garlic_run_storage(; configurator, settings, name, kw...) = begin
     c0 = :Meta => :storage => true
     c1 = (
         :Phenology => :storage_days => 100,
         :Meta => :storage => false,
     )
-    r0 = rcp_run(; config=c0, settings=s)
-    bson("garlic_rcp-storage-on.bson", df = r0)
-    r1 = rcp_run(; config=c1, settings=s)
-    bson("garlic_rcp-storage-off.bson", df = r1)
+    r0 = garlic_run(; configurator, settings, config=c0)
+    bson("garlic_$name-storage-on.bson", df = r0)
+    r1 = garlic_run(; configurator, settings, config=c1)
+    bson("garlic_$name-storage-off.bson", df = r1)
     r = [r0; r1]
-    bson("garlic_rcp-storage.bson", df = r)
+    bson("garlic_$name-storage.bson", df = r)
 end
 
-rcp_run_cold() = begin
-    s = (; settings..., station = [221, 272, 601]) # 제천, 영주, 단양
+garlic_run_cold(; configurator, settings, name, kw...) = begin
     c0 = :Meta => :cold => true
     c1 = (
         :Density => :enable_cold_damage => false,
         :LeafColdInjury => :_enable => false,
         :Meta => :cold => false,
     )
-    r0 = rcp_run(; config=c0, settings=s)
-    bson("garlic_rcp-cold-on.bson", df = r0)
-    r1 = rcp_run(; config=c1, settings=s)
-    bson("garlic_rcp-cold-off.bson", df = r1)
+    r0 = garlic_run(; configurator, settings, config=c0)
+    bson("garlic_$name-cold-on.bson", df = r0)
+    r1 = garlic_run(; configurator, settings, config=c1)
+    bson("garlic_$name-cold-off.bson", df = r1)
     r = [r0; r1]
-    bson("garlic_rcp-cold.bson", df = r)
+    bson("garlic_$name-cold.bson", df = r)
 end
