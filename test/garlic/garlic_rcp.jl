@@ -301,3 +301,5 @@ garlic_run_cold(; configurator, settings, name, kw...) = begin
     r = [r0; r1]
     bson("garlic_$name-cold.bson", df = r)
 end
+
+Garlic
