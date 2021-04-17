@@ -153,6 +153,14 @@ LATLONGS = Dict(
     601 => (; latitude = 36.98553, longitude = 128.3669),
 )
 
+korea_config(; config=(), tz=tz, kw...) = _korea_config(; config, meta=kw, tz, kw...)
+_korea_config(; config=(), meta=(), tz=tz, station, year, sowing_day, scape_removal_day) = begin
+    latlongs = LATLONGS[station]
+    name = "$(station)_$(year)"
+    weaname = "$(@__DIR__)/data/Korea/$name.wea"
+    garlic_config(; config, meta, tz, latlongs..., weaname, year, sowing_day, scape_removal_day)
+end
+
 rcp_co2(scenario, year) = begin
     x = [2005, 2050, 2100, 2150, 2250, 2300]
     y = if scenario == :RCP45
@@ -222,6 +230,14 @@ rcp_settings = (;
     scape_removal_day = [1],
 )
 rcp_run(; configurator=rcp_config, settings=rcp_settings, kw...) = garlic_run(; configurator, settings, kw...)
+
+korea_settings = (;
+    station = [185, 101], # Gosan, Chuncheon
+    year = 2007:2016,
+    sowing_day = 240:10:350,
+    scape_removal_day = [1],
+)
+korea_run(; configurator=korea_config, settings=korea_settings, kw...) = garlic_run(; configurator, settings, kw...)
 
 garlic_compose(; config=(), configurator, settings) = begin
     K = keys(settings)
