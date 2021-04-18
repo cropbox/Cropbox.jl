@@ -268,7 +268,6 @@ end
 const C = :Cropbox
 const ϵ = @q begin end
 
-genvartype(v::VarInfo) = genvartype(v)
 genvartype(v::VarInfo{Nothing}) = gettag(v, :_type)
 genvartype(v::VarInfo{Symbol}) = begin
     N = gettag(v, :_type)
