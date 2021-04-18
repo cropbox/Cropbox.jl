@@ -405,7 +405,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $S(; kw...) = $_S(; kw...)
         $C.typefor(::Type{<:$S}) = $_S
         let $(constpatches...)
-            Core.@__doc__ mutable struct $_S <: $S
+            Core.@__doc__ struct $_S <: $S
                 $(fields...)
                 function $_S(; __kwargs__...)
                     $predecl
