@@ -72,6 +72,24 @@ Base.:|(a::Union{State,And,Or,Not}, b::Union{State,And,Or,Not}) = Or(a, b)
 value(s::And) = value(s.state1) && value(s.state2)
 value(s::Or) = value(s.state1) || value(s.state2)
 
+mutable struct StateRef{V,S<:State{V}} <: State{V}
+    state::S
+end
+
+Base.getindex(r::StateRef) = r.state
+value(r::StateRef) = value(r[])
+setvalue!(r::StateRef, s::State) = (r.state = s)
+
+#HACK: swap out state variable of mutable System after initialization
+setvar!(s::System, k::Symbol, v::State) = begin
+    r = s[k]
+    @assert r isa StateRef
+    setvalue!(r, v)
+    a = Dict(fieldnamesalias(s))[k]
+    !isnothing(a) && setvalue!(s[a], v)
+    nothing
+end
+
 abstract type Priority end
 struct PrePriority <: Priority end
 struct PostPriority <: Priority end

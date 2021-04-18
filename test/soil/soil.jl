@@ -251,8 +251,8 @@ end
     H(Hm, Hg): total_head => Hm + Hg ~ track(u"m") # H_i (m)
 
     # Water content (2.4.10)
-    qi: water_flux_in => 0 ~ track(u"m/d", skip) # q_i (m day-1)
-    qo: water_flux_out => 0 ~ track(u"m/d", skip) # q_o (m day-1)
+    qi: water_flux_in => 0 ~ track(u"m/d", ref, skip) # q_i (m day-1)
+    qo: water_flux_out => 0 ~ track(u"m/d", ref, skip) # q_o (m day-1)
     q̂(qi, qo): water_flux_net => qi - qo ~ track(u"m/d") # q^hat_i (m day-1)
     𝚯(q̂): water_content ~ accumulate(init=𝚯_i, u"m") # Theta_i (m)
 

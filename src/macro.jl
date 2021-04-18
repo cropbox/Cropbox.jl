@@ -273,7 +273,8 @@ genvartype(v::VarInfo{Symbol}) = begin
     N = gettag(v, :_type)
     U = gettag(v, :unit)
     V = @q $C.valuetype($N, $U)
-    genvartype(v, Val(v.state); N, U, V)
+    T = genvartype(v, Val(v.state); N, U, V)
+    istag(v, :ref) ? @q(StateRef{$V,$T}) : T
 end
 
 genfield(v::VarInfo) = begin
@@ -325,6 +326,7 @@ gendecl(v::VarInfo) = begin
         stargs = [:($(esc(k))=$v) for (k, v) in filterconstructortags(v)]
         @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
     end
+    decl = istag(v, :ref) ? @q(StateRef($decl)) : decl
     gendecl(v, decl)
 end
 gendecl(v::VarInfo{Nothing}) = begin

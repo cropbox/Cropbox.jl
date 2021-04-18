@@ -57,14 +57,6 @@ Base.hasproperty(s::System, n::AbstractString) = begin
     true
 end
 
-#HACK: swap out state variable of mutable System after initialization
-setvar!(s::System, k::Symbol, v) = begin
-    setfield!(s, k, v)
-    a = Dict(fieldnamesalias(s))[k]
-    !isnothing(a) && setfield!(s, a, v)
-    nothing
-end
-
 #HACK: calculate variable body with external arguments for debugging purpose
 value(s::System, k::Symbol; kw...) = begin
     d = dependency(s)

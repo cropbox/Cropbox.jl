@@ -36,15 +36,15 @@
 
     @testset "setvar!" begin
         @system SSystemSetVar(Controller) begin
-            a => 1 ~ preserve
-            b => 2 ~ preserve
+            a => 1 ~ preserve(ref)
+            b => 2 ~ preserve(ref)
         end
         s = instance(SSystemSetVar)
         @test s.a' == 1 && s.b' == 2
-        a, b = s.a, s.b
+        a, b = s.a[], s.b[]
         Cropbox.setvar!(s, :b, a)
         Cropbox.setvar!(s, :a, b)
-        @test s.a === b && s.b === a
+        @test s.a[] === b && s.b[] === a
         @test s.a' == 2 && s.b' == 1
     end
 
