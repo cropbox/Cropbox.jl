@@ -166,7 +166,7 @@ end
             #HACK: assume apical when no lateral branching zone exists
             iszero(ln) ? :apical : :lateral
         end
-    end ~ preserve::Symbol
+    end ~ preserve::sym
 
     lb: length_of_basal_zone => 0.4 ~ preserve(u"cm", extern, parameter, min=0)
     la: length_of_apical_zone => 0.5 ~ preserve(u"cm", extern, parameter, min=0)
@@ -255,7 +255,7 @@ end
             :nothing
         end
         find(rand())
-    end ~ call::Symbol
+    end ~ call::sym
 
     ms(l, Δl, lt, lmax): may_segment => (l >= Δl && lt < lmax) ~ flag
     S(n, box, ro, zi, r, lb, la, ln, lmax, lt, ls1, wrap(RT1)): segment => begin
@@ -302,19 +302,19 @@ end
 @system SecondOrderLateralRoot{
     Segment => SecondOrderLateralRoot,
 }(BaseRoot, Tropism) <: BaseRoot begin
-    n: name => :SecondOrderLateralRoot ~ preserve::Symbol
+    n: name => :SecondOrderLateralRoot ~ preserve::sym
 end
 @system FirstOrderLateralRoot{
     Segment => FirstOrderLateralRoot,
     Branch => SecondOrderLateralRoot,
 }(BaseRoot, Gravitropism) <: BaseRoot begin
-    n: name => :FirstOrderLateralRoot ~ preserve::Symbol
+    n: name => :FirstOrderLateralRoot ~ preserve::sym
 end
 @system PrimaryRoot{
     Segment => PrimaryRoot,
     Branch => FirstOrderLateralRoot,
 }(BaseRoot, Gravitropism) <: BaseRoot begin
-    n: name => :PrimaryRoot ~ preserve::Symbol
+    n: name => :PrimaryRoot ~ preserve::sym
 end
 
 Cropbox.update!(s::BaseRoot, t) = begin

@@ -18,7 +18,7 @@ end
     total_mass ~ hold
     green_leaf_ratio ~ hold
 
-    dp(pheno.development_phase): development_phase ~ track::Symbol
+    dp(pheno.development_phase): development_phase ~ track::sym
 
     C_conc: carbon_concentration => begin
         # maize: 40% C, See Kim et al. (2007) EEB

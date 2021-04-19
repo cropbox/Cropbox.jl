@@ -91,7 +91,7 @@ include("death.jl")
         else
             :bulb_growth_without_scape
         end
-    end ~ track::Symbol
+    end ~ track::sym
 end
 
 @system PhenologyController(Controller) begin

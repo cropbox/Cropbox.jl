@@ -6,7 +6,7 @@ import CSV
 
 @system StoreBase begin
     filename => "" ~ preserve::String(parameter)
-    ik: indexkey => :index ~ preserve::Symbol(parameter)
+    ik: indexkey => :index ~ preserve::sym(parameter)
 
     i(t=context.clock.tick): index => t + 1 ~ track::int
     ix: indexer ~ hold
@@ -35,7 +35,7 @@ end
 @system DayStore(DataFrameStore) begin
     i(context.clock.time): index ~ track::int(u"d")
 
-    daykey => :day ~ preserve::Symbol(parameter)
+    daykey => :day ~ preserve::sym(parameter)
     ix(daykey; r::Cropbox.DataFrames.DataFrameRow): indexer => r[daykey] ~ call::int(u"d")
 end
 
@@ -43,7 +43,7 @@ end
     calendar(context) ~ ::Calendar
     i(t=calendar.time): index => Cropbox.Dates.Date(t) ~ track::date
 
-    datekey => :date ~ preserve::Symbol(parameter)
+    datekey => :date ~ preserve::sym(parameter)
     ix(datekey; r::Cropbox.DataFrames.DataFrameRow): indexer => r[datekey] ~ call::date
 end
 
@@ -51,8 +51,8 @@ end
     calendar(context) ~ ::Calendar
     i(calendar.time): index ~ track::datetime
 
-    datekey => :date ~ preserve::Symbol(parameter)
-    timekey => :time ~ preserve::Symbol(parameter)
+    datekey => :date ~ preserve::sym(parameter)
+    timekey => :time ~ preserve::sym(parameter)
     tz: timezone => Cropbox.tz"UTC" ~ preserve::Cropbox.TimeZones.TimeZone(parameter)
     ix(datekey, timekey, tz; r::Cropbox.DataFrames.DataFrameRow): indexer => begin
         #HACK: handle ambiguous time conversion under DST

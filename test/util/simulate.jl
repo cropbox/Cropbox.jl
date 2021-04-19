@@ -290,7 +290,7 @@ using Dates
     @testset "extractable" begin
         @system SSimulateExtractable(Controller) begin
             a => 1 ~ track
-            b => :hello ~ track::Symbol
+            b => :hello ~ track::sym
             c => "world" ~ track::String
             d => DateTime(2020, 3, 1) ~ track::DateTime
             e => Dict(:k => 0) ~ track::Dict
