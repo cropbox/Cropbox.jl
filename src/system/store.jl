@@ -15,36 +15,36 @@ import CSV
 end
 
 @system DataFrameStore(StoreBase) begin
-    ix(; r::DataFrames.DataFrameRow): indexer => DataFrames.row(r) ~ call::Int
+    ix(; r::Cropbox.DataFrames.DataFrameRow): indexer => Cropbox.DataFrames.row(r) ~ call::Int
 
     df(filename, ik, ix): dataframe => begin
-        df = CSV.File(filename) |> DataFrames.DataFrame |> unitfy
+        df = Cropbox.CSV.File(filename) |> Cropbox.DataFrames.DataFrame |> unitfy
         df[!, ik] = map(ix, eachrow(df))
         df
-    end ~ preserve::DataFrame(extern, parameter)
+    end ~ preserve::Cropbox.DataFrames.DataFrame(extern, parameter)
 
     gdf(df, ik): grouped_dataframe => begin
-        DataFrames.groupby(df, ik)
-    end ~ preserve::DataFrames.GroupedDataFrame{DataFrame}
+        Cropbox.DataFrames.groupby(df, ik)
+    end ~ preserve::Cropbox.DataFrames.GroupedDataFrame{Cropbox.DataFrame}
 
     s(gdf, i): store => begin
         gdf[(i,)][1, :]
-    end ~ track::DataFrames.DataFrameRow{DataFrame,DataFrames.Index}
+    end ~ track::Cropbox.DataFrames.DataFrameRow{Cropbox.DataFrame,Cropbox.DataFrames.Index}
 end
 
 @system DayStore(DataFrameStore) begin
     i(context.clock.time): index ~ track::Int(u"d")
 
     daykey => :day ~ preserve::Symbol(parameter)
-    ix(daykey; r::DataFrames.DataFrameRow): indexer => r[daykey] ~ call::Int(u"d")
+    ix(daykey; r::Cropbox.DataFrames.DataFrameRow): indexer => r[daykey] ~ call::Int(u"d")
 end
 
 @system DateStore(DataFrameStore) begin
     calendar(context) ~ ::Calendar
-    i(t=calendar.time): index => Dates.Date(t) ~ track::date
+    i(t=calendar.time): index => Cropbox.Dates.Date(t) ~ track::date
 
     datekey => :date ~ preserve::Symbol(parameter)
-    ix(datekey; r::DataFrames.DataFrameRow): indexer => r[datekey] ~ call::date
+    ix(datekey; r::Cropbox.DataFrames.DataFrameRow): indexer => r[datekey] ~ call::date
 end
 
 @system TimeStore(DataFrameStore) begin
@@ -53,17 +53,17 @@ end
 
     datekey => :date ~ preserve::Symbol(parameter)
     timekey => :time ~ preserve::Symbol(parameter)
-    tz: timezone => tz"UTC" ~ preserve::TimeZones.TimeZone(parameter)
-    ix(datekey, timekey, tz; r::DataFrames.DataFrameRow): indexer => begin
+    tz: timezone => Cropbox.tz"UTC" ~ preserve::Cropbox.TimeZones.TimeZone(parameter)
+    ix(datekey, timekey, tz; r::Cropbox.DataFrames.DataFrameRow): indexer => begin
         #HACK: handle ambiguous time conversion under DST
         occurrence = 1
-        i = DataFrames.row(r)
+        i = Cropbox.DataFrames.row(r)
         if i > 1
             r0 = parent(r)[i-1, :]
             r0[timekey] == r[timekey] && (occurrence = 2)
         end
-        dt = DateTime(r[datekey], r[timekey])
-        ZonedDateTime(dt, tz, occurrence)
+        dt = Cropbox.Dates.DateTime(r[datekey], r[timekey])
+        Cropbox.ZonedDateTime(dt, tz, occurrence)
     end ~ call::datetime
 end
 
@@ -71,12 +71,12 @@ end
     #TODO: avoid dynamic dispatch on Table/NamedTuple
     ix(; i::Int, r::NamedTuple): indexer => i ~ call::Int
     tb(filename, ik, ix): table => begin
-        tb = CSV.File(filename) |> TypedTables.FlexTable
+        tb = Cropbox.CSV.File(filename) |> Cropbox.TypedTables.FlexTable
         setproperty!(tb, ik, map(enumerate(eachrow(tb))) do (i, r)
             ix(i, r)
         end)
-        Table(tb)
-    end ~ preserve::Table(extern, parameter)
+        Cropbox.Table(tb)
+    end ~ preserve::Cropbox.Table(extern, parameter)
     s(tb, i): store => tb[i] ~ track::NamedTuple
 end
 
