@@ -1,7 +1,6 @@
 module Pheno
 
 using Cropbox
-using DataFrames
 using TimeZones
 import Dates
 

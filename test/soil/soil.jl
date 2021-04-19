@@ -338,8 +338,6 @@ end
     end ~ ::Nothing
 end
 
-using DataFrames
-using CSV
 @system SoilWeather begin
     s: store ~ provide(index=:timestamp, init=1u"d", parameter)
     R: precipitation ~ drive(from=s, by=:precipitation, u"mm/d")

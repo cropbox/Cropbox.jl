@@ -1,7 +1,3 @@
-using TimeZones
-using DataFrames
-using CSV
-
 @system Weather begin
     calendar(context) ~ ::Calendar(override)
     vp(context): vapor_pressure ~ ::VaporPressure
