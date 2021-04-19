@@ -724,19 +724,24 @@ end
 geninit(v::VarInfo) = @q $C.value($(gettag(v, :init)))
 
 gendefaultvalue(v::VarInfo; parameter=false, init=false, sample=true, unitfy=true, minmax=true, round=true, when=true) = begin
-    x = if parameter && istag(v, :parameter)
+    x0 = if parameter && istag(v, :parameter)
         genparameter(v)
     elseif init && hastag(v, :init)
         geninit(v)
     else
         genbody(v)
     end
+    x = x0
     sample && (x = gensample(v, x))
     unitfy && (x = genunitfy(v, x))
     minmax && (x = genminmax(v, x))
     round && (x = genround(v, x))
     when && (x = genwhen(v, x))
-    x
+    if istag(v, :optional)
+        @q isnothing($x0) ? nothing : $x
+    else
+        x
+    end
 end
 
 genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = @q begin
