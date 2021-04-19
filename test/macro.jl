@@ -138,6 +138,8 @@
             f => "A" ~ preserve::str
             g => nothing ~ preserve::∅
             h => missing ~ preserve::_
+            i => Cropbox.Dates.Date(2021) ~ preserve::date
+            j => Cropbox.TimeZones.ZonedDateTime(2021, Cropbox.TimeZones.tz"UTC") ~ preserve::datetime
         end
         s = instance(STypeAlias)
         @test s.a' isa Int64 && s.a' === -1
@@ -148,6 +150,8 @@
         @test s.f' isa String && s.f' === "A"
         @test s.g' isa Nothing && s.g' === nothing
         @test s.h' isa Missing && s.h' === missing
+        @test s.i' isa Cropbox.Dates.Date && s.i' === Cropbox.Dates.Date(2021)
+        @test s.j' isa Cropbox.TimeZones.ZonedDateTime && s.j' === Cropbox.TimeZones.ZonedDateTime(2021, Cropbox.tz"UTC")
     end
 
     @testset "type union nothing" begin

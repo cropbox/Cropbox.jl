@@ -149,6 +149,8 @@ parsetypealias(::Val{:sym}, _) = :Symbol
 parsetypealias(::Val{:str}, _) = :String
 parsetypealias(::Val{:∅}, _) = :Nothing
 parsetypealias(::Val{:_}, _) = :Missing
+parsetypealias(::Val{:date}, _) = :($C.Dates.Date)
+parsetypealias(::Val{:datetime}, _) = :($C.TimeZones.ZonedDateTime)
 parsetypealias(::Val, type) = type
 
 extractscope(x) = begin
