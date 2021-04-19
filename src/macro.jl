@@ -153,6 +153,9 @@ parsetypealias(::Val{:date}, _) = :($C.Dates.Date)
 parsetypealias(::Val{:datetime}, _) = :($C.TimeZones.ZonedDateTime)
 parsetypealias(::Val, type) = type
 
+using Dates: Date
+using TimeZones: ZonedDateTime
+
 extractscope(x) = begin
     l = []
     if @capture(x, a_{c__})
