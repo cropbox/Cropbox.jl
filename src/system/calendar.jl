@@ -2,7 +2,7 @@ using TimeZones: TimeZones, ZonedDateTime, @tz_str
 import Dates
 
 @system Calendar begin
-    init => ZonedDateTime(2017, 7, 16, tz"America/Los_Angeles") ~ preserve::ZonedDateTime(extern, parameter)
+    init ~ preserve::ZonedDateTime(extern, parameter)
     last => nothing ~ preserve::ZonedDateTime(extern, parameter, optional)
     time(t0=init, t=nounit(context.clock.time, u"s")) => t0 + (t |> round |> Dates.Second) ~ track::ZonedDateTime
     step(context.clock.step) ~ preserve(u"hr")
