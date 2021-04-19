@@ -33,7 +33,7 @@ julia> visualize(S, :time, :a; stop=5, kind=:line)
                       time (hr)
 ```
 """
-visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
+visualize(a...; kw...) = plot(a...; kw...)
 """
     visualize!(p, <arguments>; <keyword arguments>) -> Plot
 
@@ -44,6 +44,9 @@ See also: [`visualize`](@ref)
 # Arguments
 - `p::Union{Plot,Nothing}`: plot object to be updated; `nothing` creates a new plot.
 """
+visualize!(a...; kw...) = plot!(a...; kw...)
+
+visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
 visualize!(p, S::Type{<:System}, x, y;
     config=(), group=(), xstep=(),
     stop=nothing, snap=nothing,
