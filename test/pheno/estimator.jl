@@ -18,14 +18,14 @@ import Dates
 
     t0(year, tz, Ds): start_date => begin
         ZonedDateTime(year-1, 1, 1, tz) + Dates.Day(Ds)
-    end ~ preserve::ZonedDateTime
+    end ~ preserve::datetime
 
     t1(year, tz, De): end_date => begin
         ZonedDateTime(year, 1, 1, tz) + Dates.Day(De)
-    end ~ preserve::ZonedDateTime
+    end ~ preserve::datetime
 
     calendar(context, init=t0') ~ ::Calendar
-    t(calendar.time): current_date ~ track::ZonedDateTime
+    t(calendar.time): current_date ~ track::datetime
 
     s: store ~ provide(init=t, parameter)
 

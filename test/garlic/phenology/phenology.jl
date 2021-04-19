@@ -30,7 +30,7 @@ import Dates
     sun ~ ::Sun(override)
     soil ~ ::Soil(override)
 
-    planting_date ~ preserve::ZonedDateTime(parameter)
+    planting_date ~ preserve::datetime(parameter)
     DAP(t0=planting_date, t=calendar.time): day_after_planting => begin
         floor(t - t0, Dates.Day) |> Dates.value
     end ~ track::Int(min=0)

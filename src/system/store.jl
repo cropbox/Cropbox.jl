@@ -41,15 +41,15 @@ end
 
 @system DateStore(DataFrameStore) begin
     calendar(context) ~ ::Calendar
-    i(t=calendar.time): index => Dates.Date(t) ~ track::Dates.Date
+    i(t=calendar.time): index => Dates.Date(t) ~ track::date
 
     datekey => :date ~ preserve::Symbol(parameter)
-    ix(datekey; r::DataFrames.DataFrameRow): indexer => r[datekey] ~ call::Dates.Date
+    ix(datekey; r::DataFrames.DataFrameRow): indexer => r[datekey] ~ call::date
 end
 
 @system TimeStore(DataFrameStore) begin
     calendar(context) ~ ::Calendar
-    i(calendar.time): index ~ track::ZonedDateTime
+    i(calendar.time): index ~ track::datetime
 
     datekey => :date ~ preserve::Symbol(parameter)
     timekey => :time ~ preserve::Symbol(parameter)
@@ -64,7 +64,7 @@ end
         end
         dt = DateTime(r[datekey], r[timekey])
         ZonedDateTime(dt, tz, occurrence)
-    end ~ call::ZonedDateTime
+    end ~ call::datetime
 end
 
 @system TableStore(StoreBase) begin

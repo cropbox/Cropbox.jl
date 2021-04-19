@@ -28,7 +28,7 @@ import Dates
     weather ~ ::Weather(override)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
-    t(calendar.time): datetime ~ track::ZonedDateTime
+    t(calendar.time): datetime ~ track::datetime
     d(t): day => Dates.dayofyear(t) ~ track::Int
     h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
 
