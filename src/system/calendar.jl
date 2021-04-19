@@ -5,7 +5,7 @@ import Dates
     init => ZonedDateTime(2017, 7, 16, tz"America/Los_Angeles") ~ preserve::ZonedDateTime(extern, parameter)
     last => nothing ~ preserve::ZonedDateTime(extern, parameter, optional)
     time(t0=init, t=nounit(context.clock.time, u"s")) => t0 + (t |> round |> Dates.Second) ~ track::ZonedDateTime
-    step(Δt=nounit(context.clock.step, u"s")) => Dates.Second(Δt) ~ preserve::Dates.Second
+    step(context.clock.step) ~ preserve(u"hr")
     stop(time, last) => begin
         isnothing(last) ? false : (time >= last)
     end ~ flag
@@ -14,9 +14,9 @@ import Dates
             nothing
         else
             # number of update!() required to reach `last` time
-            ceil(last - init, Dates.Second) / step
+            (last - init) / step
         end
-    end ~ preserve::Int(optional)
+    end ~ preserve::Int(round, optional)
 end
 
 export Calendar

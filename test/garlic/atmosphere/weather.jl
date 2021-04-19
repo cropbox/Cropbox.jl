@@ -6,8 +6,7 @@ using CSV
     calendar(context) ~ ::Calendar(override)
     vp(context): vapor_pressure ~ ::VaporPressure
 
-    #TODO: remove calendar.step once Unitful gets Dates compatibility
-    s: store ~ provide(init=calendar.time, step=calendar.step, parameter)
+    s: store ~ provide(init=calendar.time, parameter)
 
     PFD: photon_flux_density ~ drive(from=s, by=:SolRad, u"μmol/m^2/s") #Quanta
     #PFD => 1500 ~ track # umol m-2 s-1

@@ -54,7 +54,7 @@ using TimeZones
     @testset "calendar" begin
         @system SProvideCalendar(Controller) begin
             calendar(context) ~ ::Calendar
-            a ~ provide(init=calendar.time, step=calendar.step, parameter)
+            a ~ provide(init=calendar.time, parameter)
         end
         t0 = ZonedDateTime(2011, 10, 29, 0, tz"Asia/Seoul")
         t1 = ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")

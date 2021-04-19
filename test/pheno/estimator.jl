@@ -27,7 +27,7 @@ import Dates
     calendar(context, init=t0') ~ ::Calendar
     t(calendar.time): current_date ~ track::ZonedDateTime
 
-    s: store ~ provide(init=t, step=calendar.step, parameter)
+    s: store ~ provide(init=t, parameter)
 
     match => false ~ flag
     stop(m=match, t, t1) => (m || t >= t1) ~ flag
