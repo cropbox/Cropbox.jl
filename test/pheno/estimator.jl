@@ -8,10 +8,10 @@ import Dates
     year ~ preserve::Int(parameter)
 
     # 270(+1)th days of the first year (around end of September)
-    Ds: start_date_offset => 270 ~ preserve::Int
+    Ds: start_date_offset => 270 ~ preserve::Int(u"d")
 
     # 150 days after the second year (around end of May)
-    De: end_date_offset => 150 ~ preserve::Int
+    De: end_date_offset => 150 ~ preserve::Int(u"d")
 
     tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
 
