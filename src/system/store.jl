@@ -5,7 +5,7 @@ using TypedTables: TypedTables, Table
 import CSV
 
 @system StoreBase begin
-    filename => "" ~ preserve::String(parameter)
+    filename => "" ~ preserve::str(parameter)
     ik: indexkey => :index ~ preserve::sym(parameter)
 
     i(t=context.clock.tick): index => t + 1 ~ track::int

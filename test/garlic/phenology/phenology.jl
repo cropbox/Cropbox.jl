@@ -77,7 +77,7 @@ include("death.jl")
     #     else
     #         "none"
     #     end
-    # end ~ track::String
+    # end ~ track::str
 
     development_phase(germinated, floral_initiated, dead, scape_removed) => begin
         if !germinated

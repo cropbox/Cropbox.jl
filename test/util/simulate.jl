@@ -291,7 +291,7 @@ using Dates
         @system SSimulateExtractable(Controller) begin
             a => 1 ~ track
             b => :hello ~ track::sym
-            c => "world" ~ track::String
+            c => "world" ~ track::str
             d => DateTime(2020, 3, 1) ~ track::DateTime
             e => Dict(:k => 0) ~ track::Dict
             f => [1, 2, 3] ~ track::Vector
