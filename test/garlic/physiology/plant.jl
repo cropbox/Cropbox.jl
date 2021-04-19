@@ -43,7 +43,7 @@
 
     yield(bulb_mass, PD) => bulb_mass * PD ~ track(u"g/m^2")
 
-    DAP(pheno.DAP): day_after_planting ~ track::Int
+    DAP(pheno.DAP): day_after_planting ~ track::int(u"d")
     time(calendar.time) ~ track::datetime
 end
 

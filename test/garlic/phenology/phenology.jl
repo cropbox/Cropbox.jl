@@ -8,8 +8,6 @@ include("bulbappearance.jl")
 include("scapegrowth.jl")
 include("death.jl")
 
-import Dates
-
 #TODO make a common class to be shared by Garlic and MAIZSIM
 @system Phenology(
     Germination,
@@ -31,9 +29,7 @@ import Dates
     soil ~ ::Soil(override)
 
     planting_date ~ preserve::datetime(parameter)
-    DAP(t0=planting_date, t=calendar.time): day_after_planting => begin
-        floor(t - t0, Dates.Day) |> Dates.value
-    end ~ track::Int(min=0)
+    DAP(t0=planting_date, t=calendar.time): day_after_planting => (t - t0) ~ track::int(u"d", min=0, round=:floor)
 
     leaves_generic => 10 ~ preserve::Int(parameter)
     leaves_potential(leaves_total) ~ track::Int(min=leaves_generic)
