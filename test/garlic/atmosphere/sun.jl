@@ -29,7 +29,7 @@ import Dates
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
     t(calendar.time): datetime ~ track::datetime
-    d(t): day => Dates.dayofyear(t) ~ track::Int
+    d(t): day => Dates.dayofyear(t) ~ track::Int(u"d")
     h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
 
     ϕ(loc.lat): latitude ~ track(u"°") # DO NOT convert to radians for consistency
@@ -50,33 +50,33 @@ import Dates
 
     # Goudriaan 1977
     declination_angle_goudriaan(d) => begin
-        g = 2pi * (d + 10)/365
+        g = 2pi * (d + 10u"d") / 365u"d"
         -23.45u"°" * cos(g)
     end ~ track(u"°")
 
     # Resenberg, blad, verma 1982
     declination_angle_resenberg(d) => begin
-        g = 2pi * (d - 172)/365
+        g = 2pi * (d - 172u"d") / 365u"d"
         23.5u"°" * cos(g)
     end ~ track(u"°")
 
     # Iqbal (1983) Pg 10 Eqn 1.3.3, and sundesign.com
     declination_angle_iqbal(d) => begin
-        g = 2pi * (d + 284)/365
+        g = 2pi * (d + 284u"d") / 365u"d"
         23.45u"°" * sin(g)
     end ~ track(u"°")
 
     # Campbell and Norman, p168
     declination_angle_campbell(d) => begin
-        a = deg2rad(356.6 + 0.9856d)
-        b = deg2rad(278.97 + 0.9856d + 1.9165sin(a))
+        a = deg2rad(356.6 + 0.9856u"d^-1" * d)
+        b = deg2rad(278.97 + 0.9856u"d^-1" * d + 1.9165sin(a))
         asind(0.39785sin(b))
     end ~ track(u"°")
 
     # Spencer equation, Iqbal (1983) Pg 7 Eqn 1.3.1. Most accurate among all
     declination_angle_spencer(d) => begin
         # gamma: day angle
-        g = 2pi * (d - 1)/365
+        g = 2pi * (d - 1u"d") / 365u"d"
         0.006918 - 0.399912cos(g) + 0.070257sin(g) - 0.006758cos(2g) + 0.000907sin(2g) -0.002697cos(3g) + 0.00148sin(3g)
     end ~ track(u"rad")
 
@@ -95,7 +95,7 @@ import Dates
     end ~ track(u"hr")
 
     ET(d): equation_of_time => begin
-        f = (279.575 + 0.9856d)*u"°"
+        f = (279.575 + 0.9856u"d^-1" * d)*u"°"
         (-104.7sin(f) + 596.2sin(2f) + 4.3sin(3f) - 12.7sin(4f) -429.3cos(f) - 2.0cos(2f) + 19.3cos(3f)) / (60 * 60)
     end ~ track(u"hr")
 
@@ -171,7 +171,7 @@ import Dates
     solar_radiation(ts, d, SC) => begin
         # solar constant, Iqbal (1983)
         #FIXME better to be 1361 or 1362 W/m-2?
-        g = 2pi * (d - 10)/365
+        g = 2pi * (d - 10u"d") / 365u"d"
         SC * sin(ts) * (1 + 0.033cos(g))
     end ~ track(u"W/m^2")
 

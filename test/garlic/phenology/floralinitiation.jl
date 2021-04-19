@@ -10,7 +10,7 @@
         # solstice = w.time.tz.localize(datetime.datetime(w.time.year, 6, 21))
         # # no MAX_LEAF_NO implied unlike original model
         # w.time <= solstice and w.day_length >= self.critical_photoperiod
-        day_length >= critPPD && day <= 171
+        day_length >= critPPD && day <= 171u"d"
     end ~ flag(once)
 
     floral_initiating(floral_initiateable & !floral_initiated) ~ flag
