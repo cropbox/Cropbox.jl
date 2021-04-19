@@ -118,8 +118,8 @@
 
     @testset "parameter round" begin
         @system SParameterRound(Controller) begin
-            a ~ preserve::Int(parameter, round=:floor)
-            b ~ preserve::Int(parameter, round=:trunc)
+            a ~ preserve::int(parameter, round=:floor)
+            b ~ preserve::int(parameter, round=:trunc)
         end
         o1 = :0 => (a = 1.4, b = 1.4)
         s1 = instance(SParameterRound; config=o1)

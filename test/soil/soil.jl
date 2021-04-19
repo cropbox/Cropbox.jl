@@ -212,7 +212,7 @@ end
 @system Layer(CharacteristicTransfer) begin
     context ~ ::SoilContext(override)
 
-    i: index ~ ::Int(override)
+    i: index ~ ::int(override)
     θ_i: vwc_initial => 0.4 ~ preserve(extern)
 
     # Soil layer depth and cumulative thickness (2.4.2)

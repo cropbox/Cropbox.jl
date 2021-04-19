@@ -5,13 +5,13 @@ using TimeZones
 import Dates
 
 @system Estimator begin
-    year ~ preserve::Int(parameter)
+    year ~ preserve::int(parameter)
 
     # 270(+1)th days of the first year (around end of September)
-    Ds: start_date_offset => 270 ~ preserve::Int(u"d")
+    Ds: start_date_offset => 270 ~ preserve::int(u"d")
 
     # 150 days after the second year (around end of May)
-    De: end_date_offset => 150 ~ preserve::Int(u"d")
+    De: end_date_offset => 150 ~ preserve::int(u"d")
 
     tz: timezone => tz"UTC" ~ preserve::TimeZone(parameter)
 

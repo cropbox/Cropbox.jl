@@ -83,7 +83,7 @@
     @testset "query index" begin
         @system SProduceQueryIndex begin
             p => produce(SProduceQueryIndex) ~ produce::SProduceQueryIndex[]
-            i(context.clock.tick) ~ preserve::Int
+            i(context.clock.tick) ~ preserve::int
             a(x=p["*"].i) => sum(x) ~ track
             b(x=p["**"].i) => sum(x) ~ track
         end
@@ -110,7 +110,7 @@
     @testset "query condition with flag" begin
         @system SProduceQueryConditionTrackBool begin
             p => produce(SProduceQueryConditionTrackBool) ~ produce::SProduceQueryConditionTrackBool[]
-            i(context.clock.tick) ~ preserve::Int
+            i(context.clock.tick) ~ preserve::int
             f(i) => isodd(i) ~ flag
             a(x=p["*/f"].i) => sum(x) ~ track
             b(x=p["**/f"].i) => sum(x) ~ track
@@ -142,7 +142,7 @@
     @testset "adjoint" begin
         @system SProduceAdjoint begin
             p => produce(SProduceAdjoint) ~ produce::SProduceAdjoint[]
-            i(context.clock.tick) ~ preserve::Int
+            i(context.clock.tick) ~ preserve::int
         end
         @system SProduceAdjointController(Controller) begin
             s(context) ~ ::SProduceAdjoint
@@ -163,7 +163,7 @@
 
     @testset "when" begin
         @system SProduceWhen begin
-            t(context.clock.tick) ~ track::Int
+            t(context.clock.tick) ~ track::int
             w(t) => isodd(t) ~ flag
             a => produce(SProduceWhen) ~ produce(when=w)
         end

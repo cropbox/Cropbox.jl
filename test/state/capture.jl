@@ -54,7 +54,7 @@
 
     @testset "when" begin
         @system SCaptureWhen(Controller) begin
-            t(context.clock.tick) ~ track::Int
+            t(context.clock.tick) ~ track::int
             f ~ preserve(parameter)
             w(t, f) => t <= f ~ flag
             a => 1 ~ capture

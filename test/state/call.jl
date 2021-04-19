@@ -27,11 +27,11 @@
 
     @testset "type and unit" begin
         @system SCallTypeUnit(Controller) begin
-            fa(; x::Int(u"m")) => x ~ call::Int(u"m")
-            a(fa) => fa(1u"m") ~ track::Int(u"m")
-            fb(i; x::Int(u"m")) => i + x ~ call::Int(u"m")
-            b(fb) => fb(1u"m") ~ track::Int(u"m")
-            i => 1 ~ preserve::Int(u"m")
+            fa(; x::Int(u"m")) => x ~ call::int(u"m")
+            a(fa) => fa(1u"m") ~ track::int(u"m")
+            fb(i; x::Int(u"m")) => i + x ~ call::int(u"m")
+            b(fb) => fb(1u"m") ~ track::int(u"m")
+            i => 1 ~ preserve::int(u"m")
         end
         s = instance(SCallTypeUnit)
         @test s.a' === 1u"m"

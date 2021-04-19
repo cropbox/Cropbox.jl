@@ -29,8 +29,8 @@ import Dates
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
     t(calendar.time): datetime ~ track::datetime
-    d(t): day => Dates.dayofyear(t) ~ track::Int(u"d")
-    h(t): hour => Dates.hour(t) ~ track::Int(u"hr")
+    d(t): day => Dates.dayofyear(t) ~ track::int(u"d")
+    h(t): hour => Dates.hour(t) ~ track::int(u"hr")
 
     ϕ(loc.lat): latitude ~ track(u"°") # DO NOT convert to radians for consistency
     λ(loc.long): longitude ~ track(u"°") # leave it as in degrees, used only once for solar noon calculation

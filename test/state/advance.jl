@@ -46,7 +46,7 @@
 
     @testset "type" begin
         @system SAdvanceType(Controller) begin
-            a ~ advance::Int
+            a ~ advance::int
         end
         s = instance(SAdvanceType)
         @test s.a' === 0

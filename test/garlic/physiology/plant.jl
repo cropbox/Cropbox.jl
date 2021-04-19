@@ -16,7 +16,7 @@
     soil(context) ~ ::Soil
     pheno(context, calendar, weather, sun, soil): phenology ~ ::Phenology
 
-    primordia => 5 ~ preserve::Int(parameter)
+    primordia => 5 ~ preserve::int(parameter)
 
     #bulb => begin end ~ produce::Bulb
 

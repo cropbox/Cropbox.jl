@@ -6,7 +6,7 @@ using TypedTables: TypedTables, Table
 @testset "store" begin
     @testset "dataframe" begin
         @system SStoreDataFrame(DataFrameStore, Controller) begin
-            a(s) => s[:a] ~ track::Int
+            a(s) => s[:a] ~ track::int
             b(s) => s[:b] ~ track
         end
         a = [1, 2, 3]
@@ -73,7 +73,7 @@ using TypedTables: TypedTables, Table
 
     @testset "table" begin
         @system SStoreTable(TableStore, Controller) begin
-            a(s) => s[:a] ~ track::Int
+            a(s) => s[:a] ~ track::int
             b(s) => s[:b] ~ track
         end
         a = [1, 2, 3]

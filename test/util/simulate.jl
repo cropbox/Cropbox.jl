@@ -53,7 +53,7 @@ using Dates
         @system SSimulateStopCount(Controller) begin
             a => 1 ~ preserve(parameter)
             b(a) ~ accumulate
-            c => 5 ~ preserve::Int
+            c => 5 ~ preserve::int
         end
         r = simulate(SSimulateStopCount, stop=:c)
         @test r[end-1, :b] == 4
@@ -253,7 +253,7 @@ using Dates
     @testset "options" begin
         @system SSimulateOptions(Controller) begin
             a ~ preserve(extern)
-            b ~ ::Int(override)
+            b ~ ::int(override)
         end
         n = 10
         a, b = 1, 2

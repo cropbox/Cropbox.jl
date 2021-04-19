@@ -1,7 +1,7 @@
 #TODO: rename *temperature to more genereral terms
 @system LeafLengthTracker(BetaFunction) begin
     pheno: phenology ~ ::Phenology(override)
-    T: temperature ~ ::Int(override)
+    T: temperature ~ ::int(override)
     #FIXME: leaves_potential is already max(leaves_generic, leaves_total)?
     n(np=pheno.leaves_potential, ng=pheno.leaves_generic): leaf_count => max(np, ng) ~ track
     Tn: minimum_temperature => 0 ~ preserve
@@ -34,7 +34,7 @@ end
 end
 
 @system Leaf(Organ, LeafColdInjury) begin
-    rank ~ ::Int(override) # preserve
+    rank ~ ::int(override) # preserve
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
     # This is the "potential" elongation rate with no water stress Yang

@@ -91,7 +91,7 @@
 
     @testset "when" begin
         @system SAccumulateWhen(Controller) begin
-            t(context.clock.tick) ~ track::Int
+            t(context.clock.tick) ~ track::int
             f ~ preserve(parameter)
             w(t, f) => t < f ~ flag
             a => 1 ~ accumulate
@@ -120,7 +120,7 @@
 
     @testset "reset" begin
         @system SAccumulateReset(Controller) begin
-            t(context.clock.tick) ~ track::Int
+            t(context.clock.tick) ~ track::int
             r(t) => t % 4 == 0 ~ flag
             a => 1 ~ accumulate
             b => 1 ~ accumulate(reset=r)

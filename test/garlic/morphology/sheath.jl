@@ -1,5 +1,5 @@
 @system Sheath(Organ) begin
-    rank ~ ::Int(override) # preserve
+    rank ~ ::int(override) # preserve
 
     #FIXME sheath biomass
     mass => 0 ~ track(u"g")

@@ -154,8 +154,8 @@ end
 }(Tropism, Rendering) begin
     box ~ <:Container(override)
 
-    ro: root_order => 1 ~ preserve::Int(extern)
-    zi: zone_index => 0 ~ preserve::Int(extern)
+    ro: root_order => 1 ~ preserve::int(extern)
+    zi: zone_index => 0 ~ preserve::int(extern)
 
     zt(lmax, la, lb, lp, ln): zone_type => begin
         if (lmax - la) <= lp
@@ -196,8 +196,8 @@ end
         rand(Normal(θ, σ_Δx))
     end ~ call(u"°")
     pβ(;): pick_radial_angle => rand(Uniform(0, 360)) ~ call(u"°")
-    αN: angular_angle_trials => 20 ~ preserve::Int(parameter)
-    βN: radial_angle_trials => 5 ~ preserve::Int(parameter)
+    αN: angular_angle_trials => 20 ~ preserve::int(parameter)
+    βN: radial_angle_trials => 5 ~ preserve::int(parameter)
     A(pα, pβ, to, N, dist=box.dist, np, αN, βN): angles => begin
         n = rand() < N % 1 ? ceil(N) : floor(N)
         P = [(pα(), pβ()) for i in 0:n]
@@ -329,7 +329,7 @@ end
 
 @system RootArchitecture(Controller) begin
     box(context) ~ <:Container(override)
-    maxB: number_of_basal_roots => 1 ~ preserve::Int(parameter)
+    maxB: number_of_basal_roots => 1 ~ preserve::int(parameter)
     RT0: initial_transformation => IdentityTransformation() ~ track::Transformation
     roots(roots, box, maxB, wrap(RT0)) => begin
         [produce(PrimaryRoot; box, RT0) for i in (length(roots)+1):maxB]

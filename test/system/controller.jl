@@ -2,7 +2,7 @@
     @testset "options" begin
         @system SControllerOptions(Controller) begin
             a ~ preserve(extern)
-            b ~ ::Int(override)
+            b ~ ::int(override)
         end
         o = (a=1, b=2)
         s = instance(SControllerOptions; options=o)

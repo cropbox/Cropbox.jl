@@ -27,7 +27,7 @@ using DataFrames: DataFrame
 
     @testset "type" begin
         @system SDriveType(Controller) begin
-            a => [2, 4, 6] ~ drive::Int(u"m")
+            a => [2, 4, 6] ~ drive::int(u"m")
         end
         s = instance(SDriveType)
         @test s.a' === 2u"m"
@@ -74,8 +74,8 @@ using DataFrames: DataFrame
 
     @testset "produce" begin
         @system SDriveProduce begin
-            i(context.clock.tick) ~ preserve::Int
-            a => 0:3 ~ drive::Int
+            i(context.clock.tick) ~ preserve::int
+            a => 0:3 ~ drive::int
         end
         @system SDriveProduceController(Controller) begin
             p => produce(SDriveProduce) ~ produce

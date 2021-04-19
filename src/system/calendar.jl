@@ -16,7 +16,7 @@ import Dates
             # number of update!() required to reach `last` time
             (last - init) / step
         end
-    end ~ preserve::Int(round, optional)
+    end ~ preserve::int(round, optional)
 end
 
 export Calendar

@@ -31,9 +31,9 @@ include("death.jl")
     planting_date ~ preserve::datetime(parameter)
     DAP(t0=planting_date, t=calendar.time): day_after_planting => (t - t0) ~ track::int(u"d", min=0, round=:floor)
 
-    leaves_generic => 10 ~ preserve::Int(parameter)
-    leaves_potential(leaves_total) ~ track::Int(min=leaves_generic)
-    leaves_total(leaves_initiated) ~ track::Int
+    leaves_generic => 10 ~ preserve::int(parameter)
+    leaves_potential(leaves_total) ~ track::int(min=leaves_generic)
+    leaves_total(leaves_initiated) ~ track::int
 
     T(leaves_appeared, T_air=weather.T_air): temperature => begin
         if leaves_appeared < 9

@@ -19,5 +19,5 @@
         #HACK set initial leaf appearance to 1, not 0, to better describe stroage effect (2016-11-14: KDY, SK, JH)
         initial_leaves = (begin_from_emergence && leaf_appearable) ? 1 : 0
         floor(Int, initial_leaves + leaf_tip_appearance)
-    end ~ track::Int
+    end ~ track::int
 end

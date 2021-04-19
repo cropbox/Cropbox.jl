@@ -6,7 +6,7 @@ timeunit(::Type{<:Clock}) = u"hr"
     init => 0 ~ preserve(unit=timeunit, parameter)
     step => 1 ~ preserve(unit=timeunit, parameter)
     time => nothing ~ advance(init=init, step=step, unit=timeunit)
-    tick => nothing ~ advance::Int
+    tick => nothing ~ advance::int
 end
 
 abstract type DailyClock <: Clock end

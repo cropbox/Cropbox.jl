@@ -8,14 +8,14 @@ import CSV
     filename => "" ~ preserve::String(parameter)
     ik: indexkey => :index ~ preserve::Symbol(parameter)
 
-    i(t=context.clock.tick): index => t + 1 ~ track::Int
+    i(t=context.clock.tick): index => t + 1 ~ track::int
     ix: indexer ~ hold
 
     s: store ~ hold
 end
 
 @system DataFrameStore(StoreBase) begin
-    ix(; r::Cropbox.DataFrames.DataFrameRow): indexer => Cropbox.DataFrames.row(r) ~ call::Int
+    ix(; r::Cropbox.DataFrames.DataFrameRow): indexer => Cropbox.DataFrames.row(r) ~ call::int
 
     df(filename, ik, ix): dataframe => begin
         df = Cropbox.CSV.File(filename) |> Cropbox.DataFrames.DataFrame |> unitfy
@@ -33,10 +33,10 @@ end
 end
 
 @system DayStore(DataFrameStore) begin
-    i(context.clock.time): index ~ track::Int(u"d")
+    i(context.clock.time): index ~ track::int(u"d")
 
     daykey => :day ~ preserve::Symbol(parameter)
-    ix(daykey; r::Cropbox.DataFrames.DataFrameRow): indexer => r[daykey] ~ call::Int(u"d")
+    ix(daykey; r::Cropbox.DataFrames.DataFrameRow): indexer => r[daykey] ~ call::int(u"d")
 end
 
 @system DateStore(DataFrameStore) begin
@@ -69,7 +69,7 @@ end
 
 @system TableStore(StoreBase) begin
     #TODO: avoid dynamic dispatch on Table/NamedTuple
-    ix(; i::Int, r::NamedTuple): indexer => i ~ call::Int
+    ix(; i::Int, r::NamedTuple): indexer => i ~ call::int
     tb(filename, ik, ix): table => begin
         tb = Cropbox.CSV.File(filename) |> Cropbox.TypedTables.FlexTable
         setproperty!(tb, ik, map(enumerate(eachrow(tb))) do (i, r)

@@ -4,11 +4,11 @@
     #FIXME: ThermalTime only accepts override of track, not preserve
     STP(ST): storage_tempreature_proxy ~ track(u"°C")
     SBF(context, T=STP, To=T_opt', Tx=T_ceil'): storage_beta_function ~ ::BetaFunction
-    ILN: initial_leaves_at_harvest => 4 ~ preserve::Int(parameter)
+    ILN: initial_leaves_at_harvest => 4 ~ preserve::int(parameter)
     ILS(LIR_max, β=SBF.ΔT, SD): initial_leaves_during_storage => begin
         floor(Int, LIR_max * β * SD)
-    end ~ preserve::Int
-    initial_leaves(ILN, ILS) => ILN + ILS ~ preserve::Int
+    end ~ preserve::int
+    initial_leaves(ILN, ILS) => ILN + ILS ~ preserve::int
 
     LIR_max: maximum_leaf_initiation_rate => 0.20 ~ preserve(u"d^-1", parameter)
 
@@ -28,5 +28,5 @@
     # no MAX_LEAF_NO implied unlike original model
     leaves_initiated(initial_leaves, leaf_initiation) => begin
         floor(Int, initial_leaves + leaf_initiation)
-    end ~ track::Int
+    end ~ track::int
 end

@@ -88,11 +88,11 @@
 
     @testset "round int" begin
         @system STrackRoundInt(Controller) begin
-            a => 1.5 ~ track::Int(round)
-            b => 1.5 ~ track::Int(round=:round)
-            c => 1.5 ~ track::Int(round=:ceil)
-            d => -1.5 ~ track::Int(round=:floor)
-            e => -1.5 ~ track::Int(round=:trunc)
+            a => 1.5 ~ track::int(round)
+            b => 1.5 ~ track::int(round=:round)
+            c => 1.5 ~ track::int(round=:ceil)
+            d => -1.5 ~ track::int(round=:floor)
+            e => -1.5 ~ track::int(round=:trunc)
         end
         s = instance(STrackRoundInt)
         @test s.a' === s.b'
@@ -104,11 +104,11 @@
 
     @testset "round int unit" begin
         @system STrackRoundIntUnit(Controller) begin
-            a => 1.5 ~ track::Int(u"d", round)
-            b => 1.5 ~ track::Int(u"d", round=:round)
-            c => 1.5 ~ track::Int(u"d", round=:ceil)
-            d => -1.5 ~ track::Int(u"d", round=:floor)
-            e => -1.5 ~ track::Int(u"d", round=:trunc)
+            a => 1.5 ~ track::int(u"d", round)
+            b => 1.5 ~ track::int(u"d", round=:round)
+            c => 1.5 ~ track::int(u"d", round=:ceil)
+            d => -1.5 ~ track::int(u"d", round=:floor)
+            e => -1.5 ~ track::int(u"d", round=:trunc)
         end
         s = instance(STrackRoundIntUnit)
         @test s.a' === s.b'
