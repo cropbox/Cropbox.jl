@@ -4,7 +4,7 @@ import Dates
 @system Calendar begin
     init ~ preserve::ZonedDateTime(extern, parameter)
     last => nothing ~ preserve::ZonedDateTime(extern, parameter, optional)
-    time(t0=init, t=nounit(context.clock.time, u"s")) => t0 + (t |> round |> Dates.Second) ~ track::ZonedDateTime
+    time(t0=init, t=context.clock.time) => t0 + convert(Dates.Second, t) ~ track::ZonedDateTime
     step(context.clock.step) ~ preserve(u"hr")
     stop(time, last) => begin
         isnothing(last) ? false : (time >= last)
