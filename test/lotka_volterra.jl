@@ -26,5 +26,5 @@
     stop = 20u"yr"
     r = simulate(LotkaVolterra; config, stop)
     @test r.t[end] >= stop
-    Cropbox.plot(r, :t, [:N, :P], names=["prey", "predator"]) |> display
+    visualize(r, :t, [:N, :P], names=["prey", "predator"]) |> display
 end

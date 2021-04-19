@@ -450,5 +450,5 @@ end
         ),
     )
     @test r.time[end] == 80u"d"
-    Cropbox.plot(r, :time, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> display
+    visualize(r, :time, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> display
 end

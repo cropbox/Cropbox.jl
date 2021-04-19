@@ -64,7 +64,7 @@ show(stdout, "text/plain", r) # hide
 Here is a line plot of the variable `a` after running simulation updated for five times.
 
 ```@example simple
-plot(r, :time, :a; kind = :line)
+visualize(r, :time, :a; kind = :line)
 ```
 
 A more comprehensive guide in the next page will tell more about concepts and features behind Cropbox.

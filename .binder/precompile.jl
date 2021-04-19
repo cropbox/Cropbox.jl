@@ -8,9 +8,9 @@ end
 c = @config
 r = simulate(S, config=c)
 simulate(S, configs=[c])
-plot(r, :time, :c; backend=:UnicodePlots) |> display
-plot(r, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
-plot(r, :time, :c; kind=:line, backend=:Gadfly)' |> Cropbox.Gadfly.SVG() |> display
+visualize(r, :time, :c; backend=:UnicodePlots) |> display
+visualize(r, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
+visualize(r, :time, :c; kind=:line, backend=:Gadfly)' |> Cropbox.Gadfly.SVG() |> display
 visualize(S, :time, :c; backend=:UnicodePlots) |> display
 visualize(S, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.SVGJS() |> display
 r |> display
