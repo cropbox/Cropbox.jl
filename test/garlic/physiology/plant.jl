@@ -41,7 +41,11 @@
         end
     end ~ produce::NodalUnit[]
 
-    yield(bulb_mass, PD) => bulb_mass * PD ~ track(u"g/m^2")
+    dry_yield(bulb_mass, PD) => bulb_mass * PD ~ track(u"g/m^2")
+    fresh_yield(dry_yield, BMC) => begin
+        dry_yield * 1 / (1 - BMC)
+    end ~ track(u"g/m^2")
+    BMC: bulb_moisture_content => 0.85 ~ preserve
 
     DAP(pheno.DAP): day_after_planting ~ track::int(u"d")
     time(calendar.time) ~ track::datetime

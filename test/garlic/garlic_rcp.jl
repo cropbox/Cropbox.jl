@@ -249,7 +249,7 @@ garlic_compose(; config=(), configurator, settings) = begin
 end
 
 garlic_run(;
-    target=[:bulb_mass, :total_mass, :planting_density, :yield, :leaf_area],
+    target=[:bulb_mass, :total_mass, :planting_density, :dry_yield, :fresh_yield, :leaf_area],
     config=(),
     configurator,
     settings,
