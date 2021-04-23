@@ -3,7 +3,6 @@
     gh ~ hold
     PPFD ~ hold
     #δ ~ hold #FIXME: really needed?
-    D ~ hold
 
     ϵ: leaf_thermal_emissivity => 0.97 ~ preserve(parameter)
     σ: stefan_boltzmann_constant => u"σ" ~ preserve(u"W/m^2/K^4")
