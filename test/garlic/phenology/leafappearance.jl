@@ -6,7 +6,7 @@
         LTARa_max / (1 + exp(-k * (SD - SDm)))
     end ~ preserve(u"d^-1", parameter)
 
-    leaf_tip_appearance(r=LTAR_max, β=BF.ΔT) => r*β ~ accumulate(when=leaf_appearing)
+    LTA(r=LTAR_max, β=BF.ΔT): leaf_tip_appearance => r*β ~ accumulate(when=leaf_appearing)
 
     leaf_appearable(emerged) ~ flag
     leaf_appeared(leaves_appeared, leaves_initiated) => begin
@@ -16,8 +16,6 @@
     leaf_appearing(leaf_appearable & !leaf_appeared) ~ flag
 
     #HACK set initial leaf appearance to 1, not 0, to better describe stroage effect (2016-11-14: KDY, SK, JH)
-    initial_leaf_tip_appearance => 1 ~ track::int(when=begin_from_emergence & leaf_appearable)
-    leaves_appeared(initial_leaf_tip_appearance, leaf_tip_appearance) => begin
-        initial_leaf_tip_appearance + leaf_tip_appearance 
-    end ~ track::int(round=:floor)
+    ILTA: initial_leaf_tip_appearance => 1 ~ track::int(when=begin_from_emergence & leaf_appearable)
+    leaves_appeared(ILTA, LTA) => (ILTA + LTA) ~ track::int(round=:floor)
 end
