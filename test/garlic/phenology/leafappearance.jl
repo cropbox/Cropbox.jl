@@ -15,9 +15,9 @@
     end ~ flag
     leaf_appearing(leaf_appearable & !leaf_appeared) ~ flag
 
-    leaves_appeared(leaf_tip_appearance, leaf_appearable, begin_from_emergence) => begin
-        #HACK set initial leaf appearance to 1, not 0, to better describe stroage effect (2016-11-14: KDY, SK, JH)
-        initial_leaves = (begin_from_emergence && leaf_appearable) ? 1 : 0
-        floor(Int, initial_leaves + leaf_tip_appearance)
-    end ~ track::int
+    #HACK set initial leaf appearance to 1, not 0, to better describe stroage effect (2016-11-14: KDY, SK, JH)
+    initial_leaf_tip_appearance => 1 ~ track::int(when=begin_from_emergence & leaf_appearable)
+    leaves_appeared(initial_leaf_tip_appearance, leaf_tip_appearance) => begin
+        initial_leaf_tip_appearance + leaf_tip_appearance 
+    end ~ track::int(round=:floor)
 end
