@@ -254,6 +254,13 @@
         @test_throws MethodError instance(SDynamicTypeBaseStatic; options=(; x = c))
     end
 
+    @testset "duplicate variable" begin
+        @test_logs (:warn, "duplicate variable") @eval @system SDuplicateVariable begin
+            x => 1 ~ preserve
+            x => 2 ~ preserve
+        end
+    end
+
     @testset "body replacement" begin
         @system SBodyReplacement1(Controller) begin
             a => 1 ~ preserve

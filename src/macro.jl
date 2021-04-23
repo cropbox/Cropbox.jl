@@ -579,7 +579,12 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                 ds = ""
             end
             v = VarInfo(s, l, ln, ds, sc, substs)
-            d[v.name] = v
+            n = v.name
+            v0 = get(d, n, nothing)
+            if !isnothing(v0)
+                @warn "duplicate variable" system=s name=v.name alias=(v0.alias => v.alias) state=(v0.state => v.state)
+            end
+            d[n] = v
         end
         d
     end
