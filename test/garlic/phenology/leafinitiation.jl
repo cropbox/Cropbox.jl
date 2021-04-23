@@ -6,8 +6,8 @@
     SBF(context, T=STP, To=T_opt', Tx=T_ceil'): storage_beta_function ~ ::BetaFunction
     ILN: initial_leaves_at_harvest => 4 ~ preserve::int(parameter)
     ILS(LIR_max, β=SBF.ΔT, SD): initial_leaves_during_storage => begin
-        floor(Int, LIR_max * β * SD)
-    end ~ preserve::int
+        LIR_max * β * SD
+    end ~ preserve::int(round=:floor)
     initial_leaves(ILN, ILS) => ILN + ILS ~ preserve::int
 
     LIR_max: maximum_leaf_initiation_rate => 0.20 ~ preserve(u"d^-1", parameter)
@@ -27,6 +27,6 @@
 
     # no MAX_LEAF_NO implied unlike original model
     leaves_initiated(initial_leaves, leaf_initiation) => begin
-        floor(Int, initial_leaves + leaf_initiation)
-    end ~ track::int
+        initial_leaves + leaf_initiation
+    end ~ track::int(round=:floor)
 end
