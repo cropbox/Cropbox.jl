@@ -197,7 +197,13 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C = configure(namefor(S) => ((key(v) => val(v) for v in P)...,))
     if recursive
         T = OrderedSet([@eval scope $(v.type) for v in V])
-        T = filter(t -> t <: System && !any(t .<: exclude), T)
+        T = map(collect(T)) do t
+            #HACK: not working for dynamic type (i.e. eltype(Vector{<:System}) = Any)
+            et = eltype(t)
+            et <: System ? et : t <: System ? t : nothing
+        end
+        filter!(!isnothing, T)
+        filter!(t -> !any(t .<: exclude), T)
         X = (S, T..., exclude...) |> Set
         C = configure(parameters.(T; alias, recursive=true, exclude=X, scope)..., C)
     end
