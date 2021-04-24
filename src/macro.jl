@@ -74,6 +74,10 @@ uncanonicalname(n, s) = begin
     cs, cn = splitcanonicalname(n)
     (s == cs) ? cn : Symbol(n)
 end
+canonicalnamelabel(n) = begin
+    cs, cn = splitcanonicalname(n)
+    isnothing(cs) ? string(cn) : "($cs) $cn"
+end
 isprivatename(n) = begin
     s = string(n)
     #HACK: support private variable name with single prefix `_` (i.e. _a => __S__a, __b => __b)
