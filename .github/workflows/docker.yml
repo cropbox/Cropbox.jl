@@ -17,4 +17,5 @@ jobs:
           REPO_DIR: "/home/Cropbox.jl"
           IMAGE_NAME: "cropbox/cropbox"
           LATEST_TAG_OFF: true
+          ADDITIONAL_TAG: ${{ github.event.ref }}
           MYBINDERORG_TAG: ${{ github.event.ref }}
