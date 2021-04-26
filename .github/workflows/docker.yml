@@ -10,6 +10,7 @@ jobs:
           remove-dotnet: 'true'
           remove-android: 'true'
       - uses: actions/checkout@v2
+      - uses: rlespinasse/github-slug-action@v3.x
       - uses: jupyterhub/repo2docker-action@master
         with:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -17,5 +18,5 @@ jobs:
           REPO_DIR: "/home/Cropbox.jl"
           IMAGE_NAME: "cropbox/cropbox"
           LATEST_TAG_OFF: true
-          ADDITIONAL_TAG: ${{ github.event.ref }}
-          MYBINDERORG_TAG: ${{ github.event.ref }}
+          ADDITIONAL_TAG: ${{ env.GITHUB_REF_SLUG }}
+          MYBINDERORG_TAG: ${{ env.GITHUB_REF_SLUG }}
