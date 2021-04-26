@@ -4,11 +4,13 @@ import Dates
 @testset "calendar" begin
     @testset "basic" begin
         @system SCalendar(Calendar, Controller)
-        t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
+        d = Dates.Date(2011, 10, 29)
+        t0 = ZonedDateTime(d, tz"Asia/Seoul")
         o = :Calendar => :init => t0
         s = instance(SCalendar; config=o)
         @test s.init' == t0
         @test s.time' == t0
+        @test s.date' == d
         @test s.step' == Dates.Hour(1)
         update!(s)
         @test s.time' == t0 + Dates.Hour(1)
