@@ -1,7 +1,6 @@
 using Cropbox
+using LeafGasExchange
 using Test
-
-include("gasexchange.jl")
 
 "Kim et al. (2007), Kim et al. (2006)"
 ge_maize1 = :C4 => (
@@ -126,34 +125,34 @@ ge_step_t = :Weather => :T_air => -10:1:50
 @testset "gasexchange" begin
     @testset "C3" begin
         @testset "A-Ci" begin
-            Cropbox.visualize(GasExchangeTest.ModelC3MD, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC3MD, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> display
         end
 
         @testset "A-Q" begin
-            Cropbox.visualize(GasExchangeTest.ModelC3MD, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC3MD, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> display
         end
 
         @testset "A-T" begin
-            Cropbox.visualize(GasExchangeTest.ModelC3MD, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC3MD, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
 
     @testset "C4" begin
         @testset "A-Ci" begin
-            Cropbox.visualize(GasExchangeTest.ModelC4MD, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC4MD, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> display
         end
 
         @testset "A-Q" begin
-            Cropbox.visualize(GasExchangeTest.ModelC4MD, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC4MD, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> display
         end
 
         @testset "A-T" begin
-            Cropbox.visualize(GasExchangeTest.ModelC4MD, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC4MD, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
         end
     end
 
     @testset "N vs Ψv" begin
-        Cropbox.visualize(GasExchangeTest.ModelC4MD, :N, :Ψv, :A_net;
+        Cropbox.visualize(LeafGasExchange.ModelC4MD, :N, :Ψv, :A_net;
             config=ge_base,
             kind=:heatmap,
             xstep=:Nitrogen=>:N=>0:0.05:2,
