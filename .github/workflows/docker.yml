@@ -19,4 +19,3 @@ jobs:
           IMAGE_NAME: "cropbox/cropbox"
           LATEST_TAG_OFF: true
           ADDITIONAL_TAG: ${{ env.GITHUB_REF_SLUG }}
-          MYBINDERORG_TAG: ${{ env.GITHUB_REF_SLUG }}
