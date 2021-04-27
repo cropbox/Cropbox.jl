@@ -38,7 +38,13 @@ for f in (:unitfy, :deunitfy)
         r
     end
 end
-unitfy(df::DataFrame) = begin
+
+import Dates
+unitfy(df::DataFrame; kw...) = begin
+    #HACK: default constructor for common types to avoid scope binding issue
+    D = merge(Dict(
+        :Date => Dates.Date,
+    ), Dict(kw))
     p = r"(.+)\(([^\(\)]+)\)$"
     M = match.(p, names(df))
     n(m::RegexMatch) = m.match => strip(m.captures[1])
@@ -50,7 +56,8 @@ unitfy(df::DataFrame) = begin
         #HACK: assume type constructor if the label starts with `:`
         e = startswith(s, ":") ? Symbol(s[2:end]) : :(@u_str($s))
         #HACK: use Main scope for type constructor evaluation
-        Main.eval(e)
+        #TODO: remove fallback eval in favor of explict constructor mapping
+        haskey(D, e) ? D[e] : Main.eval(e)
     end
     u(m) = nothing
     U = u.(M)
