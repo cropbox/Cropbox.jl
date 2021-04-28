@@ -26,7 +26,7 @@ $ docker run -it --rm cropbox/cropbox julia
   (_)     | (_) (_)    |
    _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
   | | | | | | |/ _` |  |
-  | | |_| | | | (_| |  |  Version 1.6.0 (2021-03-24)
+  | | |_| | | | (_| |  |  Version 1.6.1 (2021-04-23)
  _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
 |__/                   |
 
