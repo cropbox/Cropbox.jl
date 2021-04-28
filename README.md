@@ -7,3 +7,10 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cropbox/cropbox-binder/main)
 
 Cropbox is a declarative modeling framework specifically designed for developing crop models. The goal is to let crop modelers focus on *what* the model should look like rather than *how* the model is technically implemented under the hood.
+
+## Examples
+
+- [LeafGasExchange.jl](https://github.com/cropbox/LeafGasExchange.jl) / [plants2020](https://github.com/cropbox/plants2020): coupled leaf gas-exchange model
+- [Garlic.jl](https://github.com/cropbox/Garlic.jl): garlic growth simulation model
+- [SimpleCrop.jl](https://github.com/cropbox/SimpleCrop.jl): example of DSSAT-like crop model written in Cropbox
+- [CropRootBox.jl](https://github.com/cropbox/CropRootBox.jl): example of root system architecture simulation like CRootBox
