@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · Cropbox.jl</title><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-192782823-1', 'auto');
+ga('send', 'pageview', {'page': location.pathname + location.search + location.hash});
+</script><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script><link href="assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href><img src="assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit">Cropbox.jl</span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li><a class="tocitem" href="#Getting-Started"><span>Getting Started</span></a></li></ul></li><li><span class="tocitem">Guide</span></li><li><span class="tocitem">Tutorials</span></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="reference/">Index</a></li><li><a class="tocitem" href="reference/declaration/">Declaration</a></li><li><a class="tocitem" href="reference/simulation/">Simulation</a></li><li><a class="tocitem" href="reference/visualization/">Visualization</a></li><li><a class="tocitem" href="reference/inspection/">Inspection</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/cropbox/Cropbox.jl/blob/master/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Cropbox"><a class="docs-heading-anchor" href="#Cropbox">Cropbox</a><a id="Cropbox-1"></a><a class="docs-heading-anchor-permalink" href="#Cropbox" title="Permalink"></a></h1><p>Cropbox is a declarative modeling framework specifically designed for developing crop models. The goal is to let crop modelers focus on <em>what</em> the model should look like rather than <em>how</em> the model is technically implemented under the hood.</p><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><p><a href="https://github.com/cropbox/Cropbox.jl">Cropbox.jl</a> is available through Julia package manager.</p><pre><code class="language-julia">using Pkg
+Pkg.add(&quot;Cropbox&quot;)</code></pre><p>There is a <a href="https://hub.docker.com/repository/docker/cropbox/cropbox">Docker image</a> with Cropbox precompiled for convenience. By default, Jupyter Lab will be launched.</p><pre><code class="language-shell">$ docker run -it --rm -p 8888:8888 cropbox/cropbox</code></pre><p>If REPL is preferred, you can directly launch an instance of Julia session.</p><pre><code class="language-shell">$ docker run -it --rm cropbox/cropbox julia
+               _
+   _       _ _(_)_     |  Documentation: https://docs.julialang.org
+  (_)     | (_) (_)    |
+   _ _   _| |_  __ _   |  Type &quot;?&quot; for help, &quot;]?&quot; for Pkg help.
+  | | | | | | |/ _` |  |
+  | | |_| | | | (_| |  |  Version 1.6.1 (2021-04-23)
+ _/ |\__&#39;_|_|_|\__&#39;_|  |  Official https://julialang.org/ release
+|__/                   |
+
+julia&gt;</code></pre><p>The docker image can be also launched via Binder without installing anything local.</p><p><a href="https://mybinder.org/v2/gh/cropbox/cropbox-binder/main"><img src="https://mybinder.org/badge_logo.svg" alt="Binder"/></a></p><h2 id="Getting-Started"><a class="docs-heading-anchor" href="#Getting-Started">Getting Started</a><a id="Getting-Started-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Started" title="Permalink"></a></h2><p>Let&#39;s start with Cropbox.</p><pre><code class="language-julia">using Cropbox</code></pre><p>In Cropbox, <strong>system</strong> is where the model specification is written down in a slightly repurposed Julia syntax, which is an approach generally called domain specific language (DSL).</p><pre><code class="language-julia">@system S(Controller) begin
+    a(a) ~ accumulate(init = 1)
+end</code></pre><p>In this simple example, our system <code>S</code> has a single variable named <code>a</code> which accumulates itself starting from an initial value of 1. Once the model is defined as a system, users can run simulations.</p><pre><code class="language-julia">r = simulate(S, stop = 5)</code></pre><pre class="documenter-example-output">6×2 DataFrame
+ Row │ time       a
+     │ Quantity…  Float64
+─────┼────────────────────
+   1 │    0.0 hr      1.0
+   2 │    1.0 hr      2.0
+   3 │    2.0 hr      4.0
+   4 │    3.0 hr      8.0
+   5 │    4.0 hr     16.0
+   6 │    5.0 hr     32.0</pre><p>Here is a line plot of the variable <code>a</code> after running simulation updated for five times.</p><pre><code class="language-julia">visualize(r, :time, :a; kind = :line)</code></pre><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:gadfly="http://www.gadflyjl.org/ns"
+     version="1.2"
+     width="141.42mm" height="100mm" viewBox="0 0 141.42 100"
+     stroke="none"
+     fill="#000000"
+     stroke-width="0.3"
+     font-size="3.88"
+>
+<defs>
+  <marker id="arrow" markerWidth="15" markerHeight="7" refX="5" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
+  </marker>
+</defs>
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-7fa3cf95-1">
+  <g transform="translate(70.71,50)">
+    <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
+  </g>
+</g>
+<g class="plotroot xscalable yscalable" id="img-7fa3cf95-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-7fa3cf95-3">
+    <g transform="translate(70.37,93.72)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">time (hr)</text>
+      </g>
+    </g>
+  </g>
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-7fa3cf95-4">
+    <g transform="translate(12.35,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">0</text>
+      </g>
+    </g>
+    <g transform="translate(35.56,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">1</text>
+      </g>
+    </g>
+    <g transform="translate(58.77,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">2</text>
+      </g>
+    </g>
+    <g transform="translate(81.98,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">3</text>
+      </g>
+    </g>
+    <g transform="translate(105.19,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">4</text>
+      </g>
+    </g>
+    <g transform="translate(128.39,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">5</text>
+      </g>
+    </g>
+  </g>
+  <g class="guide colorkey" id="img-7fa3cf95-5">
+    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-7fa3cf95-6">
+      <g transform="translate(135.02,47.75)" id="img-7fa3cf95-7">
+        <g class="primitive">
+          <text dy="0.35em">a</text>
+        </g>
+      </g>
+    </g>
+    <g stroke-width="0.3" id="img-7fa3cf95-8">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-7fa3cf95-9">
+        <g transform="translate(132.21,47.75)" id="img-7fa3cf95-10">
+          <circle cx="0" cy="0" r="0.7" class="primitive"/>
+        </g>
+      </g>
+    </g>
+    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-7fa3cf95-11">
+      <g transform="translate(131.39,44.44)" id="img-7fa3cf95-12">
+        <g class="primitive">
+          <text dy="-0em"></text>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g clip-path="url(#img-7fa3cf95-13)">
+    <g id="img-7fa3cf95-14">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-7fa3cf95-15">
+        <g transform="translate(70.37,45.52)" id="img-7fa3cf95-16">
+          <path d="M-60.02,-40.52 L60.02,-40.52 60.02,40.52 -60.02,40.52  z" class="primitive"/>
+        </g>
+      </g>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-7fa3cf95-17">
+        <g transform="translate(70.37,61.68)" id="img-7fa3cf95-18">
+          <path fill="none" d="M-60.02,0 L60.02,0 " class="primitive"/>
+        </g>
+        <g transform="translate(70.37,36.82)" id="img-7fa3cf95-19">
+          <path fill="none" d="M-60.02,0 L60.02,0 " class="primitive"/>
+        </g>
+        <g transform="translate(70.37,11.97)" id="img-7fa3cf95-20">
+          <path fill="none" d="M-60.02,0 L60.02,0 " class="primitive"/>
+        </g>
+      </g>
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-7fa3cf95-21">
+        <g transform="translate(12.35,45.52)" id="img-7fa3cf95-22">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(35.56,45.52)" id="img-7fa3cf95-23">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(58.77,45.52)" id="img-7fa3cf95-24">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(81.98,45.52)" id="img-7fa3cf95-25">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(105.19,45.52)" id="img-7fa3cf95-26">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(128.39,45.52)" id="img-7fa3cf95-27">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+      </g>
+      <g class="plotpanel" id="img-7fa3cf95-28">
+        <metadata>
+          <boundingbox value="10.346666666666664mm 5.0mm 120.04802290397618mm 81.04333333333334mm"/>
+          <unitbox value="-0.08617122247980467 32.80474192013153 5.172342444959609 -32.60948384026305"/>
+        </metadata>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-7fa3cf95-29">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke="#00BFFF" id="img-7fa3cf95-30">
+            <g transform="translate(70.37,60.43)" id="img-7fa3cf95-31">
+              <path fill="none" d="M-58.02,23.61 L-34.81,21.12 -11.6,16.15 11.6,6.21 34.81,-13.67 58.02,-53.43 " class="primitive"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-7fa3cf95-32">
+    <g transform="translate(9.35,61.68)" id="img-7fa3cf95-33">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">10</text>
+      </g>
+    </g>
+    <g transform="translate(9.35,36.82)" id="img-7fa3cf95-34">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">20</text>
+      </g>
+    </g>
+    <g transform="translate(9.35,11.97)" id="img-7fa3cf95-35">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">30</text>
+      </g>
+    </g>
+  </g>
+</g>
+<defs>
+  <clipPath id="img-7fa3cf95-13">
+    <path d="M10.35,5 L130.39,5 130.39,86.04 10.35,86.04 " />
+  </clipPath>
+</defs>
+</svg>
+<p>A more comprehensive guide in the next page will tell more about concepts and features behind Cropbox.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="reference/">Index »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 5 May 2021 19:09">Wednesday 5 May 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
