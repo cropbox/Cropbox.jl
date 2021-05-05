@@ -126,11 +126,12 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, snatch=n
     n = count(stop(s))
 
     dt = verbose ? 1 : Inf
+    showspeed = true
     if n isa Number
-        p = Progress(n; dt, barglyphs)
+        p = Progress(n; dt, barglyphs, showspeed)
         check = s -> p.counter < p.n
     else
-        p = ProgressUnknown(; dt, desc="Iterations:")
+        p = ProgressUnknown(; dt, desc="Iterations:", showspeed)
         check = s -> !stop(s)
     end
 
