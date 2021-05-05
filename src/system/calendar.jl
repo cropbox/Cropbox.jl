@@ -1,4 +1,5 @@
 using TimeZones: TimeZones, ZonedDateTime, @tz_str
+export @tz_str
 import Dates
 
 @system Calendar begin
