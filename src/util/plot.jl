@@ -119,6 +119,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     legend=nothing, legendpos=nothing,
     names=nothing, colors=nothing,
     xlim=nothing, ylim=nothing,
+    ycat=nothing,
     xunit=nothing, yunit=nothing,
     aspect=nothing,
     backend=nothing,
@@ -139,6 +140,15 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
         ylim = (minimum(minimum.(l)), maximum(maximum.(l)))
     end
 
+    if kind == :step && isnothing(ycat)
+        if all(isequal(Bool), eltype.(Ys))
+            ycat = [false, true]
+        else
+            l = unique.(Ys)
+            ycat = unique(Iterators.flatten(l))
+        end
+    end
+
     n = length(Ys)
     xlab = label(xlab, xunit)
     ylab = label(ylab, yunit)
@@ -153,7 +163,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect)
+    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
 end
 
 plot(df::DataFrame, x, y, z;

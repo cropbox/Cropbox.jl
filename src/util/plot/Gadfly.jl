@@ -1,6 +1,6 @@
 import Gadfly
 
-plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect) = begin
+plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect) = begin
     n = length(Ys)
     Xs = [X for _ in 1:n]
     kinds = [kind for _ in 1:n]
@@ -11,6 +11,8 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         geoms = [Gadfly.Geom.point]
     elseif kind == :scatterline
         geoms = [Gadfly.Geom.point, Gadfly.Geom.line]
+    elseif kind == :step
+        geoms = [Gadfly.Geom.step]
     else
         error("unrecognized plot kind = $kind")
     end
@@ -68,8 +70,14 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         xmin, xmax = xlim
         ymin, ymax = ylim
 
+        scales = if kind == :step
+            [
+                Gadfly.Scale.y_discrete(levels=ycat),
+                Gadfly.Coord.cartesian(; xmin, xmax, ymin=1, ymax=length(ycat), aspect_ratio=aspect),
+            ]
         #HACK: aesthetic adjustment for boolean (flag) plots
-        scales = if eltype(ylim) == Bool
+        #TODO: remove special adjustment in favor of new step plot
+        elseif eltype(ylim) == Bool
             [
                 #HACK: ensure correct level order (false low, true high)
                 Gadfly.Scale.y_discrete(levels=[false, true]),

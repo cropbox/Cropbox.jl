@@ -1,6 +1,6 @@
 import UnicodePlots
 
-plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect, width=40, height=15) = begin
+plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "CI", nothing) == "true"
         UnicodePlots.DotCanvas
     else
@@ -11,6 +11,12 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         plot! = UnicodePlots.lineplot!
     elseif kind == :scatter
         plot! = UnicodePlots.scatterplot!
+    elseif kind == :step
+        plot! = UnicodePlots.stairs!
+        #HACK: convert symbol array to integer index array
+        ylim = (1, length(ycat))
+        Ys = indexin.(Ys, Ref(ycat))
+        height = length(ycat)
     else
         error("unrecognized plot kind = $kind")
     end
@@ -34,6 +40,15 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     xlim_value(v) = v
     xlimval = xlim_value.(xlim)
 
+    annotate_y_axis!(obj) = begin
+        if kind == :step
+            #HACK: show original string of symbol instead of index number
+            for (i, y) in zip(height:-1:1, ycat)
+                UnicodePlots.annotate!(obj, :l, i, string(y), color=:light_black)
+            end
+        end
+    end
+
     if isnothing(p)
         a = Float64[]
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
@@ -42,6 +57,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         #HACK: override xlim string (for Date/DateTime)
         UnicodePlots.annotate!(obj, :bl, string(xlim[1]), color=:light_black)
         UnicodePlots.annotate!(obj, :br, string(xlim[2]), color=:light_black)
+        annotate_y_axis!(obj)
         p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
