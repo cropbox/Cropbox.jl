@@ -40,6 +40,12 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     xlim_value(v) = v
     xlimval = xlim_value.(xlim)
 
+    annotate_x_axis!(obj) = begin
+        #HACK: override xlim string (for Date/DateTime)
+        UnicodePlots.annotate!(obj, :bl, string(xlim[1]), color=:light_black)
+        UnicodePlots.annotate!(obj, :br, string(xlim[2]), color=:light_black)
+    end
+
     annotate_y_axis!(obj) = begin
         if kind == :step
             #HACK: show original string of symbol instead of index number
@@ -54,9 +60,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
         obj = UnicodePlots.Plot(a, a, canvas; title, xlabel=xlab, ylabel=ylab, xlim=xlimval, ylim, width, height)
         UnicodePlots.annotate!(obj, :r, legend)
-        #HACK: override xlim string (for Date/DateTime)
-        UnicodePlots.annotate!(obj, :bl, string(xlim[1]), color=:light_black)
-        UnicodePlots.annotate!(obj, :br, string(xlim[2]), color=:light_black)
+        annotate_x_axis!(obj)
         annotate_y_axis!(obj)
         p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
     end
