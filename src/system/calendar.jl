@@ -1,6 +1,7 @@
 using TimeZones: TimeZones, ZonedDateTime, @tz_str
-export @tz_str
-import Dates
+export ZonedDateTime, @tz_str
+using Dates: Dates, Date
+export Dates, Date
 
 @system Calendar begin
     init ~ preserve::datetime(extern, parameter)
