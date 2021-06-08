@@ -3,13 +3,13 @@ using Test
 
 @testset "cropbox" begin
     @testset "framework" begin
-        include("macro.jl")
-        include("state.jl")
-        include("system.jl")
-        include("unit.jl")
-        include("config.jl")
-        include("graph.jl")
-        include("util.jl")
+        include("framework/macro.jl")
+        include("framework/state.jl")
+        include("framework/system.jl")
+        include("framework/unit.jl")
+        include("framework/config.jl")
+        include("framework/graph.jl")
+        include("framework/util.jl")
     end
 
     @testset "examples" begin
