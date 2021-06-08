@@ -18,6 +18,7 @@ using Test
         include("examples/gasexchange.jl")
         include("examples/root.jl")
         include("examples/soil.jl")
+        include("examples/simplecrop.jl")
         include("examples/garlic.jl")
     end
 end

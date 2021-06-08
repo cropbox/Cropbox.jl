@@ -1,10 +1,12 @@
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CropRootBox = "0b8d6067-eb21-45e9-ba5b-895cd2a7ad38"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Garlic = "154c3855-1f1e-46e8-b837-ca60023b1bfc"
 LeafGasExchange = "eed59905-05f1-464e-afba-94c39a4505fd"
+SimpleCrop = "d8d364f4-8e31-46ec-8830-5c8affd8de2c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
