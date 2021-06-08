@@ -1,7 +1,6 @@
 using Cropbox
+using CropRootBox
 using Test
-
-include("root.jl")
 
 # using DataFrames
 # using Statistics
@@ -26,7 +25,7 @@ root_maize = (
         θ = 80 ± 8,
         N = 1.5,
         a = 0.04 ± 0.004,
-        color = Root.RGBA(1, 0, 0, 1),
+        color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
         lb = 0.2 ± 0.04,
@@ -39,7 +38,7 @@ root_maize = (
         θ = 70 ± 15,
         N = 1,
         a = 0.03 ± 0.003,
-        color = Root.RGBA(0, 1, 0, 1),
+        color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (;
         lb = 0,
@@ -52,7 +51,7 @@ root_maize = (
         θ = 70 ± 10,
         N = 2,
         a = 0.02 ± 0.002,
-        color = Root.RGBA(0, 0, 1, 1),
+        color = CropRootBox.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_N = (
@@ -74,7 +73,7 @@ root_switchgrass_N = (
         θ = 60 ± 6,
         N = 1.5,
         a = (0.62 ± 0.41)u"mm",
-        color = Root.RGBA(1, 0, 0, 1),
+        color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
         lb = 0.63 ± 0.45,
@@ -87,7 +86,7 @@ root_switchgrass_N = (
         θ = 60 ± 6,
         N = 1,
         a = (0.22 ± 0.07)u"mm",
-        color = Root.RGBA(0, 1, 0, 1),
+        color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (;
         lb = 0.45 ± 0.64,
@@ -100,7 +99,7 @@ root_switchgrass_N = (
         θ = 60 ± 6,
         N = 2,
         a = (0.19 ± 0.10)u"mm",
-        color = Root.RGBA(0, 0, 1, 1),
+        color = CropRootBox.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_W = (
@@ -122,7 +121,7 @@ root_switchgrass_W = (
         θ = 60 ± 6,
         N = 1.5,
         a = (0.71 ± 0.65)u"mm",
-        color = Root.RGBA(1, 0, 0, 1),
+        color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
         lb = 0.59 ± 0.48,
@@ -135,7 +134,7 @@ root_switchgrass_W = (
         θ = 60 ± 6,
         N = 1,
         a = (0.19 ± 0.08)u"mm",
-        color = Root.RGBA(0, 1, 0, 1),
+        color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (;
         lb = 0,
@@ -148,7 +147,7 @@ root_switchgrass_W = (
         θ = 60 ± 6,
         N = 2,
         a = (0.19 ± 0.08)u"mm", # 0.68 ± 0.77
-        color = Root.RGBA(0, 0, 1, 1),
+        color = CropRootBox.RGBA(0, 0, 1, 1),
     )
 )
 root_switchgrass_N2 = (
@@ -170,7 +169,7 @@ root_switchgrass_N2 = (
         θ = 60 ± 6,
         N = 1.5,
         a = (0.78 ± 0.27)u"mm",
-        color = Root.RGBA(1, 0, 0, 1),
+        color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
         lb = 0.20 ± 0.15,
@@ -183,7 +182,7 @@ root_switchgrass_N2 = (
         θ = 60 ± 6,
         N = 1,
         a = (0.35 ± 0.38)u"mm",
-        color = Root.RGBA(0, 1, 0, 1),
+        color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
 )
 root_switchgrass_W2 = (
@@ -205,7 +204,7 @@ root_switchgrass_W2 = (
         θ = 60 ± 6,
         N = 1.5,
         a = (0.40 ± 0.15)u"mm",
-        color = Root.RGBA(1, 0, 0, 1),
+        color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
         lb = 0.41 ± 0.35,
@@ -218,7 +217,7 @@ root_switchgrass_W2 = (
         θ = 60 ± 6,
         N = 1,
         a = (0.21 ± 0.06)u"mm",
-        color = Root.RGBA(0, 1, 0, 1),
+        color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
 )
 
@@ -312,13 +311,13 @@ soilcore = :SoilCore => (;
 )
 
 @testset "root" begin
-    b = instance(Root.Pot, config=container_pot)
-    s = instance(Root.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
+    b = instance(CropRootBox.Pot, config=container_pot)
+    s = instance(CropRootBox.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
     r = simulate!(s, stop=50)
     @test r.time[end] == 50u"hr"
-    # Root.render(s)
-    Root.writevtk(tempname(), s)
-    # Root.writepvd("test", Root.RootArchitecture, config=root_maize, stop=50)
+    # CropRootBox.render(s)
+    CropRootBox.writevtk(tempname(), s)
+    # CropRootBox.writepvd("test", CropRootBox.RootArchitecture, config=root_maize, stop=50)
 end
 
 # @testset "switchgrass" begin
@@ -327,17 +326,17 @@ end
 #         :AlPO4 => root_switchgrass_AlPO4,
 #         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
 #     )
-#     b = instance(Root.Rhizobox, config=container_rhizobox)
+#     b = instance(CropRootBox.Rhizobox, config=container_rhizobox)
 #     P = [1, 4, 8, 12, 16, 20, 24]u"wk"
 #     R = []
 #     for i in 1:10, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
 #         n = "$c-$i"
-#         r = simulate(Root.RootArchitecture; config=C[c], options=(; box=b), seed=i, stop=P[end]) do D, s
+#         r = simulate(CropRootBox.RootArchitecture; config=C[c], options=(; box=b), seed=i, stop=P[end]) do D, s
 #             t = s.context.clock.time' |> u"wk"
 #             if t in P
 #                 p = deunitfy(t, u"wk") |> Int
-#                 Root.writevtk("$n-w$p", s)
-#                 G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#                 CropRootBox.writevtk("$n-w$p", s)
+#                 G = gather!(s, CropRootBox.BaseRoot; callback=CropRootBox.gatherbaseroot!)
 #                 D[1][:time] = t
 #                 D[1][:treatment] = c
 #                 D[1][:repetition] = i
@@ -371,10 +370,10 @@ end
 #     R = []
 #     for (k, c) in C
 #         n = "switchgrass_$k"
-#         b = instance(Root.Rhizobox, config=container_rhizobox)
-#         s = instance(Root.RootArchitecture; config=c, options=(; box=b), seed=0)
+#         b = instance(CropRootBox.Rhizobox, config=container_rhizobox)
+#         s = instance(CropRootBox.RootArchitecture; config=c, options=(; box=b), seed=0)
 #         r = simulate!(s, stop=1000) do D, s
-#             G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#             G = gather!(s, CropRootBox.BaseRoot; callback=CropRootBox.gatherbaseroot!)
 #             D[1][:length] = !isempty(G) ? sum([s.length' for s in G]) : 0.0u"cm"
 #             D[1][:volume] = !isempty(G) ? sum([s.length' * s.radius'^2 for s in G]) : 0.0u"mm^3"
 #             D[1][:count] = length(G)
@@ -383,7 +382,7 @@ end
 #         plot(r, :time, :length, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-length.pdf")
 #         plot(r, :time, :volume, yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-volume.pdf")
 #         plot(r, :time, :count, kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("$n-count.pdf")
-#         Root.writevtk(n, s)
+#         CropRootBox.writevtk(n, s)
 #     end    
 #     save(x, y, f; kw...) = begin
 #         K = collect(keys(C))
@@ -405,29 +404,29 @@ end
 #     )
 #     for (k, c) in C
 #         n = "switchgrass_$k"
-#         b = instance(Root.Rhizobox, config=container_rhizobox)
-#         L = [instance(Root.SoilLayer, config=:SoilLayer => (; d, t=1)) for d in 0:1:10]
-#         s = instance(Root.RootArchitecture; config=c, options=(; box=b), seed=0)
+#         b = instance(CropRootBox.Rhizobox, config=container_rhizobox)
+#         L = [instance(CropRootBox.SoilLayer, config=:SoilLayer => (; d, t=1)) for d in 0:1:10]
+#         s = instance(CropRootBox.RootArchitecture; config=c, options=(; box=b), seed=0)
 #         r = simulate!(s, stop=300) do D, s
-#             G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#             G = gather!(s, CropRootBox.BaseRoot; callback=CropRootBox.gatherbaseroot!)
 #             for (i, l) in enumerate(L)
 #                 V = [s.length' for s in G if s.ii(l)]
 #                 D[1][Symbol("L$(i-1)")] = !isempty(V) ? sum(V) : 0.0u"cm"
 #             end
 #         end
 #         plot(r, :time, [Symbol("L$(i-1)") for i in 1:length(L)], kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
-#         Root.writevtk(n, s)
+#         CropRootBox.writevtk(n, s)
 #     end
 # end
 
 # @testset "maize layer" begin
 #     n = "maize"
-#     b = instance(Root.Pot, config=container_pot)
+#     b = instance(CropRootBox.Pot, config=container_pot)
 #     t = 5
-#     L = [instance(Root.SoilLayer, config=:SoilLayer => (; d, t)) for d in 0:t:30-t]
-#     s = instance(Root.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
+#     L = [instance(CropRootBox.SoilLayer, config=:SoilLayer => (; d, t)) for d in 0:t:30-t]
+#     s = instance(CropRootBox.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
 #     r = simulate!(s, stop=500) do D, s
-#         G = gather!(s, Root.BaseRoot; callback=Root.gatherbaseroot!)
+#         G = gather!(s, CropRootBox.BaseRoot; callback=CropRootBox.gatherbaseroot!)
 #         for (i, l) in enumerate(L)
 #             ll = [s.length' for s in G if s.ii(l)]
 #             D[1][Symbol("L$(i-1)")] = !isempty(ll) ? sum(ll) : 0.0u"cm"
@@ -439,5 +438,5 @@ end
 #     plot(r, :time, [Symbol("L$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total length", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("L$n.pdf")
 #     plot(r, :time, [Symbol("V$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="total volume", yunit=u"mm^3", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("V$n.pdf")
 #     plot(r, :time, [Symbol("C$(i-1)") for i in 1:length(L)], legend="soil depth", names=["$((i-1)*t) - $(i*t) cm" for i in 1:length(L)], title="count", kind=:line, backend=:Gadfly)[] |> Cropbox.Gadfly.PDF("C$n.pdf")
-#     Root.writevtk(n, s)
+#     CropRootBox.writevtk(n, s)
 # end
