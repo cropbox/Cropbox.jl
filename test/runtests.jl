@@ -12,12 +12,12 @@ using Test
         include("util.jl")
     end
 
-    @testset "application" begin
-        include("lotka_volterra.jl")
-        include("pheno/estimator.jl")
-        include("gasexchange/runtests.jl")
-        include("root/runtests.jl")
-        include("soil/soil.jl")
-        include("garlic/runtests.jl")
+    @testset "examples" begin
+        include("examples/lotka_volterra.jl")
+        include("examples/pheno.jl")
+        include("examples/gasexchange.jl")
+        include("examples/root.jl")
+        include("examples/soil.jl")
+        include("examples/garlic.jl")
     end
 end

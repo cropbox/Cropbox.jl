@@ -439,7 +439,7 @@ end
         config=(
             :Clock => (:step => 1u"d"),
             :SoilClock => (:step => 15u"minute"),
-            :SoilWeather => (:store => "$(@__DIR__)/PyWaterBal.csv"),
+            :SoilWeather => (:store => "$(@__DIR__)/data/soil/PyWaterBal.csv"),
         ),
         target=(
             :v1 => "s.L[1].θ",
