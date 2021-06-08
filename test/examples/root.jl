@@ -313,11 +313,14 @@ soilcore = :SoilCore => (;
 @testset "root" begin
     b = instance(CropRootBox.Pot, config=container_pot)
     s = instance(CropRootBox.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
-    r = simulate!(s, stop=50)
-    @test r.time[end] == 50u"hr"
-    # CropRootBox.render(s)
+    r = simulate!(s, stop=100u"d")
+    @test r.time[end] == 100u"d"
+    # using GLMakie
+    # scn = CropRootBox.render(s)
+    # GLMakie.save("root_maize.png", scn)
     CropRootBox.writevtk(tempname(), s)
-    # CropRootBox.writepvd("test", CropRootBox.RootArchitecture, config=root_maize, stop=50)
+    # CropRootBox.writepvd(tempname(), CropRootBox.RootArchitecture, config=root_maize, stop=50)
+    CropRootBox.writestl(tempname(), s)
 end
 
 # @testset "switchgrass" begin
