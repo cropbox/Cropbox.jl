@@ -117,6 +117,17 @@ using DataStructures: OrderedDict
         end
     end
     
+    @testset "check" begin
+        @system SConfigCheck begin
+            a ~ preserve(parameter)
+            b: bb ~ preserve(parameter)
+        end
+        @test Cropbox.configure(SConfigCheck => :a => 1) == @config(:SConfigCheck => :a => 1)
+        @test_throws ErrorException Cropbox.configure(SConfigCheck => :aa => 2)
+        @test Cropbox.configure(SConfigCheck => :b => 3) == @config(:SConfigCheck => :b => 3)
+        @test Cropbox.configure(SConfigCheck => :bb => 4) == @config(:SConfigCheck => :bb => 4)
+    end
+
     @testset "merge" begin
         @testset "tuple" begin
             c = (:S1 => (:a => 1, :b => 2), :S2 => (:a => 3, :b => 4))

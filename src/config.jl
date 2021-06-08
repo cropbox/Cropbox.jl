@@ -86,7 +86,15 @@ _configure(k::String, v) = begin
         error("unrecognized configuration key string: $k")
     end
 end
-_configure(k::Type{<:System}, v) = _configure(namefor(k), v)
+_configure(S::Type{<:System}, l) = begin
+    P = filter(istag(:parameter), [n.info for n in dependency(S).N])
+    K = map(v -> (v.name, v.alias), P) |> Iterators.flatten
+    C = _configure(l)
+    for k in keys(C)
+        (k ∉ K) && error("unrecognized parameter: $S => $k")
+    end
+    _configure(namefor(S), C)
+end
 _configure(k, v) = _configure(Symbol(k), v)
 _configure(v) = _Config(v)
 _configure(v::NamedTuple) = _Config(pairs(v))
