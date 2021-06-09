@@ -18,5 +18,5 @@ display(MIME("text/html"), r)
 
 using Test
 
-include("../test/state.jl")
-include("../test/system.jl")
+include("../test/framework/state.jl")
+include("../test/framework/system.jl")
