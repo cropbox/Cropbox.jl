@@ -270,8 +270,13 @@ using Dates
         end
         n = 10
         r1 = simulate(SSimulateSeed, seed=0, stop=n)
-        @test r1[end, :a] == 0.5392892841426182
-        @test r1[end, :b] == 3.766035118243237
+        if VERSION >= v"1.7"
+            @test r1[end, :a] == 0.3920426340150871
+            @test r1[end, :b] == 6.003221616529312
+        else
+            @test r1[end, :a] == 0.5392892841426182
+            @test r1[end, :b] == 3.766035118243237
+        end
         r2 = simulate(SSimulateSeed, seed=0, stop=n)
         @test r1 == r2
     end

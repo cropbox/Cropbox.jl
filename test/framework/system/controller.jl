@@ -24,7 +24,11 @@
             a => 0 ± 1 ~ preserve
         end
         s1 = instance(SControllerSeed; seed=0)
-        @test s1.a' == 0.6791074260357777
+        if VERSION >= v"1.7"
+            @test s1.a' == 0.20154471885274503
+        else
+            @test s1.a' == 0.6791074260357777
+        end
         s2 = instance(SControllerSeed; seed=0)
         @test s1.a' == s2.a'
     end
