@@ -17,13 +17,13 @@ Base.adjoint(g::Gather) = value(g)
 
 mixindispatch(s, g::Gather) = mixindispatch(s, g.types...)
 
-gather!(s::System, SS::Type{<:System}...; store=[], callback=visit!) = gather!(Gather(SS, store, callback), s)
-gather!(g::Gather, v) = g(g, mixindispatch(v, g)...)
+gather!(s::System, SS::Type{<:System}...; store=[], callback=visit!, kwargs=()) = gather!(Gather(SS, store, callback), s; kwargs...)
+gather!(g::Gather, v; kwargs...) = g(g, mixindispatch(v, g)...; kwargs...)
 
-visit!(g::Gather, s::System, ::Val) = (gather!.(g, value.(collect(s))); g')
-visit!(g::Gather, V::Vector{<:System}, ::Val) = (gather!.(g, V); g')
-visit!(g::Gather, s, ::Val) = g'
-visit!(g::Gather, s) = visit!(g, s, Val(nothing))
+visit!(g::Gather, s::System, ::Val; k...) = (gather!.(g, value.(collect(s)); k...); g')
+visit!(g::Gather, V::Vector{<:System}, ::Val; k...) = (gather!.(g, V; k...); g')
+visit!(g::Gather, s, ::Val; k...) = g'
+visit!(g::Gather, s; k...) = visit!(g, s, Val(nothing); k...)
 
 gathersystem!(g::Gather, s::System, ::Val{:System}) = (push!(g, s); visit!(g, s))
 gathersystem!(g::Gather, a...) = visit!(g, a...)
