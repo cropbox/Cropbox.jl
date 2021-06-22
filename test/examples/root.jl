@@ -72,7 +72,7 @@ root_switchgrass_N = (
         σ = 9,
         θ = 60 ± 6,
         N = 1.5,
-        a = (0.62 ± 0.41)u"mm",
+        a = (0.62 ± 0.06)u"mm", # (0.62 ± 0.41)u"mm",
         color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
@@ -85,7 +85,7 @@ root_switchgrass_N = (
         σ = 18,
         θ = 60 ± 6,
         N = 1,
-        a = (0.22 ± 0.07)u"mm",
+        a = (0.22 ± 0.02)u"mm", # (0.22 ± 0.07)u"mm",
         color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (;
@@ -98,7 +98,7 @@ root_switchgrass_N = (
         σ = 20,
         θ = 60 ± 6,
         N = 2,
-        a = (0.19 ± 0.10)u"mm",
+        a = (0.19 ± 0.02)u"mm", # (0.19 ± 0.10)u"mm",
         color = CropRootBox.RGBA(0, 0, 1, 1),
     )
 )
@@ -120,7 +120,7 @@ root_switchgrass_W = (
         σ = 9,
         θ = 60 ± 6,
         N = 1.5,
-        a = (0.71 ± 0.65)u"mm",
+        a = (0.71 ± 0.07)u"mm", # (0.71 ± 0.65)u"mm",
         color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
@@ -133,7 +133,7 @@ root_switchgrass_W = (
         σ = 18,
         θ = 60 ± 6,
         N = 1,
-        a = (0.19 ± 0.08)u"mm",
+        a = (0.19 ± 0.02)u"mm", # (0.19 ± 0.08)u"mm",
         color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
     :SecondOrderLateralRoot => (;
@@ -168,7 +168,7 @@ root_switchgrass_N2 = (
         σ = 9,
         θ = 60 ± 6,
         N = 1.5,
-        a = (0.78 ± 0.27)u"mm",
+        a = (0.78 ± 0.08)u"mm", # (0.78 ± 0.27)u"mm",
         color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
@@ -181,7 +181,7 @@ root_switchgrass_N2 = (
         σ = 18,
         θ = 60 ± 6,
         N = 1,
-        a = (0.35 ± 0.38)u"mm",
+        a = (0.35 ± 0.04)u"mm", # (0.35 ± 0.38)u"mm",
         color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
 )
@@ -203,7 +203,7 @@ root_switchgrass_W2 = (
         σ = 9,
         θ = 60 ± 6,
         N = 1.5,
-        a = (0.40 ± 0.15)u"mm",
+        a = (0.40 ± 0.04)u"mm", # (0.40 ± 0.15)u"mm",
         color = CropRootBox.RGBA(1, 0, 0, 1),
     ),
     :FirstOrderLateralRoot => (;
@@ -216,7 +216,7 @@ root_switchgrass_W2 = (
         σ = 18,
         θ = 60 ± 6,
         N = 1,
-        a = (0.21 ± 0.06)u"mm",
+        a = (0.21 ± 0.02)u"mm", # (0.21 ± 0.06)u"mm",
         color = CropRootBox.RGBA(0, 1, 0, 1),
     ),
 )
