@@ -304,7 +304,7 @@ container_rhizobox = :Rhizobox => (;
     h = 42u"inch",
 )
 soilcore = :SoilCore => (;
-    d = 5,
+    d = 4,
     l = 20,
     x0 = 3,
     y0 = 3,
