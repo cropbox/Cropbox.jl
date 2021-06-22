@@ -422,6 +422,25 @@ end
 #     end
 # end
 
+# @testset "switchgrass" begin
+#     C = Dict(
+#         :KH2PO4 => root_switchgrass_KH2PO4,
+#         :AlPO4 => root_switchgrass_AlPO4,
+#         :C6H17NaO24P6 => root_switchgrass_C6H17NaO24P6,
+#     )
+#     b = instance(CropRootBox.Rhizobox, config=container_rhizobox)
+#     o = instance(CropRootBox.SoilCore, config=soilcore)
+#     p = 24u"wk"
+#     for i in 1:1, c in (:KH2PO4, :AlPO4, :C6H17NaO24P6)
+#         n = "$c-$i"
+#         s = instance(CropRootBox.RootArchitecture; config=C[c], options=(; box=b), seed=i)
+#         simulate!(s, stop=p)
+#         m = CropRootBox.mesh(s; container=o)
+#         CropRootBox.writestl("switchgrass-core-" * n * ".stl", m)
+#         CropRootBox.writestl("switchgrass-" * n * ".stl", s)
+#     end
+# end
+
 # @testset "maize layer" begin
 #     n = "maize"
 #     b = instance(CropRootBox.Pot, config=container_pot)
