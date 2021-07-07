@@ -33,8 +33,11 @@ metricfunc(metric) = metric
 #HACK: handle index columns with non-identical, but compatible units
 # https://github.com/JuliaData/DataFrames.jl/issues/2486
 normalize!(dfs::DataFrame...; on) = begin
+    n = length(dfs)
+    is(i::Symbol) = repeat([i], n)
+    is(i) = collect(i)
     for i in on
-        cols = getindex.(dfs, !, i)
+        cols = getindex.(dfs, !, is(i))
         elts = eltype.(cols)
         t = promote_type(elts...)
         for (d, c, e) in zip(dfs, cols, elts)
