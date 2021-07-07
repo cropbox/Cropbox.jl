@@ -8,7 +8,7 @@ Compare output of simulation results for the given system `S` and observation da
 
 # Arguments
 - `S::Type{<:System}`: type of system to be evaluated.
-- `obs::DataFrame`: observatioan data to be used for evaluation.
+- `obs::DataFrame`: observation data to be used for evaluation.
 
 # Keyword Arguments
 ## Configuration

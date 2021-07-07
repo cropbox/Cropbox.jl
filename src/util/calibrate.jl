@@ -50,7 +50,7 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 
 # Arguments
 - `S::Type{<:System}`: type of system to be calibrated.
-- `obs::DataFrame`: observatioan data to be used for calibration.
+- `obs::DataFrame`: observation data to be used for calibration.
 
 # Keyword Arguments
 ## Configuration
