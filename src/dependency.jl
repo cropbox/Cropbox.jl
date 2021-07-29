@@ -164,7 +164,11 @@ end
 labels(d::Dependency; kw...) = label.(d.N; kw...)
 
 edgestyle(d::Dependency, a::VarNode, b::VarNode) = ""
-edgestyles(d::Dependency) = Dict(let a=src(e), b=dst(e); (a, b) => edgestyle(d, d.N[a], d.N[b]) end for e in edges(d.g))
+edgestyles(d::Dependency; kw...) = Dict(
+    let a = src(e), b = dst(e)
+        (a, b) => edgestyle(d, d.N[a], d.N[b])
+    end for e in edges(d.g)
+)
 
 Base.show(io::IO, d::Dependency) = print(io, "Dependency")
 Base.show(io::IO, ::MIME"text/plain", d::Dependency) = begin

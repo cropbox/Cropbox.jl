@@ -73,7 +73,7 @@ add!(h::Hierarchy, a::Symbol, T::Type{Vector{S}}) where {S<:System} = add!(h, a,
 add!(h::Hierarchy, a::Symbol, T) = nothing
 
 label(n::Symbol) = string(n)
-labels(h::Hierarchy) = label.(nodes(h))
+labels(h::Hierarchy; kw...) = label.(nodes(h))
 
 edgestyle(h::Hierarchy, e::Symbol) = begin
     if e == :mixin
@@ -84,7 +84,7 @@ edgestyle(h::Hierarchy, e::Symbol) = begin
         "solid"
     end
 end
-edgestyles(h::Hierarchy) = Dict(e => edgestyle(h, s) for (e, s) in h.E)
+edgestyles(h::Hierarchy; kw...) = Dict(e => edgestyle(h, s) for (e, s) in h.E)
 
 Base.show(io::IO, h::Hierarchy) = print(io, "Hierarchy")
 Base.show(io::IO, ::MIME"text/plain", h::Hierarchy) = begin
