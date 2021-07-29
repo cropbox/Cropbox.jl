@@ -50,7 +50,7 @@ add!(h::Hierarchy, S::Type{<:System}) = begin
     for v in V
         T = @eval scope $(v.type)
         #HACK: skip Context since the graph tends to look too busy
-        get(h.C, :skipcontext, false) && (T == Context) && continue
+        get(h.C, :skipcontext, false) && (T == typefor(Context)) && continue
         add!(h, a, T)
     end
     push!(h.N, a)
