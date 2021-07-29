@@ -3,30 +3,45 @@ abstract type Graph end
 graph(g::Graph) = g
 labels(g::Graph; kw...) = [] #error("labels() not defined for $x")
 edgestyles(g::Graph; kw...) = Dict()
+graphstyle(g::Graph; kw...) = begin
+    d1 = Dict(
+        :ratio => 0.5,
+        :ranksep => 0.2,
+        :margin => 0.03,
+        :fontname => "Courier",
+        :fontsize => 9,
+        :arrowsize => 0.2,
+        :penwidth => 0.2,
+    )
+    d2 = Dict(kw)
+    merge(d1, d2)
+end
 
-makedot(g::Graph) = begin
+makedot(g::Graph; style=()) = begin
     node(i, l) = """$i [label="$l"]\n"""
-    N = [node(i, l) for (i, l) in enumerate(labels(g))]
+    N = [node(i, l) for (i, l) in enumerate(labels(g; style...))]
     
     edge(a, b) = """$a -> $b [style="$(get(ES, (a, b), ""))"]\n"""
-    ES = edgestyles(g)
+    ES = edgestyles(g; style...)
     E = [edge(e.src, e.dst) for e in edges(graph(g))]
+
+    GS = graphstyle(g; style...)
     
     """
     digraph {
-    ratio=0.5
-    ranksep=0.2
+    ratio=$(GS[:ratio])
+    ranksep=$(GS[:ranksep])
     node[
         width=0
         height=0
-        margin=0.03
+        margin=$(GS[:margin])
         shape=plaintext
-        fontname=Courier
-        fontsize=9
+        fontname=$(GS[:fontname])
+        fontsize=$(GS[:fontsize])
     ]
     edge [
-        arrowsize=0.2
-        penwidth=0.2
+        arrowsize=$(GS[:arrowsize])
+        penwidth=$(GS[:penwidth])
     ]
     $(N...)
     $(E...)
@@ -34,16 +49,16 @@ makedot(g::Graph) = begin
     """
 end
 
-writedot(g::Graph) = writedot(tempname(), g)
-writedot(name::AbstractString, g::Graph) = begin
+writedot(g::Graph; kw...) = writedot(tempname(), g; kw...)
+writedot(name::AbstractString, g::Graph; style=()) = begin
     !endswith(name, ".dot") && (name *= ".dot")
-    write(name, makedot(g))
+    write(name, makedot(g; style))
     name
 end
 
 #TODO: wait until Graphviz_jll adds Windows support
 import Conda
-writeimage(name::AbstractString, g::Graph; format=nothing) = begin
+writeimage(name::AbstractString, g::Graph; format=nothing, style=()) = begin
     ext = splitext(name)[2]
     if isnothing(format)
         format = ext[2:end]
@@ -52,7 +67,7 @@ writeimage(name::AbstractString, g::Graph; format=nothing) = begin
         format = string(format)
         ext != format && (name *= "."*format)
     end
-    dot = writedot(g)
+    dot = writedot(g; style)
     let exe = joinpath(Conda.bin_dir(:cropbox), "dot"),
         cmd = `$exe -T$format $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
