@@ -40,6 +40,10 @@ manipulate(f::Function; parameters, config=()) = begin
         V = getindex.(W)
         configure(config, parameterzip(K, V))
     end
+    if isempty(Interact.WebIO.providers_initialised)
+        @warn "interactive plot only works with a WebIO provider loaded"
+        return f(c[])
+    end
     output = Interact.@map f(&c)
     z = Interact.Widget{:Cropbox}(Dict(zip(K, W)); output)
     Interact.@layout!(z, Interact.vbox(L..., output))
