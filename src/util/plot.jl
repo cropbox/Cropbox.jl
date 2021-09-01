@@ -61,6 +61,7 @@ label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
 detectbackend() = begin
     if isdefined(Main, :IJulia) && Main.IJulia.inited ||
        isdefined(Main, :Juno) && Main.Juno.isactive() ||
+       isdefined(Main, :VSCodeServer) ||
        isdefined(Main, :PlutoRunner) ||
        isdefined(Main, :Documenter) && any(t -> startswith(string(t.func), "#makedocs#"), stacktrace()) ||
        haskey(ENV, "NJS_VERSION")
