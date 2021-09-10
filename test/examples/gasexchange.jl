@@ -125,29 +125,29 @@ ge_step_t = :Weather => :T_air => -10:1:50
 @testset "gasexchange" begin
     @testset "C3" begin
         @testset "A-Ci" begin
-            Cropbox.visualize(LeafGasExchange.ModelC3MD, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC3MD, :Ci, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_c) |> println
         end
 
         @testset "A-Q" begin
-            Cropbox.visualize(LeafGasExchange.ModelC3MD, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC3MD, :PFD, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_q) |> println
         end
 
         @testset "A-T" begin
-            Cropbox.visualize(LeafGasExchange.ModelC3MD, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC3MD, :T_air, [:A_net, :Ac, :Aj, :Ap]; config=ge_base, xstep=ge_step_t) |> println
         end
     end
 
     @testset "C4" begin
         @testset "A-Ci" begin
-            Cropbox.visualize(LeafGasExchange.ModelC4MD, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC4MD, :Ci, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_c) |> println
         end
 
         @testset "A-Q" begin
-            Cropbox.visualize(LeafGasExchange.ModelC4MD, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC4MD, :PFD, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_q) |> println
         end
 
         @testset "A-T" begin
-            Cropbox.visualize(LeafGasExchange.ModelC4MD, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> display
+            Cropbox.visualize(LeafGasExchange.ModelC4MD, :T_air, [:A_net, :Ac, :Aj]; config=ge_base, xstep=ge_step_t) |> println
         end
     end
 
@@ -157,6 +157,6 @@ ge_step_t = :Weather => :T_air => -10:1:50
             kind=:heatmap,
             xstep=:Nitrogen=>:N=>0:0.05:2,
             ystep=:StomataTuzet=>:WP_leaf=>-2:0.05:0,
-        ) |> display
+        ) |> println
     end
 end

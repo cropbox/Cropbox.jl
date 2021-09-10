@@ -17,6 +17,6 @@ config = @config (
 
 @testset "simplecrop" begin
     r = simulate(SimpleCrop.Model; config, stop = :endsim)
-    visualize(r, :DATE, :LAI; kind = :line) |> display
-    visualize(r, :DATE, :(SWC/DP); yunit = u"mm^3/mm^3", kind = :line) |> display
+    visualize(r, :DATE, :LAI; kind = :line) |> println
+    visualize(r, :DATE, :(SWC/DP); yunit = u"mm^3/mm^3", kind = :line) |> println
 end

@@ -353,7 +353,7 @@ end
 #         push!(R, r)
 #     end
 #     df = vcat(R...)
-#     combine(groupby(df, [:treatment, :time]), :length => mean, :length => std) |> display
+#     combine(groupby(df, [:treatment, :time]), :length => mean, :length => std) |> println
 #     Gadfly.plot(df, x=:time, y=:length, color=:treatment,
 #         Gadfly.Geom.boxplot,
 #         Gadfly.Scale.x_discrete,
