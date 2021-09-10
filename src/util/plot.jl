@@ -2,10 +2,10 @@ using DataFrames: DataFrame
 using MacroTools: @capture
 import Unitful
 
-struct Plot
-    obj
+struct Plot{T}
+    obj::T
     opt::Dict{Symbol,Any}
-    Plot(obj; kw...) = new(obj, Dict(kw...))
+    Plot(obj; kw...) = new{typeof(obj)}(obj, Dict(kw...))
 end
 update!(p::Plot; kw...) = (mergewith!(vcat, p.opt, Dict(kw...)); p)
 getplotopt(p::Plot, k, v=nothing) = get(p.opt, k, v)
@@ -22,7 +22,7 @@ Base.show(io::IO, p::Plot) = show(io, p.obj)
 #HACK: custom hook for intercepting 3-args show() from each backend (i.e. Gadfly)
 Base.show(io::IO, m::MIME, p::Plot) = _show(io, m, p.obj)
 _show(io::IO, m::MIME, o) = show(io, m, o)
-Base.show(io::IO, ::MIME"text/plain", p::Plot) = show(io, "Cropbox.Plot")
+Base.show(io::IO, ::MIME"text/plain", p::P) where {P<:Plot} = show(io, "<$P>")
 
 Base.display(p::Plot) = display(p.obj)
 Base.display(d::AbstractDisplay, p::Plot) = display(d, p.obj)
