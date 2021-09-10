@@ -32,9 +32,6 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         [f(c, i) for (i, c) in enumerate(colors)]
     end
 
-    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    !endswith(xlab, "\n") && (xlab *= "\n")
-
     #HACK: handle x-axis type of Date/DateTime adapted from UnicodePlots.lineplot()
     xlim_value(v::Dates.TimeType) = Dates.value(v)
     xlim_value(v) = v
@@ -90,9 +87,6 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
 
     !isnothing(zgap) && @warn "unsupported contour interval = $zgap"
     !isnothing(zlabgap) && @warn "unsupported countour label interval = $zlabgap"
-
-    #HACK: add newline to ensure clearing (i.e. test summary right after plot)
-    !endswith(xlab, "\n") && (xlab *= "\n")
 
     arr(a) = sort(unique(a))
     x = arr(X)
