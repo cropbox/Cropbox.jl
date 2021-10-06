@@ -96,13 +96,13 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     offset(a) = a[1]
     xoffset = offset(x)
     yoffset = offset(y)
-    scale(a) = (a[end] - offset(a)) / (length(a) - 1)
-    xscale = scale(x)
-    yscale = scale(y)
+    fact(a) = (a[end] - offset(a)) / (length(a) - 1)
+    xfact = fact(x)
+    yfact = fact(y)
 
     !isnothing(aspect) && (width = round(Int, aspect * height))
 
     #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
-    obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xscale, yscale, xlim, ylim, xoffset, yoffset, width, height)
+    obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xfact, yfact, xlim, ylim, xoffset, yoffset, width, height)
     Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width, height)
 end
