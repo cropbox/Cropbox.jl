@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# in case $HOME and $REPO_DIR are different
-cd $HOME
-
-exec "$@"
