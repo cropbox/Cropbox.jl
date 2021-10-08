@@ -2,7 +2,7 @@ FROM jupyter/datascience-notebook:2021-10-07
 
 # set up repository for repo2docker
 ARG REPO_DIR=${HOME}
-ENV REPO_DIR ${REPO_DIR}
+ENV REPO_DIR=${REPO_DIR}
 WORKDIR ${REPO_DIR}
 USER root
 COPY --chown=${NB_USER}:users . ${REPO_DIR}
@@ -14,7 +14,7 @@ RUN pip install \
     'webio_jupyter_extension'
 
 # ensure Cropbox.jl added/built and available outside home directory
-ENV JULIA_PROJECT ""
+ENV JULIA_PROJECT=""
 ENV CROPBOX_DIR=${REPO_DIR}
 RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
 
