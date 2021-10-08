@@ -7,6 +7,10 @@ WORKDIR ${REPO_DIR}
 USER root
 COPY --chown=${NB_USER}:users . ${REPO_DIR}
 
+# avoid config/data in home which can be replaced
+ENV JUPYTER_CONFIG_DIR=/opt/conda/etc/jupyter
+ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
+
 # install necessary Jupyter modules
 RUN pip install \
     'nbgitpuller' \
