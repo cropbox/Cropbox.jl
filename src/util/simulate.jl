@@ -25,7 +25,8 @@ end
 
 parsesimulationkey(p::Pair, s) = [p]
 parsesimulationkey(a::Symbol, s) = [a => a]
-parsesimulationkey(a::String, s) = begin
+parsesimulationkey(a::String, s) = [Symbol(a) => a]
+parsesimulationkey(a::String, s::System) = begin
     A = split(a, '.')
     # support wildcard names (i.e. "s.*" expands to ["s.a", "s.b", ...])
     if A[end] == "*"
