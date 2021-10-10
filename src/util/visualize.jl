@@ -189,8 +189,8 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
 ) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
-    I = parseindex(index, S) |> keys |> collect
-    yo, ye = parsetarget(y, S) |> collect |> only
+    I = parseindex(index, obs) |> keys |> collect
+    yo, ye = parsetarget(y, obs) |> collect |> only
 
     ests = map(m -> simulate(; m..., index, target=ye, stop, snap, verbose=false), maps)
     normalize!(obs, ests..., on=I)
