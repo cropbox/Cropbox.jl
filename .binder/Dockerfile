@@ -23,7 +23,7 @@ ENV CROPBOX_DIR=${REPO_DIR}
 RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
 
 # install commonly used packages
-RUN julia -e 'using Pkg; pkg"add CSV DataFrames DataFramesMeta DataStructures Dates Distributions Gadfly StatsBase Test TimeZones TypedTables Unitful";'
+RUN julia -e 'using Pkg; pkg"add CSV DataFrames DataFramesMeta DataStructures Distributions Gadfly StatsBase TimeZones TypedTables Unitful";'
 
 #HACK: ensure MKL_jll artifacts downloaded (perhaps an issue with PackageCompiler 1.6+)
 RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
