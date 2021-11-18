@@ -97,6 +97,7 @@ format!(m::Simulation; nounit=false, long=false) = begin
         i = collect(keys(m.index))
         t = setdiff(propertynames(r), i)
         r = DataFrames.stack(r, t, i)
+        r = sort!(r, i)
     end
     r
 end
