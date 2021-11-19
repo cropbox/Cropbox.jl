@@ -12,7 +12,7 @@ ENV JUPYTER_CONFIG_DIR=/opt/conda/etc/jupyter
 ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
 
 # install RStudio
-ENV RSTUDIO_URL=https://download2.rstudio.org/server/bionic/amd64/rstudio-server-1.3.1093-amd64.deb
+ENV RSTUDIO_URL=https://download2.rstudio.org/server/bionic/amd64/rstudio-server-1.2.5001-amd64.deb
 RUN wget -O /tmp/rstudio.deb ${RSTUDIO_URL} && \
     apt-get update && \
     apt install -y /tmp/rstudio.deb && \
@@ -21,12 +21,8 @@ RUN wget -O /tmp/rstudio.deb ${RSTUDIO_URL} && \
     apt-get -qq clean && \
     rm -rf /var/lib/apt/lists/*
 
-# adjust RStudio permission
-RUN chown -R ${NB_USER}:users /var/lib/rstudio-server
-
 # configure RStudio
-RUN echo "server-user=${NB_USER}" >> /etc/rstudio/rserver.conf && \
-    echo auth-none=1 >> /etc/rstudio/rserver.conf && \
+RUN echo auth-none=1 >> /etc/rstudio/rserver.conf && \
     echo auth-minimum-user-id=0 >> /etc/rstudio/rserver.conf && \
     echo rsession-which-r=/opt/conda/bin/R >> /etc/rstudio/rserver.conf && \
     echo www-frame-origin=same >> /etc/rstudio/rserver.conf
