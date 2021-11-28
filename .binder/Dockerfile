@@ -60,7 +60,7 @@ ENV CROPBOX_DIR=${REPO_DIR}
 RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
 
 # install commonly used packages
-RUN julia -e 'using Pkg; pkg"add CSV DataFrames DataFramesMeta DataStructures Distributions Gadfly StatsBase TimeZones TypedTables Unitful";'
+RUN julia -e 'using Pkg; pkg"add CSV DataFrames DataFramesMeta DataStructures Distributions Gadfly StatsBase TimeZones TypedTables Unitful WGLMakie";'
 
 # install MLJ packages
 RUN julia -e 'using Pkg; pkg"add Flux MLJ MLJLinearModels MLJDecisionTreeInterface MLJFlux Plots";'
