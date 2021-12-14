@@ -82,7 +82,7 @@ parsemeta(::Nothing, c) = OrderedDict()
 update!(m::Simulation, s::System, snatch!) = begin
     D = extract(s, m)
     snatch!(D, s)
-    !isempty(D) && append!(m.result, D)
+    !isempty(D) && append!(m.result, D; cols=:union)
 end
 
 format!(m::Simulation; nounit=false, long=false) = begin
