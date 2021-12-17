@@ -1,7 +1,7 @@
 name = "Cropbox"
 uuid = "a904b226-abf1-11e9-2713-059ba252a964"
 authors = ["Kyungdahm Yun <tomyun@gmail.com>"]
-version = "0.3.18"
+version = "0.3.19-DEV"
 
 [deps]
 BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
