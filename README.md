@@ -14,3 +14,9 @@ Cropbox is a declarative modeling framework specifically designed for developing
 - [Garlic.jl](https://github.com/cropbox/Garlic.jl): garlic growth simulation model
 - [SimpleCrop.jl](https://github.com/cropbox/SimpleCrop.jl): example of DSSAT-like crop model written in Cropbox
 - [CropRootBox.jl](https://github.com/cropbox/CropRootBox.jl): example of root system architecture simulation like CRootBox
+
+## Tutorials
+
+- [Cropbox Workshop 2021](https://github.com/cropbox/cropbox-workshop-2021) (Korean)
+- [UW SEFS 508](https://github.com/uwkimlab/plant_modeling) -- "Plant Modeling" course at University of Washington
+- [Cropbox Tutorial](https://github.com/cropbox/cropbox-tutorial-KSAFM2020) presented at [KSAFM](http://www.ksafm.org/en/) 2020 Workshop
