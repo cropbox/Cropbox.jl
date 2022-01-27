@@ -25,7 +25,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
 
     create_colors(colors; n0=0) = begin
         n = length(colors)
-        C = collect(Iterators.take(Iterators.cycle(UnicodePlots.color_cycle), n+n0))[n0+begin:end]
+        C = collect(Iterators.take(Iterators.cycle(UnicodePlots.COLOR_CYCLE), n+n0))[n0+begin:end]
         f(c::Int, _) = p.opt[:colors][c]
         f(c, _) = c in keys(UnicodePlots.color_encode) ? c : :normal
         f(::Nothing, i) = C[i]
