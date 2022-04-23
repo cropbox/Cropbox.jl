@@ -39,15 +39,15 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
 
     annotate_x_axis!(obj) = begin
         #HACK: override xlim string (for Date/DateTime)
-        UnicodePlots.label!(obj, :bl, string(xlim[1]), color=:light_black)
-        UnicodePlots.label!(obj, :br, string(xlim[2]), color=:light_black)
+        UnicodePlots.label!(obj, :bl, string(xlim[1]), color=:light_gray)
+        UnicodePlots.label!(obj, :br, string(xlim[2]), color=:light_gray)
     end
 
     annotate_y_axis!(obj) = begin
         if kind == :step
             #HACK: show original string of symbol instead of index number
             for (i, y) in zip(height:-1:1, ycat)
-                UnicodePlots.label!(obj, :l, i, string(y), color=:light_black)
+                UnicodePlots.label!(obj, :l, i, string(y), color=:light_gray)
             end
         end
     end
