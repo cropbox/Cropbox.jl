@@ -9,7 +9,7 @@ using Test
         snap=s -> Dates.hour(s.calendar.time') == 12,
     )
     @test r.leaves_initiated[end] > 0
-    visualize(r, :DAP, [:leaves_appeared, :leaves_mature, :leaves_dropped]) |> println # Fig. 3.D
+    visualize(r, :DAP, [:leaves_appeared, :leaves_mature, :leaves_dropped], kind=:step) |> println # Fig. 3.D
     visualize(r, :DAP, :green_leaf_area) |> println # Fig. 4.D
     visualize(r, :DAP, [:leaf_mass, :bulb_mass, :total_mass]) |> println
 end
