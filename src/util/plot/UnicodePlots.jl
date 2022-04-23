@@ -55,7 +55,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     if isnothing(p)
         a = Float64[]
         !isnothing(aspect) && (width = round(Int, aspect * 2height))
-        obj = UnicodePlots.Plot(a, a, canvas; title, xlabel=xlab, ylabel=ylab, xlim=xlimval, ylim, width, height)
+        obj = UnicodePlots.Plot(a, a; canvas, title, xlabel=xlab, ylabel=ylab, xlim=xlimval, ylim, width, height)
         UnicodePlots.label!(obj, :r, legend)
         annotate_x_axis!(obj)
         annotate_y_axis!(obj)
