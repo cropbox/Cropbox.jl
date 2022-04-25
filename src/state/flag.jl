@@ -14,7 +14,7 @@ gendefault(v::VarInfo, ::Val{:Flag}) = istag(v, :parameter) ? genparameter(v) : 
 
 genupdate(v::VarInfo, ::Val{:Flag}, ::MainStep; kw...) = begin
     @gensym s f q
-    if istag(v, :parameter)
+    if istag(v, :override, :parameter)
         nothing
     elseif istag(v, :once)
         @q let $s = $(symstate(v))
