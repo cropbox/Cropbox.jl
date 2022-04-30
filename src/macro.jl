@@ -284,7 +284,7 @@ genvartype(v::VarInfo{Symbol}) = begin
     V = @q $C.valuetype($N, $U)
     T = if istag(v, :override)
         #HACK: support overrides between common state variables
-        l = [genvartype(v, Val(t); N, U, V) for t in (:Track, :Preserve, :Drive)]
+        l = [genvartype(v, Val(t); N, U, V) for t in (:Track, :Preserve, :Flag, :Drive)]
         :(Union{$(l...)})
     else
         genvartype(v, Val(v.state); N, U, V)
