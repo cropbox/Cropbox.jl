@@ -40,7 +40,17 @@ instance(S::Type{<:System}; config=(), options=(), seed=nothing) = begin
     c = configure(config)
     #HACK: support placeholder (0) for the controller name
     c = configure(((k == Symbol(0) ? namefor(S) : k) => v for (k, v) in c)...)
-    s = S(; config=c, options...)
+    #HACK: support implicit Controller
+    s = if last(mixinsof(S)) != Controller
+        n = namefor(S)
+        sym = gensym(n)
+        scope = scopeof(S)
+        ex = :(@system $sym($n, Controller))
+        S = scope.eval(ex)
+        Base.invokelatest(S; config=c, options...)
+    else
+        S(; config=c, options...)
+    end
     update!(s)
 end
 

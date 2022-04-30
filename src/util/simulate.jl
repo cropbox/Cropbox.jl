@@ -35,7 +35,8 @@ parsesimulationkey(a::String, s::System) = begin
         p(n) = let k = join(filter(!isempty, [a0, string(n)]), '.')
             Symbol(k) => k
         end
-        [p(n) for n in fieldnamesunique(ss)]
+        #HACK: invoke latest method created for implicit Controller
+        [p(n) for n in Base.invokelatest(fieldnamesunique, ss)]
     else
         [Symbol(a) => a]
     end
