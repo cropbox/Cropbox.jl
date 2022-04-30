@@ -311,7 +311,8 @@ gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
     !isnothing(v.body) && error("`override` can't have funtion body: $(v.body)")
-    gengetkwargs(v, nothing)
+    d = istag(v, :parameter) ? genparameter(v) : nothing
+    gengetkwargs(v, d)
 end
 
 genextern(v::VarInfo, default) = gengetkwargs(v, default)
