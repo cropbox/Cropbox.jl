@@ -249,6 +249,33 @@
         @test s.a === s.c.a
     end
 
+    @testset "override union" begin
+        @system SOverrideUnionComponent begin
+            a ~ track(override)
+        end
+        @system SOverrideUnionTrack(Controller) begin
+            c(context, a) ~ ::SOverrideUnionComponent
+            a => 1 ~ track
+        end
+        @system SOverrideUnionPreserve(Controller) begin
+            c(context, a) ~ ::SOverrideUnionComponent
+            a => 1 ~ preserve
+        end
+        @system SOverrideUnionDrive(Controller) begin
+            c(context, a) ~ ::SOverrideUnionComponent
+            a => [1] ~ drive
+        end
+        s1 = instance(SOverrideUnionTrack)
+        @test s1.a' == s1.c.a' == 1
+        @test s1.a === s1.c.a
+        s2 = instance(SOverrideUnionPreserve)
+        @test s2.a' == s2.c.a' == 1
+        @test s2.a === s2.c.a
+        s3 = instance(SOverrideUnionDrive)
+        @test s3.a' == s3.c.a' == 1
+        @test s3.a === s3.c.a
+    end
+
     @testset "dynamic type" begin
         @system SDynamicTypeBase(Controller)
         @system SDynamicTypeChild(Controller) <: SDynamicTypeBase
