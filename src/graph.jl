@@ -56,8 +56,7 @@ writedot(name::AbstractString, g::Graph; style=()) = begin
     name
 end
 
-#TODO: wait until Graphviz_jll adds Windows support
-import Conda
+import Graphviz_jll
 writeimage(name::AbstractString, g::Graph; format=nothing, style=()) = begin
     ext = splitext(name)[2]
     if isnothing(format)
@@ -68,7 +67,7 @@ writeimage(name::AbstractString, g::Graph; format=nothing, style=()) = begin
         ext != format && (name *= "."*format)
     end
     dot = writedot(g; style)
-    let exe = joinpath(Conda.bin_dir(:cropbox), "dot"),
+    Graphviz_jll.dot() do exe
         cmd = `$exe -T$format $dot -o $name`
         success(cmd) || error("cannot execute: $cmd")
     end
