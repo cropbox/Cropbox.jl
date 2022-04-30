@@ -311,7 +311,7 @@ gennewargs(infos) = names.(infos) |> Iterators.flatten |> collect
 
 genoverride(v::VarInfo) = begin
     !isnothing(v.body) && error("`override` can't have funtion body: $(v.body)")
-    d = istag(v, :parameter) ? genstate(v) : nothing
+    d = istag(v, :parameter) ? genstate(v) : missing
     gengetkwargs(v, d)
 end
 
@@ -320,10 +320,13 @@ genextern(v::VarInfo, default) = gengetkwargs(v, default)
 gengetkwargs(v::VarInfo, default) = begin
     K = [Meta.quot(n) for n in names(v)]
     K = names(v)
-    @q $C.getbynames(__kwargs__, $K, $default)
+    @gensym o
+    @q let $o = $C.getbynames(__kwargs__, $K)
+        ismissing($o) ? $default : $o
+    end
 end
 
-getbynames(d, K, default=nothing) = begin
+getbynames(d, K, default=missing) = begin
     for k in K
         haskey(d, k) && return d[k]
     end
