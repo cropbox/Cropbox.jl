@@ -330,17 +330,21 @@ getbynames(d, K, default=nothing) = begin
     default
 end
 
+genstate(v::VarInfo) = begin
+    name = Meta.quot(v.name)
+    alias = Meta.quot(v.alias)    
+    value = istag(v, :extern) ? genextern(v, gendefault(v)) : gendefault(v)
+    stargs = [:($(esc(k))=$v) for (k, v) in filterconstructortags(v)]
+    @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
+end
+
 using DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo) = begin
-    name = Meta.quot(v.name)
-    alias = Meta.quot(v.alias)
     decl = if istag(v, :override)
         genoverride(v)
     else
-        value = istag(v, :extern) ? genextern(v, gendefault(v)) : gendefault(v)
-        stargs = [:($(esc(k))=$v) for (k, v) in filterconstructortags(v)]
-        @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
+        genstate(v)
     end
     decl = istag(v, :ref) ? @q(StateRef($decl)) : decl
     gendecl(v, decl)
