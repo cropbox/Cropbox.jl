@@ -236,6 +236,19 @@
         @test s.a' == 2u"m"
     end
 
+    @testset "override" begin
+        @system SOverrideComponent begin
+            a ~ track(override)
+        end
+        @system SOverride(Controller) begin
+            c(context, a) ~ ::SOverrideComponent
+            a => 1 ~ track
+        end
+        s = instance(SOverride)
+        @test s.a' == s.c.a' == 1
+        @test s.a === s.c.a
+    end
+
     @testset "dynamic type" begin
         @system SDynamicTypeBase(Controller)
         @system SDynamicTypeChild(Controller) <: SDynamicTypeBase
