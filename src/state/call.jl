@@ -1,3 +1,4 @@
+#TODO: consider MethodWrapper: https://julialang.zulipchat.com/#narrow/stream/274208-helpdesk-.28published.29/topic/Constraining.20method.20signatures/near/262358928
 #TODO: use vendored FunctionWrappers for now: https://github.com/JuliaLang/julia/issues/40187
 include("../../lib/FunctionWrappers/FunctionWrappers.jl")
 using .FunctionWrappers: FunctionWrapper
