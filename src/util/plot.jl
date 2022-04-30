@@ -38,7 +38,7 @@ extractcolumn(df::DataFrame, n::Expr) = begin
     e = Main.eval(:(df -> @. $(MacroTools.postwalk(te, n))))
     (() -> @eval $e($df))()
 end
-convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c, TimeZones.Local)
+convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c)
 convertcolumn(c) = c
 extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(a)
