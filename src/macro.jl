@@ -632,6 +632,9 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                     docstring = ""
                     # proxy variable is a track to the variable `brought` in
                     n1, a, as, kws, b, s, st, dt, tgs = parseline(line, scope)
+                    #HACK: do not bring in non-state variables
+                    #TODO: support bringing in non-state variables (i.e. pass)
+                    isnothing(s) && continue
                     as = [:($n.$n1)]
                     kws = nothing
                     b = nothing
