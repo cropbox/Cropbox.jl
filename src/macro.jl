@@ -631,20 +631,21 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                     linenumber = v1.linenumber
                     docstring = ""
                     # proxy variable is a track to the variable `brought` in
-                    n1, a, as, kws, b, s, st, dt, tgs = parseline(line, scope)
-                    #HACK: do not bring in non-state variables
-                    #TODO: support bringing in non-state variables (i.e. pass)
-                    isnothing(s) && continue
-                    as = [:($n.$n1)]
-                    kws = nothing
-                    b = nothing
-                    s = :track
-                    tgs = isnothing(tgs) ? tgs : filter(x -> @capture(x, @u_str(_)), tgs)
-                    # generate a proxy variable
-                    v2 = genvarinfo(t, n1, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
-                    # do not overwrite a newer declaration of the variable
-                    if !haskey(d, k)
-                        d[k] = v2
+                    let (n1, a, as, kws, b, s, st, dt, tgs) = parseline(line, scope)
+                        #HACK: do not bring in non-state variables
+                        #TODO: support bringing in non-state variables (i.e. pass)
+                        isnothing(s) && continue
+                        as = [:($n.$n1)]
+                        kws = nothing
+                        b = nothing
+                        s = :track
+                        tgs = isnothing(tgs) ? tgs : filter(x -> @capture(x, @u_str(_)), tgs)
+                        # generate a proxy variable
+                        v2 = genvarinfo(t, n1, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
+                        # do not overwrite a newer declaration of the variable
+                        if !haskey(d, k)
+                            d[k] = v2
+                        end
                     end
                 end
             end
