@@ -605,7 +605,8 @@ using DataStructures: OrderedDict, OrderedSet
 gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, substs, incl, scope)
 geninfos(body; name, substs, incl, scope, _...) = begin
     # update type substitution dict cascaded over all participating mixins
-    substs = merge(substsof.(_mixincollect(mixinsof(scope, incl)))..., substs)
+    M = _mixincollect(mixinsof(scope, incl))
+    substs = merge(substsof.(M)..., substs)
     con(b, s, sc) = begin
         d = OrderedDict{Symbol,VarInfo}()
         #HACK: default in case LineNumberNode is not attached
@@ -623,8 +624,8 @@ geninfos(body; name, substs, incl, scope, _...) = begin
             #TODO: consolidate `bring` handling logic
             if v.state == :Bring
                 _, _, _, _, _, _, t, _, _ = parseline(v.line, scope)
-                (t in incl) || error("undefined mixin used for `bring`: $t")
                 m = getsystem(scope, t)
+                (m in M) || error("undefined mixin used for `bring`: $t")
                 for (k, v1) in con(source(m), namefor(m), scopeof(m))
                     line = v1.line
                     linenumber = v1.linenumber
