@@ -638,7 +638,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                     s = :track
                     tgs = isnothing(tgs) ? tgs : filter(x -> @capture(x, @u_str(_)), tgs)
                     # generate a proxy variable
-                    v2 = genvarinfo(n, n1, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
+                    v2 = genvarinfo(t, n1, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
                     # do not overwrite a newer declaration of the variable
                     if !haskey(d, k)
                         d[k] = v2
