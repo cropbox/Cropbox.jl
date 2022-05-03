@@ -350,18 +350,7 @@ genstate(v::VarInfo) = begin
     @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
 end
 
-using DataStructures: OrderedSet
-gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
-gendecl(v::VarInfo) = begin
-    decl = if istag(v, :override)
-        genoverride(v)
-    else
-        genstate(v)
-    end
-    decl = istag(v, :ref) ? @q(StateRef($decl)) : decl
-    gendecl(v, decl)
-end
-gendecl(v::VarInfo{Nothing}) = begin
+gennostate(v::VarInfo) = begin
     args = emitfuncargpair.(v.args; value=false)
     if istag(v, :option)
         push!(args, @q $(esc(:option)) = __kwargs__)
@@ -376,6 +365,21 @@ gendecl(v::VarInfo{Nothing}) = begin
     # implicit :expose
     decl = :($(esc(v.name)) = $decl)
     gendecl(v, decl)
+end
+
+using DataStructures: OrderedSet
+gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
+gendecl(v::VarInfo) = begin
+    decl = if istag(v, :override)
+        genoverride(v)
+    else
+        genstate(v)
+    end
+    decl = istag(v, :ref) ? @q(StateRef($decl)) : decl
+    gendecl(v, decl)
+end
+gendecl(v::VarInfo{Nothing}) = begin
+    gennostate(v)
 end
 gendecl(v::VarInfo, decl) = @q begin
     $(linenumber(v, "gendecl"))
