@@ -32,6 +32,11 @@ Base.show(io::IO, v::VarInfo) = begin
 end
 
 VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::String, scope::Module, substs::Dict) = begin
+    n, a, as, kws, b, s, st, dt, tgs = parseline(line, scope)
+    genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
+end
+
+parseline(line, scope) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::stype|<:dtype][(tags..)]]
     @capture(bindscope(line, scope), (decl_ ~ deco_) | decl_)
     @capture(deco,
@@ -42,14 +47,18 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     @capture(decl, (def1_ => body_) | def1_)
     @capture(def1, (def2_: alias_) | def2_)
     @capture(def2, name_(args__; kwargs__) | name_(; kwargs__) | name_(args__) | name_)
-    name = parsename(name, system)
-    alias = parsealias(alias, system)
-    args = parseargs(args, system)
-    kwargs = parsekwargs(kwargs)
-    body = parsebody(body)
-    state = parsestate(state)
-    type = parsetype(stype, dtype, state, scope, substs)
-    tags = parsetags(tags; name, alias, args, kwargs, system, state, type)
+    (name, alias, args, kwargs, body, state, stype, dtype, tags)
+end
+
+genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs) = begin
+    name = parsename(n, system)
+    alias = parsealias(a, system)
+    args = parseargs(as, system)
+    kwargs = parsekwargs(kws)
+    body = parsebody(b)
+    state = parsestate(s)
+    type = parsetype(st, dt, state, scope, substs)
+    tags = parsetags(tgs; name, alias, args, kwargs, system, state, type)
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
     catch
