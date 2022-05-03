@@ -113,6 +113,7 @@ parsebody(body) = begin
 end
 parsebody(::Nothing) = nothing
 
+#TODO: make `nothing` an alias of generic state `pass` which may share some logics with `bring`
 parsestate(state) = typestate(Val(state))
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
 typestate(::Val{nothing}) = nothing
@@ -288,6 +289,10 @@ const ϵ = @q begin end
 
 genvartype(v::VarInfo{Nothing}) = gettag(v, :_type)
 genvartype(v::VarInfo{Symbol}) = begin
+    #HACK: escape hatch for `bring`
+    if v.state == :Bring
+        return gettag(v, :_type)
+    end
     N = gettag(v, :_type)
     U = gettag(v, :unit)
     V = @q $C.valuetype($N, $U)
@@ -370,6 +375,10 @@ end
 using DataStructures: OrderedSet
 gendecl(N::Vector{VarNode}) = gendecl.(OrderedSet([n.info for n in N]))
 gendecl(v::VarInfo) = begin
+    #HACK: escape hatch for `bring`
+    if v.state == :Bring
+        return gennostate(v)
+    end
     decl = if istag(v, :override)
         genoverride(v)
     else
@@ -611,6 +620,30 @@ geninfos(body; name, substs, incl, scope, _...) = begin
             end
             v = VarInfo(s, l, ln, ds, sc, substs)
             n = v.name
+            #TODO: consolidate `bring` handling logic
+            if v.state == :Bring
+                _, _, _, _, _, _, t, _, _ = parseline(v.line, scope)
+                (t in incl) || error("undefined mixin used for `bring`: $t")
+                m = getsystem(scope, t)
+                for (k, v1) in con(source(m), namefor(m), scopeof(m))
+                    line = v1.line
+                    linenumber = v1.linenumber
+                    docstring = ""
+                    # proxy variable is a track to the variable `brought` in
+                    n1, a, as, kws, b, s, st, dt, tgs = parseline(line, scope)
+                    as = [:($n.$n1)]
+                    kws = nothing
+                    b = nothing
+                    s = :track
+                    tgs = isnothing(tgs) ? tgs : filter(x -> @capture(x, @u_str(_)), tgs)
+                    # generate a proxy variable
+                    v2 = genvarinfo(n, n1, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
+                    # do not overwrite a newer declaration of the variable
+                    if !haskey(d, k)
+                        d[k] = v2
+                    end
+                end
+            end
             v0 = get(d, n, nothing)
             if !isnothing(v0)
                 @warn "duplicate variable" system=s name=v.name alias=(v0.alias => v.alias) state=(v0.state => v.state)

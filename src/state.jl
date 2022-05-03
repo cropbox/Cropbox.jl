@@ -106,6 +106,7 @@ end
 Base.show(io::IO, ::MIME"text/plain", s::State) = print(io, value(s))
 
 include("state/hold.jl")
+include("state/bring.jl")
 include("state/wrap.jl")
 include("state/advance.jl")
 include("state/preserve.jl")
