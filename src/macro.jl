@@ -641,7 +641,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                             kws = nothing
                             b = nothing
                             s = :track
-                            tgs = isnothing(tgs) ? tgs : filter(x -> @capture(x, @u_str(_)), tgs)
+                            tgs = isnothing(tgs) ? [] : filter(x -> @capture(x, @u_str(_)), tgs)
                             #HACK: make preserve(parameter) if needed (i.e. for testing)
                             if istag(v, :parameters)
                                 as = nothing
