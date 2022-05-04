@@ -5,7 +5,7 @@
             b(a) => 2a ~ track
             c(b) ~ accumulate
         end
-        @eval @system SBring(SBringPart, Controller) begin
+        @eval @system SBring(Controller) begin
             p(context) ~ bring::SBringPart
         end
         o = SBringPart => :a => 1
@@ -25,7 +25,7 @@
             b(a) => 2a ~ track
             c(b) ~ accumulate
         end
-        @eval @system SBringOverrideMod(SBringOverridePart) begin
+        @eval @system SBringOverrideMod begin
             p ~ bring::SBringOverridePart(override)
         end
         @eval @system SBringOverride(Controller) begin
@@ -42,15 +42,6 @@
         update!(s)
         @test_throws ErrorException s.m.c'
         @test s.p.c' == 2
-    end
-
-    @testset "mixin" begin
-        @system SBringMixinPart begin
-            a => 1 ~ preserve
-        end
-        @test_throws LoadError @eval @system SBringMixin(Controller) begin
-            p(context) ~ bring::SBringMixinPart
-        end
     end
 
     @testset "parameters" begin

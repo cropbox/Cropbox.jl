@@ -625,7 +625,9 @@ geninfos(body; name, substs, incl, scope, _...) = begin
             if v.state == :Bring
                 _, _, _, _, _, _, t, _, _ = parseline(v.line, scope)
                 m = getsystem(scope, t)
-                (m in M) || error("undefined mixin used for `bring`: $t")
+                #HACK: do not require mixin declaration since not all variables may be brought in
+                #(m in M) || error("undefined mixin used for `bring`: $t")
+                #TODO: iterate over variables from mixins too?
                 for (k, v1) in con(source(m), namefor(m), scopeof(m))
                     line = v1.line
                     linenumber = v1.linenumber
