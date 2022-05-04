@@ -47,6 +47,15 @@ using DataStructures: OrderedDict
             C = Cropbox.configure(c)
             @test C[:SConfigSystemType][:a] == 1
         end
+
+        @testset "type with unit" begin
+            @system SConfigSystemTypeUnit begin
+                a ~ preserve(parameter, u"m")
+            end
+            c = SConfigSystemTypeUnit => :a => 1
+            C = Cropbox.configure(c)
+            @test C[:SConfigSystemTypeUnit][:a] == 1u"m"
+        end
     end
     
     @testset "variable" begin

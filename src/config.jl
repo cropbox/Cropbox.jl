@@ -89,10 +89,13 @@ end
 _configure(S::Type{<:System}, l) = begin
     P = filter(istag(:parameter), [n.info for n in dependency(S).N])
     K = map(v -> (v.name, v.alias), P) |> Iterators.flatten
+    U = fieldunits(S)
     C = _configure(l)
-    for k in keys(C)
-        (k ∉ K) && error("unrecognized parameter: $S => $k")
-    end
+    C = map(collect(C)) do p
+        k, v = p
+        (k ∉ K) && error("unrecognized parameter: $S => $k => $v")
+        k => unitfy(v, U[k])
+    end |> OrderedDict
     _configure(namefor(S), C)
 end
 _configure(k, v) = _configure(Symbol(k), v)
