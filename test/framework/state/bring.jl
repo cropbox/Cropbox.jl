@@ -12,9 +12,11 @@
         s = instance(SBring; config=o)
         @test s.a' == s.p.a' == 1
         @test s.b' == s.p.b' == 2
-        @test s.c' == s.p.c' == 0
+        @test_throws ErrorException s.c'
+        @test s.p.c' == 0
         update!(s)
-        @test s.c' == s.p.c' == 2
+        @test_throws ErrorException s.c'
+        @test s.p.c' == 2
     end
 
     @testset "override" begin
@@ -35,9 +37,11 @@
         @test s.p === s.m.p
         @test s.m.a' == s.p.a' == 1
         @test s.m.b' == s.p.b' == 2
-        @test s.m.c' == s.p.c' == 0
+        @test_throws ErrorException s.m.c'
+        @test s.p.c' == 0
         update!(s)
-        @test s.m.c' == s.p.c' == 2
+        @test_throws ErrorException s.m.c'
+        @test s.p.c' == 2
     end
 
     @testset "mixin" begin
