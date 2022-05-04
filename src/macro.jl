@@ -640,6 +640,12 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                             b = nothing
                             s = :track
                             tgs = isnothing(tgs) ? tgs : filter(x -> @capture(x, @u_str(_)), tgs)
+                            #HACK: make preserve(parameter) if needed (i.e. for testing)
+                            if istag(v, :parameters)
+                                as = nothing
+                                s = :preserve
+                                push!(tgs, :parameter)
+                            end
                             # generate a proxy variable
                             v2 = genvarinfo(t, n1, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
                             # do not overwrite a newer declaration of the variable

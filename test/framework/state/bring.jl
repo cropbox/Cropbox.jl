@@ -52,4 +52,32 @@
             p(context) ~ bring::SBringMixinPart
         end
     end
+
+    @testset "parameters" begin
+        @system SBringParamsPart begin
+            a => 1 ~ preserve
+            b(a) => 2a ~ track
+            c(b) ~ accumulate
+            d => true ~ flag
+        end
+        @eval @system SBringParams(Controller) begin
+            p(context) ~ bring::SBringParamsPart(parameters)
+        end
+        #TODO: support system-based configuration for implicitly generated parameters
+        o = :SBringParams => (;
+            a = 0,
+            b = 1,
+            c = 2,
+            d = false,
+        )
+        s = instance(SBringParams; config=o)
+        @test s.a' == 0
+        @test s.b' == 1
+        @test_throws ErrorException s.c' == 2
+        @test s.d' == false
+        @test s.p.a' == 1
+        @test s.p.b' == 2
+        @test s.p.c' == 0
+        @test s.p.d' == true
+    end
 end
