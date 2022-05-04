@@ -428,8 +428,8 @@ genconstbase(M, consts) = :(merge(constsof.(_mixincollect($M))..., Dict($((@q($(
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
 genfieldunits(infos) = @q filter(p -> !isnothing(p[1]), $C.OrderedDict(
-    $((@q($(Meta.quot(v.name)) => $(v.tags[:unit])) for v in infos)...),
-    $((@q($(Meta.quot(v.alias)) => $(v.tags[:unit])) for v in infos)...),
+    $((@q($(Meta.quot(v.name)) => $(gettag(v, :unit))) for v in infos)...),
+    $((@q($(Meta.quot(v.alias)) => $(gettag(v, :unit))) for v in infos)...),
 ))
 
 genstruct(name, type, infos, consts, substs, incl, scope) = begin
