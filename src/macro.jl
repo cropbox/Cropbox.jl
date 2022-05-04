@@ -427,6 +427,7 @@ genconstbase(M, consts) = :(merge(constsof.(_mixincollect($M))..., Dict($((@q($(
 
 genfieldnamesunique(infos) = Tuple(v.name for v in infos)
 genfieldnamesalias(infos) = Tuple((v.name, v.alias) for v in infos)
+genfieldunits(infos) = :(Dict($((@q($(Meta.quot(v.name)) => $(v.tags[:unit])) for v in infos)...)))
 
 genstruct(name, type, infos, consts, substs, incl, scope) = begin
     #FIXME: simple `gensym(name)` leads to very strange invalid redefinition of constant error on Julia 1.6.0
@@ -467,6 +468,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C.mixinsof(::Type{$_S}) = $(mixinsof(scope, incl))
         $C.fieldnamesunique(::Type{$_S}) = $(genfieldnamesunique(infos))
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
+        $C.fieldunits(::Type{$_S}) = $(genfieldunits(infos))
         $C.scopeof(::Type{$_S}) = $scope
         $C._update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage(); scope))
         $C._update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage(); scope))
@@ -541,10 +543,13 @@ vartype(::Type{S}, k) where {S<:System} = fieldtype(typefor(S), k) |> typefor
 
 fieldnamesunique(::Type{System}) = ()
 fieldnamesalias(::Type{System}) = ()
+fieldunits(::Type{System}) = Dict()
 fieldnamesunique(::S) where {S<:System} = fieldnamesunique(S)
 fieldnamesalias(::S) where {S<:System} = fieldnamesalias(S)
+fieldunits(::S) where {S<:System} = fieldunits(S)
 fieldnamesunique(::Type{S}) where {S<:System} = fieldnamesunique(typefor(S))
 fieldnamesalias(::Type{S}) where {S<:System} = fieldnamesalias(typefor(S))
+fieldunits(::Type{S}) where {S<:System} = fieldunits(typefor(S))
 
 subsystemsof(::Type{System}) = ()
 subsystemsof(::S) where {S<:System} = subsystemsof(S)
