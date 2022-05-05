@@ -8,6 +8,7 @@ Bring(; _value, kw...) = begin
     V(; kw...)
 end
 
+supportedtags(::Val{:Bring}) = (:parameters, :override)
 constructortags(::Val{:Bring}) = ()
 
 genvartype(v::VarInfo, ::Val{:Bring}; V, _...) = V

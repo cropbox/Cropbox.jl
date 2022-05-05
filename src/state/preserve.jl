@@ -12,6 +12,7 @@ Preserve(; unit, optional, _value, _type, _...) = begin
     Preserve{V}(v)
 end
 
+supportedtags(::Val{:Preserve}) = (:unit, :optional, :parameter, :override, :extern, :ref, :min, :max, :round)
 constructortags(::Val{:Preserve}) = (:unit, :optional)
 
 updatetags!(d, ::Val{:Preserve}; _...) = begin

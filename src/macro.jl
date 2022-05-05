@@ -202,7 +202,7 @@ end
 getsystem(m::Module, i) = reduce((a, b) -> getfield(a, b), split(String(i), ".") .|> Symbol, init=m)
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
-parsetags(tags::Vector; system, state, type, a...) = begin
+parsetags(tags::Vector; name, system, state, type, a...) = begin
     s = Val(state)
     d = Dict{Symbol,Any}()
     for t in tags
@@ -214,9 +214,15 @@ parsetags(tags::Vector; system, state, type, a...) = begin
             d[t] = true
         end
     end
-    !haskey(d, :unit) && (d[:unit] = nothing)
+    T = supportedtags(s)
+    (:unit ∈ T) && !haskey(d, :unit) && (d[:unit] = nothing)
     d[:_type] = esc(type)
     updatetags!(d, s; a...)
+    for (k, v) in d
+        if !isnothing(state) && !(startswith(string(k), "_") || (k ∈ T))
+            error("unsupported tag: $k = $v for $system => $name ~ $state")
+        end
+    end
     d
 end
 
@@ -227,7 +233,7 @@ typetag(::Val{:Produce}) = :(Vector{System})
 typetag(::Val{:Provide}) = :(Cropbox.DataFrame)
 typetag(::Val{nothing}) = nothing
 
-supportedtags(::Val) = nothing
+supportedtags(::Val) = ()
 
 filterconstructortags(v::VarInfo) = begin
     stags = constructortags(Val(v.state))

@@ -130,4 +130,10 @@
         @test s2.a' === -2
         @test s2.b' === -1
     end
+
+    @testset "parameter typo" begin
+        @test_throws LoadError @eval @system SParameterType(Controller) begin
+            a ~ preserve(paramter)
+        end
+    end
 end

@@ -32,6 +32,7 @@ Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
     Interpolate{V}(v)
 end
 
+supportedtags(::Val{:Interpolate}) = (:unit, :knotunit, :reverse, :parameter)
 constructortags(::Val{:Interpolate}) = (:unit, :knotunit, :reverse)
 
 updatetags!(d, ::Val{:Interpolate}; _...) = begin

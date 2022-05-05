@@ -13,6 +13,7 @@ Drive(; tick, unit, _value, _type, _...) = begin
     Drive{V}(v, a, t)
 end
 
+supportedtags(::Val{:Drive}) = (:tick, :unit, :from, :by, :parameter, :override)
 constructortags(::Val{:Drive}) = (:tick, :unit)
 
 updatetags!(d, ::Val{:Drive}; _...) = begin

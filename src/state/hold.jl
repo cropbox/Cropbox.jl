@@ -7,6 +7,7 @@ Hold(; _name, _alias, _...) = begin
     Hold{Any}(_name, _alias)
 end
 
+supportedtags(::Val{:Hold}) = ()
 constructortags(::Val{:Hold}) = ()
 
 value(s::Hold) = error("cannot read variable on hold: $(s.name) $(isnothing(s.alias) ? "" : "($(s.alias))")")

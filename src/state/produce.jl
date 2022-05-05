@@ -29,6 +29,7 @@ Produce(; _name, _type, _...) = begin
     Produce{P,V,S}(_name, v, Production{S}[])
 end
 
+supportedtags(::Val{:Produce}) = (:single, :when)
 constructortags(::Val{:Produce}) = ()
 
 produce(s::Type{<:System}; args...) = Production(typefor(s), args)

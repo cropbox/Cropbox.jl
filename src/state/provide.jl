@@ -18,6 +18,7 @@ Provide(; index, init, step, autounit, _value, _type, _...) = begin
     Provide{V}(v)
 end
 
+supportedtags(::Val{:Provide}) = (:index, :init, :step, :autounit, :parameter)
 constructortags(::Val{:Provide}) = (:index, :init, :step, :autounit)
 
 updatetags!(d, ::Val{:Provide}; _...) = begin

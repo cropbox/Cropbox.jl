@@ -8,6 +8,7 @@ Wrap(; _value, _...) = begin
     Wrap{V}(v)
 end
 
+supportedtags(::Val{:Wrap}) = ()
 constructortags(::Val{:Wrap}) = ()
 
 wrap(v::V) where V = Wrap{V}(v)

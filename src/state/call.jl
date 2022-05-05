@@ -14,6 +14,7 @@ end
 
 (c::Call)(a...) = value(c)(a...)
 
+supportedtags(::Val{:Call}) = (:unit,)
 constructortags(::Val{:Call}) = (:unit,)
 
 #HACK: showing s.value could trigger StackOverflowError

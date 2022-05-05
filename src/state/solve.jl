@@ -9,6 +9,7 @@ Solve(; unit, _type, _...) = begin
     Solve{V}(v)
 end
 
+supportedtags(::Val{:Solve}) = (:unit, :lower, :upper, :pick)
 constructortags(::Val{:Solve}) = (:unit,)
 
 # \Equal opeartor for both solve/bisect

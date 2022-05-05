@@ -10,6 +10,7 @@ Integrate(; unit, _type, _...) = begin
     Integrate{V}(v)
 end
 
+supportedtags(::Val{:Integrate}) = (:unit, :from, :to)
 constructortags(::Val{:Integrate}) = (:unit,)
 
 updatetags!(d, ::Val{:Integrate}; _...) = begin

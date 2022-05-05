@@ -52,6 +52,7 @@ Tabulate(; unit, rows, columns=(), _value, _type, _...) = begin
     Tabulate{V}(v, rows, columns)
 end
 
+supportedtags(::Val{:Tabulate}) = (:unit, :rows, :columns, :parameter)
 constructortags(::Val{:Tabulate}) = (:unit, :rows, :columns)
 
 genvartype(v::VarInfo, ::Val{:Tabulate}; V, _...) = @q Tabulate{$V}

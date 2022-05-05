@@ -17,6 +17,7 @@ Capture(; unit, time, timeunit, _type, _...) = begin
     Capture{V,T,R}(v, t, zero(R))
 end
 
+supportedtags(::Val{:Capture}) = (:unit, :time, :timeunit, :when)
 constructortags(::Val{:Capture}) = (:unit, :time, :timeunit)
 
 @generated rateunit(s::Capture{V,T,R}) where {V,T,R} = unittype(R)

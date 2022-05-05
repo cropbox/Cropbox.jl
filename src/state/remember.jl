@@ -10,6 +10,7 @@ Remember(; unit, _value, _type, _...) = begin
     Remember{V}(v, false)
 end
 
+supportedtags(::Val{:Remember}) = (:unit, :init, :when)
 constructortags(::Val{:Remember}) = (:unit,)
 
 genvartype(v::VarInfo, ::Val{:Remember}; V, _...) = @q Remember{$V}

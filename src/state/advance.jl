@@ -13,6 +13,7 @@ Advance(; init=nothing, step=nothing, unit, _type, _...) = begin
     Advance{T}(t, t, Δt)
 end
 
+supportedtags(::Val{:Advance}) = (:init, :step, :unit)
 constructortags(::Val{:Advance}) = (:init, :step, :unit)
 
 genvartype(v::VarInfo, ::Val{:Advance}; V, _...) = @q Advance{$V}

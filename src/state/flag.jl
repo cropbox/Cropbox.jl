@@ -6,6 +6,7 @@ Flag(; _value, _...) = begin
     Flag{Bool}(_value)
 end
 
+supportedtags(::Val{:Flag}) = (:parameter, :override, :extern, :once, :when)
 constructortags(::Val{:Flag}) = ()
 
 genvartype(v::VarInfo, ::Val{:Flag}; _...) = @q Flag{Bool}

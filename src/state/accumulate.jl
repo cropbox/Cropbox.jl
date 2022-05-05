@@ -18,7 +18,8 @@ Accumulate(; unit, time, timeunit, _value, _type, _...) = begin
     Accumulate{V,T,R}(v, t, zero(R), false)
 end
 
-constructortags(::Val{:Accumulate}) = (:unit, :init, :time, :timeunit)
+supportedtags(::Val{:Accumulate}) = (:unit, :init, :time, :timeunit, :reset, :min, :max, :when)
+constructortags(::Val{:Accumulate}) = (:unit, :init, :time, :timeunit, :reset)
 
 @generated rateunit(::Accumulate{V,T,R}) where {V,T,R} = unittype(R)
 
