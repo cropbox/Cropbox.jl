@@ -1,6 +1,6 @@
 using DataFrames
 import Unitful
-using Dates: Date
+using Dates: Date, Time
 
 @testset "unit" begin
     @testset "unit" begin
