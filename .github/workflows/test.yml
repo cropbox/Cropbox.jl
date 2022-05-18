@@ -12,6 +12,11 @@ jobs:
         depwarn: [yes]
         experimental: [false]
         include:
+          - version: '1.7'
+            os: macos-latest
+            arch: x64
+            depwarn: error
+            experimental: false
           - version: 'nightly'
             os: macos-latest
             arch: x64
