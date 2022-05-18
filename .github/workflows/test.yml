@@ -3,25 +3,22 @@ on: [push, pull_request]
 jobs:
   run:
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
+      fail-fast: false
       matrix:
         version: ['1.7']
         os: [macos-latest, ubuntu-latest, windows-latest]
         arch: [x64]
         depwarn: [yes]
-        experimental: [false]
         include:
           - version: '1.7'
             os: macos-latest
             arch: x64
             depwarn: error
-            experimental: false
           - version: 'nightly'
             os: macos-latest
             arch: x64
             depwarn: error
-            experimental: true
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
