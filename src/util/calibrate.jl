@@ -109,6 +109,8 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     obs = copy(obs)
     P = configure(parameters)
     K = parameterkeys(P)
+    V = parametervalues(P)
+    U = parameterunits(P)
     I = parseindex(index, S) |> keys |> collect
     T = parsetarget(target, S) |> keys |> collect
     n = length(T)
@@ -127,7 +129,7 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
         r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
     end
-    config(X) = parameterzip(K, X)
+    config(X) = parameterzip(K, X, U)
     cost(X) = begin
         c = config(X)
         l = length(configs)
@@ -141,8 +143,7 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         e = Float64.(e)
         multi ? Tuple(e) : e[1]
     end
-    #FIXME: input parameters units are ignored without conversion
-    range = map(p -> Float64.(Tuple(deunitfy(p))), parametervalues(P))
+    range = map((p, u) -> Float64.(Tuple(deunitfy(p, u))), V, U)
     method = if multi
         agg = isnothing(weight) ? mean : let w = StatsBase.weights(weight); f -> mean(f, w) end
         (Method=:borg_moea, FitnessScheme=BlackBoxOptim.ParetoFitnessScheme{n}(aggregator=agg))

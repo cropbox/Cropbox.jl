@@ -113,10 +113,12 @@ parameterflatten(c::Config) = begin
 end
 parameterkeys(c::Config) = collect(keys(parameterflatten(c)))
 parametervalues(c::Config) = collect(values(parameterflatten(c)))
-parameterzip(K, V) = begin
+parameterunits(c::Config) = [fieldunits(typefor(k))[v] for (k, v) in parameterkeys(c)]
+parameterzip(K, V) = parameterzip(K, V, repeat([nothing], length(V)))
+parameterzip(K, V, U) = begin
     l = DefaultOrderedDict(OrderedDict)
-    for ((s, k), v) in zip(K, V)
-        l[s][k] = v
+    for ((s, k), v, u) in zip(K, V, U)
+        l[s][k] = unitfy(v, u)
     end
     configure(l)
 end

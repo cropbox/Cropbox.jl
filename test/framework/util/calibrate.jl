@@ -18,16 +18,15 @@ using DataFrames
 
     @testset "unit" begin
         @system SCalibrateUnit(Controller) begin
-            a => 0 ~ preserve(parameter, u"m/hr")
+            a => 0 ~ preserve(parameter, u"cm/hr")
             b(a) ~ accumulate(u"m")
         end
         n = 10
-        t, a, b = 10.0u"hr", 20u"m/hr", 200u"m"
-        #FIXME: parameter range units are just ignored
-        A = [0.0, 100.0]u"m/hr"
+        t, a, b = 10.0u"hr", 20u"cm/hr", 200u"cm"
+        A = [0, 1]u"m/hr"
         obs = DataFrame(time=[t], b=[b])
         p = calibrate(SCalibrateUnit, obs, stop=n, target=:b, parameters=("SCalibrateUnit.a" => A))
-        @test p[:SCalibrateUnit][:a] == Cropbox.deunitfy(a)
+        @test p[:SCalibrateUnit][:a] ≈ a
         r = simulate(SCalibrateUnit, stop=n, config=p)
         @test r[r.time .== t, :][1, :b] == b
     end
