@@ -28,7 +28,7 @@ manipulate(f::Function; parameters, config=()) = begin
             w = Interact.widget(V; kw...)
             #HACK: use similar style/color (:light_blue) to Config
             d = w.layout(w).children[1].dom
-            d.props[:style] = Dict("font-family" => "monospace", "width" => "25%")
+            d.props[:style] = Dict("font-family" => "monospace", "width" => "80%")
             d.children[1].children[1].props[:style]["color"] = :royalblue
             push!(W, w)
             push!(L, w)
