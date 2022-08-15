@@ -21,9 +21,10 @@ manipulate(f::Function; parameters, config=()) = begin
         l = Interact.style(n, "font-family" => "monospace", "color" => :darkorchid)
         push!(L, l)
         for (k, V) in Q
-            label = string(k)
+            u = fieldunits(typefor(s))[k]
+            b = label(k, u)
             v = option(C, s, k)
-            kw = ismissing(v) ? (; label) : (; label, value=v)
+            kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
             #TODO: deunitfy() based on known units from parameters()
             w = Interact.widget(V; kw...)
             #HACK: use similar style/color (:light_blue) to Config
