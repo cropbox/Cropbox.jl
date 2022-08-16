@@ -8,6 +8,10 @@
 
 Cropbox is a declarative modeling framework specifically designed for developing crop models. The goal is to let crop modelers focus on *what* the model should look like rather than *how* the model is technically implemented under the hood.
 
+## Talks
+
+- [JuliaCon 2022](https://youtu.be/l43ldy_L35A) -- "Cropbox.jl: A Declarative Crop Modeling Framework"
+
 ## Examples
 
 - [LeafGasExchange.jl](https://github.com/cropbox/LeafGasExchange.jl) / [plants2020](https://github.com/cropbox/plants2020): coupled leaf gas-exchange model
