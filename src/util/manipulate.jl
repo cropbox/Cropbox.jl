@@ -24,22 +24,26 @@ manipulate(f::Function; parameters, config=()) = begin
             u = fieldunits(typefor(s))[k]
             b = label(k, u)
             v = option(C, s, k)
+            #HACK: remove units of reactive values for UI layout
+            v = deunitfy(v, u)
+            V = deunitfy(V, u)
             kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
-            #TODO: deunitfy() based on known units from parameters()
             w = Interact.widget(V; kw...)
             #HACK: use similar style/color (:light_blue) to Config
             d = w.layout(w).children[1].dom
             d.props[:style] = Dict("font-family" => "monospace", "width" => "80%")
             d.children[1].children[1].props[:style]["color"] = :royalblue
+            d.children[1].children[1].props[:style]["white-space"] = :nowrap
             push!(W, w)
             push!(L, w)
         end
     end
     K = parameterkeys(P)
+    U = parameterunits(P)
     O = [Interact.onchange(w) for w in W]
     c = map(O...) do (W...)
         V = getindex.(W)
-        configure(config, parameterzip(K, V))
+        configure(config, parameterzip(K, V, U))
     end
     if isempty(Interact.WebIO.providers_initialised)
         @warn "interactive plot only works with a WebIO provider loaded"
