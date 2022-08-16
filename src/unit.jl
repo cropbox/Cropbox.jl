@@ -13,6 +13,10 @@ unitfy(v::Tuple, u::Units) = unitfy.(v, u)
 unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
 unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple{Vararg{Union{Quantity,Missing}}}, u::Units) = unitfy.(v, u)
+unitfy(v::UnitRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(1, u), unitfy(v.stop, u))
+unitfy(v::StepRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(v.step, u), unitfy(v.stop, u))
+unitfy(v::StepRangeLen, u::Units) = StepRangeLen(unitfy(v.ref, u), unitfy(v.step, u), v.len, v.offset)
+unitfy(v::Base.TwicePrecision, u::Units) = Base.TwicePrecision(unitfy(v.hi, u), unitfy(v.lo, u))
 unitfy(v, u) = u(v)
 unitfy(v::V, ::Type{V}) where V = v
 
@@ -20,6 +24,10 @@ deunitfy(v) = v
 deunitfy(v::Quantity) = Unitful.ustrip(v)
 deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
+deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
+deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(v.step), deunitfy(v.stop))
+deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(v.ref), deunitfy(v.step), v.len, v.offset)
+deunitfy(v::Base.TwicePrecision) = Base.TwicePrecision(deunitfy(v.hi), deunitfy(v.lo))
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 deunitfy(v, ::Missing) = deunitfy(v)
 
