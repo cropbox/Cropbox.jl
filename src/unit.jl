@@ -27,6 +27,7 @@ promoteunit() = nothing
 
 hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
+hasunit(v) = hasunit(unittype(v))
 
 using DataFrames: DataFrame, DataFrames
 for f in (:unitfy, :deunitfy)
