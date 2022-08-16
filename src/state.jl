@@ -45,7 +45,7 @@ struct Nounit{S,U}
 end
 
 nounit(s::State, u::Units) = Nounit(s, u)
-nounit(s::State) = Nounit(s, nothing)
+nounit(s::State) = Nounit(s, missing)
 value(s::Nounit) = deunitfy(value(s.state), s.unit)
 
 export nounit

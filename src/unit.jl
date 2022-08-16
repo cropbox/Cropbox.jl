@@ -5,7 +5,8 @@ unitfy(::Nothing, u) = nothing
 unitfy(::Nothing, ::Nothing) = nothing
 unitfy(::Missing, u) = missing
 unitfy(::Missing, ::Nothing) = missing
-unitfy(v, ::Nothing) = v
+unitfy(v, ::Nothing) = !hasunit(v) ? deunitfy(v) : error("unable to strip units: $v")
+unitfy(v, ::Missing) = v
 unitfy(v::Number, u::Units) = Quantity(v, u)
 unitfy(v::Array, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple, u::Units) = unitfy.(v, u)
@@ -20,6 +21,7 @@ deunitfy(v::Quantity) = Unitful.ustrip(v)
 deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v, u) = deunitfy(unitfy(v, u))
+deunitfy(v, ::Missing) = deunitfy(v)
 
 promoteunit(u...) = Unitful.promote_unit(filter(!isnothing, u)...)
 promoteunit(::Nothing) = nothing

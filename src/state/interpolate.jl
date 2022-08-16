@@ -37,7 +37,7 @@ constructortags(::Val{:Interpolate}) = (:unit, :knotunit, :reverse)
 
 updatetags!(d, ::Val{:Interpolate}; _...) = begin
     !haskey(d, :reverse) && (d[:reverse] = false)
-    !haskey(d, :knotunit) && (d[:knotunit] = nothing)
+    !haskey(d, :knotunit) && (d[:knotunit] = missing)
 end
 
 genvartype(v::VarInfo, ::Val{:Interpolate}; V, U, _...) = @q Interpolate{$V}

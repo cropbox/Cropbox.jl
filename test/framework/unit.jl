@@ -87,9 +87,9 @@ using Dates: Date, Time
         @test Cropbox.unitfy(missing, nothing) === missing
     end
 
-    @testset "nothing units" begin
-        @test Cropbox.unitfy(1, nothing) === 1
-        @test Cropbox.unitfy(1u"cm", nothing) === 1u"cm"
+    @testset "missing units" begin
+        @test Cropbox.unitfy(1, missing) === 1
+        @test Cropbox.unitfy(1u"cm", missing) === 1u"cm"
     end
 
     @testset "single" begin
@@ -102,7 +102,7 @@ using Dates: Date, Time
     @testset "percent" begin
         @test Cropbox.unitfy(1, u"percent") === 1u"percent"
         @test 1 |> u"percent" === 100u"percent"
-        @test Cropbox.unitfy(1u"percent", nothing) === 1u"percent"
+        @test Cropbox.unitfy(1u"percent", missing) === 1u"percent"
         @test Cropbox.unitfy(1u"percent", u"NoUnits") === 1//100
     end
 

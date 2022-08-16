@@ -1014,13 +1014,13 @@ end
 extractfunckwargtuple(a) = let k, t, u
     @capture(a, k_::t_(u_) | k_::t_ | k_(u_))
     isnothing(k) && (k = a)
+    isnothing(u) && (u = missing)
     (k, t, u)
 end
 emitfunckwargkey(a) = @q $(esc(extractfunckwargtuple(a)[1]))
 emitfunckwargpair(a) = begin
     k, t, u = extractfunckwargtuple(a)
-    v = esc(k)
-    v = isnothing(u) ? @q($v) : @q($C.unitfy($v, $u))
+    v = @q($C.unitfy($(esc(k)), $u))
     # Skip type assertion (maybe only needed for Call, not Integrate)
     #v = @q $v::$C.valuetype($(gencallargtype(t)), $u)
     @q $k = $v
