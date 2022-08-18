@@ -736,11 +736,11 @@ Declare a new system called `name` with new variables declared in `decl` block u
 - `advance`: manages a time-keeping variable; `time` and `tick` from `Clock`.
 - `preserve`: keeps initially assigned value with no further updates; constants, parameters.
 - `tabulate`: makes a two dimensional table with named keys; *i.e.* partitioning table.
-- `interpolate`: makes a curve fuction interpolated with discrete values; *i.e.* soil characteristic curve.
+- `interpolate`: makes a curve function interpolated with discrete values; *i.e.* soil characteristic curve.
 - `track`: evaluates variable expression as is for each update.
 - `remember`: keeps tracking variable until a certain condition is met; essentially `track` turning into `preserve`.
 - `provide`: manages a table of time-series in DataFrame.
-- `drive`: fetchs the current value from a time-series; maybe supplied by `provide`.
+- `drive`: fetches the current value from a time-series; maybe supplied by `provide`.
 - `call`: defines a partial function bound with some variables.
 - `integrate`: calculates integral using Gaussian method; not for time domain.
 - `accumulate`: emulates integration of rate variable over time; essentially Euler method.
@@ -748,7 +748,7 @@ Declare a new system called `name` with new variables declared in `decl` block u
 - `flag`: sets a boolean flag; essentially `track::Bool`.
 - `produce`: attaches a new instance of system dynamically constructed; *i.e.* root structure growth.
 - `bisect`: solves nonlinear equation using bisection method; *i.e.* gas-exchange model coupling.
-- `solve`: solves polynomical equation symbolically; *i.e.* quadratic equations in photosynthesis model.
+- `solve`: solves polynomial equation symbolically; *i.e.* quadratic equations in photosynthesis model.
 
 # Examples
 ```julia-repl
