@@ -1,4 +1,4 @@
-using LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, has_edge, nv
+using Graphs: Graphs, DiGraph, add_edge!, add_vertex!, has_edge, nv
 
 struct Hierarchy <: Graph
     g::DiGraph

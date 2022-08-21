@@ -1,4 +1,4 @@
-using LightGraphs: LightGraphs, DiGraph, add_edge!, add_vertex!, dst, edges, src
+using Graphs: Graphs, DiGraph, add_edge!, add_vertex!, dst, edges, src
 
 struct Dependency <: Graph
     g::DiGraph
@@ -148,9 +148,9 @@ add!(d::Dependency, V::Vector{VarInfo}) = begin
 end
 
 Base.sort(d::Dependency) = begin
-    C = LightGraphs.simplecycles(d.g)
+    C = Graphs.simplecycles(d.g)
     !isempty(C) && error("no cyclic dependency allowed: $([[d.N[i].info.name for i in c] for c in C])")
-    J = LightGraphs.topological_sort_by_dfs(d.g)
+    J = Graphs.topological_sort_by_dfs(d.g)
     [d.N[i] for i in J]
 end
 
