@@ -1,4 +1,4 @@
-using Interpolations: LinearInterpolation, Extrapolation
+using Interpolations: linear_interpolation, Extrapolation
 using DataStructures: OrderedDict
 
 struct Interpolate{V} <: State{V}
@@ -26,7 +26,7 @@ Interpolate(; unit, knotunit, reverse, _value, _type, _...) = begin
     sort!(d)
     K = unitfy(collect(keys(d)), value(knotunit))
     V = unitfy(collect(values(d)), value(unit))
-    v = LinearInterpolation(K, V)
+    v = linear_interpolation(K, V)
     #HACK: pick up unitfy-ed valuetype
     V = typeof(v).parameters[1]
     Interpolate{V}(v)
