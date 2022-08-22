@@ -35,6 +35,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     n, a, as, kws, b, s, st, dt, tgs = parseline(line, scope)
     genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
 end
+VarInfo(system, line, linenumber, a...) = error("syntax error ($system): \"$line\" ($linenumber)")
 
 parseline(line, scope) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::stype|<:dtype][(tags..)]]
