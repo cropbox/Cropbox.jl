@@ -36,7 +36,11 @@ deunitfy(v::Array) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
 deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(step(v)), deunitfy(v.stop))
-deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(v.ref), deunitfy(step(v)), v.len, v.offset)
+deunitfy(v::StepRangeLen) = begin
+    #HACK: avoid TwicePrecision exposed by StepRangeLen constructor
+    E = eltype(v.ref + step(v))
+    StepRangeLen(deunitfy(E(v.ref)), deunitfy(step(v)), length(v), v.offset)
+end
 deunitfy(v::Base.TwicePrecision) = Base.TwicePrecision(deunitfy(v.hi), deunitfy(v.lo))
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 deunitfy(v, ::Missing) = deunitfy(v)
