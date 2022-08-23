@@ -562,7 +562,15 @@ fieldnamesalias(::Type{S}) where {S<:System} = fieldnamesalias(typefor(S))
 fieldunits(::Type{S}) where {S<:System} = fieldunits(typefor(S))
 
 fieldunit(S, k) = get(fieldunits(S), k, missing)
-fieldunit(::Symbol, k) = missing
+fieldunit(s::Symbol, k) = begin
+    #HACK: if no system type found, assume unit is missing
+    #TODO: forbid implicit Symbol -> System conversion in the future
+    try
+        fieldunit(typefor(s), k)
+    catch
+        missing
+    end
+end
 
 subsystemsof(::Type{System}) = ()
 subsystemsof(::S) where {S<:System} = subsystemsof(S)
