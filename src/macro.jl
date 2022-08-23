@@ -561,6 +561,9 @@ fieldnamesunique(::Type{S}) where {S<:System} = fieldnamesunique(typefor(S))
 fieldnamesalias(::Type{S}) where {S<:System} = fieldnamesalias(typefor(S))
 fieldunits(::Type{S}) where {S<:System} = fieldunits(typefor(S))
 
+fieldunit(S, k) = get(fieldunits(S), k, missing)
+fieldunit(::Symbol, k) = missing
+
 subsystemsof(::Type{System}) = ()
 subsystemsof(::S) where {S<:System} = subsystemsof(S)
 subsystemsof(::Type{S}) where {S<:System} = filter(n -> fieldtype(typefor(S), n) <: System, fieldnamesunique(S))

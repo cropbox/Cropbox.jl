@@ -21,7 +21,7 @@ manipulate(f::Function; parameters, config=()) = begin
         l = Interact.style(n, "font-family" => "monospace", "color" => :darkorchid)
         push!(L, l)
         for (k, V) in Q
-            u = fieldunits(typefor(s))[k]
+            u = fieldunit(s, k)
             b = label(k, u)
             v = option(C, s, k)
             #HACK: remove units of reactive values for UI layout
