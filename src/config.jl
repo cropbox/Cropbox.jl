@@ -223,6 +223,7 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     C
 end
 #TODO: parameters(::System) to show current configurations (need proper handling of alias)
+#TODO: parameters() to combine existing Config
 
 configmultiply(; base=()) = [configure(base)]
 configmultiply(patches::Vector; base=()) = configmultiply(patches...; base)
