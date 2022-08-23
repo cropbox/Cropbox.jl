@@ -171,6 +171,7 @@ using Dates: Date, Time
         r = Cropbox.unitfy(df, U)
         @test Cropbox.unittype(eltype(r[!, 1])) == u"s"
         @test Cropbox.unittype(eltype(r[!, 2])) == u"NoUnits"
+        @test Cropbox.deunitfy(r) == df
     end
 
     @testset "dataframe auto unit" begin

@@ -80,10 +80,10 @@ unitfy(df::DataFrame; kw...) = begin
         #TODO: remove fallback eval in favor of explict constructor mapping
         haskey(D, e) ? D[e] : Main.eval(e)
     end
-    u(m) = nothing
+    u(m) = missing
     U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
 end
-deunitfy(df::DataFrame) = deunitfy(df, repeat([nothing], DataFrames.ncol(df)))
+deunitfy(df::DataFrame) = deunitfy(df, repeat([missing], DataFrames.ncol(df)))
 
 export unitfy, deunitfy
