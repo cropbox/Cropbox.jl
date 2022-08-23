@@ -130,6 +130,19 @@ using Dates: Date, Time
         @test isequal(Cropbox.unitfy((1u"cm", 0.02u"m", missing), u"cm"), (1u"cm", 2.0u"cm", missing))
     end
 
+    @testset "range" begin
+        @test isequal(Cropbox.unitfy(1:3, u"m"), (1:3)u"m")
+        @test isequal(Cropbox.unitfy(1:1:3, u"m"), (1:3)u"m")
+        @test isequal(Cropbox.unitfy(1:1.0:3, u"m"), (1:1.0:3)u"m")
+        @test isapprox(Cropbox.unitfy(1:0.1:3, u"m"), (1:0.1:3)u"m")
+    end
+
+    @testset "range affine" begin
+        @test isequal(Cropbox.unitfy(1:3, u"°C"), [1, 2, 3]u"°C")
+        @test isequal(Cropbox.unitfy(1:1:3, u"°C"), [1, 2, 3]u"°C")
+        @test isequal(Cropbox.unitfy(1:1.0:3, u"°C"), [1, 2, 3]u"°C")
+    end
+
     @testset "mixed units" begin
         #TODO: reduce subtlety
         @test_throws Unitful.DimensionError Cropbox.unitfy([1u"m", 2u"cm", 3], u"mm")
