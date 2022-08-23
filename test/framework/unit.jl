@@ -138,9 +138,9 @@ using Dates: Date, Time
     end
 
     @testset "range affine" begin
-        @test isequal(Cropbox.unitfy(1:3, u"°C"), [1, 2, 3]u"°C")
-        @test isequal(Cropbox.unitfy(1:1:3, u"°C"), [1, 2, 3]u"°C")
-        @test isequal(Cropbox.unitfy(1:1.0:3, u"°C"), [1, 2, 3]u"°C")
+        @test all(collect(Cropbox.unitfy(1:3, u"°C")) .=== [1, 2, 3]u"°C")
+        @test all(collect(Cropbox.unitfy(1:1:3, u"°C")) .=== [1, 2, 3]u"°C")
+        @test all(collect(Cropbox.unitfy(1:1.0:3, u"°C")) .=== [1.0, 2.0, 3.0]u"°C")
     end
 
     @testset "mixed units" begin

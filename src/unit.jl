@@ -13,8 +13,8 @@ unitfy(v::Tuple, u::Units) = unitfy.(v, u)
 unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
 unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple{Vararg{Union{Quantity,Missing}}}, u::Units) = unitfy.(v, u)
-unitfy(v::UnitRange, u::Units) = range(unitfy(v.start, u), unitfy(v.stop, u); step = unitfy(1, Unitful.absoluteunit(u)))
-unitfy(v::StepRange, u::Units) = range(unitfy(v.start, u), unitfy(v.stop, u); step = unitfy(step(v), Unitful.absoluteunit(u)))
+unitfy(v::UnitRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(1, Unitful.absoluteunit(u)), unitfy(v.stop, u))
+unitfy(v::StepRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(step(v), Unitful.absoluteunit(u)), unitfy(v.stop, u))
 unitfy(v::StepRangeLen, u::Units) = begin
     #HACK: avoid missing zero() for unitfied TwicePrecision called by StepRangeLen constructor
     x = v.ref + step(v)
