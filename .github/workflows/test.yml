@@ -11,10 +11,6 @@ jobs:
         arch: [x64]
         depwarn: [yes]
         include:
-          - version: '1.6'
-            os: macos-latest
-            arch: x64
-            depwarn: yes
           - version: '1.7'
             os: macos-latest
             arch: x64
