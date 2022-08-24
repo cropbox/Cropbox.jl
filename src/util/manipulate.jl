@@ -57,9 +57,9 @@ manipulate(f::Function; parameters, config=()) = begin
     end
     K = parameterkeys(P)
     U = parameterunits(P)
-    #HACK: disable onchange modifier due to incompatibility with dropdown widget
-    #O = [Interact.onchange(w) for w in W]
-    c = map(W...) do (V...)
+    #HACK: update the widgets only when the change is finalized (i.e., mouse release)
+    O = [Interact.onchange(w, w[!isnothing(w[:changes]) ? :changes : :index]) for w in W]
+    c = map(O...) do (V...)
         configure(config, parameterzip(K, V, U))
     end
     if isempty(Interact.WebIO.providers_initialised)
