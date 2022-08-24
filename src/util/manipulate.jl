@@ -24,25 +24,42 @@ manipulate(f::Function; parameters, config=()) = begin
             u = fieldunit(s, k)
             b = label(k, u)
             v = option(C, s, k)
-            #HACK: remove units of reactive values for UI layout
-            v = deunitfy(v, u)
-            V = deunitfy(V, u)
-            kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
-            w = Interact.widget(V; kw...)
-            #HACK: use similar style/color (:light_blue) to Config
-            d = w.layout(w).children[1].dom
-            d.props[:style] = Dict("font-family" => "monospace", "width" => "80%")
-            d.children[1].children[1].props[:style]["color"] = :royalblue
-            d.children[1].children[1].props[:style]["white-space"] = :nowrap
+            #TODO: use multiple dispatch?
+            if V isa Union{AbstractArray{Symbol},AbstractArray{<:Enum},AbstractDict}
+                kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
+                w = Interact.dropdown(V; kw...)
+                d = w.layout(w).children[1].dom
+                #TODO: make dropdown box smaller
+                d.props[:style] = Dict("font-family" => "monospace", "padding" => "5px 10px 20px", "color" => :royalblue)
+                d.children[2].props[:style] = Dict("margin" => "-13px 0 0 20px")
+            elseif V isa Union{AbstractRange,AbstractArray}
+                #HACK: remove units of reactive values for UI layout
+                v = deunitfy(v, u)
+                V = deunitfy(V, u)
+                kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
+                w = Interact.widget(V; kw...)
+                #HACK: use similar style/color (:light_blue) to Config
+                d = w.layout(w).children[1].dom
+                d.props[:style] = Dict("font-family" => "monospace", "width" => "80%")
+                d.children[1].children[1].props[:style]["color"] = :royalblue
+                d.children[1].children[1].props[:style]["white-space"] = :nowrap
+            elseif V isa Bool
+                kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
+                w = Interact.checkbox(V; kw...)
+                d = w.layout(w).children[1].dom
+                d.props[:style] = Dict("font-family" => "monospace", "color" => :royalblue)
+                #TODO: tweak margin
+                d.children[2].props[:style] = Dict("font-size" => "14px", "padding-left" => "40px")
+            end
             push!(W, w)
             push!(L, w)
         end
     end
     K = parameterkeys(P)
     U = parameterunits(P)
-    O = [Interact.onchange(w) for w in W]
-    c = map(O...) do (W...)
-        V = getindex.(W)
+    #HACK: disable onchange modifier due to incompatibility with dropdown widget
+    #O = [Interact.onchange(w) for w in W]
+    c = map(W...) do (V...)
         configure(config, parameterzip(K, V, U))
     end
     if isempty(Interact.WebIO.providers_initialised)
