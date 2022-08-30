@@ -26,6 +26,7 @@ unitfy(v::StepRangeLen, u::Units) = begin
     s = unitfy(step(v), Unitful.absoluteunit(u))
     R = typeof(r)
     S = typeof(s)
+    #TODO: use TwicePrecision?
     StepRangeLen{T,R,S}(r, s, length(v), v.offset)
 end
 unitfy(v::Base.TwicePrecision, u::Units) = Base.TwicePrecision(unitfy(v.hi, u), unitfy(v.lo, u))
