@@ -222,8 +222,65 @@ parameters(::Type{S}; alias=false, recursive=false, exclude=(), scope=nothing) w
     end
     C
 end
-#TODO: parameters(::System) to show current configurations (need proper handling of alias)
-#TODO: parameters() to combine existing Config
+"""
+    parameters(s; <keyword arguments>) -> Config
+
+Extract a list of parameters from an existing instance of system `s`.
+
+# Arguments
+- `s::System`: instance of system to be inspected.
+
+# Keyword Arguments
+- `alias=false`: show alias instead of parameter name.
+- `recursive=false`: extract parameters from other systems declared in `S`.
+- `exclude=()`: systems excluded in recurisve search.
+
+# Examples
+```julia-repl
+julia> @system S(Controller) begin
+           a: aaa => 1 ~ preserve(parameter)
+       end;
+
+julia> s = instance(S; config = :S => :a => 2);
+
+julia> parameters(s)
+Config for 1 system:
+  S
+    a = 2.0
+
+julia> parameters(s; alias = true)
+Config for 1 system:
+  S
+    aaa = 2.0
+
+julia> parameters(s; recursive = true)
+Config for 3 systems:
+  Clock
+    init = 0.0 hr
+    step = 1.0 hr
+  Context
+  S
+    a = 2.0
+
+julia> parameters(s; recursive = true, exclude = (Context,))
+Config for 1 system:
+  S
+    a = 2.0
+```
+"""
+parameters(s::S; alias=false, recursive=false, exclude=()) where {S<:System} = begin
+    V = [n.info for n in dependency(S).N]
+    P = filter(istag(:parameter), V)
+    key = alias ? (v -> isnothing(v.alias) ? v.name : v.alias) : (v -> v.name)
+    C = configure(namefor(S) => ((key(v) => s[v.name]' for v in P)...,))
+    if recursive
+        I = filter(i -> i isa System && !any(isa.(i, exclude)), collect(s))
+        T = typefor.(I)
+        X = (S, T..., exclude...) |> Set
+        C = configure(parameters.(I; alias, recursive, exclude=X)..., C)
+    end
+    C
+end
 
 configmultiply(; base=()) = [configure(base)]
 configmultiply(patches::Vector; base=()) = configmultiply(patches...; base)

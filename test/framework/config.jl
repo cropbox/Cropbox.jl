@@ -547,6 +547,19 @@ using DataStructures: OrderedDict
             @test !haskey(c, :Clock)
             @test c[:SConfigParametersExclude][:a] == 1
         end
+
+        @testset "instance" begin
+            @system SConfigParametersInstance(Controller) begin
+                a => 1 ~ preserve(parameter)
+            end
+            c0 = :SConfigParametersInstance => :a => 2
+            s1 = instance(SConfigParametersInstance; config=c0)
+            c1 = Cropbox.parameters(s1)
+            @test @config(c0) == c1
+            s2 = instance(SConfigParametersInstance; config=c1)
+            c2 = Cropbox.parameters(s2)
+            @test c1 == c2
+        end
     end
 
     @testset "option" begin
