@@ -240,20 +240,25 @@ visualize(S::Type{<:System}, x, y, z;
     plot(r, x, y, z; plotopts...)
 end
 
-visualize(s::Call, args...; plotopts...) = begin
-    #HACK: access internal function object
-    f = s'.obj.x
-    #HACK: recover function name
-    fn = string(f)
-    fn = replace(fn[findlast('#', fn)+1:end], "__call" => "")
-    #HACK: retrieve call argument names
-    N = (Base.methods(f) |> only |> Base.method_argnames)[2:end]
-    i = findall(x -> x isa AbstractRange || x isa AbstractArray, args) |> only
-    n = N[i]
-    x = args[i] |> collect
-    A = Iterators.product(args...)
-    y = [s(a...) for a in A]
-    plot(x, y; xlab=n, ylab=fn, plotopts...)
+visualize_call(S::Type{<:System}, x, y, call...; config=(), xstep=(), plotopts...) = begin
+    if isempty(xstep)
+        s = instance(S; config)
+        f = s[y]'
+        i = findall(a -> a isa AbstractRange || a isa AbstractArray, call) |> only
+        rx = call[i] |> collect
+        ry = [f(a...) for a in Iterators.product(call...)]
+        plot(rx, ry; xlab=x, ylab=y, plotopts...)
+    else
+        configs = @config(config + !xstep)
+        r(c) = begin
+            s = instance(S; config=c)
+            f = s[y]'
+            (s[x]', f(call...))
+        end
+        l = [r(c) for c in configs]
+        rx, ry =  [first.(l), last.(l)]
+        plot(rx, ry; xlab=x, ylab=y, plotopts...)
+    end
 end
 
 export visualize, visualize!
