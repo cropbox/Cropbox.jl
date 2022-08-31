@@ -39,7 +39,7 @@ import PolynomialRoots
 solvepolynomial(p, pu) = begin
     sp = [deunitfy(q, qu) for (q, qu) in zip(p, pu)]
     r = PolynomialRoots.roots(sp)
-    real.(filter(isreal, r))
+    real.(filter!(isreal, r))
 end
 solvequadratic(a, b, c) = begin
     (a == 0) && return (-c/b,)

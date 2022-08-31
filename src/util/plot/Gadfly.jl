@@ -39,7 +39,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         [f(c, i) for (i, c) in enumerate(colors)]
     end
     colorkey(colors) = begin
-        NC = filter(x -> let (n, c) = x; !isempty(n) end, collect(zip(names, colors)))
+        NC = filter!(x -> let (n, c) = x; !isempty(n) end, collect(zip(names, colors)))
         if !isempty(NC)
             N, C = first.(NC), last.(NC)
             Gadfly.Guide.manual_color_key(legend, N, C; pos=keypos)
@@ -55,7 +55,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     end
     update_color!(guides, colors) = begin
         #TODO: very hacky approach to append new plots... definitely need a better way
-        keys = filter(x -> x isa Gadfly.Guide.ManualDiscreteKey, guides)
+        keys = filter!(x -> x isa Gadfly.Guide.ManualDiscreteKey, guides)
         if isempty(keys)
             key = colorkey(colors)
             !isnothing(key) && push!(guides, key)

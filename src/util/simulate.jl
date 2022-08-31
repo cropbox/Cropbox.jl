@@ -32,7 +32,7 @@ parsesimulationkey(a::String, s::System) = begin
     if A[end] == "*"
         a0 = join(A[1:end-1], '.')
         ss = s[a0]
-        p(n) = let k = join(filter(!isempty, [a0, string(n)]), '.')
+        p(n) = let k = join(filter!(!isempty, [a0, string(n)]), '.')
             Symbol(k) => k
         end
         [p(n) for n in fieldnamesunique(ss)]

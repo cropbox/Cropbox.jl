@@ -11,7 +11,7 @@ Provide(; index, init, step, autounit, _value, _type, _...) = begin
     Δt = value(step)
     df = DataFrame(_value isa String ? CSV.File(_value) : _value)
     df = autounit ? unitfy(df) : df
-    v = filter(r -> r[i] >= t && iszero(typeof(Δt)(r[i] - t) % Δt), df)
+    v = filter!(r -> r[i] >= t && iszero(typeof(Δt)(r[i] - t) % Δt), df)
     v[1, i] != t && error("incompatible index for initial time = $t\n$v")
     !all(isequal(Δt), diff(v[!, i])) && error("incompatible index for time step = $Δt\n$v")
     V = _type

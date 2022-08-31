@@ -15,6 +15,6 @@ timeunit(::Type{Context}) = timeunit(Clock)
 timeunit(::Type{typefor(Context)}) = timeunit(Context)
 
 #HACK: fallback when timeunit() not available for custom Context
-timeunit(C::Type{<:Context}) = only(filter(v -> v.name == :clock, geninfos(C))).type |> scopeof(C).eval |> timeunit
+timeunit(C::Type{<:Context}) = only(filter!(v -> v.name == :clock, geninfos(C))).type |> scopeof(C).eval |> timeunit
 
 export Context

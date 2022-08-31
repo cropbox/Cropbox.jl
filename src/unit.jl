@@ -73,7 +73,7 @@ unitfy(df::DataFrame; kw...) = begin
     M = match.(p, names(df))
     n(m::RegexMatch) = m.match => strip(m.captures[1])
     n(m) = nothing
-    N = filter(!isnothing, n.(M))
+    N = filter!(!isnothing, n.(M))
     isempty(N) && return df
     u(m::RegexMatch) = begin
         s = m.captures[2]

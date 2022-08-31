@@ -87,7 +87,7 @@ _configure(k::String, v) = begin
     end
 end
 _configure(S::Type{<:System}, l) = begin
-    P = filter(istag(:parameter), [n.info for n in dependency(S).N])
+    P = filter!(istag(:parameter), [n.info for n in dependency(S).N])
     K = map(v -> (v.name, v.alias), P) |> Iterators.flatten
     U = fieldunits(S)
     C = _configure(l)
@@ -274,7 +274,7 @@ parameters(s::S; alias=false, recursive=false, exclude=()) where {S<:System} = b
     key = alias ? (v -> isnothing(v.alias) ? v.name : v.alias) : (v -> v.name)
     C = configure(namefor(S) => ((key(v) => s[v.name]' for v in P)...,))
     if recursive
-        I = filter(i -> i isa System && !any(isa.(i, exclude)), collect(s))
+        I = filter!(i -> i isa System && !any(isa.(i, exclude)), collect(s))
         T = typefor.(I)
         X = (S, T..., exclude...) |> Set
         C = configure(parameters.(I; alias, recursive, exclude=X)..., C)

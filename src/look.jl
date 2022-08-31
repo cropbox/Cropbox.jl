@@ -49,19 +49,19 @@ look(S::Type{<:System}, k::Symbol; kw...) = look(stdout, S, k; kw...)
 look(m::Module, s::Symbol; kw...) = look(getfield(m, s); kw...)
 
 look(io::IO, s::Union{S,Type{S}}; header=true, doc=true, system=true, kw...) where {S<:System} = begin
-    print(io, join(filter(!isempty, strip.([
+    print(io, join(filter!(!isempty, strip.([
         doc ? buf2str(io -> lookdoc(io, s; header, kw...)) : "",
         system ? buf2str(io -> looksystem(io, s; header, kw...)) : "",
     ])), "\n\n"))
 end
 look(io::IO, S::Type{<:System}, k::Symbol; header=true, doc=true, code=true, kw...) = begin
-    print(io, join(filter(!isempty, strip.([
+    print(io, join(filter!(!isempty, strip.([
         doc ? buf2str(io -> lookdoc(io, S, k; header, kw...)) : "",
         code ? buf2str(io -> lookcode(io, S, k; header, kw...)) : "",
     ])), "\n\n"))
 end
 look(io::IO, s::S, k::Symbol; header=true, value=true, kw...) where {S<:System} = begin
-    print(io, join(filter(!isempty, strip.([
+    print(io, join(filter!(!isempty, strip.([
         buf2str(io -> look(io, S, k; header, kw...)),
         value ? buf2str(io -> lookvalue(io, s, k; header, kw...)) : "",
     ])), "\n\n"))
