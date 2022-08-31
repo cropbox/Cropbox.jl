@@ -240,4 +240,20 @@ visualize(S::Type{<:System}, x, y, z;
     plot(r, x, y, z; plotopts...)
 end
 
+visualize(s::Call, args...; plotopts...) = begin
+    #HACK: access internal function object
+    f = s'.obj.x
+    #HACK: recover function name
+    fn = string(f)
+    fn = replace(fn[findlast('#', fn)+1:end], "__call" => "")
+    #HACK: retrieve call argument names
+    N = (Base.methods(f) |> only |> Base.method_argnames)[2:end]
+    i = findall(x -> x isa AbstractRange || x isa AbstractArray, args) |> only
+    n = N[i]
+    x = args[i] |> collect
+    A = Iterators.product(args...)
+    y = [s(a...) for a in A]
+    plot(x, y; xlab=n, ylab=fn, plotopts...)
+end
+
 export visualize, visualize!
