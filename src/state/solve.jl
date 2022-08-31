@@ -93,7 +93,7 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; scope, kw...) = begin
                $xl = $C.unitfy($C.value($lower), $U),
                $xu = $C.unitfy($C.value($upper), $U)
             #TODO: remove duplication
-            $l = filter(x -> $xl <= x <= $xu, collect($X))
+            $l = filter(x -> $xl <= x <= $xu, $X)
             isempty($l) && ($l = clamp.($X, $xl, $xu))
             $l |> $pick
         end
