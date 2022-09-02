@@ -18,7 +18,7 @@ manipulate(f::Function; parameters, config=()) = begin
     for (s, Q) in P
         n = Interact.node(:div, string(s))
         #HACK: use similar style/color (:light_magenta) to Config
-        l = Interact.style(n, "font-family" => "monospace", "color" => :darkorchid)
+        l = Interact.style(n, "font-family" => "monospace", "color" => :rebeccapurple)
         push!(L, l)
         for (k, V) in Q
             u = fieldunit(s, k)
