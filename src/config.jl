@@ -64,6 +64,37 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     color = get(io, :color, false)
     join(io, f.(c; color), '\n')
 end
+Base.show(io::IO, ::MIME"text/html", c::Config) = begin
+    n = length(c)
+    print(io, "<p style=\"font-family: monospace\">")
+    if n == 0
+        print(io, "Config empty")
+    elseif n == 1
+        print(io, "Config for 1 system:")
+    else
+        print(io, "Config for $n systems:")
+    end
+    println(io, "</p>")
+    f((s, C)) = begin
+        b = IOBuffer()
+        println(b, "<table style=\"font-family: monospace\">")
+        println(b, "<tr style=\"background-color: transparent\">")
+        println(b, "<td colspan=\"3\" style=\"padding-left: 20px; color: rebeccapurple\">$s</th>")
+        println(b, "</tr>")
+        K = keys(C)
+        l = isempty(K) ? 0 : maximum(length.(string.(K)))
+        for (k, v) in C
+            print(b, "<tr style=\"text-align: left; background-color: transparent\">")
+            print(b, "<td style=\"padding-left: 40px; color: royalblue\">$k</td>")
+            print(b, "<td style=\"color: gray\">=</td>")
+            print(b, "<td>$(labelstring(v))</td>")
+            println(b, "</tr>")
+        end
+        println(b, "</table>")
+        String(take!(b))
+    end
+    join(io, f.(c), '\n')
+end
 
 configure(c::Config) = c
 configure(c::AbstractDict) = configure(c...)
