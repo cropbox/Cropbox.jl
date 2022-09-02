@@ -14,6 +14,12 @@ end
 
 (c::Call)(a...) = value(c)(a...)
 
+#HACK: for debugging with automatic unitfy
+call(c::Call{V,FunctionWrapper{V,T}}, args...) where {V,T<:Tuple} = begin
+    U = [unittype(t) for (a, t) in zip(args, T.types)]
+    value(c)([unitfy(a, u) for (a, u) in zip(args, U)]...)
+end
+
 supportedtags(::Val{:Call}) = (:unit,)
 constructortags(::Val{:Call}) = (:unit,)
 
