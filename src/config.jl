@@ -41,7 +41,7 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     if n == 0
         print(io, "Config empty")
     elseif n == 1
-        println(io, "Config for $n system:")
+        println(io, "Config for 1 system:")
     else
         println(io, "Config for $n systems:")
     end
