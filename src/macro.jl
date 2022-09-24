@@ -637,7 +637,8 @@ geninfos(body; name, substs, incl, scope, _...) = begin
         d = OrderedDict{Symbol,VarInfo}()
         #HACK: default in case LineNumberNode is not attached
         ln = LineNumberNode(@__LINE__, @__FILE__)
-        for l in b.args
+        #HACK: ensure single line expr is still inside a block
+        for l in MacroTools.block(b).args
             isline(l) && (ln = l; continue)
             if isdoc(l)
                 lnn, ds, l = l.args[2:4]
