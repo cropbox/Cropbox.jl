@@ -33,7 +33,7 @@ RUN julia -e 'using Pkg; pkg"add Flux MLJ MLJLinearModels MLJDecisionTreeInterfa
 RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
 
 # install Cropbox-related packages
-RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop";'
+RUN julia -e 'using Pkg; pkg"add Garlic LeafGasExchange SimpleCrop";'
 
 # create a system image with Cropbox built-in
 ENV CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
