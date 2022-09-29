@@ -1,4 +1,6 @@
-import Interact
+#HACK: use vendored Interact: https://github.com/JuliaGizmos/Interact.jl/pull/417
+include("../../lib/Interact/Interact.jl")
+import .Interact
 
 """
     manipulate(f::Function; parameters, config=())
