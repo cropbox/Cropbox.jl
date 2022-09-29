@@ -7,10 +7,13 @@ using Random
 using Dates
 using Base64: stringmime
 using JSON
-using Knockout
-using Knockout: js_lambda
-using Widgets
-import Widgets:
+#HACK: use vendored Interact: https://github.com/JuliaGizmos/Interact.jl/pull/417
+include("../Knockout/Knockout.jl")
+include("../Widgets/Widgets.jl")
+using .Knockout
+using .Knockout: js_lambda
+using .Widgets
+import .Widgets:
     observe,
     AbstractWidget,
     div,
@@ -85,13 +88,13 @@ export slap_design!
 abstract type WidgetTheme<:Widgets.AbstractBackend; end
 struct NativeHTML<:WidgetTheme; end
 
-const font_awesome = joinpath(@__DIR__, "..", "assets", "all.js")
-const prism_js = joinpath(@__DIR__, "..", "assets", "prism.js")
-const prism_css = joinpath(@__DIR__, "..", "assets", "prism.css")
-const highlight_css = joinpath(@__DIR__, "..", "assets", "highlight.css")
-const nouislider_min_js = joinpath(@__DIR__, "..", "assets", "nouislider.min.js")
-const nouislider_min_css = joinpath(@__DIR__, "..", "assets", "nouislider.min.css")
-const style_css = joinpath(@__DIR__, "..", "assets", "style.css")
+const font_awesome = joinpath(@__DIR__, "assets", "all.js")
+const prism_js = joinpath(@__DIR__, "assets", "prism.js")
+const prism_css = joinpath(@__DIR__, "assets", "prism.css")
+const highlight_css = joinpath(@__DIR__, "assets", "highlight.css")
+const nouislider_min_js = joinpath(@__DIR__, "assets", "nouislider.min.js")
+const nouislider_min_css = joinpath(@__DIR__, "assets", "nouislider.min.css")
+const style_css = joinpath(@__DIR__, "assets", "style.css")
 
 include("classes.jl")
 include("backends.jl")

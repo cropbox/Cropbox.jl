@@ -5,8 +5,8 @@ import Observables: off, observe, AbstractObservable, ObservablePair
 
 export knockout
 
-const knockout_js = joinpath(@__DIR__, "..", "assets", "knockout.js")
-const knockout_punches_js = joinpath(@__DIR__, "..", "assets", "knockout_punches.js")
+const knockout_js = joinpath(@__DIR__, "assets", "knockout.js")
+const knockout_punches_js = joinpath(@__DIR__, "assets", "knockout_punches.js")
 
 """
 `knockout(template, data=Dict(), extra_js = js""; computed = [], methods = [])`

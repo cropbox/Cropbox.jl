@@ -2,24 +2,27 @@ module Interact
 
 using Reexport
 
-@reexport using InteractBase
-import InteractBase: notifications
-import Widgets: Widget, @layout, @nodeps
+#HACK: use vendored Interact: https://github.com/JuliaGizmos/Interact.jl/pull/417
+include("../InteractBase/InteractBase.jl")
+include("../Knockout/Knockout.jl")
+include("../Widgets/Widgets.jl")
+
+@reexport using .InteractBase
+import .InteractBase: notifications
+import .Widgets: Widget, @layout, @nodeps
 import Observables: @on, @map!, @map
 
 @reexport using OrderedCollections
 @reexport using Observables
-@reexport using Knockout
+@reexport using .Knockout
 @reexport using CSSUtil
 @reexport using WebIO
-@reexport using Widgets
+@reexport using .Widgets
 
 struct Bulma<:InteractBase.WidgetTheme; end
 
-const notebookdir = joinpath(@__DIR__, "..", "doc", "notebooks")
-
-const bulma_css = joinpath(@__DIR__, "..", "assets", "bulma.min.css")
-const bulma_confined_css = joinpath(@__DIR__, "..", "assets", "bulma_confined.min.css")
+const bulma_css = joinpath(@__DIR__, "assets", "bulma.min.css")
+const bulma_confined_css = joinpath(@__DIR__, "assets", "bulma_confined.min.css")
 
 function InteractBase.libraries(::Bulma)
     bulmalib = InteractBase.isijulia() ? bulma_confined_css : bulma_css
