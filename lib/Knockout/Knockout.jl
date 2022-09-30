@@ -1,6 +1,6 @@
 module Knockout
 
-using WebIO, Observables, JSExpr, JSON
+using Cropbox.Interact.WebIO, Observables, Cropbox.Interact.JSExpr, JSON
 import Observables: off, observe, AbstractObservable, ObservablePair
 
 export knockout

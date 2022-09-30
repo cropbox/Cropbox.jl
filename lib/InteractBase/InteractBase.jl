@@ -1,19 +1,16 @@
 module InteractBase
 
-using WebIO, OrderedCollections, Observables, CSSUtil, Colors, JSExpr
+using Cropbox.Interact.WebIO, OrderedCollections, Observables, Cropbox.Interact.CSSUtil, Colors, Cropbox.Interact.JSExpr
 import Observables: ObservablePair, AbstractObservable
-import JSExpr: JSString
+import Cropbox.Interact.JSExpr: JSString
 using Random
 using Dates
 using Base64: stringmime
 using JSON
-#HACK: use vendored Interact: https://github.com/JuliaGizmos/Interact.jl/pull/417
-include("../Knockout/Knockout.jl")
-include("../Widgets/Widgets.jl")
-using .Knockout
-using .Knockout: js_lambda
-using .Widgets
-import .Widgets:
+using Cropbox.Interact.Knockout
+using Cropbox.Interact.Knockout: js_lambda
+using Cropbox.Interact.Widgets
+import Cropbox.Interact.Widgets:
     observe,
     AbstractWidget,
     div,

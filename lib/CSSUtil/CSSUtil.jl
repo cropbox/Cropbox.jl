@@ -1,8 +1,8 @@
 module CSSUtil
 
-using WebIO
+using Cropbox.Interact.WebIO
 using JSON
-import WebIO: render
+import Cropbox.Interact.WebIO: render
 
 export style
 export @md_str

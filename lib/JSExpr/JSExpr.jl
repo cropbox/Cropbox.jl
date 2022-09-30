@@ -2,10 +2,10 @@ __precompile__()
 
 module JSExpr
 
-using JSON, MacroTools, WebIO
+using JSON, MacroTools, Cropbox.Interact.WebIO
 export JSString, @js, @js_str, @var, @new
 
-import WebIO: JSString, JSONContext, JSEvalSerialization, scopeid
+import Cropbox.Interact.WebIO: JSString, JSONContext, JSEvalSerialization, scopeid
 using Observables: AbstractObservable
 
 macro js(expr)

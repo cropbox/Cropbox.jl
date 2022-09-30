@@ -1,4 +1,4 @@
-import WebIO: camel2kebab
+import .WebIO: camel2kebab
 
 # Get median elements of ranges, used for initialising sliders.
 # Differs from median(r) in that it always returns an element of the range

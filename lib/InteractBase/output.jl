@@ -1,4 +1,4 @@
-using WebIO, JSExpr
+using .WebIO, .JSExpr
 
 const katex_min_js = joinpath(@__DIR__, "assets", "katex.min.js")
 

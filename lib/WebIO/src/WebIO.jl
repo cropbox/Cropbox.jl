@@ -4,8 +4,8 @@ using Observables
 using Requires
 using AssetRegistry
 using Base64: stringmime
-import Widgets
-import Widgets: node, AbstractWidget
+import Cropbox.Interact.Widgets
+import Cropbox.Interact.Widgets: node, AbstractWidget
 using Logging
 using UUIDs
 using Base64
