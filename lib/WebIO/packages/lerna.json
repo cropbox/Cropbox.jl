@@ -1,0 +1,9 @@
+{
+  "packages": [
+    "blink-provider",
+    "generic-http-provider",
+    "mux-provider",
+    "webio"
+  ],
+  "version": "0.8.15"
+}
