@@ -346,11 +346,22 @@ if isdefined(Observables, :setexcludinghandlers)
         Observables.setexcludinghandlers(ob, val, x -> !(x isa SyncCallback))
         return
     end
-else
-    # Observables >=0.4
+elseif isdefined(Observables, :setexcludinghandlers!)
+    # Observables ==0.4
     function set_nosync(ob, val)
         Observables.setexcludinghandlers!(ob, val)
         for f in listeners(ob)
+            if !(f isa SyncCallback)
+                Base.invokelatest(f, val)
+            end
+        end
+        return
+    end
+else
+    # Observables >=0.5
+    function set_nosync(ob, val)
+        Observables.observe(ob).val = val
+        for (_, f) in listeners(ob)::Vector{Pair{Int, Any}}
             if !(f isa SyncCallback)
                 Base.invokelatest(f, val)
             end
