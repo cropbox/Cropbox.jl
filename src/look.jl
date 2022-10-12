@@ -42,41 +42,41 @@ julia> look(s, :a)
 ```
 
 """
-look(s::System; kw...) = look(stdout, s; kw...)
-look(S::Type{<:System}; kw...) = look(stdout, S; kw...)
-look(s::System, k::Symbol; kw...) = look(stdout, s, k; kw...)
-look(S::Type{<:System}, k::Symbol; kw...) = look(stdout, S, k; kw...)
+
+look(a...; kw...) = look(stdout, MIME("text/plain"), a...; kw...)
+look(io::IO, m::MIME, a...; kw...) = error("undefined look: $a")
+
 look(m::Module, s::Symbol; kw...) = look(getfield(m, s); kw...)
 
-look(io::IO, s::Union{S,Type{S}}; header=true, doc=true, system=true, kw...) where {S<:System} = begin
+look(io::IO, m::MIME, s::Union{S,Type{S}}; header=true, doc=true, system=true, kw...) where {S<:System} = begin
     print(io, join(filter!(!isempty, strip.([
-        doc ? buf2str(io -> lookdoc(io, s; header, kw...)) : "",
-        system ? buf2str(io -> looksystem(io, s; header, kw...)) : "",
+        doc ? buf2str(io -> lookdoc(io, m, s; header, kw...)) : "",
+        system ? buf2str(io -> looksystem(io, m, s; header, kw...)) : "",
     ])), "\n\n"))
 end
-look(io::IO, S::Type{<:System}, k::Symbol; header=true, doc=true, code=true, kw...) = begin
+look(io::IO, m::MIME, S::Type{<:System}, k::Symbol; header=true, doc=true, code=true, kw...) = begin
     print(io, join(filter!(!isempty, strip.([
-        doc ? buf2str(io -> lookdoc(io, S, k; header, kw...)) : "",
-        code ? buf2str(io -> lookcode(io, S, k; header, kw...)) : "",
+        doc ? buf2str(io -> lookdoc(io, m, S, k; header, kw...)) : "",
+        code ? buf2str(io -> lookcode(io, m, S, k; header, kw...)) : "",
     ])), "\n\n"))
 end
-look(io::IO, s::S, k::Symbol; header=true, value=true, kw...) where {S<:System} = begin
+look(io::IO, m::MIME, s::S, k::Symbol; header=true, value=true, kw...) where {S<:System} = begin
     print(io, join(filter!(!isempty, strip.([
-        buf2str(io -> look(io, S, k; header, kw...)),
-        value ? buf2str(io -> lookvalue(io, s, k; header, kw...)) : "",
+        buf2str(io -> look(io, m, S, k; header, kw...)),
+        value ? buf2str(io -> lookvalue(io, m, s, k; header, kw...)) : "",
     ])), "\n\n"))
 end
 
-lookdoc(io::IO, ::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
+lookdoc(io::IO, m, ::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[doc]\n", color=:light_black)
     try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
-        show(io, MIME("text/plain"), md)
+        show(io, m, md)
     catch
     end
 end
-looksystem(io::IO, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
+looksystem(io::IO, ::MIME, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[system]\n", color=:light_black)
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
@@ -89,7 +89,7 @@ looksystem(io::IO, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} =
     end
 end
 
-lookdoc(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw...) where {S<:System} = begin
+lookdoc(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[doc]\n", color=:light_black)
     #HACK: mimic REPL.fielddoc(b, k) with no default description
     docstr = fetchdocstr(S)
@@ -104,19 +104,19 @@ lookdoc(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw..
     else
         md
     end
-    show(io, MIME("text/plain"), s)
+    show(io, m, s)
 end
-lookcode(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:System} = begin
+lookcode(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:System} = begin
     header && printstyled(io, "[code]\n", color=:light_black)
     d = dependency(S)
     n = canonicalname(k, S)
     v = d.M[n]
-    Highlights.highlight(io, MIME("text/plain"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
+    Highlights.highlight(io, m, "  " * string(v.line), Highlights.Lexers.JuliaLexer)
 end
-lookvalue(io::IO, s::System, k::Symbol; header=false, kw...) = begin
+lookvalue(io::IO, m::MIME, s::System, k::Symbol; header=false, kw...) = begin
     header && printstyled(io, "[value]\n", color=:light_black)
     n = canonicalname(k, s)
-    show(io, MIME("text/plain"), s[n])
+    show(io, m, s[n])
 end
 
 buf2str(f; color=true, kw...) = begin
@@ -184,21 +184,19 @@ getdoc(S::Type{<:System}) = begin
     """)
     b = IOBuffer()
     io = IOContext(b, :color => true)
-    header = false
-    doc = true
-    look(io, S; header, doc, system=false)
+    println(io, only(docstr.text))
     fields = docstr.data[:fields]
     if !isempty(fields)
         for (n, a) in fieldnamesalias(S)
             !haskey(fields, n) && continue
-            println(io, '\n')
+            ds = get(docstr.data[:fields], n, nothing)
+            isnothing(ds) && continue
             entry = isnothing(a) ? "- `$n`" : "- `$n` (`$a`)"
-            show(io, MIME("text/plain"), Markdown.parse(entry))
-            print(io, ": ")
-            look(io, S, n; header, doc, excerpt=true, code=false)
+            excerpt = split(strip(ds), '\n')[1]
+            println(io, entry * ": " * excerpt)
         end
     end
-    String(take!(b)) |> Text
+    String(take!(b)) |> Markdown.parse
 end
 
 export look, @look

@@ -38,7 +38,7 @@ dive(s::Vector{<:System}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), e
 dive(s::State{<:System}, t) = dive([MenuItem("1", "", s')], t)
 dive(s::State{<:Vector}, t) = dive(map(t -> MenuItem(string(t[1]), "", t[2]), enumerate(s')), t)
 dive(s::State, t) = dive(t) do io
-    look(io, value(t[end-1]), Symbol(name(t[end])))
+    look(io, MIME("text/plain"), value(t[end-1]), Symbol(name(t[end])))
 end
 dive(l::Vector{<:MenuItem}, t) = begin
     isempty(l) && return
