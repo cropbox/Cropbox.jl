@@ -111,7 +111,7 @@ lookcode(io::IO, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:S
     d = dependency(S)
     n = canonicalname(k, S)
     v = d.M[n]
-    Highlights.highlight(io, MIME("text/ansi"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
+    Highlights.highlight(io, MIME("text/plain"), "  " * string(v.line), Highlights.Lexers.JuliaLexer)
 end
 lookvalue(io::IO, s::System, k::Symbol; header=false, kw...) = begin
     header && printstyled(io, "[value]\n", color=:light_black)
