@@ -80,7 +80,7 @@ lookdoc(io::IO, m::MIME, ::Union{S,Type{S}}; header=false, kw...) where {S<:Syst
     catch
     end
 end
-looksystem(io::IO, m::MIME, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
+looksystem(io::IO, m::MIME"text/plain", s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
     lookheader(io, m, "[system]"; header)
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
@@ -91,6 +91,26 @@ looksystem(io::IO, m::MIME, s::Union{S,Type{S}}; header=false, kw...) where {S<:
         printstyled(io, " = ", color=:light_black)
         print(io, labelstring(s[n]))
     end
+end
+looksystem(io::IO, m::MIME"text/html", s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
+    lookheader(io, m, "[system]"; header)
+    println(io, "<table style=\"font-family: monospace\">")
+    println(io, "<tr style=\"background-color: transparent\">")
+    println(io, "<td colspan=\"4\" style=\"text-align: left; padding: 2px; padding-left: 0px; color: rebeccapurple\">$(namefor(S))</th>")
+    println(io, "</tr>")
+    for (n, a) in fieldnamesalias(S)
+        c1 = uncanonicalname(n)
+        c2 = isnothing(a) ? "" : "($(uncanonicalname(a)))"
+        c3 = isa(s, Type) ? "" : "="
+        c4 = isa(s, Type) ? "" : Markdown.htmlesc(labelstring(s[n]))
+        print(io, "<tr style=\"background-color: transparent\">")
+        print(io, "<td style=\"text-align: left; padding: 2px; padding-left: 20px; color: royalblue\">$c1</td>")
+        print(io, "<td style=\"text-align: left; padding: 2px 0px 2px 0px; color: gray\">$c2</td>")
+        print(io, "<td style=\"text-align: center; padding: 2px 10px 2px 10px; color: gray\">$c3</td>")
+        print(io, "<td style=\"text-align: left; padding: 2px;\">$c4</td>")
+        println(io, "</tr>")
+    end
+    println(io, "</table>")
 end
 
 lookdoc(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw...) where {S<:System} = begin
