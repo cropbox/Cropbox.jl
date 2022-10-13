@@ -13,6 +13,10 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         geoms = [Gadfly.Geom.point, Gadfly.Geom.line]
     elseif kind == :step
         geoms = [Gadfly.Geom.step]
+    elseif kind == :hline
+        geoms = [Gadfly.Geom.hline]
+    elseif kind == :vline
+        geoms = [Gadfly.Geom.vline]
     else
         error("unrecognized plot kind = $kind")
     end
@@ -64,7 +68,20 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
             colorkey!(key, colors)
         end
     end
-    create_layers(colors; n0=0) = [Gadfly.layer(x=Xs[i], y=Ys[i], geoms..., order=n0+i, Gadfly.Theme(theme; default_color=colors[i])) for i in 1:n]
+    create_layers(colors; n0=0) = begin
+        f(i) = begin
+            xy = if kind == :hline
+                (; yintercept=Ys[i]) 
+            elseif kind == :vline
+                (; xintercept=Xs[i])
+            else
+                (; x=Xs[i], y=Ys[i])
+            end
+            t = Gadfly.Theme(theme; default_color=colors[i])
+            Gadfly.layer(geoms..., t; xy..., order=n0+i)
+        end
+        [f(i) for i in 1:n]
+    end
 
     if isnothing(p)
         xmin, xmax = xlim
