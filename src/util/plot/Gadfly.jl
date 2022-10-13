@@ -55,7 +55,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     end
     update_color!(guides, colors) = begin
         #TODO: very hacky approach to append new plots... definitely need a better way
-        keys = filter!(x -> x isa Gadfly.Guide.ManualDiscreteKey, guides)
+        keys = filter(x -> x isa Gadfly.Guide.ManualDiscreteKey, guides)
         if isempty(keys)
             key = colorkey(colors)
             !isnothing(key) && push!(guides, key)
