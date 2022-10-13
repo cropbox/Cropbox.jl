@@ -109,7 +109,6 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         n0 = length(obj.layers)
         colors = create_colors(colors; n0)
         update_color!(obj.guides, colors)
-        foreach(l -> Gadfly.push!(obj, l), create_layers(colors))
         for l in create_layers(colors)
             Gadfly.push!(obj, l)
         end
