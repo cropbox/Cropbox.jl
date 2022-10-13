@@ -188,7 +188,8 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
         names = repeat([""], n)
     else
         legend = isnothing(legend) ? "" : string(legend)
-        names = isnothing(names) ? string.(1:n) : names
+        n0 = length(getplotopt(p, :Ys, []))
+        names = isnothing(names) ? "#" .* string.(n0+1:n0+n) : names
     end
     colors = isnothing(colors) ? repeat([nothing], n) : colors
     title = isnothing(title) ? "" : string(title)
