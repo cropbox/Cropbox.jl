@@ -70,6 +70,7 @@ end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
 Base.show(io::IO, m::MIME"text/plain", s::System) = look(io, m, s; header=false, doc=false)
+Base.show(io::IO, m::MIME"text/html", s::System) = look(io, m, s; header=false, doc=false)
 
 #TODO: see if we can move it to util/look.jl
 include("look.jl")
