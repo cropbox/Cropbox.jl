@@ -17,6 +17,14 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         ylim = (1, length(ycat))
         Ys = indexin.(Ys, Ref(ycat))
         height = length(ycat)
+    elseif kind == :hline
+        plot! = UnicodePlots.hline!
+        #HACK: no clipping on x axis
+        Ys = [nothing]
+    elseif kind == :vline
+        plot! = UnicodePlots.vline!
+        #HACK: no clipping on y axis
+        Ys = [nothing]
     else
         error("unrecognized plot kind = $kind")
     end

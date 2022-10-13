@@ -71,7 +71,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     create_layers(colors; n0=0) = begin
         f(i) = begin
             xy = if kind == :hline
-                (; yintercept=Ys[i]) 
+                (; yintercept=Xs[i]) 
             elseif kind == :vline
                 (; xintercept=Xs[i])
             else

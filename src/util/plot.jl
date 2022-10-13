@@ -110,6 +110,33 @@ plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=n
     plot!(p, X, Ys; xlab, ylab, names, colors, kw...)
 end
 
+"""
+    plot(v::Number; kind, <keyword arguments>) -> Plot
+    plot(V::Vector; kind, <keyword arguments>) -> Plot
+
+Plot a graph of horizontal/vertical lines depending on `kind`, which can be either `:hline` or `:vline`.
+An initial plotting of `hline` requires `xlim` and `vline` requires `ylim`, respectively.
+
+See also: [`plot!`](@ref), [`visualize`](@ref)
+"""
+plot(v::Number; kw...) = plot([v]; kw...)
+plot!(p::Union{Plot,Nothing}, v::Number; kw...) = plot!(p, [v]; kw...)
+plot(V::Vector; kw...) = plot!(nothing, V; kw...)
+plot!(p::Union{Plot,Nothing}, X::Vector; kind, xlim=nothing, ylim=nothing, kw...) = begin
+    xlim = getplotopt(p, :xlim, xlim)
+    ylim = getplotopt(p, :ylim, ylim)
+    if kind == :hline
+        isnothing(xlim) && error("hline requires `xlim`: $V")
+        ylim = isnothing(ylim) ? findlim(X) : ylim
+    elseif kind == :vline
+        isnothing(ylim) && error("vline requires `ylim`: $V")
+        xlim = isnothing(xlim) ? findlim(X) : xlim
+    else
+        error("unsupported `kind` for single value plot: $kind")
+    end
+    plot!(p, X, []; kind, xlim, ylim, kw...)
+end
+
 plot(X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot(X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
 plot(X::Vector, Ys::Vector{<:Vector}; kw...) = plot!(nothing, X, Ys; kw...)
 plot!(p::Union{Plot,Nothing}, X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
