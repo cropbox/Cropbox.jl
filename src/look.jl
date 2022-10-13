@@ -115,6 +115,7 @@ lookcode(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) wh
     d = dependency(S)
     n = canonicalname(k, S)
     v = d.M[n]
+    Highlights.stylesheet(io, m, Highlights.Themes.DefaultTheme)
     Highlights.highlight(io, m, "  " * string(v.line), Highlights.Lexers.JuliaLexer)
 end
 lookvalue(io::IO, m::MIME, s::System, k::Symbol; header=false, kw...) = begin

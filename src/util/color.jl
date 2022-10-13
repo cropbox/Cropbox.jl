@@ -1,6 +1,9 @@
 import Crayons
 import Highlights
 
+#HACK: produce an empty string for `stylesheet()` under "text/plain"
+function Highlights.Format.render(::IO, ::MIME"text/plain", ::Highlights.Themes.Theme) end
+
 function Highlights.Format.render(io::IO, ::MIME"text/plain", tokens::Highlights.Format.TokenIterator)
     for (str, id, style) in tokens
         fg = style.fg.active ? map(Int, (style.fg.r, style.fg.g, style.fg.b)) : nothing
