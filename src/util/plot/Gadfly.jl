@@ -64,7 +64,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
             colorkey!(key, colors)
         end
     end
-    create_layers(colors) = [Gadfly.layer(x=Xs[i], y=Ys[i], geoms..., Gadfly.Theme(theme; default_color=colors[i])) for i in 1:n]
+    create_layers(colors; n0=0) = [Gadfly.layer(x=Xs[i], y=Ys[i], geoms..., order=n0+i, Gadfly.Theme(theme; default_color=colors[i])) for i in 1:n]
 
     if isnothing(p)
         xmin, xmax = xlim
@@ -109,7 +109,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         n0 = length(obj.layers)
         colors = create_colors(colors; n0)
         update_color!(obj.guides, colors)
-        for l in create_layers(colors)
+        for l in create_layers(colors; n0)
             Gadfly.push!(obj, l)
         end
         update!(p; Xs, Ys, kinds, colors, names)
