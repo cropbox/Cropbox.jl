@@ -56,7 +56,10 @@ findlim(array::Vector{<:Number}) = begin
 end
 findlim(array) = extrema(skipmissing(array))
 
-label(l, u) = hasunit(u) ? "$l ($u)" : "$l"
+label(l, u) = begin
+    l = isnothing(l) ? "" : l
+    hasunit(u) ? "$l ($u)" : "$l"
+end
 
 detectbackend() = begin
     if isdefined(Main, :IJulia) && Main.IJulia.inited ||
