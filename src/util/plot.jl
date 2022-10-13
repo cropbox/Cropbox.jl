@@ -52,7 +52,7 @@ findlim(array::Vector{<:Number}) = begin
     l = isempty(a) ? 0 : floor(minimum(a))
     u = isempty(a) ? 0 : ceil(maximum(a))
     #HACK: avoid empty range
-    l == u ? (l, l+1) : (l, u)
+    l == u ? (l-1, l+1) : (l, u)
 end
 findlim(array) = extrema(skipmissing(array))
 
