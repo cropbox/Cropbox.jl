@@ -64,6 +64,8 @@ Base.show(io::IO, ::MIME"text/plain", c::Config) = begin
     color = get(io, :color, false)
     join(io, f.(c; color), '\n')
 end
+
+import Markdown
 Base.show(io::IO, ::MIME"text/html", c::Config) = begin
     n = length(c)
     print(io, "<p style=\"font-family: monospace\">")
@@ -87,7 +89,7 @@ Base.show(io::IO, ::MIME"text/html", c::Config) = begin
             print(b, "<tr style=\"background-color: transparent\">")
             print(b, "<td style=\"text-align: left; padding: 2px; padding-left: 40px; color: royalblue\">$k</td>")
             print(b, "<td style=\"text-align: center; padding: 2px 10px 2px 10px; color: gray\">=</td>")
-            print(b, "<td style=\"text-align: left; padding: 2px;\">$(labelstring(v))</td>")
+            print(b, "<td style=\"text-align: left; padding: 2px;\">$(Markdown.htmlesc(labelstring(v)))</td>")
             println(b, "</tr>")
         end
         println(b, "</table>")
