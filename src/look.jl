@@ -67,8 +67,12 @@ look(io::IO, m::MIME, s::S, k::Symbol; header=true, value=true, kw...) where {S<
     ])), "\n\n"))
 end
 
-lookdoc(io::IO, m, ::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
-    header && printstyled(io, "[doc]\n", color=:light_black)
+lookheader(io::IO, ::MIME, s; header=true, kw...) = begin
+    header && printstyled(io, s * "\n", color=:light_black)
+end
+
+lookdoc(io::IO, m::MIME, ::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
+    lookheader(io, m, "[doc]"; header)
     try
         #HACK: mimic REPL.doc(b) with no dynamic concatenation
         md = Docs.formatdoc(fetchdocstr(S))
@@ -76,8 +80,8 @@ lookdoc(io::IO, m, ::Union{S,Type{S}}; header=false, kw...) where {S<:System} = 
     catch
     end
 end
-looksystem(io::IO, ::MIME, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
-    header && printstyled(io, "[system]\n", color=:light_black)
+looksystem(io::IO, m::MIME, s::Union{S,Type{S}}; header=false, kw...) where {S<:System} = begin
+    lookheader(io, m, "[system]"; header)
     printstyled(io, namefor(S), color=:light_magenta)
     for (n, a) in fieldnamesalias(S)
         print(io, "\n  ")
@@ -90,7 +94,7 @@ looksystem(io::IO, ::MIME, s::Union{S,Type{S}}; header=false, kw...) where {S<:S
 end
 
 lookdoc(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=false, kw...) where {S<:System} = begin
-    header && printstyled(io, "[doc]\n", color=:light_black)
+    lookheader(io, m, "[doc]"; header)
     #HACK: mimic REPL.fielddoc(b, k) with no default description
     docstr = fetchdocstr(S)
     isnothing(docstr) && return
@@ -107,14 +111,14 @@ lookdoc(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, excerpt=fa
     show(io, m, s)
 end
 lookcode(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) where {S<:System} = begin
-    header && printstyled(io, "[code]\n", color=:light_black)
+    lookheader(io, m, "[code]"; header)
     d = dependency(S)
     n = canonicalname(k, S)
     v = d.M[n]
     Highlights.highlight(io, m, "  " * string(v.line), Highlights.Lexers.JuliaLexer)
 end
 lookvalue(io::IO, m::MIME, s::System, k::Symbol; header=false, kw...) = begin
-    header && printstyled(io, "[value]\n", color=:light_black)
+    lookheader(io, m, "[value]"; header)
     n = canonicalname(k, s)
     show(io, m, s[n])
 end
