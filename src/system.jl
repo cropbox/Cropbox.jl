@@ -58,8 +58,16 @@ Base.hasproperty(s::System, n::AbstractString) = begin
 end
 
 #HACK: calculate variable body with external arguments for debugging purpose
-value(s::System, k::Symbol; kw...) = begin
-    d = dependency(s)
+value(s::S, k::Symbol; kw...) where {S<:System} = begin
+    d = dependency(S)
+    v = d.M[k]
+    K = extractfuncargpair.(v.args) .|> first
+    kw0 = Dict(k => s[k]' for k in K)
+    kw1 = merge(kw0, kw)
+    value(S, k; kw1...)
+end
+value(S::Type{<:System}, k::Symbol; kw...) = begin
+    d = dependency(S)
     v = d.M[k]
     @assert v.state in (:Preserve, :Track)
     emit(a) = let p = extractfuncargpair(a), k = p[1]; :($k = $(kw[k])) end
