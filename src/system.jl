@@ -65,7 +65,8 @@ value(s::System, k::Symbol; kw...) = begin
     emit(a) = let p = extractfuncargpair(a), k = p[1]; :($k = $(kw[k])) end
     args = emit.(v.args)
     body = v.body
-    eval(:(let $(args...); $body end))
+    type = v.type
+    eval(:($type(let $(args...); $body end)))
 end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
