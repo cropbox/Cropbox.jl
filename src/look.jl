@@ -180,7 +180,9 @@ julia> @look S.a
 
 """
 macro look(ex)
-    if @capture(ex, s_.k_)
+    if @capture(ex, s_.k_(kw__))
+        :(Cropbox.value($(esc(s)), $(Meta.quot(k)); $(kw...)))
+    elseif @capture(ex, s_.k_)
         :(Cropbox.look($(esc(s)), $(Meta.quot(k))))
     else
         :(Cropbox.look($(esc(ex))))
