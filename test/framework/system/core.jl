@@ -60,6 +60,6 @@
         @test Cropbox.value(s, :b; a=2) == 4
         @test Cropbox.value(s, :c; a=0, b=1) == 1
         @test Cropbox.value(s, :c; a=0) == 2
-        @test_throws AssertionError Cropbox.value(s, :d; c=0)
+        @test_throws ErrorException Cropbox.value(s, :d; c=0)
     end
 end

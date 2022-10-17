@@ -58,23 +58,32 @@ Base.hasproperty(s::System, n::AbstractString) = begin
 end
 
 #HACK: calculate variable body with external arguments for debugging purpose
-value(s::S, k::Symbol; kw...) where {S<:System} = begin
+value(s::S, k::Symbol, a...; kw...) where {S<:System} = begin
     d = dependency(S)
     v = d.M[k]
-    K = extractfuncargpair.(v.args) .|> first
-    kw0 = Dict(k => s[k]' for k in K)
+    P = extractfuncargpair.(v.args)
+    kw0 = Dict(k => s[v]' for (k, v) in P)
     kw1 = merge(kw0, kw)
-    value(S, k; kw1...)
+    value(S, k, a...; kw1...)
 end
-value(S::Type{<:System}, k::Symbol; kw...) = begin
+value(S::Type{<:System}, k::Symbol, a...; kw...) = begin
     d = dependency(S)
     v = d.M[k]
-    @assert v.state in (:Preserve, :Track)
-    emit(a) = let p = extractfuncargpair(a), k = p[1]; :($k = $(kw[k])) end
-    args = emit.(v.args)
     body = v.body
     type = v.type
-    eval(:($type(let $(args...); $body end)))
+    emitvars(a) = let p = extractfuncargpair(a), k = p[1]; :($k = $(kw[k])) end
+    emitvals(a, v) = let (k, t, u) = extractfunckwargtuple(a); :($k = Cropbox.unitfy($v, $u)) end
+    #TODO: check args/kwargs existence
+    if v.state in (:Preserve, :Track)
+        vars = emitvars.(v.args)
+        eval(:($type(let $(vars...); $body end)))
+    elseif v.state == :Call
+        vars = emitvars.(v.args)
+        vals = emitvals.(v.kwargs, a)
+        eval(:($type(let $([vars..., vals...]...); $body end)))
+    else
+        error("unsupported state for value() call form: $v")
+    end
 end
 
 Base.show(io::IO, s::System) = print(io, "<$(namefor(s))>")
