@@ -180,8 +180,19 @@ julia> @look S.a
 
 """
 macro look(ex)
-    if @capture(ex, s_.k_(kw__))
-        :(Cropbox.value($(esc(s)), $(Meta.quot(k)); $(kw...)))
+    if @capture(ex, s_.k_(args__))
+        f(x) = begin
+            if isexpr(x, :parameters)
+                x.args
+            elseif isexpr(x, :kw)
+                [x]
+            else
+                nothing
+            end
+        end
+        a = filter(x -> !isexpr(x, :parameters, :kw), args)
+        kw = filter(!isnothing, f.(args)) |> Iterators.flatten |> collect
+        :(Cropbox.value($(esc(s)), $(Meta.quot(k)), $(a...); $(kw...)))
     elseif @capture(ex, s_.k_)
         :(Cropbox.look($(esc(s)), $(Meta.quot(k))))
     else
