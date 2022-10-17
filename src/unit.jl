@@ -50,7 +50,7 @@ promoteunit() = nothing
 
 hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
-hasunit(v) = hasunit(unittype(v))
+hasunit(v) = any(hasunit.(unittype(v)))
 
 using DataFrames: DataFrame, DataFrames
 for f in (:unitfy, :deunitfy)
@@ -87,6 +87,7 @@ unitfy(df::DataFrame; kw...) = begin
     U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
 end
-deunitfy(df::DataFrame) = deunitfy(df, repeat([missing], DataFrames.ncol(df)))
+unitfy(df::DataFrame, ::Nothing) = df
+deunitfy(df::DataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
 
 export unitfy, deunitfy
