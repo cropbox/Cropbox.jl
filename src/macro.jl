@@ -998,10 +998,14 @@ extractfuncargpair(a) = let k, v
     extractfuncargkey(k) => v
 end
 emitfuncargpair(a; kw...) = emitfuncargpair(extractfuncargpair(a)...; kw...)
-emitfuncargpair(k, v; value=true) = begin
-    k = esc(k)
+emitfuncargpair(k, v; escape=true, value=true, kw=false) = begin
+    k = escape ? esc(k) : k
     v = value ? @q($C.value($v)) : v
-    @q $k = $v
+    if kw
+        Expr(:kw, k, v)
+    else
+        @q $k = $v
+    end
 end
 
 genbody(v::VarInfo, body=nothing) = begin
@@ -1031,25 +1035,28 @@ extractfunckwargtuple(a) = let k, t, u
     (k, t, u)
 end
 emitfunckwargkey(a) = @q $(esc(extractfunckwargtuple(a)[1]))
-emitfunckwargpair(a) = begin
+emitfunckwargpair(a; escape=true) = begin
     k, t, u = extractfunckwargtuple(a)
-    v = @q($C.unitfy($(esc(k)), $u))
+    k = escape ? esc(k) : k
+    v = @q($C.unitfy($k, $u))
     # Skip type assertion (maybe only needed for Call, not Integrate)
     #v = @q $v::$C.valuetype($(gencallargtype(t)), $u)
     @q $k = $v
 end
 
 genfunc(v::VarInfo; unitfy=true) = begin
-    innerargs = @q begin $(emitfuncargpair.(v.args)...) end
-    innerbody = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
+    innerbody = MacroTools.flatten(@q $(esc(v.body)))
     unitfy && (innerbody = @q $C.unitfy($innerbody, $C.value($(gettag(v, :unit)))))
 
     callargs = emitfunckwargkey.(v.kwargs)
+    callkwargs = emitfuncargpair.(v.args; kw=true)
     argsheader = emitfunckwargpair.(v.kwargs)
 
-    @q function $(symcall(v))($(callargs...))
-        let $(argsheader...)
-            $innerbody
+    MacroTools.flatten(@q let
+        function $(symcall(v))($(callargs...); $(callkwargs...))
+            let $(argsheader...)
+                $innerbody
+            end
         end
-    end
+    end)
 end
