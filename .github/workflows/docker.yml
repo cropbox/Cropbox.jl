@@ -9,8 +9,8 @@ jobs:
           overprovision-lvm: 'true'
           remove-dotnet: 'true'
           remove-android: 'true'
-      - uses: actions/checkout@v2
-      - uses: rlespinasse/github-slug-action@v3.x
+      - uses: actions/checkout@v3
+      - uses: rlespinasse/github-slug-action@v4
       - uses: jupyterhub/repo2docker-action@master
         with:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
