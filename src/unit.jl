@@ -52,9 +52,9 @@ hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
 hasunit(v) = any(hasunit.(unittype(v)))
 
-using DataFrames: DataFrame, DataFrames
+using DataFrames: AbstractDataFrame, DataFrame, DataFrames
 for f in (:unitfy, :deunitfy)
-    @eval $f(df::DataFrame, U::Vector) = begin
+    @eval $f(df::AbstractDataFrame, U::Vector) = begin
         r = DataFrame()
         for (n, c, u) in zip(propertynames(df), eachcol(df), U)
             r[!, n] = $f.(c, u)
@@ -64,7 +64,7 @@ for f in (:unitfy, :deunitfy)
 end
 
 import Dates
-unitfy(df::DataFrame; kw...) = begin
+unitfy(df::AbstractDataFrame; kw...) = begin
     #HACK: default constructor for common types to avoid scope binding issue
     D = merge(Dict(
         :Date => Dates.Date,
@@ -87,7 +87,7 @@ unitfy(df::DataFrame; kw...) = begin
     U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
 end
-unitfy(df::DataFrame, ::Nothing) = df
-deunitfy(df::DataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
+unitfy(df::AbstractDataFrame, ::Nothing) = df
+deunitfy(df::AbstractDataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
 
 export unitfy, deunitfy
