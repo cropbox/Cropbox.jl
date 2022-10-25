@@ -75,6 +75,9 @@ end
 parsemetadata(p::Pair, c) = p
 parsemetadata(a::Symbol, c) = c[a]
 parsemetadata(a::String, c) = c[Symbol(a)]
+#HACK: support nested meta keyword list
+parsemetadata(::Nothing, c) = ()
+parsemetadata(a, c) = parsemeta(a, c)
 parsemeta(a::Vector, c) = merge(parsemeta(nothing, c), OrderedDict.(parsemetadata.(a, Ref(c)))...)
 parsemeta(a::Tuple, c) = parsemeta(collect(a), c)
 parsemeta(a, c) = parsemeta([a], c)
