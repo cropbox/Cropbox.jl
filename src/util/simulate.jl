@@ -45,6 +45,7 @@ parsesimulationkey(a::Vector, s) = parsesimulationkey.(a, Ref(s)) |> Iterators.f
 parsesimulation(a::Vector, s) = OrderedDict(parsesimulationkey.(a, Ref(s)) |> Iterators.flatten)
 parsesimulation(a::Tuple, s) = parsesimulation(collect(a), s)
 parsesimulation(::Tuple{}, s) = parsesimulation([], s)
+parsesimulation(::Missing, s) = parsesimulation([], s)
 parsesimulation(a, s) = parsesimulation([a], s)
 
 parseindex(::Nothing, s) = parsesimulation(:time => "context.clock.time", s)
