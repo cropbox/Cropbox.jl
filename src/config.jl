@@ -157,6 +157,21 @@ parameterzip(K, V, U) = begin
     configure(l)
 end
 
+codify(c::Config, p) = begin
+    p = Symbol(p)
+    K = [(p, Symbol(string(s, '.', k))) for (s, k) in parameterkeys(c)]
+    V = parametervalues(c)
+    U = parameterunits(c)
+    parameterzip(K, V, U)
+end
+decodify(c::Config, p) = begin
+    p = Symbol(p)
+    K = [Pair(Symbol.(split(string(k), "."))...) for k in keys(c[p])]
+    V = [v for v in values(c[p])]
+    U = parameterunits(K)
+    parameterzip(K, V, U)
+end
+
 #TODO: wait until TOML 0.5 gets support
 # using TOML
 # loadconfig(c::AbstractString) = configure(TOML.parse(c))
