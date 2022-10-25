@@ -205,6 +205,23 @@ using Dates
         @test r[r.time .== n*u"hr", :b] == p .* n
     end
 
+    @testset "config and configs" begin
+        @system SSimulateConfigConfigs(Controller) begin
+            x ~ preserve(parameter)
+            a ~ preserve(parameter)
+            b(a) ~ accumulate
+        end
+        x = 0
+        A = [1, 2]
+        c = @config :SSimulateConfigConfigs => :x => x
+        C = @config !(:SSimulateConfigConfigs => :a => A)
+        n = 10
+        r = simulate(SSimulateConfigConfigs; config=c, configs=C, stop=n)
+        @test all(r[r.time .== n*u"hr", :x] .== x)
+        @test r[r.time .== n*u"hr", :a] == A
+        @test r[r.time .== n*u"hr", :b] == A .* n
+    end
+
     @testset "meta" begin
         @system SSimulateMeta(Controller) begin
             a ~ preserve(parameter)

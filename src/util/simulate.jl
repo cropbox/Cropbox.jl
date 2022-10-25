@@ -186,8 +186,8 @@ See also: [`instance`](@ref), [`@config`](@ref)
 - `meta=nothing`: name of systems in the configuration to be included in the output as metadata.
 
 ## Configuration
-- `config=()`: a single configuration for the system (can't be used with `configs`).
-- `configs=[]`: multiple configurations for the system (can't be used with `config` nor `configs` argument).
+- `config=()`: a single configuration for the system, or a base for multiple configurations (when used with `configs`).
+- `configs=[]`: multiple configurations for the system.
 - `seed=nothing`: random seed for resetting each simulation run.
 
 ## Progress
@@ -224,10 +224,8 @@ simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], options=(), s
     if isempty(configs)
         s = instance(S; config, options, seed)
         simulate!(s, layout; kwargs...)
-    elseif isempty(config)
-        simulate(S, layout, configs; options, seed, kwargs...)
     else
-        @error "redundant configurations" config configs
+        simulate(S, layout, @config(config + configs); options, seed, kwargs...)
     end
 end
 simulate(S::Type{<:System}, layout::Vector, configs::Vector; verbose=true, kwargs...) = begin
