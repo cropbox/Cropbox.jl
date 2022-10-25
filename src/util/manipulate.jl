@@ -60,7 +60,9 @@ manipulate(f::Function; parameters, config=()) = begin
     #HACK: update the widgets only when the change is finalized (i.e., mouse release)
     O = [Interact.onchange(w, w[!isnothing(w[:changes]) ? :changes : :index]) for w in W]
     c = map(O...) do (V...)
-        configure(config, parameterzip(K, V, U))
+        X = parameterzip(K, V, U)
+        _X = codify(X, :__manipulate__)
+        configure(config, X, _X)
     end
     if isempty(Interact.WebIO.providers_initialised)
         @warn "interactive plot only works with a WebIO provider loaded"

@@ -225,12 +225,25 @@ simulate(; system, kw...) = simulate(system; kw...)
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate(S, [(; base, index, target, meta)]; kwargs...) |> only
 end
-simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], options=(), seed=nothing, kwargs...) = begin
-    if isempty(configs)
+simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], parameters=(), options=(), seed=nothing, kwargs...) = begin
+    if isempty(configs) && isempty(parameters)
         s = instance(S; config, options, seed)
         simulate!(s, layout; kwargs...)
     else
-        simulate(S, layout, @config(config + configs); options, seed, kwargs...)
+        if isempty(parameters)
+            c = @config config + configs
+            L = layout
+        elseif isempty(configs)
+            P = @config !parameters
+            _P = codify.(P, :__manipulate__)
+            c = @config(config + P + _P)
+            #HACK: inject a meta keyword, assuming a single layout
+            l = only(layout)
+            L = [(; base=l.base, index=l.index, target=l.target, meta=(l.meta, :__manipulate__))]
+        else
+            @error "redundant configurations with parameters" configs parameters
+        end
+        simulate(S, L, c; options, seed, kwargs...)
     end
 end
 simulate(S::Type{<:System}, layout::Vector, configs::Vector; verbose=true, kwargs...) = begin
