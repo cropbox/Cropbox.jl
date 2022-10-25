@@ -146,7 +146,8 @@ parameterflatten(c::Config) = begin
 end
 parameterkeys(c::Config) = collect(keys(parameterflatten(c)))
 parametervalues(c::Config) = collect(values(parameterflatten(c)))
-parameterunits(c::Config) = [fieldunit(k, v) for (k, v) in parameterkeys(c)]
+parameterunits(c::Config) = parameterunits(parameterkeys(c))
+parameterunits(K) = [fieldunit(k, v) for (k, v) in K]
 parameterzip(K, V) = parameterzip(K, V, repeat([nothing], length(V)))
 parameterzip(K, V, U) = begin
     l = DefaultOrderedDict(OrderedDict)
