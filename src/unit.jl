@@ -31,7 +31,6 @@ unitfy(v::StepRangeLen, u::Units) = begin
     #TODO: use TwicePrecision?
     StepRangeLen{T,R,S}(r, s, length(v), v.offset)
 end
-unitfy(v::Base.TwicePrecision, u::Units) = Base.TwicePrecision(unitfy(v.hi, u), unitfy(v.lo, u))
 unitfy(v, u) = u(v)
 unitfy(v::V, ::Type{V}) where V = v
 
@@ -42,7 +41,6 @@ deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
 deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(step(v)), deunitfy(v.stop))
 deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(first(v)), deunitfy(step(v)), length(v), v.offset)
-deunitfy(v::Base.TwicePrecision) = Base.TwicePrecision(deunitfy(v.hi), deunitfy(v.lo))
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 deunitfy(v, ::Missing) = deunitfy(v)
 
