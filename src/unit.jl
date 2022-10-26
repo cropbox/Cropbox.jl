@@ -19,11 +19,13 @@ unitfy(v::UnitRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(1, Unitful
 unitfy(v::StepRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(step(v), Unitful.absoluteunit(u)), unitfy(v.stop, u))
 unitfy(v::StepRangeLen, u::Units) = begin
     #HACK: avoid missing zero() for unitfied TwicePrecision called by StepRangeLen constructor
-    x = v.ref + step(v)
-    E = eltype(x)
-    T = typeof(unitfy(E(x), u))
-    r = unitfy(E(v.ref), u)
-    s = unitfy(step(v), Unitful.absoluteunit(u))
+    x0 = first(v)
+    Δx = step(v)
+    x1 = x0 + Δx
+    E = eltype(x1)
+    T = typeof(unitfy(x1, u))
+    r = unitfy(x0, u)
+    s = unitfy(Δx, Unitful.absoluteunit(u))
     R = typeof(r)
     S = typeof(s)
     #TODO: use TwicePrecision?
@@ -39,7 +41,7 @@ deunitfy(v::AbstractArray) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
 deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(step(v)), deunitfy(v.stop))
-deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(v.ref), deunitfy(step(v)), length(v), v.offset)
+deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(first(v)), deunitfy(step(v)), length(v), v.offset)
 deunitfy(v::Base.TwicePrecision) = Base.TwicePrecision(deunitfy(v.hi), deunitfy(v.lo))
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 deunitfy(v, ::Missing) = deunitfy(v)
