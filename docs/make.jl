@@ -10,11 +10,23 @@ makedocs(
     ),
     sitename = "Cropbox.jl",
     pages = [
-        "Home" => "index.md",
+        "Introduction" => [
+            "Cropbox" => "index.md",
+            "Installation" => "installation.md"
+        ],
         "Guide" => [
+            "System" => "guide/system.md",
+            "Variable" => "guide/variable.md",
+            "Configuration" => "guide/configuration.md",
+            "Simulation" => "guide/simulation.md",
+            "Visualization" => "guide/visualization.md",
+            "Inspection" => "guide/inspection.md"
         ],
         "Tutorials" => [
+            "Growing Degree-Day" => "tutorials/gdd.md",
+            "Lotka-Volterra" => "tutorials/lotkavolterra.md",
         ],
+        "Gallery" => "gallery.md",
         "Reference" => [
             "Index" => "reference/index.md",
             "Declaration" => "reference/declaration.md",
@@ -22,6 +34,7 @@ makedocs(
             "Visualization" => "reference/visualization.md",
             "Inspection" => "reference/inspection.md",
         ],
+        "Frequently Asked Questions" => "faq.md",
     ],
 )
 
