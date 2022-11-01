@@ -187,11 +187,14 @@ macro look(ex)
             elseif isexpr(x, :kw)
                 [x]
             else
-                nothing
+                []
             end
         end
+        g(x) = begin
+            Expr(:kw, x.args[1], esc(x.args[2]))
+        end
         a = filter(x -> !isexpr(x, :parameters, :kw), args)
-        kw = filter(!isnothing, f.(args)) |> Iterators.flatten |> collect
+        kw = args .|> f |> Iterators.flatten .|> g
         :(Cropbox.value($(esc(s)), $(Meta.quot(k)), $(a...); $(kw...)))
     elseif @capture(ex, s_.k_)
         :(Cropbox.look($(esc(s)), $(Meta.quot(k))))
