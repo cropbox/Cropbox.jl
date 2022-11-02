@@ -35,7 +35,7 @@ manipulate(f::Function; parameters, config=()) = begin
                 d = w.layout(w).children[1].dom
                 #TODO: make dropdown box smaller
                 d.props[:style] = Dict("font-family" => "monospace", "padding" => "5px 10px 20px", "color" => :royalblue)
-                d.children[2].props[:style] = Dict("margin" => "-13px 0 0 20px")
+                d.children[2].props[:style] = Dict("margin" => "-5px 0 0 20px")
             elseif V isa Union{AbstractRange,AbstractArray}
                 #HACK: remove units of reactive values for UI layout
                 v = deunitfy(v, u)
