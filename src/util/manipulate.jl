@@ -24,6 +24,10 @@ manipulate(f::Function; parameters, config=()) = begin
             u = fieldunit(s, k)
             b = label(k, u)
             v = option(C, s, k)
+            #HACK: support Enum types
+            if V isa Type && V <: Enum
+                V = collect(instances(V))
+            end
             #TODO: use multiple dispatch?
             if V isa Union{AbstractArray{Symbol},AbstractArray{<:Enum},AbstractDict}
                 kw = ismissing(v) ? (; label=b) : (; label=b, value=v)
