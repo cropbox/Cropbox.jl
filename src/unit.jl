@@ -38,7 +38,7 @@ deunitfy(v::AbstractArray) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
 deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(step(v)), deunitfy(v.stop))
-deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(v.ref), deunitfy(step(v)), length(v), v.offset)
+deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(eltype(v)(v.ref)), deunitfy(step(v)), length(v), v.offset)
 deunitfy(v, u) = deunitfy(unitfy(v, u))
 deunitfy(v, ::Missing) = deunitfy(v)
 
