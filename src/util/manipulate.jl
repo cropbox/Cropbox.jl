@@ -54,6 +54,8 @@ manipulate(f::Function; parameters, config=()) = begin
                 d.props[:style] = Dict("font-family" => "monospace", "color" => :royalblue)
                 #TODO: tweak margin
                 d.children[2].props[:style] = Dict("font-size" => "14px", "padding-left" => "40px")
+            else
+                error("unsupported values for interaction: $V")
             end
             push!(W, w)
             push!(L, w)
