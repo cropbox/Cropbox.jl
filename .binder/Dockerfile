@@ -40,7 +40,7 @@ ENV CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
 RUN julia -e 'import Pkg; Pkg.add("PackageCompiler"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path="'${CROPBOX_IMG}'", precompile_execution_file="'${REPO_DIR}'/.binder/precompile.jl", cpu_target=PackageCompiler.default_app_cpu_target());' || exit 1
 
 # update IJulia kernel with custom system image
-RUN julia -e 'using IJulia; installkernel("Julia", "--project='${HOME}'", "--sysimage='${CROPBOX_IMG}'", "--threads=auto");'
+RUN julia -e 'using IJulia; installkernel("Julia", "--project='${HOME}'", "--sysimage='${CROPBOX_IMG}'");'
 
 # create a wrapper for Julia REPL with custom system image
 RUN rm /usr/local/bin/julia && \
