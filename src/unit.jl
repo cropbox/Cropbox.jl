@@ -10,10 +10,10 @@ unitfy(::Nothing, ::Missing) = nothing
 unitfy(::Missing, ::Missing) = missing
 unitfy(v, ::Missing) = v
 unitfy(v::Number, u::Units) = Quantity(v, u)
-unitfy(v::Array, u::Units) = unitfy.(v, u)
+unitfy(v::AbstractArray, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple, u::Units) = unitfy.(v, u)
 unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
-unitfy(v::Array{<:Union{Quantity,Missing}}, u::Units) = unitfy.(v, u)
+unitfy(v::AbstractArray{<:Union{Quantity,Missing}}, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple{Vararg{Union{Quantity,Missing}}}, u::Units) = unitfy.(v, u)
 unitfy(v::UnitRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(1, Unitful.absoluteunit(u)), unitfy(v.stop, u))
 unitfy(v::StepRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(step(v), Unitful.absoluteunit(u)), unitfy(v.stop, u))
@@ -35,7 +35,7 @@ unitfy(v::V, ::Type{V}) where V = v
 
 deunitfy(v) = v
 deunitfy(v::Quantity) = Unitful.ustrip(v)
-deunitfy(v::Array) = deunitfy.(v)
+deunitfy(v::AbstractArray) = deunitfy.(v)
 deunitfy(v::Tuple) = deunitfy.(v)
 deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
 deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(step(v)), deunitfy(v.stop))
@@ -52,9 +52,9 @@ hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
 hasunit(v) = any(hasunit.(unittype(v)))
 
-using DataFrames: DataFrame, DataFrames
+using DataFrames:AbstractDataFrame, DataFrame, DataFrames
 for f in (:unitfy, :deunitfy)
-    @eval $f(df::DataFrame, U::Vector) = begin
+    @eval $f(df::AbstractDataFrame, U::Vector) = begin
         r = DataFrame()
         for (n, c, u) in zip(propertynames(df), eachcol(df), U)
             r[!, n] = $f.(c, u)
@@ -64,7 +64,7 @@ for f in (:unitfy, :deunitfy)
 end
 
 import Dates
-unitfy(df::DataFrame; kw...) = begin
+unitfy(df::AbstractDataFrame; kw...) = begin
     #HACK: default constructor for common types to avoid scope binding issue
     D = merge(Dict(
         :Date => Dates.Date,
@@ -87,7 +87,7 @@ unitfy(df::DataFrame; kw...) = begin
     U = u.(M)
     DataFrames.rename(unitfy(df, U), N...)
 end
-unitfy(df::DataFrame, ::Nothing) = df
-deunitfy(df::DataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
+unitfy(df::AbstractDataFrame, ::Nothing) = df
+deunitfy(df::AbstractDataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
 
 export unitfy, deunitfy

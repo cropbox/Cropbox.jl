@@ -32,7 +32,7 @@ metricfunc(metric) = metric
 
 #HACK: handle index columns with non-identical, but compatible units
 # https://github.com/JuliaData/DataFrames.jl/issues/2486
-normalize!(dfs::DataFrame...; on) = begin
+normalize!(dfs::AbstractDataFrame...; on) = begin
     n = length(dfs)
     is(i::Symbol) = repeat([i], n)
     is(i) = collect(i)
@@ -95,7 +95,7 @@ Config for 1 system:
     a = 20.0
 ```
 """
-calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame; config=(), configs=[], kwargs...) = begin
     if isempty(configs)
         calibrate(S, obs, [config]; kwargs...)
     elseif isempty(config)
@@ -104,7 +104,7 @@ calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) =
         @error "redundant configurations" config configs
     end
 end
-calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
     #HACK: use copy due to normalize!
     obs = copy(obs)
     P = configure(parameters)

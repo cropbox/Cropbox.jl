@@ -117,7 +117,7 @@ julia> evaluate(obs, est; index = :time, target = :b => :c)
 1.0 g
 ```
 """
-evaluate(obs::DataFrame, est::DataFrame; index=nothing, target, metric=nothing, kwargs...) = begin
+evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index=nothing, target, metric=nothing, kwargs...) = begin
     S = nothing
     #HACK: use copy due to normalize!
     obs = copy(obs)

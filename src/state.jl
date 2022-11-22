@@ -27,7 +27,7 @@ unittype(::Type{<:Vector{V}}) where V = unittype(V)
 unittype(::Type{<:Vector{Union{V,Missing}}}) where V = unittype(V)
 unittype(::Type{<:AbstractRange{V}}) where V = unittype(V)
 unittype(::T) where T = unittype(T)
-unittype(v::DataFrame) = unittype.(eltype.(eachcol(v)))
+unittype(v::AbstractDataFrame) = unittype.(eltype.(eachcol(v)))
 
 valuetype(::State{V}) where V = V
 valuetype(T, ::Nothing) = T

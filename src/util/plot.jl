@@ -29,9 +29,9 @@ Base.display(d::AbstractDisplay, p::Plot) = display(d, p.obj)
 Base.display(m::MIME, p::Plot) = display(m, p.obj)
 Base.display(d::AbstractDisplay, m::MIME, p::Plot) = display(d, m, p.obj)
 
-extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
-extractcolumn(df::DataFrame, n::String) = extractcolumn(df, Symbol(n))
-extractcolumn(df::DataFrame, n::Expr) = begin
+extractcolumn(df::AbstractDataFrame, n::Symbol) = df[!, n]
+extractcolumn(df::AbstractDataFrame, n::String) = extractcolumn(df, Symbol(n))
+extractcolumn(df::AbstractDataFrame, n::Expr) = begin
     ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
     te(x) = @capture(x, f_(a__)) ? :($f($(ts.(a)...))) : x
     #HACK: avoid world age problem for function scope eval
@@ -40,9 +40,9 @@ extractcolumn(df::DataFrame, n::Expr) = begin
 end
 convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c)
 convertcolumn(c) = c
-extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
+extractunit(df::AbstractDataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(a)
-extractarray(df::DataFrame, n) = begin
+extractarray(df::AbstractDataFrame, n) = begin
     #HACK: Gadfly doesn't support ZonedDateTime
     convertcolumn(extractcolumn(df, n))
 end
@@ -83,8 +83,8 @@ Plot a graph from provided data source. The type of graph is selected based on a
 
 See also: [`plot!`](@ref), [`visualize`](@ref)
 """
-plot(df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot(df, x, [y]; names=[name], colors=[color], kw...)
-plot(df::DataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
+plot(df::AbstractDataFrame, x, y; name=nothing, color=nothing, kw...) = plot(df, x, [y]; names=[name], colors=[color], kw...)
+plot(df::AbstractDataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
 """
     plot!(p, <arguments>; <keyword arguments>) -> Plot
 
@@ -95,8 +95,8 @@ See also: [`plot`](@ref)
 # Arguments
 - `p::Union{Plot,Nothing}`: plot object to be updated; `nothing` creates a new plot.
 """
-plot!(p::Union{Plot,Nothing}, df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot!(p, df, x, [y]; names=[name], colors=[color], kw...)
-plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, kw...) = begin
+plot!(p::Union{Plot,Nothing}, df::AbstractDataFrame, x, y; name=nothing, color=nothing, kw...) = plot!(p, df, x, [y]; names=[name], colors=[color], kw...)
+plot!(p::Union{Plot,Nothing}, df::AbstractDataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, kw...) = begin
     arr(n) = extractarray(df, n)
     X = arr(x)
     Ys = arr.(ys)
