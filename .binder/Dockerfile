@@ -33,7 +33,7 @@ RUN echo "server-user=${NB_USER}" >> /etc/rstudio/rserver.conf && \
     echo www-frame-origin=same >> /etc/rstudio/rserver.conf
 
 # install R packages
-RUN mamba install --quiet --yes --channel tomyun \
+RUN mamba install --quiet --yes --channel conda-forge \
     'tensorflow' \
     'r-tidyverse' \
     'r-tensorflow' \
