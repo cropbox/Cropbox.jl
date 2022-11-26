@@ -40,6 +40,7 @@ RUN mamba install --quiet --yes --channel tomyun \
     'r-keras' \
     'r-tfdatasets' \
     'r-randomforest' \
+    'r-skimr' \
     'r-hydrogof' && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
