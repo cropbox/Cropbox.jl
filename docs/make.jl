@@ -24,7 +24,7 @@ makedocs(
         ],
         "Tutorials" => [
             "Growing Degree-Day" => "tutorials/gdd.md",
-            "Lotka-Volterra" => "tutorials/lotkavolterra.md",
+            "Lotka-Volterra Equations" => "tutorials/lotkavolterra.md",
         ],
         "Gallery" => "gallery.md",
         "Reference" => [

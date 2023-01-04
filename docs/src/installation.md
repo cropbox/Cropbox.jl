@@ -1,4 +1,4 @@
-# Installation
+# [Installation](@id Installation)
 
 ## Install Julia
 

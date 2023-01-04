@@ -1,4 +1,4 @@
-# Simulation
+# [Simulation](@id Simulation1)
 
 ```@docs
 instance

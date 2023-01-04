@@ -1,4 +1,4 @@
-# Visualization
+# [Visualization](@id Visualization1)
 
 ```@docs
 plot
