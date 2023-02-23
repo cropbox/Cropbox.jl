@@ -105,7 +105,7 @@ evaluate(S, est; target = :a, stop = 3)
 
 ## [`calibrate()`](@id calibrate)
 
-`calibrate()` is a function used to estimate a set of parameters for a given system, that will yield a simulation as closely as possible to a provided observation data. A multitude of simulations are conducted using different combinations of parameter values specified by a range of possible values. The optimal set of parameters is selected based on the chosen evaluation metric (RMSE by default). The algorithm used is the differential evolution algorithm from [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl. The function returns a Config object that we can directly use in model simulations.
+`calibrate()` is a function used to estimate a set of parameters for a given system, that will yield a simulation as closely as possible to a provided observation data. A multitude of simulations are conducted using different combinations of parameter values specified by a range of possible values. The optimal set of parameters is selected based on the chosen evaluation metric (RMSE by default). The algorithm used is the differential evolution algorithm from [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl). The function returns a Config object that we can directly use in model simulations.
 
 **Example**
 
