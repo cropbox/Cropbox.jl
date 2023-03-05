@@ -12,7 +12,7 @@ ENV JUPYTER_CONFIG_DIR=/opt/conda/etc/jupyter
 ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
 
 # install RStudio
-ENV RSTUDIO_URL=https://download2.rstudio.org/server/jammy/amd64/rstudio-server-2022.07.2-576-amd64.deb
+ENV RSTUDIO_URL=https://download2.rstudio.org/server/jammy/amd64/rstudio-server-2022.12.0-353-amd64.deb
 RUN wget -O /tmp/rstudio.deb ${RSTUDIO_URL} && \
     apt-get update && \
     apt install -y /tmp/rstudio.deb && \
