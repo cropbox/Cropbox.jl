@@ -23,6 +23,7 @@ y = [2, 4, 6, 8, 10]
 
 plot(x, y)
 ```
+\
 
 **Multiple Vectors**
 
@@ -31,6 +32,7 @@ You can also plot multiple series, by using a vector of vectors.
 ```@example Cropbox
 plot(x, [x, y])
 ```
+\
 
 **DataFrame**
 

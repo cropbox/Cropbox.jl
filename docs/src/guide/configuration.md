@@ -13,7 +13,7 @@ For a variable to be eligible for adjustment through a configuration, the variab
 
 Configurations are created using the `@config` macro. 
 
-A basic unit of configuration for a system `S` is represented as a pair in the form of `S => pv`. The parameter variable and its corresponding value is represented as another pair in the form of `p => v`. In other words, a configuration is created by pairing system `S` to a pairing of parameter variable and value `p => v`, like so: `:S => :p => v`.
+A basic unit of configuration for a system `S` is represented as a pair in the form of `S => p` (`p` represents a parameter). The parameter variable and its corresponding value is represented as another pair in the form of `p => v`. In other words, a configuration is created by pairing system `S` to a pairing of parameter variable and value `p => v`, like so: `:S => :p => v`.
 
 **Example**
 
