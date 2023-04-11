@@ -4,7 +4,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: easimon/maximize-build-space@v4
+      - uses: easimon/maximize-build-space@v6
         with:
           overprovision-lvm: 'true'
           remove-dotnet: 'true'
