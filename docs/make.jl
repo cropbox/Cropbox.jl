@@ -14,17 +14,19 @@ makedocs(
             "Cropbox" => "index.md",
             "Installation" => "installation.md"
         ],
-        "Guide" => [
+        "Tutorials" => [
+            "Getting started with Julia" => "tutorials/julia.md",
+            "Getting started with Cropbox" => "tutorials/cropbox.md",
+            "Making a model" => "tutorials/makingamodel.md",
+            "Using an existing model" => "tutorials/usingamodel.md",
+        ],
+        "Manual" => [
             "System" => "guide/system.md",
             "Variable" => "guide/variable.md",
             "Configuration" => "guide/configuration.md",
             "Simulation" => "guide/simulation.md",
             "Visualization" => "guide/visualization.md",
-            "Inspection" => "guide/inspection.md"
-        ],
-        "Tutorials" => [
-            "Growing Degree-Day" => "tutorials/gdd.md",
-            "Lotka-Volterra" => "tutorials/lotkavolterra.md",
+            "Inspection" => "guide/inspection.md",
         ],
         "Gallery" => "gallery.md",
         "Reference" => [
@@ -34,8 +36,8 @@ makedocs(
             "Visualization" => "reference/visualization.md",
             "Inspection" => "reference/inspection.md",
         ],
-        "Frequently Asked Questions" => "faq.md",
-    ],
+        "Frequently Asked Questions" => "faq.md"
+    ]
 )
 
 deploydocs(
