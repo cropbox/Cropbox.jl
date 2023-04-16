@@ -25,3 +25,6 @@ Cropbox is a declarative modeling framework specifically designed for developing
 - Cropbox Workshop: [2021](https://github.com/cropbox/cropbox-workshop-2021), [2022](https://github.com/cropbox/cropbox-workshop-2022) (Korea), [2022](https://github.com/cropbox/cropbox-workshop-2022-tw) (Taiwan)
 - [UW SEFS 508](https://github.com/uwkimlab/plant_modeling) -- "Plant Modeling" course at University of Washington
 - [Cropbox Tutorial](https://github.com/cropbox/cropbox-tutorial-KSAFM2020) presented at [KSAFM](http://www.ksafm.org/en/) 2020 Workshop
+
+## Citation
+Yun K, Kim S-H (2023) Cropbox: a declarative crop modelling framework. in silico Plants, 5(1), diac021, https://doi.org/10.1093/insilicoplants/diac021
