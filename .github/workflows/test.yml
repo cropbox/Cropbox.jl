@@ -19,6 +19,10 @@ jobs:
             os: macos-latest
             arch: x64
             depwarn: error
+          - version: '1.9'
+            os: macos-latest
+            arch: x64
+            depwarn: error
           - version: 'nightly'
             os: macos-latest
             arch: x64
