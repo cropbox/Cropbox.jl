@@ -216,21 +216,3 @@ _show(io::IO, m::MIME"text/html", p::Gadfly.Plot) = begin
     h = Gadfly.Compose.default_graphic_height
     Gadfly.SVG(io, w, h, false)(p)
 end
-
-import Cairo
-import ImageMagick
-import FileIO
-# https://github.com/tshort/SixelTerm.jl
-sixel(p::Gadfly.Plot) = begin
-    png = IOBuffer()
-    #HACK: needs to set emit_on_finish false
-    w = Gadfly.Compose.default_graphic_width
-    h = Gadfly.Compose.default_graphic_height
-    p |> Gadfly.PNG(png, w, h, false; dpi=144)
-    im = ImageMagick.load(png)
-    six = IOBuffer()
-    st = FileIO.Stream(FileIO.format"six", six)
-    ImageMagick.save(st, im)
-    write(stdout, take!(six))
-    nothing
-end

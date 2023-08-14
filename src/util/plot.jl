@@ -233,9 +233,6 @@ plot(df::DataFrame, x, y, z;
     plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect)
 end
 
-sixel(p::Plot) = sixel(p[])
-sixel(::P) where P = error("sixel not supported: $P")
-
 include("plot/UnicodePlots.jl")
 include("plot/Gadfly.jl")
 
