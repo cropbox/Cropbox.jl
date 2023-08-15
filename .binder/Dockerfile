@@ -4,8 +4,14 @@ FROM jupyter/datascience-notebook:julia-1.9.2
 ARG REPO_DIR=${HOME}
 ENV REPO_DIR=${REPO_DIR}
 WORKDIR ${REPO_DIR}
-USER root
 COPY --chown=${NB_USER}:users . ${REPO_DIR}
+
+#HACK: ensure REPO_DIR is fully owned by user to avoid Git `safe.directory` issue
+USER root
+RUN chown -R ${NB_USER}:users ${REPO_DIR}
+
+# install as non-root
+USER ${NB_USER}
 
 # avoid config/data in home which can be replaced
 ENV JUPYTER_CONFIG_DIR=/opt/conda/etc/jupyter
@@ -41,6 +47,9 @@ RUN julia -e 'import Pkg; Pkg.add("PackageCompiler"); using PackageCompiler; cre
 
 # update IJulia kernel with custom system image
 RUN julia -e 'using IJulia; installkernel("Julia", "--project='${HOME}'", "--sysimage='${CROPBOX_IMG}'");'
+
+# clean up as root
+USER root
 
 # create a wrapper for Julia REPL with custom system image
 RUN rm /usr/local/bin/julia && \
