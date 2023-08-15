@@ -1,4 +1,5 @@
-FROM jupyter/datascience-notebook:julia-1.9.2
+ARG JULIA_VERSION=1.9.2
+FROM jupyter/datascience-notebook:julia-${JULIA_VERSION}
 
 # set up repository for repo2docker
 ARG REPO_DIR=${HOME}
