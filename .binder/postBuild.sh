@@ -27,7 +27,7 @@ julia -e "import Pkg; Pkg.add(\"Test\");"
 julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${CROPBOX_IMG}\", precompile_execution_file=\"${REPO_DIR}/.binder/precompile.jl\", cpu_target=PackageCompiler.default_app_cpu_target());" || exit 1
 
 # update IJulia kernel with custom system image
-julia -e "using IJulia; installkernel(\"Julia\", \"--project=${HOME}\", \"--sysimage=${CROPBOX_IMG}\");"
+JULIA_PROJECT="" julia -e "using IJulia; installkernel(\"Julia\", \"--project=${HOME}\", \"--sysimage=${CROPBOX_IMG}\");"
 
 # create a wrapper of Julia REPL with custom system image
 mkdir -p ${REPO_DIR}/.local/bin
