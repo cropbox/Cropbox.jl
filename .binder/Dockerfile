@@ -1,5 +1,5 @@
 ARG JULIA_VERSION=1.9.2
-FROM jupyter/datascience-notebook:julia-${JULIA_VERSION}
+FROM jupyter/julia-notebook:julia-${JULIA_VERSION}
 ARG JULIA_VERSION
 ENV JULIA_VERSION=${JULIA_VERSION}
 
