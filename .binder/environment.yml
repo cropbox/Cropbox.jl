@@ -1,0 +1,19 @@
+channels:
+  - conda-forge
+dependencies:
+  # repo2docker
+  - python=3.10
+  - nodejs=18
+  - pip
+  - ipywidgets==8.*
+  - jupyter-offlinenotebook==0.2.*
+  - jupyter-resource-usage==0.7.*
+  - jupyter_server==1.*
+  - jupyterhub-singleuser==3.*
+  - jupyterlab==3.*
+  - notebook==6.*
+  # Cropbox.jl
+  - sympy
+  # Jupyter
+  - nbgitpuller
+  - nbresuse
