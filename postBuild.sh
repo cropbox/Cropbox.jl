@@ -24,7 +24,7 @@ ln -s ${JULIA_PATH}/lib/julia/sys.so ${CROPBOX_IMG}
 
 # create a system image with Cropbox built-in
 julia -e "import Pkg; Pkg.add(\"Test\");"
-julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${CROPBOX_IMG}\", precompile_execution_file=\"${REPO_DIR}/.binder/precompile.jl\", cpu_target=PackageCompiler.default_app_cpu_target());" || exit 1
+julia -e "import Pkg; Pkg.add(\"PackageCompiler\"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path=\"${CROPBOX_IMG}\", precompile_execution_file=\"${REPO_DIR}/precompile.jl\", cpu_target=PackageCompiler.default_app_cpu_target());" || exit 1
 
 # update IJulia kernel with custom system image
 JULIA_PROJECT="" julia -e "using IJulia; installkernel(\"Julia\", \"--project=${HOME}\", \"--sysimage=${CROPBOX_IMG}\");"
