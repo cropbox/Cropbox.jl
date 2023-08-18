@@ -18,9 +18,9 @@ display(MIME("text/html"), r)
 
 using Test
 
-include("../test/framework/state.jl")
-include("../test/framework/system.jl")
+include("./test/framework/state.jl")
+include("./test/framework/system.jl")
 
-include("../test/examples/gasexchange.jl")
-include("../test/examples/simplecrop.jl")
-include("../test/examples/garlic.jl")
+include("./test/examples/gasexchange.jl")
+include("./test/examples/simplecrop.jl")
+include("./test/examples/garlic.jl")
