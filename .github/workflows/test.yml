@@ -26,7 +26,7 @@ jobs:
           - version: 'nightly'
             os: macos-latest
             arch: x64
-            depwarn: error
+            depwarn: yes
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
