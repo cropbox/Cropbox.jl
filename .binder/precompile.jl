@@ -1,3 +1,6 @@
+using Pkg
+Pkg.precompile()
+
 using Cropbox
 
 @system S(Controller) begin
