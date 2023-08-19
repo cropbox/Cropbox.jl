@@ -88,20 +88,13 @@ RUN mamba install --yes \
 # to the system share location. Avoids problems with runtime UID change not
 # taking effect properly on the .local folder in the jovyan home dir.
 RUN julia -e 'import Pkg; Pkg.update()' && \
-    julia -e 'import Pkg; Pkg.add(["HDF5", "IJulia", "Pluto"])' && \
-    julia -e 'import Pkg; Pkg.precompile()' && \
+    julia -e 'import Pkg; Pkg.add("HDF5")' && \
+    julia -e 'using Pkg; pkg"add IJulia"; pkg"precompile"' && \
     # move kernelspec out of home \
     mv "${HOME}/.local/share/jupyter/kernels/julia"* "${CONDA_DIR}/share/jupyter/kernels/" && \
     chmod -R go+rx "${CONDA_DIR}/share/jupyter" && \
     rm -rf "${HOME}/.local" && \
     fix-permissions "${JULIA_PKGDIR}" "${CONDA_DIR}/share/jupyter"
-
-# Install jupyter-pluto-proxy to get Pluto to work on JupyterHub
-RUN mamba install --yes \
-    'jupyter-pluto-proxy' && \
-    mamba clean --all -f -y && \
-    fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
 
 WORKDIR "${HOME}"
 #END: jupyter/datascience-notebook
@@ -147,20 +140,20 @@ RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
 # install Cropbox-related packages
 RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop";'
 
-# # create a system image with Cropbox built-in
-# ENV CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
-# RUN julia -e 'import Pkg; Pkg.add("PackageCompiler"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path="'${CROPBOX_IMG}'", precompile_execution_file="'${REPO_DIR}'/.binder/precompile.jl", cpu_target=PackageCompiler.default_app_cpu_target());' || exit 1
+# create a system image with Cropbox built-in
+ENV CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
+RUN julia -e 'import Pkg; Pkg.add("PackageCompiler"); using PackageCompiler; create_sysimage(:Cropbox; sysimage_path="'${CROPBOX_IMG}'", precompile_execution_file="'${REPO_DIR}'/.binder/precompile.jl", cpu_target=PackageCompiler.default_app_cpu_target());' || exit 1
 
-# # update IJulia kernel with custom system image
-# RUN julia -e 'using IJulia; installkernel("Julia", "--project='${HOME}'", "--sysimage='${CROPBOX_IMG}'");'
+# update IJulia kernel with custom system image
+RUN julia -e 'using IJulia; installkernel("Julia", "--project='${HOME}'", "--sysimage='${CROPBOX_IMG}'");'
 
-# # clean up as root
-# USER root
+# clean up as root
+USER root
 
-# # create a wrapper for Julia REPL with custom system image
-# RUN rm /usr/local/bin/julia && \
-#     echo -e '#!/bin/bash\n/opt/julia-'${JULIA_VERSION}'/bin/julia -J'${CROPBOX_IMG} '"$@"' > /usr/local/bin/julia && \
-#     chmod +x /usr/local/bin/julia
+# create a wrapper for Julia REPL with custom system image
+RUN rm /usr/local/bin/julia && \
+    echo -e '#!/bin/bash\n/opt/julia-'${JULIA_VERSION}'/bin/julia -J'${CROPBOX_IMG} '"$@"' > /usr/local/bin/julia && \
+    chmod +x /usr/local/bin/julia
 
 RUN chown -R ${NB_USER}:users ${HOME} && \
     chown -R ${NB_USER}:users ${JULIA_DEPOT_PATH}
