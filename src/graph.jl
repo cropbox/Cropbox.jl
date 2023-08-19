@@ -67,10 +67,8 @@ writeimage(name::AbstractString, g::Graph; format=nothing, style=()) = begin
         ext != format && (name *= "."*format)
     end
     dot = writedot(g; style)
-    Graphviz_jll.dot() do exe
-        cmd = `$exe -T$format $dot -o $name`
-        success(cmd) || error("cannot execute: $cmd")
-    end
+    cmd = `$(Graphviz_jll.dot()) -T$format $dot -o $name`
+    success(cmd) || error("cannot execute: $cmd")
     name
 end
 
