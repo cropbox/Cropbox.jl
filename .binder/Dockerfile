@@ -106,46 +106,46 @@ RUN mamba install --yes \
 WORKDIR "${HOME}"
 #END: jupyter/datascience-notebook
 
-# # set up repository for repo2docker
-# ARG REPO_DIR=${HOME}
-# ENV REPO_DIR=${REPO_DIR}
-# WORKDIR ${REPO_DIR}
-# COPY --chown=${NB_USER}:users . ${REPO_DIR}
+# set up repository for repo2docker
+ARG REPO_DIR=${HOME}
+ENV REPO_DIR=${REPO_DIR}
+WORKDIR ${REPO_DIR}
+COPY --chown=${NB_USER}:users . ${REPO_DIR}
 
-# #HACK: ensure REPO_DIR is fully owned by user to avoid Git `safe.directory` issue
-# USER root
-# RUN chown -R ${NB_USER}:users ${REPO_DIR}
+#HACK: ensure REPO_DIR is fully owned by user to avoid Git `safe.directory` issue
+USER root
+RUN chown -R ${NB_USER}:users ${REPO_DIR}
 
-# # install as non-root
-# USER ${NB_USER}
+# install as non-root
+USER ${NB_USER}
 
-# # avoid config/data in home which can be replaced
-# ENV JUPYTER_CONFIG_DIR=/opt/conda/etc/jupyter
-# ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
+# avoid config/data in home which can be replaced
+ENV JUPYTER_CONFIG_DIR=/opt/conda/etc/jupyter
+ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
 
-# # install necessary Jupyter modules
-# RUN pip install \
-#     'jupyter-server-proxy' \
-#     'nbgitpuller' \
-#     'nbresuse' \
-#     'webio_jupyter_extension'
+# install necessary Jupyter modules
+RUN pip install \
+    'jupyter-server-proxy' \
+    'nbgitpuller' \
+    'nbresuse' \
+    'webio_jupyter_extension'
 
-# # ensure Cropbox.jl added/built and available outside home directory
-# ENV JULIA_PROJECT=""
-# ENV CROPBOX_DIR=${REPO_DIR}
-# RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
+# ensure Cropbox.jl added/built and available outside home directory
+ENV JULIA_PROJECT=""
+ENV CROPBOX_DIR=${REPO_DIR}
+RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
 
-# # install commonly used packages
-# RUN julia -e 'using Pkg; pkg"add CSV DataFrames DataFramesMeta DataStructures Distributions Gadfly StatsBase TimeZones TypedTables Unitful WGLMakie";'
+# install commonly used packages
+RUN julia -e 'using Pkg; pkg"add CSV DataFrames DataFramesMeta DataStructures Distributions Gadfly StatsBase TimeZones TypedTables Unitful WGLMakie";'
 
-# # install MLJ packages
-# RUN julia -e 'using Pkg; pkg"add MLJ MLJModels MLJLinearModels MLJDecisionTreeInterface DecisionTree MLJFlux Flux Plots";'
+# install MLJ packages
+RUN julia -e 'using Pkg; pkg"add MLJ MLJModels MLJLinearModels MLJDecisionTreeInterface DecisionTree MLJFlux Flux Plots";'
 
-# #HACK: ensure MKL_jll artifacts downloaded (perhaps an issue with PackageCompiler 1.6+)
-# RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
+#HACK: ensure MKL_jll artifacts downloaded (perhaps an issue with PackageCompiler 1.6+)
+RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
 
-# # install Cropbox-related packages
-# RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop";'
+# install Cropbox-related packages
+RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop";'
 
 # # create a system image with Cropbox built-in
 # ENV CROPBOX_IMG=${CROPBOX_DIR}/cropbox.so
@@ -162,8 +162,8 @@ WORKDIR "${HOME}"
 #     echo -e '#!/bin/bash\n/opt/julia-'${JULIA_VERSION}'/bin/julia -J'${CROPBOX_IMG} '"$@"' > /usr/local/bin/julia && \
 #     chmod +x /usr/local/bin/julia
 
-# RUN chown -R ${NB_USER}:users ${HOME} && \
-#     chown -R ${NB_USER}:users ${JULIA_DEPOT_PATH}
+RUN chown -R ${NB_USER}:users ${HOME} && \
+    chown -R ${NB_USER}:users ${JULIA_DEPOT_PATH}
 
-# WORKDIR ${HOME}
-# USER ${NB_USER}
+WORKDIR ${HOME}
+USER ${NB_USER}
