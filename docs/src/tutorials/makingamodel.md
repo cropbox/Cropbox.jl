@@ -343,7 +343,7 @@ Here is a list of variables used in the system:
 
 ### System
 
-Let's begin by creating a [system](@ref System) called `LotkaVolterra`. Since this is a system that we want to simulate later on, we must include [`Controller`](@ref Controller) as a [mixin](@ref Mixin).
+Let's begin by creating a [system](@ref system) called `LotkaVolterra`. Since this is a system that we want to simulate later on, we must include [`Controller`](@ref Controller) as a [mixin](@ref Mixin).
 
 ```
 @system LotkaVolterra(Controller)

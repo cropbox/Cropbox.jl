@@ -8,7 +8,7 @@ Cropbox is a declarative modeling framework specifically designed for developing
 
 * Read the [Installation](@ref Installation).
 * Read the [Tutorials](@ref Julia).
-* Read the [Manual](@ref System).
+* Read the [Manual](@ref system).
 * Check out the [Cropbox Tutorial](https://github.com/cropbox/cropbox-tutorial-KSAFM2020) presented at the [KSAFM](http://www.ksafm.org/en/) 2020 Workshop
 * Check out the course material for [SEFS 508](https://github.com/uwkimlab/plant_modeling), a plant modeling course at the University of Washington.
 * Check out the [Gallery](@ref Gallery) to see what others have done with the Cropbox framework.

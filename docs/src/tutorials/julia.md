@@ -45,4 +45,4 @@ d = @system D
 ```
 
 !!! warning "Warning"
-    Julia variables are not to be confused with Cropbox [variables](@ref variable) defined within Cropbox [systems](@id system).
+    Julia variables are not to be confused with Cropbox [variables](@ref variable) defined within Cropbox [systems](@ref system).
