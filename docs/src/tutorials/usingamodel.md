@@ -9,7 +9,7 @@ This tutorial will teach you how to use an existing Cropbox model. For this tuto
 
 Often times, the Cropbox model that you want to use will be part of a Julia package.
 
-If the package you want to install is under the official [Julia package registry](@https://github.com/JuliaRegistries/General), you can simply install the package using the following command.
+If the package you want to install is under the official [Julia package registry](https://github.com/JuliaRegistries/General), you can simply install the package using the following command.
 
 ```
 using Pkg
