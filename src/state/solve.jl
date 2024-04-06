@@ -23,7 +23,7 @@ genpolynomial(v::VarInfo; scope) = begin
     push!(V, x)
     #HACK: use scope of caller, avoiding eval into precompiled Cropbox module
     p = scope.eval(@q let $(V...)
-        Cropbox.SymPy.@vars $(V...)
+        Cropbox.SymPy.@syms $(V...)
         Cropbox.sympy.Poly(begin
             $(v.body)
         end, $x)
