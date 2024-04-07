@@ -4,6 +4,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: easimon/maximize-build-space@v7
+        with:
+          overprovision-lvm: 'true'
+          remove-dotnet: 'true'
+          remove-android: 'true'
       - uses: actions/checkout@v4
       - id: meta
         uses: docker/metadata-action@v5
