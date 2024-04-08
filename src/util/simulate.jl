@@ -8,7 +8,7 @@ struct Simulation
     target::OrderedDict{Symbol,Any}
     mapping::OrderedDict{Symbol,Any}
     meta::OrderedDict{Symbol,Any}
-    result::DataFrame
+    result::Vector{OrderedDict{Symbol,Any}}
 end
 
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
@@ -20,7 +20,7 @@ simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, me
     T = filtersimulationdict(T, sb)
     IT = merge(I, T)
     M = parsemeta(meta, s.context.config)
-    Simulation(base, I, T, IT, M, DataFrame())
+    Simulation(base, I, T, IT, M, Vector{OrderedDict{Symbol,Any}}())
 end
 
 parsesimulationkey(p::Pair, s) = [p]
@@ -87,11 +87,11 @@ parsemeta(::Nothing, c) = OrderedDict()
 update!(m::Simulation, s::System, snatch!) = begin
     D = extract(s, m)
     snatch!(D, s)
-    !isempty(D) && append!(m.result, D; cols=:union)
+    !isempty(D) && append!(m.result, D)
 end
 
 format!(m::Simulation; nounit=false, long=false) = begin
-    r = m.result
+    r = DataFrame(m.result)
     for (k, v) in m.meta
         r[!, k] .= v 
     end
