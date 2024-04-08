@@ -14,14 +14,6 @@ USER root
 # Check https://julialang.org/downloads/
 ARG julia_version="1.10.2"
 
-# R pre-requisites
-RUN apt-get update --yes && \
-    apt-get install --yes --no-install-recommends \
-    fonts-dejavu \
-    gfortran \
-    gcc && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # Julia dependencies
 # install Julia packages in /opt/julia instead of ${HOME}
 ENV JULIA_DEPOT_PATH=/opt/julia \
@@ -54,34 +46,6 @@ RUN mkdir /etc/julia && \
     fix-permissions "${JULIA_PKGDIR}"
 
 USER ${NB_UID}
-
-# R packages including IRKernel which gets installed globally.
-# r-e1071: dependency of the caret R package
-RUN mamba install --yes \
-    'r-base' \
-    'r-caret' \
-    'r-crayon' \
-    'r-devtools' \
-    'r-e1071' \
-    'r-forecast' \
-    'r-hexbin' \
-    'r-htmltools' \
-    'r-htmlwidgets' \
-    'r-irkernel' \
-    'r-nycflights13' \
-    'r-randomforest' \
-    'r-rcurl' \
-    'r-rmarkdown' \
-    'r-rodbc' \
-    'r-rsqlite' \
-    'r-shiny' \
-    'r-tidymodels' \
-    'r-tidyverse' \
-    'rpy2' \
-    'unixodbc' && \
-    mamba clean --all -f -y && \
-    fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
 
 # Add Julia packages.
 # Install IJulia as jovyan and then move the kernelspec out
