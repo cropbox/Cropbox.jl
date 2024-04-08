@@ -133,8 +133,8 @@ using Dates
         n = 3
         i = 0
         f(s, m) = begin
-            r = m.result[end, :]
-            @test s.a' == r.a && s.b' == r.b
+            r = m.result[end]
+            @test s.a' == r[:a] && s.b' == r[:b]
             i += 1
         end
         simulate(SSimulateCallback, stop=n, callback=f)
