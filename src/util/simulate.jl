@@ -91,7 +91,7 @@ update!(m::Simulation, s::System, snatch!) = begin
 end
 
 format!(m::Simulation; nounit=false, long=false) = begin
-    r = DataFrame(m.result)
+    r = DataFrame(DataFrames.Tables.dictcolumntable(m.result), copycols=false)
     for (k, v) in m.meta
         r[!, k] .= v 
     end
