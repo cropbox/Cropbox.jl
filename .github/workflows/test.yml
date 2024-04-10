@@ -12,19 +12,19 @@ jobs:
         depwarn: [yes]
         include:
           - version: '1.7'
-            os: macos-latest
+            os: ubuntu-latest
             arch: x64
             depwarn: yes
           - version: '1.8'
-            os: macos-latest
+            os: ubuntu-latest
             arch: x64
             depwarn: error
           - version: '1.9'
-            os: macos-latest
+            os: ubuntu-latest
             arch: x64
             depwarn: error
           - version: 'nightly'
-            os: macos-latest
+            os: ubuntu-latest
             arch: x64
             depwarn: yes
     steps:
