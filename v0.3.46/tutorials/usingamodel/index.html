@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Using an existing model · Cropbox.jl</title><meta name="title" content="Using an existing model · Cropbox.jl"/><meta property="og:title" content="Using an existing model · Cropbox.jl"/><meta property="twitter:title" content="Using an existing model · Cropbox.jl"/><meta name="description" content="Documentation for Cropbox.jl."/><meta property="og:description" content="Documentation for Cropbox.jl."/><meta property="twitter:description" content="Documentation for Cropbox.jl."/><meta property="og:url" content="https://cropbox.github.io/Cropbox.jl/stable/tutorials/usingamodel/"/><meta property="twitter:url" content="https://cropbox.github.io/Cropbox.jl/stable/tutorials/usingamodel/"/><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/tutorials/usingamodel/"/><script async src="https://www.googletagmanager.com/gtag/js?id=UA-192782823-1"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-192782823-1', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Introduction</span><ul><li><a class="tocitem" href="../../">Cropbox</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../julia/">Getting started with Julia</a></li><li><a class="tocitem" href="../cropbox/">Getting started with Cropbox</a></li><li><a class="tocitem" href="../makingamodel/">Making a model</a></li><li class="is-active"><a class="tocitem" href>Using an existing model</a><ul class="internal"><li><a class="tocitem" href="#Installing-a-Cropbox-Model"><span>Installing a Cropbox Model</span></a></li><li><a class="tocitem" href="#Importing-a-Cropbox-Model"><span>Importing a Cropbox Model</span></a></li><li><a class="tocitem" href="#Inspecting-the-Model"><span>Inspecting the Model</span></a></li><li><a class="tocitem" href="#Running-a-Simulation"><span>Running a Simulation</span></a></li><li><a class="tocitem" href="#Visualizing-the-Results"><span>Visualizing the Results</span></a></li></ul></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../guide/system/">System</a></li><li><a class="tocitem" href="../../guide/variable/">Variable</a></li><li><a class="tocitem" href="../../guide/configuration/">Configuration</a></li><li><a class="tocitem" href="../../guide/simulation/">Simulation</a></li><li><a class="tocitem" href="../../guide/visualization/">Visualization</a></li><li><a class="tocitem" href="../../guide/inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../gallery/">Gallery</a></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../../reference/">Index</a></li><li><a class="tocitem" href="../../reference/declaration/">Declaration</a></li><li><a class="tocitem" href="../../reference/simulation/">Simulation</a></li><li><a class="tocitem" href="../../reference/visualization/">Visualization</a></li><li><a class="tocitem" href="../../reference/inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Using an existing model</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Using an existing model</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/tutorials/usingamodel.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Using-an-Existing-Cropbox-Model"><a class="docs-heading-anchor" href="#Using-an-Existing-Cropbox-Model">Using an Existing Cropbox Model</a><a id="Using-an-Existing-Cropbox-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Using-an-Existing-Cropbox-Model" title="Permalink"></a></h1><p>This tutorial will teach you how to use an existing Cropbox model. For this tutorial, we will be importing and utilizing a Cropbox model from a julia package called SimpleCrop.</p><h2 id="Installing-a-Cropbox-Model"><a class="docs-heading-anchor" href="#Installing-a-Cropbox-Model">Installing a Cropbox Model</a><a id="Installing-a-Cropbox-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Installing-a-Cropbox-Model" title="Permalink"></a></h2><p>Often times, the Cropbox model that you want to use will be part of a Julia package.</p><p>If the package you want to install is under the official <a href="https://github.com/JuliaRegistries/General">Julia package registry</a>, you can simply install the package using the following command.</p><pre><code class="nohighlight hljs">using Pkg
+Pkg.add(&quot;SimpleCrop&quot;)</code></pre><p>You can also install any Julia package using a GitHub link.</p><pre><code class="nohighlight hljs">using Pkg
+Pkg.add(&quot;https://github.com/cropbox/SimpleCrop.jl&quot;)</code></pre><h2 id="Importing-a-Cropbox-Model"><a class="docs-heading-anchor" href="#Importing-a-Cropbox-Model">Importing a Cropbox Model</a><a id="Importing-a-Cropbox-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Importing-a-Cropbox-Model" title="Permalink"></a></h2><p>To start using a Julia package containing your desired model, you must first load the package into your environment.</p><p>This can be done by using this simple command.</p><pre><code class="language-julia hljs">using SimpleCrop</code></pre><p>Let&#39;s not forget to load Cropbox as well.</p><pre><code class="language-julia hljs">using Cropbox</code></pre><h2 id="Inspecting-the-Model"><a class="docs-heading-anchor" href="#Inspecting-the-Model">Inspecting the Model</a><a id="Inspecting-the-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Inspecting-the-Model" title="Permalink"></a></h2><p>The model is implemented as a system named <code>Model</code> defined in SimpleCrop module. We can inspect the model with the <code>@look</code> macro, which will show us all the variables in the system.  </p><pre><code class="language-julia hljs">@look SimpleCrop.Model</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[system]</span>
+<span class="sgr95">Model</span>
+  <span class="sgr94">context</span>
+  <span class="sgr94">config</span>
+  <span class="sgr94">DATE</span>
+  <span class="sgr94">DOY</span>
+  <span class="sgr94">DOYP</span><span class="sgr90"> (planting_day_of_year)</span>
+  <span class="sgr94">TMAX</span><span class="sgr90"> (maximum_temperature)</span>
+  <span class="sgr94">TMIN</span><span class="sgr90"> (minimum_temperature)</span>
+  <span class="sgr94">TMN</span><span class="sgr90"> (mean_temperature)</span>
+  <span class="sgr94">PAR</span><span class="sgr90"> (photosynthetically_active_radiation)</span>
+  <span class="sgr94">SWFAC</span><span class="sgr90"> (soil_water_stress_factor)</span>
+  <span class="sgr94">EMP1</span><span class="sgr90"> (LAI_coeff1)</span>
+  <span class="sgr94">EMP2</span><span class="sgr90"> (LAI_coeff2)</span>
+  <span class="sgr94">Fc</span><span class="sgr90"> (canopy_fraction)</span>
+  <span class="sgr94">sla</span><span class="sgr90"> (specific_leaf_area)</span>
+  <span class="sgr94">INTOT</span><span class="sgr90"> (duration_of_reproductive_stage)</span>
+  <span class="sgr94">LAI0</span><span class="sgr90"> (initial_leaf_area_index)</span>
+  <span class="sgr94">Lfmax</span><span class="sgr90"> (maximum_leaf_number)</span>
+  <span class="sgr94">N0</span><span class="sgr90"> (initial_leaf_number)</span>
+  <span class="sgr94">nb</span><span class="sgr90"> (LAI_coeff)</span>
+  <span class="sgr94">p1</span><span class="sgr90"> (leaf_senescence_rate)</span>
+  <span class="sgr94">PD</span><span class="sgr90"> (plant_density)</span>
+  <span class="sgr94">rm</span><span class="sgr90"> (maximum_leaf_appearance_rate)</span>
+  <span class="sgr94">tb</span><span class="sgr90"> (base_temperature)</span>
+  <span class="sgr94">W0</span><span class="sgr90"> (initial_plant_dry_matter)</span>
+  <span class="sgr94">Wc0</span><span class="sgr90"> (initial_canopy_dry_matter)</span>
+  <span class="sgr94">Wr0</span><span class="sgr90"> (initial_root_dry_matter)</span>
+  <span class="sgr94">PT</span><span class="sgr90"> (photosynthesis_reduction_factor_for_temp)</span>
+  <span class="sgr94">RUE</span><span class="sgr90"> (radiation_use_efficiency)</span>
+  <span class="sgr94">Pg</span><span class="sgr90"> (potential_growth_rate)</span>
+  <span class="sgr94">ROWSPC</span><span class="sgr90"> (row_spacing)</span>
+  <span class="sgr94">Y1</span><span class="sgr90"> (canopy_light_extinction_coeff)</span>
+  <span class="sgr94">P</span><span class="sgr90"> (planted)</span>
+  <span class="sgr94">VP</span><span class="sgr90"> (vegetative_phase)</span>
+  <span class="sgr94">RP</span><span class="sgr90"> (reproductive_phase)</span>
+  <span class="sgr94">FL</span><span class="sgr90"> (development_phase_code)</span>
+  <span class="sgr94">dN</span><span class="sgr90"> (leaf_number_increase)</span>
+  <span class="sgr94">N</span><span class="sgr90"> (leaf_number)</span>
+  <span class="sgr94">di</span><span class="sgr90"> (daily_accumulated_temperature)</span>
+  <span class="sgr94">INT</span><span class="sgr90"> (accumulated_temperature_during_reproductive_stage)</span>
+  <span class="sgr94">_a</span>
+  <span class="sgr94">dLAI1</span>
+  <span class="sgr94">dLAI2</span>
+  <span class="sgr94">dLAI</span><span class="sgr90"> (leaf_area_index_increase)</span>
+  <span class="sgr94">LAI</span><span class="sgr90"> (leaf_area_index)</span>
+  <span class="sgr94">E</span><span class="sgr90"> (CH2O_conversion_efficiency)</span>
+  <span class="sgr94">dW</span>
+  <span class="sgr94">W</span><span class="sgr90"> (plant_dry_matter)</span>
+  <span class="sgr94">Wc</span><span class="sgr90"> (canopy_dry_matter)</span>
+  <span class="sgr94">Wr</span><span class="sgr90"> (root_dry_matter)</span>
+  <span class="sgr94">Wf</span><span class="sgr90"> (fruit_dry_matter)</span>
+  <span class="sgr94">endsim</span><span class="sgr90"> (end_of_simulation)</span>
+  <span class="sgr94">Δt</span><span class="sgr90"> (timestep)</span>
+  <span class="sgr94">SRAD</span><span class="sgr90"> (solar_radiation)</span>
+  <span class="sgr94">RAIN</span><span class="sgr90"> (rainfall)</span>
+  <span class="sgr94">calendar</span>
+  <span class="sgr94">_i</span><span class="sgr90"> (irrigation_data)</span>
+  <span class="sgr94">IRR</span>
+  <span class="sgr94">CN</span><span class="sgr90"> (runoff_curve_number)</span>
+  <span class="sgr94">DP</span><span class="sgr90"> (soil_profile_depth)</span>
+  <span class="sgr94">DRNp</span><span class="sgr90"> (daily_drainage)</span>
+  <span class="sgr94">WPp</span><span class="sgr90"> (soil_water_portion_at_wilting_point)</span>
+  <span class="sgr94">FCp</span><span class="sgr90"> (soil_water_portion_at_field_capacity)</span>
+  <span class="sgr94">STp</span><span class="sgr90"> (soil_water_portion_at_saturation)</span>
+  <span class="sgr94">SWC0</span><span class="sgr90"> (initial_soil_water_content)</span>
+  <span class="sgr94">WP</span><span class="sgr90"> (soil_water_content_at_wilting_point)</span>
+  <span class="sgr94">FC</span><span class="sgr90"> (soil_water_content_at_field_capacity)</span>
+  <span class="sgr94">ST</span><span class="sgr90"> (soil_water_content_at_saturation)</span>
+  <span class="sgr94">S</span><span class="sgr90"> (potential_maximum_soil_moisture_retention_after_runoff)</span>
+  <span class="sgr94">POTINF</span><span class="sgr90"> (potential_infiltration)</span>
+  <span class="sgr94">ROF</span><span class="sgr90"> (runoff)</span>
+  <span class="sgr94">INF</span><span class="sgr90"> (infiltration)</span>
+  <span class="sgr94">THE</span><span class="sgr90"> (soil_water_content_threshold)</span>
+  <span class="sgr94">TRAIN</span><span class="sgr90"> (cumulative_rainfall)</span>
+  <span class="sgr94">TIRR</span><span class="sgr90"> (cumulative_irrigation)</span>
+  <span class="sgr94">TESa</span><span class="sgr90"> (cumulative_soil_evaporation)</span>
+  <span class="sgr94">TEPa</span><span class="sgr90"> (cumulative_plant_transpiration)</span>
+  <span class="sgr94">TROF</span><span class="sgr90"> (cumulative_runoff)</span>
+  <span class="sgr94">TDRN</span><span class="sgr90"> (cumulative_vertical_drainage)</span>
+  <span class="sgr94">TINF</span><span class="sgr90"> (cumulative_infiltration)</span>
+  <span class="sgr94">DRN</span><span class="sgr90"> (vertical_drainage)</span>
+  <span class="sgr94">αs</span><span class="sgr90"> (soil_albedo)</span>
+  <span class="sgr94">αc</span><span class="sgr90"> (crop_albedo)</span>
+  <span class="sgr94">ALB</span><span class="sgr90"> (surface_albedo)</span>
+  <span class="sgr94">Tmed</span>
+  <span class="sgr94">EEQ</span><span class="sgr90"> (equilibrium_evaporation)</span>
+  <span class="sgr94">f</span>
+  <span class="sgr94">ETp</span><span class="sgr90"> (potential_evapotranspiration)</span>
+  <span class="sgr94">ESp</span><span class="sgr90"> (potential_soil_evaporation)</span>
+  <span class="sgr94">EPp</span><span class="sgr90"> (potential_plant_transpiration)</span>
+  <span class="sgr94">_a</span>
+  <span class="sgr94">ESa</span><span class="sgr90"> (soil_evaporation)</span>
+  <span class="sgr94">EPa</span><span class="sgr90"> (plant_transpiration)</span>
+  <span class="sgr94">dSWC</span>
+  <span class="sgr94">dROF_extra</span>
+  <span class="sgr94">dSWC_ADJ</span>
+  <span class="sgr94">SWC_ADJ</span>
+  <span class="sgr94">SWC</span><span class="sgr90"> (soil_water_content)</span>
+  <span class="sgr94">ΔSWC</span><span class="sgr90"> (storage_change)</span>
+  <span class="sgr94">Fi</span>
+  <span class="sgr94">Fo</span>
+  <span class="sgr94">WATBAL</span>
+  <span class="sgr94">CHECK</span>
+  <span class="sgr94">SWFAC1</span><span class="sgr90"> (drought_stress_factor)</span>
+  <span class="sgr94">WTABLE</span><span class="sgr90"> (water_table_thickness)</span>
+  <span class="sgr94">DWT</span><span class="sgr90"> (water_table_depth)</span>
+  <span class="sgr94">STRESS_DEPTH</span><span class="sgr90"> (water_table_depth_threshold)</span>
+  <span class="sgr94">SWFAC2</span><span class="sgr90"> (excess_stress_factor)</span>
+  <span class="sgr94">_w</span><span class="sgr90"> (weather_data)</span></code></pre><p>@look can also be used to inspect individual state variables. </p><pre><code class="language-julia hljs">@look SimpleCrop.Model.W</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[code]</span>
+  W(dW)<span class="sgr38_2" style="color:#666"><span class="sgr1">:</span></span>plant_dry_matter <span class="sgr38_2" style="color:#666"><span class="sgr1">~</span></span> accumulate(u&quot;g/m^2&quot;, init <span class="sgr38_2" style="color:#666"><span class="sgr1">=</span></span> W0, when <span class="sgr38_2" style="color:#666"><span class="sgr1">=</span></span> P)</code></pre><p>The relationship between the variables in the model can be visualized using a dependency graph. </p><pre><code class="language-julia hljs">Cropbox.dependency(SimpleCrop.Model)</code></pre><img src="fa23e214.svg" alt="Example block output"/><p>If an arrow points from one variable to a second variable, then the value of the second variable depends on, or is calculated with, the value of the first. </p><p>We can view the values of all the parameters of the model with the following command.</p><pre><code class="language-julia hljs">parameters(SimpleCrop.Model; alias = true)</code></pre><p style="font-family: monospace">Config for 1 system:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Model</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">weather_data</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">nothing</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">planting_day_of_year</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">121 d</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">LAI_coeff1</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.104 m^2</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">LAI_coeff2</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.64</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">canopy_fraction</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.85</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">duration_of_reproductive_stage</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">300.0 d K</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">initial_leaf_area_index</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.013</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">maximum_leaf_number</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">12.0</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">initial_leaf_number</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">2.0</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">LAI_coeff</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">5.3</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">leaf_senescence_rate</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.03 g K^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">plant_density</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">5.0 m^-2</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">maximum_leaf_appearance_rate</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.1 d^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">base_temperature</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">10.0 °C</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">initial_plant_dry_matter</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.3 g m^-2</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">initial_canopy_dry_matter</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.045 g m^-2</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">initial_root_dry_matter</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.255 g m^-2</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">radiation_use_efficiency</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">2.1 g MJ^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">row_spacing</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">60.0 cm</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">CH2O_conversion_efficiency</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1.0</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">irrigation_data</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">nothing</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">runoff_curve_number</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">55</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">soil_profile_depth</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">145 cm</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">daily_drainage</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.1 d^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">soil_water_portion_at_wilting_point</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.06</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">soil_water_portion_at_field_capacity</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.17</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">soil_water_portion_at_saturation</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.28</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">initial_soil_water_content</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">246.5 mm</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">soil_albedo</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">crop_albedo</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.2</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">water_table_depth_threshold</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">250 mm</td></tr>
+</table>
+<h2 id="Running-a-Simulation"><a class="docs-heading-anchor" href="#Running-a-Simulation">Running a Simulation</a><a id="Running-a-Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Running-a-Simulation" title="Permalink"></a></h2><p>As many parameters are already defined in the model, we only need to prepare time-series data for daily weather and irrigation, which are included in the package for convenience.</p><pre><code class="language-julia hljs">using CSV
+using DataFrames
+using Dates
+using TimeZones
+
+loaddata(f) = CSV.File(joinpath(dirname(pathof(SimpleCrop)), &quot;../test/data&quot;, f)) |&gt; DataFrame</code></pre><pre><code class="language-julia hljs">config = @config (
+    :Clock =&gt; :step =&gt; 1u&quot;d&quot;,
+    :Calendar =&gt; :init =&gt; ZonedDateTime(1987, 1, 1, tz&quot;UTC&quot;),
+    :Weather =&gt; :weather_data =&gt; loaddata(&quot;weather.csv&quot;),
+    :SoilWater =&gt; :irrigation_data =&gt; loaddata(&quot;irrigation.csv&quot;),
+)</code></pre><p>Let&#39;s run a simulation with the model using configuration we just created. Stop condition for simulation is defined in a flag variable named <code>endsim</code> which coincides with plant maturity or the end of reproductive stage.</p><pre><code class="language-julia hljs">r = simulate(SimpleCrop.Model; config, stop = :endsim)</code></pre><h2 id="Visualizing-the-Results"><a class="docs-heading-anchor" href="#Visualizing-the-Results">Visualizing the Results</a><a id="Visualizing-the-Results-1"></a><a class="docs-heading-anchor-permalink" href="#Visualizing-the-Results" title="Permalink"></a></h2><p>The output of simulation is now contained in a data frame from which we generate multiple plots. The number of leaf (<code>N</code>) went from <code>initial_leaf_number</code> (= 2) to <code>maximum_leaf_number</code> (= 12) as indicated in the default set of parameters.</p><pre><code class="language-julia hljs">visualize(r, :DATE, :N; ylim = (0, 15), kind = :line)</code></pre><img src="ffcf732e.svg" alt="Example block output"/><p>Thermal degree days (<code>INT</code>) started accumulating from mid-August with the onset of reproductive stage until late-October when it reaches the maturity indicated by <code>duration_of_reproductive_stage</code> (= 300 K d).</p><pre><code class="language-julia hljs">visualize(r, :DATE, :INT; kind = :line)</code></pre><img src="05f52528.svg" alt="Example block output"/><p>Assimilated carbon (<code>W</code>) was partitioned into multiple parts of the plant as shown in the plot of dry biomass.</p><pre><code class="language-julia hljs">visualize(r, :DATE, [:W, :Wc, :Wr, :Wf];
+    names = [&quot;Total&quot;, &quot;Canopy&quot;, &quot;Root&quot;, &quot;Fruit&quot;], kind = :line)</code></pre><img src="1d0a9b84.svg" alt="Example block output"/><p>Leaf area index (<code>LAI</code>) reached its peak at the end of vegetative stage then began declining throughout reproductive stage.</p><pre><code class="language-julia hljs">visualize(r, :DATE, :LAI; kind = :line)</code></pre><img src="268576a9.svg" alt="Example block output"/><p>For soil water balance, here is a plot showing water runoff (<code>ROF</code>), infiltration (<code>INF</code>), and vertical drainage (<code>DRN</code>).</p><pre><code class="language-julia hljs">visualize(r, :DATE, [:ROF, :INF, :DRN]; kind = :line)</code></pre><img src="18501b25.svg" alt="Example block output"/><p>Soil water status has influence on potential evapotranspiration (<code>ETp</code>), actual soil evaporation (<code>ESa</code>), and actual plant transpiration (<code>ESp</code>).</p><pre><code class="language-julia hljs">visualize(r, :DATE, [:ETp, :ESa, :EPa]; kind = :line)</code></pre><img src="af98f047.svg" alt="Example block output"/><p>The resulting soil water content (<code>SWC</code>) is shown here.</p><pre><code class="language-julia hljs">visualize(r, :DATE, :SWC; ylim = (0, 400), kind = :line)</code></pre><img src="e487ebfb.svg" alt="Example block output"/><p>Which, in turn, determines soil water stress factor (<code>SWFAC</code>) in this model.</p><pre><code class="language-julia hljs">visualize(r, :DATE, [:SWFAC, :SWFAC1, :SWFAC2]; ylim = (0, 1), kind = :line)</code></pre><img src="a5c1bbdf.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../makingamodel/">« Making a model</a><a class="docs-footer-nextpage" href="../../guide/system/">System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Friday 12 April 2024 12:59">Friday 12 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

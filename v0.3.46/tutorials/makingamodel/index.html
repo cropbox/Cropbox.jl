@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Making a model · Cropbox.jl</title><meta name="title" content="Making a model · Cropbox.jl"/><meta property="og:title" content="Making a model · Cropbox.jl"/><meta property="twitter:title" content="Making a model · Cropbox.jl"/><meta name="description" content="Documentation for Cropbox.jl."/><meta property="og:description" content="Documentation for Cropbox.jl."/><meta property="twitter:description" content="Documentation for Cropbox.jl."/><meta property="og:url" content="https://cropbox.github.io/Cropbox.jl/stable/tutorials/makingamodel/"/><meta property="twitter:url" content="https://cropbox.github.io/Cropbox.jl/stable/tutorials/makingamodel/"/><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/tutorials/makingamodel/"/><script async src="https://www.googletagmanager.com/gtag/js?id=UA-192782823-1"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-192782823-1', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Introduction</span><ul><li><a class="tocitem" href="../../">Cropbox</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../julia/">Getting started with Julia</a></li><li><a class="tocitem" href="../cropbox/">Getting started with Cropbox</a></li><li class="is-active"><a class="tocitem" href>Making a model</a><ul class="internal"><li><a class="tocitem" href="#GDD"><span>Growing Degree-Day</span></a></li><li><a class="tocitem" href="#Lotka-Volterra-Equations"><span>Lotka-Volterra Equations</span></a></li></ul></li><li><a class="tocitem" href="../usingamodel/">Using an existing model</a></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../guide/system/">System</a></li><li><a class="tocitem" href="../../guide/variable/">Variable</a></li><li><a class="tocitem" href="../../guide/configuration/">Configuration</a></li><li><a class="tocitem" href="../../guide/simulation/">Simulation</a></li><li><a class="tocitem" href="../../guide/visualization/">Visualization</a></li><li><a class="tocitem" href="../../guide/inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../gallery/">Gallery</a></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../../reference/">Index</a></li><li><a class="tocitem" href="../../reference/declaration/">Declaration</a></li><li><a class="tocitem" href="../../reference/simulation/">Simulation</a></li><li><a class="tocitem" href="../../reference/visualization/">Visualization</a></li><li><a class="tocitem" href="../../reference/inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Making a model</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Making a model</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/tutorials/makingamodel.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Making-a-Model"><a class="docs-heading-anchor" href="#Making-a-Model">Making a Model</a><a id="Making-a-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Making-a-Model" title="Permalink"></a></h1><p>This tutorial will cover the topic of creating a Cropbox model.</p><ul><li><a href="#Making-a-Model">Making a Model</a></li><li class="no-marker"><ul><li><a href="#GDD">Growing Degree-Day</a></li><li class="no-marker"><ul><li><a href="#System">System</a></li><li class="no-marker"><ul><li><a href="#Variables">Variables</a></li><li><a href="#Mixins">Mixins</a></li></ul></li><li><a href="#Configuration">Configuration</a></li><li><a href="#Simulation">Simulation</a></li><li><a href="#Visualization">Visualization</a></li></ul></li><li><a href="#Lotka-Volterra-Equations">Lotka-Volterra Equations</a></li><li class="no-marker"><ul><li><a href="#System-2">System</a></li><li><a href="#Configuration-2">Configuration</a></li><li><a href="#Visualization-2">Visualization</a></li><li><a href="#Density-Dependent-Lotka-Volterra-Equations">Density-Dependent Lotka-Volterra Equations</a></li><li class="no-marker"><ul><li><a href="#System-3">System</a></li><li><a href="#Configuration-3">Configuration</a></li><li><a href="#Visualization-3">Visualization</a></li><li><a href="#Calibration">Calibration</a></li><li><a href="#Evaluation">Evaluation</a></li></ul></li></ul></li></ul></li></ul><h2 id="GDD"><a class="docs-heading-anchor" href="#GDD">Growing Degree-Day</a><a id="GDD-1"></a><a class="docs-heading-anchor-permalink" href="#GDD" title="Permalink"></a></h2><p>You might have heard the terms like growing degree days (GDD), thermal units, heat units, heat sums, temperature sums, and thermal-time that are used to relate the rate of plant or insect development to temperature. They are all synonymous. The concept of thermal-time or thermal-units derives from the long-standing observation and assumption that timing of development is primarily driven by temperature in plants and the relationship is largely linear. The linear relationship is generally held true over normal growing temperatures that are bracketed by the base temperature (<em>Tb</em>) and optimal temperature (<em>Topt</em>). Many existing crop models and tree growth models use thermal-unit approaches (e.g., GDD) for modeling phenology with some modifications to account for other factors like photoperiod, vernalization, dormancy, and stress. The growing degree days (GDD) is defined as the difference between the average daily air temperature (<em>T</em>) and the base temperature below which the developmental process stops. The bigger the difference in a day, the faster the development takes place up to a certain optimal temperature (<em>Topt</em>). The Cumulative GDD (cGDD) since the growth initiation (e.g., sowing, imbibition for germination) is then calculated by:</p><p class="math-container">\[\begin{align}
+\mathrm{GDD}(T) &amp;= \max \{ 0, \min \{ T, T_{opt} \} - T_b \} \\
+\mathrm{cGDD} &amp;= \sum_i^n \mathrm{GDD}(T_i) \\
+\end{align}\]</p><p>In this section, we will create a model that simulates GDD and cGDD.</p><h3 id="System"><a class="docs-heading-anchor" href="#System">System</a><a id="System-1"></a><a class="docs-heading-anchor-permalink" href="#System" title="Permalink"></a></h3><p>Let us start by making a system called <code>GrowingDegreeDay</code>. This can be done using a simple Cropbox macro <code>@system</code>. </p><pre><code class="nohighlight hljs">@system GrowingDegreeDay</code></pre><h4 id="Variables"><a class="docs-heading-anchor" href="#Variables">Variables</a><a id="Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Variables" title="Permalink"></a></h4><p>From the equation, let&#39;s identify the variables we need to declare in our system. In the equation for GDD, we have two parameters <em>Topt</em> and <em>Tb</em>. Since they are fixed values, we will declare them as <code>preserve</code> variables, which are variables that remain constant throughout a simulation.</p><pre><code class="nohighlight hljs">@system GrowingDegreeDay begin
+    Tb ~ preserve
+    To ~ preserve
+end</code></pre><p><code>Tb</code> and <code>To</code> are parameters that we may want to change depending on the simulation. To make this possible, we will assign them the <code>parameter</code> tag, which allows the tagged variables to be altered through a configuration for each simulation. Note that we will not assign values at declaration because we will configure them when we run the simulation.</p><pre><code class="nohighlight hljs">@system GrowingDegreeDay begin
+    Tb ~ preserve(parameter)
+    To ~ preserve(parameter)
+end</code></pre><p>Lastly, we will tag the variables with units. Tagging units is the recommended practice for many reasons, one of which is to catch mismatching units during calculations.</p><pre><code class="nohighlight hljs">@system GrowingDegreeDay begin
+    Tb ~ preserve(parameter, u&quot;°C&quot;)
+    To ~ preserve(parameter, u&quot;°C&quot;)
+end</code></pre><p>In the GDD equation, <em>T</em> represents the average daily temperature value necessary to calculate the GDD. Likewise, the variable in our system will represent a series of daily average temperatures. The series of temperature values will be driven from an external data source, for which we will create a separate system later on for data extraction. For the <code>GrowingDegreeDay</code> system, we will declare <code>T</code> as a <code>hold</code> variable, which represents a placeholder that will be replaced by a <code>T</code> from another system. </p><pre><code class="nohighlight hljs">@system GrowingDegreeDay begin
+    T ~ hold
+    Tb ~ preserve(parameter, u&quot;°C&quot;)
+    To ~ preserve(parameter, u&quot;°C&quot;)
+end</code></pre><p>We declared all the necessary variables required to calculate GDD. Now it is time to declare GDD as a variable in the system. Because GDD is a variable that we want to evaluate and store in each update, we will declare it as a <code>track</code> variable with <code>T</code>, <code>Tb</code>, and <code>To</code> as its depending variables.</p><pre><code class="nohighlight hljs">@system GrowingDegreeDay begin
+    T ~ hold
+    Tb ~ preserve(parameter, u&quot;°C&quot;)
+    To ~ preserve(parameter, u&quot;°C&quot;)
+
+    GDD(T, Tb, To) =&gt; begin
+        min(T, To) - Tb
+    end ~ track(min = 0, u&quot;K&quot;)
+end</code></pre><p><em>Note that we have tagged the unit for</em> <code>GDD</code> <em>as</em> <code>u&quot;K&quot;</code>. <em>This is to avoid incompatibilities that</em> <code>u&quot;°C&quot;</code> <em>has with certain operations.</em></p><p>Now that <code>GDD</code> is declared in the system, we will declare cGDD as an <code>accumulate</code> variable with <code>GDD</code> as its depending variable. Recall that <code>accumulate</code> variables perform the Euler method of integration.</p><pre><code class="nohighlight hljs">@system GrowingDegreeDay begin
+    T ~ hold
+    Tb ~ preserve(parameter, u&quot;°C&quot;)
+    To ~ preserve(parameter, u&quot;°C&quot;)
+
+    GDD(T, Tb, To) =&gt; begin
+        min(T, To) - Tb
+    end ~ track(min = 0, u&quot;K&quot;)
+
+    cGDD(GDD) ~ accumulate(u&quot;K*d&quot;)
+end</code></pre><p>We have declared all the necessary variables for <code>GrowingDegreeDay</code>.</p><h4 id="Mixins"><a class="docs-heading-anchor" href="#Mixins">Mixins</a><a id="Mixins-1"></a><a class="docs-heading-anchor-permalink" href="#Mixins" title="Permalink"></a></h4><p>Now let&#39;s address the issue of the missing temperature values. We will make a new system that will provide the missing temperature data we need for simulating <code>GrowingDegreeDay</code>. We will call this system <code>Temperature</code>. The purpose of <code>Temperature</code> will be to obtain a time series of daily average temperature values from an external data source.</p><pre><code class="nohighlight hljs">@system Temperature</code></pre><p>For this tutorial, we will be using weather data from Beltsville, Maryland in 2002. The data is available <a href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/tutorials/weather.csv">here</a>.</p><p>If you are unsure how to read CSV files, check the following <a href="https://csv.juliadata.org/stable/reading.html#CSV.read">documentation</a>. You can also follow the template below (make sure <code>path</code> corresponds to the path to your data file).</p><pre><code class="nohighlight hljs">using CSV, DataFrames
+
+weather = CSV.read(path, DataFrame)</code></pre><p>The data should look something like the following:</p><pre><code class="language-julia hljs">first(weather, 3)</code></pre><div><div style = "float: left;"><span>3×10 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">year</th><th style = "text-align: left;">doy</th><th style = "text-align: left;">rad (W/m^2)</th><th style = "text-align: left;">Tavg (°C)</th><th style = "text-align: left;">Tmax (°C)</th><th style = "text-align: left;">Tmin (°C)</th><th style = "text-align: left;">rainfall (mm)</th><th style = "text-align: left;">date (:Date)</th><th style = "text-align: left;">GDD (K)</th><th style = "text-align: left;">cGDD (K)</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Date" style = "text-align: left;">Date</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">2002</td><td style = "text-align: right;">135</td><td style = "text-align: right;">295.8</td><td style = "text-align: right;">14.9</td><td style = "text-align: right;">22.1</td><td style = "text-align: right;">8.6</td><td style = "text-align: right;">0</td><td style = "text-align: left;">2002-05-15</td><td style = "text-align: right;">6.9</td><td style = "text-align: right;">6.9</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">2002</td><td style = "text-align: right;">136</td><td style = "text-align: right;">297.9</td><td style = "text-align: right;">18.0</td><td style = "text-align: right;">27.7</td><td style = "text-align: right;">4.9</td><td style = "text-align: right;">0</td><td style = "text-align: left;">2002-05-16</td><td style = "text-align: right;">10.0</td><td style = "text-align: right;">10.0</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">2002</td><td style = "text-align: right;">137</td><td style = "text-align: right;">224.2</td><td style = "text-align: right;">21.3</td><td style = "text-align: right;">27.3</td><td style = "text-align: right;">14.3</td><td style = "text-align: right;">3</td><td style = "text-align: left;">2002-05-17</td><td style = "text-align: right;">13.3</td><td style = "text-align: right;">13.3</td></tr></tbody></table></div><p><br/> Notice that the column names have units in parentheses. The <code>unitfy()</code> function in Cropbox automatically assigns units to values based on names of the columns (if the unit is specified).</p><pre><code class="language-julia hljs">weather = unitfy(weather)
+first(weather, 3)</code></pre><div><div style = "float: left;"><span>3×10 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">year</th><th style = "text-align: left;">doy</th><th style = "text-align: left;">rad</th><th style = "text-align: left;">Tavg</th><th style = "text-align: left;">Tmax</th><th style = "text-align: left;">Tmin</th><th style = "text-align: left;">rainfall</th><th style = "text-align: left;">date</th><th style = "text-align: left;">GDD</th><th style = "text-align: left;">cGDD</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Unitful.Quantity{Float64, 𝐌 𝐓^-3, Unitful.FreeUnits{(m^-2, W), 𝐌 𝐓^-3, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝚯, Unitful.FreeUnits{(K,), 𝚯, Unitful.Affine{-5463//20}}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝚯, Unitful.FreeUnits{(K,), 𝚯, Unitful.Affine{-5463//20}}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝚯, Unitful.FreeUnits{(K,), 𝚯, Unitful.Affine{-5463//20}}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Int64, 𝐋, Unitful.FreeUnits{(mm,), 𝐋, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Date" style = "text-align: left;">Date</th><th title = "Unitful.Quantity{Float64, 𝚯, Unitful.FreeUnits{(K,), 𝚯, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝚯, Unitful.FreeUnits{(K,), 𝚯, nothing}}" style = "text-align: left;">Quantity…</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">2002</td><td style = "text-align: right;">135</td><td style = "text-align: right;">295.8 W m^-2</td><td style = "text-align: right;">14.9 °C</td><td style = "text-align: right;">22.1 °C</td><td style = "text-align: right;">8.6 °C</td><td style = "text-align: right;">0 mm</td><td style = "text-align: left;">2002-05-15</td><td style = "text-align: right;">6.9 K</td><td style = "text-align: right;">6.9 K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">2002</td><td style = "text-align: right;">136</td><td style = "text-align: right;">297.9 W m^-2</td><td style = "text-align: right;">18.0 °C</td><td style = "text-align: right;">27.7 °C</td><td style = "text-align: right;">4.9 °C</td><td style = "text-align: right;">0 mm</td><td style = "text-align: left;">2002-05-16</td><td style = "text-align: right;">10.0 K</td><td style = "text-align: right;">10.0 K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">2002</td><td style = "text-align: right;">137</td><td style = "text-align: right;">224.2 W m^-2</td><td style = "text-align: right;">21.3 °C</td><td style = "text-align: right;">27.3 °C</td><td style = "text-align: right;">14.3 °C</td><td style = "text-align: right;">3 mm</td><td style = "text-align: left;">2002-05-17</td><td style = "text-align: right;">13.3 K</td><td style = "text-align: right;">13.3 K</td></tr></tbody></table></div><p><br/> In the <code>Temperature</code> system, there is one variable that we will declare before declaring any other variable. We will name this variable <code>calendar</code>.</p><pre><code class="nohighlight hljs">@system Temperature begin
+    calendar(context) ~ ::Calendar
+end</code></pre><p>The purpose of <code>calendar</code> is to have access to variables inside the <code>Calendar</code> system such as <code>init</code>, <code>last</code>, and <code>date</code>, which represent initial, last, and current date, respectively.</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p><code>calendar</code> is a variable reference to the <a href="../../guide/system/#Calendar"><code>Calendar</code></a> system (one of the built-in systems of Cropbox), which has a number of time-related variables in date format. Declaring <code>calendar</code> as a variable of type <code>Calendar</code> allows us to use the variables inside the <code>Calendar</code> system as variables for our current system. Recall that <code>context</code> is a reference to the <code>Context</code> system and is included in every Cropbox system by default. Inside the <code>Context</code> system there is the <code>config</code> variable which references a <code>Config</code> object. By having <code>context</code> as a depending variable for <code>calendar</code>, we can change the values of the variables in <code>calendar</code> with a configuration. </p></div></div><p>The next variable we will add is a variable storing the weather data as a DataFrame. This variable will be a <code>provide</code> variable named <code>data</code>.</p><pre><code class="nohighlight hljs">@system Temperature begin
+    calendar(context) ~ ::Calendar
+    data ~ provide(parameter, index=:date, init=calendar.date)
+end</code></pre><p>Note that we have tagged the variable with a <code>parameter</code> tag so that we can assign a DataFrame during the configuration. We will set the index of the extracted DataFrame as the &quot;date&quot; column of the data source. The <code>init</code> tag is used to specify the starting row of the data that we want to store. <code>calendar.date</code> refers to the <code>date</code> variable in the <code>Calendar</code> system, and is a <code>track</code> variable that keeps track of the dates of simulation. The initial value of <code>date</code> is dependent on <code>calendar.init</code> which we will assign during configuration. By setting <code>init</code> to <code>calendar.date</code>, we are making sure that the <code>provide</code> variable extracts data from the correct starting row corresponding to the desired initial date of simulation.</p><p>Now we can finally declare the temperature variable using one of the columns of the DataFrame represented by <code>data</code>. Because this variable is <em>driven</em> from a source, we will be declaring a <code>drive</code> variable named <code>T</code>. The <code>from</code> tag specifies the DataFrame source and the <code>by</code> tag specifies which column to take the values from.</p><pre><code class="language-julia hljs">@system Temperature begin
+    calendar(context) ~ ::Calendar
+    data ~ provide(parameter, index=:date, init=calendar.date)
+    T ~ drive(from=data, by=:Tavg, u&quot;°C&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.Temperature</code></pre><p><br/> We finally have all the components to define our model. Because <code>GrowingDegreeDay</code> requires values for <code>T</code> from <code>Temperature</code>, let&#39;s redeclare <code>GrowingDegreeDay</code> with <code>Temperature</code> as a mixin. Because we want to run a simulation of <code>GrowingDegreeDay</code>, we also want to include <code>Controller</code> as a mixin. Recall that <code>Controller</code> must be included as a mixin for any system that you want to simulate.</p><pre><code class="language-julia hljs">@system GrowingDegreeDay(Temperature, Controller) begin
+    T ~ hold
+    Tb ~ preserve(parameter, u&quot;°C&quot;)
+    To ~ preserve(parameter, u&quot;°C&quot;)
+
+    GDD(T, Tb, To) =&gt; begin
+        min(T, To) - Tb
+    end ~ track(min = 0, u&quot;K&quot;)
+
+    cGDD(GDD) ~ accumulate(u&quot;K*d&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.GrowingDegreeDay</code></pre><p><br/></p><h3 id="Configuration"><a class="docs-heading-anchor" href="#Configuration">Configuration</a><a id="Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#Configuration" title="Permalink"></a></h3><p>The next step is to create a configuration object to assign the values of parameters. Recall that <code>data</code>, <code>T</code>, <code>Tb</code>, and <code>To</code> are empty variables at the moment.</p><p>As covered in the <a href="../../guide/configuration/#Configuration1">Configuration</a> section, we can make a single <code>Config</code> object with all the configurations we need for our systems.</p><p>Given the nature of GDD, this model is a daily model. To run a daily simulation, we need to configure the <code>step</code> variable in the <code>Clock</code> system from <code>1u&quot;hr&quot;</code> to <code>1u&quot;d&quot;</code>. This will change the time interval of the simulation from hourly (default) to daily.</p><pre><code class="nohighlight hljs">c = @config :Clock =&gt; :step =&gt; 1u&quot;d&quot;</code></pre><p>Next we will add the configurations for <code>GrowingDegreeDay</code>. The only parameters we have to configure are <code>Tb</code> and <code>To</code>.</p><pre><code class="nohighlight hljs">c = @config (
+    :Clock =&gt; (
+        :step =&gt; 1u&quot;d&quot;
+    ),
+    :GrowingDegreeDay =&gt; (
+        :Tb =&gt; 8.0u&quot;°C&quot;,
+        :To =&gt; 32.0u&quot;°C&quot;
+    )
+)</code></pre><p>Next we will pair the aforementioned DataFrame <code>weather</code> to <code>data</code> in <code>Temperature</code></p><pre><code class="nohighlight hljs">c = @config(
+    :Clock =&gt; (
+        :step =&gt; 1u&quot;d&quot;
+    ),
+    :GrowingDegreeDay =&gt; (
+        :Tb =&gt; 8.0u&quot;°C&quot;,
+        :To =&gt; 32.0u&quot;°C&quot;
+    ),
+    :Temperature =&gt; (
+        :data =&gt; weather
+    )
+)</code></pre><p>Lastly, we will configure the <code>init</code> and <code>last</code> parameters of the <code>Calendar</code> system, which will define the time range of our simulation.</p><pre><code class="language-julia hljs">c = @config(
+    :Clock =&gt; (
+        :step =&gt; 1u&quot;d&quot;
+    ),
+    :GrowingDegreeDay  =&gt; (
+        :Tb =&gt; 8.0u&quot;°C&quot;,
+        :To =&gt; 32.0u&quot;°C&quot;
+    ),
+    :Temperature =&gt; (
+        :data =&gt; weather
+    ),
+    :Calendar =&gt; (
+        :init =&gt; ZonedDateTime(2002, 5, 15, tz&quot;America/New_York&quot;),
+        :last =&gt; ZonedDateTime(2002, 9, 30, tz&quot;America/New_York&quot;)
+    )
+)</code></pre><p style="font-family: monospace">Config for 4 systems:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Clock</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">step</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1 d</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">GrowingDegreeDay</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">Tb</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">8.0 °C</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">To</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">32.0 °C</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Temperature</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">data</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">139×10 DataFrame…</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Calendar</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">init</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">ZonedDateTime&#40;2002, 5, 15, tz&quot;America/New_York&quot;&#41;</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">last</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">ZonedDateTime&#40;2002, 9, 30, tz&quot;America/New_York&quot;&#41;</td></tr>
+</table>
+<h3 id="Simulation"><a class="docs-heading-anchor" href="#Simulation">Simulation</a><a id="Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation" title="Permalink"></a></h3><p>Now that we have fully defined <code>GrowingDegreeDay</code> and created a configuration for it, we can finally simulate the model.</p><pre><code class="language-julia hljs">s = simulate(GrowingDegreeDay;
+    config = c,
+    stop = &quot;calendar.stop&quot;,
+    index = &quot;calendar.date&quot;,
+    target = [:GDD, :cGDD]
+)
+
+first(s, 10)</code></pre><div><div style = "float: left;"><span>10×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">calendar.date</th><th style = "text-align: left;">GDD</th><th style = "text-align: left;">cGDD</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Date" style = "text-align: left;">Date</th><th title = "Unitful.Quantity{Float64, 𝚯, Unitful.FreeUnits{(K,), 𝚯, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝚯 𝐓, Unitful.FreeUnits{(d, K), 𝚯 𝐓, nothing}}" style = "text-align: left;">Quantity…</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: left;">2002-05-15</td><td style = "text-align: right;">6.9 K</td><td style = "text-align: right;">0.0 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: left;">2002-05-16</td><td style = "text-align: right;">10.0 K</td><td style = "text-align: right;">6.9 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: left;">2002-05-17</td><td style = "text-align: right;">13.3 K</td><td style = "text-align: right;">16.9 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: left;">2002-05-18</td><td style = "text-align: right;">4.5 K</td><td style = "text-align: right;">30.2 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: left;">2002-05-19</td><td style = "text-align: right;">1.6 K</td><td style = "text-align: right;">34.7 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: left;">2002-05-20</td><td style = "text-align: right;">2.1 K</td><td style = "text-align: right;">36.3 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: left;">2002-05-21</td><td style = "text-align: right;">0.8 K</td><td style = "text-align: right;">38.4 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: left;">2002-05-22</td><td style = "text-align: right;">3.6 K</td><td style = "text-align: right;">39.2 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">9</td><td style = "text-align: left;">2002-05-23</td><td style = "text-align: right;">6.7 K</td><td style = "text-align: right;">42.8 d K</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">10</td><td style = "text-align: left;">2002-05-24</td><td style = "text-align: right;">12.1 K</td><td style = "text-align: right;">49.5 d K</td></tr></tbody></table></div><p><br/></p><h3 id="Visualization"><a class="docs-heading-anchor" href="#Visualization">Visualization</a><a id="Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Visualization" title="Permalink"></a></h3><p>To end the tutorial, let&#39;s visualize the simulation using the <code>plot()</code> and <code>visualize()</code> functions.</p><p>We can input the DataFrame from our simulation in the <code>plot()</code> function to create a plot.</p><p>Here is a plot of <code>GDD</code> over time.</p><pre><code class="language-julia hljs">plot(s, &quot;calendar.date&quot;, :GDD; kind=:line)</code></pre><img src="2f7d1d02.svg" alt="Example block output"/><p>We can also simultaneously run a new simulation and plot its result using the <code>visualize()</code> function.</p><p>Here is a plot of <code>cGDD</code> over time.</p><pre><code class="language-julia hljs">visualize(GrowingDegreeDay, &quot;calendar.date&quot;, :cGDD; config=c, stop=&quot;calendar.stop&quot;, kind=:line)</code></pre><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:gadfly="http://www.gadflyjl.org/ns"
+     version="1.2"
+     width="141.42mm" height="100mm" viewBox="0 0 141.42 100"
+     stroke="none"
+     fill="#000000"
+     stroke-width="0.3"
+     font-size="3.88"
+>
+<defs>
+  <marker id="arrow" markerWidth="15" markerHeight="7" refX="5" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
+  </marker>
+</defs>
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-310cabd4-1">
+  <g transform="translate(70.71,50)">
+    <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
+  </g>
+</g>
+<g class="plotroot xscalable yscalable" id="img-310cabd4-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-310cabd4-3">
+    <g transform="translate(78.7,93.72)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">calendar.date</text>
+      </g>
+    </g>
+  </g>
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-310cabd4-4">
+    <g transform="translate(36.32,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">Jun</text>
+      </g>
+    </g>
+    <g transform="translate(60.53,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">Jul</text>
+      </g>
+    </g>
+    <g transform="translate(85.56,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">Aug</text>
+      </g>
+    </g>
+    <g transform="translate(110.59,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">Sep</text>
+      </g>
+    </g>
+  </g>
+  <g clip-path="url(#img-310cabd4-5)">
+    <g id="img-310cabd4-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-310cabd4-7">
+        <g transform="translate(78.7,45.52)" id="img-310cabd4-8">
+          <path d="M-57.72,-40.52 L57.72,-40.52 57.72,40.52 -57.72,40.52  z" class="primitive"/>
+        </g>
+      </g>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-310cabd4-9">
+        <g transform="translate(78.7,84.04)" id="img-310cabd4-10">
+          <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
+        </g>
+        <g transform="translate(78.7,65.14)" id="img-310cabd4-11">
+          <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
+        </g>
+        <g transform="translate(78.7,46.24)" id="img-310cabd4-12">
+          <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
+        </g>
+        <g transform="translate(78.7,27.34)" id="img-310cabd4-13">
+          <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
+        </g>
+        <g transform="translate(78.7,8.44)" id="img-310cabd4-14">
+          <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
+        </g>
+      </g>
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-310cabd4-15">
+        <g transform="translate(36.32,45.52)" id="img-310cabd4-16">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(60.53,45.52)" id="img-310cabd4-17">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(85.56,45.52)" id="img-310cabd4-18">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(110.59,45.52)" id="img-310cabd4-19">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+      </g>
+      <g class="plotpanel" id="img-310cabd4-20">
+        <metadata>
+          <boundingbox value="20.976666666666674mm 5.0mm 115.44468957064284mm 81.04333333333334mm"/>
+          <unitbox value="2002-05-13 2090.9052913944533 143 days -2143.8105827889067"/>
+        </metadata>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-310cabd4-21">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-310cabd4-22">
+            <g transform="translate(78.3,46.45)" id="img-310cabd4-23">
+              <path fill="none" d="M-55.7,37.6 L-54.9,37.34 -54.09,36.96 -53.28,36.45 -52.47,36.28 -51.67,36.22 -50.86,36.14 -50.05,36.11 -49.25,35.98 -48.44,35.73 -47.63,35.27 -46.82,34.8 -46.02,34.34 -45.21,33.83 -44.4,33.32 -43.59,32.8 -42.79,32.28 -41.98,31.61 -41.17,30.93 -40.37,30.36 -39.56,29.9 -38.75,29.34 -37.94,28.67 -37.14,28.08 -36.33,27.69 -35.52,27.33 -34.71,26.84 -33.91,26.2 -33.1,25.49 -32.29,24.81 -31.48,24.33 -30.68,23.94 -29.87,23.49 -29.06,23.04 -28.26,22.57 -27.45,22.09 -26.64,21.61 -25.83,21.09 -25.03,20.57 -24.22,20.03 -23.41,19.43 -22.6,18.75 -21.8,18 -20.99,17.25 -20.18,16.54 -19.38,15.95 -18.57,15.35 -17.76,14.74 -16.95,14.07 -16.15,13.32 -15.34,12.51 -14.53,11.69 -13.72,10.92 -12.92,10.35 -12.11,9.87 -11.3,9.28 -10.49,8.52 -9.69,7.88 -8.88,7.4 -8.07,6.92 -7.27,6.39 -6.46,5.91 -5.65,5.3 -4.84,4.59 -4.04,3.92 -3.23,3.2 -2.42,2.48 -1.61,1.8 -0.81,1.14 0,0.39 0.81,-0.38 1.61,-0.96 2.42,-1.53 3.23,-1.98 4.04,-2.57 4.84,-3.33 5.65,-4.12 6.46,-4.87 7.27,-5.63 8.07,-6.38 8.88,-7.17 9.69,-7.84 10.49,-8.57 11.3,-9.29 12.11,-9.88 12.92,-10.33 13.72,-10.8 14.53,-11.3 15.34,-11.85 16.15,-12.49 16.95,-13.2 17.76,-13.96 18.57,-14.73 19.38,-15.52 20.18,-16.27 20.99,-17.04 21.8,-17.84 22.6,-18.61 23.41,-19.34 24.22,-20 25.03,-20.71 25.83,-21.43 26.64,-22.11 27.45,-22.77 28.26,-23.3 29.06,-23.91 29.87,-24.33 30.68,-24.7 31.48,-25.09 32.29,-25.54 33.1,-25.9 33.91,-26.33 34.71,-26.87 35.52,-27.51 36.33,-28.05 37.14,-28.51 37.94,-28.95 38.75,-29.39 39.56,-29.89 40.37,-30.48 41.17,-31.03 41.98,-31.39 42.79,-31.78 43.59,-32.29 44.4,-32.86 45.21,-33.44 46.02,-33.93 46.82,-34.4 47.63,-34.9 48.44,-35.46 49.25,-36.07 50.05,-36.67 50.86,-37.1 51.67,-37.41 52.47,-37.78 53.28,-38.14 54.09,-38.63 54.9,-39.1 55.7,-39.41 " class="primitive"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-310cabd4-24">
+    <g transform="translate(19.98,84.04)" id="img-310cabd4-25">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">0</text>
+      </g>
+    </g>
+    <g transform="translate(19.98,65.14)" id="img-310cabd4-26">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">500</text>
+      </g>
+    </g>
+    <g transform="translate(19.98,46.24)" id="img-310cabd4-27">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">1000</text>
+      </g>
+    </g>
+    <g transform="translate(19.98,27.34)" id="img-310cabd4-28">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">1500</text>
+      </g>
+    </g>
+    <g transform="translate(19.98,8.44)" id="img-310cabd4-29">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">2000</text>
+      </g>
+    </g>
+  </g>
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-310cabd4-30">
+    <g transform="translate(8.64,43.52)" id="img-310cabd4-31">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">cGDD (d K)</text>
+      </g>
+    </g>
+  </g>
+</g>
+<defs>
+  <clipPath id="img-310cabd4-5">
+    <path d="M20.98,5 L136.42,5 136.42,86.04 20.98,86.04 " />
+  </clipPath>
+</defs>
+</svg>
+<h2 id="Lotka-Volterra-Equations"><a class="docs-heading-anchor" href="#Lotka-Volterra-Equations">Lotka-Volterra Equations</a><a id="Lotka-Volterra-Equations-1"></a><a class="docs-heading-anchor-permalink" href="#Lotka-Volterra-Equations" title="Permalink"></a></h2><p>In this tutorial, we will create a model that simulates population dynamics between prey and predator using the Lotka-Volterra equations. The Lotka-Volterra equations are as follows:</p><p class="math-container">\[\begin{align}
+\frac{dN}{dt} &amp;= bN - aNP \\
+\frac{dP}{dt} &amp;= caNP - mP \\
+\end{align}\]</p><p><br/> Here is a list of variables used in the system:</p><table><tr><th style="text-align: center">Symbol</th><th style="text-align: center">Value</th><th style="text-align: center">Units</th><th style="text-align: left">Description</th></tr><tr><td style="text-align: center">t</td><td style="text-align: center">-</td><td style="text-align: center"><span>$\mathrm{yr}$</span></td><td style="text-align: left">Time unit used in the model</td></tr><tr><td style="text-align: center">N</td><td style="text-align: center">-</td><td style="text-align: center">-</td><td style="text-align: left">Prey population as number of individuals (state variable)</td></tr><tr><td style="text-align: center">P</td><td style="text-align: center">-</td><td style="text-align: center">-</td><td style="text-align: left">Predator population as number of individuals (state variable)</td></tr><tr><td style="text-align: center">b</td><td style="text-align: center">-</td><td style="text-align: center"><span>$\mathrm{yr^{-1}}$</span></td><td style="text-align: left">Per capital birth rate that defines the intrinsic growth rate of prey population</td></tr><tr><td style="text-align: center">a</td><td style="text-align: center">-</td><td style="text-align: center"><span>$\mathrm{yr^{-1}}$</span></td><td style="text-align: left">Attack rate or predation rate</td></tr><tr><td style="text-align: center">c</td><td style="text-align: center">-</td><td style="text-align: center">-</td><td style="text-align: left">Conversion efficiency of an eaten prey into new predator; predator&#39;s reproduction efficiency per prey consumed)</td></tr><tr><td style="text-align: center">m</td><td style="text-align: center">-</td><td style="text-align: center"><span>$\mathrm{yr^{-1}}$</span></td><td style="text-align: left">Mortality rate of predator population</td></tr></table><p><br/></p><h3 id="System-2"><a class="docs-heading-anchor" href="#System-2">System</a><a class="docs-heading-anchor-permalink" href="#System-2" title="Permalink"></a></h3><p>Let&#39;s begin by creating a <a href="../../guide/system/#system">system</a> called <code>LotkaVolterra</code>. Since this is a system that we want to simulate later on, we must include <a href="../../guide/system/#Controller"><code>Controller</code></a> as a <a href="../../guide/system/#Mixin">mixin</a>.</p><pre><code class="nohighlight hljs">@system LotkaVolterra(Controller)</code></pre><p><br/> We will first declare a time variable with a yearly unit, which we will use for plotting the model simulations later on. Recall that <code>context.clock.time</code> is a variable that keeps track of the progression of time. We are simply declaring a variable to keep track of the time in years.</p><pre><code class="nohighlight hljs">@system LotkaVolterra(Controller) begin
+    t(context.clock.time) ~ track(u&quot;yr&quot;)
+end</code></pre><p><br/> Next, we will declare the parameters in the equations as <code>preserve</code> variables. <code>preserve</code> variables are variables that remain constant throughout a simulation.</p><pre><code class="nohighlight hljs">@system LotkaVolterra(Controller) begin
+    t(context.clock.time) ~ track(u&quot;yr&quot;)
+
+    b: prey_birth_rate            ~ preserve(parameter, u&quot;yr^-1&quot;)
+    a: predation_rate             ~ preserve(parameter, u&quot;yr^-1&quot;)
+    c: predator_reproduction_rate ~ preserve(parameter)
+    m: predator_mortality_rate    ~ preserve(parameter, u&quot;yr^-1&quot;)
+end</code></pre><p><br/> Now let&#39;s declare the prey and predator populations as variables. The Lotka-Volterra equations describe the rates of change for the two populations. As we want to track the actual number of the two populations, we will declare the two populations as <code>accumulate</code> variables, which are simply Euler integrations of the two population rates. Note that a variable can be used as its own depending variable.</p><pre><code class="nohighlight hljs">@system LotkaVolterra(Controller) begin
+    t(context.clock.time) ~ track(u&quot;yr&quot;)
+
+    b: prey_birth_rate            ~ preserve(parameter, u&quot;yr^-1&quot;)
+    a: predation_rate             ~ preserve(parameter, u&quot;yr^-1&quot;)
+    c: predator_reproduction_rate ~ preserve(parameter)
+    m: predator_mortality_rate    ~ preserve(parameter, u&quot;yr^-1&quot;)
+
+    N(N, P, b, a):    prey_population     =&gt;     b*N - a*N*P ~ accumulate
+    P(N, P, c, a, m): predator_population =&gt; c*a*N*P -   m*P ~ accumulate
+end</code></pre><p><br/> By default, <code>accumulate</code> variables initialize at a value of zero. In our current model, that would result in two populations remaining at zero indefinitely. To address this, we will define the initial values for the two <code>accumulate</code> variables using the <code>init</code> tag. We can specify a particular value, or we can also create and reference new parameters representing the two initial populations. We will go with the latter option as it allows us to flexibly change the initial populations with a configuration.</p><pre><code class="language-julia hljs">@system LotkaVolterra(Controller) begin
+    t(context.clock.time) ~ track(u&quot;yr&quot;)
+
+    b: prey_birth_rate            ~ preserve(parameter, u&quot;yr^-1&quot;)
+    a: predation_rate             ~ preserve(parameter, u&quot;yr^-1&quot;)
+    c: predator_reproduction_rate ~ preserve(parameter)
+    m: predator_mortality_rate    ~ preserve(parameter, u&quot;yr^-1&quot;)
+
+    N0: prey_initial_population     ~ preserve(parameter)
+    P0: predator_initial_population ~ preserve(parameter)
+
+    N(N, P, b, a):    prey_population     =&gt;     b*N - a*N*P ~ accumulate(init=N0)
+    P(N, P, c, a, m): predator_population =&gt; c*a*N*P -   m*P ~ accumulate(init=P0)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.LotkaVolterra</code></pre><p><br/></p><h3 id="Configuration-2"><a class="docs-heading-anchor" href="#Configuration-2">Configuration</a><a class="docs-heading-anchor-permalink" href="#Configuration-2" title="Permalink"></a></h3><p>With the system now defined, we will create a <code>Config</code> object to fill or adjust the parameters.</p><p>First, we will change the <code>step</code> variable in the <code>Clock</code> system to <code>1u&quot;d&quot;</code>, which will make the system update at a daily interval. Recall that <code>Clock</code> is a system that is referenced in all systems by default. You can technically run the model with any timestep.</p><pre><code class="language-julia hljs">lvc = @config (:Clock =&gt; :step =&gt; 1u&quot;d&quot;)</code></pre><p style="font-family: monospace">Config for 1 system:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Clock</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">step</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1 d</td></tr>
+</table>
+<p><br/> Next, we will configure the parameters in the <code>LotkaVolterra</code> system that we defined. Note that we can easily combine configurations by providing multiple elements.</p><pre><code class="language-julia hljs">lvc = @config (lvc,
+    :LotkaVolterra =&gt; (
+        b = 0.6,
+        a = 0.02,
+        c = 0.5,
+        m = 0.5,
+        N0 = 20,
+        P0 = 30
+    )
+)</code></pre><p style="font-family: monospace">Config for 2 systems:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Clock</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">step</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1 d</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">LotkaVolterra</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">b</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.6</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">a</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.02</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">c</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.5</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">m</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.5</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">N0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">20</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">P0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">30</td></tr>
+</table>
+<p><br/></p><h3 id="Visualization-2"><a class="docs-heading-anchor" href="#Visualization-2">Visualization</a><a class="docs-heading-anchor-permalink" href="#Visualization-2" title="Permalink"></a></h3><p>Let&#39;s visualize the <code>LotkaVolterra</code> system with the configuration that we just created, using the <code>visualize()</code> function. The <code>visualize()</code> function both runs a simulation and plots the resulting DataFrame.</p><pre><code class="language-julia hljs">visualize(LotkaVolterra, :t, [:N, :P]; config = lvc, stop = 100u&quot;yr&quot;, kind = :line)</code></pre><img src="30a0fdb2.svg" alt="Example block output"/><h3 id="Density-Dependent-Lotka-Volterra-Equations"><a class="docs-heading-anchor" href="#Density-Dependent-Lotka-Volterra-Equations">Density-Dependent Lotka-Volterra Equations</a><a id="Density-Dependent-Lotka-Volterra-Equations-1"></a><a class="docs-heading-anchor-permalink" href="#Density-Dependent-Lotka-Volterra-Equations" title="Permalink"></a></h3><p>Now let&#39;s try to make a density-dependent version of the original Lotka-Volterra model which incorporates a new term in the prey population rate. The new variable <em>K</em> represents the carrying capacity of the prey population.</p><p class="math-container">\[\begin{align}
+\frac{dN}{dt} &amp;= bN-\frac{b}{K}N^2-aNP \\
+\frac{dP}{dt} &amp;= caNP-mP \\
+\end{align}\]</p><h4 id="System-3"><a class="docs-heading-anchor" href="#System-3">System</a><a class="docs-heading-anchor-permalink" href="#System-3" title="Permalink"></a></h4><p>We will call this new system <code>LotkaVolterraDD</code>.</p><pre><code class="nohighlight hljs">@system LotkaVolterraDD(Controller)</code></pre><p><br/> Since we already defined the <code>LotkaVolterra</code> system, which already has most of the variables we require, we can use <code>LotkaVolterra</code> as a mixin for <code>LotkaVolterraDD</code>. This makes our task a lot simpler, as all that remains is to declare the variable <code>K</code> for carrying capacity and redeclare the variable <code>N</code> for prey population. The variable <code>N</code> in the new system will automatically overwrite the <code>N</code> from <code>LotkaVolterra</code>. </p><pre><code class="language-julia hljs">@system LotkaVolterraDD(LotkaVolterra, Controller) begin
+    N(N, P, K, b, a): prey_population =&gt; begin
+        b*N - b/K*N^2 - a*N*P
+    end ~ accumulate(init = N0)
+
+    K: carrying_capacity ~ preserve(parameter)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.LotkaVolterraDD</code></pre><p><br/></p><h4 id="Configuration-3"><a class="docs-heading-anchor" href="#Configuration-3">Configuration</a><a class="docs-heading-anchor-permalink" href="#Configuration-3" title="Permalink"></a></h4><p>Much like the new system, the new configuration can be created by reusing the old configuration. All we need to configure is the new variable <code>K</code>.</p><pre><code class="language-julia hljs">lvddc = @config(lvc, (:LotkaVolterraDD =&gt; :K =&gt; 1000))</code></pre><p style="font-family: monospace">Config for 3 systems:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Clock</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">step</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1 d</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">LotkaVolterra</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">b</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.6</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">a</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.02</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">c</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.5</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">m</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.5</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">N0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">20</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">P0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">30</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">LotkaVolterraDD</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">K</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1000</td></tr>
+</table>
+<p><br/></p><h4 id="Visualization-3"><a class="docs-heading-anchor" href="#Visualization-3">Visualization</a><a class="docs-heading-anchor-permalink" href="#Visualization-3" title="Permalink"></a></h4><p>Once again, let&#39;s visualize the system using the <code>visualize()</code> function.</p><pre><code class="language-julia hljs">visualize(LotkaVolterraDD, :t, [:N, :P]; config = lvddc, stop = 100u&quot;yr&quot;, kind = :line)</code></pre><img src="b6d000cd.svg" alt="Example block output"/><p><br/></p><h4 id="Calibration"><a class="docs-heading-anchor" href="#Calibration">Calibration</a><a id="Calibration-1"></a><a class="docs-heading-anchor-permalink" href="#Calibration" title="Permalink"></a></h4><p>If you want to calibrate the parameters according to a particular dataset, Cropbox provides the <code>calibrate()</code> function, which relies on <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim.jl</a> for global optimization methods. If you are interested in local optimization methods, refer to <a href="https://github.com/JuliaNLSolvers/Optim.jl">Optim.jl</a> package for more information.</p><p>For this tutorial, we will use a dataset containing the number of pelts (in thousands) of Canadian lynx and snowshoe hare traded by the Hudson Bay Trading Company in Canada from 1845 to 1935. The data is available <a href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/tutorials/pelts.csv">here</a>.</p><p>If you are unsure how to read CSV files, check the following <a href="https://csv.juliadata.org/stable/reading.html#CSV.read">documentation</a>. You can also follow the template below (make sure <code>path</code> corresponds to the path to your data file).</p><pre><code class="nohighlight hljs">using CSV, DataFrames
+
+pelts = CSV.read(path, DataFrame)</code></pre><p>The data should look something like the this:</p><pre><code class="language-julia hljs">first(pelts, 3)</code></pre><div><div style = "float: left;"><span>3×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Year (yr)</th><th style = "text-align: left;">Hare</th><th style = "text-align: left;">Lynx</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">1845</td><td style = "text-align: right;">19.58</td><td style = "text-align: right;">30.09</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">1846</td><td style = "text-align: right;">19.6</td><td style = "text-align: right;">45.15</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1847</td><td style = "text-align: right;">19.61</td><td style = "text-align: right;">49.15</td></tr></tbody></table></div><p><br/> Recall that we can use the <code>unitfy()</code> function in Cropbox to automatically assign units when they are specified in the column headers.</p><pre><code class="language-julia hljs">pelts = unitfy(pelts)
+first(pelts, 3)</code></pre><div><div style = "float: left;"><span>3×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Year</th><th style = "text-align: left;">Hare</th><th style = "text-align: left;">Lynx</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Unitful.Quantity{Int64, 𝐓, Unitful.FreeUnits{(yr,), 𝐓, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">1845 yr</td><td style = "text-align: right;">19.58</td><td style = "text-align: right;">30.09</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">1846 yr</td><td style = "text-align: right;">19.6</td><td style = "text-align: right;">45.15</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1847 yr</td><td style = "text-align: right;">19.61</td><td style = "text-align: right;">49.15</td></tr></tbody></table></div><p><br/> Let&#39;s plot the data and see what it looks like.</p><pre><code class="language-julia hljs">visualize(pelts, :Year, [:Hare, :Lynx], kind = :scatterline)</code></pre><img src="121e460f.svg" alt="Example block output"/><p><br/> For our calibration, we will use a subset of the data covering years 1900 to 1920.</p><pre><code class="language-julia hljs">pelts_subset = @subset(pelts, 1900u&quot;yr&quot; .&lt;= :Year .&lt;= 1920u&quot;yr&quot;)</code></pre><div><div style = "float: left;"><span>21×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Year</th><th style = "text-align: left;">Hare</th><th style = "text-align: left;">Lynx</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Unitful.Quantity{Int64, 𝐓, Unitful.FreeUnits{(yr,), 𝐓, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">1900 yr</td><td style = "text-align: right;">12.82</td><td style = "text-align: right;">7.13</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">1901 yr</td><td style = "text-align: right;">4.72</td><td style = "text-align: right;">9.47</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1902 yr</td><td style = "text-align: right;">4.73</td><td style = "text-align: right;">14.86</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: right;">1903 yr</td><td style = "text-align: right;">37.22</td><td style = "text-align: right;">31.47</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: right;">1904 yr</td><td style = "text-align: right;">69.72</td><td style = "text-align: right;">60.57</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: right;">1905 yr</td><td style = "text-align: right;">57.78</td><td style = "text-align: right;">63.51</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: right;">1906 yr</td><td style = "text-align: right;">28.68</td><td style = "text-align: right;">54.7</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: right;">1907 yr</td><td style = "text-align: right;">23.37</td><td style = "text-align: right;">6.3</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">9</td><td style = "text-align: right;">1908 yr</td><td style = "text-align: right;">21.54</td><td style = "text-align: right;">3.41</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">10</td><td style = "text-align: right;">1909 yr</td><td style = "text-align: right;">26.34</td><td style = "text-align: right;">5.44</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">11</td><td style = "text-align: right;">1910 yr</td><td style = "text-align: right;">53.1</td><td style = "text-align: right;">11.65</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">12</td><td style = "text-align: right;">1911 yr</td><td style = "text-align: right;">68.48</td><td style = "text-align: right;">20.35</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">13</td><td style = "text-align: right;">1912 yr</td><td style = "text-align: right;">75.58</td><td style = "text-align: right;">32.88</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">14</td><td style = "text-align: right;">1913 yr</td><td style = "text-align: right;">57.92</td><td style = "text-align: right;">39.55</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">15</td><td style = "text-align: right;">1914 yr</td><td style = "text-align: right;">40.97</td><td style = "text-align: right;">43.36</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">16</td><td style = "text-align: right;">1915 yr</td><td style = "text-align: right;">24.95</td><td style = "text-align: right;">40.83</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">17</td><td style = "text-align: right;">1916 yr</td><td style = "text-align: right;">12.59</td><td style = "text-align: right;">30.36</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">18</td><td style = "text-align: right;">1917 yr</td><td style = "text-align: right;">4.97</td><td style = "text-align: right;">17.18</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">19</td><td style = "text-align: right;">1918 yr</td><td style = "text-align: right;">4.5</td><td style = "text-align: right;">6.82</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">20</td><td style = "text-align: right;">1919 yr</td><td style = "text-align: right;">11.21</td><td style = "text-align: right;">3.19</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">21</td><td style = "text-align: right;">1920 yr</td><td style = "text-align: right;">56.6</td><td style = "text-align: right;">3.52</td></tr></tbody></table></div><p><br/> Before we calibrate the parameters for <code>LotkaVolterra</code>, let&#39;s add one new variable to the system. We will name this variable <code>y</code> for year. The purpose of <code>y</code> is to keep track of the year in the same manner as the dataset.</p><pre><code class="language-julia hljs">@system LotkaVolterra(Controller) begin
+    t(context.clock.time) ~ track(u&quot;yr&quot;)
+    y(t): year            ~ track::Int(u&quot;yr&quot;, round)
+
+    b: prey_birth_rate            ~ preserve(parameter, u&quot;yr^-1&quot;)
+    a: predation_rate             ~ preserve(parameter, u&quot;yr^-1&quot;)
+    c: predator_reproduction_rate ~ preserve(parameter)
+    m: predator_mortality_rate    ~ preserve(parameter, u&quot;yr^-1&quot;)
+
+    N0: prey_initial_population     ~ preserve(parameter)
+    P0: predator_initial_population ~ preserve(parameter)
+
+    N(N, P, b, a):    prey_population     =&gt;     b*N - a*N*P ~ accumulate(init=N0)
+    P(N, P, c, a, m): predator_population =&gt; c*a*N*P -   m*P ~ accumulate(init=P0)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.LotkaVolterra</code></pre><p><br/> We will now use the <code>calibrate()</code> function to find parameters that fit the data. Keep in mind that the search range for each parameter will be determined by you. We will use the <code>snap</code> option to explicitly indicate that the output should be recorded by 365-day intervals to avoid excessive rows in the DataFrame causing unnecessary slowdown. Note that we will use <code>365u&quot;d&quot;</code> instead of <code>1u&quot;yr&quot;</code> which is technically equivalent to <code>365.25u&quot;d&quot;</code> following the convention in astronomy. For information regarding syntax, please check the <a href="../../reference/simulation/#Simulation1">reference</a>.</p><pre><code class="language-julia hljs">lvcc = calibrate(LotkaVolterra, pelts_subset;
+    index = :Year =&gt; :y,
+    target = [:Hare =&gt; :N, :Lynx =&gt; :P],
+    config = :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;),
+    parameters = LotkaVolterra =&gt; (;
+        b = (0, 2),
+        a = (0, 2),
+        c = (0, 2),
+        m = (0, 2),
+        N0 = (0, 100),
+        P0 = (0, 100),
+    ),
+    stop = 20u&quot;yr&quot;,
+    snap = 365u&quot;d&quot;
+)</code></pre><p style="font-family: monospace">Config for 1 system:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">LotkaVolterra</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">b</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.508959</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">a</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.0192982</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">c</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1.7184</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">m</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1.09638</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">N0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">22.6805</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">P0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">10.7536</td></tr>
+</table>
+<p><br/> As you can see above, the <code>calibrate()</code> function will return a <code>Config</code> object for the system.</p><p>Using the new configuration, let&#39;s make a comparison plot to visualize how well the simualation with the new parameters fits the data.</p><pre><code class="language-julia hljs">p1 = visualize(pelts_subset, :Year, [:Hare, :Lynx]; kind = :scatterline)
+visualize!(p1, LotkaVolterra, :t, [:N, :P];
+    config = (lvcc, :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;)),
+    stop = 20u&quot;yr&quot;,
+    kind = :line,
+    colors = [1, 2],
+    names = [],
+)</code></pre><img src="4f72284c.svg" alt="Example block output"/><p><br/> Now let&#39;s try calibrating the density-dependent version of the model. Since we made a slight change to <code>LotkaVolterra</code>, let&#39;s make sure to define <code>LotkaVolterraDD</code> again.</p><pre><code class="language-julia hljs">@system LotkaVolterraDD(LotkaVolterra, Controller) begin
+    N(N, P, K, b, a): prey_population =&gt; begin
+        b*N - b/K*N^2 - a*N*P
+    end ~ accumulate(init = N0)
+
+    K: carrying_capacity ~ preserve(parameter)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.LotkaVolterraDD</code></pre><p><br/> Don&#39;t forget to add <code>K</code> among the parameters that we want to calibrate.</p><pre><code class="language-julia hljs">lvddcc = calibrate(LotkaVolterraDD, pelts_subset;
+    index = :Year =&gt; :y,
+    target = [:Hare =&gt; :N, :Lynx =&gt; :P],
+    config = :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;),
+    parameters = LotkaVolterraDD =&gt; (;
+        b = (0, 2),
+        a = (0, 2),
+        c = (0, 2),
+        m = (0, 2),
+        N0 = (0, 100),
+        P0 = (0, 100),
+        K = (0, 1000)
+    ),
+    stop = 20u&quot;yr&quot;,
+    snap = 365u&quot;d&quot;
+)</code></pre><p style="font-family: monospace">Config for 1 system:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">LotkaVolterraDD</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">b</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.880817</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">a</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.0317812</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">c</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.730478</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">m</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.716714</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">N0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">12.6245</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">P0</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">13.5917</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">K</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">887.152</td></tr>
+</table>
+<p><br/> Once again, let us make a comparison plot to see how the density-dependent version of the model fares against the original dataset.</p><pre><code class="language-julia hljs">p2 = visualize(pelts_subset, :Year, [:Hare, :Lynx]; kind = :scatterline)
+visualize!(p2, LotkaVolterraDD, :t, [:N, :P];
+    config = (lvddcc, :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;)),
+    stop = 20u&quot;yr&quot;,
+    kind = :line,
+    colors = [1, 2],
+    names = [],
+)</code></pre><img src="9f3d943d.svg" alt="Example block output"/><p><br/></p><h4 id="Evaluation"><a class="docs-heading-anchor" href="#Evaluation">Evaluation</a><a id="Evaluation-1"></a><a class="docs-heading-anchor-permalink" href="#Evaluation" title="Permalink"></a></h4><p>We have visualized how the simulated <code>LotkaVolterra</code> and <code>LotkaVolterraDD</code> systems compare to the the original dataset. Let us obtain a metric for how well the simulations fit the original dataset using the <code>evaluate()</code> function in Cropbox. The <code>evaluate()</code> function supports numerous different metrics for evaluation. Here, we will calculate the root-mean-square error (RMSE) and modeling efficiency (EF).</p><p>Here are the evaluation metrics for <code>LotkaVolterra</code>. The numbers in the tuples correspond to hare and lynx, respectively.</p><pre><code class="language-julia hljs">evaluate(LotkaVolterra, pelts_subset;
+    index = :Year =&gt; :y,
+    target = [:Hare =&gt; :N, :Lynx =&gt; :P],
+    config = (lvcc, :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;)),
+    stop = 20u&quot;yr&quot;,
+    snap = 365u&quot;d&quot;,
+    metric = :rmse,
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(17.37148524278938, 9.760454951690196)</code></pre><pre><code class="language-julia hljs">evaluate(LotkaVolterra, pelts_subset;
+    index = :Year =&gt; :y,
+    target = [:Hare =&gt; :N, :Lynx =&gt; :P],
+    config = (lvcc, :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;)),
+    stop = 20u&quot;yr&quot;,
+    snap = 365u&quot;d&quot;,
+    metric = :ef
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.45103924288219865, 0.7479251686137505)</code></pre><p><br/> Here are the evaluation metrics for <code>LotkaVolterraDD</code>:</p><pre><code class="language-julia hljs">evaluate(LotkaVolterraDD, pelts_subset;
+    index = :Year =&gt; :y,
+    target = [:Hare =&gt; :N, :Lynx =&gt; :P],
+    config = (lvddcc, :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;)),
+    stop = 20u&quot;yr&quot;,
+    snap = 365u&quot;d&quot;,
+    metric = :rmse
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(16.17943364709707, 11.70354851591861)</code></pre><pre><code class="language-julia hljs">evaluate(LotkaVolterraDD, pelts_subset;
+    index = :Year =&gt; :y,
+    target = [:Hare =&gt; :N, :Lynx =&gt; :P],
+    config = (lvddcc, :Clock =&gt; (:init =&gt; 1900u&quot;yr&quot;, :step =&gt; 1u&quot;d&quot;)),
+    stop = 20u&quot;yr&quot;,
+    snap = 365u&quot;d&quot;,
+    metric = :ef
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.5237949169511267, 0.6375697135890357)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../cropbox/">« Getting started with Cropbox</a><a class="docs-footer-nextpage" href="../usingamodel/">Using an existing model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Friday 12 April 2024 12:59">Friday 12 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
