@@ -78,7 +78,7 @@ unitfy(df::AbstractDataFrame; kw...) = begin
         s = m.captures[2]
         #HACK: assume type constructor if the label starts with `:`
         if startswith(s, ":")
-            e = Symbol(s[2:end])
+            e = Meta.parse(s[2:end])
             #HACK: use Main scope for type constructor evaluation
             #TODO: remove fallback eval in favor of explict constructor mapping
             haskey(D, e) ? D[e] : Main.eval(e)
