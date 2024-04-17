@@ -76,10 +76,14 @@ unitfy(df::AbstractDataFrame; kw...) = begin
     u(m::RegexMatch) = begin
         s = m.captures[2]
         #HACK: assume type constructor if the label starts with `:`
-        e = startswith(s, ":") ? Symbol(s[2:end]) : :(@u_str($s))
-        #HACK: use Main scope for type constructor evaluation
-        #TODO: remove fallback eval in favor of explict constructor mapping
-        haskey(D, e) ? D[e] : Main.eval(e)
+        if startswith(s, ":")
+            e = Symbol(s[2:end])
+            #HACK: use Main scope for type constructor evaluation
+            #TODO: remove fallback eval in favor of explict constructor mapping
+            haskey(D, e) ? D[e] : Main.eval(e)
+        else
+            Unitful.uparse(s)
+        end
     end
     u(m) = missing
     U = u.(M)
