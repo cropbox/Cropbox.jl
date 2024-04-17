@@ -62,7 +62,7 @@ for f in (:unitfy, :deunitfy)
 end
 
 import Dates
-import Symbolics
+import JuliaInterpreter
 unitfy(df::AbstractDataFrame; kw...) = begin
     #HACK: default constructor for common types to avoid scope binding issue
     D = merge(Dict(
@@ -83,10 +83,15 @@ unitfy(df::AbstractDataFrame; kw...) = begin
             #TODO: remove fallback eval in favor of explict constructor mapping
             haskey(D, e) ? D[e] : Main.eval(e)
         else
-            #HACK: use Symbolics to avoid eval during precompilation
+            #HACK: use JuliaInterpreter to avoid eval during precompilation
             #Unitful.uparse(s)
             # https://github.com/PainterQubits/Unitful.jl/issues/649
-            Symbolics.parse_expr_to_symbolic(Meta.parse(s), Unitful)
+            e = Meta.parse(s)
+            if isa(e, Symbol)
+                Unitful.lookup_units(Unitful, e)
+            else
+                JuliaInterpreter.finish_and_return!(JuliaInterpreter.Frame(Unitful, e))
+            end
         end
     end
     u(m) = missing
