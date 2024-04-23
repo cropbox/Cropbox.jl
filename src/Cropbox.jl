@@ -34,4 +34,6 @@ include("util/plot.jl")
 include("util/visualize.jl")
 include("util/manipulate.jl")
 
+include("precompile.jl")
+
 end
