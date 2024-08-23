@@ -55,18 +55,17 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep; kw...) = begin
            $t0 = $s.time,
            $a = $a0 + $s.rate * ($t - $t0)
         $(genstore(v, a; unitfy=false, minmax=true, round=false, when=false))
+        $s.time = $t
     end
 end
 
 genupdate(v::VarInfo, ::Val{:Accumulate}, ::PostStep; kw...) = begin
     w = gettag(v, :when)
     f = isnothing(w) ? genbody(v) : @q $C.value($w) ? $(genbody(v)) : zero($(gettag(v, :_type)))
-    @gensym s t r e
+    @gensym s r e
     @q let $s = $(symstate(v)),
-           $t = $C.value($(gettag(v, :time))),
            $r = $C.unitfy($f, $C.rateunit($s)),
            $e = $C.value($(gettag(v, :reset)))
-        $s.time = $t
         $s.rate = $r
         $s.reset = $e
     end
