@@ -356,7 +356,7 @@ end
 
 genstate(v::VarInfo) = begin
     name = Meta.quot(v.name)
-    alias = Meta.quot(v.alias)    
+    alias = Meta.quot(v.alias)
     value = istag(v, :extern) ? genextern(v, gendefault(v)) : gendefault(v)
     stargs = [:($(esc(k))=$v) for (k, v) in filterconstructortags(v)]
     @q $C.$(v.state)(; _name=$name, _alias=$alias, _value=$value, $(stargs...))
@@ -459,9 +459,14 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
     system = quote
         Core.@__doc__ abstract type $S <: $T end
         $S(; kw...) = $_S(; kw...)
-        $C.typefor(::Type{<:$S}) = $_S
         let $(constpatches...)
-            Core.@__doc__ mutable struct $_S <: $S
+            # HACK: We want to define `typefor` before the type is fully defined
+            # because it may be used in the `fields`. Because of the order that
+            # struct definitions happen to get evaluated in, type supertype definition
+            # is the only place where we have access to the incomplete $_S before evaluating
+            # the fields. The extra let is required to due a lowering bug
+            # (https://github.com/JuliaLang/julia/issues/56510).
+            Core.@__doc__ mutable struct $_S <: ((let $_S=$_S; ($C.typefor(::Type{<:$S}) = $_S); end); $S)
                 $(fields...)
                 function $_S(; __kwargs__...)
                     $predecl
