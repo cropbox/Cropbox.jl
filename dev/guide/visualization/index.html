@@ -6,7 +6,7 @@
 </script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Introduction</span><ul><li><a class="tocitem" href="../../">Cropbox</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorials/julia/">Getting started with Julia</a></li><li><a class="tocitem" href="../../tutorials/cropbox/">Getting started with Cropbox</a></li><li><a class="tocitem" href="../../tutorials/makingamodel/">Making a model</a></li><li><a class="tocitem" href="../../tutorials/usingamodel/">Using an existing model</a></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../system/">System</a></li><li><a class="tocitem" href="../variable/">Variable</a></li><li><a class="tocitem" href="../configuration/">Configuration</a></li><li><a class="tocitem" href="../simulation/">Simulation</a></li><li class="is-active"><a class="tocitem" href>Visualization</a><ul class="internal"><li><a class="tocitem" href="#plot"><span><code>plot()</code></span></a></li><li><a class="tocitem" href="#visualize"><span><code>visualize()</code></span></a></li><li><a class="tocitem" href="#manipulate"><span><code>manipulate()</code></span></a></li></ul></li><li><a class="tocitem" href="../inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../gallery/">Gallery</a></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../../reference/">Index</a></li><li><a class="tocitem" href="../../reference/declaration/">Declaration</a></li><li><a class="tocitem" href="../../reference/simulation/">Simulation</a></li><li><a class="tocitem" href="../../reference/visualization/">Visualization</a></li><li><a class="tocitem" href="../../reference/inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Visualization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Visualization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/guide/visualization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Visualization"><a class="docs-heading-anchor" href="#Visualization">Visualization</a><a id="Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Visualization" title="Permalink"></a></h1><p>There are three main functions in Cropbox used for visualization. For information regarding syntax, please check the <a href="../../reference/visualization/#Visualization1">reference</a>.</p><ul><li><a href="#plot"><code>plot()</code></a></li><li><a href="#visualize"><code>visualize()</code></a></li><li><a href="#manipulate"><code>manipulate()</code></a></li></ul><h2 id="plot"><a class="docs-heading-anchor" href="#plot"><code>plot()</code></a><a id="plot-1"></a><a class="docs-heading-anchor-permalink" href="#plot" title="Permalink"></a></h2><p>The <code>plot()</code> function is used to plot two-dimensional graphs.</p><p><strong>Two Vectors</strong></p><p>Let&#39;s start by making a simple plot by using two vectors of discrete values.</p><pre><code class="language-julia hljs">x = [1, 2, 3, 4, 5]
 y = [2, 4, 6, 8, 10]
 
-plot(x, y)</code></pre><img src="baf75e03.svg" alt="Example block output"/><p><br/> <strong>Multiple Vectors</strong></p><p>You can also plot multiple series, by using a vector of vectors.</p><pre><code class="language-julia hljs">plot(x, [x, y])</code></pre><img src="1a5cde68.svg" alt="Example block output"/><p><br/> <strong>DataFrame</strong></p><p>We can also make a plot using a DataFrame and its columns. Recall that the <code>simulate()</code> function provides a DataFrame.</p><pre><code class="language-julia hljs">@system S(Controller) begin
+plot(x, y)</code></pre><img src="faa50595.svg" alt="Example block output"/><p><br/> <strong>Multiple Vectors</strong></p><p>You can also plot multiple series, by using a vector of vectors.</p><pre><code class="language-julia hljs">plot(x, [x, y])</code></pre><img src="a92d1dfc.svg" alt="Example block output"/><p><br/> <strong>DataFrame</strong></p><p>We can also make a plot using a DataFrame and its columns. Recall that the <code>simulate()</code> function provides a DataFrame.</p><pre><code class="language-julia hljs">@system S(Controller) begin
     x ~ advance
     y1(x) =&gt; 2x ~ track
     y2(x) =&gt; x^2 ~ track
@@ -14,14 +14,14 @@ end
 
 df = simulate(S; stop=10)
 
-p = plot(df, :x, [:y1, :y2])</code></pre><img src="e95571cd.svg" alt="Example block output"/><h3 id="plot!()"><a class="docs-heading-anchor" href="#plot!()"><code>plot!()</code></a><a id="plot!()-1"></a><a class="docs-heading-anchor-permalink" href="#plot!()" title="Permalink"></a></h3><p><code>plot!()</code> is an extension of the <code>plot()</code> function used to update an existing <code>Plot</code> object <code>p</code> by appending a new graph made with <code>plot()</code></p><p><strong>Example</strong></p><pre><code class="language-julia hljs">@system S(Controller) begin
+p = plot(df, :x, [:y1, :y2])</code></pre><img src="a28a5ccd.svg" alt="Example block output"/><h3 id="plot!()"><a class="docs-heading-anchor" href="#plot!()"><code>plot!()</code></a><a id="plot!()-1"></a><a class="docs-heading-anchor-permalink" href="#plot!()" title="Permalink"></a></h3><p><code>plot!()</code> is an extension of the <code>plot()</code> function used to update an existing <code>Plot</code> object <code>p</code> by appending a new graph made with <code>plot()</code></p><p><strong>Example</strong></p><pre><code class="language-julia hljs">@system S(Controller) begin
     x ~ advance
     y3(x) =&gt; 3x ~ track
 end
 
 df = simulate(S; stop=10)
 
-plot!(p, df, :x, :y3)</code></pre><img src="ac73a14a.svg" alt="Example block output"/><h2 id="visualize"><a class="docs-heading-anchor" href="#visualize"><code>visualize()</code></a><a id="visualize-1"></a><a class="docs-heading-anchor-permalink" href="#visualize" title="Permalink"></a></h2><p>The <code>visualize()</code> function is used to make a plot from an output collected by running simulations. It is essentially identical to running the <code>plot()</code> function with a DataFrame from the <code>simulate()</code> function, and can be seen as a convenient function to run both <code>plot()</code> and <code>simulate()</code> together.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">@system S(Controller) begin
+plot!(p, df, :x, :y3)</code></pre><img src="0c0b3aa2.svg" alt="Example block output"/><h2 id="visualize"><a class="docs-heading-anchor" href="#visualize"><code>visualize()</code></a><a id="visualize-1"></a><a class="docs-heading-anchor-permalink" href="#visualize" title="Permalink"></a></h2><p>The <code>visualize()</code> function is used to make a plot from an output collected by running simulations. It is essentially identical to running the <code>plot()</code> function with a DataFrame from the <code>simulate()</code> function, and can be seen as a convenient function to run both <code>plot()</code> and <code>simulate()</code> together.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">@system S(Controller) begin
     x ~ advance
     y1(x) =&gt; 2x ~ track
     y2(x) =&gt; x^2 ~ track
@@ -43,20 +43,20 @@ v = visualize(S, :x, [:y1, :y2]; stop=10, kind=:line)</code></pre><?xml version=
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-8cae4f26-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-67cd5410-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-8cae4f26-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-8cae4f26-3">
+<g class="plotroot xscalable yscalable" id="img-67cd5410-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-67cd5410-3">
     <g transform="translate(70.48,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">x</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-8cae4f26-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-67cd5410-4">
     <g transform="translate(14.02,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -73,83 +73,83 @@ v = visualize(S, :x, [:y1, :y2]; stop=10, kind=:line)</code></pre><?xml version=
       </g>
     </g>
   </g>
-  <g class="guide colorkey" id="img-8cae4f26-5">
-    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-8cae4f26-6">
-      <g transform="translate(133.57,45.94)" id="img-8cae4f26-7">
+  <g class="guide colorkey" id="img-67cd5410-5">
+    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-67cd5410-6">
+      <g transform="translate(133.57,45.94)" id="img-67cd5410-7">
         <g class="primitive">
           <text dy="0.35em">y1</text>
         </g>
       </g>
-      <g transform="translate(133.57,49.56)" id="img-8cae4f26-8">
+      <g transform="translate(133.57,49.56)" id="img-67cd5410-8">
         <g class="primitive">
           <text dy="0.35em">y2</text>
         </g>
       </g>
     </g>
-    <g stroke-width="0.3" id="img-8cae4f26-9">
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#D4CA3A" id="img-8cae4f26-10">
-        <g transform="translate(130.75,49.56)" id="img-8cae4f26-11">
+    <g stroke-width="0.3" id="img-67cd5410-9">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#D4CA3A" id="img-67cd5410-10">
+        <g transform="translate(130.75,49.56)" id="img-67cd5410-11">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-8cae4f26-12">
-        <g transform="translate(130.75,45.94)" id="img-8cae4f26-13">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-67cd5410-12">
+        <g transform="translate(130.75,45.94)" id="img-67cd5410-13">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
     </g>
-    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-8cae4f26-14">
-      <g transform="translate(129.94,42.62)" id="img-8cae4f26-15">
+    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-67cd5410-14">
+      <g transform="translate(129.94,42.62)" id="img-67cd5410-15">
         <g class="primitive">
           <text dy="-0em"></text>
         </g>
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-8cae4f26-16)">
-    <g id="img-8cae4f26-17">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-8cae4f26-18">
-        <g transform="translate(70.48,45.52)" id="img-8cae4f26-19">
+  <g clip-path="url(#img-67cd5410-16)">
+    <g id="img-67cd5410-17">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-67cd5410-18">
+        <g transform="translate(70.48,45.52)" id="img-67cd5410-19">
           <path d="M-58.46,-40.52 L58.46,-40.52 58.46,40.52 -58.46,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-8cae4f26-20">
-        <g transform="translate(70.48,84.04)" id="img-8cae4f26-21">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-67cd5410-20">
+        <g transform="translate(70.48,84.04)" id="img-67cd5410-21">
           <path fill="none" d="M-58.46,0 L58.46,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.48,45.52)" id="img-8cae4f26-22">
+        <g transform="translate(70.48,45.52)" id="img-67cd5410-22">
           <path fill="none" d="M-58.46,0 L58.46,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.48,7)" id="img-8cae4f26-23">
+        <g transform="translate(70.48,7)" id="img-67cd5410-23">
           <path fill="none" d="M-58.46,0 L58.46,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-8cae4f26-24">
-        <g transform="translate(14.02,45.52)" id="img-8cae4f26-25">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-67cd5410-24">
+        <g transform="translate(14.02,45.52)" id="img-67cd5410-25">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(70.48,45.52)" id="img-8cae4f26-26">
+        <g transform="translate(70.48,45.52)" id="img-67cd5410-26">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(126.94,45.52)" id="img-8cae4f26-27">
+        <g transform="translate(126.94,45.52)" id="img-67cd5410-27">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-8cae4f26-28">
+      <g class="plotpanel" id="img-67cd5410-28">
         <metadata>
           <boundingbox value="12.019999999999996mm 5.0mm 116.92135623730951mm 81.04333333333334mm"/>
           <unitbox value="-0.17711441543412798 102.59594167784364 10.354228830868255 -105.19188335568728"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-8cae4f26-29">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-8cae4f26-30">
-            <g transform="translate(70.48,76.34)" id="img-8cae4f26-31">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-67cd5410-29">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-67cd5410-30">
+            <g transform="translate(70.48,76.34)" id="img-67cd5410-31">
               <path fill="none" d="M-56.46,7.7 L-45.17,6.16 -33.88,4.62 -22.58,3.08 -11.29,1.54 0,0 11.29,-1.54 22.58,-3.08 33.88,-4.62 45.17,-6.16 56.46,-7.7 " class="primitive"/>
             </g>
           </g>
         </g>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-8cae4f26-32">
-          <g class="color_LCHab{Float32}(80.0f0,70.000015f0,100.43479f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#D4CA3A" id="img-8cae4f26-33">
-            <g transform="translate(70.48,57.08)" id="img-8cae4f26-34">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-67cd5410-32">
+          <g class="color_LCHab{Float32}(80.0f0,70.000015f0,100.43479f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#D4CA3A" id="img-67cd5410-33">
+            <g transform="translate(70.48,57.08)" id="img-67cd5410-34">
               <path fill="none" d="M-56.46,26.97 L-45.17,26.19 -33.88,23.88 -22.58,20.03 -11.29,14.64 0,7.7 11.29,-0.77 22.58,-10.79 33.88,-22.34 45.17,-35.44 56.46,-50.08 " class="primitive"/>
             </g>
           </g>
@@ -157,18 +157,18 @@ v = visualize(S, :x, [:y1, :y2]; stop=10, kind=:line)</code></pre><?xml version=
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-8cae4f26-35">
-    <g transform="translate(11.02,84.04)" id="img-8cae4f26-36">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-67cd5410-35">
+    <g transform="translate(11.02,84.04)" id="img-67cd5410-36">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">0</text>
       </g>
     </g>
-    <g transform="translate(11.02,45.52)" id="img-8cae4f26-37">
+    <g transform="translate(11.02,45.52)" id="img-67cd5410-37">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">50</text>
       </g>
     </g>
-    <g transform="translate(11.02,7)" id="img-8cae4f26-38">
+    <g transform="translate(11.02,7)" id="img-67cd5410-38">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">100</text>
       </g>
@@ -176,7 +176,7 @@ v = visualize(S, :x, [:y1, :y2]; stop=10, kind=:line)</code></pre><?xml version=
   </g>
 </g>
 <defs>
-  <clipPath id="img-8cae4f26-16">
+  <clipPath id="img-67cd5410-16">
     <path d="M12.02,5 L128.94,5 128.94,86.04 12.02,86.04 " />
   </clipPath>
 </defs>
@@ -202,20 +202,20 @@ visualize!(v, S, :x, :y3; stop=10, kind=:line)</code></pre><?xml version="1.0" e
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-6f6bec1b-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-47d2b74d-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-6f6bec1b-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-6f6bec1b-3">
+<g class="plotroot xscalable yscalable" id="img-47d2b74d-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-47d2b74d-3">
     <g transform="translate(70.48,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">x</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-6f6bec1b-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-47d2b74d-4">
     <g transform="translate(14.02,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -232,90 +232,90 @@ visualize!(v, S, :x, :y3; stop=10, kind=:line)</code></pre><?xml version="1.0" e
       </g>
     </g>
   </g>
-  <g class="guide colorkey" id="img-6f6bec1b-5">
-    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-6f6bec1b-6">
-      <g transform="translate(133.57,45.94)" id="img-6f6bec1b-7">
+  <g class="guide colorkey" id="img-47d2b74d-5">
+    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-47d2b74d-6">
+      <g transform="translate(133.57,45.94)" id="img-47d2b74d-7">
         <g class="primitive">
           <text dy="0.35em">y1</text>
         </g>
       </g>
-      <g transform="translate(133.57,49.56)" id="img-6f6bec1b-8">
+      <g transform="translate(133.57,49.56)" id="img-47d2b74d-8">
         <g class="primitive">
           <text dy="0.35em">y2</text>
         </g>
       </g>
     </g>
-    <g stroke-width="0.3" id="img-6f6bec1b-9">
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#D4CA3A" id="img-6f6bec1b-10">
-        <g transform="translate(130.75,49.56)" id="img-6f6bec1b-11">
+    <g stroke-width="0.3" id="img-47d2b74d-9">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#D4CA3A" id="img-47d2b74d-10">
+        <g transform="translate(130.75,49.56)" id="img-47d2b74d-11">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-6f6bec1b-12">
-        <g transform="translate(130.75,45.94)" id="img-6f6bec1b-13">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-47d2b74d-12">
+        <g transform="translate(130.75,45.94)" id="img-47d2b74d-13">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
     </g>
-    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-6f6bec1b-14">
-      <g transform="translate(129.94,42.62)" id="img-6f6bec1b-15">
+    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-47d2b74d-14">
+      <g transform="translate(129.94,42.62)" id="img-47d2b74d-15">
         <g class="primitive">
           <text dy="-0em"></text>
         </g>
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-6f6bec1b-16)">
-    <g id="img-6f6bec1b-17">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-6f6bec1b-18">
-        <g transform="translate(70.48,45.52)" id="img-6f6bec1b-19">
+  <g clip-path="url(#img-47d2b74d-16)">
+    <g id="img-47d2b74d-17">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-47d2b74d-18">
+        <g transform="translate(70.48,45.52)" id="img-47d2b74d-19">
           <path d="M-58.46,-40.52 L58.46,-40.52 58.46,40.52 -58.46,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-6f6bec1b-20">
-        <g transform="translate(70.48,84.04)" id="img-6f6bec1b-21">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-47d2b74d-20">
+        <g transform="translate(70.48,84.04)" id="img-47d2b74d-21">
           <path fill="none" d="M-58.46,0 L58.46,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.48,45.52)" id="img-6f6bec1b-22">
+        <g transform="translate(70.48,45.52)" id="img-47d2b74d-22">
           <path fill="none" d="M-58.46,0 L58.46,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.48,7)" id="img-6f6bec1b-23">
+        <g transform="translate(70.48,7)" id="img-47d2b74d-23">
           <path fill="none" d="M-58.46,0 L58.46,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-6f6bec1b-24">
-        <g transform="translate(14.02,45.52)" id="img-6f6bec1b-25">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-47d2b74d-24">
+        <g transform="translate(14.02,45.52)" id="img-47d2b74d-25">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(70.48,45.52)" id="img-6f6bec1b-26">
+        <g transform="translate(70.48,45.52)" id="img-47d2b74d-26">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(126.94,45.52)" id="img-6f6bec1b-27">
+        <g transform="translate(126.94,45.52)" id="img-47d2b74d-27">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-6f6bec1b-28">
+      <g class="plotpanel" id="img-47d2b74d-28">
         <metadata>
           <boundingbox value="12.019999999999996mm 5.0mm 116.92135623730951mm 81.04333333333334mm"/>
           <unitbox value="-0.17711441543412798 102.59594167784364 10.354228830868255 -105.19188335568728"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-6f6bec1b-29">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-6f6bec1b-30">
-            <g transform="translate(70.48,76.34)" id="img-6f6bec1b-31">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-47d2b74d-29">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-47d2b74d-30">
+            <g transform="translate(70.48,76.34)" id="img-47d2b74d-31">
               <path fill="none" d="M-56.46,7.7 L-45.17,6.16 -33.88,4.62 -22.58,3.08 -11.29,1.54 0,0 11.29,-1.54 22.58,-3.08 33.88,-4.62 45.17,-6.16 56.46,-7.7 " class="primitive"/>
             </g>
           </g>
         </g>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-6f6bec1b-32">
-          <g class="color_LCHab{Float32}(80.0f0,70.000015f0,100.43479f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#D4CA3A" id="img-6f6bec1b-33">
-            <g transform="translate(70.48,57.08)" id="img-6f6bec1b-34">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-47d2b74d-32">
+          <g class="color_LCHab{Float32}(80.0f0,70.000015f0,100.43479f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#D4CA3A" id="img-47d2b74d-33">
+            <g transform="translate(70.48,57.08)" id="img-47d2b74d-34">
               <path fill="none" d="M-56.46,26.97 L-45.17,26.19 -33.88,23.88 -22.58,20.03 -11.29,14.64 0,7.7 11.29,-0.77 22.58,-10.79 33.88,-22.34 45.17,-35.44 56.46,-50.08 " class="primitive"/>
             </g>
           </g>
         </g>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-6f6bec1b-35">
-          <g class="color_LCHab{Float32}(65.89944f0,62.21457f0,353.99814f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#FF6DAE" id="img-6f6bec1b-36">
-            <g transform="translate(70.48,72.49)" id="img-6f6bec1b-37">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-47d2b74d-35">
+          <g class="color_LCHab{Float32}(65.89944f0,62.21457f0,353.99814f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#FF6DAE" id="img-47d2b74d-36">
+            <g transform="translate(70.48,72.49)" id="img-47d2b74d-37">
               <path fill="none" d="M-56.46,11.56 L-45.17,9.25 -33.88,6.93 -22.58,4.62 -11.29,2.31 0,0 11.29,-2.31 22.58,-4.62 33.88,-6.93 45.17,-9.25 56.46,-11.56 " class="primitive"/>
             </g>
           </g>
@@ -323,18 +323,18 @@ visualize!(v, S, :x, :y3; stop=10, kind=:line)</code></pre><?xml version="1.0" e
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-6f6bec1b-38">
-    <g transform="translate(11.02,84.04)" id="img-6f6bec1b-39">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-47d2b74d-38">
+    <g transform="translate(11.02,84.04)" id="img-47d2b74d-39">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">0</text>
       </g>
     </g>
-    <g transform="translate(11.02,45.52)" id="img-6f6bec1b-40">
+    <g transform="translate(11.02,45.52)" id="img-47d2b74d-40">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">50</text>
       </g>
     </g>
-    <g transform="translate(11.02,7)" id="img-6f6bec1b-41">
+    <g transform="translate(11.02,7)" id="img-47d2b74d-41">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">100</text>
       </g>
@@ -342,9 +342,9 @@ visualize!(v, S, :x, :y3; stop=10, kind=:line)</code></pre><?xml version="1.0" e
   </g>
 </g>
 <defs>
-  <clipPath id="img-6f6bec1b-16">
+  <clipPath id="img-47d2b74d-16">
     <path d="M12.02,5 L128.94,5 128.94,86.04 12.02,86.04 " />
   </clipPath>
 </defs>
 </svg>
-<h2 id="manipulate"><a class="docs-heading-anchor" href="#manipulate"><code>manipulate()</code></a><a id="manipulate-1"></a><a class="docs-heading-anchor-permalink" href="#manipulate" title="Permalink"></a></h2><p>The <code>manipulate</code> function has two different <a href="https://docs.julialang.org/en/v1/manual/methods/">methods</a> for creating an interactive plot.</p><pre><code class="nohighlight hljs">manipulate(f::Function; parameters, config=())</code></pre><p>Create an interactive plot updated by callback f. Only works in Jupyter Notebook.</p><pre><code class="nohighlight hljs">manipulate(args...; parameters, kwargs...)</code></pre><p>Create an interactive plot by calling manipulate with visualize as a callback.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Simulation</a><a class="docs-footer-nextpage" href="../inspection/">Inspection »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.2 on <span class="colophon-date" title="Saturday 26 April 2025 13:08">Saturday 26 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<h2 id="manipulate"><a class="docs-heading-anchor" href="#manipulate"><code>manipulate()</code></a><a id="manipulate-1"></a><a class="docs-heading-anchor-permalink" href="#manipulate" title="Permalink"></a></h2><p>The <code>manipulate</code> function has two different <a href="https://docs.julialang.org/en/v1/manual/methods/">methods</a> for creating an interactive plot.</p><pre><code class="nohighlight hljs">manipulate(f::Function; parameters, config=())</code></pre><p>Create an interactive plot updated by callback f. Only works in Jupyter Notebook.</p><pre><code class="nohighlight hljs">manipulate(args...; parameters, kwargs...)</code></pre><p>Create an interactive plot by calling manipulate with visualize as a callback.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Simulation</a><a class="docs-footer-nextpage" href="../inspection/">Inspection »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.2 on <span class="colophon-date" title="Saturday 26 April 2025 13:30">Saturday 26 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
