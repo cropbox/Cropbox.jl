@@ -11,18 +11,6 @@ jobs:
         arch: [x64]
         depwarn: [yes]
         include:
-          - version: '1.7'
-            os: ubuntu-latest
-            arch: x64
-            depwarn: yes
-          - version: '1.8'
-            os: ubuntu-latest
-            arch: x64
-            depwarn: error
-          - version: '1.9'
-            os: ubuntu-latest
-            arch: x64
-            depwarn: error
           - version: '1.10'
             os: ubuntu-latest
             arch: x64
