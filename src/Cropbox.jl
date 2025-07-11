@@ -24,6 +24,7 @@ include("system/store.jl")
 include("system/thermaltime.jl")
 
 include("util/simulate.jl")
+include("util/analyze.jl")
 include("util/calibrate.jl")
 include("util/evaluate.jl")
 include("util/gather.jl")
