@@ -1,8 +1,9 @@
 import GlobalSensitivity
 using StatsBase: StatsBase, mean
+using DataFrames
 
 """
-    analyze(S; <keyword arguments>)
+    analyze(S; <keyword arguments>) -> DataFrame | Any
 
 Perform a global sensitivity analysis on a system `S` using the specified method from GlobalSensitivity.jl.
 This function quantifies how variations in model parameters affect the output variable of interest.
@@ -25,7 +26,7 @@ This function quantifies how variations in model parameters affect the output va
 - Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
 
 # Returns
-- An object containing the result of the analysis.
+- A DataFrame or object containing the result of the analysis.
 
 See also: [`simulate`](@ref), [`@config`](@ref)
 
@@ -85,7 +86,16 @@ analyze(S::Type{<:System}, configs::Vector; target, parameters, method, option=(
         @error "unknown method" method
     end
 
-    GlobalSensitivity.gsa(f, m, r; samples)
+    a = GlobalSensitivity.gsa(f, m, r; samples)
+    KS = first.(K)
+    KP = last.(K)
+    if a isa GlobalSensitivity.MorrisResult
+        DataFrame(system = KS, parameter = KP, means = a.means[1,:], means_star = a.means_star[1,:], variances = a.variances[1,:])
+    elseif a isa GlobalSensitivity.SobolResult
+        DataFrame(system = KS, parameter = KP, ST = a.ST, S1 = a.S1)
+    else
+        a
+    end
 end
 
 export analyze
