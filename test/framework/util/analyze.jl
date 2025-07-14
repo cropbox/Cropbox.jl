@@ -61,8 +61,9 @@ P = (
         ),
 )
 
-m = GlobalSensitivity.Morris(; total_num_trajectory = 1500, num_trajectory = 50)
-
+mm = GlobalSensitivity.Morris(; total_num_trajectory = 1500, num_trajectory = 50)
 #analyze(Garlic.Model; target = :dry_yield, parameters = P, config = c0, method = m, samples = 1000, stop = "calendar.count", snap = "?")
+dfa = analyze(Garlic.Model; target = :dry_yield, parameters = P, config = c0, method = mm, samples = 1000, stop = 300u"d", snap = 300u"d")
 
-analyze(Garlic.Model; target = :dry_yield, parameters = P, config = c0, method = m, samples = 1000, stop = 300u"d", snap = 300u"d")
+ms = GlobalSensitivity.Sobol()
+dfs = analyze(Garlic.Model; target = :dry_yield, parameters = P, config = c0, method = ms, samples = 1000, stop = 300u"d", snap = 300u"d")
