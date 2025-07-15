@@ -101,4 +101,7 @@ end
 unitfy(df::AbstractDataFrame, ::Nothing) = df
 deunitfy(df::AbstractDataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
 
+unitfy(dfs::AbstractArray{<:AbstractDataFrame}) = unitfy.(dfs)
+unitfy(dfs::AbstractArray{<:AbstractDataFrame}, ::Nothing) = dfs
+
 export unitfy, deunitfy
