@@ -1,62 +1,115 @@
 # [Installation](@id Installation)
 
-## Installing Julia
+Cropbox is a Julia package. A local Julia installation and a small project
+environment are enough; the documentation does not require a separate site
+generator or notebook stack.
 
-Cropbox is a domain-specific language (DSL) for [Julia](https://julialang.org). To use Cropbox, you must first [download and install](https://julialang.org/downloads/) Julia. For new users, it is recommended to install the "Current stable release" for Julia. In general, you will want to install the 64-bit version. If you run into an issue installing the 64-bit version, you can try the 32-bit version. During installation, select "Add Julia to PATH". You can also add Julia to PATH after installation using the terminal.
+## Install Julia
+
+For a new installation, use [Juliaup](https://github.com/JuliaLang/juliaup),
+the version manager recommended by the Julia project. Follow the
+[official installation instructions](https://docs.julialang.org/en/v1/manual/installation/)
+for your platform. Juliaup keeps Julia versions up to date and makes it easy to
+retain an older version for a project that needs one.
+
+Verify the installation in a terminal:
 
 ```shell
-export PATH="$PATH:/path/to/<Julia directory>/bin"
-``` 
+julia --version
+```
 
-For more detailed platform-specific instructions, you can check the [official Julia instructions](https://julialang.org/downloads/platform/).
+## Create a project and install Cropbox
 
-Once Julia is added to PATH, the interactive REPL can be started by double-clicking the Julia executable or running `julia` from the command line. 
+Keeping each model in its own Julia environment makes examples reproducible and
+prevents unrelated package updates from changing a working model.
 
-## Using JupyterLab
-While you can technically use the terminal or command prompt to run your code, it may be convenient to use an integrated development environment (IDE) or an interactive platform like [JupyterLab](https://jupyter.org/install). To add the Julia kernel to Jupyter, launch the REPL and add the IJulia package. 
+```shell
+mkdir my-cropbox-model
+cd my-cropbox-model
+julia --project=.
+```
+
+At the Julia prompt, activate the directory and install Cropbox:
+
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.add("Cropbox")
+
+using Cropbox
+```
+
+The first import may take longer while Julia compiles the package. Later imports
+reuse the compilation cache. Commit both `Project.toml` and `Manifest.toml` when
+the exact package versions must be reproducible.
+
+To work from a local checkout of Cropbox itself, use `Pkg.develop` from the model
+environment:
+
+```julia
+using Pkg
+Pkg.develop(path="/path/to/Cropbox.jl")
+```
+
+## Choose an editor
+
+Cropbox works in the Julia REPL, scripts, and notebooks. The
+[Julia extension for Visual Studio Code](https://www.julia-vscode.org/) is a
+good default for scripts and packages. For Jupyter notebooks, add IJulia to the
+project in which the notebooks will run:
 
 ```julia
 using Pkg
 Pkg.add("IJulia")
 ```
-When you launch Jupyter, you should now be able to select a Julia kernel to run your notebook. 
 
-## Installing Cropbox
+An editor or notebook is optional; neither is a Cropbox dependency.
 
-[Cropbox.jl](https://github.com/cropbox/Cropbox.jl) is available through Julia package manager and can be installed using the Julia REPL.
+## Install model packages used in the tutorials
+
+The LeafGasExchange, Garlic, and CropRootBox tutorials use separate packages.
+They are available through Julia's
+[General registry](https://github.com/JuliaRegistries/General), but they are not
+dependencies of this manual. Add only the model you need to the same project
+environment:
 
 ```julia
 using Pkg
-Pkg.add("Cropbox")
+Pkg.add("LeafGasExchange")
+Pkg.add("Garlic")
+Pkg.add("CropRootBox")
 ```
 
-## Using Docker
+SimpleCrop can likewise be installed with `Pkg.add("SimpleCrop")`. Each
+tutorial gives its exact setup command.
 
-If you would like to skip the process of installing Julia and Cropbox on your machine, there is a [Docker image](https://hub.docker.com/repository/docker/cropbox/cropbox) with Cropbox precompiled for convenience. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) on your machine by following the instructions on the website and run the following command in the terminal or command prompt. 
+For an unregistered model package or a specific development revision, provide
+its repository URL and, when needed, a revision:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/organization/Model.jl", rev="main")
+```
+
+Use `Pkg.develop(url="...")` instead when you intend to edit that package
+locally. Record the repository revision or commit alongside a published model
+analysis.
+
+## Docker and Binder
+
+The [`cropbox/cropbox` Docker image](https://hub.docker.com/r/cropbox/cropbox)
+can provide an isolated notebook environment:
 
 ```shell
-$ docker run -it --rm -p 8888:8888 cropbox/cropbox
-```
-By default, this will launch a JupyterLab session that you can access by opening the printed URL in your browser. 
-
-If REPL is preferred, you can directly launch an instance of Julia session.
-
-```shell
-docker run -it --rm cropbox/cropbox julia
-               _
-   _       _ _(_)_     |  Documentation: https://docs.julialang.org
-  (_)     | (_) (_)    |
-   _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
-  | | | | | | |/ _` |  |
-  | | |_| | | | (_| |  |  Version 1.6.1 (2021-04-23)
- _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
-|__/                   |
-
-julia>
+docker run -it --rm -p 8888:8888 cropbox/cropbox
 ```
 
-## Using Binder
+Open the URL printed by JupyterLab. Check the image tag and package versions
+before using the container for a reproducible analysis; a local Julia project
+with a committed manifest gives finer version control.
 
-The docker image can be also launched via Binder without installing anything locally. This method is the least recommended due to its timeout duration.
+A hosted [Binder environment](https://mybinder.org/v2/gh/cropbox/cropbox-binder/main)
+is useful for a short trial, but startup time and session lifetime are outside
+Cropbox's control.
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cropbox/cropbox-binder/main)
+Continue with the [Quick Start](@ref quick-start).

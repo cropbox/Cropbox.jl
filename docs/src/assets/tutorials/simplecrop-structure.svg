@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 390" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleCrop crop and soil-water coupling</title>
+  <desc id="desc">Weather and irrigation affect a soil-water bucket, which exchanges water demand and stress with crop development and growth.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#667085"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="30" y="42" width="205" height="86" rx="14" fill="#eef2ff" stroke="#4063d8" stroke-width="2.5"/>
+    <text x="133" y="77" fill="#243b8f" font-size="20" font-weight="700">Weather</text>
+    <text x="133" y="103" fill="#475467" font-size="14">rain · radiation · temperature</text>
+    <rect x="30" y="246" width="205" height="86" rx="14" fill="#eaf7f8" stroke="#3b8792" stroke-width="2.5"/>
+    <text x="133" y="281" fill="#286570" font-size="20" font-weight="700">Management</text>
+    <text x="133" y="307" fill="#475467" font-size="14">irrigation schedule</text>
+
+    <path d="M235 85H350" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M235 289H350" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M235 92C300 92 286 190 350 190" fill="none" stroke="#667085" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+    <rect x="362" y="38" width="250" height="130" rx="18" fill="#edf7eb" stroke="#389826" stroke-width="3"/>
+    <text x="487" y="76" fill="#286d1b" font-size="22" font-weight="700">Crop development</text>
+    <text x="487" y="106" fill="#17212b" font-size="16">phenology · LAI · biomass</text>
+    <text x="487" y="134" fill="#475467" font-size="14">canopy and root demand</text>
+
+    <rect x="362" y="220" width="250" height="130" rx="18" fill="#fff7df" stroke="#d69e2e" stroke-width="3"/>
+    <text x="487" y="258" fill="#8a5b08" font-size="22" font-weight="700">Soil-water bucket</text>
+    <text x="487" y="288" fill="#17212b" font-size="16">storage · infiltration · drainage</text>
+    <text x="487" y="316" fill="#475467" font-size="14">evaporation and transpiration</text>
+
+    <path d="M452 168V218" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="413" y="198" fill="#667085" font-size="13" text-anchor="end">water demand</text>
+    <path d="M522 220V170" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="542" y="198" fill="#667085" font-size="13" text-anchor="start">stress factors</text>
+
+    <path d="M612 103H708" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M612 285H708" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="720" y="80" width="205" height="230" rx="18" fill="#f8fafc" stroke="#667085" stroke-width="2.5"/>
+    <text x="823" y="118" fill="#344054" font-size="21" font-weight="700">Diagnostics</text>
+    <text x="823" y="157" fill="#17212b" font-size="16">growth and yield</text>
+    <text x="823" y="195" fill="#17212b" font-size="16" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">SWC · SWFAC</text>
+    <text x="823" y="233" fill="#17212b" font-size="16" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">ROF · INF · DRN</text>
+    <text x="823" y="271" fill="#17212b" font-size="16" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">WATBAL</text>
+  </g>
+</svg>
