@@ -10,8 +10,8 @@ Capture(; unit, time, timeunit, _type, _...) = begin
     v = unitfy(zero(_type), U)
     #V = promote_type(V, typeof(v))
     TU = value(timeunit)
-    t = unitfy(value(time), TU)
-    T = typeof(t)
+    T = valuetype(Float64, TU)
+    t = convertvalue(T, unitfy(value(time), TU))
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     Capture{V,T,R}(v, t, zero(R))
@@ -41,7 +41,10 @@ gendefault(v::VarInfo, ::Val{:Capture}) = nothing
 genupdate(v::VarInfo, ::Val{:Capture}, ::MainStep; kw...) = begin
     @gensym s t t0 d
     @q let $s = $(symstate(v)),
-           $t = $C.value($(gettag(v, :time))),
+           $t = $C.convertvalue(
+               typeof($s.time),
+               $C.unitfy($C.value($(gettag(v, :time))), $C.unittype($s.time)),
+           ),
            $t0 = $s.time,
            $d = $s.rate * ($t - $t0)
         $C.store!($s, $d)
@@ -53,7 +56,10 @@ genupdate(v::VarInfo, ::Val{:Capture}, ::PostStep; kw...) = begin
     f = isnothing(w) ? genbody(v) : @q $C.value($w) ? $(genbody(v)) : zero($(gettag(v, :_type)))
     @gensym s t r
     @q let $s = $(symstate(v)),
-           $t = $C.value($(gettag(v, :time))),
+           $t = $C.convertvalue(
+               typeof($s.time),
+               $C.unitfy($C.value($(gettag(v, :time))), $C.unittype($s.time)),
+           ),
            $r = $C.unitfy($f, $C.rateunit($s))
         $s.time = $t
         $s.rate = $r

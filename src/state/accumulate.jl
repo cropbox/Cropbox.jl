@@ -11,8 +11,8 @@ Accumulate(; unit, time, timeunit, _value, _type, _...) = begin
     v = _value
     #V = promote_type(V, typeof(v))
     TU = value(timeunit)
-    t = unitfy(value(time), TU)
-    T = typeof(t)
+    T = valuetype(Float64, TU)
+    t = convertvalue(T, unitfy(value(time), TU))
     RU = rateunittype(U, TU)
     R = valuetype(_type, RU)
     Accumulate{V,T,R}(v, t, zero(R), false)
@@ -51,7 +51,10 @@ genupdate(v::VarInfo, ::Val{:Accumulate}, ::MainStep; kw...) = begin
     @gensym s a0 t t0 a
     @q let $s = $(symstate(v)),
            $a0 = $s.reset ? $(gendefault(v)) : $s.value,
-           $t = $C.value($(gettag(v, :time))),
+           $t = $C.convertvalue(
+               typeof($s.time),
+               $C.unitfy($C.value($(gettag(v, :time))), $C.unittype($s.time)),
+           ),
            $t0 = $s.time,
            $a = $a0 + $s.rate * ($t - $t0)
         $(genstore(v, a; unitfy=false, minmax=true, round=false, when=false))

@@ -71,4 +71,20 @@ import Dates
         s = instance(SCalendarCountSeconds; config=o)
         @test s.count' == n
     end
+
+    @testset "subhourly clock" begin
+        @system SCalendarSubhourly(Calendar, Controller)
+        t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
+        o = (
+            :Calendar => (init=t0,),
+            :Clock => (step=10u"minute",),
+        )
+        s = instance(SCalendarSubhourly; config=o)
+        for _ in 1:6
+            update!(s)
+        end
+        @test s.context.clock.time' === (1//1)u"hr"
+        @test s.time' == t0 + Dates.Hour(1)
+        @test s.date' == Dates.Date(t0)
+    end
 end

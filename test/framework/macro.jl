@@ -133,6 +133,7 @@
             a => -1 ~ preserve::int
             b => 1 ~ preserve::uint
             c => 1 ~ preserve::float
+            r => 1//10 ~ preserve::rational
             d => true ~ preserve::bool
             e => :a ~ preserve::sym
             f => "A" ~ preserve::str
@@ -145,6 +146,7 @@
         @test s.a' isa Int64 && s.a' === -1
         @test s.b' isa UInt64 && s.b' == 1
         @test s.c' isa Float64 && s.c' === 1.0
+        @test s.r' isa Rational{Int64} && s.r' === 1//10
         @test s.d' isa Bool && s.d' === true
         @test s.e' isa Symbol && s.e' === :a
         @test s.f' isa String && s.f' === "A"

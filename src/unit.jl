@@ -1,6 +1,43 @@
 using Unitful: Unitful, Units, Quantity, @u_str
 export @u_str
 
+exactify(::Type, v; warn=true) = v
+exactify(::Type{Rational{I}}, v::Integer; warn=true) where {I<:Integer} = convert(Rational{I}, v)
+exactify(::Type{Rational{I}}, v::Rational; warn=true) where {I<:Integer} = convert(Rational{I}, v)
+exactify(::Type{Rational{I}}, v::AbstractFloat; warn=true) where {I<:Integer} = begin
+    isfinite(v) || throw(ArgumentError("rational value must be finite: $v"))
+    r = rationalize(I, v)
+    if warn
+        literal = denominator(r) == 1 ? string(numerator(r)) : "$(numerator(r))//$(denominator(r))"
+        @warn "floating-point value converted to an exact rational value; use an integer or rational literal to avoid this warning" value=v rational=r literal
+    end
+    r
+end
+exactify(::Type{Rational{I}}, v::Quantity{F}; warn=true) where {I<:Integer,F<:AbstractFloat} = begin
+    x = Unitful.ustrip(v)
+    isfinite(x) || throw(ArgumentError("rational value must be finite: $v"))
+    r = rationalize(I, x)
+    u = Unitful.unit(v)
+    q = r * u
+    if warn
+        literal = denominator(r) == 1 ? "$(numerator(r))u\"$u\"" : "($(numerator(r))//$(denominator(r)))u\"$u\""
+        @warn "floating-point value converted to an exact rational value; use an integer or rational literal to avoid this warning" value=v rational=q literal
+    end
+    q
+end
+exactify(T::Type{<:Rational}, v::Quantity; warn=true) = exactify(T, Unitful.ustrip(v); warn) * Unitful.unit(v)
+
+convertvalue(::Type{T}, v; warn=true) where {T} = convert(T, v)
+convertvalue(::Type{Rational{I}}, v; warn=true) where {I<:Integer} = exactify(Rational{I}, v; warn)
+convertvalue(::Type{Q}, v; warn=true) where {I<:Integer,D,U,Q<:Quantity{Rational{I},D,U}} = begin
+    x = exactify(Rational{I}, v; warn)
+    convert(Q, unitfy(x, Unitful.unit(Q)))
+end
+
+hasfloatvalue(v::AbstractFloat) = true
+hasfloatvalue(v::Quantity) = hasfloatvalue(Unitful.ustrip(v))
+hasfloatvalue(v) = false
+
 unitfy(::Nothing, u) = nothing
 unitfy(::Nothing, ::Nothing) = nothing
 unitfy(::Missing, u) = missing

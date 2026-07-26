@@ -121,8 +121,10 @@ progress!(s::System, M::Vector{Simulation}; stop=nothing, snap=nothing, snatch=n
     snapprobe(a::Quantity) = s -> let c = s.context.clock; (c.time' - c.init') % a |> iszero end
     snapprobe(a) = probe(a)
 
-    stop = stopprobe(stop)
-    snap = snapprobe(snap)
+    clocktimeinput(v::Quantity) = convertvalue(typeof(value(s.context.clock.time)), v)
+    clocktimeinput(v) = v
+    stop = stopprobe(clocktimeinput(stop))
+    snap = snapprobe(clocktimeinput(snap))
     snatch = isnothing(snatch) ? (D, s) -> nothing : snatch
     callback = isnothing(callback) ? (s, m) -> nothing : callback
 

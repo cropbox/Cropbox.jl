@@ -65,6 +65,20 @@
         @test s.a' == 1 && s.b' == 6 && s.c' == 3
     end
 
+    @testset "rational clock integration" begin
+        @system SAccumulateRationalClock(Controller) begin
+            a => 1 ~ accumulate
+        end
+        s = instance(SAccumulateRationalClock; config=:Clock => (:step => 10u"minute"))
+        @test s.a.time == 0u"hr"
+        @test s.a.time isa Cropbox.Quantity{Float64}
+        for _ in 1:6
+            update!(s)
+        end
+        @test s.a.time == 1u"hr"
+        @test s.a' ≈ 1
+    end
+
     @testset "unit hour" begin
         @system SAccumulateUnitHour(Controller) begin
             a => 1 ~ accumulate(u"hr")
