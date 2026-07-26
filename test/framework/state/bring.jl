@@ -12,10 +12,10 @@
         s = instance(SBring; config=o)
         @test s.a' == s.p.a' == 1
         @test s.b' == s.p.b' == 2
-        @test_throws ErrorException s.c'
+        @test_throws FieldAccessError s.c'
         @test s.p.c' == 0
         update!(s)
-        @test_throws ErrorException s.c'
+        @test_throws FieldAccessError s.c'
         @test s.p.c' == 2
     end
 
@@ -37,10 +37,10 @@
         @test s.p === s.m.p
         @test s.m.a' == s.p.a' == 1
         @test s.m.b' == s.p.b' == 2
-        @test_throws ErrorException s.m.c'
+        @test_throws FieldAccessError s.m.c'
         @test s.p.c' == 0
         update!(s)
-        @test_throws ErrorException s.m.c'
+        @test_throws FieldAccessError s.m.c'
         @test s.p.c' == 2
     end
 
@@ -64,7 +64,7 @@
         s = instance(SBringParams; config=o)
         @test s.a' == 0
         @test s.b' == 1
-        @test_throws ErrorException s.c' == 2
+        @test_throws FieldAccessError s.c' == 2
         @test s.d' == false
         @test s.p.a' == 1
         @test s.p.b' == 2
