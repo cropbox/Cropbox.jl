@@ -5,7 +5,7 @@
             __b: __bb => 2 ~ preserve
         end
         s = instance(SPrivateName)
-        @test_throws ErrorException s._a
+        @test_throws FieldAccessError s._a
         @test s.__SPrivateName__a' == 1
         @test s.__SPrivateName__aa === s.__SPrivateName__a
         @test s.__b' == 2
@@ -62,14 +62,14 @@
         end
         @eval @system SPrivateNameMixed1(SPrivateNameMixin1, SPrivateNameMixin2, Controller)
         s1 = instance(SPrivateNameMixed1)
-        @test_throws ErrorException s1._a
+        @test_throws FieldAccessError s1._a
         @test s1.__SPrivateNameMixin1__a' == 1
         @test s1.__SPrivateNameMixin2__a' == 2
         @test s1.b' == 1
         @test s1.c' == 2
         @eval @system SPrivateNameMixed11(SPrivateNameMixed1, Controller)
         s11 = instance(SPrivateNameMixed11)
-        @test_throws ErrorException s11._a
+        @test_throws FieldAccessError s11._a
         @test s11.__SPrivateNameMixin1__a' == 1
         @test s11.__SPrivateNameMixin2__a' == 2
         @test s11.b' == 1
