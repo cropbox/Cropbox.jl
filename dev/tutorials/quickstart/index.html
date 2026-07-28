@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Quick Start · Cropbox.jl</title><meta name="title" content="Quick Start · Cropbox.jl"/><meta property="og:title" content="Quick Start · Cropbox.jl"/><meta property="twitter:title" content="Quick Start · Cropbox.jl"/><meta name="description" content="Documentation for Cropbox.jl."/><meta property="og:description" content="Documentation for Cropbox.jl."/><meta property="twitter:description" content="Documentation for Cropbox.jl."/><meta property="og:url" content="https://cropbox.github.io/Cropbox.jl/stable/tutorials/quickstart/"/><meta property="twitter:url" content="https://cropbox.github.io/Cropbox.jl/stable/tutorials/quickstart/"/><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/tutorials/quickstart/"/><script async src="https://www.googletagmanager.com/gtag/js?id=UA-192782823-1"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-192782823-1', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Start Here</span><ul><li><a class="tocitem" href="../../">Overview</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li class="is-active"><a class="tocitem" href>Quick Start</a><ul class="internal"><li><a class="tocitem" href="#Load-Cropbox"><span>Load Cropbox</span></a></li><li><a class="tocitem" href="#Declare-a-model"><span>Declare a model</span></a></li><li><a class="tocitem" href="#Inspect-defaults"><span>Inspect defaults</span></a></li><li><a class="tocitem" href="#Configure-a-scenario"><span>Configure a scenario</span></a></li><li><a class="tocitem" href="#Create-an-instance"><span>Create an instance</span></a></li><li><a class="tocitem" href="#Run-the-model"><span>Run the model</span></a></li><li><a class="tocitem" href="#Compare-scenarios"><span>Compare scenarios</span></a></li><li><a class="tocitem" href="#Plot-output"><span>Plot output</span></a></li><li><a class="tocitem" href="#Next-steps"><span>Next steps</span></a></li></ul></li></ul></li><li><span class="tocitem">Core Concepts</span><ul><li><a class="tocitem" href="../../concepts/overview/">How Cropbox Works</a></li><li><a class="tocitem" href="../../guide/system/">Systems and Composition</a></li><li><a class="tocitem" href="../../concepts/lifecycle/">Model Execution</a></li><li><a class="tocitem" href="../../reference/dsl/">DSL Syntax</a></li><li><a class="tocitem" href="../../reference/behaviors/">Behaviors and Tags</a></li></ul></li><li><span class="tocitem">Learn by Example</span><ul><li><a class="tocitem" href="../growth/">Logistic Growth</a></li><li><a class="tocitem" href="../phenology/">Weather-driven Phenology</a></li><li><a class="tocitem" href="../lotka-volterra/">Predator–Prey Model</a></li><li><a class="tocitem" href="../leafgasexchange/">Leaf Gas Exchange</a></li><li><a class="tocitem" href="../garlic/">Garlic Growth Model</a></li><li><a class="tocitem" href="../simplecrop/">SimpleCrop</a></li><li><a class="tocitem" href="../soilwater/">Soil Water Transport</a></li><li><a class="tocitem" href="../croprootbox/">Root System Architecture</a></li></ul></li><li><span class="tocitem">Workflows</span><ul><li><a class="tocitem" href="../../howto/configuration/">Configure Models and Scenarios</a></li><li><a class="tocitem" href="../../howto/simulation/">Run Simulations and Shape Output</a></li><li><a class="tocitem" href="../../howto/inspection/">Inspect and Visualize Models</a></li><li><a class="tocitem" href="../evaluation/">Evaluate and Calibrate Models</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../reference/declaration/">Declarations</a></li><li><a class="tocitem" href="../../reference/simulation/">Simulation API</a></li><li><a class="tocitem" href="../../reference/visualization/">Visualization API</a></li><li><a class="tocitem" href="../../reference/inspection/">Inspection API</a></li><li><a class="tocitem" href="../../reference/utilities/">Values and Units</a></li><li><a class="tocitem" href="../../reference/hierarchy/">Dynamic Hierarchies</a></li><li><a class="tocitem" href="../../reference/components/">Built-in Model Components</a></li><li><a class="tocitem" href="../../reference/">API Index</a></li></ul></li><li><span class="tocitem">Troubleshooting</span><ul><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li><li><a class="tocitem" href="../../troubleshooting/common-mistakes/">Common Mistakes</a></li><li><a class="tocitem" href="../../troubleshooting/performance/">Performance and Reproducibility</a></li></ul></li><li><a class="tocitem" href="../../gallery/">Model Gallery</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Start Here</a></li><li class="is-active"><a href>Quick Start</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Quick Start</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/tutorials/quickstart.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="quick-start"><a class="docs-heading-anchor" href="#quick-start">Quick Start</a><a id="quick-start-1"></a><a class="docs-heading-anchor-permalink" href="#quick-start" title="Permalink"></a></h1><p>This tutorial builds a complete model, changes its parameters, runs it, and selects useful output. It assumes basic Julia syntax but no previous Cropbox experience.</p><h2 id="Load-Cropbox"><a class="docs-heading-anchor" href="#Load-Cropbox">Load Cropbox</a><a id="Load-Cropbox-1"></a><a class="docs-heading-anchor-permalink" href="#Load-Cropbox" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Cropbox</code></pre><p>Cropbox re-exports the <code>u&quot;...&quot;</code> unit string used throughout this manual. Attaching units to model variables catches incompatible calculations early and makes simulation output self-describing.</p><h2 id="Declare-a-model"><a class="docs-heading-anchor" href="#Declare-a-model">Declare a model</a><a id="Declare-a-model-1"></a><a class="docs-heading-anchor-permalink" href="#Declare-a-model" title="Permalink"></a></h2><p>The following system describes biomass increasing at a constant rate until a target mass is reached.</p><pre><code class="language-julia hljs">@system Growth(Controller) begin
+    rate: growth_rate    =&gt; 1.5            ~ preserve(parameter, u&quot;g/hr&quot;)
+    target: target_mass  =&gt; 5              ~ preserve(parameter, u&quot;g&quot;)
+
+    mass(rate)                             ~ accumulate(u&quot;g&quot;)
+    mature(mass, target) =&gt; mass &gt;= target ~ flag
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.Growth</code></pre><p>Read each declaration from left to right:</p><ul><li><code>rate</code> and <code>target</code> are fixed values. The <code>parameter</code> tag makes them configurable.</li><li><code>mass</code> depends on <code>rate</code> and accumulates it using the simulation time step.</li><li><code>mature</code> is recalculated as a Boolean condition. Because <code>mass</code> only increases in this model, it remains true after the threshold is reached.</li><li><code>Controller</code> supplies configuration and a simulation clock to the top-level system.</li></ul><p>Long names after <code>:</code> are aliases. They improve inspection output without making equations verbose.</p><h2 id="Inspect-defaults"><a class="docs-heading-anchor" href="#Inspect-defaults">Inspect defaults</a><a id="Inspect-defaults-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-defaults" title="Permalink"></a></h2><p>Use <code>parameters</code> before running an unfamiliar model.</p><pre><code class="language-julia hljs">parameters(Growth)</code></pre><p style="font-family: monospace">Config for 1 system:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Growth</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">rate</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1.5 g hr^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">target</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">5 g</td></tr>
+</table>
+<p><code>look</code> shows declarations and documentation. It accepts either a system type or an instance.</p><pre><code class="language-julia hljs">look(Growth, :mass)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[code]</span>
+  mass(rate) <span class="sgr38_2" style="color:#666"><span class="sgr1">~</span></span> accumulate(u&quot;g&quot;)</code></pre><h2 id="Configure-a-scenario"><a class="docs-heading-anchor" href="#Configure-a-scenario">Configure a scenario</a><a id="Configure-a-scenario-1"></a><a class="docs-heading-anchor-permalink" href="#Configure-a-scenario" title="Permalink"></a></h2><p>Configuration keys form a system-variable-value path. A named tuple is a convenient way to set several variables in one system.</p><pre><code class="language-julia hljs">config = @config (
+    Growth =&gt; (rate = 2.0, target = 7.0),
+    Clock =&gt; :step =&gt; 30u&quot;minute&quot;,
+)</code></pre><p style="font-family: monospace">Config for 2 systems:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Growth</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">rate</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">2.0 g hr^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">target</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">7.0 g</td></tr>
+</table>
+
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">Clock</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">step</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">1//2 hr</td></tr>
+</table>
+<p>Numbers supplied for unitful parameters are interpreted in the parameter&#39;s declared unit. Explicit quantities are also accepted.</p><h2 id="Create-an-instance"><a class="docs-heading-anchor" href="#Create-an-instance">Create an instance</a><a id="Create-an-instance-1"></a><a class="docs-heading-anchor-permalink" href="#Create-an-instance" title="Permalink"></a></h2><pre><code class="language-julia hljs">s = instance(Growth; config)</code></pre><table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="4" style="text-align: left; padding: 2px; padding-left: 0px; color: rebeccapurple">Growth</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 20px; color: royalblue">context</td><td style="text-align: left; padding: 2px 0px 2px 0px; color: gray"></td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">&lt;Context&gt;</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 20px; color: royalblue">config</td><td style="text-align: left; padding: 2px 0px 2px 0px; color: gray"></td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">&lt;Config&gt;</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 20px; color: royalblue">rate</td><td style="text-align: left; padding: 2px 0px 2px 0px; color: gray">(growth_rate)</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">2.0 g hr^-1</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 20px; color: royalblue">target</td><td style="text-align: left; padding: 2px 0px 2px 0px; color: gray">(target_mass)</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">7.0 g</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 20px; color: royalblue">mass</td><td style="text-align: left; padding: 2px 0px 2px 0px; color: gray"></td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">0.0 g</td></tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 20px; color: royalblue">mature</td><td style="text-align: left; padding: 2px 0px 2px 0px; color: gray"></td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">false</td></tr>
+</table><p><code>instance</code> initializes the full system and performs its initial update. Access a variable with property syntax; postfix <code>&#39;</code> retrieves the current value stored in a Cropbox state.</p><pre><code class="language-julia hljs">s.mass&#39;, s.mature&#39;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.0 g, false)</code></pre><p>Calling <code>update!(s)</code> advances this same instance. Most analyses should use <code>simulate</code>, which also collects output.</p><h2 id="Run-the-model"><a class="docs-heading-anchor" href="#Run-the-model">Run the model</a><a id="Run-the-model-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-model" title="Permalink"></a></h2><p>Stop on the model condition and request only the columns needed for the result.</p><pre><code class="language-julia hljs">result = simulate(Growth;
+    config,
+    stop = :mature,
+    target = [:mass, :mature],
+)</code></pre><div><div style = "float: left;"><span>8×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">time</th><th style = "text-align: left;">mass</th><th style = "text-align: left;">mature</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "Unitful.Quantity{Float64, 𝐓, Unitful.FreeUnits{(hr,), 𝐓, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝐌, Unitful.FreeUnits{(g,), 𝐌, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Bool" style = "text-align: left;">Bool</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">0.0 hr</td><td style = "text-align: right;">0.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">0.5 hr</td><td style = "text-align: right;">1.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1.0 hr</td><td style = "text-align: right;">2.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: right;">1.5 hr</td><td style = "text-align: right;">3.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: right;">2.0 hr</td><td style = "text-align: right;">4.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: right;">2.5 hr</td><td style = "text-align: right;">5.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: right;">3.0 hr</td><td style = "text-align: right;">6.0 g</td><td style = "text-align: right;">false</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: right;">3.5 hr</td><td style = "text-align: right;">7.0 g</td><td style = "text-align: right;">true</td></tr></tbody></table></div><p>The initial state is included when the default snapshot rule is used. The default index is <code>context.clock.time</code>, displayed as <code>time</code>.</p><p>To stop after a duration instead, pass a number or quantity.</p><pre><code class="language-julia hljs">simulate(Growth; config, stop = 2u&quot;hr&quot;, target = :mass)</code></pre><div><div style = "float: left;"><span>5×2 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">time</th><th style = "text-align: left;">mass</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "Unitful.Quantity{Float64, 𝐓, Unitful.FreeUnits{(hr,), 𝐓, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝐌, Unitful.FreeUnits{(g,), 𝐌, nothing}}" style = "text-align: left;">Quantity…</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">0.0 hr</td><td style = "text-align: right;">0.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">0.5 hr</td><td style = "text-align: right;">1.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1.0 hr</td><td style = "text-align: right;">2.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: right;">1.5 hr</td><td style = "text-align: right;">3.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: right;">2.0 hr</td><td style = "text-align: right;">4.0 g</td></tr></tbody></table></div><h2 id="Compare-scenarios"><a class="docs-heading-anchor" href="#Compare-scenarios">Compare scenarios</a><a id="Compare-scenarios-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-scenarios" title="Permalink"></a></h2><p><code>!</code> expands an iterable value into a vector of configurations.</p><pre><code class="language-julia hljs">configs = @config config + !(Growth =&gt; :rate =&gt; [1.0, 2.0, 3.0])
+
+comparison = simulate(Growth;
+    configs,
+    stop = 4u&quot;hr&quot;,
+    target = :mass,
+    meta = :Growth,
+)</code></pre><div><div style = "float: left;"><span>27×4 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">time</th><th style = "text-align: left;">mass</th><th style = "text-align: left;">rate</th><th style = "text-align: left;">target</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "Unitful.Quantity{Float64, 𝐓, Unitful.FreeUnits{(hr,), 𝐓, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝐌, Unitful.FreeUnits{(g,), 𝐌, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝐌 𝐓^-1, Unitful.FreeUnits{(g, hr^-1), 𝐌 𝐓^-1, nothing}}" style = "text-align: left;">Quantity…</th><th title = "Unitful.Quantity{Float64, 𝐌, Unitful.FreeUnits{(g,), 𝐌, nothing}}" style = "text-align: left;">Quantity…</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">0.0 hr</td><td style = "text-align: right;">0.0 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">0.5 hr</td><td style = "text-align: right;">0.5 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1.0 hr</td><td style = "text-align: right;">1.0 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: right;">1.5 hr</td><td style = "text-align: right;">1.5 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: right;">2.0 hr</td><td style = "text-align: right;">2.0 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: right;">2.5 hr</td><td style = "text-align: right;">2.5 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: right;">3.0 hr</td><td style = "text-align: right;">3.0 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: right;">3.5 hr</td><td style = "text-align: right;">3.5 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">9</td><td style = "text-align: right;">4.0 hr</td><td style = "text-align: right;">4.0 g</td><td style = "text-align: right;">1.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">10</td><td style = "text-align: right;">0.0 hr</td><td style = "text-align: right;">0.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">11</td><td style = "text-align: right;">0.5 hr</td><td style = "text-align: right;">1.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">12</td><td style = "text-align: right;">1.0 hr</td><td style = "text-align: right;">2.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">13</td><td style = "text-align: right;">1.5 hr</td><td style = "text-align: right;">3.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">14</td><td style = "text-align: right;">2.0 hr</td><td style = "text-align: right;">4.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">15</td><td style = "text-align: right;">2.5 hr</td><td style = "text-align: right;">5.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">16</td><td style = "text-align: right;">3.0 hr</td><td style = "text-align: right;">6.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">17</td><td style = "text-align: right;">3.5 hr</td><td style = "text-align: right;">7.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">18</td><td style = "text-align: right;">4.0 hr</td><td style = "text-align: right;">8.0 g</td><td style = "text-align: right;">2.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">19</td><td style = "text-align: right;">0.0 hr</td><td style = "text-align: right;">0.0 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">20</td><td style = "text-align: right;">0.5 hr</td><td style = "text-align: right;">1.5 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">21</td><td style = "text-align: right;">1.0 hr</td><td style = "text-align: right;">3.0 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">22</td><td style = "text-align: right;">1.5 hr</td><td style = "text-align: right;">4.5 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">23</td><td style = "text-align: right;">2.0 hr</td><td style = "text-align: right;">6.0 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">24</td><td style = "text-align: right;">2.5 hr</td><td style = "text-align: right;">7.5 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">25</td><td style = "text-align: right;">3.0 hr</td><td style = "text-align: right;">9.0 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">26</td><td style = "text-align: right;">3.5 hr</td><td style = "text-align: right;">10.5 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">27</td><td style = "text-align: right;">4.0 hr</td><td style = "text-align: right;">12.0 g</td><td style = "text-align: right;">3.0 g hr^-1</td><td style = "text-align: right;">7.0 g</td></tr></tbody></table></div><p>Metadata columns identify the configuration used for each run. For larger experiments, request individual metadata pairs rather than every parameter in a system.</p><h2 id="Plot-output"><a class="docs-heading-anchor" href="#Plot-output">Plot output</a><a id="Plot-output-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-output" title="Permalink"></a></h2><p><code>visualize</code> accepts the data frame returned by <code>simulate</code>.</p><pre><code class="language-julia hljs">visualize(result, :time, :mass; kind = :line)</code></pre><img src="0b1e9853.svg" alt="Example block output"/><p>It can also simulate a system and plot the result in one call:</p><pre><code class="language-julia hljs">visualize(Growth, :time, :mass;
+    config,
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+)</code></pre><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:gadfly="http://www.gadflyjl.org/ns"
+     version="1.2"
+     width="141.42mm" height="100mm" viewBox="0 0 141.42 100"
+     stroke="none"
+     fill="#000000"
+     stroke-width="0.3"
+     font-size="3.88"
+>
+<defs>
+  <marker id="arrow" markerWidth="15" markerHeight="7" refX="5" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
+  </marker>
+</defs>
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-0420c712-1">
+  <g transform="translate(70.71,50)">
+    <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
+  </g>
+</g>
+<g class="plotroot xscalable yscalable" id="img-0420c712-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-0420c712-3">
+    <g transform="translate(76.19,93.72)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">time (hr)</text>
+      </g>
+    </g>
+  </g>
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-0420c712-4">
+    <g transform="translate(17.96,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">0</text>
+      </g>
+    </g>
+    <g transform="translate(47.07,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">1</text>
+      </g>
+    </g>
+    <g transform="translate(76.19,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">2</text>
+      </g>
+    </g>
+    <g transform="translate(105.31,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">3</text>
+      </g>
+    </g>
+    <g transform="translate(134.42,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">4</text>
+      </g>
+    </g>
+  </g>
+  <g clip-path="url(#img-0420c712-5)">
+    <g id="img-0420c712-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-0420c712-7">
+        <g transform="translate(76.19,45.52)" id="img-0420c712-8">
+          <path d="M-60.23,-40.52 L60.23,-40.52 60.23,40.52 -60.23,40.52  z" class="primitive"/>
+        </g>
+      </g>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-0420c712-9">
+        <g transform="translate(76.19,84.04)" id="img-0420c712-10">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,64.78)" id="img-0420c712-11">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,45.52)" id="img-0420c712-12">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,26.26)" id="img-0420c712-13">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,7)" id="img-0420c712-14">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+      </g>
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-0420c712-15">
+        <g transform="translate(17.96,45.52)" id="img-0420c712-16">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(47.07,45.52)" id="img-0420c712-17">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,45.52)" id="img-0420c712-18">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(105.31,45.52)" id="img-0420c712-19">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(134.42,45.52)" id="img-0420c712-20">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+      </g>
+      <g class="plotpanel" id="img-0420c712-21">
+        <metadata>
+          <boundingbox value="15.956666666666678mm 5.0mm 120.46468957064283mm 81.04333333333334mm"/>
+          <unitbox value="-0.06869034751642487 8.20767533422749 4.137380695032849 -8.415350668454982"/>
+        </metadata>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-0420c712-22">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-0420c712-23">
+            <g transform="translate(76.19,45.52)" id="img-0420c712-24">
+              <path fill="none" d="M-58.23,38.52 L-43.67,28.89 -29.12,19.26 -14.56,9.63 -0,0 14.56,-9.63 29.12,-19.26 43.67,-28.89 58.23,-38.52 " class="primitive"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-0420c712-25">
+    <g transform="translate(14.96,84.04)" id="img-0420c712-26">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">0</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,64.78)" id="img-0420c712-27">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">2</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,45.52)" id="img-0420c712-28">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">4</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,26.26)" id="img-0420c712-29">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">6</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,7)" id="img-0420c712-30">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">8</text>
+      </g>
+    </g>
+  </g>
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-0420c712-31">
+    <g transform="translate(8.64,43.52)" id="img-0420c712-32">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">mass (g)</text>
+      </g>
+    </g>
+  </g>
+</g>
+<defs>
+  <clipPath id="img-0420c712-5">
+    <path d="M15.96,5 L136.42,5 136.42,86.04 15.96,86.04 " />
+  </clipPath>
+</defs>
+</svg>
+<h2 id="Next-steps"><a class="docs-heading-anchor" href="#Next-steps">Next steps</a><a id="Next-steps-1"></a><a class="docs-heading-anchor-permalink" href="#Next-steps" title="Permalink"></a></h2><ul><li><a href="../../concepts/overview/#cropbox-concepts">How Cropbox Works</a> explains systems, dependencies, and behaviors.</li><li><a href="../../howto/configuration/#configuration-workflow">Configure Models and Scenarios</a> covers merging and factorial combinations.</li><li><a href="../../howto/simulation/#simulation-workflow">Run Simulations and Shape Output</a> covers nested paths, snapshots, callbacks, and output formats.</li><li><a href="../phenology/#phenology-tutorial">Weather-driven Phenology</a> adds calendar time and tabular input.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../installation/">« Installation</a><a class="docs-footer-nextpage" href="../../concepts/overview/">How Cropbox Works »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 28 July 2026 06:10">Tuesday 28 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

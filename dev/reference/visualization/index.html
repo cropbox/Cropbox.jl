@@ -1,32 +1,466 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Visualization · Cropbox.jl</title><meta name="title" content="Visualization · Cropbox.jl"/><meta property="og:title" content="Visualization · Cropbox.jl"/><meta property="twitter:title" content="Visualization · Cropbox.jl"/><meta name="description" content="Documentation for Cropbox.jl."/><meta property="og:description" content="Documentation for Cropbox.jl."/><meta property="twitter:description" content="Documentation for Cropbox.jl."/><meta property="og:url" content="https://cropbox.github.io/Cropbox.jl/stable/reference/visualization/"/><meta property="twitter:url" content="https://cropbox.github.io/Cropbox.jl/stable/reference/visualization/"/><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/reference/visualization/"/><script async src="https://www.googletagmanager.com/gtag/js?id=UA-192782823-1"></script><script>  window.dataLayer = window.dataLayer || [];
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Visualization API · Cropbox.jl</title><meta name="title" content="Visualization API · Cropbox.jl"/><meta property="og:title" content="Visualization API · Cropbox.jl"/><meta property="twitter:title" content="Visualization API · Cropbox.jl"/><meta name="description" content="Documentation for Cropbox.jl."/><meta property="og:description" content="Documentation for Cropbox.jl."/><meta property="twitter:description" content="Documentation for Cropbox.jl."/><meta property="og:url" content="https://cropbox.github.io/Cropbox.jl/stable/reference/visualization/"/><meta property="twitter:url" content="https://cropbox.github.io/Cropbox.jl/stable/reference/visualization/"/><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/reference/visualization/"/><script async src="https://www.googletagmanager.com/gtag/js?id=UA-192782823-1"></script><script>  window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'UA-192782823-1', {'page_path': location.pathname + location.search + location.hash});
-</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Introduction</span><ul><li><a class="tocitem" href="../../">Cropbox</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorials/julia/">Getting started with Julia</a></li><li><a class="tocitem" href="../../tutorials/cropbox/">Getting started with Cropbox</a></li><li><a class="tocitem" href="../../tutorials/makingamodel/">Making a model</a></li><li><a class="tocitem" href="../../tutorials/usingamodel/">Using an existing model</a></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../guide/system/">System</a></li><li><a class="tocitem" href="../../guide/variable/">Variable</a></li><li><a class="tocitem" href="../../guide/configuration/">Configuration</a></li><li><a class="tocitem" href="../../guide/simulation/">Simulation</a></li><li><a class="tocitem" href="../../guide/visualization/">Visualization</a></li><li><a class="tocitem" href="../../guide/inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../gallery/">Gallery</a></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../">Index</a></li><li><a class="tocitem" href="../declaration/">Declaration</a></li><li><a class="tocitem" href="../simulation/">Simulation</a></li><li class="is-active"><a class="tocitem" href>Visualization</a></li><li><a class="tocitem" href="../inspection/">Inspection</a></li></ul></li><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Reference</a></li><li class="is-active"><a href>Visualization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Visualization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/reference/visualization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Visualization1"><a class="docs-heading-anchor" href="#Visualization1">Visualization</a><a id="Visualization1-1"></a><a class="docs-heading-anchor-permalink" href="#Visualization1" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Cropbox.plot" href="#Cropbox.plot"><code>Cropbox.plot</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">plot(df::DataFrame, x, y; &lt;keyword arguments&gt;) -&gt; Plot
-plot(X::Vector, Y::Vector; &lt;keyword arguments&gt;) -&gt; Plot
-plot(df::DataFrame, x, y, z; &lt;keyword arguments&gt;) -&gt; Plot</code></pre><p>Plot a graph from provided data source. The type of graph is selected based on arguments.</p><p>See also: <a href="#Cropbox.plot!"><code>plot!</code></a>, <a href="../../guide/visualization/#visualize"><code>visualize</code></a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/plot.jl#L77-L85">source</a></section><section><div><pre><code class="language-julia hljs">plot(v::Number; kind, &lt;keyword arguments&gt;) -&gt; Plot
-plot(V::Vector; kind, &lt;keyword arguments&gt;) -&gt; Plot</code></pre><p>Plot a graph of horizontal/vertical lines depending on <code>kind</code>, which can be either <code>:hline</code> or <code>:vline</code>. An initial plotting of <code>hline</code> requires <code>xlim</code> and <code>vline</code> requires <code>ylim</code>, respectively.</p><p>See also: <a href="#Cropbox.plot!"><code>plot!</code></a>, <a href="../../guide/visualization/#visualize"><code>visualize</code></a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/plot.jl#L116-L124">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Cropbox.plot!" href="#Cropbox.plot!"><code>Cropbox.plot!</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">plot!(p, &lt;arguments&gt;; &lt;keyword arguments&gt;) -&gt; Plot</code></pre><p>Update an existing <code>Plot</code> object <code>p</code> by appending a new graph made with <code>plot</code>.</p><p>See also: <a href="../../guide/visualization/#plot"><code>plot</code></a></p><p><strong>Arguments</strong></p><ul><li><code>p::Union{Plot,Nothing}</code>: plot object to be updated; <code>nothing</code> creates a new plot.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/plot.jl#L88-L97">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Cropbox.visualize" href="#Cropbox.visualize"><code>Cropbox.visualize</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">visualize(&lt;arguments&gt;; &lt;keyword arguments&gt;) -&gt; Plot</code></pre><p>Make a plot from an output collected by running necessary simulations. A convenient function to run both <code>simulate</code> and <code>plot</code> together.</p><p>See also: <a href="#Cropbox.visualize!"><code>visualize!</code></a>, <a href="../../guide/simulation/#simulate"><code>simulate</code></a>, <a href="../../guide/visualization/#plot"><code>plot</code></a>, <a href="../../guide/visualization/#manipulate"><code>manipulate</code></a></p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @system S(Controller) begin
-           a(a) =&gt; a ~ accumulate(init=1)
-       end;
+</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Start Here</span><ul><li><a class="tocitem" href="../../">Overview</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../tutorials/quickstart/">Quick Start</a></li></ul></li><li><span class="tocitem">Core Concepts</span><ul><li><a class="tocitem" href="../../concepts/overview/">How Cropbox Works</a></li><li><a class="tocitem" href="../../guide/system/">Systems and Composition</a></li><li><a class="tocitem" href="../../concepts/lifecycle/">Model Execution</a></li><li><a class="tocitem" href="../dsl/">DSL Syntax</a></li><li><a class="tocitem" href="../behaviors/">Behaviors and Tags</a></li></ul></li><li><span class="tocitem">Learn by Example</span><ul><li><a class="tocitem" href="../../tutorials/growth/">Logistic Growth</a></li><li><a class="tocitem" href="../../tutorials/phenology/">Weather-driven Phenology</a></li><li><a class="tocitem" href="../../tutorials/lotka-volterra/">Predator–Prey Model</a></li><li><a class="tocitem" href="../../tutorials/leafgasexchange/">Leaf Gas Exchange</a></li><li><a class="tocitem" href="../../tutorials/garlic/">Garlic Growth Model</a></li><li><a class="tocitem" href="../../tutorials/simplecrop/">SimpleCrop</a></li><li><a class="tocitem" href="../../tutorials/soilwater/">Soil Water Transport</a></li><li><a class="tocitem" href="../../tutorials/croprootbox/">Root System Architecture</a></li></ul></li><li><span class="tocitem">Workflows</span><ul><li><a class="tocitem" href="../../howto/configuration/">Configure Models and Scenarios</a></li><li><a class="tocitem" href="../../howto/simulation/">Run Simulations and Shape Output</a></li><li><a class="tocitem" href="../../howto/inspection/">Inspect and Visualize Models</a></li><li><a class="tocitem" href="../../tutorials/evaluation/">Evaluate and Calibrate Models</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../declaration/">Declarations</a></li><li><a class="tocitem" href="../simulation/">Simulation API</a></li><li class="is-active"><a class="tocitem" href>Visualization API</a><ul class="internal"><li><a class="tocitem" href="#Common-plotting-forms"><span>Common plotting forms</span></a></li><li><a class="tocitem" href="#Visualize-a-simulation"><span>Visualize a simulation</span></a></li><li><a class="tocitem" href="#Observations-and-model-estimates"><span>Observations and model estimates</span></a></li><li><a class="tocitem" href="#Heatmaps-and-contours"><span>Heatmaps and contours</span></a></li><li><a class="tocitem" href="#Labels,-units,-limits,-and-backends"><span>Labels, units, limits, and backends</span></a></li><li><a class="tocitem" href="#Common-failures"><span>Common failures</span></a></li><li><a class="tocitem" href="#Interactive-parameter-controls"><span>Interactive parameter controls</span></a></li></ul></li><li><a class="tocitem" href="../inspection/">Inspection API</a></li><li><a class="tocitem" href="../utilities/">Values and Units</a></li><li><a class="tocitem" href="../hierarchy/">Dynamic Hierarchies</a></li><li><a class="tocitem" href="../components/">Built-in Model Components</a></li><li><a class="tocitem" href="../">API Index</a></li></ul></li><li><span class="tocitem">Troubleshooting</span><ul><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li><li><a class="tocitem" href="../../troubleshooting/common-mistakes/">Common Mistakes</a></li><li><a class="tocitem" href="../../troubleshooting/performance/">Performance and Reproducibility</a></li></ul></li><li><a class="tocitem" href="../../gallery/">Model Gallery</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API Reference</a></li><li class="is-active"><a href>Visualization API</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Visualization API</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/reference/visualization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Visualization1"><a class="docs-heading-anchor" href="#Visualization1">Visualization</a><a id="Visualization1-1"></a><a class="docs-heading-anchor-permalink" href="#Visualization1" title="Permalink"></a></h1><p>Cropbox provides one main visualization family and an optional interactive wrapper. The same calls work with existing data or with a model that still needs to be simulated.</p><table><tr><th style="text-align: right">Function</th><th style="text-align: right">Start with</th><th style="text-align: right">What it does</th></tr><tr><td style="text-align: right"><code>visualize</code>, <code>visualize!</code></td><td style="text-align: right">vectors, a <code>DataFrame</code>, a system, or data plus a system</td><td style="text-align: right">draw existing data or run any needed simulations and draw the result</td></tr><tr><td style="text-align: right"><code>manipulate</code></td><td style="text-align: right">a callback or <code>visualize</code> arguments</td><td style="text-align: right">add parameter widgets in a supported notebook</td></tr></table><p>For a saved analysis, it is usually clearest to call <code>simulate</code>, keep its <code>DataFrame</code>, and plot that table. Direct system visualization is convenient for quick response curves, comparisons, and checks while developing a model.</p><p>The public call families are:</p><table><tr><th style="text-align: right">Call shape</th><th style="text-align: right">Result</th></tr><tr><td style="text-align: right"><code>visualize(X, Y)</code> or <code>visualize(df, x, y)</code></td><td style="text-align: right">visualize existing arrays or table columns</td></tr><tr><td style="text-align: right"><code>visualize(System, x, y)</code></td><td style="text-align: right">simulate one system and plot its trajectory or response</td></tr><tr><td style="text-align: right"><code>visualize([System1, System2], x, y)</code></td><td style="text-align: right">compare compatible systems</td></tr><tr><td style="text-align: right"><code>visualize(df, System, x, y)</code></td><td style="text-align: right">overlay observations and a simulated trajectory</td></tr><tr><td style="text-align: right"><code>visualize(obs, System, y; index)</code></td><td style="text-align: right">observation-versus-estimate plot</td></tr><tr><td style="text-align: right"><code>visualize(System, x, y, z)</code></td><td style="text-align: right">two-factor heatmap or contour plot</td></tr><tr><td style="text-align: right"><code>visualize!</code></td><td style="text-align: right">append to an existing <code>Plot</code> and return the same wrapper</td></tr></table><p>Every form returns Cropbox&#39;s <code>Plot</code> wrapper and accepts the same labels, units, limits, kinds, and backend selection.</p><h2 id="Common-plotting-forms"><a class="docs-heading-anchor" href="#Common-plotting-forms">Common plotting forms</a><a id="Common-plotting-forms-1"></a><a class="docs-heading-anchor-permalink" href="#Common-plotting-forms" title="Permalink"></a></h2><p>The examples below use one small trajectory model and one static response model.</p><pre><code class="language-julia hljs">using Cropbox
+using DataFrames
 
-julia&gt; visualize(S, :time, :a; stop=5, kind=:line)
-       ┌────────────────────────────────────────┐
-    32 │                                       :│
-       │                                      : │
-       │                                     :  │
-       │                                    :   │
-       │                                   :    │
-       │                                  :     │
-       │                                 :      │
-  a    │                                :       │
-       │                              .&#39;        │
-       │                            .&#39;          │
-       │                          .&#39;            │
-       │                       ..&#39;              │
-       │                   ..&#39;&#39;                 │
-       │             ....&#39;&#39;                     │
-     1 │.........&#39;&#39;&#39;&#39;                           │
-       └────────────────────────────────────────┘
-       0                                        5
-                      time (hr)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/visualize.jl#L1-L35">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Cropbox.visualize!" href="#Cropbox.visualize!"><code>Cropbox.visualize!</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">visualize!(p, &lt;arguments&gt;; &lt;keyword arguments&gt;) -&gt; Plot</code></pre><p>Update an existing <code>Plot</code> object <code>p</code> by appending a new graph made with <code>visualize</code>.</p><p>See also: <a href="../../guide/visualization/#visualize"><code>visualize</code></a></p><p><strong>Arguments</strong></p><ul><li><code>p::Union{Plot,Nothing}</code>: plot object to be updated; <code>nothing</code> creates a new plot.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/visualize.jl#L37-L46">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Cropbox.manipulate" href="#Cropbox.manipulate"><code>Cropbox.manipulate</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">manipulate(f::Function; parameters, config=())</code></pre><p>Create an interactive plot updated by callback <code>f</code>. Only works in Jupyter Notebook.</p><p><strong>Arguments</strong></p><ul><li><code>f::Function</code>: callback for generating a plot; interactively updated configuration <code>c</code> is provided.</li><li><code>parameters</code>: parameters adjustable with interactive widgets; value should be an iterable.</li><li><code>config=()</code>: a baseline configuration.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/manipulate.jl#L3-L12">source</a></section><section><div><pre><code class="language-julia hljs">manipulate(args...; parameters, kwargs...)</code></pre><p>Create an interactive plot by calling <code>manipulate</code> with <code>visualize</code> as a callback.</p><p>See also: <a href="../../guide/visualization/#visualize"><code>visualize</code></a></p><p><strong>Arguments</strong></p><ul><li><code>args</code>: positional arguments for <code>visualize</code>.</li><li><code>parameters</code>: parameters for <code>manipulate</code>.</li><li><code>kwargs</code>: keyword arguments for <code>visualize</code>.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/cropbox/Cropbox.jl/blob/dc2316da4043fb2b134118958fca94e1e595c609/src/util/manipulate.jl#L82-L93">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Simulation</a><a class="docs-footer-nextpage" href="../inspection/">Inspection »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 17 July 2025 17:39">Thursday 17 July 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+@system VisualTrajectory(Controller) begin
+    rate          =&gt; 1.0           ~ preserve(parameter, u&quot;g/hr&quot;)
+    mass(rate)                     ~ accumulate(u&quot;g&quot;)
+    reached(mass) =&gt; mass &gt;= 3u&quot;g&quot; ~ flag
+end
+
+@system VisualResponse(Controller) begin
+    input                  =&gt; 0.0           ~ preserve(parameter)
+    slope                  =&gt; 1.0           ~ preserve(parameter)
+    response(input, slope) =&gt; slope * input ~ track(min = 0)
+end
+
+series = DataFrame(
+    hour = (0:4)u&quot;hr&quot;,
+    observed = [0.1, 1.2, 1.9, 3.2, 3.8]u&quot;g&quot;,
+    smooth = [0, 1, 2, 3, 4]u&quot;g&quot;,
+    reached = [false, false, false, true, true],
+)
+
+nothing</code></pre><h3 id="Vectors-and-DataFrames"><a class="docs-heading-anchor" href="#Vectors-and-DataFrames">Vectors and DataFrames</a><a id="Vectors-and-DataFrames-1"></a><a class="docs-heading-anchor-permalink" href="#Vectors-and-DataFrames" title="Permalink"></a></h3><pre><code class="language-julia hljs">visualize(X::Vector, Y::Vector; options...)
+visualize(X::Vector, [Y1, Y2]; options...)
+visualize(df, x, y; options...)
+visualize(df, x, [y1, y2]; options...)</code></pre><p>For a <code>DataFrame</code>, <code>x</code> and <code>y</code> may be column names as symbols or strings. They may also be an expression evaluated column by column, such as <code>:(SWC / depth)</code>. The result is useful for a derived quantity that does not need to become a model variable. Functions used inside the expression must be visible in the calling Julia session; for a saved analysis, a named derived column is easier to test and reuse.</p><p>Array-based calls currently dispatch on concrete <code>Vector</code> values. Use <code>collect(range)</code> before passing a range directly.</p><pre><code class="language-julia hljs">visualize(series, :hour, :observed;
+    kind = :scatterline,
+    title = &quot;Observed mass&quot;,
+    xlab = &quot;Time&quot;,
+    ylab = &quot;Mass&quot;,
+    legend = false,
+)</code></pre><img src="1b30a29e.svg" alt="Example block output"/><p>Passing several <code>y</code> columns draws several series. <code>names</code> controls their legend labels; <code>legend</code> is the legend title, not a Boolean switch for individual series.</p><pre><code class="language-julia hljs">visualize(series, :hour, [:observed, :smooth];
+    kind = :line,
+    names = [&quot;observation&quot;, &quot;reference&quot;],
+    legend = &quot;Series&quot;,
+    ylab = &quot;Mass&quot;,
+)</code></pre><img src="7e6cd37b.svg" alt="Example block output"/><h3 id="Plot-kinds"><a class="docs-heading-anchor" href="#Plot-kinds">Plot kinds</a><a id="Plot-kinds-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-kinds" title="Permalink"></a></h3><p>Two-dimensional plots support these <code>kind</code> values:</p><table><tr><th style="text-align: right"><code>kind</code></th><th style="text-align: right">Use</th></tr><tr><td style="text-align: right"><code>:scatter</code></td><td style="text-align: right">separate observations; the default</td></tr><tr><td style="text-align: right"><code>:line</code></td><td style="text-align: right">a continuous ordered trajectory</td></tr><tr><td style="text-align: right"><code>:scatterline</code></td><td style="text-align: right">points and a connecting line</td></tr><tr><td style="text-align: right"><code>:step</code></td><td style="text-align: right">stages, counts, or Boolean state changes</td></tr><tr><td style="text-align: right"><code>:hline</code></td><td style="text-align: right">one or more horizontal reference lines</td></tr><tr><td style="text-align: right"><code>:vline</code></td><td style="text-align: right">one or more vertical reference lines</td></tr></table><p><code>step</code> automatically treats Boolean values and other repeated categories as ordered levels. Supply <code>ycat</code> when their display order must be explicit.</p><pre><code class="language-julia hljs">visualize(series, :hour, :reached;
+    kind = :step,
+    ylab = &quot;Threshold reached&quot;,
+    legend = false,
+)</code></pre><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:gadfly="http://www.gadflyjl.org/ns"
+     version="1.2"
+     width="141.42mm" height="100mm" viewBox="0 0 141.42 100"
+     stroke="none"
+     fill="#000000"
+     stroke-width="0.3"
+     font-size="3.88"
+>
+<defs>
+  <marker id="arrow" markerWidth="15" markerHeight="7" refX="5" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
+  </marker>
+</defs>
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-51e638de-1">
+  <g transform="translate(70.71,50)">
+    <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
+  </g>
+</g>
+<g class="plotroot xscalable" id="img-51e638de-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-51e638de-3">
+    <g transform="translate(78.71,93.72)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">hour (hr)</text>
+      </g>
+    </g>
+  </g>
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-51e638de-4">
+    <g transform="translate(22.99,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">0</text>
+      </g>
+    </g>
+    <g transform="translate(50.85,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">1</text>
+      </g>
+    </g>
+    <g transform="translate(78.71,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">2</text>
+      </g>
+    </g>
+    <g transform="translate(106.56,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">3</text>
+      </g>
+    </g>
+    <g transform="translate(134.42,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">4</text>
+      </g>
+    </g>
+  </g>
+  <g clip-path="url(#img-51e638de-5)">
+    <g id="img-51e638de-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-51e638de-7">
+        <g transform="translate(78.71,45.52)" id="img-51e638de-8">
+          <path d="M-57.72,-40.52 L57.72,-40.52 57.72,40.52 -57.72,40.52  z" class="primitive"/>
+        </g>
+      </g>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-51e638de-9">
+        <g transform="translate(78.71,45.52)" id="img-51e638de-10">
+          <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
+        </g>
+      </g>
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-51e638de-11">
+        <g transform="translate(22.99,45.52)" id="img-51e638de-12">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(50.85,45.52)" id="img-51e638de-13">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(78.71,45.52)" id="img-51e638de-14">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(106.56,45.52)" id="img-51e638de-15">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(134.42,45.52)" id="img-51e638de-16">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+      </g>
+      <g class="plotpanel" id="img-51e638de-17">
+        <metadata>
+          <boundingbox value="20.99000000000001mm 5.0mm 115.4313562373095mm 81.04333333333334mm"/>
+          <unitbox value="-0.07179307755137451 2.5 4.143586155102749 -2.0"/>
+        </metadata>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-51e638de-18">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-51e638de-19">
+            <g transform="translate(84.9,52.28)" id="img-51e638de-20">
+              <path fill="none" d="M-61.91,13.51 L-34.05,13.51 -34.05,13.51 -6.19,13.51 -6.19,13.51 21.67,13.51 21.67,-27.01 49.53,-27.01 49.53,-27.01 " class="primitive"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-51e638de-21">
+    <g transform="translate(19.99,65.78)" id="img-51e638de-22">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">false</text>
+      </g>
+    </g>
+    <g transform="translate(19.99,25.26)" id="img-51e638de-23">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">true</text>
+      </g>
+    </g>
+  </g>
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-51e638de-24">
+    <g transform="translate(8.64,43.52)" id="img-51e638de-25">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">Threshold reached</text>
+      </g>
+    </g>
+  </g>
+</g>
+<defs>
+  <clipPath id="img-51e638de-5">
+    <path d="M20.99,5 L136.42,5 136.42,86.04 20.99,86.04 " />
+  </clipPath>
+</defs>
+</svg>
+<p>An initial horizontal line needs <code>xlim</code>; an initial vertical line needs <code>ylim</code>. When the line is appended to a plot, Cropbox reuses that plot&#39;s limits.</p><pre><code class="language-julia hljs">plain_series = DataFrame(
+    x = 0:4,
+    observed = [0.1, 1.2, 1.9, 3.2, 3.8],
+    smooth = 0:4,
+)
+
+p = visualize(plain_series, :x, :observed;
+    kind = :scatter,
+    name = &quot;observation&quot;,
+    xlab = &quot;Time&quot;,
+    ylab = &quot;Mass&quot;,
+)
+visualize!(p, plain_series, :x, :smooth;
+    kind = :line,
+    name = &quot;reference&quot;,
+)
+visualize!(p, 3;
+    kind = :hline,
+    name = &quot;threshold&quot;,
+    color = :lightgray,
+)</code></pre><img src="ee8897b4.svg" alt="Example block output"/><p>The one-value <code>:hline</code> and <code>:vline</code> helpers currently work most reliably when both axes are unitless or use compatible dimensions. For a plot with time on x and mass on y, draw a two-point unit-aware line instead:</p><pre><code class="language-julia hljs">p_units = visualize(series, :hour, :observed; kind = :scatter)
+visualize!(p_units, [0, 4]u&quot;hr&quot;, [3, 3]u&quot;g&quot;;
+    kind = :line,
+    name = &quot;threshold&quot;,
+)</code></pre><img src="d79aba7e.svg" alt="Example block output"/><p><code>visualize!</code> changes and returns the same Cropbox <code>Plot</code>. Use <code>p[]</code>, <code>p&#39;</code>, or <code>value(p)</code> only when direct access to the backend object is needed, for example to call a backend-specific export function.</p><p>To save a Gadfly result without adding another plotting package:</p><pre><code class="language-julia hljs">p = visualize(series, :hour, :observed;
+    kind = :line,
+    backend = :Gadfly,
+)
+
+p[] |&gt; Cropbox.Gadfly.SVG(&quot;observed.svg&quot;)</code></pre><p>PDF export additionally requires the <code>Cairo</code> and <code>Fontconfig</code> packages to be installed and imported in the current environment:</p><pre><code class="language-julia hljs">import Cairo, Fontconfig
+
+p[] |&gt; Cropbox.Gadfly.PDF(&quot;observed.pdf&quot;)</code></pre><p>The returned wrapper remains the portable part of the API; <code>Cropbox.Gadfly</code> is intentionally backend-specific.</p><h2 id="Visualize-a-simulation"><a class="docs-heading-anchor" href="#Visualize-a-simulation">Visualize a simulation</a><a id="Visualize-a-simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-a-simulation" title="Permalink"></a></h2><pre><code class="language-julia hljs">visualize(SystemType, x, y;
+    config = (), group = (), xstep = (),
+    base = nothing, stop = nothing, snap = nothing,
+    options...)</code></pre><p>This form calls <code>simulate</code> with <code>x</code> and <code>y</code> as output variables, then renders the result. The usual simulation meanings of <code>base</code>, <code>stop</code>, and <code>snap</code> apply.</p><pre><code class="language-julia hljs">visualize(VisualTrajectory, :time, :mass;
+    config = VisualTrajectory =&gt; :rate =&gt; 1,
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+    ylab = &quot;Mass&quot;,
+    legend = false,
+)</code></pre><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:gadfly="http://www.gadflyjl.org/ns"
+     version="1.2"
+     width="141.42mm" height="100mm" viewBox="0 0 141.42 100"
+     stroke="none"
+     fill="#000000"
+     stroke-width="0.3"
+     font-size="3.88"
+>
+<defs>
+  <marker id="arrow" markerWidth="15" markerHeight="7" refX="5" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
+  </marker>
+</defs>
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-174051f9-1">
+  <g transform="translate(70.71,50)">
+    <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
+  </g>
+</g>
+<g class="plotroot xscalable yscalable" id="img-174051f9-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-174051f9-3">
+    <g transform="translate(76.19,93.72)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">time (hr)</text>
+      </g>
+    </g>
+  </g>
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-174051f9-4">
+    <g transform="translate(17.96,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">0</text>
+      </g>
+    </g>
+    <g transform="translate(47.07,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">1</text>
+      </g>
+    </g>
+    <g transform="translate(76.19,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">2</text>
+      </g>
+    </g>
+    <g transform="translate(105.31,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">3</text>
+      </g>
+    </g>
+    <g transform="translate(134.42,87.04)">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.6em">4</text>
+      </g>
+    </g>
+  </g>
+  <g clip-path="url(#img-174051f9-5)">
+    <g id="img-174051f9-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-174051f9-7">
+        <g transform="translate(76.19,45.52)" id="img-174051f9-8">
+          <path d="M-60.23,-40.52 L60.23,-40.52 60.23,40.52 -60.23,40.52  z" class="primitive"/>
+        </g>
+      </g>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-174051f9-9">
+        <g transform="translate(76.19,84.04)" id="img-174051f9-10">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,64.78)" id="img-174051f9-11">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,45.52)" id="img-174051f9-12">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,26.26)" id="img-174051f9-13">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,7)" id="img-174051f9-14">
+          <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
+        </g>
+      </g>
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-174051f9-15">
+        <g transform="translate(17.96,45.52)" id="img-174051f9-16">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(47.07,45.52)" id="img-174051f9-17">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(76.19,45.52)" id="img-174051f9-18">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(105.31,45.52)" id="img-174051f9-19">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+        <g transform="translate(134.42,45.52)" id="img-174051f9-20">
+          <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
+        </g>
+      </g>
+      <g class="plotpanel" id="img-174051f9-21">
+        <metadata>
+          <boundingbox value="15.956666666666678mm 5.0mm 120.46468957064283mm 81.04333333333334mm"/>
+          <unitbox value="-0.06869034751642487 4.103837667113745 4.137380695032849 -4.207675334227491"/>
+        </metadata>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-174051f9-22">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-174051f9-23">
+            <g transform="translate(76.19,45.52)" id="img-174051f9-24">
+              <path fill="none" d="M-58.23,38.52 L-29.12,19.26 0,0 29.12,-19.26 58.23,-38.52 " class="primitive"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-174051f9-25">
+    <g transform="translate(14.96,84.04)" id="img-174051f9-26">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">0</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,64.78)" id="img-174051f9-27">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">1</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,45.52)" id="img-174051f9-28">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">2</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,26.26)" id="img-174051f9-29">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">3</text>
+      </g>
+    </g>
+    <g transform="translate(14.96,7)" id="img-174051f9-30">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">4</text>
+      </g>
+    </g>
+  </g>
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-174051f9-31">
+    <g transform="translate(8.64,43.52)" id="img-174051f9-32">
+      <g class="primitive">
+        <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">Mass (g)</text>
+      </g>
+    </g>
+  </g>
+</g>
+<defs>
+  <clipPath id="img-174051f9-5">
+    <path d="M15.96,5 L136.42,5 136.42,86.04 15.96,86.04 " />
+  </clipPath>
+</defs>
+</svg>
+<p>When <code>y</code> is a vector, all targets are drawn from the same simulation output. This is the form used for leaf gas-exchange limitation rates, garlic organ mass, and soil-water components in the tutorials.</p><pre><code class="language-julia hljs">visualize(Model, :time, [:leaf_mass, :bulb_mass, :total_mass];
+    config,
+    stop = :finished,
+    kind = :line,
+    names = [&quot;leaf&quot;, &quot;bulb&quot;, &quot;total&quot;],
+)</code></pre><h3 id="Parameter-response-curves"><a class="docs-heading-anchor" href="#Parameter-response-curves">Parameter response curves</a><a id="Parameter-response-curves-1"></a><a class="docs-heading-anchor-permalink" href="#Parameter-response-curves" title="Permalink"></a></h3><p><code>xstep</code> varies the variable used on the x-axis. <code>group</code> makes one series for each value of another parameter. Both accept the same system-to-parameter pair shape used by <code>@config</code>.</p><pre><code class="language-julia hljs">visualize(VisualResponse, :input, :response;
+    xstep = VisualResponse =&gt; :input =&gt; 0:0.25:4,
+    group = VisualResponse =&gt; :slope =&gt; [0.5, 1.0, 1.5],
+    kind = :line,
+    ylab = &quot;Response&quot;,
+)</code></pre><img src="dfdca15f.svg" alt="Example block output"/><p>For a grouped curve, the group parameter becomes the default legend title and its values become the series labels. Pass <code>names</code> and <code>legend</code> to replace them. If <code>names</code> is a symbol, Cropbox reads the unique value of that output column and uses it as each label. The latter is useful when a label is determined indirectly by configuration.</p><p>Use <code>xstep</code> with a static or snapshot-like response. If the system advances for many steps, every snapshot from every configuration is placed in the same curve; in that case it is usually clearer to call <code>simulate</code>, select the desired time rows, and plot the resulting table.</p><h3 id="Compare-systems"><a class="docs-heading-anchor" href="#Compare-systems">Compare systems</a><a id="Compare-systems-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-systems" title="Permalink"></a></h3><p>Pass a vector of system types to compare compatible outputs. <code>configs</code>, <code>names</code>, and <code>colors</code> are parallel vectors and must match the systems in order.</p><pre><code class="language-julia hljs">@system FastVisualTrajectory(VisualTrajectory) begin
+    rate =&gt; 1.5 ~ preserve(parameter, u&quot;g/hr&quot;)
+end
+
+visualize([VisualTrajectory, FastVisualTrajectory], :time, :mass;
+    configs = [(), ()],
+    names = [&quot;baseline&quot;, &quot;fast&quot;],
+    colors = [:steelblue, :darkorange],
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+)</code></pre><img src="819360d0.svg" alt="Example block output"/><p>The systems do not need to share an implementation, but each must expose the requested x and y paths. Omit <code>configs</code>, or leave it empty, to use an empty configuration for every system. Supply a parallel vector explicitly when the positional pairing should be especially clear in teaching or analysis code.</p><h3 id="Append-simulations-with-visualize!"><a class="docs-heading-anchor" href="#Append-simulations-with-visualize!">Append simulations with <code>visualize!</code></a><a id="Append-simulations-with-visualize!-1"></a><a class="docs-heading-anchor-permalink" href="#Append-simulations-with-visualize!" title="Permalink"></a></h3><p>Use the mutating form when the layers are assembled conditionally or at different points in an analysis. <code>nothing</code> is accepted as the initial plot, but starting with <code>visualize</code> is usually easier to read.</p><pre><code class="language-julia hljs">p = visualize(VisualTrajectory, :time, :mass;
+    config = VisualTrajectory =&gt; :rate =&gt; 1,
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+    names = [&quot;baseline&quot;],
+    legend = &quot;Model&quot;,
+    colors = [:steelblue],
+)
+
+visualize!(p, FastVisualTrajectory, :time, :mass;
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+    names = [&quot;fast&quot;],
+    colors = [:darkorange],
+)</code></pre><img src="6f6cc515.svg" alt="Example block output"/><p>All appended layers must use compatible axis units. <code>visualize!</code> does not retain a simulation table, so call <code>simulate</code> explicitly when those values are needed for later statistics or export.</p><p>Keep the backend consistent across appended calls. If the initial call sets <code>backend</code> explicitly, pass the same value to each <code>visualize!</code> call; the current implementation does not infer that keyword from the existing wrapper.</p><h2 id="Observations-and-model-estimates"><a class="docs-heading-anchor" href="#Observations-and-model-estimates">Observations and model estimates</a><a id="Observations-and-model-estimates-1"></a><a class="docs-heading-anchor-permalink" href="#Observations-and-model-estimates" title="Permalink"></a></h2><p>There are two distinct comparison plots.</p><h3 id="Overlay-trajectories"><a class="docs-heading-anchor" href="#Overlay-trajectories">Overlay trajectories</a><a id="Overlay-trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#Overlay-trajectories" title="Permalink"></a></h3><pre><code class="language-julia hljs">visualize(observations, SystemType, obs_x =&gt; model_x, obs_y =&gt; model_y;
+    config, stop, options...)</code></pre><p>Cropbox draws observations as points and model output as a line. Pairs map differently named columns; omit the pairs when both names already match.</p><pre><code class="language-julia hljs">observations = DataFrame(
+    hour = (0:4)u&quot;hr&quot;,
+    measured = [0.1, 1.2, 1.9, 3.2, 3.8]u&quot;g&quot;,
+)
+
+visualize(observations,
+    VisualTrajectory,
+    :hour =&gt; :time,
+    :measured =&gt; :mass;
+    config = VisualTrajectory =&gt; :rate =&gt; 1,
+    stop = 4u&quot;hr&quot;,
+    name = &quot;observation&quot;,
+    names = [&quot;model&quot;],
+    ylab = &quot;Mass&quot;,
+)</code></pre><img src="026349f3.svg" alt="Example block output"/><p>Pass a vector of systems and a parallel <code>configs</code> vector to overlay several models on the same observations.</p><h3 id="Observation-versus-estimate"><a class="docs-heading-anchor" href="#Observation-versus-estimate">Observation versus estimate</a><a id="Observation-versus-estimate-1"></a><a class="docs-heading-anchor-permalink" href="#Observation-versus-estimate" title="Permalink"></a></h3><p>Omit the x argument and supply <code>index</code>. Cropbox simulates only at matching indices, joins observations and estimates, draws points, and adds the 1:1 line.</p><pre><code class="language-julia hljs">visualize(observations,
+    VisualTrajectory,
+    :measured =&gt; :mass;
+    index = :hour =&gt; &quot;context.clock.time&quot;,
+    config = VisualTrajectory =&gt; :rate =&gt; 1,
+    stop = 4u&quot;hr&quot;,
+    name = &quot;model&quot;,
+)</code></pre><img src="16e40981.svg" alt="Example block output"/><p>A vector target draws one observation-versus-estimate series for each target. For several model specifications of one target, pass named tuples with <code>system</code>, <code>config</code>, or <code>configs</code> fields:</p><pre><code class="language-julia hljs">models = [
+    (; system = VisualTrajectory,
+       config = VisualTrajectory =&gt; :rate =&gt; 0.9),
+    (; system = VisualTrajectory,
+       config = VisualTrajectory =&gt; :rate =&gt; 1.1),
+]
+
+visualize(observations, models, :measured =&gt; :mass;
+    index = :hour =&gt; &quot;context.clock.time&quot;,
+    names = [&quot;slow&quot;, &quot;fast&quot;],
+    stop = 4u&quot;hr&quot;,
+)</code></pre><p>These plots join on the index, so missing points, incompatible units, time-zone differences, or duplicate indices can change which rows appear. Check the joined data with <code>evaluate</code> or an explicit DataFrames join when a point is unexpectedly absent.</p><h2 id="Heatmaps-and-contours"><a class="docs-heading-anchor" href="#Heatmaps-and-contours">Heatmaps and contours</a><a id="Heatmaps-and-contours-1"></a><a class="docs-heading-anchor-permalink" href="#Heatmaps-and-contours" title="Permalink"></a></h2><pre><code class="language-julia hljs">visualize(SystemType, x, y, z;
+    config = (), xstep = (), ystep = (),
+    base = nothing, stop = nothing, snap = nothing,
+    options...)</code></pre><p><code>xstep</code> and <code>ystep</code> form a factorial grid. The result is plotted as a heatmap by default. This is the pattern used for the nitrogen-by-water-potential response in the Leaf Gas Exchange tutorial.</p><pre><code class="language-julia hljs">visualize(VisualResponse, :input, :slope, :response;
+    xstep = VisualResponse =&gt; :input =&gt; 0:0.25:4,
+    ystep = VisualResponse =&gt; :slope =&gt; 0.25:0.25:2,
+    kind = :heatmap,
+    xlab = &quot;Input&quot;,
+    ylab = &quot;Slope&quot;,
+    zlab = &quot;Response&quot;,
+    aspect = 1.4,
+)</code></pre><img src="968fb123.svg" alt="Example block output"/><p>The same factorial result can be rendered as contours:</p><pre><code class="language-julia hljs">visualize(VisualResponse, :input, :slope, :response;
+    xstep = VisualResponse =&gt; :input =&gt; 0:0.25:4,
+    ystep = VisualResponse =&gt; :slope =&gt; 0.25:0.25:2,
+    kind = :contour,
+    zgap = 0.5,
+    zlabgap = 1,
+    xlab = &quot;Input&quot;,
+    ylab = &quot;Slope&quot;,
+    zlab = &quot;Response&quot;,
+    aspect = 1.4,
+    backend = :Gadfly,
+)</code></pre><img src="6e1d7ba7.svg" alt="Example block output"/><p>Three-column <code>visualize(df, x, y, z)</code> uses the same renderer. Set <code>kind=:contour</code> for contour lines. <code>zlim</code> fixes the color or contour range, <code>zgap</code> controls contour spacing, and <code>zlabgap</code> requests labels at a chosen interval. Contour rendering and the gap options are currently more complete in the Gadfly backend than in the terminal backend. Supply a complete, regularly ordered x-by-y grid for portable heatmap output; <code>visualize</code> creates that grid from its two factors.</p><h2 id="Labels,-units,-limits,-and-backends"><a class="docs-heading-anchor" href="#Labels,-units,-limits,-and-backends">Labels, units, limits, and backends</a><a id="Labels,-units,-limits,-and-backends-1"></a><a class="docs-heading-anchor-permalink" href="#Labels,-units,-limits,-and-backends" title="Permalink"></a></h2><p>The main two-dimensional options are:</p><table><tr><th style="text-align: right">Option</th><th style="text-align: right">Meaning</th></tr><tr><td style="text-align: right"><code>kind</code></td><td style="text-align: right"><code>:scatter</code>, <code>:line</code>, <code>:scatterline</code>, or <code>:step</code></td></tr><tr><td style="text-align: right"><code>title</code>, <code>xlab</code>, <code>ylab</code></td><td style="text-align: right">plot and axis labels</td></tr><tr><td style="text-align: right"><code>name</code>, <code>names</code></td><td style="text-align: right">one series label or several series labels</td></tr><tr><td style="text-align: right"><code>legend</code>, <code>legendpos</code></td><td style="text-align: right">legend title/visibility and inside position</td></tr><tr><td style="text-align: right"><code>color</code>, <code>colors</code></td><td style="text-align: right">one color or parallel series colors</td></tr><tr><td style="text-align: right"><code>xlim</code>, <code>ylim</code></td><td style="text-align: right">displayed data limits</td></tr><tr><td style="text-align: right"><code>xunit</code>, <code>yunit</code></td><td style="text-align: right">units used for conversion and axis labels</td></tr><tr><td style="text-align: right"><code>ycat</code></td><td style="text-align: right">explicit category order for a step plot</td></tr><tr><td style="text-align: right"><code>aspect</code></td><td style="text-align: right">requested width-to-height relation</td></tr><tr><td style="text-align: right"><code>backend</code></td><td style="text-align: right"><code>:Gadfly</code> or <code>:UnicodePlots</code></td></tr></table><p>For three-column plots, <code>zlab</code>, <code>zlim</code>, <code>zgap</code>, and <code>zlabgap</code> control the color or contour dimension. <code>legendpos=(x, y)</code> places a Gadfly legend inside the plot at relative coordinates; the terminal backend warns and ignores that option.</p><p>Set <code>legend=false</code> to hide the legend. Units are inferred from arrays or DataFrame columns. An explicit <code>xunit</code> or <code>yunit</code> converts compatible values before plotting; it does not reinterpret an incompatible number. <code>ZonedDateTime</code> columns are converted to <code>DateTime</code> because the graphical backend does not accept zoned values directly.</p><p>Cropbox chooses Gadfly in Jupyter, Pluto, VS Code, and Documenter, and UnicodePlots in a plain terminal. Set <code>backend</code> when output must be identical across environments. Backend-specific plot objects remain an escape hatch, but code written against them is less portable than code using the options above.</p><p>Backend behavior is not completely identical:</p><table><tr><th style="text-align: right">Feature</th><th style="text-align: right">Gadfly</th><th style="text-align: right">UnicodePlots</th></tr><tr><td style="text-align: right">line, scatter, and step</td><td style="text-align: right">supported</td><td style="text-align: right">supported</td></tr><tr><td style="text-align: right"><code>:scatterline</code></td><td style="text-align: right">points plus line</td><td style="text-align: right">line rendering</td></tr><tr><td style="text-align: right">heatmap</td><td style="text-align: right">supported</td><td style="text-align: right">supported on a regular grid</td></tr><tr><td style="text-align: right">contour</td><td style="text-align: right">supported</td><td style="text-align: right">warns and falls back to a heatmap</td></tr><tr><td style="text-align: right">inside <code>legendpos</code></td><td style="text-align: right">supported</td><td style="text-align: right">ignored with a warning</td></tr><tr><td style="text-align: right"><code>zgap</code>, <code>zlabgap</code></td><td style="text-align: right">supported for contours</td><td style="text-align: right">ignored with a warning</td></tr></table><p>Use <code>backend=:Gadfly</code> for publication figures that rely on contour labels, inside legends, or exact graphical composition. Use <code>:UnicodePlots</code> for fast terminal diagnostics.</p><h2 id="Common-failures"><a class="docs-heading-anchor" href="#Common-failures">Common failures</a><a id="Common-failures-1"></a><a class="docs-heading-anchor-permalink" href="#Common-failures" title="Permalink"></a></h2><ul><li>A vector of systems requires parallel <code>configs</code>, <code>names</code>, and <code>colors</code> in the same order. In particular, <code>configs</code> must have the same length as the system vector.</li><li>A heatmap requires a complete, regularly ordered factorial grid. Missing combinations are better handled by constructing and checking a <code>DataFrame</code> before plotting.</li><li>Appended layers must have compatible units. <code>xunit</code> and <code>yunit</code> convert compatible quantities; they do not assign dimensions to unrelated values.</li><li>An explicitly selected backend must be repeated on appended calls.</li><li>A grouped response curve may contain every snapshot from every configuration. Select one time point explicitly when a dynamic run would otherwise join unrelated trajectories.</li><li>Observation-versus-estimate plots use an inner join. Missing, duplicated, or differently zoned index values can silently reduce or multiply the points; inspect the joined table when the count is unexpected.</li><li>Backend warnings usually indicate a presentation limitation, not a failed simulation. Re-run with <code>backend=:Gadfly</code> before changing model equations.</li></ul><h2 id="Interactive-parameter-controls"><a class="docs-heading-anchor" href="#Interactive-parameter-controls">Interactive parameter controls</a><a id="Interactive-parameter-controls-1"></a><a class="docs-heading-anchor-permalink" href="#Interactive-parameter-controls" title="Permalink"></a></h2><p>The callback form receives a configuration made from the current widget values:</p><pre><code class="language-julia hljs">manipulate(c -&gt; visualize(VisualTrajectory, :time, :mass;
+        config = c,
+        stop = 4u&quot;hr&quot;,
+        kind = :line,
+    );
+    parameters = VisualTrajectory =&gt; :rate =&gt; 0:0.25:2,
+    config = VisualTrajectory =&gt; :rate =&gt; 1,
+)</code></pre><p>The convenience form sends its positional and remaining keyword arguments to <code>visualize</code>:</p><pre><code class="language-julia hljs">manipulate(VisualTrajectory, :time, :mass;
+    parameters = VisualTrajectory =&gt; :rate =&gt; 0:0.25:2,
+    config = VisualTrajectory =&gt; :rate =&gt; 1,
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+)</code></pre><p>Ranges and arrays make sliders; arrays of symbols or enum values and dictionaries make drop-down controls; Booleans make check boxes. Interactive widgets require a working WebIO provider. Without one, Cropbox warns and returns a single static callback result, which is useful for testing the code but is not interactive.</p><p>Treat a widget as an exploration tool. Save the selected values as an explicit <code>Config</code> before using them in a reproducible analysis.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Simulation API</a><a class="docs-footer-nextpage" href="../inspection/">Inspection API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 28 July 2026 06:10">Tuesday 28 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
