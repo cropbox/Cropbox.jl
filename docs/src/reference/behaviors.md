@@ -14,7 +14,7 @@ Ask how the value changes:
 - Boolean event or state: `flag`;
 - read from indexed input: `provide` plus `drive`;
 - generated child systems: `produce`;
-- equation root: `solve`, `bisect`, or experimental `fixedpoint`.
+- equation root: `solve` or `bisect`.
 
 Use the smallest behavior that expresses the scientific meaning. A declaration
 that happens to produce the same number with `preserve` and `track` still has a
@@ -34,6 +34,11 @@ Supported tags: `parameter`, `optional`, `override`, `extern`, `ref`, `min`,
 coefficient => 0.8 ~ preserve(parameter, min = 0, max = 1)
 ```
 
+`optional` changes the stored value type to allow `nothing`. With no body or
+configured value, the value is `nothing`; an explicit configured `nothing` is
+also retained. A configured `missing` instead means “use the declaration
+default” and is not the spelling for an intentionally absent value.
+
 ### [`track`](@id behavior-track)
 
 Recomputes the body in dependency order on every applicable update.
@@ -44,6 +49,23 @@ Supported tags: `override`, `extern`, `ref`, `skip`, `init`, `when`, `min`,
 ```julia
 rate(T, Tb) => T - Tb ~ track(min = 0, u"K/d")
 ```
+
+A self-dependency can express a discrete recurrence when an initial value is
+explicit:
+
+```julia
+x(x) => 2x ~ track(init = 1)
+```
+
+Without `init`, the first evaluation has no `x` to read. This form is a
+stepwise recurrence, not integration of a rate; use `accumulate` for a state
+whose change is defined per unit time. Cycles between separate `track`
+variables remain invalid.
+
+With `when`, `track` stores the body only while the condition is true. When it
+is false, the stored value is `init`, or zero when `init` is absent; it does
+not retain the previous tracked value. Use `remember` for a one-time capture
+that must then persist.
 
 ### [`accumulate`](@id behavior-accumulate)
 
@@ -57,11 +79,21 @@ Supported tags: `init`, `time`, `timeunit`, `reset`, `when`, `min`, `max`,
 biomass(growth_rate) ~ accumulate(init = biomass0, u"g")
 ```
 
+Without `init`, the stored state starts at zero in its declared type and unit.
+The default `time` is `context.clock.time`; `timeunit` controls the rate unit
+used for the elapsed interval. A true `when` condition enables the rate, while
+`reset` schedules a return to `init` on the next update.
+
+Several accumulated states may depend on one another, as in coupled
+predator–prey equations. Cropbox advances their stored values before computing
+the rates for the following interval, so each new rate sees the same updated
+snapshot rather than a declaration-order-dependent partial update.
+
 ### [`flag`](@id behavior-flag)
 
 Stores a Boolean condition. `once` makes a true event irreversible.
 
-Supported tags: `parameter`, `override`, `extern`, `once`, `when`.
+Supported tags: `parameter`, `override`, `extern`, `once`.
 
 ```julia
 triggered(signal, threshold) => signal >= threshold ~ flag(once)
@@ -109,22 +141,25 @@ interval. Unlike `accumulate`, it does not retain a running total.
 
 Supported tags: `time`, `timeunit`, `when`, `unit`.
 
+When its `when` condition is false, the rate stored for the following interval
+is zero.
+
 ### [`integrate`](@id behavior-integrate)
 
-Builds a callable numerical integral over a non-time argument. It is distinct
-from `accumulate`, which integrates during simulation updates.
+Evaluates a numerical integral over a non-time argument during an update. It is
+distinct from `accumulate`, which carries a state forward through simulation
+time.
 
-Supported tags: `from`, `to`, `method`, `points`, `unit`.
+Supported tags: `from`, `to`, `unit`.
 
 ```julia
 area(scale; x) => scale * sin(x) ~ integrate(from = 0, to = π)
 ```
 
-`method=:quadgk` is the adaptive default. `method=:gauss` selects a fixed
-Gauss–Legendre rule, with `points=3` or `points=5`. Cropbox caches the result
-until the integration bounds or bound model dependencies change. The single
-argument after `;` may carry its own type or unit, for example
-`x::Float64(u"m")`.
+Cropbox evaluates the integral with QuadGK's adaptive quadrature whenever the
+variable updates. The single argument after `;` is the integration variable
+and may carry its own type or unit, for example `x::Float64(u"m")`. `from` and
+`to` provide its bounds.
 
 ## Tabular and functional data
 
@@ -227,6 +262,11 @@ The body may return one production request, several requests, or `nothing`.
 `~ produce::Child` stores at most one child; a vector type such as
 `~ produce::Child[]` appends children. Constructor keywords passed to
 `produce(Child; ...)` are combined with the parent's shared context.
+`single` is derived internally from this declared static type; model code
+normally selects the behavior by writing `Child` or `Child[]`, not by adding a
+`single` tag manually.
+See [Dynamic Hierarchies](@ref dynamic-hierarchies) for the request helper,
+hierarchy traversal, and simulation-output considerations.
 
 ### [`hold`](@id behavior-hold)
 
@@ -235,9 +275,19 @@ tags.
 
 ### [`wrap`](@id behavior-wrap)
 
-Passes a state object rather than its current value into a dependency. It
-accepts no tags and should be reserved for code that deliberately needs state
-identity or mutation semantics.
+Dependencies normally receive current values. `wrap(state)` passes the state
+object itself:
+
+```julia
+@system WrappedState(Controller) begin
+    source                => 1        ~ preserve
+    doubled(wrap(source)) => 2source' ~ track
+end
+```
+
+This makes storage identity and mutation visible to the equation. `wrap`
+accepts no tags and should be rare in scientific model code. Use an ordinary
+dependency whenever only the value is needed.
 
 ### [`bring`](@id behavior-bring)
 
@@ -255,6 +305,19 @@ leaves construction to a parent declaration. Prefer mixins or an ordinary child
 unless this forwarding behavior is specifically needed.
 
 ## Equation-solving behaviors
+
+### [Residual equality with `⩵`](@id residual-equality)
+
+Inside `solve` or `bisect`, `left ⩵ right` means the residual
+`left - right`:
+
+```julia
+x    => (2x ⩵ 1)  ~ solve
+y(y) => (y^2 ⩵ 2) ~ bisect(lower = 0, upper = 2)
+```
+
+It improves the readability of an equation but does not perform a Boolean
+comparison. Use Julia's `==` when a Boolean result is intended.
 
 ### [`solve`](@id behavior-solve)
 
@@ -294,24 +357,6 @@ expand an initially invalid bracket. The defaults are `maxiter=150` and
 `tol=1e-5`; specify them when numerical reproducibility across model versions is
 important.
 
-### [`fixedpoint` (experimental)](@id behavior-fixedpoint)
-
-Iterates `x = f(x)` until the absolute update error is within tolerance.
-
-Supported tags: `init`, `maxiter`, `tol`, `damping`, `min`, `max`, `unit`.
-
-```julia
-x(x) => cos(x) ~ fixedpoint(init = 1.0, tol = 1e-10, maxiter = 100)
-```
-
-`damping` scales each proposed change; `min` and `max` clip iterates. Unlike
-bisection, a fixed-point iteration is not generally guaranteed to converge.
-Treat this behavior as experimental and verify both convergence and agreement
-with a trusted formulation over the entire input domain.
-
-The current defaults are a zero initial value, `maxiter=50`, `tol=1e-5`, and
-`damping=1.0`.
-
 ## Tag compatibility matrix
 
 The table below mirrors the tags accepted by each behavior. A tag absent from a
@@ -321,11 +366,11 @@ row is rejected during `@system` expansion.
 |---|---|
 | `preserve` | `parameter`, `optional`, `override`, `extern`, `ref`, `min`, `max`, `round`, `unit` |
 | `track` | `override`, `extern`, `ref`, `skip`, `init`, `when`, `min`, `max`, `round`, `unit` |
-| `flag` | `parameter`, `override`, `extern`, `once`, `when` |
+| `flag` | `parameter`, `override`, `extern`, `once` |
 | `remember` | `init`, `when`, `unit` |
 | `accumulate` | `init`, `time`, `timeunit`, `reset`, `when`, `min`, `max`, `unit` |
 | `capture` | `time`, `timeunit`, `when`, `unit` |
-| `integrate` | `from`, `to`, `method`, `points`, `unit` |
+| `integrate` | `from`, `to`, `unit` |
 | `advance` | `init`, `step`, `unit` |
 | `provide` | `parameter`, `index`, `init`, `step`, `autounit` |
 | `drive` | `parameter`, `override`, `tick`, `from`, `by`, `unit` |
@@ -333,8 +378,7 @@ row is rejected during `@system` expansion.
 | `interpolate` | `parameter`, `reverse`, `knotunit`, `unit` |
 | `solve` | `lower`, `upper`, `pick`, `unit` |
 | `bisect` | `lower`, `upper`, `maxiter`, `tol`, `min`, `max`, `evalunit`, `unit` |
-| `fixedpoint` | `init`, `maxiter`, `tol`, `damping`, `min`, `max`, `unit` |
-| `produce` | `single`, `when` |
+| `produce` | `single` (inferred from type), `when` |
 | `hold` | none |
 | `wrap` | none |
 | `call` | `unit` |
@@ -348,7 +392,7 @@ row is rejected during `@system` expansion.
 - `extern`: accept a value supplied by a constructor or parent system.
 - `override`: leave the declaration to construction or a compatible replacing
   declaration.
-- `optional`: permit a missing parameter value.
+- `optional`: allow a preserved value to be `nothing`.
 - `ref`: store a reference wrapper used for deliberate cross-component writes.
 
 These tags affect ownership, not just numerical updates. Use them sparingly at
@@ -357,8 +401,9 @@ system boundaries and document who supplies the value.
 ### Initialization and conditions
 
 - `init`: starting value or starting index, depending on the behavior.
-- `when`: update only under a Boolean condition; Boolean combinations are
-  accepted.
+- `when`: supply a Boolean condition whose effect depends on the behavior;
+  `track` falls back to `init` or zero, cumulative behaviors use a zero rate,
+  `remember` captures once, and `produce` gates child requests.
 - `once`: prevent a `flag` from returning to false.
 - `reset`: return an accumulator to its `init` value on the next update when
   the tag expression is true.
@@ -371,7 +416,7 @@ system boundaries and document who supplies the value.
 - `round`: apply integer-style rounding; accepted values include `:round`,
   `:floor`, `:ceil`, and `:trunc`.
 - `lower`, `upper`: solver search or root-selection bounds.
-- `tol`, `maxiter`, `damping`: iterative solver controls.
+- `tol`, `maxiter`: iterative solver controls.
 
 Bounds can prevent invalid output but can also hide an invalid equation. Explain
 scientific bounds in the variable docstring and test behavior at the boundary.

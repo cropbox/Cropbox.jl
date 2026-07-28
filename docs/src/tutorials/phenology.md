@@ -1,4 +1,4 @@
-# [Build a Weather-driven Model](@id phenology-tutorial)
+# [Weather-driven Phenology](@id phenology-tutorial)
 
 This tutorial develops a thermal-time model from an equation, connects it to
 daily weather, and stops the simulation at maturity. It introduces the pattern
@@ -30,7 +30,6 @@ sample.
 using Cropbox
 using DataFrames
 using Dates
-using TimeZones
 
 dates = Date(2025, 4, 1):Day(1):Date(2025, 4, 20)
 weather = DataFrame(
@@ -63,14 +62,14 @@ operations.
 
 ```@example phenology
 @system ThermalTime begin
-    Tb: base_temperature                      => 5                 ~ preserve(parameter, u"°C")
-    Topt: optimum_temperature                 => 30                ~ preserve(parameter, u"°C")
-    requirement                               => 75                ~ preserve(parameter, u"K*d")
+    Tb: base_temperature                    => 5                 ~ preserve(parameter, u"°C")
+    Topt: optimum_temperature               => 30                ~ preserve(parameter, u"°C")
+    requirement                             => 75                ~ preserve(parameter, u"K*d")
 
-    Tbounded(T, Topt)                         => T                 ~ track(max = Topt, u"°C")
-    ΔT(Tbounded, Tb): effective_temperature   => Tbounded - Tb     ~ track(min = 0, u"K")
-    TT(ΔT): thermal_time                                           ~ accumulate(u"K*d")
-    mature(TT, requirement)                   => TT >= requirement ~ flag
+    Tbounded(T, Topt)                       => T                 ~ track(max = Topt, u"°C")
+    ΔT(Tbounded, Tb): effective_temperature => Tbounded - Tb     ~ track(min = 0, u"K")
+    TT(ΔT): thermal_time                                         ~ accumulate(u"K*d")
+    mature(TT, requirement)                 => TT >= requirement ~ flag
 end
 ```
 
@@ -79,20 +78,40 @@ lower bound of effective temperature. The equation therefore contains no
 hidden clamping function. `accumulate` combines effective temperature with the
 daily clock step and stores kelvin-days.
 
-## Compose and configure
+## Compose the executable model
 
 ```@example phenology
 @system PhenologyModel(ThermalTime, Weather, Controller)
+```
 
+`Cropbox.hierarchy` shows how the reusable process, environment, controller,
+and child systems are assembled:
+
+```@example phenology
+h = Cropbox.hierarchy(PhenologyModel; skipcontext = true)
+println(repr(MIME("text/plain"), h))
+nothing
+```
+
+![PhenologyModel system hierarchy](../assets/tutorials/phenology-hierarchy.svg)
+
+*Direct `writeimage` output from
+`hierarchy(PhenologyModel; skipcontext = true)`. Dashed arrows identify mixins;
+solid arrows identify child-system relationships. The runtime context is
+omitted while the `Calendar` used by `Weather` remains visible.*
+
+The final system contains the process, environment, and root controller. The
+same `ThermalTime` component can be reused with another weather implementation.
+
+## Configure the scenario
+
+```@example phenology
 config = @config (
     Clock => :step => 1u"d",
     Calendar => :init => ZonedDateTime(2025, 4, 1, tz"UTC"),
     Weather => :data => weather,
 )
 ```
-
-The final system contains the process, environment, and root controller. The
-same `ThermalTime` component can be reused with another weather implementation.
 
 ## Run to maturity
 
@@ -165,5 +184,5 @@ Useful next exercises are:
 - calibrate `Tb` and `requirement` on training years, then evaluate held-out
   years.
 
-The [Evaluation and Calibration](@ref evaluation-tutorial) tutorial covers the
+The [Evaluate and Calibrate Models](@ref evaluation-tutorial) workflow covers the
 last two steps.

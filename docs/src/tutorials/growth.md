@@ -31,9 +31,9 @@ using Cropbox
 using DataFrames
 
 @system LogisticGrowth(Controller) begin
-    r: growth_rate       => 0.05                  ~ preserve(parameter, u"g/g/d")
-    Wf: final_biomass    => 300                   ~ preserve(parameter, u"g")
-    W0: initial_biomass  => 0.25                  ~ preserve(parameter, u"g")
+    r: growth_rate       => 0.05                 ~ preserve(parameter, u"g/g/d")
+    Wf: final_biomass    => 300                  ~ preserve(parameter, u"g")
+    W0: initial_biomass  => 0.25                 ~ preserve(parameter, u"g")
     W(W, r, Wf): biomass => r * W * (1 - W / Wf) ~ accumulate(init = W0, u"g")
 
     t(context.clock.time): time ~ track(u"d")
@@ -65,6 +65,28 @@ Use `look` for the complete declaration or one variable.
 ```@example logistic
 look(LogisticGrowth, :W)
 ```
+
+`Cropbox.dependency` exposes the graph Cropbox uses to order declarations and
+update stages:
+
+```@example logistic
+d = Cropbox.dependency(LogisticGrowth)
+println(repr(MIME("text/plain"), d))
+nothing
+```
+
+The text form gives the generated update order. The SVG below is written
+directly from the same graph object:
+
+```julia
+Cropbox.writeimage("logistic-dependency", d; format = :svg)
+```
+
+![LogisticGrowth dependency relationships](../assets/tutorials/logistic-dependency.svg)
+
+*Direct `writeimage` output from `dependency(LogisticGrowth)`. Generated stages
+such as `∘context`, `⋆context`, and `⋆W` remain visible because this is the
+actual scheduling graph rather than a redrawn scientific summary.*
 
 ## Configure a scenario
 
@@ -134,7 +156,7 @@ evaluate(LogisticGrowth, observations;
 
 `calibrate` extends this step by searching bounded parameter ranges. Keep the
 data used for calibration separate from independent validation data; see
-[Evaluation and Calibration](@ref evaluation-tutorial) for the full workflow.
+[Evaluate and Calibrate Models](@ref evaluation-tutorial) for the full workflow.
 
 ## Continue
 
@@ -143,5 +165,5 @@ data used for calibration separate from independent validation data; see
   configurations and parameter sweeps.
 - [Run Simulations and Shape Output](@ref simulation-workflow) covers stopping,
   snapshots, and output selectors.
-- [Build a Weather-driven Model](@ref phenology-tutorial) adds calendar time and
+- [Weather-driven Phenology](@ref phenology-tutorial) adds calendar time and
   tabular weather input.

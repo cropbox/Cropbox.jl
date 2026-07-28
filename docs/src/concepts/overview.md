@@ -23,13 +23,13 @@ A variable has a short programmatic name, an optional alias, dependencies, a
 formula or initial value, and an update behavior.
 
 ```julia
-rate(temperature, base): development_rate =>
-    (temperature - base) / 1u"d" ~ track(min = 0, u"K/d")
+response(temperature, base): effective_temperature =>
+    temperature - base ~ track(min = 0, u"K")
 ```
 
-Here `rate` depends on `temperature` and `base`; `development_rate` is an alias;
-the expression is recalculated by `track`; `min = 0` applies a lower bound to
-the stored value; and the result has units of kelvin per day.
+Here `response` depends on `temperature` and `base`; `effective_temperature` is
+an alias; the expression is recalculated by `track`; `min = 0` applies a lower
+bound to the stored value; and the result has units of kelvin.
 
 ### Dependency
 
@@ -82,20 +82,29 @@ of the specification.
 using Cropbox
 
 @system TemperatureResponse begin
-    temperature                 => 20                            ~ preserve(parameter, u"°C")
-    base                        => 5                             ~ preserve(parameter, u"°C")
-    response(temperature, base) => (temperature - base) / 1u"hr" ~ track(min = 0, u"K/hr")
+    T: temperature         => 20            ~ preserve(parameter, u"°C")
+    Tb: base_temperature   => 5             ~ preserve(parameter, u"°C")
+
+    Δt(context.clock.step): timestep        ~ preserve(u"hr")
+    r(T, Tb, Δt): response => (T - Tb) / Δt ~ track(min = 0, u"K/hr")
 end
 
 @system Development(TemperatureResponse, Controller) begin
-    progress(response) ~ accumulate(u"K")
+    progress(r) ~ accumulate(u"K")
 end
 
 config = @config TemperatureResponse => (
-    temperature = 18u"°C",
-    base = 4u"°C",
+    T = 18,
+    Tb = 4,
 )
 ```
+
+Short names keep dependencies and equations compact. Descriptive aliases such
+as `temperature`, `base_temperature`, `timestep`, and `response` remain
+available when reading an instance or selecting output. `Δt` reads the
+configured `Clock.step`, so the response equation does not bake in a fixed
+update interval. The configuration supplies plain numbers for `T` and `Tb`;
+Cropbox applies their declared unit and displays them as `18 °C` and `4 °C`.
 
 Continue with [DSL Syntax](@ref dsl-syntax), [System](@ref system), and
 [Configure Models and Scenarios](@ref configuration-workflow). The
@@ -124,13 +133,13 @@ first(result, 3)
 
 A system field is a Cropbox state object rather than a bare number; postfix `'`
 or `value` retrieves its current value outside a declaration. See
-[Systems and Simulation Lifecycle](@ref simulation-lifecycle) and
+[Model Execution](@ref model-execution) and
 [Run Simulations and Shape Output](@ref simulation-workflow) for construction,
 updates, stopping, snapshots, and output selectors.
 
 ### 3. Visualization and evaluation
 
-`visualize` and `plot` explore trajectories, scenarios, and observations.
+`visualize` explores trajectories, scenarios, and observations.
 `evaluate` compares model estimates with observed data using a selected metric,
 and `calibrate` searches parameter ranges against that objective. Keep
 calibration and independent validation separate.
@@ -140,7 +149,7 @@ visualize(result, :time, :progress; kind = :line)
 ```
 
 Continue with [Inspect and Visualize Models](@ref inspection-workflow) and the
-[Evaluation and Calibration](@ref evaluation-tutorial) tutorial.
+[Evaluate and Calibrate Models](@ref evaluation-tutorial) workflow.
 
 ## Where to go next
 

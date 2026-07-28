@@ -1,11 +1,12 @@
-# [Coupled Population Dynamics](@id lotka-volterra-tutorial)
+# [Predator–Prey Model](@id lotka-volterra-tutorial)
 
-This tutorial preserves the Lotka–Volterra example used in the original Cropbox
-manual. It is not a crop model, but it is a compact way to learn two patterns
-that occur throughout crop modeling: several states changing together and a
-base process being extended without copying the whole specification.
+This tutorial preserves the Lotka–Volterra predator–prey example used in the
+original Cropbox manual. It is not a crop model, but it is a compact way to
+learn two patterns that occur throughout crop modeling: several states changing
+together and a base process being extended without copying the whole
+specification.
 
-## Start from the coupled equations
+## Start from the Lotka–Volterra equations
 
 Let prey population ``N`` and predator population ``P`` follow
 
@@ -44,8 +45,8 @@ using DataFrames
     N0: prey_initial_population     => 20 ~ preserve(parameter)
     P0: predator_initial_population => 30 ~ preserve(parameter)
 
-    N(N, P, b, a): prey_population             => b * N - a * N * P     ~ accumulate(init = N0)
-    P(N, P, c, a, m): predator_population      => c * a * N * P - m * P ~ accumulate(init = P0)
+    N(N, P, b, a): prey_population        => b * N - a * N * P     ~ accumulate(init = N0)
+    P(N, P, c, a, m): predator_population => c * a * N * P - m * P ~ accumulate(init = P0)
 end
 
 @system LotkaVolterra(PredatorPrey, Controller)
@@ -177,10 +178,10 @@ fitted = calibrate(LotkaVolterra, observations;
     index = :t,
     target = [:Hare => :N, :Lynx => :P],
     parameters = PredatorPrey => (
-        b = (0u"yr^-1", 2u"yr^-1"),
-        a = (0u"yr^-1", 2u"yr^-1"),
+        b = (0, 2),
+        a = (0, 2),
         c = (0, 2),
-        m = (0u"yr^-1", 2u"yr^-1"),
+        m = (0, 2),
         N0 = (0, 200),
         P0 = (0, 200),
     ),
@@ -190,8 +191,15 @@ fitted = calibrate(LotkaVolterra, observations;
 )
 ```
 
+`calibrate` reads the declared unit of each parameter. The plain bound
+`b = (0, 2)` is therefore interpreted in `u"yr^-1"` because `b` was declared
+with that unit. If an explicit quantity is useful, `[0, 2]u"yr^-1"` is a valid
+equivalent range container; multiplying a tuple as `(0, 2)u"yr^-1"` is not
+valid Julia syntax. Explicit compatible units are most useful when the search
+interval is naturally expressed on a different time scale.
+
 For the density-dependent model, add a bounded `K` parameter and compare both
 models on held-out years rather than judging only their calibration error.
 Retain the time step, bounds, metric, optimizer options, and package versions.
-See [Evaluation and Calibration](@ref evaluation-tutorial) for multi-target and
+See [Evaluate and Calibrate Models](@ref evaluation-tutorial) for multi-target and
 multi-environment workflows.

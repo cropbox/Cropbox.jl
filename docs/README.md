@@ -20,10 +20,11 @@ published automatically through GitHub Pages.
   [quick start](https://cropbox.github.io/Cropbox.jl/stable/tutorials/quickstart/).
 - Want to understand the framework? Read
   [How Cropbox Works](https://cropbox.github.io/Cropbox.jl/stable/concepts/overview/)
-  and the
-  [system lifecycle](https://cropbox.github.io/Cropbox.jl/stable/concepts/lifecycle/).
+  and [systems and composition](https://cropbox.github.io/Cropbox.jl/stable/guide/system/),
+  then follow the
+  [model execution flow](https://cropbox.github.io/Cropbox.jl/stable/concepts/lifecycle/).
 - Want to build a model step by step? Follow the logistic-growth,
-  weather-driven phenology, and coupled-population tutorials under
+  weather-driven phenology, and predator–prey tutorials under
   **Learn by Example**.
 - Already have a model? Use the task-oriented guides for configuration,
   simulation, inspection, visualization, evaluation, and calibration.
@@ -39,7 +40,10 @@ simulation, visualization, and interpretation:
   conditions;
 - garlic phenology, leaf development, biomass, carbon flow, and planting-date
   scenarios;
-- SimpleCrop growth, soil-water fluxes, stress, water balance, and irrigation;
+- SimpleCrop phenology, canopy growth, biomass partitioning, and coupled
+  environment;
+- the layered soil-water example and pedotransfer functions from the Cropbox
+  test suite;
 - CropRootBox root-system architecture, hierarchy traversal, rendering, and
   geometry export.
 
@@ -51,10 +55,10 @@ and simulation workflow, and includes figures generated from the model output.
 | Section | What it contains |
 |---|---|
 | **Start Here** | overview, installation, and a first runnable model |
-| **Core Concepts** | systems, variables, dependencies, behaviors, context, and simulation lifecycle |
+| **Core Concepts** | modeling workflow, system composition, model execution, DSL syntax, behaviors, and tags |
 | **Learn by Example** | progressively larger models and scientific applications |
 | **Workflows** | practical recipes for configuration, simulation, inspection, and output |
-| **DSL and API Reference** | declaration grammar, behaviors, tags, functions, components, and plotting variants |
+| **API Reference** | declarations, simulation, visualization, inspection, utilities, and components |
 | **Troubleshooting** | FAQ, common mistakes, performance, and reproducibility advice |
 | **Model Gallery** | related model packages, workshops, and learning resources |
 

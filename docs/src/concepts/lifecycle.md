@@ -1,9 +1,11 @@
-# [Systems and Simulation Lifecycle](@id simulation-lifecycle)
+# [Model Execution](@id model-execution)
 
-Many Cropbox surprises come from mixing up declaration time, construction time,
-and update time. This page follows one system through its full lifecycle.
+The previous page explains how systems are defined and composed. This page
+follows one executable system from configuration through construction, manual
+updates, simulation, and output. Keeping those stages separate prevents many
+common Cropbox mistakes.
 
-## 1. Declare a system type
+## 1. Declare an executable system
 
 ```@example lifecycle
 using Cropbox
@@ -19,10 +21,62 @@ end
 `@system` analyzes dependencies and creates a concrete Julia type. No model
 instance exists yet.
 
-## 2. Construct and initialize
+## 2. Configure the runtime
+
+### [Configuration](@id Config)
+
+A `Config` maps system variables to scenario values. It is an input object, not
+a model instance. Prefer `@config`, and use system types as keys when they are
+available so parameter names and compatible units can be checked early.
 
 ```@example lifecycle
-s = instance(Counter)
+config = @config (
+    Counter => (
+        increment = 1,
+        limit = 3,
+    ),
+    Clock => :step => 1u"hr",
+)
+```
+
+Plain numeric values inherit the units declared by their parameters. Use an
+explicit unit when the configuration performs a conversion or defines a time
+step in a unit different from the declaration.
+
+### [Context and Controller](@id Context)
+
+Every constructed system receives a `Context` containing normalized
+configuration and a `Clock`. The root `Controller` creates that context; child
+systems receive it from their parent. Treat it as framework infrastructure and
+configure public systems instead of mutating context fields.
+
+### [Clock](@id Clock)
+
+`Clock` tracks elapsed model time and update count. Its `step` controls model
+updates. The later `snap` option controls only which updated states become
+output rows, so numerical resolution and output frequency remain separate
+decisions.
+
+### [Calendar](@id Calendar)
+
+`Calendar` maps elapsed time to a `ZonedDateTime` and date. Add or mix in a
+component that uses it when a model depends on civil dates, time zones, or
+date-indexed weather data.
+
+```julia
+config = @config (
+    Clock => :step => 1u"d",
+    Calendar => :init => ZonedDateTime(2025, 4, 1, tz"UTC"),
+)
+```
+
+`ZonedDateTime` and `tz"..."` are re-exported by Cropbox. Use the plain clock
+when elapsed model time is sufficient.
+
+## 3. Construct and initialize
+
+```@example lifecycle
+s = instance(Counter; config)
 ```
 
 `instance` performs four user-visible actions:
@@ -35,7 +89,7 @@ s = instance(Counter)
 This is why a freshly constructed instance already has meaningful `track` and
 `flag` values.
 
-## 3. Advance an existing instance
+## 4. Advance an existing instance
 
 ```@example lifecycle
 update!(s)
@@ -46,10 +100,14 @@ update!(s)
 This is useful for interactive control but must not be confused with a fresh
 replicate.
 
-## 4. Simulate and collect output
+## 5. Simulate and collect output
 
 ```@example lifecycle
-result = simulate(Counter; stop = :reached, target = [:total, :reached])
+result = simulate(Counter;
+    config,
+    stop = :reached,
+    target = [:total, :reached],
+)
 ```
 
 `simulate` constructs a new instance and delegates the update loop to
@@ -59,7 +117,8 @@ and then each updated state until the stop condition is satisfied.
 `simulate!` instead accepts an existing instance:
 
 ```@example lifecycle
-s2 = instance(Counter; config = Counter => :limit => 2)
+short_config = @config(config, Counter => :limit => 2)
+s2 = instance(Counter; config = short_config)
 result2 = simulate!(s2; stop = :reached, target = :total)
 ```
 
@@ -111,8 +170,7 @@ The common behaviors occupy different points in an update:
 - `accumulate`, `capture`, and `remember` carry values across updates;
 - `provide` establishes a data source and `drive` selects the current input;
 - `produce` may append child systems;
-- `solve`, `bisect`, and experimental `fixedpoint` repeat selected calculations
-  to resolve an equation.
+- `solve` and `bisect` repeat selected calculations to resolve an equation.
 
 Tags such as `when`, `once`, `reset`, `min`, and `max` modify those transitions.
 See [Behaviors and Tags](@ref behaviors-and-tags) for the supported combinations.

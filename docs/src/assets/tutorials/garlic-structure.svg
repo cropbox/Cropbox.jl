@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 390" role="img" aria-labelledby="title desc">
   <title id="title">Garlic model process chain</title>
-  <desc id="desc">Weather and calendar drive phenology and canopy development, which feed gas exchange, carbon balance, and organ growth with leaf-area feedback.</desc>
+  <desc id="desc">Weather and calendar drive phenology and canopy development, which feed gas exchange, carbon balance, and organ growth.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0 0L10 5L0 10z" fill="#667085"/>
     </marker>
   </defs>
@@ -37,10 +37,8 @@
     <text x="918" y="205" fill="#475467" font-size="14">growth allocation</text>
 
     <path d="M918 225V278" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
-    <rect x="786" y="290" width="264" height="76" rx="14" fill="#fff0f0" stroke="#cb3c33" stroke-width="2.5"/>
-    <text x="918" y="322" fill="#9f2f28" font-size="19" font-weight="700">Organ growth and yield</text>
-    <text x="918" y="348" fill="#475467" font-size="14">leaf · bulb · root · senescence</text>
-    <path d="M786 328H502V227" fill="none" stroke="#667085" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
-    <text x="641" y="316" fill="#667085" font-size="14" font-style="italic">leaf-area feedback</text>
+    <rect x="790" y="290" width="236" height="76" rx="14" fill="#fff0f0" stroke="#cb3c33" stroke-width="2.5"/>
+    <text x="908" y="322" fill="#9f2f28" font-size="19" font-weight="700">Organ growth and yield</text>
+    <text x="908" y="348" fill="#475467" font-size="14">leaf · bulb · root · senescence</text>
   </g>
 </svg>

@@ -65,16 +65,22 @@ Parameter values may be scalars, arrays, tables, functions, or other objects
 accepted by the declaration. A value is not expanded merely because it is a
 collection; expansion happens only through the `@config` sweep syntax.
 
+`missing` means “no configured override” during parameter construction, so
+Cropbox falls back to the declaration body. It is not stored as the parameter
+value. For a `preserve(optional)` declaration whose intentional value is
+absent, configure `nothing` instead.
+
 ### System keys and validation
 
 Prefer the system type when it is available:
 
 ```julia
-@config Model => :rate => 2u"g/d"
+@config Model => :rate => 2
 ```
 
 Cropbox then checks the short name or alias against parameters declared by
-`Model` and converts compatible units immediately. A symbol such as `:Model`
+`Model` and applies the declared unit to a plain number. An explicitly unitful
+value is converted when its dimension is compatible. A symbol such as `:Model`
 or a string path such as `"Model.rate"` is normalized by name but cannot offer
 the same early validation. Name-based keys are still useful for external files
 or code that runs before the model package is loaded.

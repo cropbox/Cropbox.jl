@@ -11,8 +11,8 @@ selected values, and compare those values with observations.
 | `evaluate` | join observations and estimates and calculate metrics | one number or a tuple |
 | `calibrate` | search parameter bounds against those metrics | a `Config` or Pareto frontier |
 
-For a first simulation, read [Systems and Simulation Lifecycle](@ref
-simulation-lifecycle) and [Run Simulations and Shape Output](@ref
+For a first simulation, read [Model Execution](@ref
+model-execution) and [Run Simulations and Shape Output](@ref
 simulation-workflow). This page records the complete public call patterns and
 the less common options exercised by the test suite.
 
@@ -39,6 +39,30 @@ Prefer a system type as a configuration key when it is in scope. Type keys
 check parameter names and convert compatible units immediately. Symbol or
 string keys remain useful when loading configuration before the system package,
 but validation is then deferred until construction.
+
+## [Advance one update with `update!`](@id manual-update)
+
+```julia
+update!(instance)
+```
+
+One call performs one generated Cropbox update cycle in dependency order. It
+is useful in tests and tightly controlled interactive code:
+
+```julia
+s = instance(Model; config)
+update!(s)
+value(s.context.clock.time)
+```
+
+For normal runs, prefer `simulate` or `simulate!`; they also handle stopping,
+snapshots, callbacks, output selection, and progress. Do not manually update an
+instance while a simulation callback is traversing the same instance.
+
+`update!` is also an internal extension point with stage arguments, and Cropbox
+uses the same exported name for updating a plot's option store. Those methods
+are implementation-facing; model code should normally call the one-argument
+system form or the documented `visualize!` function.
 
 ## Run fresh models with `simulate`
 
@@ -305,13 +329,17 @@ search bound:
 
 ```julia
 parameters = Model => (
-    base_temperature = (-5u"°C", 15u"°C"),
-    thermal_requirement = (100u"K*d", 2000u"K*d"),
+    base_temperature = (-5, 15),
+    thermal_requirement = (100, 2000),
 )
 ```
 
-Bounds are converted to each declared parameter unit before optimization. The
-result is a `Config` containing the selected values in model units.
+Plain bounds inherit the unit declared by each parameter and are converted
+before optimization. This is usually the clearest form. When explicit units
+are needed, put them on the values (for example
+`(-5u"°C", 15u"°C")`) or multiply a vector such as
+`[0, 2]u"yr^-1"`; `(0, 2)u"yr^-1"` is not valid Julia syntax. The result is a
+`Config` containing the selected values in model units.
 
 Cropbox uses
 [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl)
@@ -335,9 +363,9 @@ pass it to an optimization package such as
 
 Do not pass nonempty `config` and `configs` together to `evaluate` or
 `calibrate`. For several environments, make each entry of `configs` complete
-and include environment-identifying columns in `index`. See [Evaluation and
-Calibration](@ref evaluation-tutorial) for validation splits, residual checks,
-and reporting practice.
+and include environment-identifying columns in `index`. See [Evaluate and
+Calibrate Models](@ref evaluation-tutorial) for validation splits, residual
+checks, and reporting practice.
 
 ## API docstrings
 

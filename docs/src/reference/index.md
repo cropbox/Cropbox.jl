@@ -1,6 +1,7 @@
 # [Public API Index](@id public-api-index)
 
-This is a task-oriented index of names exported by Cropbox. “Advanced” means
+This is a task-oriented index of supported names exported by Cropbox.
+Deprecated compatibility aliases are intentionally omitted. “Advanced” means
 that ordinary crop-model scripts rarely need the name, not that it is private.
 
 ## Modeling and configuration
@@ -11,20 +12,20 @@ that ordinary crop-model scripts rarely need the name, not that it is private.
 | `System` | common abstract system type | [System](@ref system) |
 | `@config`, `Config` | build and store configuration | [Declarations and Configuration](@ref declaration-api) |
 | `parameters` | list configurable values | [Inspection](@ref Inspection1) |
-| `Controller`, `Context` | root construction and shared runtime context | [System](@ref system) |
-| `Clock`, `Calendar` | elapsed and civil time | [System](@ref system) |
+| `Controller` | make a composed system executable | [Systems and Composition](@ref system) |
+| `Context` | carry configuration and shared runtime state | [Model Execution](@ref model-execution) |
+| `Clock`, `Calendar` | elapsed and civil time | [Model Execution](@ref model-execution) |
 | `instance` | construct and initialize a system | [Simulation](@ref Simulation1) |
-| `update!` | perform one manual update | [Values, Units, and Structure](@ref utility-api) |
+| `update!` | perform one manual update | [Simulation](@ref manual-update) |
 
-## Simulation, analysis, and plotting
+## Simulation, analysis, and visualization
 
 | Name | Role | Reference |
 |---|---|---|
 | `simulate`, `simulate!` | run fresh or existing systems | [Simulation](@ref Simulation1) |
 | `evaluate` | compare observations and estimates | [Simulation](@ref Simulation1) |
 | `calibrate` | search parameter bounds | [Simulation](@ref Simulation1) |
-| `plot`, `plot!` | plot vectors and tables | [Visualization](@ref Visualization1) |
-| `visualize`, `visualize!` | simulate and plot, or plot existing data | [Visualization](@ref Visualization1) |
+| `visualize`, `visualize!` | visualize existing data or simulation results | [Visualization](@ref Visualization1) |
 | `manipulate` | add interactive parameter widgets | [Visualization](@ref Visualization1) |
 | `look`, `@look`, `dive` | inspect declarations and instances | [Inspection](@ref Inspection1) |
 
@@ -32,21 +33,21 @@ that ordinary crop-model scripts rarely need the name, not that it is private.
 
 | Name | Role | Reference |
 |---|---|---|
-| `value` | unwrap a state or supported wrapper | [Values, Units, and Structure](@ref utility-api) |
-| `nounit` | pass a state magnitude without its unit | [Values, Units, and Structure](@ref utility-api) |
-| `unitfy`, `deunitfy` | attach, convert, strip, or parse units | [Values, Units, and Structure](@ref utility-api) |
+| `value` | unwrap a state or supported wrapper | [Values and Units](@ref utility-api) |
+| `nounit` | pass a state magnitude without its unit | [Values and Units](@ref utility-api) |
+| `unitfy`, `deunitfy` | attach, convert, strip, or parse units | [Values and Units](@ref utility-api) |
 | `u"..."` | Unitful unit string macro | [Built-in Model Components](@ref built-in-components) |
-| `±` | Normal sampling specification | [Values, Units, and Structure](@ref utility-api) |
-| `⩵` | residual equality for solver behaviors | [Values, Units, and Structure](@ref utility-api) |
-| `wrap` | pass a state object as a dependency (advanced) | [Values, Units, and Structure](@ref utility-api) |
+| `±` | Normal sampling specification | [Configure Models and Scenarios](@ref stochastic-configuration) |
+| `⩵` | residual equality for solver behaviors | [Behaviors and Tags](@ref residual-equality) |
+| `wrap` | pass a state object as a dependency (advanced) | [Behaviors and Tags](@ref behavior-wrap) |
 
 ## Dynamic structures
 
 | Name | Role | Reference |
 |---|---|---|
-| `produce` | request dynamic child construction | [Values, Units, and Structure](@ref utility-api) |
-| `Gather` | traversal state and output store | [Values, Units, and Structure](@ref utility-api) |
-| `gather!`, `visit!` | dispatch and walk a model hierarchy | [Values, Units, and Structure](@ref utility-api) |
+| `produce` | request dynamic child construction | [Dynamic Hierarchies](@ref dynamic-hierarchies) |
+| `Gather` | traversal state and output store | [Dynamic Hierarchies](@ref dynamic-hierarchies) |
+| `gather!`, `visit!` | dispatch and walk a model hierarchy | [Dynamic Hierarchies](@ref dynamic-hierarchies) |
 
 ## Reusable systems and re-exports
 

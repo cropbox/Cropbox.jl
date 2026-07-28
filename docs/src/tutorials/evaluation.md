@@ -1,9 +1,14 @@
-# [Evaluation and Calibration](@id evaluation-tutorial)
+# [Evaluate and Calibrate Models](@id evaluation-tutorial)
 
 Model evaluation compares estimates with observations. Calibration searches a
 parameter space for configurations that improve a selected metric. Keep these
 steps separate: evaluation is meaningful on any data set, while calibration
 must be judged on data not used by the optimizer.
+
+This page is the final part of the
+specification → simulation → visualization and evaluation workflow. Start here
+after the model definition, scenarios, and output contract have already been
+checked.
 
 ## Compare two data frames
 
@@ -53,9 +58,9 @@ hide stage-specific bias, so pair metrics with residual plots.
 
 ```@example evaluation
 @system LinearGrowth(Controller) begin
-    time(context.clock.time)       ~ track(u"d")
-    rate                     => 10 ~ preserve(parameter, u"g/d")
-    mass(rate)                     ~ accumulate(u"g")
+    time(context.clock.time) ~ track(u"d")
+    rate => 10               ~ preserve(parameter, u"g/d")
+    mass(rate)               ~ accumulate(u"g")
 end
 
 obs2 = DataFrame(
@@ -123,14 +128,15 @@ fitted = calibrate(LinearGrowth, obs2;
     config,
     index = :time,
     target = :mass,
-    parameters = LinearGrowth => :rate => (0u"g/d", 20u"g/d"),
+    parameters = LinearGrowth => :rate => (0, 20),
     stop = 3u"d",
     metric = :rmse,
     optim = (MaxSteps = 1000,),
 )
 ```
 
-The result is a `Config` that can be merged with the base scenario.
+The bounds inherit `rate`'s declared unit `u"g/d"`. The result is a `Config`
+that can be merged with the base scenario.
 
 ```julia
 estimate = simulate(LinearGrowth;

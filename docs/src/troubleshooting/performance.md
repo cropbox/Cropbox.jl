@@ -90,9 +90,9 @@ For LeafGasExchange and other coupled models:
 - compare both outputs and failure rates over a grid;
 - report tolerance and iteration limits with timing results.
 
-Experimental fixed-point or analytical paths can be faster for a particular
-formulation, but the framework-level conclusion must not be inferred from one
-model's algorithmic change.
+Model-specific alternative solvers or analytical paths can be faster for a
+particular formulation, but a framework-level conclusion must not be inferred
+from one model's algorithmic change.
 
 ## Whole-plant and integration-heavy models
 

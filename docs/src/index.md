@@ -17,19 +17,24 @@ result = simulate(Growth; stop = 3u"hr")
 ```
 
 This is a small example, but the same workflow is used in coupled leaf gas
-exchange, garlic growth, soil-water balance, and root architecture models.
+exchange, garlic growth, SimpleCrop, layered soil, and root architecture models.
 
 ## Choose a path
 
 - New to Cropbox: start with [Quick Start](@ref quick-start).
 - Building a model: read [How Cropbox Works](@ref cropbox-concepts), then
-  [Build a Weather-driven Model](@ref phenology-tutorial).
+  [Weather-driven Phenology](@ref phenology-tutorial).
 - Using an existing model: go directly to the
   [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial),
-  [Garlic](@ref garlic-tutorial), [Soil Water](@ref soil-water-tutorial), or
+  [Garlic](@ref garlic-tutorial), [SimpleCrop](@ref simplecrop-tutorial),
+  [Soil Water Transport](@ref soil-water-transport-tutorial), or
   [CropRootBox](@ref croprootbox-tutorial) tutorial.
 - Looking up syntax: use [DSL Syntax](@ref dsl-syntax) and
   [Behaviors and Tags](@ref behaviors-and-tags).
+- Maintaining or extending a model package: combine
+  [Systems and Composition](@ref system), [DSL Syntax](@ref dsl-syntax),
+  [Inspection](@ref Inspection1), and
+  [Dynamic Hierarchies](@ref dynamic-hierarchies) as needed.
 - Debugging or optimizing a model: see [Frequently Asked Questions](@ref faq),
   [Common Mistakes](@ref common-mistakes), and
   [Performance and Reproducibility](@ref performance-guide).
@@ -42,7 +47,7 @@ Cropbox follows the same three-phase workflow used in Cropbox courses:
 |---|---|---|
 | Specification | Define processes, states, inputs, and dependencies. | `@system`, behaviors, tags, units |
 | Simulation | Apply scenarios, advance state, and collect selected output. | `parameters`, `@config`, `instance`, `simulate` |
-| Visualization and evaluation | Explore predictions and compare them with observations. | `visualize`, `plot`, `evaluate`, `calibrate` |
+| Visualization and evaluation | Explore predictions and compare them with observations. | `visualize`, `evaluate`, `calibrate` |
 
 Cropbox deliberately separates model equations from scenario configuration.
 One model definition can therefore be reused with different weather data,
@@ -57,17 +62,22 @@ The worked tutorials progress from framework mechanics to coupled applications:
 | Tutorial | What it demonstrates |
 |---|---|
 | [Logistic Growth](@ref logistic-growth-tutorial) | translating a differential equation into states, rates, and configuration |
-| [Weather-driven Model](@ref phenology-tutorial) | calendar time, tabular weather input, thermal time, and a biological stop condition |
-| [Coupled Population Dynamics](@ref lotka-volterra-tutorial) | coupled accumulated states, mixin extension, and observation-based fitting |
-| [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial) | inspecting and sweeping a coupled biochemical model |
+| [Weather-driven Phenology](@ref phenology-tutorial) | calendar time, tabular weather input, thermal time, and a biological stop condition |
+| [Predator–Prey Model](@ref lotka-volterra-tutorial) | Lotka–Volterra equations, coupled accumulated states, mixin extension, and observation-based fitting |
+| [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial) | inspecting a coupled biochemical model across configured environmental ranges |
 | [Garlic Growth Model](@ref garlic-tutorial) | whole-plant composition, daily output, and dynamic organs |
-| [Soil Water and SimpleCrop](@ref soil-water-tutorial) | weather and irrigation input, water stress, and balance checks |
+| [SimpleCrop](@ref simplecrop-tutorial) | running a compact crop model and reading development, growth, and environmental output |
+| [Soil Water Transport](@ref soil-water-transport-tutorial) | layered storage and fluxes, pedotransfer functions, and a test-suite simulation |
 | [Root System Architecture](@ref croprootbox-tutorial) | stochastic configuration, dynamic systems, geometry, and custom summaries |
-| [Evaluation and Calibration](@ref evaluation-tutorial) | observations, metrics, residuals, and parameter search |
 
 These examples are drawn from Cropbox tests, courses, and workshops. The
 [Model Gallery](@ref Gallery) links their package repositories and additional
 workshop material.
+
+After a model can be simulated and visualized, continue with
+[Evaluate and Calibrate Models](@ref evaluation-tutorial). It belongs to the
+workflow that compares predictions with observations, rather than to the
+sequence of model examples.
 
 ## Citation
 

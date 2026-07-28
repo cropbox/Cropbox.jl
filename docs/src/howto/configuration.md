@@ -49,6 +49,30 @@ Values without units are interpreted in the unit declared by the variable.
 Supplying explicit compatible quantities is clearer when configurations cross
 files or packages.
 
+## [Sample stochastic parameters with `±`](@id stochastic-configuration)
+
+```julia
+mean ± standard_deviation
+```
+
+Cropbox interprets this value as a Normal draw when a state is initialized.
+Units may be attached to the entire expression:
+
+```julia
+config = @config RootType => (
+    growth_rate = (6.0 ± 0.6)u"cm/d",
+    angle = 70 ± 10,
+)
+
+s = instance(RootModel; config, seed = 1)
+```
+
+This is a sampling specification, not a general uncertainty-propagation
+number. Once sampled, the state contains one ordinary value. Use `seed` for a
+reproducible draw, and use an explicit seed loop when independent replicates
+are needed. The [CropRootBox tutorial](@ref croprootbox-tutorial) shows this
+pattern in a dynamic root model.
+
 ## Merge configurations
 
 Later values override earlier values.

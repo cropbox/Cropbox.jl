@@ -3,7 +3,7 @@
   <title id="title">Cropbox modeling workflow</title>
   <desc id="desc">A model specification is converted into a simulation, whose output supports visualization and evaluation.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#667085"/>
     </marker>
   </defs>
@@ -27,10 +27,10 @@
     <path d="M 480 280 V 310 H 310 V 328" fill="none" stroke="#667085" stroke-width="4" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
     <path d="M 480 310 H 650 V 328" fill="none" stroke="#667085" stroke-width="4" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
 
-    <text x="250" y="302" fill="#667085" font-size="16" font-style="italic">Interaction</text>
+    <text x="250" y="318" fill="#667085" font-size="16" font-style="italic">Interaction</text>
     <rect x="180" y="340" width="260" height="100" rx="16" fill="#f6eff8" stroke="#9558b2" stroke-width="3"/>
     <text x="310" y="380" fill="#704087" font-size="24" font-weight="700">Visualization</text>
-    <text x="310" y="410" fill="#17212b" font-size="18">visualize · plot</text>
+    <text x="310" y="410" fill="#17212b" font-size="18">visualize</text>
     <text x="310" y="428" fill="#475467" font-size="13">trajectories · comparisons</text>
 
     <text x="710" y="302" fill="#667085" font-size="16" font-style="italic">Calibration</text>

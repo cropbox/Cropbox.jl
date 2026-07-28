@@ -119,13 +119,6 @@ incompatible, or the model may be outside the solver's intended domain. Recreate
 one failing input with `instance`, inspect the residual at both bounds, and
 check upstream variables. Increasing `maxiter` cannot fix an unbracketed root.
 
-## Should I use experimental `fixedpoint` because it is faster?
-
-Only after verifying convergence and accuracy over the entire input domain. A
-fixed-point iteration depends on the chosen formulation, initial value,
-damping, and clipping; it has weaker general convergence guarantees than a
-properly bracketed bisection. Keep a trusted reference path for comparison.
-
 ## How do I make a stochastic model reproducible?
 
 Pass `seed` to `instance` or `simulate` and retain it with the configuration.
@@ -143,8 +136,8 @@ performance-guide).
 ## Can I use a different plotting package?
 
 Yes. `simulate` returns a DataFrame, so any Julia or external plotting tool can
-consume it. Cropbox's `plot` and `visualize` are conveniences, not a required
-storage format.
+consume it. Cropbox's `visualize` is a convenience, not a required storage
+format.
 
 ## Where should a question be documented?
 

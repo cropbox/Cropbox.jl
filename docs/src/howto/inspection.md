@@ -52,17 +52,31 @@ inspection.
 
 ## Inspect dependency relationships
 
-`look` is the stable human-readable view. Package authors can also inspect the
-dependency representation used during code generation:
+`look` is the stable declaration view. Two qualified structural helpers expose
+complementary graphs:
 
 ```julia
-graph = Cropbox.dependency(InspectDemo)
+d = Cropbox.dependency(InspectDemo)
+h = Cropbox.hierarchy(InspectDemo; skipcontext = true)
 ```
 
-This returns an implementation-oriented graph rather than a publication-ready
-diagram. Its nodes distinguish update stages as well as variables, so use it
-for debugging declaration order and cycles, not as a saved public API format.
-For model documentation, describe the important process dependencies explicitly.
+`dependency` follows variables and generated update stages; it is useful for
+checking evaluation order and cycles. `hierarchy` follows mixins and child
+systems; dashed edges denote mixins. Cropbox uses its bundled Graphviz
+executable to render either graph as SVG on supported platforms. A static copy
+can be written for documentation:
+
+```julia
+Cropbox.writeimage("dependency", d; format = :svg)
+Cropbox.writeimage("hierarchy", h; format = :svg)
+```
+
+The text representation remains available without invoking Graphviz.
+
+These helpers are qualified because their graph representation is
+implementation-oriented rather than a stable serialization format. Explain the
+scientific relationships in the surrounding text instead of asking readers to
+infer model meaning from every generated stage.
 
 ## Navigate an instance
 
@@ -82,13 +96,13 @@ functions. Do not assume a system field is a bare number.
 
 ## Visualize an existing result
 
-`plot` can work directly with vectors, and `plot!` adds another series to an
-existing plot:
+`visualize` works directly with vectors, and `visualize!` adds another series
+to the same result:
 
 ```julia
-x = 1:5
-p = plot(x, 2 .* x; kind = :line)
-plot!(p, x, 3 .* x; kind = :line)
+x = collect(1:5)
+p = visualize(x, 2 .* x; kind = :line)
+visualize!(p, x, 3 .* x; kind = :line)
 ```
 
 This form is useful for calculated curves that do not require a simulation.
@@ -99,8 +113,8 @@ r = simulate(InspectDemo; stop = 4u"hr", target = :mass)
 visualize(r, :time, :mass; kind = :line)
 ```
 
-`plot` works directly with vectors or DataFrames. `visualize` adds model-aware
-convenience methods and can run a system itself.
+The same function accepts vectors or DataFrames and can also run a system
+itself.
 
 ```@example inspectflow
 visualize(InspectDemo, :time, :mass;
@@ -149,5 +163,5 @@ analysis beyond quick exploration, construct configurations explicitly with
 
 `visualize(obs, Model, ...)` overlays observations and model output, while
 `visualize(obs, Model, target; index=...)` can produce an observation-versus-
-estimate plot. See [Evaluation and Calibration](@ref evaluation-tutorial) for a
+estimate plot. See [Evaluate and Calibrate Models](@ref evaluation-tutorial) for a
 complete workflow.

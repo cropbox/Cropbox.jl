@@ -2,7 +2,7 @@
   <title id="title">CropRootBox system and geometric hierarchy</title>
   <desc id="desc">RootArchitecture produces primary root axes, which produce first- and second-order laterals; every axis is a chain of RootSegment systems constrained by a container.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0 0L10 5L0 10z" fill="#667085"/>
     </marker>
   </defs>

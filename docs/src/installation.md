@@ -1,115 +1,155 @@
 # [Installation](@id Installation)
 
-Cropbox is a Julia package. A local Julia installation and a small project
-environment are enough; the documentation does not require a separate site
-generator or notebook stack.
+The simplest setup is Julia plus the registered Cropbox package. Docker and
+Jupyter are alternatives when a local Julia installation is inconvenient or a
+notebook interface is preferred. A separate Julia package is useful later,
+when a model becomes a maintained project.
 
-## Install Julia
+## 1. Install Cropbox locally
 
-For a new installation, use [Juliaup](https://github.com/JuliaLang/juliaup),
-the version manager recommended by the Julia project. Follow the
-[official installation instructions](https://docs.julialang.org/en/v1/manual/installation/)
-for your platform. Juliaup keeps Julia versions up to date and makes it easy to
-retain an older version for a project that needs one.
-
-Verify the installation in a terminal:
-
-```shell
-julia --version
-```
-
-## Create a project and install Cropbox
-
-Keeping each model in its own Julia environment makes examples reproducible and
-prevents unrelated package updates from changing a working model.
-
-```shell
-mkdir my-cropbox-model
-cd my-cropbox-model
-julia --project=.
-```
-
-At the Julia prompt, activate the directory and install Cropbox:
+Install Julia using the
+[official Juliaup-based instructions](https://docs.julialang.org/en/v1/manual/installation/),
+then start Julia and add Cropbox:
 
 ```julia
 using Pkg
-Pkg.activate(".")
 Pkg.add("Cropbox")
 
 using Cropbox
 ```
 
-The first import may take longer while Julia compiles the package. Later imports
-reuse the compilation cache. Commit both `Project.toml` and `Manifest.toml` when
-the exact package versions must be reproducible.
+This installs the current registered Cropbox release in Julia's active
+environment. It is enough for the [Quick Start](@ref quick-start); no document
+builder, editor extension, or notebook package is required.
 
-To work from a local checkout of Cropbox itself, use `Pkg.develop` from the model
-environment:
+The first `using Cropbox` may take longer while Julia compiles packages. Later
+sessions reuse the compilation cache.
 
-```julia
-using Pkg
-Pkg.develop(path="/path/to/Cropbox.jl")
+## 2. Use Docker
+
+The [`cropbox/cropbox` image](https://hub.docker.com/r/cropbox/cropbox) includes
+Julia, Cropbox, Jupyter, and commonly used model packages. With Docker running:
+
+```shell
+docker run --rm -it -p 8888:8888 cropbox/cropbox
 ```
 
-## Choose an editor
+Open the Jupyter URL printed in the terminal. Files created only inside the
+container disappear when it stops, so mount a working directory when results
+must be retained:
 
-Cropbox works in the Julia REPL, scripts, and notebooks. The
-[Julia extension for Visual Studio Code](https://www.julia-vscode.org/) is a
-good default for scripts and packages. For Jupyter notebooks, add IJulia to the
-project in which the notebooks will run:
+```shell
+docker run --rm -it -p 8888:8888 -v "$PWD":/home/jovyan/work cropbox/cropbox
+```
+
+With no explicit tag, Docker uses the released `latest` image. The `main` tag
+follows current development and may change without notice; use a versioned tag
+or an image digest when an analysis must be exactly reproducible.
+
+A hosted
+[Cropbox Binder session](https://mybinder.org/v2/gh/cropbox/cropbox-binder/main)
+is convenient for a short trial without installing Julia or Docker. Its startup
+time, storage, and session lifetime are controlled by Binder.
+
+## 3. Work in Jupyter
+
+IJulia connects a local Julia installation to Jupyter Notebook and JupyterLab:
 
 ```julia
 using Pkg
+Pkg.add("Cropbox")
 Pkg.add("IJulia")
+
+using IJulia
+notebook()
 ```
 
-An editor or notebook is optional; neither is a Cropbox dependency.
+The first `notebook()` call can install a private Jupyter distribution if one
+is not already available. If Jupyter is already installed, adding IJulia also
+registers a Julia kernel that can be selected from that interface. The Docker
+image in the preceding section already starts with this integration available.
 
-## Install model packages used in the tutorials
+## 4. Use a project environment
 
-The LeafGasExchange, Garlic, and CropRootBox tutorials use separate packages.
-They are available through Julia's
-[General registry](https://github.com/JuliaRegistries/General), but they are not
-dependencies of this manual. Add only the model you need to the same project
+Once an analysis has more than a few exploratory cells, give it an isolated
 environment:
+
+```shell
+mkdir my-cropbox-analysis
+cd my-cropbox-analysis
+julia --project=.
+```
+
+At the Julia prompt:
+
+```julia
+using Pkg
+Pkg.add("Cropbox")
+```
+
+This creates `Project.toml` and `Manifest.toml` in the directory. Keep both
+files with a reproducible analysis so package versions can be restored later.
+The same environment can be selected by a Julia script, VS Code, or an IJulia
+kernel.
+
+## 5. Develop a model as a Julia package
+
+Use a package when the model has reusable source files, tests, or collaborators.
+Julia's built-in package manager creates the minimal structure:
+
+```julia
+using Pkg
+Pkg.generate("MyCropModel")
+Pkg.activate("MyCropModel")
+Pkg.add("Cropbox")
+```
+
+Put systems in `MyCropModel/src/MyCropModel.jl`, export the model types meant
+for users, and add focused examples or tests under `test/`. A minimal package
+module starts like this:
+
+```julia
+module MyCropModel
+
+using Cropbox
+
+@system Model(Controller) begin
+    rate => 1  ~ preserve(parameter, u"g/d")
+    mass(rate) ~ accumulate(u"g")
+end
+
+export Model
+
+end
+```
+
+Run Julia from the package directory with `julia --project=.`. This is the
+appropriate place for source control, a committed environment, data-loading
+helpers, and automated tests.
+
+`Pkg.develop(path="/path/to/Cropbox.jl")` is a separate, advanced workflow for
+editing Cropbox itself or testing against an unreleased local checkout. Normal
+model development should use `Pkg.add("Cropbox")`.
+
+## Add model packages as needed
+
+LeafGasExchange, Garlic, SimpleCrop, and CropRootBox are separate registered
+packages. Add only the model used by the analysis:
 
 ```julia
 using Pkg
 Pkg.add("LeafGasExchange")
 Pkg.add("Garlic")
+Pkg.add("SimpleCrop")
 Pkg.add("CropRootBox")
 ```
 
-SimpleCrop can likewise be installed with `Pkg.add("SimpleCrop")`. Each
-tutorial gives its exact setup command.
-
-For an unregistered model package or a specific development revision, provide
-its repository URL and, when needed, a revision:
+For an unregistered model or a specific revision:
 
 ```julia
 using Pkg
 Pkg.add(url="https://github.com/organization/Model.jl", rev="main")
 ```
 
-Use `Pkg.develop(url="...")` instead when you intend to edit that package
-locally. Record the repository revision or commit alongside a published model
-analysis.
-
-## Docker and Binder
-
-The [`cropbox/cropbox` Docker image](https://hub.docker.com/r/cropbox/cropbox)
-can provide an isolated notebook environment:
-
-```shell
-docker run -it --rm -p 8888:8888 cropbox/cropbox
-```
-
-Open the URL printed by JupyterLab. Check the image tag and package versions
-before using the container for a reproducible analysis; a local Julia project
-with a committed manifest gives finer version control.
-
-A hosted [Binder environment](https://mybinder.org/v2/gh/cropbox/cropbox-binder/main)
-is useful for a short trial, but startup time and session lifetime are outside
-Cropbox's control.
-
-Continue with the [Quick Start](@ref quick-start).
+Record the repository revision or commit with a published analysis. Continue
+with the [Quick Start](@ref quick-start).

@@ -43,33 +43,6 @@ the resulting surface.
 `instance`, `simulate`, or `visualize`. Nested components receive context and
 configuration from their parent.
 
-### Supertype
-
-```julia
-@system DailyClock(Clock) <: Clock begin
-    # ...
-end
-```
-
-`<:` assigns the public system supertype. It is used when another declaration
-expects a family of compatible systems.
-
-### Header patches
-
-Header braces support type substitution and system constants.
-
-```julia
-@system DailyContext{Clock => DailyClock}(Context) <: Context
-@system S{coefficient = 2}(Controller) begin
-    y => coefficient * 3 ~ preserve
-end
-```
-
-Type substitution is an advanced composition feature: declarations that refer
-to the old type are normalized to the replacement type. Constants are resolved
-during generated code construction. Keep patches close to the system that needs
-them and explain them in the system docstring.
-
 ## Variable declaration grammar
 
 ```text
@@ -247,6 +220,38 @@ The parent then constructs the child with its own context. Similarly, a mixin
 can declare a placeholder behavior with `override`, and the final system can
 supply the concrete declaration. An override declaration cannot carry an update
 body; it receives its value from construction or a replacing declaration.
+
+## Advanced system headers
+
+The following header forms are useful for framework components and specialized
+composition, but they are not part of most model declarations.
+
+### Public supertype
+
+```julia
+@system DailyClock(Clock) <: Clock begin
+    # ...
+end
+```
+
+`<:` assigns the public system supertype. Use it when another declaration
+expects a family of compatible systems.
+
+### Header patches
+
+Header braces support type substitution and system constants.
+
+```julia
+@system DailyContext{Clock => DailyClock}(Context) <: Context
+@system S{coefficient = 2}(Controller) begin
+    y => coefficient * 3 ~ preserve
+end
+```
+
+Type substitution rewrites declarations that refer to the old type so they use
+the replacement type. Constants are resolved while Cropbox constructs the
+generated code. Keep patches close to the system that needs them and explain
+them in the system docstring.
 
 ## Documentation strings
 

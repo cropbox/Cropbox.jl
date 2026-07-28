@@ -337,6 +337,6 @@ scenario simulations unless the model explicitly guarantees thread safety.
 - warm up one small instance before benchmarking;
 - separate model construction, simulation, traversal, and file-writing time.
 
-The generic traversal functions used here are described in [Values, Units, and
-Structure](@ref utility-api); simulation callbacks and random-seed
-behavior are detailed in [Simulation](@ref Simulation1).
+The generic traversal functions used here are described in
+[Dynamic Hierarchies](@ref dynamic-hierarchies); simulation callbacks and
+random-seed behavior are detailed in [Simulation](@ref Simulation1).

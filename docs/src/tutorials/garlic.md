@@ -57,11 +57,19 @@ Keep this process chain in mind while reading the output:
 ![Garlic model process chain](../assets/tutorials/garlic-structure.svg)
 
 *The model proceeds from environment and phenology to canopy gas exchange and
-carbon allocation. Simulated organ growth changes green leaf area, closing the
-main feedback loop.*
+carbon allocation and organ growth.*
 
 The final mass curve is an outcome of this chain, not a growth curve fitted
 directly to time.
+
+In the current implementation, leaf phenology and expansion determine
+`green_leaf_area`, which controls `LAI`, radiation interception, and carbon
+supply. Accumulated leaf mass does not feed back to leaf area through a
+specific-leaf-area equation: the leaf-level `carbon_effect` is fixed at `1.0`.
+`SLA` is calculated as a diagnostic, and a fixed SLA value is used when
+estimating potential leaf carbon demand. The process diagram therefore shows
+the implemented forward path rather than a general SLA-based crop-model
+feedback.
 
 ## Use a packaged configuration
 
@@ -155,8 +163,8 @@ visualize(result,
 configuration.*
 
 Interpret these outputs together. Biomass partitioning depends on phenological
-stage, while green leaf area feeds back into radiation interception and carbon
-supply.
+stage, while phenology-driven green leaf area controls radiation interception
+and carbon supply.
 
 ## Trace the carbon path
 
@@ -233,7 +241,7 @@ calibration result.*
 Treat this first as a sensitivity check: does the parameter move the output in
 the expected direction and period? Selecting the visually closest line is not
 calibration. Formal fitting also needs a stated metric, defensible bounds, and
-independent validation; see [Model Evaluation and Calibration](@ref
+independent validation; see [Evaluate and Calibrate Models](@ref
 evaluation-tutorial).
 
 ## Compare planting dates
@@ -242,8 +250,6 @@ The 2025 workshop varies one parameter while retaining a packaged regional
 configuration. The pattern is:
 
 ```julia
-using TimeZones
-
 base = Garlic.Examples.RCP.ND_RICCA_2014_field
 planting_dates = [
     ZonedDateTime(2014,  9, 1, tz"Asia/Seoul"),

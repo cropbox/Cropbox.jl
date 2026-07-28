@@ -155,5 +155,5 @@ visualize(Growth, :time, :mass;
   and factorial combinations.
 - [Run Simulations and Shape Output](@ref simulation-workflow) covers nested
   paths, snapshots, callbacks, and output formats.
-- [Build a Weather-driven Model](@ref phenology-tutorial) adds calendar time and
+- [Weather-driven Phenology](@ref phenology-tutorial) adds calendar time and
   tabular input.

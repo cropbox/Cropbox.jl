@@ -119,7 +119,7 @@ config = @config (
 
 | Component | Index used at runtime | Main inputs |
 |---|---|---|
-| `DataFrameStore` | row-derived key | `filename` or `df`, `ik` |
+| `DataFrameStore` | generated row number stored under `ik` | `filename` or `df`, `ik` |
 | `DayStore` | elapsed whole days | `daykey` (default `:day`) |
 | `DateStore` | calendar date | `datekey` (default `:date`) |
 | `TimeStore` | zoned date and time | `datekey`, `timekey`, `tz` |
@@ -129,6 +129,13 @@ config = @config (
 file I/O is optional. `TableStore` does the same for a TypedTables table through
 `tb`. These are construction inputs; changing the original object after
 construction is not a supported way to drive a running model.
+
+The base `DataFrameStore` numbers rows starting at one, writes those numbers to
+the column selected by `ik` (default `:index`), and looks up the current row by
+that generated key. It therefore replaces an existing column with the same
+name; it does not use an arbitrary pre-existing `ik` column as a scientific
+index. Use `DayStore`, `DateStore`, or `TimeStore` when the input already has a
+meaningful elapsed-day or calendar key. `TableStore` is likewise row-ordered.
 
 `DayStore` expects an integer-compatible day column and is appropriate when
 elapsed day is the real key. `DateStore` uses `Calendar`, so it is safer for
@@ -143,7 +150,7 @@ lookup error. Validate the input index before running the scientific model.
 
 ## Time infrastructure
 
-The most frequently used exported infrastructure systems are summarized here:
+The most frequently used exported infrastructure systems are:
 
 | System | Role |
 |---|---|
@@ -152,7 +159,44 @@ The most frequently used exported infrastructure systems are summarized here:
 | `Clock` | tracks elapsed time, step, initialization, and tick |
 | `Calendar` | maps clock time to `ZonedDateTime` and `Date` |
 
-They are described in detail under [System](@ref system). `Date`, `Dates`,
-`ZonedDateTime`, and the `tz"..."` macro are re-exported for convenience, as is
-Unitful's `u"..."` macro. They keep their behavior from their source packages;
-Cropbox does not define a separate date or unit syntax.
+`Controller` belongs on the executable root. It normalizes the supplied
+configuration and constructs one `Context`; nested systems receive that same
+context from their parent. `Context` in turn constructs the configured `Clock`.
+This is why ordinary components should not add their own controller or clock.
+
+`Clock` exposes two parameters and two changing values:
+
+| Name | Meaning | Default |
+|---|---|---|
+| `init` | elapsed time at construction | `0u"hr"` |
+| `step` | duration of one model update | `1u"hr"` |
+| `time` | current elapsed time | starts at `init` |
+| `tick` | number of completed update advances | starts at `0` |
+
+The default clock unit is hours. A plain configured number therefore means
+hours; write an explicit quantity such as `1u"d"` when another unit is
+intended. Both `time` and `tick` advance once per update. Output `snap` rules
+only select states after this update schedule has been defined.
+
+`Calendar` is not included in `Context` automatically. Add it as a child or
+mixin when a model needs civil time:
+
+| Name | Meaning |
+|---|---|
+| `init` | required starting `ZonedDateTime` |
+| `last` | optional ending `ZonedDateTime` |
+| `time` | `init` plus the elapsed clock time |
+| `date` | `Date(time)` |
+| `stop` | whether `time` has reached `last`; always false without `last` |
+| `count` | rounded update count from `init` to `last`; `nothing` without `last` |
+
+Configure compatible `Clock.step`, `Calendar.init`, and `Calendar.last` values
+when `count` is used as a stopping condition. A duration that is not an exact
+multiple of the step makes the rounding convention part of the experiment;
+prefer an explicit Boolean or duration stop when that ambiguity matters.
+
+These systems are introduced under [Systems and Composition](@ref system) and
+followed through construction under [Model Execution](@ref model-execution).
+`Date`, `Dates`, `ZonedDateTime`, and the `tz"..."` macro are re-exported for
+convenience, as is Unitful's `u"..."` macro. They keep their behavior from their
+source packages; Cropbox does not define a separate date or unit syntax.

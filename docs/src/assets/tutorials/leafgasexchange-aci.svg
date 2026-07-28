@@ -3,7 +3,7 @@
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:gadfly="http://www.gadflyjl.org/ns"
      version="1.2"
-     width="180mm" height="120mm" viewBox="0 0 180 120"
+     width="200mm" height="120mm" viewBox="0 0 200 120"
      stroke="none"
      fill="#000000"
      stroke-width="0.3"
@@ -14,149 +14,149 @@
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-72af1f39-1">
-  <g transform="translate(90,60)">
-    <path d="M-90,-60 L90,-60 90,60 -90,60  z" class="primitive"/>
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-67a143fd-1">
+  <g transform="translate(100,60)">
+    <path d="M-100,-60 L100,-60 100,60 -100,60  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-72af1f39-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-72af1f39-3">
-    <g transform="translate(78.46,113.72)">
+<g class="plotroot xscalable yscalable" id="img-67a143fd-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-67a143fd-3">
+    <g transform="translate(86,113.72)">
       <g class="primitive">
-        <text text-anchor="middle" dy="0.6em">Intercellular CO₂ (μbar)</text>
+        <text text-anchor="middle" dy="0.6em">Ci (μbar)</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-72af1f39-4">
-    <g transform="translate(84.22,107.04)">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-67a143fd-4">
+    <g transform="translate(92.01,107.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">500</text>
       </g>
     </g>
   </g>
-  <g class="guide colorkey" id="img-72af1f39-5">
-    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-72af1f39-6">
-      <g transform="translate(143.93,54.12)" id="img-72af1f39-7">
+  <g class="guide colorkey" id="img-67a143fd-5">
+    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-67a143fd-6">
+      <g transform="translate(159,54.12)" id="img-67a143fd-7">
         <g class="primitive">
-          <text dy="0.35em">Enzyme limited</text>
+          <text dy="0.35em">Ac (enzyme-limited)</text>
         </g>
       </g>
-      <g transform="translate(143.93,57.75)" id="img-72af1f39-8">
+      <g transform="translate(159,57.75)" id="img-67a143fd-8">
         <g class="primitive">
-          <text dy="0.35em">Electron transport limited</text>
+          <text dy="0.35em">Aj (electron transport-limited)</text>
         </g>
       </g>
-      <g transform="translate(143.93,61.38)" id="img-72af1f39-9">
+      <g transform="translate(159,61.38)" id="img-67a143fd-9">
         <g class="primitive">
-          <text dy="0.35em">Net assimilation</text>
+          <text dy="0.35em">An (net assimilation)</text>
         </g>
       </g>
     </g>
-    <g stroke-width="0.3" id="img-72af1f39-10">
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#FF6DAE" id="img-72af1f39-11">
-        <g transform="translate(141.11,61.38)" id="img-72af1f39-12">
+    <g stroke-width="0.3" id="img-67a143fd-10">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#FF6DAE" id="img-67a143fd-11">
+        <g transform="translate(156.19,61.38)" id="img-67a143fd-12">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#D4CA3A" id="img-72af1f39-13">
-        <g transform="translate(141.11,57.75)" id="img-72af1f39-14">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#D4CA3A" id="img-67a143fd-13">
+        <g transform="translate(156.19,57.75)" id="img-67a143fd-14">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-72af1f39-15">
-        <g transform="translate(141.11,54.12)" id="img-72af1f39-16">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-67a143fd-15">
+        <g transform="translate(156.19,54.12)" id="img-67a143fd-16">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
     </g>
-    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-72af1f39-17">
-      <g transform="translate(140.3,50.81)" id="img-72af1f39-18">
+    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-67a143fd-17">
+      <g transform="translate(155.37,50.81)" id="img-67a143fd-18">
         <g class="primitive">
           <text dy="-0em"></text>
         </g>
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-72af1f39-19)">
-    <g id="img-72af1f39-20">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-72af1f39-21">
-        <g transform="translate(78.46,55.52)" id="img-72af1f39-22">
-          <path d="M-60.83,-50.52 L60.83,-50.52 60.83,50.52 -60.83,50.52  z" class="primitive"/>
+  <g clip-path="url(#img-67a143fd-19)">
+    <g id="img-67a143fd-20">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-67a143fd-21">
+        <g transform="translate(86,55.52)" id="img-67a143fd-22">
+          <path d="M-68.37,-50.52 L68.37,-50.52 68.37,50.52 -68.37,50.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-72af1f39-23">
-        <g transform="translate(78.46,82.17)" id="img-72af1f39-24">
-          <path fill="none" d="M-60.83,0 L60.83,0 " class="primitive"/>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-67a143fd-23">
+        <g transform="translate(86,82.17)" id="img-67a143fd-24">
+          <path fill="none" d="M-68.37,0 L68.37,0 " class="primitive"/>
         </g>
-        <g transform="translate(78.46,54.84)" id="img-72af1f39-25">
-          <path fill="none" d="M-60.83,0 L60.83,0 " class="primitive"/>
+        <g transform="translate(86,54.84)" id="img-67a143fd-25">
+          <path fill="none" d="M-68.37,0 L68.37,0 " class="primitive"/>
         </g>
-        <g transform="translate(78.46,27.5)" id="img-72af1f39-26">
-          <path fill="none" d="M-60.83,0 L60.83,0 " class="primitive"/>
+        <g transform="translate(86,27.5)" id="img-67a143fd-26">
+          <path fill="none" d="M-68.37,0 L68.37,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-72af1f39-27">
-        <g transform="translate(84.22,55.52)" id="img-72af1f39-28">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-67a143fd-27">
+        <g transform="translate(92.01,55.52)" id="img-67a143fd-28">
           <path fill="none" d="M0,-50.52 L0,50.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-72af1f39-29">
+      <g class="plotpanel" id="img-67a143fd-29">
         <metadata>
-          <boundingbox value="17.629999999999995mm 5.0mm 121.66999999999999mm 101.04333333333332mm"/>
-          <unitbox value="-9.297017081669075 76.46326383402604 930.5940341633382 -73.92652766805207"/>
+          <boundingbox value="17.629999999999995mm 5.0mm 136.74333333333334mm 101.04333333333332mm"/>
+          <unitbox value="-7.650403033422895 76.46326383402604 933.3008060668458 -73.92652766805207"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-72af1f39-30">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-72af1f39-31">
-            <g transform="translate(79.74,23.9)" id="img-72af1f39-32">
-              <path fill="none" d="M-60.08,79.93 L-58.44,68.45 -56.74,59.04 -55,51.2 -53.23,44.56 -51.46,38.81 -49.68,33.73 -47.9,29.14 -46.14,24.92 -44.39,20.98 -42.66,17.28 -40.95,13.8 -39.26,10.52 -37.59,7.53 -35.93,6.5 -34.28,5.53 -32.64,4.61 -31.01,3.73 -29.39,2.9 -27.78,2.1 -26.17,1.34 -24.57,0.62 -22.98,-0.07 -21.39,-0.72 -19.8,-1.35 -18.22,-1.95 -16.64,-2.53 -15.07,-3.08 -13.49,-3.61 -11.92,-4.12 -10.36,-4.61 -8.79,-5.07 -7.23,-5.53 -5.67,-5.96 -4.11,-6.38 -2.55,-6.78 -1,-7.17 0.55,-7.54 2.11,-7.9 3.66,-8.25 5.21,-8.59 6.75,-8.92 8.3,-9.23 9.85,-9.54 11.39,-9.83 12.94,-10.12 14.48,-10.4 16.02,-10.67 17.56,-10.93 19.1,-11.19 20.64,-11.43 22.18,-11.67 23.72,-11.91 25.26,-12.13 26.8,-12.35 28.33,-12.57 29.87,-12.78 31.4,-12.98 32.94,-13.18 34.47,-13.37 36.01,-13.56 37.54,-13.74 39.07,-13.92 40.61,-14.1 42.14,-14.27 43.67,-14.43 45.2,-14.6 46.74,-14.75 48.27,-14.91 49.8,-15.06 51.33,-15.21 52.86,-15.35 54.39,-15.5 55.92,-15.63 57.45,-15.77 " class="primitive"/>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-67a143fd-30">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-67a143fd-31">
+            <g transform="translate(87.44,23.57)" id="img-67a143fd-32">
+              <path fill="none" d="M-67.77,80.26 L-66.86,74.23 -65.93,68.78 -64.99,63.85 -64.03,59.37 -63.05,55.28 -62.07,51.53 -61.09,48.08 -60.1,44.88 -59.1,41.91 -58.11,39.14 -57.11,36.53 -56.12,34.06 -55.12,31.71 -54.13,29.47 -53.14,27.32 -52.15,25.24 -51.17,23.24 -50.19,21.3 -49.22,19.43 -48.26,17.61 -47.29,15.84 -46.34,14.13 -45.39,12.47 -44.44,10.85 -43.5,9.28 -42.56,7.85 -41.63,7.34 -40.7,6.83 -39.78,6.34 -38.86,5.86 -37.94,5.39 -37.02,4.94 -36.11,4.49 -35.2,4.06 -34.29,3.64 -33.38,3.22 -32.48,2.82 -31.58,2.43 -30.68,2.05 -29.78,1.67 -28.88,1.31 -27.98,0.95 -27.09,0.6 -26.19,0.26 -25.3,-0.07 -24.41,-0.4 -23.52,-0.71 -22.64,-1.02 -21.75,-1.33 -20.86,-1.63 -19.98,-1.92 -19.09,-2.2 -18.21,-2.48 -17.33,-2.75 -16.45,-3.02 -15.57,-3.28 -14.69,-3.54 -13.81,-3.79 -12.93,-4.04 -12.05,-4.28 -11.17,-4.51 -10.3,-4.75 -9.42,-4.97 -8.55,-5.2 -7.67,-5.42 -6.8,-5.63 -5.92,-5.84 -5.05,-6.05 -4.18,-6.25 -3.31,-6.45 -2.44,-6.65 -1.56,-6.84 -0.69,-7.03 0.18,-7.21 1.05,-7.4 1.92,-7.57 2.78,-7.75 3.65,-7.92 4.52,-8.09 5.39,-8.26 6.26,-8.43 7.12,-8.59 7.99,-8.75 8.86,-8.9 9.72,-9.06 10.59,-9.21 11.45,-9.36 12.32,-9.51 13.19,-9.65 14.05,-9.79 14.92,-9.93 15.78,-10.07 16.64,-10.21 17.51,-10.34 18.37,-10.47 19.24,-10.6 20.1,-10.73 20.96,-10.86 21.82,-10.98 22.69,-11.1 23.55,-11.22 24.41,-11.34 25.28,-11.46 26.14,-11.58 27,-11.69 27.86,-11.8 28.72,-11.91 29.58,-12.02 30.45,-12.13 31.3,-12.24 32.17,-12.34 33.03,-12.45 33.89,-12.55 34.75,-12.65 35.61,-12.75 36.47,-12.85 37.33,-12.95 38.19,-13.04 39.05,-13.14 39.91,-13.23 40.77,-13.32 41.62,-13.41 42.49,-13.5 43.34,-13.59 44.2,-13.68 45.06,-13.77 45.92,-13.85 46.78,-13.94 47.64,-14.02 48.49,-14.1 49.35,-14.19 50.21,-14.27 51.07,-14.35 51.93,-14.43 52.78,-14.5 53.64,-14.58 54.5,-14.66 55.36,-14.73 56.22,-14.81 57.07,-14.88 57.93,-14.95 58.79,-15.03 59.65,-15.1 60.5,-15.17 61.36,-15.24 62.22,-15.31 63.08,-15.37 63.93,-15.44 64.79,-15.51 " class="primitive"/>
             </g>
           </g>
         </g>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-72af1f39-33">
-          <g class="color_LCHab{Float32}(80.0f0,70.000015f0,100.43479f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#D4CA3A" id="img-72af1f39-34">
-            <g transform="translate(79.74,46.01)" id="img-72af1f39-35">
-              <path fill="none" d="M-60.08,4.9 L-58.44,4.91 -56.74,4.74 -55,4.55 -53.23,4.34 -51.46,4.12 -49.68,3.89 -47.9,3.64 -46.14,3.37 -44.39,3.09 -42.66,2.81 -40.95,2.54 -39.26,2.28 -37.59,2.03 -35.93,1.8 -34.28,1.58 -32.64,1.38 -31.01,1.19 -29.39,1.01 -27.78,0.85 -26.17,0.7 -24.57,0.56 -22.98,0.42 -21.39,0.3 -19.8,0.18 -18.22,0.07 -16.64,-0.03 -15.07,-0.13 -13.49,-0.22 -11.92,-0.31 -10.36,-0.39 -8.79,-0.46 -7.23,-0.54 -5.67,-0.61 -4.11,-0.67 -2.55,-0.73 -1,-0.79 0.55,-0.85 2.11,-0.9 3.66,-0.95 5.21,-1 6.75,-1.05 8.3,-1.09 9.85,-1.14 11.39,-1.18 12.94,-1.22 14.48,-1.25 16.02,-1.29 17.56,-1.32 19.1,-1.36 20.64,-1.39 22.18,-1.42 23.72,-1.45 25.26,-1.48 26.8,-1.5 28.33,-1.53 29.87,-1.55 31.4,-1.58 32.94,-1.6 34.47,-1.62 36.01,-1.65 37.54,-1.67 39.07,-1.69 40.61,-1.71 42.14,-1.73 43.67,-1.75 45.2,-1.76 46.74,-1.78 48.27,-1.8 49.8,-1.81 51.33,-1.83 52.86,-1.85 54.39,-1.86 55.92,-1.88 57.45,-1.89 " class="primitive"/>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-67a143fd-33">
+          <g class="color_LCHab{Float32}(80.0f0,70.000015f0,100.43479f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#D4CA3A" id="img-67a143fd-34">
+            <g transform="translate(87.44,45.99)" id="img-67a143fd-35">
+              <path fill="none" d="M-67.77,4.92 L-66.86,4.98 -65.93,4.93 -64.99,4.85 -64.03,4.77 -63.05,4.67 -62.07,4.57 -61.09,4.47 -60.1,4.36 -59.1,4.26 -58.11,4.14 -57.11,4.03 -56.12,3.91 -55.12,3.79 -54.13,3.66 -53.14,3.53 -52.15,3.39 -51.17,3.25 -50.19,3.11 -49.22,2.97 -48.26,2.83 -47.29,2.69 -46.34,2.56 -45.39,2.43 -44.44,2.3 -43.5,2.18 -42.56,2.06 -41.63,1.94 -40.7,1.82 -39.78,1.71 -38.86,1.6 -37.94,1.5 -37.02,1.4 -36.11,1.3 -35.2,1.21 -34.29,1.12 -33.38,1.04 -32.48,0.95 -31.58,0.87 -30.68,0.79 -29.78,0.72 -28.88,0.65 -27.98,0.58 -27.09,0.51 -26.19,0.44 -25.3,0.38 -24.41,0.32 -23.52,0.26 -22.64,0.2 -21.75,0.15 -20.86,0.09 -19.98,0.04 -19.09,-0.01 -18.21,-0.06 -17.33,-0.11 -16.45,-0.15 -15.57,-0.2 -14.69,-0.24 -13.81,-0.28 -12.93,-0.32 -12.05,-0.36 -11.17,-0.4 -10.3,-0.44 -9.42,-0.48 -8.55,-0.51 -7.67,-0.55 -6.8,-0.58 -5.92,-0.62 -5.05,-0.65 -4.18,-0.68 -3.31,-0.71 -2.44,-0.74 -1.56,-0.77 -0.69,-0.8 0.18,-0.83 1.05,-0.85 1.92,-0.88 2.78,-0.91 3.65,-0.93 4.52,-0.96 5.39,-0.98 6.26,-1 7.12,-1.03 7.99,-1.05 8.86,-1.07 9.72,-1.09 10.59,-1.11 11.45,-1.13 12.32,-1.15 13.19,-1.17 14.05,-1.19 14.92,-1.21 15.78,-1.23 16.64,-1.25 17.51,-1.27 18.37,-1.28 19.24,-1.3 20.1,-1.32 20.96,-1.33 21.82,-1.35 22.69,-1.37 23.55,-1.38 24.41,-1.4 25.28,-1.41 26.14,-1.42 27,-1.44 27.86,-1.45 28.72,-1.47 29.58,-1.48 30.45,-1.49 31.3,-1.51 32.17,-1.52 33.03,-1.53 33.89,-1.54 34.75,-1.56 35.61,-1.57 36.47,-1.58 37.33,-1.59 38.19,-1.6 39.05,-1.61 39.91,-1.62 40.77,-1.63 41.62,-1.65 42.49,-1.66 43.34,-1.67 44.2,-1.68 45.06,-1.69 45.92,-1.7 46.78,-1.7 47.64,-1.71 48.49,-1.72 49.35,-1.73 50.21,-1.74 51.07,-1.75 51.93,-1.76 52.78,-1.77 53.64,-1.78 54.5,-1.78 55.36,-1.79 56.22,-1.8 57.07,-1.81 57.93,-1.82 58.79,-1.82 59.65,-1.83 60.5,-1.84 61.36,-1.85 62.22,-1.85 63.08,-1.86 63.93,-1.87 64.79,-1.87 " class="primitive"/>
             </g>
           </g>
         </g>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-72af1f39-36">
-          <g class="color_LCHab{Float32}(65.89944f0,62.21457f0,353.99814f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#FF6DAE" id="img-72af1f39-37">
-            <g transform="translate(79.74,50.03)" id="img-72af1f39-38">
-              <path fill="none" d="M-60.08,53.81 L-58.44,42.39 -56.74,33.12 -55,25.53 -53.23,19.28 -51.46,14.14 -49.68,10.01 -47.9,6.84 -46.14,4.56 -44.39,2.99 -42.66,1.88 -40.95,1.06 -39.26,0.43 -37.59,-0.07 -35.93,-0.37 -34.28,-0.63 -32.64,-0.88 -31.01,-1.11 -29.39,-1.32 -27.78,-1.52 -26.17,-1.7 -24.57,-1.88 -22.98,-2.03 -21.39,-2.18 -19.8,-2.32 -18.22,-2.45 -16.64,-2.58 -15.07,-2.69 -13.49,-2.8 -11.92,-2.91 -10.36,-3 -8.79,-3.09 -7.23,-3.18 -5.67,-3.26 -4.11,-3.34 -2.55,-3.42 -1,-3.49 0.55,-3.55 2.11,-3.62 3.66,-3.68 5.21,-3.74 6.75,-3.79 8.3,-3.84 9.85,-3.89 11.39,-3.94 12.94,-3.99 14.48,-4.03 16.02,-4.08 17.56,-4.12 19.1,-4.16 20.64,-4.2 22.18,-4.23 23.72,-4.27 25.26,-4.3 26.8,-4.33 28.33,-4.36 29.87,-4.4 31.4,-4.42 32.94,-4.45 34.47,-4.48 36.01,-4.51 37.54,-4.53 39.07,-4.56 40.61,-4.58 42.14,-4.6 43.67,-4.63 45.2,-4.65 46.74,-4.67 48.27,-4.69 49.8,-4.71 51.33,-4.73 52.86,-4.75 54.39,-4.76 55.92,-4.78 57.45,-4.8 " class="primitive"/>
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-67a143fd-36">
+          <g class="color_LCHab{Float32}(65.89944f0,62.21457f0,353.99814f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#FF6DAE" id="img-67a143fd-37">
+            <g transform="translate(87.44,49.83)" id="img-67a143fd-38">
+              <path fill="none" d="M-67.77,54.02 L-66.86,48.01 -65.93,42.6 -64.99,37.73 -64.03,33.33 -63.05,29.35 -62.07,25.74 -61.09,22.46 -60.1,19.49 -59.1,16.79 -58.11,14.35 -57.11,12.16 -56.12,10.22 -55.12,8.52 -54.13,7.05 -53.14,5.81 -52.15,4.77 -51.17,3.91 -50.19,3.19 -49.22,2.59 -48.26,2.08 -47.29,1.65 -46.34,1.27 -45.39,0.93 -44.44,0.64 -43.5,0.37 -42.56,0.13 -41.63,-0.02 -40.7,-0.16 -39.78,-0.3 -38.86,-0.43 -37.94,-0.55 -37.02,-0.68 -36.11,-0.79 -35.2,-0.91 -34.29,-1.01 -33.38,-1.12 -32.48,-1.22 -31.58,-1.31 -30.68,-1.41 -29.78,-1.5 -28.88,-1.59 -27.98,-1.67 -27.09,-1.75 -26.19,-1.83 -25.3,-1.9 -24.41,-1.98 -23.52,-2.05 -22.64,-2.12 -21.75,-2.18 -20.86,-2.25 -19.98,-2.31 -19.09,-2.37 -18.21,-2.43 -17.33,-2.49 -16.45,-2.54 -15.57,-2.6 -14.69,-2.65 -13.81,-2.7 -12.93,-2.75 -12.05,-2.8 -11.17,-2.84 -10.3,-2.89 -9.42,-2.93 -8.55,-2.97 -7.67,-3.02 -6.8,-3.06 -5.92,-3.1 -5.05,-3.14 -4.18,-3.17 -3.31,-3.21 -2.44,-3.25 -1.56,-3.28 -0.69,-3.31 0.18,-3.35 1.05,-3.38 1.92,-3.41 2.78,-3.44 3.65,-3.47 4.52,-3.5 5.39,-3.53 6.26,-3.56 7.12,-3.59 7.99,-3.61 8.86,-3.64 9.72,-3.66 10.59,-3.69 11.45,-3.71 12.32,-3.74 13.19,-3.76 14.05,-3.78 14.92,-3.81 15.78,-3.83 16.64,-3.85 17.51,-3.87 18.37,-3.89 19.24,-3.91 20.1,-3.93 20.96,-3.95 21.82,-3.97 22.69,-3.99 23.55,-4.01 24.41,-4.03 25.28,-4.04 26.14,-4.06 27,-4.08 27.86,-4.1 28.72,-4.11 29.58,-4.13 30.45,-4.14 31.3,-4.16 32.17,-4.17 33.03,-4.19 33.89,-4.2 34.75,-4.22 35.61,-4.23 36.47,-4.25 37.33,-4.26 38.19,-4.27 39.05,-4.29 39.91,-4.3 40.77,-4.31 41.62,-4.33 42.49,-4.34 43.34,-4.35 44.2,-4.36 45.06,-4.37 45.92,-4.39 46.78,-4.4 47.64,-4.41 48.49,-4.42 49.35,-4.43 50.21,-4.44 51.07,-4.45 51.93,-4.46 52.78,-4.47 53.64,-4.48 54.5,-4.49 55.36,-4.5 56.22,-4.51 57.07,-4.52 57.93,-4.53 58.79,-4.54 59.65,-4.55 60.5,-4.56 61.36,-4.57 62.22,-4.58 63.08,-4.58 63.93,-4.59 64.79,-4.6 " class="primitive"/>
             </g>
           </g>
         </g>
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-72af1f39-39">
-    <g transform="translate(16.63,82.17)" id="img-72af1f39-40">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-67a143fd-39">
+    <g transform="translate(16.63,82.17)" id="img-67a143fd-40">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">20</text>
       </g>
     </g>
-    <g transform="translate(16.63,54.84)" id="img-72af1f39-41">
+    <g transform="translate(16.63,54.84)" id="img-67a143fd-41">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">40</text>
       </g>
     </g>
-    <g transform="translate(16.63,27.5)" id="img-72af1f39-42">
+    <g transform="translate(16.63,27.5)" id="img-67a143fd-42">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">60</text>
       </g>
     </g>
   </g>
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-72af1f39-43">
-    <g transform="translate(8.64,53.52)" id="img-72af1f39-44">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-67a143fd-43">
+    <g transform="translate(8.64,53.52)" id="img-67a143fd-44">
       <g class="primitive">
-        <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">Assimilation rate (μmol m⁻² s⁻¹)</text>
+        <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)"> (μmol m⁻² s⁻¹)</text>
       </g>
     </g>
   </g>
 </g>
 <defs>
-  <clipPath id="img-72af1f39-19">
-    <path d="M17.63,5 L139.3,5 139.3,106.04 17.63,106.04 " />
+  <clipPath id="img-67a143fd-19">
+    <path d="M17.63,5 L154.37,5 154.37,106.04 17.63,106.04 " />
   </clipPath>
 </defs>
 </svg>

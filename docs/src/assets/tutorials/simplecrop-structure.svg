@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 390" role="img" aria-labelledby="title desc">
   <title id="title">SimpleCrop crop and soil-water coupling</title>
-  <desc id="desc">Weather and irrigation affect a soil-water bucket, which exchanges water demand and stress with crop development and growth.</desc>
+  <desc id="desc">Weather and irrigation affect a single-profile soil-water balance, which exchanges water demand and stress with crop development and growth.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0 0L10 5L0 10z" fill="#667085"/>
     </marker>
   </defs>
@@ -16,7 +16,7 @@
 
     <path d="M235 85H350" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
     <path d="M235 289H350" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
-    <path d="M235 92C300 92 286 190 350 190" fill="none" stroke="#667085" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M235 92C305 92 285 250 360 250" fill="none" stroke="#667085" stroke-width="2.5" marker-end="url(#arrow)"/>
 
     <rect x="362" y="38" width="250" height="130" rx="18" fill="#edf7eb" stroke="#389826" stroke-width="3"/>
     <text x="487" y="76" fill="#286d1b" font-size="22" font-weight="700">Crop development</text>
@@ -24,13 +24,14 @@
     <text x="487" y="134" fill="#475467" font-size="14">canopy and root demand</text>
 
     <rect x="362" y="220" width="250" height="130" rx="18" fill="#fff7df" stroke="#d69e2e" stroke-width="3"/>
-    <text x="487" y="258" fill="#8a5b08" font-size="22" font-weight="700">Soil-water bucket</text>
-    <text x="487" y="288" fill="#17212b" font-size="16">storage · infiltration · drainage</text>
-    <text x="487" y="316" fill="#475467" font-size="14">evaporation and transpiration</text>
+    <text x="487" y="254" fill="#8a5b08" font-size="22" font-weight="700">Soil-water balance</text>
+    <text x="487" y="282" fill="#17212b" font-size="14">profile storage · infiltration</text>
+    <text x="487" y="306" fill="#17212b" font-size="14">drainage · evaporation</text>
+    <text x="487" y="330" fill="#475467" font-size="14">plant transpiration</text>
 
-    <path d="M452 168V218" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
-    <text x="413" y="198" fill="#667085" font-size="13" text-anchor="end">water demand</text>
-    <path d="M522 220V170" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M452 168V220" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="440" y="198" fill="#667085" font-size="13" text-anchor="end">water demand</text>
+    <path d="M522 220V168" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
     <text x="542" y="198" fill="#667085" font-size="13" text-anchor="start">stress factors</text>
 
     <path d="M612 103H708" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>

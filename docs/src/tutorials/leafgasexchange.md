@@ -3,8 +3,8 @@
 This case study uses
 [LeafGasExchange.jl](https://github.com/cropbox/LeafGasExchange.jl), a Cropbox
 model coupling C₃ or C₄ biochemistry, Ball–Berry or Medlyn stomatal conductance,
-and leaf energy balance. It demonstrates how to inspect and sweep an existing
-model without editing its equations.
+and leaf energy balance. It demonstrates how to inspect an existing model and
+calculate response curves or grids without editing its equations.
 
 The coupled formulation and its comparison of stomatal-conductance models are
 described in [*Coupled Gas-Exchange Model for C4 Leaves Comparing Stomatal
@@ -60,10 +60,16 @@ guide. For example, model variable `Ap` represents the C₃ limitation rate
 ``A_p``, and `Ci` stores intercellular CO₂ concentration ``C_i``. Identifiers
 remain monospace; symbols used to explain an equation are typeset as math.
 
-`Ap` belongs to the C₃ model. The C₄ model instead resolves its enzyme- and
-electron-transport-limited rates through C₄-specific sub-processes. The model
-solves `Ci`, `gs`, and leaf temperature together, so none of those outputs
-should be interpreted as an independent input.
+The figures use the conventional short labels ``A_c``, ``A_j``, and ``A_n``.
+They correspond to model variables `Ac`, `Aj`, and `A_net`; the implementation
+spells out net assimilation as `A_net` rather than defining a separate `An`
+field.
+
+`Ap` belongs to the C₃ model. The C₄ model instead resolves carboxylation-side
+`Ac` from Rubisco and PEP sub-processes, together with
+electron-transport-limited `Aj`. The model solves `Ci`, `gs`, and leaf
+temperature together, so none of those outputs should be interpreted as an
+independent input.
 
 ## Inspect the configuration surface
 
@@ -109,7 +115,7 @@ Plain numbers are interpreted in the units declared by each parameter. For a
 published analysis, record the parameter source and use explicit units wherever
 the input could be ambiguous.
 
-Create an instance to check one condition before launching a sweep:
+Create an instance to check one condition before calculating a response curve:
 
 ```julia
 s = instance(LeafGasExchange.ModelC4MD; config = base)
@@ -124,7 +130,7 @@ biologically plausible before changing any biochemical parameter.
 
 An ``A``–``C_i`` curve relates assimilation ``A`` to intercellular CO₂
 ``C_i``. The test suite avoids zero atmospheric CO₂ because it does not bracket
-a useful coupled solution. Sweep a positive range.
+a useful coupled solution. Use a positive configured range.
 
 ```julia
 co2 = LeafGasExchange.Weather => :CO2 => 10:10:1500
@@ -134,6 +140,11 @@ visualize(LeafGasExchange.ModelC4MD,
     [:Ac, :Aj, :A_net];
     config = base,
     xstep = co2,
+    names = [
+        "Ac (enzyme-limited)",
+        "Aj (electron transport-limited)",
+        "An (net assimilation)",
+    ],
     kind = :line,
 )
 ```
@@ -141,7 +152,7 @@ visualize(LeafGasExchange.ModelC4MD,
 ![Simulated A-Ci response](../assets/tutorials/leafgasexchange-aci.svg)
 
 *C₄ assimilation and its biochemical limitation rates across the configured
-CO₂ sweep. The horizontal axis is solved `Ci`, not configured atmospheric
+CO₂ range. The horizontal axis is solved `Ci`, not configured atmospheric
 `CO2`.*
 
 `xstep` changes configured atmospheric CO₂ while `Ci` is plotted from the model
@@ -150,11 +161,12 @@ need not be the same variable.
 
 Read the curve from the limitation rates toward `A_net`. In the C₃ model, net
 assimilation ``A_{net}`` follows the lowest active rate among ``A_c``, ``A_j``,
-and ``A_p``, represented by `Ac`, `Aj`, and `Ap`. Enzyme limitation commonly
+and ``A_p``, represented by `Ac`, `Aj`, and `Ap`. Rubisco limitation commonly
 dominates the lower-``C_i`` part, while electron transport or triose phosphate
-may limit the upper part. The exact transition depends on the configuration,
-so the plot is a diagnostic rather than a rule that every parameter set must
-follow.
+may limit the upper part. In the C₄ implementation, `Ac` combines the
+Rubisco- and PEP-carboxylation-side enzyme limits before it enters the smoothed
+minimum with `Aj`. The exact transition depends on the configuration, so the
+plot is a diagnostic rather than a rule that every parameter set must follow.
 
 For C₃, include the triose-phosphate-limited rate `Ap` when available.
 
@@ -164,6 +176,12 @@ visualize(LeafGasExchange.ModelC3MD,
     [:Ac, :Aj, :Ap, :A_net];
     config = base,
     xstep = co2,
+    names = [
+        "Ac (enzyme-limited)",
+        "Aj (electron transport-limited)",
+        "Ap (triose phosphate-limited)",
+        "An (net assimilation)",
+    ],
     kind = :line,
 )
 ```
@@ -181,11 +199,27 @@ temperature = LeafGasExchange.Weather => :T_air => -10:1:50
 
 visualize(LeafGasExchange.ModelC4MD,
     :PFD, [:Ac, :Aj, :A_net];
-    config = base, xstep = light, kind = :line)
+    config = base,
+    xstep = light,
+    names = [
+        "Ac (enzyme-limited)",
+        "Aj (electron transport-limited)",
+        "An (net assimilation)",
+    ],
+    kind = :line,
+)
 
 visualize(LeafGasExchange.ModelC4MD,
     :T_air, [:Ac, :Aj, :A_net];
-    config = base, xstep = temperature, kind = :line)
+    config = base,
+    xstep = temperature,
+    names = [
+        "Ac (enzyme-limited)",
+        "Aj (electron transport-limited)",
+        "An (net assimilation)",
+    ],
+    kind = :line,
+)
 ```
 
 ![Leaf light response](../assets/tutorials/leafgasexchange-light.svg)
@@ -195,7 +229,7 @@ increases.*
 
 ![Leaf temperature response](../assets/tutorials/leafgasexchange-temperature.svg)
 
-*The broad temperature sweep is a boundary diagnostic. The extreme ends should
+*The broad temperature range is a boundary diagnostic. The extreme ends should
 not be interpreted as a validated biological extrapolation.*
 
 At low light, electron transport usually constrains assimilation; as light
@@ -210,29 +244,40 @@ biological extrapolation.
 
 ## Nitrogen × water response
 
-Two sweep dimensions produce a heatmap.
+Two configured dimensions produce a factorial response grid.
 
 ```julia
 visualize(LeafGasExchange.ModelC4MD, :N, :Ψv, :A_net;
     config = base,
-    xstep = LeafGasExchange.Nitrogen => :N => 0.1:0.05:2,
+    xstep = LeafGasExchange.Nitrogen => :N => 0.5:0.05:2,
     ystep = LeafGasExchange.StomataTuzet => :WP_leaf => -2:0.05:0,
+    xlim = (0.5, 2),
+    ylim = (-2, 0),
+    zlim = (0, 50),
+    zlab = "An / A_net",
     kind = :heatmap,
 )
 ```
 
 ![Nitrogen and water response](../assets/tutorials/leafgasexchange-nitrogen-water.svg)
 
-*Net assimilation from the factorial nitrogen × water-potential sweep. The
-positive lower bound for nitrogen avoids a degenerate zero-capacity coupled
-solution.*
+*Net assimilation over a factorial grid of leaf nitrogen and water potential.
+The lower nitrogen bound avoids the low-capacity solver failure seen near
+`N = 0.1u"g/m^2"` in this configuration.*
 
 The horizontal axis is model output `N`, while `xstep` changes the nitrogen
 parameter that determines it. Similarly, `ystep` changes `WP_leaf` and the
 model reports it as `Ψv`. More negative water potential should reduce the
 Tuzet stomatal factor; increased nitrogen raises biochemical capacity within
-the configured response. Inspect `gs` and the limitation rates if the heatmap
-does not follow those broad tendencies.
+the configured response.
+
+The broad blue band below about `-1.4u"MPa"` is a calculated low-assimilation
+branch, not missing heatmap cells. With the default Medlyn intercept `g0 = 0`,
+severe water stress can drive `gs` to its zero lower bound; the coupled
+solution then gives `A_net` close to zero across the nitrogen range. The sharp
+boundary is specific to this model and configuration, not a universal
+physiological threshold. Recalculate individual points with `instance` and
+inspect `fΨv`, `gs`, `Ci`, and `A_net` before interpreting the transition.
 
 This is a factorial configuration design: every nitrogen level is combined
 with every water-potential level. For further analysis, run `simulate` with
@@ -303,19 +348,18 @@ layout.
 
 ## Solver failures
 
-When bisection reports a failure or a sweep contains gaps:
+When bisection reports a failure or a response grid contains gaps:
 
 1. reproduce the failing point with `instance`;
 2. check units and environmental ranges;
 3. verify that lower and upper bounds bracket the residual;
 4. inspect `Ci`, `gs`, leaf temperature, and limitation rates;
-5. reduce the sweep range or step to locate the transition;
+5. reduce the configured range or step to locate the transition;
 6. compare with a trusted measurement or implementation.
 
-Cropbox also contains an experimental `fixedpoint` behavior, but this tutorial
-uses the model's established solver path. Do not replace a solver solely for
-speed without domain-wide convergence and accuracy tests.
+Do not replace the model's established solver path solely for speed without
+domain-wide convergence and accuracy tests.
 
-For details of `instance`, `simulate`, selectors, and sweep construction, see
+For details of `instance`, `simulate`, selectors, and configuration grids, see
 [Simulation](@ref Simulation1). General convergence questions are collected in
 [Frequently Asked Questions](@ref faq).

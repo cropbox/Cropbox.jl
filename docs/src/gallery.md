@@ -27,7 +27,15 @@ demonstrates large-system composition and dynamic leaves. Start with the
 
 A compact modular crop model with phenology, canopy growth, partitioning,
 weather input, irrigation, and a soil-water balance. It is the executable model
-in [Soil Water and SimpleCrop](@ref soil-water-tutorial).
+in the [SimpleCrop tutorial](@ref simplecrop-tutorial).
+
+## Cropbox layered-soil test model
+
+Cropbox itself contains a multi-layer soil-water example used by the framework
+test suite. It combines pedotransfer functions, layer storage, hydraulic heads,
+and surface, inter-layer, and lower-boundary fluxes. The
+[Soil Water Transport tutorial](@ref soil-water-transport-tutorial) runs that implementation
+directly and explains its current scope.
 
 ## [CropRootBox.jl](https://github.com/cropbox/CropRootBox.jl)
 

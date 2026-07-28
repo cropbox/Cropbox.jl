@@ -26,7 +26,7 @@ controller.
 ## Using the wrong behavior
 
 ```julia
-biomass(rate) ~ track       # current rate, not accumulated biomass
+biomass(rate)  ~ track      # current rate, not accumulated biomass
 parameter => 1 ~ track      # recalculated even though conceptually fixed
 ```
 
@@ -135,8 +135,7 @@ uniqueness, coverage, and time zone before calibrating anything.
 ## Increasing solver iterations before checking the bracket
 
 `maxiter` controls work after a valid problem is defined. For `bisect`, evaluate
-the residual at `lower` and `upper` first. For `fixedpoint`, inspect the update
-map, initial value, damping, and clipping.
+the residual at `lower` and `upper` first and confirm that it changes sign.
 
 ## Calibrating too much at once
 

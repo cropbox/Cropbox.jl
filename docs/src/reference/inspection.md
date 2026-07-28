@@ -115,10 +115,18 @@ The menu needs a real terminal. In an initialized IJulia session, `dive`
 falls back to the noninteractive `look(instance)` summary. In notebooks and
 scripts, explicit property paths and `look` are easier to reproduce.
 
-## Dependency debugging
+## Structural graph debugging
 
 `Cropbox.dependency(SystemType)` exposes the graph used while generating update
 order. It is intentionally not exported and its node representation is not a
 stable serialization format. Package authors can use it to diagnose cycles or
 stage ordering; model documentation should describe the scientific dependency
 chain in plain language instead.
+
+`Cropbox.hierarchy(SystemType; skipcontext=false)` provides the complementary
+system graph. Its dashed edges represent mixins, while solid edges represent
+typed child-system relationships. Set `skipcontext=true` for a less crowded
+view of a composed application model. Both graph objects support
+`Cropbox.writeimage("name", graph; format = :svg)` through the bundled
+Graphviz executable on supported platforms. Their text representations do not
+invoke Graphviz.

@@ -1,12 +1,12 @@
 # [Visualization](@id Visualization1)
 
-Cropbox has three plotting entry points. They share the same plot object and
-most styling options, but they start from different kinds of input.
+Cropbox provides one main visualization family and an optional interactive
+wrapper. The same calls work with existing data or with a model that still
+needs to be simulated.
 
 | Function | Start with | What it does |
 |---|---|---|
-| `plot`, `plot!` | vectors or a `DataFrame` | draw data that already exists |
-| `visualize`, `visualize!` | data, a system, or data plus a system | run any needed simulations and draw the result |
+| `visualize`, `visualize!` | vectors, a `DataFrame`, a system, or data plus a system | draw existing data or run any needed simulations and draw the result |
 | `manipulate` | a callback or `visualize` arguments | add parameter widgets in a supported notebook |
 
 For a saved analysis, it is usually clearest to call `simulate`, keep its
@@ -17,17 +17,16 @@ The public call families are:
 
 | Call shape | Result |
 |---|---|
-| `plot(X, Y)` or `plot(df, x, y)` | plot existing arrays or table columns |
+| `visualize(X, Y)` or `visualize(df, x, y)` | visualize existing arrays or table columns |
 | `visualize(System, x, y)` | simulate one system and plot its trajectory or response |
 | `visualize([System1, System2], x, y)` | compare compatible systems |
 | `visualize(df, System, x, y)` | overlay observations and a simulated trajectory |
 | `visualize(obs, System, y; index)` | observation-versus-estimate plot |
 | `visualize(System, x, y, z)` | two-factor heatmap or contour plot |
-| `plot!` or `visualize!` | append to an existing `Plot` and return the same wrapper |
+| `visualize!` | append to an existing `Plot` and return the same wrapper |
 
-Every form returns Cropbox's `Plot` wrapper. Styling keywords not consumed by
-`visualize` are passed to `plot`, so the same labels, units, limits, kinds, and
-backend selection apply.
+Every form returns Cropbox's `Plot` wrapper and accepts the same labels, units,
+limits, kinds, and backend selection.
 
 ## Common plotting forms
 
@@ -39,9 +38,9 @@ using Cropbox
 using DataFrames
 
 @system VisualTrajectory(Controller) begin
-    rate          => 1.0            ~ preserve(parameter, u"g/hr")
-    mass(rate)                      ~ accumulate(u"g")
-    reached(mass) => mass >= 3u"g"  ~ flag
+    rate          => 1.0           ~ preserve(parameter, u"g/hr")
+    mass(rate)                     ~ accumulate(u"g")
+    reached(mass) => mass >= 3u"g" ~ flag
 end
 
 @system VisualResponse(Controller) begin
@@ -63,10 +62,10 @@ nothing
 ### Vectors and DataFrames
 
 ```julia
-plot(X, Y; options...)
-plot(X, [Y1, Y2]; options...)
-plot(df, x, y; options...)
-plot(df, x, [y1, y2]; options...)
+visualize(X::Vector, Y::Vector; options...)
+visualize(X::Vector, [Y1, Y2]; options...)
+visualize(df, x, y; options...)
+visualize(df, x, [y1, y2]; options...)
 ```
 
 For a `DataFrame`, `x` and `y` may be column names as symbols or strings. They
@@ -76,8 +75,11 @@ variable. Functions used inside the expression must be visible in the calling
 Julia session; for a saved analysis, a named derived column is easier to test
 and reuse.
 
+Array-based calls currently dispatch on concrete `Vector` values. Use
+`collect(range)` before passing a range directly.
+
 ```@example visref
-plot(series, :hour, :observed;
+visualize(series, :hour, :observed;
     kind = :scatterline,
     title = "Observed mass",
     xlab = "Time",
@@ -91,7 +93,7 @@ labels; `legend` is the legend title, not a Boolean switch for individual
 series.
 
 ```@example visref
-plot(series, :hour, [:observed, :smooth];
+visualize(series, :hour, [:observed, :smooth];
     kind = :line,
     names = ["observation", "reference"],
     legend = "Series",
@@ -116,7 +118,7 @@ Two-dimensional plots support these `kind` values:
 ordered levels. Supply `ycat` when their display order must be explicit.
 
 ```@example visref
-plot(series, :hour, :reached;
+visualize(series, :hour, :reached;
     kind = :step,
     ylab = "Threshold reached",
     legend = false,
@@ -133,17 +135,17 @@ plain_series = DataFrame(
     smooth = 0:4,
 )
 
-p = plot(plain_series, :x, :observed;
+p = visualize(plain_series, :x, :observed;
     kind = :scatter,
     name = "observation",
     xlab = "Time",
     ylab = "Mass",
 )
-plot!(p, plain_series, :x, :smooth;
+visualize!(p, plain_series, :x, :smooth;
     kind = :line,
     name = "reference",
 )
-plot!(p, 3;
+visualize!(p, 3;
     kind = :hline,
     name = "threshold",
     color = :lightgray,
@@ -154,33 +156,36 @@ The one-value `:hline` and `:vline` helpers currently work most reliably when
 both axes are unitless or use compatible dimensions. For a plot with time on x
 and mass on y, draw a two-point unit-aware line instead:
 
-```julia
-plot!(p, [0, 4]u"hr", [3, 3]u"g";
+```@example visref
+p_units = visualize(series, :hour, :observed; kind = :scatter)
+visualize!(p_units, [0, 4]u"hr", [3, 3]u"g";
     kind = :line,
     name = "threshold",
 )
 ```
 
-`plot!` and `visualize!` change and return the same Cropbox `Plot`. Use `p[]`,
-`p'`, or `value(p)` only when direct access to the backend plot object is
+`visualize!` changes and returns the same Cropbox `Plot`. Use `p[]`, `p'`, or
+`value(p)` only when direct access to the backend object is
 needed, for example to call a backend-specific export function.
 
-To save a Gadfly result without adding another plotting dependency:
+To save a Gadfly result without adding another plotting package:
 
 ```julia
-p = plot(series, :hour, :observed;
+p = visualize(series, :hour, :observed;
     kind = :line,
     backend = :Gadfly,
 )
 
-p[] |> Cropbox.Gadfly.SVG("observed.svg",
-    16Cropbox.Gadfly.cm,
-    10Cropbox.Gadfly.cm,
-)
-p[] |> Cropbox.Gadfly.PDF("observed.pdf",
-    16Cropbox.Gadfly.cm,
-    10Cropbox.Gadfly.cm,
-)
+p[] |> Cropbox.Gadfly.SVG("observed.svg")
+```
+
+PDF export additionally requires the `Cairo` and `Fontconfig` packages to be
+installed and imported in the current environment:
+
+```julia
+import Cairo, Fontconfig
+
+p[] |> Cropbox.Gadfly.PDF("observed.pdf")
 ```
 
 The returned wrapper remains the portable part of the API; `Cropbox.Gadfly`
@@ -195,12 +200,12 @@ visualize(SystemType, x, y;
     options...)
 ```
 
-This form calls `simulate` with `x` and `y` as output variables, then calls
-`plot`. The usual simulation meanings of `base`, `stop`, and `snap` apply.
+This form calls `simulate` with `x` and `y` as output variables, then renders
+the result. The usual simulation meanings of `base`, `stop`, and `snap` apply.
 
 ```@example visref
 visualize(VisualTrajectory, :time, :mass;
-    config = VisualTrajectory => :rate => 1u"g/hr",
+    config = VisualTrajectory => :rate => 1,
     stop = 4u"hr",
     kind = :line,
     ylab = "Mass",
@@ -279,7 +284,7 @@ starting with `visualize` is usually easier to read.
 
 ```@example visref
 p = visualize(VisualTrajectory, :time, :mass;
-    config = VisualTrajectory => :rate => 1u"g/hr",
+    config = VisualTrajectory => :rate => 1,
     stop = 4u"hr",
     kind = :line,
     names = ["baseline"],
@@ -298,6 +303,10 @@ visualize!(p, FastVisualTrajectory, :time, :mass;
 All appended layers must use compatible axis units. `visualize!` does not
 retain a simulation table, so call `simulate` explicitly when those values are
 needed for later statistics or export.
+
+Keep the backend consistent across appended calls. If the initial call sets
+`backend` explicitly, pass the same value to each `visualize!` call; the
+current implementation does not infer that keyword from the existing wrapper.
 
 ## Observations and model estimates
 
@@ -323,7 +332,7 @@ visualize(observations,
     VisualTrajectory,
     :hour => :time,
     :measured => :mass;
-    config = VisualTrajectory => :rate => 1u"g/hr",
+    config = VisualTrajectory => :rate => 1,
     stop = 4u"hr",
     name = "observation",
     names = ["model"],
@@ -344,7 +353,7 @@ visualize(observations,
     VisualTrajectory,
     :measured => :mass;
     index = :hour => "context.clock.time",
-    config = VisualTrajectory => :rate => 1u"g/hr",
+    config = VisualTrajectory => :rate => 1,
     stop = 4u"hr",
     name = "model",
 )
@@ -357,9 +366,9 @@ For several model specifications of one target, pass named tuples with
 ```julia
 models = [
     (; system = VisualTrajectory,
-       config = VisualTrajectory => :rate => 0.9u"g/hr"),
+       config = VisualTrajectory => :rate => 0.9),
     (; system = VisualTrajectory,
-       config = VisualTrajectory => :rate => 1.1u"g/hr"),
+       config = VisualTrajectory => :rate => 1.1),
 ]
 
 visualize(observations, models, :measured => :mass;
@@ -416,12 +425,13 @@ visualize(VisualResponse, :input, :slope, :response;
 )
 ```
 
-Three-column `plot(df, x, y, z)` uses the same renderer. Set `kind=:contour`
-for contour lines. `zlim` fixes the color or contour range, `zgap` controls
-contour spacing, and `zlabgap` requests labels at a chosen interval. Contour
-rendering and the gap options are currently more complete in the Gadfly backend
-than in the terminal backend. Supply a complete, regularly ordered x-by-y grid
-for portable heatmap output; `visualize` creates that grid from its two factors.
+Three-column `visualize(df, x, y, z)` uses the same renderer. Set
+`kind=:contour` for contour lines. `zlim` fixes the color or contour range,
+`zgap` controls contour spacing, and `zlabgap` requests labels at a chosen
+interval. Contour rendering and the gap options are currently more complete in
+the Gadfly backend than in the terminal backend. Supply a complete, regularly
+ordered x-by-y grid for portable heatmap output; `visualize` creates that grid
+from its two factors.
 
 ## Labels, units, limits, and backends
 
@@ -480,6 +490,7 @@ terminal diagnostics.
   before plotting.
 - Appended layers must have compatible units. `xunit` and `yunit` convert
   compatible quantities; they do not assign dimensions to unrelated values.
+- An explicitly selected backend must be repeated on appended calls.
 - A grouped response curve may contain every snapshot from every configuration.
   Select one time point explicitly when a dynamic run would otherwise join
   unrelated trajectories.
@@ -499,8 +510,8 @@ manipulate(c -> visualize(VisualTrajectory, :time, :mass;
         stop = 4u"hr",
         kind = :line,
     );
-    parameters = VisualTrajectory => :rate => (0:0.25:2)u"g/hr",
-    config = VisualTrajectory => :rate => 1u"g/hr",
+    parameters = VisualTrajectory => :rate => 0:0.25:2,
+    config = VisualTrajectory => :rate => 1,
 )
 ```
 
@@ -509,8 +520,8 @@ The convenience form sends its positional and remaining keyword arguments to
 
 ```julia
 manipulate(VisualTrajectory, :time, :mass;
-    parameters = VisualTrajectory => :rate => (0:0.25:2)u"g/hr",
-    config = VisualTrajectory => :rate => 1u"g/hr",
+    parameters = VisualTrajectory => :rate => 0:0.25:2,
+    config = VisualTrajectory => :rate => 1,
     stop = 4u"hr",
     kind = :line,
 )
@@ -524,13 +535,3 @@ but is not interactive.
 
 Treat a widget as an exploration tool. Save the selected values as an explicit
 `Config` before using them in a reproducible analysis.
-
-## API docstrings
-
-```@docs
-plot
-plot!
-visualize
-visualize!
-manipulate
-```
