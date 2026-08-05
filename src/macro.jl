@@ -159,6 +159,7 @@ parsetypealias(type) = type
 parsetypealias(::Val{:int}, _) = :Int64
 parsetypealias(::Val{:uint}, _) = :UInt64
 parsetypealias(::Val{:float}, _) = :Float64
+parsetypealias(::Val{:rational}, _) = :($C.Rational{Int64})
 parsetypealias(::Val{:bool}, _) = :Bool
 parsetypealias(::Val{:sym}, _) = :Symbol
 parsetypealias(::Val{:str}, _) = :String
@@ -789,6 +790,8 @@ gendefault(v::VarInfo, ::Val) = gendefaultvalue(v)
 
 gensample(v::VarInfo, x) = @q $C.sample($x)
 genunitfy(v::VarInfo, x) = begin
+    N = gettag(v, :_type)
+    x = @q $C.exactify($N, $x)
     u = gettag(v, :unit)
     isnothing(u) ? x : @q $C.unitfy($x, $C.value($u))
 end

@@ -28,6 +28,20 @@
         @test s.b' == 4 && s.c' == 8
     end
 
+    @testset "rational clock interval" begin
+        @system SCaptureRationalClock(Controller) begin
+            a => 1 ~ capture
+        end
+        s = instance(SCaptureRationalClock; config=:Clock => (:step => 10u"minute"))
+        @test s.a.time == 0u"hr"
+        @test s.a.time isa Cropbox.Quantity{Float64}
+        for _ in 1:6
+            update!(s)
+        end
+        @test s.a.time == 1u"hr"
+        @test s.a' ≈ 1//6
+    end
+
     @testset "unit hour" begin
         @system SCaptureUnitHour(Controller) begin
             a => 1 ~ capture(u"hr")

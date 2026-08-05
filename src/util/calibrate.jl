@@ -46,6 +46,11 @@ normalize!(dfs::DataFrame...; on) = begin
     end
 end
 
+indexequal(a, b) = isequal(a, b)
+indexequal(a::Number, b::Number) = isequal(promote(a, b)...)
+indexequal(a::Tuple, b::Tuple) = length(a) == length(b) && all(indexequal(x, y) for (x, y) in zip(a, b))
+indexcontains(x, xs) = any(y -> indexequal(x, y), xs)
+
 """
     calibrate(S, obs; <keyword arguments>) -> Config | OrderedDict
 
@@ -119,7 +124,7 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     metric = metricfunc(metric)
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parseindex(index, S) |> values |> Tuple
-    snap(s) = getproperty.(s, IV) .|> value in IC
+    snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin

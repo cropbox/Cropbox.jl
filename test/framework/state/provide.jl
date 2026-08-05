@@ -43,6 +43,19 @@ using TimeZones
         @test_throws ErrorException instance(SProvideTime)
     end
 
+    @testset "floating-point time index" begin
+        @system SProvideTimeIndex(Controller) begin
+            a => DataFrame(index=[0.0, 1/6, 1/3]u"hr", value=1:3) ~ provide
+        end
+        local s
+        @test_logs (:warn, r"floating-point time-series index converted") s = instance(
+            SProvideTimeIndex;
+            config=:Clock => (:step => 10u"minute"),
+        )
+        @test s.a'.index == [0//1, 1//6, 1//3]u"hr"
+        @test eltype(s.a'.index) <: Cropbox.Quantity{Rational{Int64}}
+    end
+
     @testset "tick" begin
         @system SProvideTick(Controller) begin
             a => DataFrame(index=0:3, value=0:10:30) ~ provide(init=context.clock.tick, step=1)

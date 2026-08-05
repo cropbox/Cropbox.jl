@@ -7,8 +7,8 @@ end
 Advance(; init=nothing, step=nothing, unit, _type, _...) = begin
     U = value(unit)
     T = valuetype(_type, U)
-    t = isnothing(init) ? zero(T) : unitfy(value(init), U)
-    Δt = isnothing(step) ? oneunit(T) : unitfy(value(step), U)
+    t = isnothing(init) ? zero(T) : convertvalue(T, unitfy(exactify(_type, value(init)), U))
+    Δt = isnothing(step) ? oneunit(T) : convertvalue(T, unitfy(exactify(_type, value(step)), U))
     #T = promote_type(typeof(t), typeof(Δt))
     Advance{T}(t, t, Δt)
 end
