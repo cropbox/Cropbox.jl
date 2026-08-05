@@ -34,12 +34,12 @@ visualize(df, x, [y1, y2]; options...)</code></pre><p>For a <code>DataFrame</cod
     xlab = &quot;Time&quot;,
     ylab = &quot;Mass&quot;,
     legend = false,
-)</code></pre><img src="1b30a29e.svg" alt="Example block output"/><p>Passing several <code>y</code> columns draws several series. <code>names</code> controls their legend labels; <code>legend</code> is the legend title, not a Boolean switch for individual series.</p><pre><code class="language-julia hljs">visualize(series, :hour, [:observed, :smooth];
+)</code></pre><img src="cab6bc9e.svg" alt="Example block output"/><p>Passing several <code>y</code> columns draws several series. <code>names</code> controls their legend labels; <code>legend</code> is the legend title, not a Boolean switch for individual series.</p><pre><code class="language-julia hljs">visualize(series, :hour, [:observed, :smooth];
     kind = :line,
     names = [&quot;observation&quot;, &quot;reference&quot;],
     legend = &quot;Series&quot;,
     ylab = &quot;Mass&quot;,
-)</code></pre><img src="7e6cd37b.svg" alt="Example block output"/><h3 id="Plot-kinds"><a class="docs-heading-anchor" href="#Plot-kinds">Plot kinds</a><a id="Plot-kinds-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-kinds" title="Permalink"></a></h3><p>Two-dimensional plots support these <code>kind</code> values:</p><table><tr><th style="text-align: right"><code>kind</code></th><th style="text-align: right">Use</th></tr><tr><td style="text-align: right"><code>:scatter</code></td><td style="text-align: right">separate observations; the default</td></tr><tr><td style="text-align: right"><code>:line</code></td><td style="text-align: right">a continuous ordered trajectory</td></tr><tr><td style="text-align: right"><code>:scatterline</code></td><td style="text-align: right">points and a connecting line</td></tr><tr><td style="text-align: right"><code>:step</code></td><td style="text-align: right">stages, counts, or Boolean state changes</td></tr><tr><td style="text-align: right"><code>:hline</code></td><td style="text-align: right">one or more horizontal reference lines</td></tr><tr><td style="text-align: right"><code>:vline</code></td><td style="text-align: right">one or more vertical reference lines</td></tr></table><p><code>step</code> automatically treats Boolean values and other repeated categories as ordered levels. Supply <code>ycat</code> when their display order must be explicit.</p><pre><code class="language-julia hljs">visualize(series, :hour, :reached;
+)</code></pre><img src="59732ad9.svg" alt="Example block output"/><h3 id="Plot-kinds"><a class="docs-heading-anchor" href="#Plot-kinds">Plot kinds</a><a id="Plot-kinds-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-kinds" title="Permalink"></a></h3><p>Two-dimensional plots support these <code>kind</code> values:</p><table><tr><th style="text-align: right"><code>kind</code></th><th style="text-align: right">Use</th></tr><tr><td style="text-align: right"><code>:scatter</code></td><td style="text-align: right">separate observations; the default</td></tr><tr><td style="text-align: right"><code>:line</code></td><td style="text-align: right">a continuous ordered trajectory</td></tr><tr><td style="text-align: right"><code>:scatterline</code></td><td style="text-align: right">points and a connecting line</td></tr><tr><td style="text-align: right"><code>:step</code></td><td style="text-align: right">stages, counts, or Boolean state changes</td></tr><tr><td style="text-align: right"><code>:hline</code></td><td style="text-align: right">one or more horizontal reference lines</td></tr><tr><td style="text-align: right"><code>:vline</code></td><td style="text-align: right">one or more vertical reference lines</td></tr></table><p><code>step</code> automatically treats Boolean values and other repeated categories as ordered levels. Supply <code>ycat</code> when their display order must be explicit.</p><pre><code class="language-julia hljs">visualize(series, :hour, :reached;
     kind = :step,
     ylab = &quot;Threshold reached&quot;,
     legend = false,
@@ -59,20 +59,20 @@ visualize(df, x, [y1, y2]; options...)</code></pre><p>For a <code>DataFrame</cod
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-51e638de-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-56032da5-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable" id="img-51e638de-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-51e638de-3">
+<g class="plotroot xscalable" id="img-56032da5-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-56032da5-3">
     <g transform="translate(78.71,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">hour (hr)</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-51e638de-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-56032da5-4">
     <g transform="translate(22.99,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -99,43 +99,43 @@ visualize(df, x, [y1, y2]; options...)</code></pre><p>For a <code>DataFrame</cod
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-51e638de-5)">
-    <g id="img-51e638de-6">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-51e638de-7">
-        <g transform="translate(78.71,45.52)" id="img-51e638de-8">
+  <g clip-path="url(#img-56032da5-5)">
+    <g id="img-56032da5-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-56032da5-7">
+        <g transform="translate(78.71,45.52)" id="img-56032da5-8">
           <path d="M-57.72,-40.52 L57.72,-40.52 57.72,40.52 -57.72,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-51e638de-9">
-        <g transform="translate(78.71,45.52)" id="img-51e638de-10">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-56032da5-9">
+        <g transform="translate(78.71,45.52)" id="img-56032da5-10">
           <path fill="none" d="M-57.72,0 L57.72,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-51e638de-11">
-        <g transform="translate(22.99,45.52)" id="img-51e638de-12">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-56032da5-11">
+        <g transform="translate(22.99,45.52)" id="img-56032da5-12">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(50.85,45.52)" id="img-51e638de-13">
+        <g transform="translate(50.85,45.52)" id="img-56032da5-13">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(78.71,45.52)" id="img-51e638de-14">
+        <g transform="translate(78.71,45.52)" id="img-56032da5-14">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(106.56,45.52)" id="img-51e638de-15">
+        <g transform="translate(106.56,45.52)" id="img-56032da5-15">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(134.42,45.52)" id="img-51e638de-16">
+        <g transform="translate(134.42,45.52)" id="img-56032da5-16">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-51e638de-17">
+      <g class="plotpanel" id="img-56032da5-17">
         <metadata>
           <boundingbox value="20.99000000000001mm 5.0mm 115.4313562373095mm 81.04333333333334mm"/>
           <unitbox value="-0.07179307755137451 2.5 4.143586155102749 -2.0"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-51e638de-18">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-51e638de-19">
-            <g transform="translate(84.9,52.28)" id="img-51e638de-20">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-56032da5-18">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-56032da5-19">
+            <g transform="translate(84.9,52.28)" id="img-56032da5-20">
               <path fill="none" d="M-61.91,13.51 L-34.05,13.51 -34.05,13.51 -6.19,13.51 -6.19,13.51 21.67,13.51 21.67,-27.01 49.53,-27.01 49.53,-27.01 " class="primitive"/>
             </g>
           </g>
@@ -143,20 +143,20 @@ visualize(df, x, [y1, y2]; options...)</code></pre><p>For a <code>DataFrame</cod
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-51e638de-21">
-    <g transform="translate(19.99,65.78)" id="img-51e638de-22">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-56032da5-21">
+    <g transform="translate(19.99,65.78)" id="img-56032da5-22">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">false</text>
       </g>
     </g>
-    <g transform="translate(19.99,25.26)" id="img-51e638de-23">
+    <g transform="translate(19.99,25.26)" id="img-56032da5-23">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">true</text>
       </g>
     </g>
   </g>
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-51e638de-24">
-    <g transform="translate(8.64,43.52)" id="img-51e638de-25">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-56032da5-24">
+    <g transform="translate(8.64,43.52)" id="img-56032da5-25">
       <g class="primitive">
         <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">Threshold reached</text>
       </g>
@@ -164,7 +164,7 @@ visualize(df, x, [y1, y2]; options...)</code></pre><p>For a <code>DataFrame</cod
   </g>
 </g>
 <defs>
-  <clipPath id="img-51e638de-5">
+  <clipPath id="img-56032da5-5">
     <path d="M20.99,5 L136.42,5 136.42,86.04 20.99,86.04 " />
   </clipPath>
 </defs>
@@ -189,11 +189,11 @@ visualize!(p, 3;
     kind = :hline,
     name = &quot;threshold&quot;,
     color = :lightgray,
-)</code></pre><img src="ee8897b4.svg" alt="Example block output"/><p>The one-value <code>:hline</code> and <code>:vline</code> helpers currently work most reliably when both axes are unitless or use compatible dimensions. For a plot with time on x and mass on y, draw a two-point unit-aware line instead:</p><pre><code class="language-julia hljs">p_units = visualize(series, :hour, :observed; kind = :scatter)
+)</code></pre><img src="54e6dbca.svg" alt="Example block output"/><p>The one-value <code>:hline</code> and <code>:vline</code> helpers currently work most reliably when both axes are unitless or use compatible dimensions. For a plot with time on x and mass on y, draw a two-point unit-aware line instead:</p><pre><code class="language-julia hljs">p_units = visualize(series, :hour, :observed; kind = :scatter)
 visualize!(p_units, [0, 4]u&quot;hr&quot;, [3, 3]u&quot;g&quot;;
     kind = :line,
     name = &quot;threshold&quot;,
-)</code></pre><img src="d79aba7e.svg" alt="Example block output"/><p><code>visualize!</code> changes and returns the same Cropbox <code>Plot</code>. Use <code>p[]</code>, <code>p&#39;</code>, or <code>value(p)</code> only when direct access to the backend object is needed, for example to call a backend-specific export function.</p><p>To save a Gadfly result without adding another plotting package:</p><pre><code class="language-julia hljs">p = visualize(series, :hour, :observed;
+)</code></pre><img src="bccdd2b1.svg" alt="Example block output"/><p><code>visualize!</code> changes and returns the same Cropbox <code>Plot</code>. Use <code>p[]</code>, <code>p&#39;</code>, or <code>value(p)</code> only when direct access to the backend object is needed, for example to call a backend-specific export function.</p><p>To save a Gadfly result without adding another plotting package:</p><pre><code class="language-julia hljs">p = visualize(series, :hour, :observed;
     kind = :line,
     backend = :Gadfly,
 )
@@ -225,20 +225,20 @@ p[] |&gt; Cropbox.Gadfly.PDF(&quot;observed.pdf&quot;)</code></pre><p>The return
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-174051f9-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-275d4701-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-174051f9-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-174051f9-3">
+<g class="plotroot xscalable yscalable" id="img-275d4701-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-275d4701-3">
     <g transform="translate(76.19,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">time (hr)</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-174051f9-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-275d4701-4">
     <g transform="translate(17.96,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -265,55 +265,55 @@ p[] |&gt; Cropbox.Gadfly.PDF(&quot;observed.pdf&quot;)</code></pre><p>The return
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-174051f9-5)">
-    <g id="img-174051f9-6">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-174051f9-7">
-        <g transform="translate(76.19,45.52)" id="img-174051f9-8">
+  <g clip-path="url(#img-275d4701-5)">
+    <g id="img-275d4701-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-275d4701-7">
+        <g transform="translate(76.19,45.52)" id="img-275d4701-8">
           <path d="M-60.23,-40.52 L60.23,-40.52 60.23,40.52 -60.23,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-174051f9-9">
-        <g transform="translate(76.19,84.04)" id="img-174051f9-10">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-275d4701-9">
+        <g transform="translate(76.19,84.04)" id="img-275d4701-10">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,64.78)" id="img-174051f9-11">
+        <g transform="translate(76.19,64.78)" id="img-275d4701-11">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,45.52)" id="img-174051f9-12">
+        <g transform="translate(76.19,45.52)" id="img-275d4701-12">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,26.26)" id="img-174051f9-13">
+        <g transform="translate(76.19,26.26)" id="img-275d4701-13">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,7)" id="img-174051f9-14">
+        <g transform="translate(76.19,7)" id="img-275d4701-14">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-174051f9-15">
-        <g transform="translate(17.96,45.52)" id="img-174051f9-16">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-275d4701-15">
+        <g transform="translate(17.96,45.52)" id="img-275d4701-16">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(47.07,45.52)" id="img-174051f9-17">
+        <g transform="translate(47.07,45.52)" id="img-275d4701-17">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,45.52)" id="img-174051f9-18">
+        <g transform="translate(76.19,45.52)" id="img-275d4701-18">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(105.31,45.52)" id="img-174051f9-19">
+        <g transform="translate(105.31,45.52)" id="img-275d4701-19">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(134.42,45.52)" id="img-174051f9-20">
+        <g transform="translate(134.42,45.52)" id="img-275d4701-20">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-174051f9-21">
+      <g class="plotpanel" id="img-275d4701-21">
         <metadata>
           <boundingbox value="15.956666666666678mm 5.0mm 120.46468957064283mm 81.04333333333334mm"/>
           <unitbox value="-0.06869034751642487 4.103837667113745 4.137380695032849 -4.207675334227491"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-174051f9-22">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-174051f9-23">
-            <g transform="translate(76.19,45.52)" id="img-174051f9-24">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-275d4701-22">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-275d4701-23">
+            <g transform="translate(76.19,45.52)" id="img-275d4701-24">
               <path fill="none" d="M-58.23,38.52 L-29.12,19.26 0,0 29.12,-19.26 58.23,-38.52 " class="primitive"/>
             </g>
           </g>
@@ -321,35 +321,35 @@ p[] |&gt; Cropbox.Gadfly.PDF(&quot;observed.pdf&quot;)</code></pre><p>The return
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-174051f9-25">
-    <g transform="translate(14.96,84.04)" id="img-174051f9-26">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-275d4701-25">
+    <g transform="translate(14.96,84.04)" id="img-275d4701-26">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">0</text>
       </g>
     </g>
-    <g transform="translate(14.96,64.78)" id="img-174051f9-27">
+    <g transform="translate(14.96,64.78)" id="img-275d4701-27">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">1</text>
       </g>
     </g>
-    <g transform="translate(14.96,45.52)" id="img-174051f9-28">
+    <g transform="translate(14.96,45.52)" id="img-275d4701-28">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">2</text>
       </g>
     </g>
-    <g transform="translate(14.96,26.26)" id="img-174051f9-29">
+    <g transform="translate(14.96,26.26)" id="img-275d4701-29">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">3</text>
       </g>
     </g>
-    <g transform="translate(14.96,7)" id="img-174051f9-30">
+    <g transform="translate(14.96,7)" id="img-275d4701-30">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">4</text>
       </g>
     </g>
   </g>
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-174051f9-31">
-    <g transform="translate(8.64,43.52)" id="img-174051f9-32">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-275d4701-31">
+    <g transform="translate(8.64,43.52)" id="img-275d4701-32">
       <g class="primitive">
         <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">Mass (g)</text>
       </g>
@@ -357,7 +357,7 @@ p[] |&gt; Cropbox.Gadfly.PDF(&quot;observed.pdf&quot;)</code></pre><p>The return
   </g>
 </g>
 <defs>
-  <clipPath id="img-174051f9-5">
+  <clipPath id="img-275d4701-5">
     <path d="M15.96,5 L136.42,5 136.42,86.04 15.96,86.04 " />
   </clipPath>
 </defs>
@@ -372,7 +372,7 @@ p[] |&gt; Cropbox.Gadfly.PDF(&quot;observed.pdf&quot;)</code></pre><p>The return
     group = VisualResponse =&gt; :slope =&gt; [0.5, 1.0, 1.5],
     kind = :line,
     ylab = &quot;Response&quot;,
-)</code></pre><img src="dfdca15f.svg" alt="Example block output"/><p>For a grouped curve, the group parameter becomes the default legend title and its values become the series labels. Pass <code>names</code> and <code>legend</code> to replace them. If <code>names</code> is a symbol, Cropbox reads the unique value of that output column and uses it as each label. The latter is useful when a label is determined indirectly by configuration.</p><p>Use <code>xstep</code> with a static or snapshot-like response. If the system advances for many steps, every snapshot from every configuration is placed in the same curve; in that case it is usually clearer to call <code>simulate</code>, select the desired time rows, and plot the resulting table.</p><h3 id="Compare-systems"><a class="docs-heading-anchor" href="#Compare-systems">Compare systems</a><a id="Compare-systems-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-systems" title="Permalink"></a></h3><p>Pass a vector of system types to compare compatible outputs. <code>configs</code>, <code>names</code>, and <code>colors</code> are parallel vectors and must match the systems in order.</p><pre><code class="language-julia hljs">@system FastVisualTrajectory(VisualTrajectory) begin
+)</code></pre><img src="539623e2.svg" alt="Example block output"/><p>For a grouped curve, the group parameter becomes the default legend title and its values become the series labels. Pass <code>names</code> and <code>legend</code> to replace them. If <code>names</code> is a symbol, Cropbox reads the unique value of that output column and uses it as each label. The latter is useful when a label is determined indirectly by configuration.</p><p>Use <code>xstep</code> with a static or snapshot-like response. If the system advances for many steps, every snapshot from every configuration is placed in the same curve; in that case it is usually clearer to call <code>simulate</code>, select the desired time rows, and plot the resulting table.</p><h3 id="Compare-systems"><a class="docs-heading-anchor" href="#Compare-systems">Compare systems</a><a id="Compare-systems-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-systems" title="Permalink"></a></h3><p>Pass a vector of system types to compare compatible outputs. <code>configs</code>, <code>names</code>, and <code>colors</code> are parallel vectors and must match the systems in order.</p><pre><code class="language-julia hljs">@system FastVisualTrajectory(VisualTrajectory) begin
     rate =&gt; 1.5 ~ preserve(parameter, u&quot;g/hr&quot;)
 end
 
@@ -382,7 +382,7 @@ visualize([VisualTrajectory, FastVisualTrajectory], :time, :mass;
     colors = [:steelblue, :darkorange],
     stop = 4u&quot;hr&quot;,
     kind = :line,
-)</code></pre><img src="819360d0.svg" alt="Example block output"/><p>The systems do not need to share an implementation, but each must expose the requested x and y paths. Omit <code>configs</code>, or leave it empty, to use an empty configuration for every system. Supply a parallel vector explicitly when the positional pairing should be especially clear in teaching or analysis code.</p><h3 id="Append-simulations-with-visualize!"><a class="docs-heading-anchor" href="#Append-simulations-with-visualize!">Append simulations with <code>visualize!</code></a><a id="Append-simulations-with-visualize!-1"></a><a class="docs-heading-anchor-permalink" href="#Append-simulations-with-visualize!" title="Permalink"></a></h3><p>Use the mutating form when the layers are assembled conditionally or at different points in an analysis. <code>nothing</code> is accepted as the initial plot, but starting with <code>visualize</code> is usually easier to read.</p><pre><code class="language-julia hljs">p = visualize(VisualTrajectory, :time, :mass;
+)</code></pre><img src="726c20f1.svg" alt="Example block output"/><p>The systems do not need to share an implementation, but each must expose the requested x and y paths. Omit <code>configs</code>, or leave it empty, to use an empty configuration for every system. Supply a parallel vector explicitly when the positional pairing should be especially clear in teaching or analysis code.</p><h3 id="Append-simulations-with-visualize!"><a class="docs-heading-anchor" href="#Append-simulations-with-visualize!">Append simulations with <code>visualize!</code></a><a id="Append-simulations-with-visualize!-1"></a><a class="docs-heading-anchor-permalink" href="#Append-simulations-with-visualize!" title="Permalink"></a></h3><p>Use the mutating form when the layers are assembled conditionally or at different points in an analysis. <code>nothing</code> is accepted as the initial plot, but starting with <code>visualize</code> is usually easier to read.</p><pre><code class="language-julia hljs">p = visualize(VisualTrajectory, :time, :mass;
     config = VisualTrajectory =&gt; :rate =&gt; 1,
     stop = 4u&quot;hr&quot;,
     kind = :line,
@@ -396,7 +396,7 @@ visualize!(p, FastVisualTrajectory, :time, :mass;
     kind = :line,
     names = [&quot;fast&quot;],
     colors = [:darkorange],
-)</code></pre><img src="6f6cc515.svg" alt="Example block output"/><p>All appended layers must use compatible axis units. <code>visualize!</code> does not retain a simulation table, so call <code>simulate</code> explicitly when those values are needed for later statistics or export.</p><p>Keep the backend consistent across appended calls. If the initial call sets <code>backend</code> explicitly, pass the same value to each <code>visualize!</code> call; the current implementation does not infer that keyword from the existing wrapper.</p><h2 id="Observations-and-model-estimates"><a class="docs-heading-anchor" href="#Observations-and-model-estimates">Observations and model estimates</a><a id="Observations-and-model-estimates-1"></a><a class="docs-heading-anchor-permalink" href="#Observations-and-model-estimates" title="Permalink"></a></h2><p>There are two distinct comparison plots.</p><h3 id="Overlay-trajectories"><a class="docs-heading-anchor" href="#Overlay-trajectories">Overlay trajectories</a><a id="Overlay-trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#Overlay-trajectories" title="Permalink"></a></h3><pre><code class="language-julia hljs">visualize(observations, SystemType, obs_x =&gt; model_x, obs_y =&gt; model_y;
+)</code></pre><img src="2932186b.svg" alt="Example block output"/><p>All appended layers must use compatible axis units. <code>visualize!</code> does not retain a simulation table, so call <code>simulate</code> explicitly when those values are needed for later statistics or export.</p><p>Keep the backend consistent across appended calls. If the initial call sets <code>backend</code> explicitly, pass the same value to each <code>visualize!</code> call; the current implementation does not infer that keyword from the existing wrapper.</p><h2 id="Observations-and-model-estimates"><a class="docs-heading-anchor" href="#Observations-and-model-estimates">Observations and model estimates</a><a id="Observations-and-model-estimates-1"></a><a class="docs-heading-anchor-permalink" href="#Observations-and-model-estimates" title="Permalink"></a></h2><p>There are two distinct comparison plots.</p><h3 id="Overlay-trajectories"><a class="docs-heading-anchor" href="#Overlay-trajectories">Overlay trajectories</a><a id="Overlay-trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#Overlay-trajectories" title="Permalink"></a></h3><pre><code class="language-julia hljs">visualize(observations, SystemType, obs_x =&gt; model_x, obs_y =&gt; model_y;
     config, stop, options...)</code></pre><p>Cropbox draws observations as points and model output as a line. Pairs map differently named columns; omit the pairs when both names already match.</p><pre><code class="language-julia hljs">observations = DataFrame(
     hour = (0:4)u&quot;hr&quot;,
     measured = [0.1, 1.2, 1.9, 3.2, 3.8]u&quot;g&quot;,
@@ -411,14 +411,14 @@ visualize(observations,
     name = &quot;observation&quot;,
     names = [&quot;model&quot;],
     ylab = &quot;Mass&quot;,
-)</code></pre><img src="026349f3.svg" alt="Example block output"/><p>Pass a vector of systems and a parallel <code>configs</code> vector to overlay several models on the same observations.</p><h3 id="Observation-versus-estimate"><a class="docs-heading-anchor" href="#Observation-versus-estimate">Observation versus estimate</a><a id="Observation-versus-estimate-1"></a><a class="docs-heading-anchor-permalink" href="#Observation-versus-estimate" title="Permalink"></a></h3><p>Omit the x argument and supply <code>index</code>. Cropbox simulates only at matching indices, joins observations and estimates, draws points, and adds the 1:1 line.</p><pre><code class="language-julia hljs">visualize(observations,
+)</code></pre><img src="011f396a.svg" alt="Example block output"/><p>Pass a vector of systems and a parallel <code>configs</code> vector to overlay several models on the same observations.</p><h3 id="Observation-versus-estimate"><a class="docs-heading-anchor" href="#Observation-versus-estimate">Observation versus estimate</a><a id="Observation-versus-estimate-1"></a><a class="docs-heading-anchor-permalink" href="#Observation-versus-estimate" title="Permalink"></a></h3><p>Omit the x argument and supply <code>index</code>. Cropbox simulates only at matching indices, joins observations and estimates, draws points, and adds the 1:1 line.</p><pre><code class="language-julia hljs">visualize(observations,
     VisualTrajectory,
     :measured =&gt; :mass;
     index = :hour =&gt; &quot;context.clock.time&quot;,
     config = VisualTrajectory =&gt; :rate =&gt; 1,
     stop = 4u&quot;hr&quot;,
     name = &quot;model&quot;,
-)</code></pre><img src="16e40981.svg" alt="Example block output"/><p>A vector target draws one observation-versus-estimate series for each target. For several model specifications of one target, pass named tuples with <code>system</code>, <code>config</code>, or <code>configs</code> fields:</p><pre><code class="language-julia hljs">models = [
+)</code></pre><img src="05b21e4d.svg" alt="Example block output"/><p>A vector target draws one observation-versus-estimate series for each target. For several model specifications of one target, pass named tuples with <code>system</code>, <code>config</code>, or <code>configs</code> fields:</p><pre><code class="language-julia hljs">models = [
     (; system = VisualTrajectory,
        config = VisualTrajectory =&gt; :rate =&gt; 0.9),
     (; system = VisualTrajectory,
@@ -440,7 +440,7 @@ visualize(observations, models, :measured =&gt; :mass;
     ylab = &quot;Slope&quot;,
     zlab = &quot;Response&quot;,
     aspect = 1.4,
-)</code></pre><img src="968fb123.svg" alt="Example block output"/><p>The same factorial result can be rendered as contours:</p><pre><code class="language-julia hljs">visualize(VisualResponse, :input, :slope, :response;
+)</code></pre><img src="2642456c.svg" alt="Example block output"/><p>The same factorial result can be rendered as contours:</p><pre><code class="language-julia hljs">visualize(VisualResponse, :input, :slope, :response;
     xstep = VisualResponse =&gt; :input =&gt; 0:0.25:4,
     ystep = VisualResponse =&gt; :slope =&gt; 0.25:0.25:2,
     kind = :contour,
@@ -451,7 +451,7 @@ visualize(observations, models, :measured =&gt; :mass;
     zlab = &quot;Response&quot;,
     aspect = 1.4,
     backend = :Gadfly,
-)</code></pre><img src="6e1d7ba7.svg" alt="Example block output"/><p>Three-column <code>visualize(df, x, y, z)</code> uses the same renderer. Set <code>kind=:contour</code> for contour lines. <code>zlim</code> fixes the color or contour range, <code>zgap</code> controls contour spacing, and <code>zlabgap</code> requests labels at a chosen interval. Contour rendering and the gap options are currently more complete in the Gadfly backend than in the terminal backend. Supply a complete, regularly ordered x-by-y grid for portable heatmap output; <code>visualize</code> creates that grid from its two factors.</p><h2 id="Labels,-units,-limits,-and-backends"><a class="docs-heading-anchor" href="#Labels,-units,-limits,-and-backends">Labels, units, limits, and backends</a><a id="Labels,-units,-limits,-and-backends-1"></a><a class="docs-heading-anchor-permalink" href="#Labels,-units,-limits,-and-backends" title="Permalink"></a></h2><p>The main two-dimensional options are:</p><table><tr><th style="text-align: right">Option</th><th style="text-align: right">Meaning</th></tr><tr><td style="text-align: right"><code>kind</code></td><td style="text-align: right"><code>:scatter</code>, <code>:line</code>, <code>:scatterline</code>, or <code>:step</code></td></tr><tr><td style="text-align: right"><code>title</code>, <code>xlab</code>, <code>ylab</code></td><td style="text-align: right">plot and axis labels</td></tr><tr><td style="text-align: right"><code>name</code>, <code>names</code></td><td style="text-align: right">one series label or several series labels</td></tr><tr><td style="text-align: right"><code>legend</code>, <code>legendpos</code></td><td style="text-align: right">legend title/visibility and inside position</td></tr><tr><td style="text-align: right"><code>color</code>, <code>colors</code></td><td style="text-align: right">one color or parallel series colors</td></tr><tr><td style="text-align: right"><code>xlim</code>, <code>ylim</code></td><td style="text-align: right">displayed data limits</td></tr><tr><td style="text-align: right"><code>xunit</code>, <code>yunit</code></td><td style="text-align: right">units used for conversion and axis labels</td></tr><tr><td style="text-align: right"><code>ycat</code></td><td style="text-align: right">explicit category order for a step plot</td></tr><tr><td style="text-align: right"><code>aspect</code></td><td style="text-align: right">requested width-to-height relation</td></tr><tr><td style="text-align: right"><code>backend</code></td><td style="text-align: right"><code>:Gadfly</code> or <code>:UnicodePlots</code></td></tr></table><p>For three-column plots, <code>zlab</code>, <code>zlim</code>, <code>zgap</code>, and <code>zlabgap</code> control the color or contour dimension. <code>legendpos=(x, y)</code> places a Gadfly legend inside the plot at relative coordinates; the terminal backend warns and ignores that option.</p><p>Set <code>legend=false</code> to hide the legend. Units are inferred from arrays or DataFrame columns. An explicit <code>xunit</code> or <code>yunit</code> converts compatible values before plotting; it does not reinterpret an incompatible number. <code>ZonedDateTime</code> columns are converted to <code>DateTime</code> because the graphical backend does not accept zoned values directly.</p><p>Cropbox chooses Gadfly in Jupyter, Pluto, VS Code, and Documenter, and UnicodePlots in a plain terminal. Set <code>backend</code> when output must be identical across environments. Backend-specific plot objects remain an escape hatch, but code written against them is less portable than code using the options above.</p><p>Backend behavior is not completely identical:</p><table><tr><th style="text-align: right">Feature</th><th style="text-align: right">Gadfly</th><th style="text-align: right">UnicodePlots</th></tr><tr><td style="text-align: right">line, scatter, and step</td><td style="text-align: right">supported</td><td style="text-align: right">supported</td></tr><tr><td style="text-align: right"><code>:scatterline</code></td><td style="text-align: right">points plus line</td><td style="text-align: right">line rendering</td></tr><tr><td style="text-align: right">heatmap</td><td style="text-align: right">supported</td><td style="text-align: right">supported on a regular grid</td></tr><tr><td style="text-align: right">contour</td><td style="text-align: right">supported</td><td style="text-align: right">warns and falls back to a heatmap</td></tr><tr><td style="text-align: right">inside <code>legendpos</code></td><td style="text-align: right">supported</td><td style="text-align: right">ignored with a warning</td></tr><tr><td style="text-align: right"><code>zgap</code>, <code>zlabgap</code></td><td style="text-align: right">supported for contours</td><td style="text-align: right">ignored with a warning</td></tr></table><p>Use <code>backend=:Gadfly</code> for publication figures that rely on contour labels, inside legends, or exact graphical composition. Use <code>:UnicodePlots</code> for fast terminal diagnostics.</p><h2 id="Common-failures"><a class="docs-heading-anchor" href="#Common-failures">Common failures</a><a id="Common-failures-1"></a><a class="docs-heading-anchor-permalink" href="#Common-failures" title="Permalink"></a></h2><ul><li>A vector of systems requires parallel <code>configs</code>, <code>names</code>, and <code>colors</code> in the same order. In particular, <code>configs</code> must have the same length as the system vector.</li><li>A heatmap requires a complete, regularly ordered factorial grid. Missing combinations are better handled by constructing and checking a <code>DataFrame</code> before plotting.</li><li>Appended layers must have compatible units. <code>xunit</code> and <code>yunit</code> convert compatible quantities; they do not assign dimensions to unrelated values.</li><li>An explicitly selected backend must be repeated on appended calls.</li><li>A grouped response curve may contain every snapshot from every configuration. Select one time point explicitly when a dynamic run would otherwise join unrelated trajectories.</li><li>Observation-versus-estimate plots use an inner join. Missing, duplicated, or differently zoned index values can silently reduce or multiply the points; inspect the joined table when the count is unexpected.</li><li>Backend warnings usually indicate a presentation limitation, not a failed simulation. Re-run with <code>backend=:Gadfly</code> before changing model equations.</li></ul><h2 id="Interactive-parameter-controls"><a class="docs-heading-anchor" href="#Interactive-parameter-controls">Interactive parameter controls</a><a id="Interactive-parameter-controls-1"></a><a class="docs-heading-anchor-permalink" href="#Interactive-parameter-controls" title="Permalink"></a></h2><p>The callback form receives a configuration made from the current widget values:</p><pre><code class="language-julia hljs">manipulate(c -&gt; visualize(VisualTrajectory, :time, :mass;
+)</code></pre><img src="47938f1c.svg" alt="Example block output"/><p>Three-column <code>visualize(df, x, y, z)</code> uses the same renderer. Set <code>kind=:contour</code> for contour lines. <code>zlim</code> fixes the color or contour range, <code>zgap</code> controls contour spacing, and <code>zlabgap</code> requests labels at a chosen interval. Contour rendering and the gap options are currently more complete in the Gadfly backend than in the terminal backend. Supply a complete, regularly ordered x-by-y grid for portable heatmap output; <code>visualize</code> creates that grid from its two factors.</p><h2 id="Labels,-units,-limits,-and-backends"><a class="docs-heading-anchor" href="#Labels,-units,-limits,-and-backends">Labels, units, limits, and backends</a><a id="Labels,-units,-limits,-and-backends-1"></a><a class="docs-heading-anchor-permalink" href="#Labels,-units,-limits,-and-backends" title="Permalink"></a></h2><p>The main two-dimensional options are:</p><table><tr><th style="text-align: right">Option</th><th style="text-align: right">Meaning</th></tr><tr><td style="text-align: right"><code>kind</code></td><td style="text-align: right"><code>:scatter</code>, <code>:line</code>, <code>:scatterline</code>, or <code>:step</code></td></tr><tr><td style="text-align: right"><code>title</code>, <code>xlab</code>, <code>ylab</code></td><td style="text-align: right">plot and axis labels</td></tr><tr><td style="text-align: right"><code>name</code>, <code>names</code></td><td style="text-align: right">one series label or several series labels</td></tr><tr><td style="text-align: right"><code>legend</code>, <code>legendpos</code></td><td style="text-align: right">legend title/visibility and inside position</td></tr><tr><td style="text-align: right"><code>color</code>, <code>colors</code></td><td style="text-align: right">one color or parallel series colors</td></tr><tr><td style="text-align: right"><code>xlim</code>, <code>ylim</code></td><td style="text-align: right">displayed data limits</td></tr><tr><td style="text-align: right"><code>xunit</code>, <code>yunit</code></td><td style="text-align: right">units used for conversion and axis labels</td></tr><tr><td style="text-align: right"><code>ycat</code></td><td style="text-align: right">explicit category order for a step plot</td></tr><tr><td style="text-align: right"><code>aspect</code></td><td style="text-align: right">requested width-to-height relation</td></tr><tr><td style="text-align: right"><code>backend</code></td><td style="text-align: right"><code>:Gadfly</code> or <code>:UnicodePlots</code></td></tr></table><p>For three-column plots, <code>zlab</code>, <code>zlim</code>, <code>zgap</code>, and <code>zlabgap</code> control the color or contour dimension. <code>legendpos=(x, y)</code> places a Gadfly legend inside the plot at relative coordinates; the terminal backend warns and ignores that option.</p><p>Set <code>legend=false</code> to hide the legend. Units are inferred from arrays or DataFrame columns. An explicit <code>xunit</code> or <code>yunit</code> converts compatible values before plotting; it does not reinterpret an incompatible number. <code>ZonedDateTime</code> columns are converted to <code>DateTime</code> because the graphical backend does not accept zoned values directly.</p><p>Cropbox chooses Gadfly in Jupyter, Pluto, VS Code, and Documenter, and UnicodePlots in a plain terminal. Set <code>backend</code> when output must be identical across environments. Backend-specific plot objects remain an escape hatch, but code written against them is less portable than code using the options above.</p><p>Backend behavior is not completely identical:</p><table><tr><th style="text-align: right">Feature</th><th style="text-align: right">Gadfly</th><th style="text-align: right">UnicodePlots</th></tr><tr><td style="text-align: right">line, scatter, and step</td><td style="text-align: right">supported</td><td style="text-align: right">supported</td></tr><tr><td style="text-align: right"><code>:scatterline</code></td><td style="text-align: right">points plus line</td><td style="text-align: right">line rendering</td></tr><tr><td style="text-align: right">heatmap</td><td style="text-align: right">supported</td><td style="text-align: right">supported on a regular grid</td></tr><tr><td style="text-align: right">contour</td><td style="text-align: right">supported</td><td style="text-align: right">warns and falls back to a heatmap</td></tr><tr><td style="text-align: right">inside <code>legendpos</code></td><td style="text-align: right">supported</td><td style="text-align: right">ignored with a warning</td></tr><tr><td style="text-align: right"><code>zgap</code>, <code>zlabgap</code></td><td style="text-align: right">supported for contours</td><td style="text-align: right">ignored with a warning</td></tr></table><p>Use <code>backend=:Gadfly</code> for publication figures that rely on contour labels, inside legends, or exact graphical composition. Use <code>:UnicodePlots</code> for fast terminal diagnostics.</p><h2 id="Common-failures"><a class="docs-heading-anchor" href="#Common-failures">Common failures</a><a id="Common-failures-1"></a><a class="docs-heading-anchor-permalink" href="#Common-failures" title="Permalink"></a></h2><ul><li>A vector of systems requires parallel <code>configs</code>, <code>names</code>, and <code>colors</code> in the same order. In particular, <code>configs</code> must have the same length as the system vector.</li><li>A heatmap requires a complete, regularly ordered factorial grid. Missing combinations are better handled by constructing and checking a <code>DataFrame</code> before plotting.</li><li>Appended layers must have compatible units. <code>xunit</code> and <code>yunit</code> convert compatible quantities; they do not assign dimensions to unrelated values.</li><li>An explicitly selected backend must be repeated on appended calls.</li><li>A grouped response curve may contain every snapshot from every configuration. Select one time point explicitly when a dynamic run would otherwise join unrelated trajectories.</li><li>Observation-versus-estimate plots use an inner join. Missing, duplicated, or differently zoned index values can silently reduce or multiply the points; inspect the joined table when the count is unexpected.</li><li>Backend warnings usually indicate a presentation limitation, not a failed simulation. Re-run with <code>backend=:Gadfly</code> before changing model equations.</li></ul><h2 id="Interactive-parameter-controls"><a class="docs-heading-anchor" href="#Interactive-parameter-controls">Interactive parameter controls</a><a id="Interactive-parameter-controls-1"></a><a class="docs-heading-anchor-permalink" href="#Interactive-parameter-controls" title="Permalink"></a></h2><p>The callback form receives a configuration made from the current widget values:</p><pre><code class="language-julia hljs">manipulate(c -&gt; visualize(VisualTrajectory, :time, :mass;
         config = c,
         stop = 4u&quot;hr&quot;,
         kind = :line,
@@ -463,4 +463,4 @@ visualize(observations, models, :measured =&gt; :mass;
     config = VisualTrajectory =&gt; :rate =&gt; 1,
     stop = 4u&quot;hr&quot;,
     kind = :line,
-)</code></pre><p>Ranges and arrays make sliders; arrays of symbols or enum values and dictionaries make drop-down controls; Booleans make check boxes. Interactive widgets require a working WebIO provider. Without one, Cropbox warns and returns a single static callback result, which is useful for testing the code but is not interactive.</p><p>Treat a widget as an exploration tool. Save the selected values as an explicit <code>Config</code> before using them in a reproducible analysis.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Simulation API</a><a class="docs-footer-nextpage" href="../inspection/">Inspection API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 28 July 2026 06:10">Tuesday 28 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre><p>Ranges and arrays make sliders; arrays of symbols or enum values and dictionaries make drop-down controls; Booleans make check boxes. Interactive widgets require a working WebIO provider. Without one, Cropbox warns and returns a single static callback result, which is useful for testing the code but is not interactive.</p><p>Treat a widget as an exploration tool. Save the selected values as an explicit <code>Config</code> before using them in a reproducible analysis.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Simulation API</a><a class="docs-footer-nextpage" href="../inspection/">Inspection API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 5 August 2026 01:32">Wednesday 5 August 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
