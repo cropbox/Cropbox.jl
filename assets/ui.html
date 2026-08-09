@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Configuration and Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e0e0e0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .graph-container {
+            flex-grow: 1;
+            margin-bottom: 10px;
+        }
+
+        .header {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: #333;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .collapsible-container {
+            margin-bottom: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            background-color: #f5f5f5;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            border-bottom: 1px solid #cccccc;
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-header::after {
+            content: "▼";
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            padding: 10px;
+            display: block;
+        }
+
+        .collapsible-content.hidden {
+            display: none;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: calc(100% - 60px);
+            height: calc(90vh - 20px);
+            background-color: #e0e0e0;
+            padding: 15px;
+            margin-top: 60px;
+            box-shadow: none;
+            border: none;
+            gap: 20px;
+        }
+
+        .section {
+            width: 32%;
+            background-color: #ffffff;
+            padding: 15px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+
+        .section {
+            width: 32%;
+            background-color: #ffffff;
+            padding: 15px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100%; 
+            overflow-y: auto;
+        }
+
+        .scrollable-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-bottom: 10px;
+            min-height: 200px;
+        }
+
+        .parameter-container,
+        .options-container {
+            background-color: #ffffff;
+            padding: 15px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            flex: 1;
+            margin-bottom: 10px;
+        }
+
+        .parameter-container label,
+        .options-container label {
+            width: 40%;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #333;
+            text-align: left;
+            padding-right: 10px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .parameter-container input[type="text"],
+        .parameter-container input[type="number"],
+        .parameter-container input[type="file"],
+        .options-container input[type="text"],
+        .options-container select {
+            width: 25%;
+            padding: 6px;
+            font-size: 14px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        .parameter-container select,
+        .options-container select {
+            width: 25%;
+            padding: 6px;
+            font-size: 14px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            transition: border-color 0.3s ease;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            margin-left: 5px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .parameter-container .unit,
+        .options-container .unit {
+            width: 15%;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        .datetime-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .datetime-input {
+            flex: 1;
+            min-width: 45px;
+            padding: 6px;
+            font-size: 14px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            text-align: right;
+            display: inline-block;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #666666;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #555555;
+        }
+
+        .selected-bubbles {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .bubble {
+            background-color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            font-size: 14px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bubble:hover {
+            background-color: #ccc;
+        }
+
+        .bubble .remove-btn {
+            margin-left: 10px;
+            cursor: pointer;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="model-name">{{model_name}}</h1>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>Parameters</h2>
+            <div class="scrollable-container">
+                <form id="parametersForm">
+                    <!-- Regular Parameters -->
+                    {{regular_params_form}}
+
+                    <h3>Clock</h3>
+                    <div class="parameter-container">
+                        <label for="Clock__step">step</label>
+                        <input type="number" id="Clock__step" name="Clock__step" value="1">
+                        <select id="Clock__unit_skip" name="Clock__unit_skip">
+                            <option value="hour">hour</option>
+                            <option value="day">day</option>
+                        </select>
+                    </div>
+
+                    <h3>Calendar</h3>
+                    <div class="parameter-container">
+                        <label>init</label>
+                        <div class="datetime-row">
+                            <input type="number" class="datetime-input" id="Calendar__init__year" name="Calendar__init__year" placeholder="Year">
+                            <input type="number" class="datetime-input" id="Calendar__init__month" name="Calendar__init__month" placeholder="Month">
+                            <input type="number" class="datetime-input" id="Calendar__init__day" name="Calendar__init__day" placeholder="Day">
+                            <select class="datetime-input" id="Calendar__init__timezone" name="Calendar__init__timezone">
+                                <option value="">Select Timezone</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-container">
+                        <label>last</label>
+                        <div class="datetime-row">
+                            <input type="number" class="datetime-input" id="Calendar__last__year" name="Calendar__last__year" placeholder="Year">
+                            <input type="number" class="datetime-input" id="Calendar__last__month" name="Calendar__last__month" placeholder="Month">
+                            <input type="number" class="datetime-input" id="Calendar__last__day" name="Calendar__last__day" placeholder="Day">
+                            <select class="datetime-input" id="Calendar__last__timezone" name="Calendar__last__timezone">
+                                <option value="">Select Timezone</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Options Section -->
+            <h2>Options</h2>
+            <div class="scrollable-container">
+                <form id="optionsForm">
+                    <div class="parameter-container">
+                        <label for="Options__stop_number_skip">stop</label>
+                        <input type="number" id="Options__stop_number_skip" name="Options__stop_number_skip">
+                        <select id="Options__stop_unit_skip" name="Options__stop_unit_skip">
+                            <option value="hour">hour</option>
+                            <option value="day">day</option>
+                            <option value="year">year</option>
+                        </select>
+                    </div>
+                    <div class="parameter-container">
+                        <label for="Options__snap_number_skip">snap</label>
+                        <input type="number" id="Options__snap_number_skip" name="Options__snap_number_skip">
+                        <select id="Options__snap_unit_skip" name="Options__snap_unit_skip">
+                            <option value="hour">hour</option>
+                            <option value="day">day</option>
+                        </select>
+                    </div>
+                    <div class="parameter-container">
+                        <label for="Options__index_skip">index</label>
+                        <input type="text" id="Options__index_skip" name="Options__index_skip">
+                    </div>
+                    <div class="parameter-container">
+                        <label for="Options__target_skip">target</label>
+                        {{target_dropdown}}  <!-- Placeholder for dropdown that will be dynamically replaced by backend -->
+                        <div id="selected-targets" class="selected-bubbles"></div> <!-- This will display the selected "bubbles" -->
+                    </div>
+                </form>
+            </div>
+            <button type="button" onclick="simulateModel()">Simulate</button>
+        </div>
+
+        <div class="section">
+            <h2>Simulation</h2>
+            <div class="scrollable-container">
+                <div id="dataframe-display" style="visibility: hidden;">{{df_html}}</div>
+            </div>
+            <button type="button" onclick="downloadCSV()">Download CSV</button>
+        </div>
+
+        <div class="section">
+            <h2>Graph</h2>
+            <div class="scrollable-container">
+                <label for="col1">Select X-Axis:</label>
+                <select id="col1"></select>
+                <label for="col2">Select Y-Axis:</label>
+                <select id="col2"></select>
+                <canvas id="myChart" width="400" height="400"></canvas>
+            </div>
+            <button type="button" onclick="drawGraph()">Draw Graph</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('parametersForm').addEventListener('change', function(event) {
+            if (event.target.type === 'file') {
+                const fileInput = event.target;
+                const file = fileInput.files[0];
+
+                if (file) {
+                    const fileName = file.name; // This is the actual name of the uploaded file, not the input's name
+                    const fileExtension = fileName.split('.').pop(); // Get the file extension
+
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        const fileContent = e.target.result;
+                        sessionStorage.setItem(fileInput.name, fileContent);  // Store file content in sessionStorage, using the input's "name" attribute
+                        sessionStorage.setItem(fileInput.name + '_extension_skip', fileExtension);  // Store file extension using the input's "name" attribute
+                    };
+
+                    reader.readAsText(file); // Read the file as text
+                }
+            }
+        });
+
+        document.getElementById('Options__target_skip').addEventListener('change', function() {
+            const selectedValue = this.value;
+
+            if (selectedValue !== "") {
+                addBubble(selectedValue);
+            }
+        });
+
+        function addBubble(value) {
+            const selectedTargets = document.getElementById('selected-targets');
+
+            // Check if bubble already exists
+            if (!document.getElementById("bubble-" + value)) { 
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.id = "bubble-" + value; 
+                bubble.innerHTML = value + ' <span class="remove-btn" onclick="removeBubble(\'' + value + '\')">&times;</span>';
+                selectedTargets.appendChild(bubble);
+            }
+        }
+
+        function removeBubble(value) {
+            const bubble = document.getElementById("bubble-" + value);
+            if (bubble) {
+                bubble.remove();
+            }
+        }
+    
+        function simulateModel() {
+            const parametersForm = new FormData(document.getElementById('parametersForm'));
+            const optionsForm = new FormData(document.getElementById('optionsForm'));
+
+            const data = {};
+
+            // Combine data from both forms
+            parametersForm.forEach((value, key) => {
+                if (value !== "") {
+                    if (key.endsWith('_file')) {
+                        const fileContent = sessionStorage.getItem(key);
+                        const fileExtension = sessionStorage.getItem(key + '_extension_skip');
+                        data[key] = fileContent;
+                        data[key + '_extension_skip'] = fileExtension;
+                    } else {
+                        data[key] = value;
+                    }
+                }
+            });
+
+            optionsForm.forEach((value, key) => {
+                if (value !== "") {
+                    if (key.endsWith('_file')) {
+                        data[key] = sessionStorage.getItem(key);  // Retrieve from sessionStorage
+                    } else {
+                        data[key] = value;
+                    }
+                }
+            });
+
+            const bubbles = document.querySelectorAll('.bubble');
+            const selectedBubbles = Array.from(bubbles).map(bubble => bubble.textContent.trim().replace(' ×', ''));  // Remove the '×'
+            data['selected_targets'] = selectedBubbles;
+
+            fetch('/simulate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(result => {
+                const df = result.results;
+                console.log(df);
+
+                // Store the DataFrame in session storage
+                sessionStorage.setItem('simulationData', JSON.stringify(df));
+
+                // Update the DataFrame display
+                let df_html = "<table border='1'><tr>";
+                for (const col of df.columns) {
+                    df_html += "<th>" + col + "</th>";
+                }
+                df_html += "</tr>";
+                for (const row of df.data) {
+                    df_html += "<tr>";
+                    for (const cell of row) {
+                        df_html += "<td>" + cell + "</td>";
+                    }
+                    df_html += "</tr>";
+                }
+                df_html += "</table>";
+                document.getElementById('dataframe-display').innerHTML = df_html;
+
+                // Make the DataFrame content visible
+                document.getElementById('dataframe-display').style.visibility = 'visible';
+
+                // Populate column selection dropdowns
+                const col1 = document.getElementById('col1');
+                const col2 = document.getElementById('col2');
+                let colOptions = "<option value=''>Select Column</option>";
+                for (const col of df.columns) {
+                    colOptions += "<option value='" + col + "'>" + col + "</option>";
+                }
+                col1.innerHTML = colOptions;
+                col2.innerHTML = colOptions;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    
+        function drawGraph() {
+            const col1 = document.getElementById('col1').value;
+            const col2 = document.getElementById('col2').value;
+    
+            if (col1 === "" || col2 === "") {
+                return;
+            }
+    
+            // Retrieve the DataFrame from session storage
+            const simulationData = JSON.parse(sessionStorage.getItem('simulationData'));
+    
+            if (!simulationData) {
+                return;
+            }
+    
+            const columns = simulationData.columns;
+            const data = simulationData.data;
+    
+            const col1Index = columns.indexOf(col1);
+            const col2Index = columns.indexOf(col2);
+    
+            if (col1Index === -1 || col2Index === -1) {
+                return;
+            }
+    
+            const x_data = data.map(row => row[col1Index]);
+            const y_data = data.map(row => row[col2Index]);
+    
+            const ctx = document.getElementById("myChart").getContext("2d");
+    
+            if (window.myChartInstance) {
+                window.myChartInstance.destroy();
+            }
+    
+            window.myChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x_data,
+                    datasets: [{
+                        label: col1 + " vs " + col2,
+                        data: y_data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { beginAtZero: true },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function downloadCSV() {
+            const simulationData = JSON.parse(sessionStorage.getItem('simulationData'));
+            
+            if (!simulationData) {
+                alert("No simulation data found!");
+                return;
+            }
+
+            const columns = simulationData.columns;
+            const data = simulationData.data;
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += columns.join(",") + "\n";
+            data.forEach(row => {
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "simulation_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function populateTimezones() {
+            // Get the init and last timezone dropdown elements
+            const initTimezoneDropdown = document.getElementById('Calendar__init__timezone');
+            const lastTimezoneDropdown = document.getElementById('Calendar__last__timezone');
+
+            // Check if `Intl.supportedValuesOf` is supported in the current browser
+            if (typeof Intl.supportedValuesOf === "function") {
+                const timezones = Intl.supportedValuesOf('timeZone'); // Get the list of IANA time zones
+
+                timezones.forEach(timezone => {
+                    // Create new option elements for both dropdowns
+                    const option1 = document.createElement('option');
+                    const option2 = document.createElement('option');
+
+                    option1.value = timezone;
+                    option1.textContent = timezone;
+
+                    option2.value = timezone;
+                    option2.textContent = timezone;
+
+                    // Append the options to both dropdowns
+                    initTimezoneDropdown.appendChild(option1);
+                    lastTimezoneDropdown.appendChild(option2);
+                });
+            } else {
+                console.error("Intl.supportedValuesOf is not supported in this browser.");
+            }
+        }
+
+        function toggleVisibility(header) {
+            // Toggle the "collapsed" class on the header element
+            header.classList.toggle("collapsed");
+
+            // Find the next sibling element, which is the collapsible content
+            const content = header.nextElementSibling;
+
+            // Toggle the visibility of the content
+            if (content.classList.contains("hidden")) {
+                content.classList.remove("hidden");
+            } else {
+                content.classList.add("hidden");
+            }
+        }
+
+        window.onload = function() {
+            populateTimezones();
+        };
+    </script>
+</body>
+</html>
