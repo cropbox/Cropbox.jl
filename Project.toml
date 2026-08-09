@@ -1,7 +1,7 @@
 name = "Cropbox"
 uuid = "a904b226-abf1-11e9-2713-059ba252a964"
-authors = ["Kyungdahm Yun <tomyun@gmail.com>"]
 version = "0.3.53-DEV"
+authors = ["Kyungdahm Yun <tomyun@gmail.com>"]
 
 [deps]
 BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
@@ -44,7 +44,7 @@ Distributions = "0.23, 0.24, 0.25"
 Gadfly = "1"
 Graphs = "1"
 Graphviz_jll = "2"
-Highlights = "0.5"
+Highlights = "0.5, 0.6"
 Interact = "0.10"
 Interpolations = "0.14, 0.15"
 JuliaInterpreter = "0.9, 0.10"
