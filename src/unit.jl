@@ -87,6 +87,12 @@ hasunit(v::Units) = !Unitful.isunitless(v)
 hasunit(::Nothing) = false
 hasunit(v) = any(hasunit.(unittype(v)))
 
+unitlabel(unit) = unitlabel(string(unit))
+unitlabel(unit::AbstractString) = begin
+    label = join((token == "%" ? "percent" : token for token in split(unit)), " ")
+    label == "d K" ? "K*d" : label
+end
+
 using DataFrames: AbstractDataFrame, DataFrame, DataFrames
 for f in (:unitfy, :deunitfy)
     @eval $f(df::AbstractDataFrame, U::Vector) = begin
@@ -136,7 +142,7 @@ unitfy(df::AbstractDataFrame; kw...) = begin
     DataFrames.rename(unitfy(df, U), N...)
 end
 unitfy(df::AbstractDataFrame, ::Nothing) = df
-deunitfy(df::AbstractDataFrame) = DataFrame(((hasunit(u) ? "$n ($u)" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
+deunitfy(df::AbstractDataFrame) = DataFrame(((hasunit(u) ? "$n ($(unitlabel(u)))" : n) => deunitfy(df[!, n]) for (n, u) in zip(names(df), unittype(df)))...)
 
 unitfy(dfs::AbstractArray{<:AbstractDataFrame}) = unitfy.(dfs)
 unitfy(dfs::AbstractArray{<:AbstractDataFrame}, ::Nothing) = dfs

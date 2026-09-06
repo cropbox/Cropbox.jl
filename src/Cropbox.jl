@@ -3,7 +3,7 @@
 
 Declarative crop modeling framework. https://github.com/cropbox/Cropbox.jl
 
-See also: [`@system`](@ref), [`@config`](@ref), [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref), [`visualize`](@ref), [`manipulate`](@ref)
+See also: [`@system`](@ref), [`@config`](@ref), [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref), [`visualize`](@ref), [`manipulate`](@ref), [`describe`](@ref), [`serve`](@ref), [`dashboard`](@ref)
 """
 module Cropbox
 
@@ -33,6 +33,7 @@ include("util/hierarchy.jl")
 include("util/plot.jl")
 include("util/visualize.jl")
 include("util/manipulate.jl")
+include("util/webapi.jl")
 
 include("precompile.jl")
 

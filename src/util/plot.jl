@@ -58,7 +58,7 @@ findlim(array) = extrema(skipmissing(array))
 
 label(l, u) = begin
     l = isnothing(l) ? "" : l
-    hasunit(u) ? "$l ($u)" : "$l"
+    hasunit(u) ? "$l ($(unitlabel(u)))" : "$l"
 end
 
 detectbackend() = begin
@@ -148,7 +148,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     title=nothing,
     xlab=nothing, ylab=nothing,
     legend=nothing, legendpos=nothing,
-    names=nothing, colors=nothing,
+    names=nothing, colors=nothing, linestyles=nothing,
     xlim=nothing, ylim=nothing,
     ycat=nothing,
     xunit=nothing, yunit=nothing,
@@ -192,10 +192,12 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
         names = isnothing(names) ? "#" .* string.(n0+1:n0+n) : names
     end
     colors = isnothing(colors) ? repeat([nothing], n) : colors
+    linestyles = isnothing(linestyles) ? repeat([:solid], n) : Symbol.(linestyles)
+    length(linestyles) == n || error("`linestyles` must contain one entry per y variable")
     title = isnothing(title) ? "" : string(title)
 
     isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
+    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, linestyles, xlim, ylim, ycat, xunit, yunit, aspect)
 end
 
 plot(df::DataFrame, x, y, z;

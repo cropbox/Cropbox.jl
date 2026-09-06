@@ -147,7 +147,7 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     isnothing(names) && (names = string.(nameof.(SS)))
     isnothing(colors) && (colors = repeat([nothing], n))
 
-    p = plot!(p, df, xo, yo; kind=:scatter, name, xlab, ylab, xunit, yunit, plotopts...)
+    p = plot!(p, df, xo, yo; name, xlab, ylab, xunit, yunit, plotopts...)
     for (S, c, name, color) in zip(SS, configs, names, colors)
         cs = isnothing(xstep) ? c : @config(c + !xstep)
         r = simulate(S; base, target=[xe, ye], configs=cs, stop, snap, verbose=false)

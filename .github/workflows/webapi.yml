@@ -1,0 +1,31 @@
+name: Web API examples
+on: [push, pull_request]
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: examples/webapi/mcp/requirements.txt
+      - name: Install example dependencies
+        env:
+          JULIA_PKG_PRECOMPILE_AUTO: '0'
+        run: |
+          python -m pip install sympy -r examples/webapi/mcp/requirements.txt
+          PYTHON="$(command -v python)" julia --project=examples/webapi -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate(); Pkg.build("PyCall"); Pkg.precompile()'
+      - name: Check the MCP adapter
+        run: python -m unittest discover -s examples/webapi/mcp -p 'test_*.py' -v
+      - name: Check all model services and MCP round trips
+        env:
+          JULIA_NUM_THREADS: '1'
+          CROPBOX_MCP_PYTHON: python
+        run: julia --startup-file=no --project=examples/webapi examples/webapi/check.jl

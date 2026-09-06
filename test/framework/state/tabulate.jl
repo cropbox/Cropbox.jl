@@ -26,6 +26,11 @@
         @test s.Bb' == 5
         @test s.Cb' == 6
         @test s.Db' == 7
+
+        rows = sprint(show, MIME"text/plain"(), s.T)
+        cols = sprint(show, MIME"text/plain"(), s.T.A)
+        @test occursin("A", rows)
+        @test occursin("a", cols)
     end
 
     @testset "parameter" begin

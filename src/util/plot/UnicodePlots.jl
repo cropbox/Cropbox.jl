@@ -1,6 +1,6 @@
 import UnicodePlots
 
-plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect, width=40, height=15) = begin
+plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, linestyles, xlim, ylim, ycat, xunit, yunit, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "CI", nothing) == "true"
         UnicodePlots.DotCanvas
     else
@@ -67,7 +67,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         UnicodePlots.label!(obj, :r, legend)
         annotate_x_axis!(obj)
         annotate_y_axis!(obj)
-        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
+        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], linestyles=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
@@ -76,7 +76,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         color = colors[i]
         plot!(p.obj, X, Y; name, color)
         #TODO: remember colors
-        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color])
+        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color], linestyles=[linestyles[i]])
     end
     p
 end

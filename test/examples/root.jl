@@ -315,6 +315,39 @@ soilcore = :SoilCore => (;
     s = instance(CropRootBox.RootArchitecture; config=root_maize, options=(; box=b), seed=0)
     r = simulate!(s, stop=100u"d")
     @test r.time[end] == 100u"d"
+    status, content_type, body = Cropbox.route_api_response(
+        CropRootBox.RootArchitecture,
+        "GET",
+        "/api/model",
+        "";
+        config=root_maize,
+    )
+    model = Cropbox.JSON3.read(body, Dict{String,Any})
+    @test status == 200
+    @test content_type == "application/json; charset=utf-8"
+    @test model["model"]["module"] == "CropRootBox"
+    @test any(p -> p["name"] == "maxB" &&
+                   p["config_path"] == "RootArchitecture.maxB", model["parameters"])
+
+    request = Dict(
+        "seed" => 0,
+        "stop" => Dict("value" => 100, "unit" => "d"),
+    )
+    status, content_type, body = Cropbox.route_api_response(
+        CropRootBox.RootArchitecture,
+        "POST",
+        "/api/simulate",
+        Cropbox.JSON3.write(request);
+        config=root_maize,
+        options=(; box=b),
+    )
+    routed = Cropbox.JSON3.read(body, Dict{String,Any})
+    @test status == 200
+    @test content_type == "application/json; charset=utf-8"
+    @test routed["status"] == "ok"
+    @test routed["summary"]["nrow"] == size(r, 1)
+    @test routed["columns"][1]["name"] == "time"
+    @test routed["rows"][end][1] == Cropbox.encode_api_plain(Cropbox.deunitfy(r[end, :time]))
     # using GLMakie
     # scn = CropRootBox.render(s)
     # GLMakie.save("root_maize.png", scn)

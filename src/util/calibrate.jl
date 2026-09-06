@@ -106,7 +106,7 @@ calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) =
     elseif isempty(config)
         calibrate(S, obs, configs; kwargs...)
     else
-        @error "redundant configurations" config configs
+        throw(ArgumentError("`config` and `configs` cannot be supplied together"))
     end
 end
 calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
@@ -128,7 +128,7 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
-        est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
+        est = simulate(S; config=c, index, target, verbose=false, kwargs..., snap)
         isempty(est) && return repeat([Inf], n)
         normalize!(est, obs, on=I)
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)

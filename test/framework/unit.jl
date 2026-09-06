@@ -155,6 +155,14 @@ using Dates: Date, Time
         @test Cropbox.deunitfy(1u"m") == 1
         @test Cropbox.deunitfy([1, 2, 3]u"m") == [1, 2, 3]
         @test Cropbox.deunitfy((1u"m", 2u"cm", 3)) === (1, 2, 3)
+        @test Cropbox.unitlabel(u"K*d") == "K*d"
+        for (fancy, label) in (("true", "d K⁻¹"), ("false", "d K^-1"))
+            withenv("UNITFUL_FANCY_EXPONENTS" => fancy) do
+                @test Cropbox.unitlabel(u"d/K") == label
+            end
+        end
+        @test Cropbox.unitlabel(u"cd*K") == "cd K"
+        @test Cropbox.unitlabel(u"percent") == "percent"
     end
 
     @testset "deunitfy with units" begin
@@ -179,6 +187,10 @@ using Dates: Date, Time
         @test df1 == DataFrame("a (s)" => [0], "b" => [0])
         df2 = Cropbox.unitfy(df1)
         @test df2 == r
+
+        thermal = Cropbox.deunitfy(DataFrame(TT=[1u"K*d"]))
+        @test names(thermal) == ["TT (K*d)"]
+        @test Cropbox.unitfy(thermal) == DataFrame(TT=[1u"K*d"])
     end
 
     @testset "dataframe auto unit" begin

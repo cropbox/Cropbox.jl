@@ -451,4 +451,52 @@ end
     )
     @test r.time[end] == 80u"d"
     visualize(r, :time, [:v1, :v2, :v3, :v4, :v5], ylim=(0.2, 0.45)) |> println
+
+    api_target = [
+        Dict("name" => "v1", "path" => "s.L[1].θ"),
+        Dict("name" => "v2", "path" => "s.L[2].θ"),
+        Dict("name" => "v3", "path" => "s.L[3].θ"),
+        Dict("name" => "v4", "path" => "s.L[4].θ"),
+        Dict("name" => "v5", "path" => "s.L[5].θ"),
+    ]
+    api_request = Dict(
+        "config" => Dict(
+            "Clock" => Dict(
+                "step" => Dict("value" => 1, "unit" => "d"),
+            ),
+            "SoilClock" => Dict(
+                "step" => Dict("value" => 15, "unit" => "minute"),
+            ),
+            "SoilWeather" => Dict(
+                "store" => Dict(
+                    "type" => "CSV",
+                    "filename" => "PyWaterBal.csv",
+                    "content" => read(joinpath(@__DIR__, "data/soil/PyWaterBal.csv"), String),
+                ),
+            ),
+        ),
+        "stop" => Dict("value" => 80, "unit" => "d"),
+        "target" => api_target,
+    )
+    status, content_type, body = Cropbox.route_api_response(
+        SoilWater.SoilController,
+        "POST",
+        "/api/simulate",
+        Cropbox.JSON3.write(api_request),
+    )
+    routed = Cropbox.JSON3.read(body, Dict{String,Any})
+    @test status == 200
+    @test content_type == "application/json; charset=utf-8"
+    @test routed["status"] == "ok"
+    @test routed["summary"]["nrow"] == size(r, 1)
+    @test [c["name"] for c in routed["columns"]] == string.(propertynames(r))
+    for i in 1:size(r, 1), (j, name) in enumerate(propertynames(r))
+        expected = Cropbox.encode_api_plain(Cropbox.deunitfy(r[i, name]))
+        actual = routed["rows"][i][j]
+        if actual isa Number && expected isa Number
+            @test isapprox(actual, expected; atol=1e-8, rtol=1e-8)
+        else
+            @test actual == expected
+        end
+    end
 end

@@ -47,7 +47,7 @@ evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     elseif isempty(config)
         evaluate(S, obs, configs; kwargs...)
     else
-        @error "redundant configurations" config configs
+        throw(ArgumentError("`config` and `configs` cannot be supplied together"))
     end
 end
 evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, kwargs...) = begin
@@ -65,7 +65,7 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
-        est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
+        est = simulate(S; config=c, index, target, verbose=false, kwargs..., snap)
         isempty(est) && return repeat([Inf], n)
         normalize!(est, obs, on=I)
         df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)

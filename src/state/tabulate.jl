@@ -29,8 +29,8 @@ DataFrames.DataFrame(t::TabulationRows; index=true) = begin
 end
 Base.Matrix(t::TabulationRows) = Matrix(DataFrame(t; index=false))
 
-Base.show(io::IO, t::TabulationCols) = show(io, DataFrame(t); summary=false, eltypes=false, show_row_number=false, vlines=:none)
-Base.show(io::IO, t::TabulationRows) = show(io, DataFrame(t); summary=false, eltypes=false, show_row_number=false, vlines=[1])
+Base.show(io::IO, t::TabulationCols) = show(io, DataFrame(t); summary=false, eltypes=false, show_row_number=false)
+Base.show(io::IO, t::TabulationRows) = show(io, DataFrame(t); summary=false, eltypes=false, show_row_number=false)
 
 tabulation(m, R, C, V) = TabulationRows{V}(R .=> [TabulationCols{V}(zip(C, V.(m[i,:]))) for i in 1:size(m, 1)])
 

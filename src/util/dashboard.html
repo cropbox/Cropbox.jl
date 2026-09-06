@@ -1,0 +1,1593 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cropbox Dashboard</title>
+  <style>
+    :root { color-scheme: light; --line:#d8dee8; --ink:#1d2630; --muted:#5d6875; --fill:#f5f7fa; --panel:#fff; --accent:#256f6c; --action:#2f6fa7; --danger:#b24646; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: var(--fill); }
+    header { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    h1 { font-size: 18px; margin: 0; }
+    main { --model-panel-width:390px; display:grid; grid-template-columns:var(--model-panel-width) 8px minmax(0, 1fr); min-width:0; height:calc(100vh - 56px); min-height:0; }
+    aside { min-width:0; background:var(--panel); padding:14px; overflow:auto; }
+    section { min-width: 0; padding: 14px; overflow: auto; }
+    .layout-resizer { position:relative; z-index:5; width:8px; min-height:0; background:#edf1f4; cursor:col-resize; touch-action:none; outline:none; }
+    .layout-resizer::before { content:""; position:absolute; inset:0 auto 0 3px; width:1px; background:#cfd7df; transition:background-color .14s ease, width .14s ease; }
+    .layout-resizer::after { content:""; position:absolute; top:50%; left:2px; width:4px; height:34px; border-radius:3px; background:#a8b5c1; transform:translateY(-50%); opacity:.58; transition:background-color .14s ease, opacity .14s ease, transform .14s ease; }
+    .layout-resizer:hover::before, .layout-resizer:focus-visible::before, .layout-resizer.dragging::before { width:2px; background:var(--accent); }
+    .layout-resizer:hover::after, .layout-resizer:focus-visible::after, .layout-resizer.dragging::after { background:var(--accent); opacity:1; transform:translateY(-50%) scaleY(1.12); }
+    .layout-resizer:focus-visible { box-shadow:inset 0 0 0 2px rgba(37,111,108,.18); }
+    body.layout-resizing { cursor:col-resize; user-select:none; }
+    h2 { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0; margin: 0; }
+    label { display: block; color: var(--muted); font-size: 12px; margin: 8px 0 4px; }
+    input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; background: #fff; color: var(--ink); }
+    select { appearance:none; -webkit-appearance:none; padding-right:32px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23256f6c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; background-size:14px 14px; }
+    input:focus, select:focus, textarea:focus { border-color:#8bb6b2; outline:none; box-shadow:0 0 0 2px rgba(37,111,108,.1); }
+    input[type="checkbox"] { width: auto; }
+    input[type="range"] { padding: 0; }
+    textarea { min-height: 118px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    button { height: 34px; border: 1px solid var(--accent); border-radius: 6px; padding: 0 11px; background: var(--accent); color: white; font-weight: 650; cursor:pointer; transition:background-color .14s ease, border-color .14s ease, box-shadow .14s ease, transform .08s ease; }
+    button:hover:not(:disabled) { box-shadow:0 2px 7px rgba(24,45,54,.14); }
+    button:active:not(:disabled) { transform:translateY(1px) scale(.96); box-shadow:inset 0 2px 4px rgba(20,38,45,.18); }
+    button:focus-visible { outline:2px solid rgba(37,111,108,.28); outline-offset:2px; }
+    button:disabled { cursor:not-allowed; opacity:.5; }
+    #run-button:disabled { cursor:wait; opacity:.78; background:var(--accent); border-color:var(--accent); }
+    button.secondary { background: #fff; color: var(--accent); }
+    button.ghost { background: transparent; color: var(--muted); border-color: var(--line); }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border: 1px solid var(--line); }
+    th, td { padding: 5px 7px; border-bottom: 1px solid var(--line); border-right: 1px solid #edf1f5; text-align: right; white-space: nowrap; font-size: 12px; }
+    th { position: sticky; top: 0; z-index: 1; background: #eef3f7; color: #344456; font-weight: 700; white-space: normal; line-height: 1.2; }
+    th:first-child, td:first-child { text-align: left; }
+    td:first-child, th:first-child { position: sticky; left: 0; z-index: 2; background: inherit; }
+    th:first-child { z-index: 3; background: #eef3f7; }
+    summary { cursor: pointer; color: var(--accent); font-weight: 650; margin-top: 10px; }
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .run-tools { display:flex; align-items:center; gap:8px; min-height:34px; }
+    .run-button-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.42); border-top-color:#fff; border-radius:50%; animation:spin .75s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .control { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #fff; }
+    .control-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+    .section-heading, .content-heading { display:flex; align-items:center; justify-content:flex-start; gap:6px; min-height:28px; margin:0 0 12px; }
+    .section-heading.spaced { margin-top:20px; }
+    .system-group { border: 1px solid var(--line); border-radius: 7px; background: #fff; margin-bottom: 10px; }
+    .system-summary { margin: 0; padding: 7px 8px; border-bottom: 1px solid var(--line); display:flex; align-items:center; gap:6px; }
+    .system-summary-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .system-body { padding: 8px; }
+    .config-picker { position:relative; margin:0 0 10px; padding:10px; border:1px solid #bfcbd6; border-radius:7px; background:#fff; box-shadow:0 8px 22px rgba(29,45,58,.11); }
+    .config-picker[hidden] { display:none; }
+    .config-picker::before { content:""; position:absolute; top:-6px; left:56px; width:10px; height:10px; background:#fff; border-left:1px solid #bfcbd6; border-top:1px solid #bfcbd6; transform:rotate(45deg); }
+    .config-picker-grid { display:grid; grid-template-columns:minmax(0, .8fr) minmax(0, 1.2fr); gap:7px; }
+    .config-picker label { margin-top:0; color:#43515f; font-weight:650; }
+    .config-picker-actions { display:flex; justify-content:flex-end; margin-top:7px; }
+    .tree-section { margin: 14px 2px 7px; color: var(--muted); font-size: 10px; font-weight: 750; text-transform: uppercase; }
+    .tree-section:first-child { margin-top:4px; }
+    .tree-row { border: 1px solid #e7edf3; border-radius: 6px; padding: 5px 6px; margin-bottom: 5px; background: #fff; transition: opacity .15s, background .15s, border-color .15s; }
+    .tree-row.inactive { background: #fafbfc; }
+    .tree-row.inactive > .tree-head > input,
+    .tree-row.inactive > .tree-head > div,
+    .tree-row.inactive > .tree-head > .tree-unit { opacity:.56; }
+    .tree-row.inactive > .tree-head > .state-icon { color:#8793a0; border-color:#e4e9ed; background:#fbfcfd; }
+    .tree-row.active { border-color: #9bc5c0; background: #f7fbfa; opacity: 1; }
+    .tree-head { display:grid; grid-template-columns: auto auto minmax(0, 1fr) minmax(34px, auto); gap:6px; align-items:center; }
+    .tree-name { min-width:0; display:flex; align-items:center; gap:4px; font-weight:650; }
+    .tree-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tree-default { color:#8995a3; font-size:11px; font-weight:500; margin-left:6px; }
+    .tree-unit { justify-self:end; color:#8995a3; font-size:11px; max-width:120px; overflow-wrap:anywhere; text-align:right; line-height:1.2; }
+    .state-icon { position:relative; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:5px; border:1px solid #d9e2ec; color:#526170; background:#f7fafc; font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; cursor:help; }
+    .state-icon:hover, .state-icon:focus { border-color:#9eb4c4; background:#eef4f7; color:#274354; outline:none; }
+    .metadata-popover { display:none; position:fixed; z-index:40; top:0; left:0; width:310px; max-width:calc(100vw - 20px); padding:10px; border:1px solid #c6d2dc; border-radius:7px; background:#fff; box-shadow:0 10px 28px rgba(22,34,46,.18); color:#2e3b47; pointer-events:none; font:11px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .metadata-trigger:hover .metadata-popover, .metadata-trigger:focus .metadata-popover, .metadata-trigger.popover-open .metadata-popover { display:block; }
+    .metadata-description { display:block; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #e7edf2; color:#344352; line-height:1.45; }
+    .metadata-grid { display:grid; grid-template-columns:minmax(72px, auto) minmax(0, 1fr); gap:5px 10px; align-items:start; }
+    .metadata-key { color:#7a8794; font-weight:650; }
+    .metadata-value { min-width:0; overflow-wrap:anywhere; color:#26384a; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .override-editor { display:grid; grid-template-columns: minmax(0, 1fr) auto; gap:8px; align-items:center; margin-top:7px; }
+    .override-editor[hidden] { display:none; }
+    .table-editor { margin-top:7px; }
+    .table-editor[hidden] { display:none; }
+    .table-default { display:flex; align-items:center; gap:7px; margin:0 0 7px; color:#7a8795; font-size:11px; }
+    .table-default .code { color:#52616f; overflow-wrap:anywhere; }
+    .variable-row { border: 1px solid #eef2f6; border-radius: 6px; padding: 5px 6px; margin-bottom: 5px; background:#fff; }
+    .variable-row .tree-name { font-weight:600; }
+    .unit { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #26384a; }
+    .panels { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); min-width:0; gap:12px; align-items:start; }
+    .panel { min-width:0; background:#fff; border:1px solid var(--line); border-radius:8px; min-height:390px; display:grid; grid-template-rows:auto 1fr; transition:border-color .15s, box-shadow .15s, opacity .15s, background-color .15s; }
+    .panel.drag-shift { transition:transform .24s cubic-bezier(.2,.8,.2,1), border-color .15s, box-shadow .15s, opacity .15s, background-color .15s; will-change:transform; }
+    .panel.dragging { opacity:.36; }
+    .panel.drag-over { border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,111,108,.14), inset 0 4px 0 rgba(37,111,108,.32); }
+    .panel-drop-indicator { position:fixed; z-index:30; pointer-events:none; border:2px dashed var(--accent); border-radius:8px; background:rgba(37,111,108,.08); box-shadow:inset 0 0 0 3px rgba(255,255,255,.72); animation:drop-indicator-in .16s ease-out; }
+    @keyframes drop-indicator-in { from { opacity:0; transform:scale(.97); } to { opacity:1; transform:scale(1); } }
+    .empty-panels { min-height:150px; border:1px dashed #cad3dc; border-radius:8px; background:rgba(255,255,255,.52); }
+    .panel-head { padding:10px; border-bottom:1px solid var(--line); }
+    .panel-top { display:flex; align-items:center; gap:8px; }
+    .panel-spacer { flex:1; }
+    .drag-handle { width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; color:#8a97a3; cursor:grab; user-select:none; }
+    .drag-handle:active { cursor:grabbing; }
+    .panel-settings { position:relative; margin-top:10px; padding:10px; border:1px solid #c9d4dd; border-radius:7px; background:#fff; box-shadow:0 7px 18px rgba(29,45,58,.09); }
+    .panel-settings[hidden] { display:none; }
+    .panel-settings::before { content:""; position:absolute; top:-6px; right:45px; width:10px; height:10px; background:#fff; border-left:1px solid #c9d4dd; border-top:1px solid #c9d4dd; transform:rotate(45deg); }
+    .panel-primary-grid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(130px, .55fr); gap:10px; align-items:start; }
+    .panel-settings label { color:#43515f; font-weight:650; }
+    .panel-primary-grid label, .axis-group label { margin-top:0; }
+    .y-selector { margin-top:10px; }
+    .y-options { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px 8px; max-height:150px; overflow:auto; padding:7px; border:1px solid var(--line); border-radius:6px; background:#fafbfd; }
+    .y-option { display:flex; align-items:center; gap:6px; min-width:0; margin:0; padding:3px 4px; color:var(--ink); font-size:12px; }
+    .y-option input { flex:none; }
+    .y-option span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .axis-settings { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-top:10px; }
+    .axis-group { border:1px solid #e8edf2; border-radius:6px; padding:7px; }
+    .axis-group-title { color:#43515f; font-size:12px; font-weight:650; margin-bottom:6px; }
+    .axis-range { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .panel-body { padding: 10px; overflow: auto; }
+    .panel-body.panel-empty { display:flex; align-items:center; justify-content:center; min-height:300px; background:linear-gradient(#fafbfd, #f7f9fb); color:#a9b4bf; }
+    .panel-placeholder { display:flex; align-items:center; justify-content:center; width:42px; height:42px; border:1px solid #e0e6eb; border-radius:50%; background:#f2f5f7; color:#a9b4bf; }
+    .panel-placeholder svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+    .panel-loading { width:18px; height:18px; border:2px solid #d5dde4; border-top-color:var(--accent); border-radius:50%; animation:spin .75s linear infinite; }
+    .panel-body svg { max-width: 100%; height: auto; }
+    .icon-button { width:28px; height:28px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:#fff; color:var(--accent); border-color:var(--line); font-weight:800; transition:border-color .12s ease, box-shadow .12s ease, transform .08s ease; }
+    .icon-button:hover:not(:disabled) { color:#185c59; border-color:#83b7b2; background:#eaf5f3; }
+    .icon-button:active:not(:disabled) { color:#104f4d; background:#cfe8e4; border-color:#69a49f; }
+    .icon-button[aria-pressed="true"], .icon-button[aria-pressed="true"]:hover:not(:disabled) { color:#104f4d; background:#dcefeb; border-color:#78aaa6; box-shadow:inset 0 1px 2px rgba(15,42,45,.12); }
+    .heading-action { width:26px; height:26px; }
+    .icon-button svg, .drag-handle svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:none; }
+    .danger-icon-button { color:#985252; }
+    .danger-icon-button:hover:not(:disabled) { color:var(--danger); border-color:#d9a8a8; background:#fff5f5; }
+    .danger-icon-button:active:not(:disabled) { color:#fff; border-color:var(--danger); background:var(--danger); }
+    .run-icon-button { width:38px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+    .run-icon-button svg { width:17px; height:17px; fill:currentColor; stroke:currentColor; stroke-width:1.5; stroke-linejoin:round; }
+    .config-commit { width:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:#fff; color:var(--action); border-color:#b8cbdb; }
+    .config-commit:hover:not(:disabled) { color:#245f92; border-color:#8fb1cd; background:#f2f7fb; }
+    .config-commit:active:not(:disabled) { color:#fff; border-color:var(--action); background:var(--action); }
+    .config-commit svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .table-wrap { min-height:180px; max-height:min(34vh, 420px); overflow:auto; border:1px solid var(--line); background:#fff; }
+    .operation-card { border: 1px solid var(--line); border-radius: 8px; padding: 9px; background: #fff; margin-bottom: 10px; }
+    .simulation-field + .simulation-field { margin-top:12px; padding-top:10px; border-top:1px solid #edf1f5; }
+    .simulation-field > label, .operation-card > label { margin-top:0; color:#43515f; font-size:12px; font-weight:650; }
+    .operation-card > label { margin-top:12px; }
+    .simulation-editor { display:grid; grid-template-columns:minmax(126px, .8fr) minmax(0, 1.2fr); gap:7px; align-items:start; }
+    .simulation-editor > select { min-width:0; }
+    .value-unit-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(66px, .55fr); gap:6px; }
+    .simulation-editor [hidden] { display:none; }
+    .code-input { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .target-options { max-height:150px; overflow:auto; padding:5px; border:1px solid var(--line); border-radius:6px; background:#fafbfd; }
+    .target-option { display:flex; align-items:center; gap:7px; margin:0; padding:4px 3px; color:var(--ink); font-size:12px; }
+    .target-option span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .results-section { margin-top:26px; padding-top:18px; border-top:1px solid var(--line); }
+    .results-section .content-heading { margin-bottom:10px; }
+    .status { color:var(--muted); font-size:12px; min-height:18px; }
+    .status:empty { display:none; }
+    .error { color: #9f3a38; white-space: pre-wrap; }
+    .just-activated { animation:configuration-arrival .65s ease-out; }
+    @keyframes configuration-arrival { 0% { box-shadow:0 0 0 0 rgba(37,111,108,.35); background:#eaf6f3; } 100% { box-shadow:0 0 0 9px rgba(37,111,108,0); } }
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; height:auto; min-height:calc(100vh - 56px); }
+      aside { max-height: 46vh; border-right: 0; border-bottom: 1px solid var(--line); }
+      .layout-resizer { display:none; }
+      .panels { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      header { align-items:flex-start; }
+      .panel-primary-grid, .axis-settings, .simulation-editor, .config-picker-grid { grid-template-columns:1fr; }
+      .y-options { grid-template-columns:1fr; }
+      .tree-unit { max-width:96px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Cropbox Dashboard</h1>
+    <div class="run-tools">
+      <span class="status" id="status" aria-live="polite"></span>
+      <button id="run-button" class="run-icon-button" title="Run simulation" aria-label="Run simulation" onclick="runWorkflow()"></button>
+    </div>
+  </header>
+  <main>
+    <aside id="model-panel">
+      <div class="section-heading">
+        <h2>Model</h2>
+        <button type="button" id="add-config-entry" class="icon-button heading-action" title="Add configuration entry" aria-label="Add configuration entry" aria-pressed="false" aria-expanded="false" onclick="toggleConfigPicker()"></button>
+      </div>
+      <div id="config-picker" class="config-picker" hidden>
+        <div class="config-picker-grid">
+          <label>System<select id="config-system" onchange="updateConfigFieldOptions()"></select></label>
+          <label>Parameter / Table<select id="config-field"></select></label>
+        </div>
+        <div class="config-picker-actions"><button type="button" class="config-commit" title="Add selected configuration entry" aria-label="Add selected configuration entry" onclick="activateConfigEntry()"></button></div>
+      </div>
+      <div id="controls"></div>
+      <div class="section-heading spaced"><h2>Simulation</h2></div>
+      <div class="operation-card">
+        <div class="simulation-field">
+          <label for="stop-mode">Stop</label>
+          <div class="simulation-editor">
+            <select id="stop-mode" onchange="updateSimulationEditors()">
+              <option value="value">Count / duration</option>
+              <option value="condition">Model condition</option>
+            </select>
+            <div class="value-unit-row" id="stop-value-fields">
+              <input id="stop-value" inputmode="decimal" value="5" aria-label="Stop count or duration">
+              <input id="stop-unit" class="code-input" value="hr" list="unit-options" placeholder="unit" aria-label="Stop unit">
+            </div>
+            <input id="stop-condition" class="code-input" list="condition-options" placeholder="system.variable" aria-label="Stop condition" hidden>
+          </div>
+        </div>
+        <div class="simulation-field">
+          <label for="snap-mode">Snapshots</label>
+          <div class="simulation-editor">
+            <select id="snap-mode" onchange="updateSimulationEditors()">
+              <option value="default">Service default</option>
+              <option value="interval">Interval</option>
+              <option value="condition">Model condition</option>
+            </select>
+            <div class="value-unit-row" id="snap-value-fields" hidden>
+              <input id="snap-value" inputmode="decimal" value="1" aria-label="Snapshot interval">
+              <input id="snap-unit" class="code-input" value="d" list="unit-options" placeholder="unit" aria-label="Snapshot unit">
+            </div>
+            <input id="snap-condition" class="code-input" list="condition-options" placeholder="system.variable" aria-label="Snapshot condition" hidden>
+          </div>
+        </div>
+        <label>Output columns</label>
+        <div id="target-select" class="target-options" role="group" aria-label="Output columns"></div>
+        <datalist id="condition-options"></datalist>
+        <datalist id="unit-options"><option value="s"><option value="min"><option value="hr"><option value="d"></datalist>
+      </div>
+    </aside>
+    <div id="layout-resizer" class="layout-resizer" role="separator"
+         aria-label="Resize model panel" aria-controls="model-panel dashboard-panel"
+         aria-orientation="vertical" aria-valuemin="280" aria-valuenow="390"
+         tabindex="0" title="Drag to resize the model panel. Double-click to reset."></div>
+    <section id="dashboard-panel">
+      <div class="content-heading">
+        <h2>Panels</h2>
+        <button type="button" class="icon-button heading-action" title="Add panel" aria-label="Add panel" onclick="addPanel()"></button>
+      </div>
+      <div class="panels" id="panels" ondragover="panelsDragOver(event)" ondrop="panelsDrop(event)"></div>
+      <div class="results-section">
+        <div class="content-heading">
+          <h2>Results</h2>
+          <button type="button" id="download-results" class="icon-button heading-action" title="Download results as CSV" aria-label="Download results as CSV" onclick="downloadTableCSV()" disabled></button>
+        </div>
+        <div class="table-wrap"><table id="result"></table></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    let schema = null;
+    let panels = [];
+    let isRunning = false;
+    let draggedPanel = null;
+    let dragPreviewIndex = null;
+    let dragOriginRects = [];
+    let nextPanelId = 1;
+    const MODEL_PANEL_MIN = 280;
+    const MODEL_PANEL_DEFAULT = 390;
+    const csvFiles = {};
+    let tableState = { columns: [], rows: [], rawColumns: [], rawRows: [], page: 0 };
+
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, s => s === "&" ? "&amp;" : s === "<" ? "&lt;" : s === ">" ? "&gt;" : s === '"' ? "&quot;" : "&#39;");
+    const code = value => `<span class="code">${esc(value)}</span>`;
+    const lucideIcon = name => ({
+      settings: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
+      close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+      grip: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>`,
+      plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+      download: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>`,
+      arrowDown: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>`,
+      play: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 4 13 8-13 8z"/></svg>`,
+      moon: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2z"/></svg>`
+    }[name] || "");
+    const options = (values, selected, multiple=false) => {
+      const chosen = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+      const ordered = [...values, ...chosen].filter((v, i, a) => v && a.indexOf(v) === i);
+      return ordered.map(v => `<option value="${esc(v)}" ${chosen.includes(v) ? "selected" : ""}>${esc(v)}</option>`).join("");
+    };
+    const sweepPath = sweep => sweep ? (sweep.path || `${sweep.system}.${sweep.name}`) : "";
+
+    function renderStaticIcons() {
+      document.getElementById("add-config-entry").innerHTML = lucideIcon("plus");
+      document.querySelector('[aria-label="Add selected configuration entry"]').innerHTML = lucideIcon("arrowDown");
+      document.querySelector('[aria-label="Add panel"]').innerHTML = lucideIcon("plus");
+      document.getElementById("download-results").innerHTML = lucideIcon("download");
+      document.getElementById("run-button").innerHTML = lucideIcon("play");
+    }
+
+    function clearDisclosureStyles(element) {
+      ["height", "marginTop", "marginBottom", "opacity", "transform", "overflow"].forEach(property => {
+        element.style[property] = "";
+      });
+    }
+
+    function animateDisclosure(element, button, open) {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const wasHidden = element.hidden;
+      const currentBox = wasHidden ? null : element.getBoundingClientRect();
+      const currentStyle = wasHidden ? null : getComputedStyle(element);
+      const startHeight = currentBox?.height || 0;
+      const startMarginTop = Number.parseFloat(currentStyle?.marginTop) || 0;
+      const startMarginBottom = Number.parseFloat(currentStyle?.marginBottom) || 0;
+      const startOpacity = Number.parseFloat(currentStyle?.opacity);
+      element.getAnimations().forEach(animation => animation.cancel());
+      button.setAttribute("aria-pressed", String(open));
+
+      if (reducedMotion) {
+        element.hidden = !open;
+        clearDisclosureStyles(element);
+        return;
+      }
+
+      if (open) {
+        element.hidden = false;
+        clearDisclosureStyles(element);
+        const targetStyle = getComputedStyle(element);
+        const targetHeight = element.getBoundingClientRect().height;
+        const targetMarginTop = Number.parseFloat(targetStyle.marginTop) || 0;
+        const targetMarginBottom = Number.parseFloat(targetStyle.marginBottom) || 0;
+        element.style.overflow = "hidden";
+        const animation = element.animate(
+          [
+            {
+              height: `${wasHidden ? 0 : startHeight}px`,
+              marginTop: `${wasHidden ? 0 : startMarginTop}px`,
+              marginBottom: `${wasHidden ? 0 : startMarginBottom}px`,
+              opacity: wasHidden || !Number.isFinite(startOpacity) ? 0 : startOpacity,
+              transform: "translateY(-7px)"
+            },
+            {
+              height: `${targetHeight}px`,
+              marginTop: `${targetMarginTop}px`,
+              marginBottom: `${targetMarginBottom}px`,
+              opacity: 1,
+              transform: "translateY(0)"
+            }
+          ],
+          { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)" }
+        );
+        animation.onfinish = () => {
+          if (button.getAttribute("aria-pressed") === "true") clearDisclosureStyles(element);
+        };
+        return;
+      }
+
+      if (wasHidden) return;
+      element.style.overflow = "hidden";
+      const animation = element.animate(
+        [
+          {
+            height: `${startHeight}px`,
+            marginTop: `${startMarginTop}px`,
+            marginBottom: `${startMarginBottom}px`,
+            opacity: Number.isFinite(startOpacity) ? startOpacity : 1,
+            transform: "translateY(0)"
+          },
+          {
+            height: "0px",
+            marginTop: "0px",
+            marginBottom: "0px",
+            opacity: 0,
+            transform: "translateY(-7px)"
+          }
+        ],
+        { duration: 210, easing: "cubic-bezier(.4,0,.6,1)" }
+      );
+      animation.onfinish = () => {
+        if (button.getAttribute("aria-pressed") === "false") {
+          element.hidden = true;
+          clearDisclosureStyles(element);
+        }
+      };
+    }
+
+    function positionMetadataPopover(trigger) {
+      const popover = trigger.querySelector(".metadata-popover");
+      if (!popover) return;
+      const margin = 10;
+      const gap = 8;
+      trigger.classList.add("popover-open");
+      popover.style.visibility = "hidden";
+      const triggerBox = trigger.getBoundingClientRect();
+      const popoverBox = popover.getBoundingClientRect();
+      const left = Math.max(margin, Math.min(triggerBox.right + gap, window.innerWidth - popoverBox.width - margin));
+      const top = Math.max(margin, Math.min(triggerBox.top, window.innerHeight - popoverBox.height - margin));
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+      popover.style.visibility = "";
+    }
+
+    function bindMetadataPopovers(root = document) {
+      root.querySelectorAll(".metadata-trigger").forEach(trigger => {
+        trigger.addEventListener("mouseenter", () => positionMetadataPopover(trigger));
+        trigger.addEventListener("focus", () => positionMetadataPopover(trigger));
+        trigger.addEventListener("mouseleave", () => trigger.classList.remove("popover-open"));
+        trigger.addEventListener("blur", () => trigger.classList.remove("popover-open"));
+      });
+    }
+
+    function simulationParts(spec) {
+      if (spec && typeof spec === "object" && !Array.isArray(spec)) {
+        return { value: spec.value ?? "", unit: spec.unit ?? "", type: spec.type ?? null };
+      }
+      return { value: spec ?? "", unit: "", type: null };
+    }
+
+    function conditionLike(parts) {
+      const text = String(parts.value ?? "").trim();
+      return parts.type === "Symbol" || (!parts.unit && text && !Number.isFinite(Number(text)));
+    }
+
+    function renderConditionOptions(...current) {
+      const paths = (schema.outputs || [])
+        .filter(output => output.state === "flag" || String(output.type || output.value_type || "").includes("Bool"))
+        .map(output => output.target_path || output.path || output.name);
+      document.getElementById("condition-options").innerHTML = [...paths, ...current]
+        .filter((value, index, all) => value && all.indexOf(value) === index)
+        .map(value => `<option value="${esc(value)}"></option>`)
+        .join("");
+    }
+
+    function initializeSimulationControls() {
+      const stop = simulationParts(schema.simulation?.stop ?? { value: 5, unit: "hr" });
+      const stopMode = conditionLike(stop) ? "condition" : "value";
+      document.getElementById("stop-mode").value = stopMode;
+      document.getElementById("stop-value").value = stopMode === "value" ? stop.value : 5;
+      document.getElementById("stop-unit").value = stopMode === "value" ? stop.unit : "";
+      document.getElementById("stop-condition").value = stopMode === "condition" ? stop.value : "";
+
+      const snapSpec = schema.simulation?.snap;
+      const snap = simulationParts(snapSpec);
+      const snapMode = snapSpec === null || snapSpec === undefined ? "default" : (conditionLike(snap) ? "condition" : "interval");
+      document.getElementById("snap-mode").value = snapMode;
+      document.getElementById("snap-value").value = snapMode === "interval" ? snap.value : 1;
+      document.getElementById("snap-unit").value = snapMode === "interval" ? snap.unit : "d";
+      document.getElementById("snap-condition").value = snapMode === "condition" ? snap.value : "";
+      renderConditionOptions(document.getElementById("stop-condition").value, document.getElementById("snap-condition").value);
+      updateSimulationEditors();
+    }
+
+    function updateSimulationEditors() {
+      const stopMode = document.getElementById("stop-mode").value;
+      document.getElementById("stop-value-fields").hidden = stopMode !== "value";
+      document.getElementById("stop-condition").hidden = stopMode !== "condition";
+      const snapMode = document.getElementById("snap-mode").value;
+      document.getElementById("snap-value-fields").hidden = snapMode !== "interval";
+      document.getElementById("snap-condition").hidden = snapMode !== "condition";
+    }
+
+    async function loadDashboard() {
+      schema = await fetch("/api/dashboard").then(r => r.json());
+      panels = (schema.panels || []).map(p => ({
+        _id: `panel-${nextPanelId++}`,
+        x: p.x,
+        y: p.y || [],
+        kind: normalizedPlotKind(p.kind || "line"),
+        xstep: p.xstep || "",
+        linestyles: Array.isArray(p.linestyles) ? p.linestyles : [],
+        xmin: p.xmin === null || p.xmin === undefined ? "" : String(p.xmin),
+        xmax: p.xmax === null || p.xmax === undefined ? "" : String(p.xmax),
+        ymin: p.ymin === null || p.ymin === undefined ? "" : String(p.ymin),
+        ymax: p.ymax === null || p.ymax === undefined ? "" : String(p.ymax),
+        settingsOpen: false
+      }));
+      if (!panels.length) panels.push(defaultPanel());
+      document.getElementById("title").textContent = schema.title || `${schema.model.name} Dashboard`;
+      initializeSimulationControls();
+      renderControls();
+      renderTargets();
+      renderPanels();
+      setStatus("");
+    }
+
+    function providerSystem(source) {
+      const raw = String(source.system || source.name || "ExternalSource");
+      return raw.split(/[^A-Za-z0-9]+/).filter(Boolean).map(part => part[0].toUpperCase() + part.slice(1)).join("") || "ExternalSource";
+    }
+
+    function rowByPath(path) {
+      return Array.from(document.querySelectorAll("[data-tree-row]")).find(row => row.dataset.path === path);
+    }
+
+    function externalControlEntries() {
+      const sources = schema.external_sources || [];
+      const inputs = schema.external_inputs || [];
+      return sources.flatMap(source => {
+        const system = providerSystem(source);
+        return inputs.map(input => {
+          const name = input.name;
+          const isDate = /date/i.test(name) || String(input.type || "").toLowerCase().includes("date");
+          const isNumber = /lat|lon|alt|elev/i.test(name) || String(input.type || "").toLowerCase().includes("float");
+          return {
+            label: `${system}.${name}`,
+            role: "parameter",
+            system,
+            path: `${system}.${name}`,
+            state: "preserve",
+            value_type: isDate ? "Date" : (isNumber ? "Float64" : "String"),
+            name,
+            step: isNumber ? 0.0001 : null,
+            min: input.min ?? null,
+            max: input.max ?? null,
+            description: input.description || `${input.label || name} used by ${source.label || source.name}.`,
+            default: input.default ?? "",
+            kind: isDate ? "date" : (isNumber ? "number" : "text"),
+            unit: input.unit || null,
+            source_name: source.name || system
+          };
+        });
+      });
+    }
+
+    function sourceForTarget(path) {
+      return (schema.external_sources || []).find(source => source.target === path);
+    }
+
+    function localName(path, system) {
+      const text = String(path || "");
+      const prefix = `${system}.`;
+      return system && text.startsWith(prefix) ? text.slice(prefix.length) : text;
+    }
+
+    function finalPathName(path) {
+      const parts = String(path || "").split(".");
+      return parts[parts.length - 1] || "";
+    }
+
+    function displayName(item, path, system) {
+      const customLabel = item.label && item.label !== item.alias ? item.label : "";
+      if (customLabel) return localName(customLabel, system);
+      const originalName = String(item.name || "");
+      if (originalName && !originalName.startsWith("__")) return originalName;
+      return finalPathName(item.declared_path || path);
+    }
+
+    function modelPanelMaximum() {
+      return Math.max(MODEL_PANEL_MIN, Math.min(720, window.innerWidth - 520));
+    }
+
+    function setModelPanelWidth(width) {
+      const main = document.querySelector("main");
+      const resizer = document.getElementById("layout-resizer");
+      const next = Math.round(Math.max(MODEL_PANEL_MIN, Math.min(modelPanelMaximum(), width)));
+      main.style.setProperty("--model-panel-width", `${next}px`);
+      resizer.setAttribute("aria-valuemax", String(modelPanelMaximum()));
+      resizer.setAttribute("aria-valuenow", String(next));
+      return next;
+    }
+
+    function initializeLayoutResizer() {
+      const main = document.querySelector("main");
+      const resizer = document.getElementById("layout-resizer");
+      let dragging = false;
+      let dragStartX = 0;
+      let dragStartWidth = MODEL_PANEL_DEFAULT;
+      const finish = event => {
+        if (!dragging) return;
+        dragging = false;
+        resizer.classList.remove("dragging");
+        document.body.classList.remove("layout-resizing");
+        if (event?.pointerId !== undefined && resizer.hasPointerCapture(event.pointerId)) {
+          resizer.releasePointerCapture(event.pointerId);
+        }
+      };
+
+      resizer.addEventListener("pointerdown", event => {
+        if (event.button !== 0) return;
+        dragging = true;
+        dragStartX = event.clientX;
+        dragStartWidth = Number(resizer.getAttribute("aria-valuenow")) || MODEL_PANEL_DEFAULT;
+        resizer.classList.add("dragging");
+        document.body.classList.add("layout-resizing");
+        resizer.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      });
+      resizer.addEventListener("pointermove", event => {
+        if (dragging) setModelPanelWidth(dragStartWidth + event.clientX - dragStartX);
+      });
+      resizer.addEventListener("pointerup", finish);
+      resizer.addEventListener("pointercancel", finish);
+      resizer.addEventListener("lostpointercapture", finish);
+      resizer.addEventListener("dblclick", () => setModelPanelWidth(MODEL_PANEL_DEFAULT));
+      resizer.addEventListener("keydown", event => {
+        const current = Number(resizer.getAttribute("aria-valuenow")) || MODEL_PANEL_DEFAULT;
+        const change = event.shiftKey ? 48 : 16;
+        if (event.key === "ArrowLeft") setModelPanelWidth(current - change);
+        else if (event.key === "ArrowRight") setModelPanelWidth(current + change);
+        else if (event.key === "Home") setModelPanelWidth(MODEL_PANEL_MIN);
+        else if (event.key === "End") setModelPanelWidth(modelPanelMaximum());
+        else return;
+        event.preventDefault();
+      });
+      window.addEventListener("resize", () => {
+        if (window.innerWidth > 980) {
+          setModelPanelWidth(Number(resizer.getAttribute("aria-valuenow")) || MODEL_PANEL_DEFAULT);
+        }
+      });
+      setModelPanelWidth(MODEL_PANEL_DEFAULT);
+    }
+
+    function stateGlyph(state, role = "") {
+      const key = String(state || role || "").toLowerCase();
+      if (key.includes("provide") || key.includes("table")) return "▦";
+      if (key.includes("preserve") || key.includes("parameter")) return "⚙";
+      if (key.includes("accumulate")) return "∑";
+      if (key.includes("track")) return "ƒ";
+      if (key.includes("drive")) return "↦";
+      return "•";
+    }
+
+    function metadataValue(value, unit = "") {
+      if (value === null || value === undefined || value === "") return "";
+      if (Array.isArray(value)) return value.map(item => metadataValue(item)).join(", ");
+      if (typeof value === "object") {
+        if (Object.prototype.hasOwnProperty.call(value, "value")) {
+          const valueUnit = value.unit || unit;
+          return `${metadataValue(value.value)}${valueUnit ? " " + valueUnit : ""}`;
+        }
+        return JSON.stringify(value);
+      }
+      return String(value);
+    }
+
+    function metadataEntries(item) {
+      return [
+        ["State", item.state || item.role],
+        ["Alias", item.alias],
+        ["Default", metadataValue(item.default, item.unit)],
+        ["Unit", item.unit],
+        ["Type", item.value_type || item.type || item.default?.type],
+        ["Path", item.path || item.config_path || item.declared_path || item.target_path],
+        ["Depends on", item.dependencies?.length ? item.dependencies.join(", ") : ""]
+      ].filter(([, value]) => value !== null && value !== undefined && value !== "");
+    }
+
+    function metadataPopover(item) {
+      const rows = metadataEntries(item).map(([key, value]) => `
+        <span class="metadata-key">${esc(key)}</span>
+        <span class="metadata-value">${esc(value)}</span>`).join("");
+      return `<span class="metadata-popover">
+        ${item.description ? `<span class="metadata-description">${esc(item.description)}</span>` : ""}
+        ${rows ? `<span class="metadata-grid">${rows}</span>` : ""}
+      </span>`;
+    }
+
+    function stateIcon(state, role = "", item = {}) {
+      const label = state || role || "variable";
+      return `<span class="state-icon metadata-trigger" tabindex="0" aria-label="${esc(label)} metadata">${esc(stateGlyph(state, role))}${metadataPopover(item)}</span>`;
+    }
+
+    function renderControls() {
+      const groups = modelGroups();
+      document.getElementById("controls").innerHTML = Object.entries(groups).map(([system, controls], index) => {
+        const compact = controls.parameters.length + controls.tables.length + controls.outputs.length <= 24;
+        return `
+        <details class="system-group" ${index === 0 && compact ? "open" : ""}>
+          <summary class="system-summary">
+            <span class="system-summary-title">${code(system)}</span>
+          </summary>
+          <div class="system-body">
+            ${controls.parameters.length ? `<div class="tree-section">Parameters</div>${controls.parameters.map(parameterRow).join("")}` : ""}
+            ${controls.tables.length ? `<div class="tree-section">Tables / DataFrames</div>${controls.tables.map(tableRow).join("")}` : ""}
+            ${controls.outputs.length ? `<div class="tree-section">Variables</div>${controls.outputs.map(variableRow).join("")}` : ""}
+          </div>
+        </details>`;
+      }).join("");
+      document.querySelectorAll("[data-override-enable]").forEach(el => el.addEventListener("change", toggleOverride));
+      document.querySelectorAll("[data-override-value]").forEach(el => el.addEventListener("input", syncNumberSlider));
+      document.querySelectorAll("[data-role='range']").forEach(slider => slider.addEventListener("input", syncSliderOverride));
+      document.querySelectorAll("input[type='file']").forEach(el => el.addEventListener("change", readCsvFile));
+      bindMetadataPopovers(document.getElementById("controls"));
+    }
+
+    function configEntries() {
+      return [
+        ...schema.controls.map(c => ({ ...c, path: c.path || `${c.system}.${c.name}` })),
+        ...externalControlEntries()
+      ].sort((a, b) => {
+        const rank = system => system === schema.model.name ? 0 : (system === "Clock" ? 2 : 1);
+        return rank(a.system || "") - rank(b.system || "") || String(a.path).localeCompare(String(b.path));
+      });
+    }
+
+    function modelGroups() {
+      const groups = {};
+      for (const entry of configEntries()) {
+        const system = entry.system || "Model";
+        groups[system] ||= { parameters: [], tables: [], outputs: [] };
+        if (entry.role === "table") groups[system].tables.push(entry);
+        else groups[system].parameters.push(entry);
+      }
+      for (const output of schema.outputs || []) {
+        const system = output.system || output.declared_system || "Model";
+        groups[system] ||= { parameters: [], tables: [], outputs: [] };
+        groups[system].outputs.push(output);
+      }
+      return groups;
+    }
+
+    function toggleConfigPicker() {
+      const picker = document.getElementById("config-picker");
+      const open = document.getElementById("add-config-entry").getAttribute("aria-pressed") !== "true";
+      setConfigPickerOpen(open);
+      if (open) {
+        populateConfigPicker();
+        document.getElementById("config-system").focus();
+      }
+    }
+
+    function setConfigPickerOpen(open) {
+      const picker = document.getElementById("config-picker");
+      const button = document.getElementById("add-config-entry");
+      button.setAttribute("aria-expanded", String(open));
+      animateDisclosure(picker, button, open);
+    }
+
+    function populateConfigPicker() {
+      const select = document.getElementById("config-system");
+      const systems = [...new Set(configEntries().map(entry => entry.system || "Model"))];
+      const previous = select.value;
+      select.innerHTML = systems.map(system => `<option value="${esc(system)}">${esc(system)}</option>`).join("");
+      if (systems.includes(previous)) select.value = previous;
+      updateConfigFieldOptions();
+    }
+
+    function updateConfigFieldOptions() {
+      const system = document.getElementById("config-system").value;
+      const select = document.getElementById("config-field");
+      const entries = configEntries().filter(entry => (entry.system || "Model") === system);
+      select.innerHTML = entries.map(entry => {
+        const path = entry.path || `${entry.system}.${entry.name}`;
+        return `<option value="${esc(path)}">${esc(localName(path, system))}</option>`;
+      }).join("");
+    }
+
+    function activateConfigEntry() {
+      const path = document.getElementById("config-field").value;
+      if (!path) return;
+      const row = enableOverride(path);
+      const group = row?.closest("details");
+      if (group) group.open = true;
+      row?.scrollIntoView({ block: "center", behavior: "smooth" });
+      row?.querySelector("[data-override-value], [data-role='table-text']")?.focus({ preventScroll: true });
+      row?.classList.remove("just-activated");
+      requestAnimationFrame(() => row?.classList.add("just-activated"));
+      setConfigPickerOpen(false);
+    }
+
+    function inputTypeFor(control) {
+      const type = String(control.value_type || control.type || "").toLowerCase();
+      if (type.includes("zoneddatetime")) return "text";
+      if (type.includes("datetime")) return "datetime-local";
+      if (control.kind === "date" || type === "date") return "date";
+      if (type.includes("matrix") || type.includes("vector") || type.includes("array")) return "json";
+      if (control.kind === "number" || /^(float|int|uint)/.test(type)) return "number";
+      if (control.kind === "checkbox" || type.includes("bool")) return "checkbox";
+      return "text";
+    }
+
+    function compactDefault(value) {
+      if (Array.isArray(value)) return `[${value.length} values]`;
+      if (value && typeof value === "object") return "{...}";
+      return String(value ?? "");
+    }
+
+    function parameterRow(control) {
+      const path = control.path || `${control.system}.${control.name}`;
+      const system = control.system || "";
+      const unit = control.unit || "";
+      const inputType = inputTypeFor(control);
+      const defaultValue = control.default ?? "";
+      const step = control.step ?? "any";
+      const checked = inputType === "checkbox" && defaultValue === true ? "checked" : "";
+      const hasRange = inputType === "number" && control.min !== null && control.min !== undefined && control.max !== null && control.max !== undefined;
+      const range = hasRange ? `<input data-role="range" data-for="${esc(path)}" type="range" min="${esc(control.min)}" max="${esc(control.max)}" step="${esc(step)}" value="${esc(defaultValue)}" disabled>` : "";
+      return `<div class="tree-row inactive" data-tree-row data-kind="parameter" data-path="${esc(path)}" data-system="${esc(control.system || "")}" data-name="${esc(control.name || "")}">
+        <div class="tree-head" onclick="toggleRowFromHead(event)">
+          <input type="checkbox" data-override-enable data-target="${esc(path)}">
+          ${stateIcon(control.state, control.role, control)}
+          <div>
+            <div class="tree-name"><span class="tree-label">${code(displayName(control, path, system))}${defaultValue === "" ? "" : `<span class="tree-default code">= ${esc(compactDefault(defaultValue))}</span>`}</span></div>
+          </div>
+          <span class="tree-unit code" title="${esc(unit || "")}">${esc(unit || "")}</span>
+        </div>
+        <div class="override-editor" data-override-editor="${esc(path)}" hidden>
+          <input data-override-value data-kind="${esc(inputType)}" data-path="${esc(path)}" data-system="${esc(control.system || "")}" data-name="${esc(control.name || "")}" data-unit="${esc(unit)}" type="${inputType === "checkbox" ? "checkbox" : inputType === "json" ? "text" : inputType}" step="${esc(step)}" value="${esc(inputType === "json" ? JSON.stringify(defaultValue) : defaultValue)}" ${checked}>
+          <span class="unit code">${esc(unit || "")}</span>
+          ${range}
+        </div>
+      </div>`;
+    }
+
+    function tableRow(control) {
+      const path = control.path || `${control.system}.${control.name}`;
+      const system = control.system || "";
+      const columns = (control.consumers || control.columns || []).map(c => c.column || c.name).filter(Boolean).join(", ");
+      const source = sourceForTarget(path);
+      const sourceLabel = source ? (source.label || source.name || "external source") : "";
+      return `<div class="tree-row inactive" data-tree-row data-kind="table" data-path="${esc(path)}" data-system="${esc(control.system || "")}" data-name="${esc(control.name || "")}">
+        <div class="tree-head" onclick="toggleRowFromHead(event)">
+          <input type="checkbox" data-override-enable data-target="${esc(path)}">
+          ${stateIcon(control.state, control.role, control)}
+          <div>
+            <div class="tree-name"><span class="tree-label">${code(displayName(control, path, system))}</span></div>
+          </div>
+          <span class="tree-unit">CSV</span>
+        </div>
+        <div class="table-editor" data-override-editor="${esc(path)}" hidden>
+          ${control.default_filename ? `<div class="table-default"><span>Configured CSV</span>${code(control.default_filename)}</div>` : ""}
+          ${source ? `<div class="toolbar" style="margin-bottom:7px"><button type="button" class="secondary" onclick="fetchExternalSourceForTarget('${esc(path)}')">Fetch ${esc(sourceLabel)}</button><span class="unit">uses ${code(providerSystem(source))}</span></div>` : ""}
+          <input data-role="table" data-system="${esc(control.system || "")}" data-name="${esc(control.name || "")}" data-path="${esc(path)}" type="file" accept="${esc(control.accept || ".csv,text/csv")}">
+          <textarea data-role="table-text" data-system="${esc(control.system || "")}" data-name="${esc(control.name || "")}" data-path="${esc(path)}" placeholder="CSV content can also be pasted here"></textarea>
+        </div>
+      </div>`;
+    }
+
+    function variableRow(output) {
+      const path = outputPath(output);
+      const system = output.system || "";
+      const unit = output.unit || "";
+      return `<div class="variable-row" data-tree-row data-kind="variable" data-path="${esc(path)}" data-system="${esc(output.system || "")}" data-name="${esc(output.name || "")}">
+        <div class="tree-head">
+          <span></span>
+          ${stateIcon(output.state, output.role, output)}
+          <div>
+            <div class="tree-name"><span class="tree-label">${code(displayName(output, path, system))}</span></div>
+          </div>
+          <span class="tree-unit code" title="${esc(unit || "")}">${esc(unit || "")}</span>
+        </div>
+      </div>`;
+    }
+
+    function toggleRowFromHead(event) {
+      if (event.target.closest("input, select, textarea, button, a, .metadata-trigger")) return;
+      const checkbox = event.currentTarget.querySelector("[data-override-enable]");
+      if (!checkbox) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function enableOverride(path) {
+      const row = rowByPath(path);
+      const checkbox = row?.querySelector("[data-override-enable]");
+      if (checkbox && !checkbox.checked) {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      return row;
+    }
+
+    function toggleOverride(event) {
+      const checkbox = event.target;
+      const row = checkbox.closest("[data-tree-row]");
+      const editor = Array.from(row.querySelectorAll("[data-override-editor]")).find(el => el.dataset.overrideEditor === checkbox.dataset.target);
+      row.classList.toggle("active", checkbox.checked);
+      row.classList.toggle("inactive", !checkbox.checked);
+      if (editor) editor.hidden = !checkbox.checked;
+      row.querySelectorAll("[data-override-value], [data-role='range'], [data-role='table'], [data-role='table-text']").forEach(el => el.disabled = !checkbox.checked);
+    }
+
+    function syncSliderOverride(event) {
+      const slider = event.target;
+      const input = Array.from(document.querySelectorAll("[data-override-value]")).find(el => el.dataset.path === slider.dataset.for);
+      if (input) input.value = slider.value;
+    }
+
+    function syncNumberSlider(event) {
+      const input = event.target;
+      const slider = input.closest("[data-tree-row]")?.querySelector("[data-role='range']");
+      if (slider && input.value !== "") slider.value = input.value;
+    }
+
+    async function readCsvFile(event) {
+      const input = event.target;
+      const file = input.files && input.files[0];
+      if (!file) return;
+      csvFiles[`${input.dataset.system}.${input.dataset.name}`] = { filename: file.name, content: await file.text() };
+    }
+
+    function parseCsvRow(line) {
+      const values = [];
+      let value = "";
+      let quoted = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (quoted && line[i + 1] === '"') {
+            value += '"';
+            i++;
+          } else {
+            quoted = !quoted;
+          }
+        } else if (char === "," && !quoted) {
+          values.push(value);
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+      values.push(value);
+      return values;
+    }
+
+    function inferCsvType(value) {
+      const text = String(value || "").trim();
+      if (/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(text)) return "Float64";
+      if (/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/.test(text)) return "ZonedDateTime";
+      if (/^\d{4}-\d{2}-\d{2}T/.test(text)) return "DateTime";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return "Date";
+      if (/^(?:true|false)$/i.test(text)) return "Bool";
+      return "String";
+    }
+
+    function tableColumnMetadata(path, content) {
+      const table = (schema.tables || []).find(entry =>
+        entry.config_path === path || entry.path === path ||
+        (entry.accepted_config_paths || []).includes(path)
+      );
+      const control = (schema.controls || []).find(entry =>
+        entry.role === "table" &&
+        (entry.path === path || (entry.accepted_config_paths || []).includes(path))
+      );
+      const lines = String(content || "").split(/\r?\n/).filter(line => line.trim());
+      if (!lines.length) return [];
+      const header = parseCsvRow(lines[0]);
+      const sample = lines.length > 1 ? parseCsvRow(lines[1]) : [];
+      const declared = control?.columns || [];
+      const stopUnit = document.getElementById("stop-unit")?.value.trim() || null;
+      return header.map((rawName, index) => {
+        const name = rawName.trim();
+        const consumer = (table?.consumers || []).find(entry => String(entry.column) === name);
+        const specification = declared.find(entry => String(entry.name || entry.column) === name);
+        const isIndex = table && String(table.index || "index") === name;
+        const column = {
+          name,
+          type: specification?.type || inferCsvType(sample[index]),
+          unit: specification?.unit ?? consumer?.unit ?? (isIndex ? stopUnit : null)
+        };
+        if (specification?.timezone) column.timezone = specification.timezone;
+        return column;
+      });
+    }
+
+    function controlValue(path, fallback = "") {
+      const row = rowByPath(path);
+      const input = row?.querySelector("[data-override-value]");
+      const enabled = row?.querySelector("[data-override-enable]")?.checked;
+      if (!enabled || !input) return fallback;
+      if (input.dataset.kind === "checkbox") return input.checked;
+      const value = input.value;
+      return value === "" ? fallback : value;
+    }
+
+    function externalValues(source = (schema.external_sources || [])[0]) {
+      if (!source) return {};
+      const system = providerSystem(source);
+      const external = {};
+      for (const input of schema.external_inputs || []) {
+        external[input.name] = controlValue(`${system}.${input.name}`, input.default ?? "");
+      }
+      return external;
+    }
+
+    function templateUrl(template, values) {
+      return String(template).replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(values[key] ?? ""));
+    }
+
+    function getPath(object, path) {
+      return String(path).split(".").reduce((value, key) => value == null ? value : value[key], object);
+    }
+
+    async function fetchExternalSourceForTarget(targetPath) {
+      const source = sourceForTarget(targetPath);
+      if (!source) throw new Error(`No external source registered for ${targetPath}`);
+      const row = enableOverride(targetPath);
+      const values = externalValues(source);
+      const url = templateUrl(source.url, values);
+      setStatus(`Fetching ${source.name || "external source"}`);
+      const json = await fetch(url).then(r => r.json());
+      const time = getPath(json, source.time_path || "daily.time") || [];
+      const data = getPath(json, source.value_path || "daily.temperature_2m_mean") || [];
+      const columns = source.columns || [];
+      const indexName = columns[0]?.name || "index";
+      const valueName = columns[1]?.name || "tavg";
+      const temporalIndex = ["Date", "DateTime", "ZonedDateTime"].includes(columns[0]?.type);
+      const rows = [`${csvCell(indexName)},${csvCell(valueName)}`];
+      for (let i = 0; i < Math.min(time.length, data.length); i++) {
+        rows.push(`${csvCell(temporalIndex ? time[i] : i)},${csvCell(data[i])}`);
+      }
+      const target = String(source.target || "").split(".");
+      if (target.length !== 2) throw new Error("external source target must be System.parameter");
+      const [system, name] = target;
+      const content = rows.join("\n") + "\n";
+      csvFiles[source.target] = { filename: `${source.name || name}.csv`, content, columns: source.columns || [] };
+      const textarea = row?.querySelector("[data-role='table-text']") || Array.from(document.querySelectorAll("[data-role='table-text']")).find(el => el.dataset.system === system && el.dataset.name === name);
+      if (textarea) textarea.value = content;
+      setStatus("");
+    }
+
+    function renderTargets() {
+      const vars = schema.outputs.map(outputPath);
+      const selected = new Set(vars.slice(0, Math.min(4, vars.length)));
+      const container = document.getElementById("target-select");
+      container.innerHTML = vars.map(value => {
+        const output = outputMetadata(value);
+        const label = output?.unit ? `${value} (${output.unit})` : value;
+        return `<label class="target-option" title="${esc(label)}"><input type="checkbox" value="${esc(value)}" ${selected.has(value) ? "checked" : ""}><span class="code">${esc(label)}</span></label>`;
+      }).join("");
+      container.querySelectorAll("input").forEach(input => input.addEventListener("change", refreshTargetColumns));
+    }
+
+    function defaultPanel() {
+      const vars = panelVars();
+      const x = vars.includes("time") ? "time" : (schema.visualize.x.default || vars[0]);
+      const defaults = Array.isArray(schema.visualize.y.default) ? schema.visualize.y.default : [schema.visualize.y.default].filter(Boolean);
+      const y = defaults.filter(value => value !== x);
+      return { _id: `panel-${nextPanelId++}`, x, y: y.length ? y : vars.filter(value => value !== x).slice(0, 1), kind: "line", xstep: "", linestyles: [], xmin: "", xmax: "", ymin: "", ymax: "", settingsOpen: true };
+    }
+
+    function panelVars() {
+      const vars = schema.outputs.map(outputPath);
+      (schema.panels || []).forEach(panel => {
+        if (panel.x) vars.push(panel.x);
+        (panel.y || []).forEach(v => vars.push(v));
+      });
+      return vars.filter((v, i, a) => v && a.indexOf(v) === i);
+    }
+
+    function outputMetadata(path) {
+      return (schema.outputs || []).find(output =>
+        output.target_path === path || output.path === path || output.name === path || output.alias === path
+      );
+    }
+
+    function outputPath(output) {
+      return output?.target_path || output?.path || output?.name || "";
+    }
+
+    function panelVariableOptions(values, selected) {
+      const chosen = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+      const ordered = [...chosen, ...values].filter((value, index, all) => value && all.indexOf(value) === index);
+      return ordered.map(value => {
+        const output = outputMetadata(value);
+        const label = output?.unit ? `${value} (${output.unit})` : value;
+        return `<option value="${esc(value)}" ${chosen.includes(value) ? "selected" : ""}>${esc(label)}</option>`;
+      }).join("");
+    }
+
+    function panelYOptions(values, selected, index) {
+      const chosen = Array.isArray(selected) ? selected : [];
+      return values.filter(value => value !== "time").map(value => {
+        const output = outputMetadata(value);
+        const label = output?.unit ? `${value} (${output.unit})` : value;
+        return `<label class="y-option" title="${esc(label)}"><input type="checkbox" data-panel-y-option="${index}" value="${esc(value)}" ${chosen.includes(value) ? "checked" : ""}><span class="code">${esc(label)}</span></label>`;
+      }).join("");
+    }
+
+    function normalizedPlotKind(value) {
+      if (value === "point") return "scatter";
+      if (value === "bar") return "line";
+      return ["line", "scatter", "scatterline", "step"].includes(value) ? value : "line";
+    }
+
+    function capturePanelPositions() {
+      return new Map(Array.from(document.querySelectorAll(".panel[data-panel-key]")).map(panel => [
+        panel.dataset.panelKey,
+        panel.getBoundingClientRect()
+      ]));
+    }
+
+    function animatePanelLayout(previousPositions, enteringId = null) {
+      if (!previousPositions || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      requestAnimationFrame(() => {
+        document.querySelectorAll(".panel[data-panel-key]").forEach(panel => {
+          const key = panel.dataset.panelKey;
+          const previous = previousPositions.get(key);
+          if (previous) {
+            const current = panel.getBoundingClientRect();
+            const deltaX = previous.left - current.left;
+            const deltaY = previous.top - current.top;
+            if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+              panel.animate(
+                [{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: "translate(0, 0)" }],
+                { duration: 310, easing: "cubic-bezier(.2,.8,.2,1)" }
+              );
+            }
+          } else if (key === enteringId) {
+            panel.animate(
+              [
+                { opacity: 0, transform: "translateY(-22px) scale(.985)" },
+                { opacity: 1, transform: "translateY(0) scale(1)" }
+              ],
+              { duration: 330, easing: "cubic-bezier(.16,1,.3,1)" }
+            );
+          }
+        });
+      });
+    }
+
+    function renderPanels({ previousPositions = null, enteringId = null } = {}) {
+      const vars = panelVars();
+      const kinds = ["line", "scatter", "scatterline", "step"];
+      if (!panels.length) {
+        document.getElementById("panels").innerHTML = `<div class="empty-panels" aria-label="No visualization panels"></div>`;
+        return;
+      }
+      document.getElementById("panels").innerHTML = panels.map((panel, i) => `
+        <div class="panel" data-panel="${i}" data-panel-key="${esc(panel._id)}">
+          <div class="panel-head">
+            <div class="panel-top">
+              <span class="drag-handle" draggable="true" title="Drag to reorder" aria-label="Drag panel" ondragstart="panelDragStart(event, ${i})" ondragend="panelDragEnd(event)">${lucideIcon("grip")}</span>
+              <span class="panel-spacer"></span>
+              <button type="button" class="icon-button" title="Panel settings" aria-label="Panel settings" aria-pressed="${panel.settingsOpen ? "true" : "false"}" aria-expanded="${panel.settingsOpen ? "true" : "false"}" onclick="togglePanelSettings(${i})">${lucideIcon("settings")}</button>
+              <button type="button" class="icon-button danger-icon-button" title="Remove panel" aria-label="Remove panel" onclick="removePanel(${i})">${lucideIcon("close")}</button>
+            </div>
+            <div class="panel-settings" data-panel-settings="${i}" ${panel.settingsOpen ? "" : "hidden"}>
+              <div class="panel-primary-grid">
+                <div><label>Index (X axis)</label><select data-panel-x="${i}">${panelVariableOptions(vars, panel.x || "time")}</select></div>
+                <div><label>Plot kind</label><select data-panel-kind="${i}">${options(kinds, normalizedPlotKind(panel.kind))}</select></div>
+              </div>
+              <div class="y-selector">
+                <label>Targets (Y axis)</label>
+                <div class="y-options">${panelYOptions(vars, panel.y || [], i)}</div>
+              </div>
+              <div class="axis-settings">
+                <div class="axis-group"><div class="axis-group-title">X limits</div><div class="axis-range"><input type="number" step="any" data-panel-xmin="${i}" value="${esc(panel.xmin ?? "")}" placeholder="Min" title="Leave blank for automatic minimum"><input type="number" step="any" data-panel-xmax="${i}" value="${esc(panel.xmax ?? "")}" placeholder="Max" title="Leave blank for automatic maximum"></div></div>
+                <div class="axis-group"><div class="axis-group-title">Y limits</div><div class="axis-range"><input type="number" step="any" data-panel-ymin="${i}" value="${esc(panel.ymin ?? "")}" placeholder="Min" title="Leave blank for automatic minimum"><input type="number" step="any" data-panel-ymax="${i}" value="${esc(panel.ymax ?? "")}" placeholder="Max" title="Leave blank for automatic maximum"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body panel-empty" id="panel-body-${i}"><span class="panel-placeholder" title="Awaiting simulation" aria-label="Awaiting simulation">${lucideIcon("moon")}</span></div>
+        </div>`).join("");
+      document.querySelectorAll("[data-panel-x], [data-panel-y-option], [data-panel-kind], [data-panel-xmin], [data-panel-xmax], [data-panel-ymin], [data-panel-ymax]").forEach(el => {
+        el.addEventListener("input", syncPanels);
+        el.addEventListener("change", syncPanels);
+      });
+      animatePanelLayout(previousPositions, enteringId);
+    }
+
+    function syncPanels() {
+      panels = panels.map((panel, i) => {
+        const y = panelY(i, panel);
+        const previousStyles = new Map((panel.y || []).map((target, index) => [target, (panel.linestyles || [])[index]]));
+        const linestyles = (panel.linestyles || []).length ? y.map(target => previousStyles.get(target) || "solid") : [];
+        return {
+          _id: panel._id,
+          x: document.querySelector(`[data-panel-x="${i}"]`)?.value || panel.x,
+          y,
+          kind: normalizedPlotKind(document.querySelector(`[data-panel-kind="${i}"]`)?.value || panel.kind),
+          xstep: panel.xstep || "",
+          linestyles,
+          xmin: document.querySelector(`[data-panel-xmin="${i}"]`)?.value || "",
+          xmax: document.querySelector(`[data-panel-xmax="${i}"]`)?.value || "",
+          ymin: document.querySelector(`[data-panel-ymin="${i}"]`)?.value || "",
+          ymax: document.querySelector(`[data-panel-ymax="${i}"]`)?.value || "",
+          settingsOpen: document.querySelector(`[data-panel="${i}"] [aria-label="Panel settings"]`)?.getAttribute("aria-pressed") === "true"
+        };
+      });
+    }
+
+    function panelY(i, panel) {
+      const selected = Array.from(document.querySelectorAll(`[data-panel-y-option="${i}"]:checked`)).map(input => input.value);
+      return selected.length ? selected : (panel.y || []);
+    }
+
+    function addPanel() {
+      syncPanels();
+      const previousPositions = capturePanelPositions();
+      const panel = { ...defaultPanel(), settingsOpen: true };
+      panels.unshift(panel);
+      renderPanels({ previousPositions, enteringId: panel._id });
+      if (tableState.rawRows.length) renderAllPanels();
+    }
+
+    function removePanel(index = panels.length - 1) {
+      if (!panels.length) return;
+      syncPanels();
+      const previousPositions = capturePanelPositions();
+      panels.splice(index, 1);
+      renderPanels({ previousPositions });
+      if (tableState.rawRows.length) renderAllPanels();
+    }
+
+    function togglePanelSettings(index) {
+      syncPanels();
+      const settings = document.querySelector(`[data-panel-settings="${index}"]`);
+      const button = document.querySelector(`[data-panel="${index}"] [aria-label="Panel settings"]`);
+      if (!settings || !button) return;
+      const open = button.getAttribute("aria-pressed") !== "true";
+      panels[index].settingsOpen = open;
+      button.setAttribute("aria-expanded", String(open));
+      animateDisclosure(settings, button, open);
+    }
+
+    function panelDragStart(event, index) {
+      syncPanels();
+      draggedPanel = index;
+      dragPreviewIndex = index;
+      dragOriginRects = Array.from(document.querySelectorAll(".panel")).map(panel => panel.getBoundingClientRect());
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", String(index));
+      document.querySelector(`[data-panel="${index}"]`)?.classList.add("dragging");
+      showPanelDropIndicator(index);
+    }
+
+    function previewPanelOrder(index) {
+      if (!Number.isInteger(draggedPanel) || !dragOriginRects.length || index === dragPreviewIndex) return;
+      const elements = Array.from(document.querySelectorAll(".panel"));
+      elements.forEach((panel, current) => {
+        panel.classList.add("drag-shift");
+        if (current === draggedPanel) {
+          panel.style.transform = "";
+          return;
+        }
+        let destination = current;
+        if (draggedPanel < index && current > draggedPanel && current <= index) destination = current - 1;
+        if (draggedPanel > index && current >= index && current < draggedPanel) destination = current + 1;
+        const from = dragOriginRects[current];
+        const to = dragOriginRects[destination];
+        panel.style.transform = destination === current || !from || !to
+          ? ""
+          : `translate(${to.left - from.left}px, ${to.top - from.top}px)`;
+      });
+      dragPreviewIndex = index;
+    }
+
+    function panelDestinationFromPoint(clientX, clientY) {
+      if (!dragOriginRects.length) return draggedPanel;
+      let destination = draggedPanel;
+      let shortestDistance = Infinity;
+      dragOriginRects.forEach((rect, index) => {
+        const centerX = (rect.left + rect.right) / 2;
+        const centerY = (rect.top + rect.bottom) / 2;
+        const distance = Math.hypot(clientX - centerX, clientY - centerY);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          destination = index;
+        }
+      });
+      return destination;
+    }
+
+    function showPanelDropIndicator(index) {
+      const rect = dragOriginRects[index];
+      if (!rect) return;
+      let indicator = document.getElementById("panel-drop-indicator");
+      if (!indicator) {
+        indicator = document.createElement("div");
+        indicator.id = "panel-drop-indicator";
+        indicator.className = "panel-drop-indicator";
+        indicator.setAttribute("aria-hidden", "true");
+        document.body.appendChild(indicator);
+      }
+      Object.assign(indicator.style, {
+        display: "block",
+        left: `${rect.left}px`,
+        top: `${rect.top}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`
+      });
+      indicator.dataset.destination = String(index);
+    }
+
+    function hidePanelDropIndicator() {
+      document.getElementById("panel-drop-indicator")?.remove();
+    }
+
+    function panelsDragOver(event) {
+      event.preventDefault();
+      if (draggedPanel === null) return;
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      const destination = panelDestinationFromPoint(event.clientX, event.clientY);
+      previewPanelOrder(destination);
+      showPanelDropIndicator(destination);
+    }
+
+    function panelsDrop(event) {
+      event.preventDefault();
+      const from = draggedPanel ?? Number(event.dataTransfer.getData("text/plain"));
+      const destination = Number.isInteger(dragPreviewIndex)
+        ? dragPreviewIndex
+        : panelDestinationFromPoint(event.clientX, event.clientY);
+      if (!Number.isInteger(from) || from === destination) return panelDragEnd();
+      const previousPositions = new Map(Array.from(document.querySelectorAll(".panel[data-panel-key]")).map((panel, index) => [
+        panel.dataset.panelKey,
+        dragOriginRects[index] || panel.getBoundingClientRect()
+      ]));
+      const [moved] = panels.splice(from, 1);
+      panels.splice(destination, 0, moved);
+      hidePanelDropIndicator();
+      draggedPanel = null;
+      dragPreviewIndex = null;
+      dragOriginRects = [];
+      renderPanels({ previousPositions });
+      if (tableState.rawRows.length) renderAllPanels();
+    }
+
+    function panelDragEnd() {
+      const activePanels = Array.from(document.querySelectorAll(".panel"));
+      activePanels.forEach(panel => {
+        panel.classList.remove("dragging", "drag-over");
+        panel.style.transform = "";
+      });
+      hidePanelDropIndicator();
+      window.setTimeout(() => activePanels.forEach(panel => {
+        panel.classList.remove("drag-shift");
+        panel.style.removeProperty("transform");
+      }), 260);
+      draggedPanel = null;
+      dragPreviewIndex = null;
+      dragOriginRects = [];
+    }
+
+    function numericSimulationValue(valueId, unitId, label, requireUnit = false) {
+      const text = document.getElementById(valueId).value.trim();
+      const unit = document.getElementById(unitId).value.trim();
+      const value = Number(text);
+      if (!text || !Number.isFinite(value)) throw new Error(`${label} must be a finite number.`);
+      if (requireUnit && !unit) throw new Error(`${label} requires a unit.`);
+      return unit ? { value, unit } : value;
+    }
+
+    function conditionSimulationValue(inputId, label) {
+      const value = document.getElementById(inputId).value.trim();
+      if (!value) throw new Error(`${label} requires a model variable path.`);
+      return value;
+    }
+
+    function simulationRequestFields() {
+      const stop = document.getElementById("stop-mode").value === "condition"
+        ? conditionSimulationValue("stop-condition", "Stop condition")
+        : numericSimulationValue("stop-value", "stop-unit", "Stop value");
+      const fields = { stop };
+      const snapMode = document.getElementById("snap-mode").value;
+      if (snapMode === "interval") fields.snap = numericSimulationValue("snap-value", "snap-unit", "Snapshot interval", true);
+      if (snapMode === "condition") fields.snap = conditionSimulationValue("snap-condition", "Snapshot condition");
+      return fields;
+    }
+
+    function requestFromControls(extra = {}) {
+      const config_entries = [];
+      document.querySelectorAll("[data-override-enable]:checked").forEach(toggle => {
+        const row = toggle.closest("[data-tree-row]");
+        const kind = row.dataset.kind;
+        const path = row.dataset.path;
+        const system = row.dataset.system;
+        const name = row.dataset.name;
+        if (kind === "table") {
+          const input = row.querySelector("[data-role='table']");
+          const pasted = row.querySelector("[data-role='table-text']")?.value.trim();
+          const key = `${system}.${name}`;
+          const file = csvFiles[key];
+          const content = pasted || file?.content;
+          if (content) {
+            const columns = file?.columns?.length ? file.columns : tableColumnMetadata(path, content);
+            config_entries.push({
+              path,
+              value: { type: "CSV", filename: file?.filename || `${name}.csv`, content, columns }
+            });
+          }
+          return;
+        }
+        const input = row.querySelector("[data-override-value]");
+        if (!input) return;
+        const unit = input.dataset.unit || null;
+        const raw = input.dataset.kind === "checkbox" ? input.checked : input.value;
+        if (input.dataset.kind !== "checkbox" && String(raw).trim() === "") return;
+        const numeric = Number(raw);
+        let value = input.dataset.kind === "number" && Number.isFinite(numeric) ? numeric : raw;
+        if (input.dataset.kind === "json") {
+          try { value = JSON.parse(raw); }
+          catch (_) { throw new Error(`${path} requires valid JSON.`); }
+        }
+        config_entries.push({ path, value: unit ? { value, unit } : value });
+      });
+      const external = Object.fromEntries((schema.external_sources || []).map(source => [source.name || providerSystem(source), externalValues(source)]));
+      const targets = selectedTargetNames();
+      const request = { config_entries, external, ...simulationRequestFields(), target: targets, ...extra };
+      return request;
+    }
+
+    function sweepByPath(path) {
+      if (!path) return null;
+      const preset = (schema.sweeps || []).find(s => sweepPath(s) === path);
+      if (!preset) return null;
+      return {
+        system: preset.system,
+        name: preset.name,
+        path: preset.path || path,
+        values: Array.isArray(preset.values) ? preset.values : undefined,
+        start: preset.start,
+        stop: preset.stop,
+        step: preset.step,
+        unit: preset.unit || null
+      };
+    }
+
+    async function runWorkflow() {
+      if (isRunning) return;
+      isRunning = true;
+      const button = document.getElementById("run-button");
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      button.title = "Running simulation";
+      button.innerHTML = `<span class="run-button-spinner" aria-hidden="true"></span>`;
+      setStatus("");
+      try {
+        syncPanels();
+        document.querySelectorAll(".panel-body").forEach(body => {
+          body.classList.remove("panel-empty");
+          body.innerHTML = `<span class="panel-loading" aria-label="Running simulation"></span>`;
+        });
+        await runSimulation();
+      } catch (error) {
+        showTableError(error.message || error);
+      } finally {
+        isRunning = false;
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+        button.title = "Run simulation";
+        button.innerHTML = lucideIcon("play");
+      }
+    }
+
+    function selectedTargetNames() {
+      return Array.from(document.querySelectorAll("#target-select input:checked")).map(input => input.value);
+    }
+
+    function displayColumns(columns, rows) {
+      const targets = selectedTargetNames();
+      if (!targets.length) return { columns, rows };
+      const indices = columns
+        .map((column, index) => ({ column, index }))
+        .filter(({ column }) => column.name === "time" || targets.includes(column.name))
+        .map(item => item.index);
+      if (!indices.length) return { columns, rows };
+      return {
+        columns: indices.map(index => columns[index]),
+        rows: rows.map(row => indices.map(index => row[index]))
+      };
+    }
+
+    function refreshTargetColumns() {
+      if (!tableState.rawColumns.length) return;
+      const filtered = displayColumns(tableState.rawColumns, tableState.rawRows);
+      tableState = { ...tableState, columns: filtered.columns, rows: filtered.rows };
+      renderResultTable();
+    }
+
+    async function runSimulation() {
+      const res = await postJSON("/api/simulate", requestFromControls());
+      if (res.status === "error") throw new Error(res.error.message);
+      const filtered = displayColumns(res.columns, res.rows);
+      tableState = { columns: filtered.columns, rows: filtered.rows, rawColumns: res.columns, rawRows: res.rows };
+      renderResultTable();
+      document.getElementById("download-results").disabled = !tableState.rows.length;
+      await renderAllPanels();
+      setStatus("");
+    }
+
+    function formatTableValue(value) {
+      if (typeof value !== "number" || !Number.isFinite(value)) return String(value ?? "");
+      if (Object.is(value, -0)) return "0";
+      if (Number.isInteger(value)) return String(value);
+      const magnitude = Math.abs(value);
+      if (magnitude !== 0 && (magnitude >= 1e7 || magnitude < 1e-5)) {
+        return value.toExponential(6).replace(/\.0+e/, "e").replace(/(\.\d*?)0+e/, "$1e");
+      }
+      return String(Number(value.toPrecision(8)));
+    }
+
+    function axisBounds(minText, maxText, label) {
+      const min = String(minText ?? "").trim();
+      const max = String(maxText ?? "").trim();
+      if (!min && !max) return null;
+      const lower = min ? Number(min) : null;
+      const upper = max ? Number(max) : null;
+      if ((lower !== null && !Number.isFinite(lower)) || (upper !== null && !Number.isFinite(upper))) {
+        throw new Error(`${label} limits must be finite numbers.`);
+      }
+      if (lower !== null && upper !== null && lower >= upper) {
+        throw new Error(`${label} minimum must be smaller than its maximum.`);
+      }
+      return [lower, upper];
+    }
+
+    function renderResultTable() {
+      const head = `<tr>${tableState.columns.map(c => `<th title="${esc(c.type || "")}">${code(c.name)}${c.unit ? " (" + code(c.unit) + ")" : ""}</th>`).join("")}</tr>`;
+      const body = tableState.rows.map(row => `<tr>${row.map(v => `<td>${esc(formatTableValue(v))}</td>`).join("")}</tr>`).join("");
+      document.getElementById("result").innerHTML = head + body;
+    }
+
+    function csvCell(value) {
+      const s = String(value ?? "");
+      return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+    }
+
+    function downloadTableCSV() {
+      if (!tableState.columns.length || !tableState.rows.length) return;
+      const csv = [
+        tableState.columns.map(c => csvCell(c.unit ? `${c.name} (${c.unit})` : c.name)).join(","),
+        ...tableState.rows.map(row => row.map(csvCell).join(","))
+      ].join("\n");
+      const blob = new Blob([csv + "\n"], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${schema.model.name}_simulation.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function renderPanel(index) {
+      const panel = panels[index];
+      const body = document.getElementById(`panel-body-${index}`);
+      if (!panel || !body) return;
+      const yUnits = [...new Set((panel.y || []).map(path => outputMetadata(path)?.unit || "").filter(Boolean))];
+      if (yUnits.length > 1) {
+        body.classList.remove("panel-empty");
+        body.innerHTML = `<div class="error">Selected targets use different units (${esc(yUnits.join(", "))}). Put them in separate panels.</div>`;
+        return;
+      }
+      body.classList.remove("panel-empty");
+      body.innerHTML = `<span class="panel-loading" aria-label="Rendering visualization"></span>`;
+      try {
+        const bounds = {};
+        const xlim = axisBounds(panel.xmin, panel.xmax, "X axis");
+        const ylim = axisBounds(panel.ymin, panel.ymax, "Y axis");
+        if (xlim) bounds.xlim = xlim;
+        if (ylim) bounds.ylim = ylim;
+        const xstep = sweepByPath(panel.xstep);
+        const plotOptions = {
+          ...bounds,
+          ...(panel.linestyles?.length === panel.y?.length ? { linestyles: panel.linestyles } : {})
+        };
+        const plot = Object.keys(plotOptions).length ? plotOptions : undefined;
+        const request = requestFromControls({ x: panel.x || "time", y: panel.y, kind: normalizedPlotKind(panel.kind), xstep, ...(plot ? { plot } : {}) });
+        if (xstep?.path) {
+          const sweptPaths = new Set(
+            (schema.controls || [])
+              .filter(control => (control.accepted_config_paths || [control.path]).includes(xstep.path))
+              .map(control => control.path)
+          );
+          sweptPaths.add(xstep.path);
+          request.config_entries = (request.config_entries || []).filter(entry => !sweptPaths.has(entry.path));
+        }
+        const res = await postJSON("/api/visualize", request);
+        body.innerHTML = res.status === "ok" ? res.body : `<div class="error">${esc(res.error?.message || "Visualization failed.")}</div>`;
+      } catch (error) {
+        body.innerHTML = `<div class="error">${esc(error.message || error)}</div>`;
+      }
+    }
+
+    async function renderAllPanels() {
+      for (let i = 0; i < panels.length; i++) await renderPanel(i);
+    }
+
+    async function postJSON(path, payload) {
+      const response = await fetch(path, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message || `${path} returned HTTP ${response.status}.`);
+      return body;
+    }
+
+    function showTableError(message) {
+      document.getElementById("result").innerHTML = `<tr><td class="error">${esc(message)}</td></tr>`;
+      document.getElementById("download-results").disabled = true;
+      document.querySelectorAll(".panel-body").forEach(body => {
+        body.innerHTML = `<div class="error">${esc(message)}</div>`;
+      });
+      setStatus(message);
+    }
+
+    function setStatus(message) {
+      document.getElementById("status").textContent = message;
+    }
+
+    renderStaticIcons();
+    initializeLayoutResizer();
+    loadDashboard().catch(error => setStatus(error.message));
+  </script>
+</body>
+</html>

@@ -1,3 +1,7 @@
 Manifest.toml
 deps/build.log
 docs/build/
+.DS_Store
+__pycache__/
+.venv/
+.pytest_cache/

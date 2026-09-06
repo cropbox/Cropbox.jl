@@ -1,6 +1,6 @@
 import Gadfly
 
-plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect) = begin
+plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, linestyles, xlim, ylim, ycat, xunit, yunit, aspect) = begin
     n = length(Ys)
     Xs = [X for _ in 1:n]
     kinds = [kind for _ in 1:n]
@@ -68,7 +68,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
             colorkey!(key, colors)
         end
     end
-    create_layers(colors; n0=0) = begin
+    create_layers(colors, linestyles; n0=0) = begin
         f(i) = begin
             xy = if kind == :hline
                 (; yintercept=Xs[i]) 
@@ -77,7 +77,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
             else
                 (; x=Xs[i], y=Ys[i])
             end
-            t = Gadfly.Theme(theme; default_color=colors[i])
+            t = Gadfly.Theme(theme; default_color=colors[i], line_style=[linestyles[i]])
             Gadfly.layer(geoms..., t; xy..., order=n0+i)
         end
         [f(i) for i in 1:n]
@@ -113,23 +113,23 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         ]
         colors = create_colors(colors)
         update_color!(guides, colors)
-        layers = create_layers(colors)
+        layers = create_layers(colors, linestyles)
         obj = Gadfly.plot(
             scales...,
             guides...,
             layers...,
             theme,
         )
-        p = Plot(obj; Xs, Ys, kinds, colors, title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect)
+        p = Plot(obj; Xs, Ys, kinds, colors, linestyles, title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect)
     else
         obj = p.obj
         n0 = length(obj.layers)
         colors = create_colors(colors; n0)
         update_color!(obj.guides, colors)
-        for l in create_layers(colors; n0)
+        for l in create_layers(colors, linestyles; n0)
             Gadfly.push!(obj, l)
         end
-        update!(p; Xs, Ys, kinds, colors, names)
+        update!(p; Xs, Ys, kinds, colors, linestyles, names)
     end
     p
 end
