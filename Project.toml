@@ -1,7 +1,7 @@
 name = "Cropbox"
 uuid = "a904b226-abf1-11e9-2713-059ba252a964"
-authors = ["Kyungdahm Yun <tomyun@gmail.com>"]
 version = "0.3.53-DEV"
+authors = ["Kyungdahm Yun <tomyun@gmail.com>"]
 
 [deps]
 BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
@@ -36,7 +36,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 BlackBoxOptim = "0.5, 0.6"
-CSV = "0.8, 0.9, 0.10"
+CSV = "0.8, 0.9, 0.10, 1"
 Crayons = "4"
 DataFrames = "1"
 DataStructures = "0.18"
