@@ -85,7 +85,7 @@ or a string path such as `"Model.rate"` is normalized by name but cannot offer
 the same early validation. Name-based keys are still useful for external files
 or code that runs before the model package is loaded.
 
-The special key `:0` means the executable root system. It is useful in generic
+The special key `:0` means the top-level model system. It is useful in generic
 components and old workshop material whose root type is not known in advance.
 Prefer the actual root type in maintained code because it is searchable and
 validated.

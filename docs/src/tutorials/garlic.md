@@ -19,10 +19,13 @@ Plant Science*, 2022). The process chain below connects those two scopes.
 
 ## Install and load
 
+Install into your active Julia environment. `CSV` and `DataFrames` are used
+later to read the observations; `Dates` is part of Julia. Run the tutorial
+blocks in order in the same session.
+
 ```julia
 using Pkg
-Pkg.add("Cropbox")
-Pkg.add("Garlic")
+Pkg.add(["Cropbox", "Garlic", "CSV", "DataFrames"])
 
 using Cropbox
 using Garlic
@@ -202,11 +205,11 @@ diagnostic, not a separately fitted model parameter. A strange final mass can
 therefore be traced upstream instead of corrected immediately with an
 allocation parameter.
 
-## Compare observations and a parameter sweep
+## Compare observations across parameter values
 
 The workshop overlays measured leaf area with several values of `LM_min`, the
 minimum length of the model's longest leaf. This combines an observation plot
-and a grouped model sweep without changing the packaged base configuration.
+and grouped model runs without changing the packaged base configuration.
 
 ```julia
 using CSV
@@ -234,7 +237,7 @@ visualize!(p, Garlic.Model, :time, :green_leaf_area;
 
 ![Observed and simulated garlic leaf area](../assets/tutorials/garlic-observation-sweep.svg)
 
-*Observed leaf area overlaid with an `LM_min` sensitivity sweep. The plot shows
+*Observed leaf area overlaid with simulations across `LM_min` values. The plot shows
 whether the parameter moves the trajectory as expected; it is not by itself a
 calibration result.*
 

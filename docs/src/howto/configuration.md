@@ -86,7 +86,7 @@ combined  = @config base + treatment
 Use this ordering consistently: package defaults, site or cultivar defaults,
 experiment settings, and finally the smallest treatment patch.
 
-## Expand a parameter sweep
+## Compare parameter values
 
 Prefix `!` expands one iterable into separate configurations.
 

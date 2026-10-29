@@ -5,6 +5,14 @@ daily weather, and stops the simulation at maturity. It introduces the pattern
 used by larger crop models: process components are written independently, then
 composed with environment and controller systems.
 
+Add the packages used below to your active Julia environment, then run the
+blocks in order in the same session. `Dates` is part of Julia.
+
+```julia
+using Pkg
+Pkg.add(["Cropbox", "DataFrames"])
+```
+
 ## The model
 
 For daily mean temperature ``T``, base temperature ``T_b``, and optimum
@@ -160,18 +168,29 @@ temperature used in each run.
 
 ## Replace synthetic data
 
-For a CSV file with `date` and `Tavg` columns:
+For your own CSV file with plain `date` and `Tavg` headers, add `CSV` first:
+
+```julia
+using Pkg
+Pkg.add("CSV")
+```
 
 ```julia
 using CSV, DataFrames
 
-weather = CSV.read("weather.csv", DataFrame)
+weather = CSV.read("my-weather.csv", DataFrame)
 weather.date = Date.(weather.date)
-config = @config config + (Weather => :data => weather)
+config = @config config + (
+    Calendar => :init => ZonedDateTime(DateTime(first(weather.date)), tz"UTC"),
+    Weather => :data => weather,
+)
 ```
 
 Before simulation, verify that dates are ordered, unique, and cover the entire
 requested period. `provide` cannot invent missing weather observations.
+The older Beltsville sample linked above has annotated headers such as
+`Tavg (°C)` and `date (:Date)`; use `unitfy` after reading that file to normalize
+its column names, units, and date types before configuring the model.
 
 ## Extend the model
 
@@ -181,8 +200,8 @@ Useful next exercises are:
 - replace `mature` with several stage flags;
 - use `remember(when=mature)` to capture the maturity date;
 - compare simulated dates with observations using `evaluate`;
-- calibrate `Tb` and `requirement` on training years, then evaluate held-out
-  years.
+- calibrate `Tb` and `requirement` on some years, then use other years for
+  validation.
 
 The [Evaluate and Calibrate Models](@ref evaluation-tutorial) workflow covers the
 last two steps.

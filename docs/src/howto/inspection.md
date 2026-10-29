@@ -142,7 +142,7 @@ Use interaction to explore sensitivity and plausible ranges. For reproducible
 analysis, record explicit configurations and run them with `simulate`; an
 interactive widget is not a substitute for a saved experiment design.
 
-## Sweep an input on a plot
+## Plot a parameter response
 
 For a model with a configurable input, `xstep` creates the configurations needed
 for a response curve.
@@ -155,7 +155,7 @@ visualize(InspectDemo, :rate, :mass;
 )
 ```
 
-Use `group` for separate series and two sweep dimensions for a heatmap. For
+Use `group` for separate series and two input ranges for a heatmap. For
 analysis beyond quick exploration, construct configurations explicitly with
 `@config`, call `simulate`, and retain the resulting DataFrame.
 

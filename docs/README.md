@@ -7,22 +7,23 @@ framework for building and running crop models in Julia. A model describes its
 components, variables, equations, data sources, and update rules; Cropbox turns
 that specification into simulations that can be visualized and evaluated.
 
-**[Open the stable documentation →](https://cropbox.github.io/Cropbox.jl/stable/)**
+**[Open the current documentation →](https://cropbox.github.io/Cropbox.jl/dev/)**
 
-The latest documentation from the `main` branch is available at the
-[development site](https://cropbox.github.io/Cropbox.jl/dev/). Both sites are
-published automatically through GitHub Pages.
+This directory follows the `main` branch and is published at the development
+site. For the registered package release, use the
+[stable documentation](https://cropbox.github.io/Cropbox.jl/stable/), which may
+have an older layout. Both sites are published automatically through GitHub Pages.
 
 ## Where to begin
 
-- New to Cropbox? Start with the [overview](https://cropbox.github.io/Cropbox.jl/stable/),
-  [installation](https://cropbox.github.io/Cropbox.jl/stable/installation/), and
-  [quick start](https://cropbox.github.io/Cropbox.jl/stable/tutorials/quickstart/).
+- New to Cropbox? Start with the [overview](https://cropbox.github.io/Cropbox.jl/dev/),
+  [installation](https://cropbox.github.io/Cropbox.jl/dev/installation/), and
+  [quick start](https://cropbox.github.io/Cropbox.jl/dev/tutorials/quickstart/).
 - Want to understand the framework? Read
-  [How Cropbox Works](https://cropbox.github.io/Cropbox.jl/stable/concepts/overview/)
-  and [systems and composition](https://cropbox.github.io/Cropbox.jl/stable/guide/system/),
+  [How Cropbox Works](https://cropbox.github.io/Cropbox.jl/dev/concepts/overview/)
+  and [systems and composition](https://cropbox.github.io/Cropbox.jl/dev/guide/system/),
   then follow the
-  [model execution flow](https://cropbox.github.io/Cropbox.jl/stable/concepts/lifecycle/).
+  [model execution flow](https://cropbox.github.io/Cropbox.jl/dev/concepts/lifecycle/).
 - Want to build a model step by step? Follow the logistic-growth,
   weather-driven phenology, and predator–prey tutorials under
   **Learn by Example**.

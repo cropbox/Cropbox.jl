@@ -106,6 +106,13 @@ configured `Clock.step`, so the response equation does not bake in a fixed
 update interval. The configuration supplies plain numbers for `T` and `Tb`;
 Cropbox applies their declared unit and displays them as `18 °C` and `4 °C`.
 
+This small example treats `T - Tb` as a contribution **per update**: dividing
+by `Δt` and then accumulating adds that contribution once each step. A shorter
+step therefore adds more contributions over the same elapsed time. It is not
+a time-step-independent thermal-time model; for degree-day accumulation, follow
+the [weather-driven phenology tutorial](@ref phenology-tutorial), which integrates
+a temperature difference over elapsed time.
+
 Continue with [DSL Syntax](@ref dsl-syntax), [System](@ref system), and
 [Configure Models and Scenarios](@ref configuration-workflow). The
 [Quick Start](@ref quick-start) develops a complete small specification.

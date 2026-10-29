@@ -31,13 +31,16 @@ Follow-on studies show how this implementation has been used and extended:
 
 ## Install and load
 
+Install into your active Julia environment, then run the blocks in order in
+the same session. `DataFrames` is used to combine the replicate summaries.
+
 ```julia
 using Pkg
-Pkg.add("Cropbox")
-Pkg.add("CropRootBox")
+Pkg.add(["Cropbox", "CropRootBox", "DataFrames"])
 
 using Cropbox
 using CropRootBox
+using DataFrames
 ```
 
 ## Understand the hierarchy
@@ -162,14 +165,14 @@ independent replicates.
 ## Simulate growth
 
 ```julia
-result = simulate!(root; stop = 100u"d")
+result = simulate!(root; stop = 15u"d")
 result[end, :time]
 ```
 
 `simulate!` is appropriate because the final geometric instance is needed for
-export. The `root` object has been mutated to day 100.
+export. The `root` object has been mutated to day 15.
 
-Do not call `simulate!(root; stop=100u"d")` again expecting a replicate; it
+Do not call `simulate!(root; stop=15u"d")` again expecting a replicate; it
 continues the existing architecture. Construct a new seeded instance instead.
 
 ![Rendered CropRootBox maize architecture](../assets/tutorials/croprootbox-maize.svg)
@@ -198,24 +201,36 @@ count, not the number of complete root axes. A newly produced axis starts with
 `zi == 0`, which gives the separate `axis_count` above. Summing segment lengths
 does give total root length.
 
-For a time series of non-scalar structure, use the `simulate` do-block form:
+For a time series of non-scalar structure, use the `simulate` do-block form.
+First define a small helper that adds the same summaries at each snapshot and
+returns the collected segments for further analysis:
 
 ```julia
+function summarize_roots!(rows, root)
+    segments = gather!(root, CropRootBox.BaseRoot;
+        callback = CropRootBox.gatherbaseroot!,
+    )
+    row = only(rows)
+    row[:segment_count] = length(segments)
+    row[:axis_count] = count(segment -> iszero(segment.zi'), segments)
+    row[:total_length] = isempty(segments) ? 0.0u"cm" :
+        sum(segment.length' for segment in segments)
+    segments
+end
+
+container = instance(CropRootBox.Pot)
 summary = simulate(CropRootBox.RootArchitecture;
     config = root_maize,
     options = (; box = container),
     seed = 0,
-    stop = 100u"d",
-    snap = 10u"d",
+    stop = 15u"d",
+    snap = 5u"d",
     target = [],
 ) do rows, s
-    segments = gather!(s, CropRootBox.BaseRoot;
-        callback = CropRootBox.gatherbaseroot!)
-    rows[1][:segment_count] = length(segments)
-    rows[1][:axis_count] = count(segment -> iszero(segment.zi'), segments)
-    rows[1][:total_length] = isempty(segments) ? 0.0u"cm" :
-        sum(segment.length' for segment in segments)
+    summarize_roots!(rows, s)
 end
+
+summary
 ```
 
 `target=[]` keeps the ordinary output narrow; the time index remains, and the
@@ -226,8 +241,8 @@ also collected when the initial time satisfies the snapshot rule.
 ## Summarize length by soil depth
 
 The test examples use `SoilLayer` containers as geometric predicates. The
-following creates three 10 cm layers and adds one length column per layer
-inside the same do-block pattern:
+following creates three 10 cm layers, runs a fresh architecture, and adds one
+length column per layer at every snapshot. It reuses `summarize_roots!` above:
 
 ```julia
 layers = [
@@ -240,14 +255,27 @@ layers = [
     for depth in (0:10:20)u"cm"
 ]
 
-for (i, layer) in enumerate(layers)
-    lengths = [
-        segment.length'
-        for segment in segments
-        if segment.ii(layer)
-    ]
-    rows[1][Symbol("layer_", i)] = isempty(lengths) ? 0.0u"cm" : sum(lengths)
+container = instance(CropRootBox.Pot)
+depth_summary = simulate(CropRootBox.RootArchitecture;
+    config = root_maize,
+    options = (; box = container),
+    seed = 0,
+    stop = 15u"d",
+    snap = 5u"d",
+    target = [],
+) do rows, s
+    segments = summarize_roots!(rows, s)
+    for (i, layer) in enumerate(layers)
+        lengths = [
+            segment.length'
+            for segment in segments
+            if segment.ii(layer)
+        ]
+        rows[1][Symbol("layer_", i)] = isempty(lengths) ? 0.0u"cm" : sum(lengths)
+    end
 end
+
+depth_summary[:, [:time, :layer_1, :layer_2, :layer_3]]
 ```
 
 This classifies a segment using the position tested by `ii`; it is a practical
@@ -284,9 +312,12 @@ geometry time series is needed. `writevtk` or `writestl` is cheaper for one
 selected final state.
 
 Interactive rendering requires an additional Makie backend. It is deliberately
-optional:
+optional; install it only if you want to run this block:
 
 ```julia
+using Pkg
+Pkg.add("GLMakie")
+
 using GLMakie
 scene = CropRootBox.render(root)
 GLMakie.save("maize-root.png", scene)
@@ -295,7 +326,8 @@ GLMakie.save("maize-root.png", scene)
 ## Replicates and treatments
 
 Use an explicit loop when both treatment and stochastic replicate identity must
-be visible:
+be visible. Start with two treatments and two seeds over 15 days to check the
+workflow before running a larger experiment:
 
 ```julia
 treatments = [
@@ -306,23 +338,37 @@ treatments = [
     )),
 ]
 
-outputs = []
-for treatment in treatments, seed in 1:10
+outputs = DataFrame[]
+finals = DataFrame[]
+for treatment in treatments, seed in 1:2
     container = instance(CropRootBox.Pot)
     result = simulate(CropRootBox.RootArchitecture;
         config = treatment.config,
         options = (; box = container),
         seed,
-        stop = 100u"d",
-        snap = 10u"d",
+        stop = 15u"d",
+        snap = 5u"d",
+        target = [],
     ) do rows, s
-        # add summaries
+        summarize_roots!(rows, s)
     end
-    result.treatment .= treatment.name
-    result.replicate .= seed
+    result[!, :treatment] = fill(treatment.name, nrow(result))
+    result[!, :replicate] = fill(seed, nrow(result))
     push!(outputs, result)
+    push!(finals, result[end:end, [:treatment, :replicate, :time,
+                                 :axis_count, :total_length]])
 end
+
+trajectories = vcat(outputs...)
+final_summaries = vcat(finals...)
+final_summaries
 ```
+
+`trajectories` retains all snapshots; `final_summaries` has one row per
+treatment and seed. Compare total length and axis count before collecting full
+geometry. These four short runs check the analysis code, not the stability of
+a treatment effect; increase the duration and number of independent seeds for
+scientific interpretation.
 
 Do not share one mutable container or output accumulator across threaded
 scenario simulations unless the model explicitly guarantees thread safety.

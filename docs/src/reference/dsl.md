@@ -4,6 +4,10 @@ Cropbox declarations resemble Julia, but `@system` parses them as a
 domain-specific language. This reference describes the accepted public syntax
 and the meaning of each part.
 
+Start with variable declarations and dependencies. Use the type, tag, and
+advanced-header sections as a reference when a model needs them; the
+[Quick Start](@ref quick-start) is the shorter introduction.
+
 ![Cropbox specification and code-generation pipeline](../assets/specification-pipeline.svg)
 
 The declaration states what each variable means, how it behaves, and what it
@@ -84,8 +88,12 @@ the generated internal name in user code.
 Positional entries bind values under their declared names.
 
 ```julia
-mean(TMAX, TMIN) => (TMAX + TMIN) / 2 ~ track(u"°C")
+mean(TMAX, TMIN) => TMIN + (TMAX - TMIN) / 2 ~ track(u"°C")
 ```
+
+This midpoint works with absolute Celsius temperatures: their difference is
+in kelvin, which can be added back to an absolute temperature. Adding two
+absolute Celsius quantities directly is not valid Unitful arithmetic.
 
 A default-like entry changes the local binding name or selects a variable from a
 nested system.
@@ -175,6 +183,7 @@ Built-in aliases include:
 |---|---|
 | `int`, `uint` | `Int64`, `UInt64` |
 | `float`, `bool` | `Float64`, `Bool` |
+| `rational` | `Rational{Int64}` |
 | `sym`, `str` | `Symbol`, `String` |
 | `date`, `datetime` | `Date`, `ZonedDateTime` |
 | `∅`, `_` | `Nothing`, `Missing` |
@@ -182,6 +191,11 @@ Built-in aliases include:
 `T[]` denotes `Vector{T}`. A type can also use a braced union such as
 `::{sym|∅}`. Most numeric behaviors default to `Float64`, `flag` defaults to
 `Bool`, `provide` to a DataFrame, and `produce` to a system vector.
+
+Use `::rational` when a value should retain an exact integer ratio, for example
+`fraction => 1//10 ~ preserve::rational`. The built-in `Clock` uses this type
+for time values; ordinary model rates and accumulated states do not need to be
+changed to rational arithmetic.
 
 ### Tags
 

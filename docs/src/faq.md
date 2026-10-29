@@ -101,9 +101,25 @@ at system and package boundaries.
 
 ## Why did a temperature subtraction fail or produce kelvin?
 
-Degrees Celsius is an affine temperature scale. A temperature difference has
-kelvin dimensions. Declare absolute temperatures with `u"°C"` and differences
-or thermal-time rates with `u"K"`, `u"K/d"`, or `u"K*d"` as appropriate.
+Degrees Celsius is an affine temperature scale. Declare absolute temperatures
+with `u"°C"`, temperature differences with `u"K"`, and accumulated thermal
+time with a unit such as `u"K*d"`. A rate with unit `u"K/d"` needs a time
+scale in its equation; subtracting two temperatures alone does not supply one.
+
+## Why does clock output contain fractions or a rational-conversion warning?
+
+The built-in clock stores exact rational times. A displayed `(1//6)u"hr"`
+means exactly ten minutes, not a different model time. Time-step, stop, and
+snapshot settings supplied as floating-point quantities are converted to
+rational values with a warning. Use `1u"minute"` instead of `1.0u"minute"`, or
+`6u"minute"` / `(1//10)u"hr"` instead of `0.1u"hr"`, to state the intended
+interval directly.
+
+`provide` can also warn when it converts a floating-point numeric time index
+to match a rational clock. Check the resulting index and input coverage; this
+conversion does not interpolate missing data. Ordinary model parameters and
+state values do not need to be rewritten as fractions. See the
+[subdaily simulation example](@ref simulation-workflow) for a complete run.
 
 ## Why did `provide` or `drive` fail near the end of a run?
 

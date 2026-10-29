@@ -289,6 +289,8 @@ Cropbox normalizes compatible index units, inner-joins rows on the index, drops
 missing target pairs in the two-table form, and then applies the metric. It does
 not compare rows merely because they have the same position.
 
+Both evaluation forms support the following metrics:
+
 | Symbol | Metric | Result scale |
 |---|---|---|
 | `:rmse` | root mean square error | target unit |
@@ -299,9 +301,11 @@ not compare rows merely because they have the same position.
 | `:ef` | Nash–Sutcliffe efficiency | dimensionless |
 | `:dr` | refined index of agreement | dimensionless |
 
-`metric` may also be a function `(estimate, observation) -> score`. Relative
-metrics need special care near zero. Efficiency metrics need enough variation
-in the observations to define their denominator.
+`metric` may also be a function `(estimate, observation) -> score`, receiving
+two vectors in that order in either evaluation form. Relative metrics need
+special care near zero. Efficiency metrics need enough variation in the
+observations to define their denominator. Error metrics are better when lower;
+`:ef` and `:dr` are better when higher, with a perfect match scoring one.
 
 When evaluating several configurations, residuals are combined across their
 matching rows before one score per target is calculated. Give environment or
@@ -350,7 +354,21 @@ optimizer initialization is deterministic. This is framework behavior rather
 than a BlackBoxOptim option. Set an explicit search budget in scripts so runtime
 does not depend on defaults.
 
-With one target, calibration minimizes that target's metric. With several
+Calibration always minimizes the supplied objective. Error metrics such as
+`:rmse` and `:mae` can be used directly. Do not pass the higher-is-better `:ef`
+or `:dr` unchanged: minimizing them searches in the wrong direction. A custom
+objective also receives `(estimate, observation)` vectors and must return a
+lower value for a better fit. For example, `1 - efficiency` converts an
+efficiency score to a loss.
+
+With several configurations, Cropbox calculates a metric separately for each
+configuration and sums those scores for each target. This differs from
+`evaluate(...; configs)`, which pools matching rows before calculating the
+metric. A sum of site-year RMSE values is not a pooled RMSE, especially when
+site-years have different numbers of observations. Check which objective fits
+the study before calibrating.
+
+With one target, calibration minimizes that target's objective. With several
 targets, it uses a multi-objective method. `weight` changes how a single
 compromise is chosen from objective values. `pareto=true` returns an ordered
 mapping from objective tuples to configurations along the Pareto frontier

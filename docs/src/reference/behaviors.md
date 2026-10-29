@@ -4,6 +4,9 @@ This reference groups behaviors by modeling purpose and records the tags
 accepted by the current implementation. It is intentionally about the DSL
 features used by Cropbox models rather than every internal helper function.
 
+For a first model, start with `preserve`, `track`, `accumulate`, and `flag`.
+Return to the remaining sections when a tutorial or model needs those behaviors.
+
 ## Choosing a behavior
 
 Ask how the value changes:
@@ -47,8 +50,11 @@ Supported tags: `override`, `extern`, `ref`, `skip`, `init`, `when`, `min`,
 `max`, `round`, `unit`.
 
 ```julia
-rate(T, Tb) => T - Tb ~ track(min = 0, u"K/d")
+effective_temperature(T, Tb) => T - Tb ~ track(min = 0, u"K")
 ```
+
+Subtracting two absolute temperatures gives a temperature difference, not a
+rate. Its unit is `K`; a rate needs an explicit time scale in its equation.
 
 A self-dependency can express a discrete recurrence when an initial value is
 explicit:
@@ -183,6 +189,12 @@ During construction Cropbox keeps rows on that exact index grid, then verifies
 that the first row equals `init` and all retained gaps equal `step`. Missing
 start rows and irregular coverage therefore fail early instead of silently
 shifting weather or management data.
+
+With a rational clock, numeric time indexes supplied as floating-point values
+are converted to rational values, with a warning. This conversion does not
+fill missing rows or interpolate data: the table must still cover the required
+index grid. Use integer or rational quantities when creating elapsed-time
+indexes yourself, such as `(0:6) * 10u"minute"`.
 
 ### [`drive`](@id behavior-drive)
 

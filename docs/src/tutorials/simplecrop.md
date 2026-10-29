@@ -21,7 +21,15 @@ variables expose the resulting state.*
 
 ## Load the example inputs
 
+Add the model and the table-reading packages to your active Julia environment:
+
+```julia
+using Pkg
+Pkg.add(["Cropbox", "SimpleCrop", "CSV", "DataFrames"])
+```
+
 The package test data contain daily weather and irrigation tables.
+Run the remaining blocks in order in the same session.
 
 ```@example simplecrop
 using Cropbox

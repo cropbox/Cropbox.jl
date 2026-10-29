@@ -15,21 +15,30 @@ so treat it as an executable framework example.
 
 ## Load the test model
 
+Add the packages used below to your active Julia environment:
+
+```julia
+using Pkg
+Pkg.add(["Cropbox", "DataFrames"])
+```
+
 The documentation uses the module portion of the test file itself. This keeps
 the tutorial tied to the implementation exercised by the current test suite.
+The loader stops before the test block, so it defines `SoilWater` without
+running the package's tests. Run all blocks below in order in one Julia session.
 
 ```@example soil-water-transport
 using Cropbox
 using DataFrames
 
 soil_source = joinpath(pkgdir(Cropbox), "test", "examples", "soil.jl")
-source = read(soil_source, String) # hide
-module_source = first(split(source, "\n@testset \"soil\" begin"; limit = 2)) # hide
-if !isdefined(Main, :SoilWater) # hide
-    Base.include_string(Main, module_source, soil_source) # hide
-end # hide
-SoilWater = Main.SoilWater # hide
-nothing
+source = read(soil_source, String)
+module_source = first(split(source, "\n@testset \"soil\" begin"; limit = 2))
+if !isdefined(Main, :SoilWater)
+    Base.include_string(Main, module_source, soil_source)
+end
+SoilWater = Main.SoilWater
+nothing # hide
 ```
 
 The main systems are:
@@ -43,7 +52,7 @@ The main systems are:
 | `SoilInterface` | water flux between adjacent layers |
 | `BedrockInterface` | lower-boundary drainage |
 | `SoilModule` | creates the profile and connects all interfaces |
-| `SoilController` | joins weather input, soil context, and the executable root |
+| `SoilController` | combines weather input and the soil profile into a runnable model |
 
 The actual type hierarchy can be inspected directly:
 

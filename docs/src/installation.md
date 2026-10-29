@@ -25,6 +25,14 @@ builder, editor extension, or notebook package is required.
 The first `using Cropbox` may take longer while Julia compiles packages. Later
 sessions reuse the compilation cache.
 
+Use `Pkg.status("Cropbox")` to check the installed version. The
+[stable documentation](https://cropbox.github.io/Cropbox.jl/stable/) describes
+the registered release; the
+[development documentation](https://cropbox.github.io/Cropbox.jl/dev/) follows
+`main` and may describe features not released yet. To try those features in a
+separate project environment, use
+`Pkg.add(url="https://github.com/cropbox/Cropbox.jl", rev="main")` instead.
+
 ## 2. Use Docker
 
 The [`cropbox/cropbox` image](https://hub.docker.com/r/cropbox/cropbox) includes
@@ -92,6 +100,19 @@ files with a reproducible analysis so package versions can be restored later.
 The same environment can be selected by a Julia script, VS Code, or an IJulia
 kernel.
 
+In a notebook, activate the same project before loading Cropbox or a model:
+
+```julia
+using Pkg
+Pkg.activate("/path/to/my-cropbox-analysis")
+using Cropbox
+Base.active_project()
+```
+
+Replace the path with the directory created above. The last line should point
+to its `Project.toml`. Restart the kernel first if another version of Cropbox
+has already been loaded in that session.
+
 ## 5. Develop a model as a Julia package
 
 Use a package when the model has reusable source files, tests, or collaborators.
@@ -127,6 +148,22 @@ Run Julia from the package directory with `julia --project=.`. This is the
 appropriate place for source control, a committed environment, data-loading
 helpers, and automated tests.
 
+From that environment, check that the package loads and runs:
+
+```julia
+using Cropbox
+using MyCropModel
+
+simulate(MyCropModel.Model;
+    config = Clock => :step => 1u"d",
+    stop = 2u"d",
+    target = :mass,
+)
+```
+
+The result includes the initial state and two daily updates, with `mass` equal
+to 0, 1, and 2 grams.
+
 `Pkg.develop(path="/path/to/Cropbox.jl")` is a separate, advanced workflow for
 editing Cropbox itself or testing against an unreleased local checkout. Normal
 model development should use `Pkg.add("Cropbox")`.
@@ -134,15 +171,16 @@ model development should use `Pkg.add("Cropbox")`.
 ## Add model packages as needed
 
 LeafGasExchange, Garlic, SimpleCrop, and CropRootBox are separate registered
-packages. Add only the model used by the analysis:
+packages. Add only the model used by the analysis; for example:
 
 ```julia
 using Pkg
 Pkg.add("LeafGasExchange")
-Pkg.add("Garlic")
-Pkg.add("SimpleCrop")
-Pkg.add("CropRootBox")
 ```
+
+For another tutorial, replace `"LeafGasExchange"` with `"Garlic"`,
+`"SimpleCrop"`, or `"CropRootBox"`. Each tutorial lists any additional packages
+needed for its tables, input files, or exports.
 
 For an unregistered model or a specific revision:
 

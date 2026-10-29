@@ -19,10 +19,12 @@ the executable implementation.
 
 ## Install and load
 
+Install into your active Julia environment, then run the blocks in order in
+the same session:
+
 ```julia
 using Pkg
-Pkg.add("Cropbox")
-Pkg.add("LeafGasExchange")
+Pkg.add(["Cropbox", "LeafGasExchange"])
 
 using Cropbox
 using LeafGasExchange

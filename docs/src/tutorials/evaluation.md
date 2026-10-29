@@ -36,9 +36,10 @@ evaluate(obs, est;
 The pair maps an observation column to an estimate column. Rows are joined by
 the index rather than assumed to be in the same order.
 
-## Available metrics
+## Choose a metric
 
-The current implementation accepts:
+RMSE and MAE are convenient starting points. Both the two-table and system
+forms support the following metrics:
 
 | Metric | Symbol | Notes |
 |---|---|---|
@@ -53,6 +54,11 @@ The current implementation accepts:
 Percentage metrics are undefined or unstable when observations are zero or near
 zero. Inspect the data before selecting a metric. A low aggregate error can also
 hide stage-specific bias, so pair metrics with residual plots.
+
+Error metrics are better when lower. Efficiency and agreement (`:ef` and `:dr`)
+are better when higher, with one indicating a perfect match. `calibrate`
+minimizes its objective, so use an error metric or convert a higher-is-better
+score to a loss such as `1 - score`; do not minimize `:ef` or `:dr` directly.
 
 ## Evaluate a system directly
 
@@ -104,47 +110,99 @@ evaluate(LinearGrowth, obs3;
 Multiple targets return a tuple of metrics. Their dimensions and magnitudes may
 differ, which becomes important during multi-objective calibration.
 
-## Visualize residual structure
-
-```julia
-visualize(obs2, LinearGrowth, :mass;
-    index = :time,
-    config,
-    stop = 3u"d",
-)
-```
-
-Also plot residuals against time, temperature, development stage, and fitted
-values. These views reveal timing errors and heteroscedasticity that a scalar
-metric cannot.
-
 ## Calibrate one parameter
 
-`calibrate` uses BlackBoxOptim internally. It can be computationally expensive,
-so the full search is shown but not executed during this documentation build.
+Use the first three observations for calibration and keep later observations
+out of the search. This small example runs during the documentation build with
+a limited optimizer budget. It demonstrates the workflow, not a validation of
+a biological growth model.
 
-```julia
-fitted = calibrate(LinearGrowth, obs2;
+```@example evaluation
+calibration_data = obs2
+validation_data = DataFrame(
+    time = [4, 5, 6]u"d",
+    mass = [41, 48, 62]u"g",
+)
+
+fitted = calibrate(LinearGrowth, calibration_data;
     config,
     index = :time,
     target = :mass,
     parameters = LinearGrowth => :rate => (0, 20),
     stop = 3u"d",
     metric = :rmse,
-    optim = (MaxSteps = 1000,),
+    optim = (MaxSteps = 100, PopulationSize = 20, TraceMode = :silent),
 )
 ```
 
 The bounds inherit `rate`'s declared unit `u"g/d"`. The result is a `Config`
-that can be merged with the base scenario.
+that can be merged with the base scenario. The fitted rate should be close to
+`9.9u"g/d"`; exact optimizer results can vary between package versions.
 
-```julia
-estimate = simulate(LinearGrowth;
-    config = @config(config + fitted),
-    stop = 3u"d",
-    target = :mass,
+## Evaluate validation data
+
+Use the same fitted configuration for both scores. The observations reserved
+for validation were not supplied to `calibrate`.
+
+```@example evaluation
+fitted_config = @config(config + fitted)
+
+scores = DataFrame(
+    data = ["calibration", "validation"],
+    rmse = [
+        evaluate(LinearGrowth, calibration_data;
+            config = fitted_config, index = :time, target = :mass, stop = 3u"d"),
+        evaluate(LinearGrowth, validation_data;
+            config = fitted_config, index = :time, target = :mass, stop = 6u"d"),
+    ],
 )
 ```
+
+This example uses later observations for validation. In a real study, using
+separate site-years, treatments, or independent experiments for validation may
+be more suitable than splitting rows from one trajectory.
+
+Join predictions to observations before subtracting them. Keeping the columns
+named makes the residual direction explicit:
+
+```@example evaluation
+predictions = simulate(LinearGrowth;
+    config = fitted_config,
+    index = :time,
+    target = :predicted => :mass,
+    stop = 6u"d",
+)
+
+residuals = innerjoin(validation_data, predictions; on = :time)
+residuals.residual = residuals.predicted .- residuals.mass
+@assert nrow(residuals) == nrow(validation_data) # hide
+residuals
+```
+
+A negative residual means underprediction. Always check the number of matched
+rows: an inner join omits unmatched indices, and evaluation does not interpolate
+between model updates.
+
+```@example evaluation
+p = visualize(residuals, :time, :residual;
+    kind = :scatterline,
+    backend = :Gadfly,
+    xlab = "Time",
+    ylab = "Predicted - observed mass",
+    title = "Validation residuals",
+    legend = false,
+)
+visualize!(p, [4, 6]u"d", [0, 0]u"g";
+    kind = :line,
+    backend = :Gadfly,
+    color = :lightgray,
+    legend = false,
+)
+```
+
+Also examine residuals against temperature, development stage, and fitted
+values. Patterns in these plots can reveal timing errors or changing error
+spread that a single score hides.
 
 ## Calibrate across environments
 
@@ -166,8 +224,13 @@ fitted = calibrate(Model, observations;
 )
 ```
 
-Every configuration contributes residuals to the objective. Ensure observation
-indices uniquely identify rows across environments.
+Calibration calculates each environment's metric separately, then sums those
+scores for each target. In contrast, `evaluate(...; configs)` pools the matching
+rows before calculating a metric. These objectives are not interchangeable: a
+sum of site-year RMSE values gives each site-year one score, while pooled RMSE
+also reflects how many observations each site-year contains. Ensure observation
+indices uniquely identify rows across environments and choose the objective
+deliberately.
 
 ## Multiple objectives
 
@@ -199,7 +262,7 @@ have different metrics or scales. Normalize deliberately and report the choice.
 5. Start with a small optimizer budget and one target.
 6. Inspect convergence and residual structure.
 7. Increase the budget only after the pipeline is correct.
-8. Evaluate the fitted configuration on held-out data.
+8. Evaluate the fitted configuration on the validation data.
 9. Report bounds, metric, weights, optimizer options, package versions, and any
    stochastic model seeds.
 

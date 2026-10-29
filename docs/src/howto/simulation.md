@@ -124,6 +124,37 @@ The model still updates at `Clock.step`; `snap` only controls output frequency.
 It is tested for the initialized state and after every update. Use it as the
 first tool for reducing memory and plotting overhead.
 
+### Subdaily updates and less frequent output
+
+Use integer time quantities for common intervals. Here the model updates every
+ten minutes but saves only every twenty minutes:
+
+```@example simflow
+subdaily_config = @config Clock => :step => 10u"minute"
+
+subdaily = simulate(OutputDemo;
+    config = subdaily_config,
+    stop = 1u"hr",
+    snap = 20u"minute",
+    target = :distance,
+)
+@assert subdaily.time == [0, 20, 40, 60]u"minute" # hide
+@assert subdaily.distance[end] ≈ 2u"m" # hide
+subdaily
+```
+
+The initial state and the states at 20, 40, and 60 minutes are returned. The
+built-in clock stores these times as exact rational quantities, so ten-minute
+steps reach one hour without floating-point drift. A fraction such as
+`(1//10)u"hr"` is also valid; `6u"minute"` expresses the same interval more
+directly. Floating-point time inputs such as `0.1u"hr"` are accepted but
+converted with a warning.
+
+Exact clock arithmetic does not remove numerical integration error or create
+states between updates. Choose a step that resolves the modeled process, and
+choose stop and snapshot intervals on that update grid when exact output times
+matter.
+
 ## Custom output with `snatch`
 
 The `snatch` callback receives the rows extracted for the current snapshot and
