@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 390" role="img" aria-labelledby="title desc">
+  <title id="title">Garlic model process chain</title>
+  <desc id="desc">Weather and calendar drive phenology and canopy development, which feed gas exchange, carbon balance, and organ growth.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#667085"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="25" y="120" width="150" height="105" rx="14" fill="#eef2ff" stroke="#4063d8" stroke-width="2.5"/>
+    <text x="100" y="158" fill="#243b8f" font-size="19" font-weight="700">Environment</text>
+    <text x="100" y="184" fill="#475467" font-size="14">weather</text>
+    <text x="100" y="205" fill="#475467" font-size="14">calendar</text>
+    <path d="M175 172H210" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="222" y="120" width="155" height="105" rx="14" fill="#fff7df" stroke="#d69e2e" stroke-width="2.5"/>
+    <text x="300" y="158" fill="#8a5b08" font-size="19" font-weight="700">Phenology</text>
+    <text x="300" y="184" fill="#475467" font-size="14">leaf initiation</text>
+    <text x="300" y="205" fill="#475467" font-size="14">appearance · maturity</text>
+    <path d="M377 172H412" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="424" y="120" width="155" height="105" rx="14" fill="#edf7eb" stroke="#389826" stroke-width="2.5"/>
+    <text x="502" y="158" fill="#286d1b" font-size="19" font-weight="700">Canopy</text>
+    <text x="502" y="184" fill="#475467" font-size="14">green leaf area</text>
+    <text x="502" y="205" fill="#475467" font-size="14">radiation interception</text>
+    <path d="M579 172H614" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="626" y="120" width="155" height="105" rx="14" fill="#eaf7f8" stroke="#3b8792" stroke-width="2.5"/>
+    <text x="704" y="158" fill="#286570" font-size="19" font-weight="700">Gas exchange</text>
+    <text x="704" y="184" fill="#475467" font-size="14">sunlit and shaded</text>
+    <text x="704" y="205" fill="#475467" font-size="14">canopy assimilation</text>
+    <path d="M781 172H816" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="828" y="120" width="180" height="105" rx="14" fill="#f6eff8" stroke="#9558b2" stroke-width="2.5"/>
+    <text x="918" y="158" fill="#704087" font-size="19" font-weight="700">Carbon balance</text>
+    <text x="918" y="184" fill="#475467" font-size="14">supply · maintenance</text>
+    <text x="918" y="205" fill="#475467" font-size="14">growth allocation</text>
+
+    <path d="M918 225V278" fill="none" stroke="#667085" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="790" y="290" width="236" height="76" rx="14" fill="#fff0f0" stroke="#cb3c33" stroke-width="2.5"/>
+    <text x="908" y="322" fill="#9f2f28" font-size="19" font-weight="700">Organ growth and yield</text>
+    <text x="908" y="348" fill="#475467" font-size="14">leaf · bulb · root · senescence</text>
+  </g>
+</svg>

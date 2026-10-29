@@ -5,7 +5,7 @@
             __b: __bb => 2 ~ preserve
         end
         s = instance(SPrivateName)
-        @test_throws ErrorException s._a
+        @test_throws FieldAccessError s._a
         @test s.__SPrivateName__a' == 1
         @test s.__SPrivateName__aa === s.__SPrivateName__a
         @test s.__b' == 2
@@ -62,14 +62,14 @@
         end
         @eval @system SPrivateNameMixed1(SPrivateNameMixin1, SPrivateNameMixin2, Controller)
         s1 = instance(SPrivateNameMixed1)
-        @test_throws ErrorException s1._a
+        @test_throws FieldAccessError s1._a
         @test s1.__SPrivateNameMixin1__a' == 1
         @test s1.__SPrivateNameMixin2__a' == 2
         @test s1.b' == 1
         @test s1.c' == 2
         @eval @system SPrivateNameMixed11(SPrivateNameMixed1, Controller)
         s11 = instance(SPrivateNameMixed11)
-        @test_throws ErrorException s11._a
+        @test_throws FieldAccessError s11._a
         @test s11.__SPrivateNameMixin1__a' == 1
         @test s11.__SPrivateNameMixin2__a' == 2
         @test s11.b' == 1
@@ -133,6 +133,7 @@
             a => -1 ~ preserve::int
             b => 1 ~ preserve::uint
             c => 1 ~ preserve::float
+            r => 1//10 ~ preserve::rational
             d => true ~ preserve::bool
             e => :a ~ preserve::sym
             f => "A" ~ preserve::str
@@ -145,6 +146,7 @@
         @test s.a' isa Int64 && s.a' === -1
         @test s.b' isa UInt64 && s.b' == 1
         @test s.c' isa Float64 && s.c' === 1.0
+        @test s.r' isa Rational{Int64} && s.r' === 1//10
         @test s.d' isa Bool && s.d' === true
         @test s.e' isa Symbol && s.e' === :a
         @test s.f' isa String && s.f' === "A"

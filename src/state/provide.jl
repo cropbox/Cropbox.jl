@@ -11,9 +11,19 @@ Provide(; index, init, step, autounit, _value, _type, _...) = begin
     Δt = value(step)
     df = DataFrame(_value isa String ? CSV.File(_value) : _value)
     df = autounit ? unitfy(df) : df
-    v = filter!(r -> r[i] >= t && iszero(typeof(Δt)(r[i] - t) % Δt), df)
+    if t isa Number && Δt isa Number && typeof(Δt) <: Union{Rational,Quantity{<:Rational}}
+        N = Δt isa Quantity ? typeof(Unitful.ustrip(Δt)) : typeof(Δt)
+        t = exactify(N, t)
+        c = df[!, i]
+        if any(hasfloatvalue, c)
+            @warn "floating-point time-series index converted to exact rational values" index=i
+        end
+        df[!, i] = [exactify(N, x; warn=false) for x in c]
+    end
+    delta(x) = convertvalue(typeof(Δt), x; warn=false)
+    v = filter!(r -> r[i] >= t && iszero(delta(r[i] - t) % Δt), df)
     v[1, i] != t && error("incompatible index for initial time = $t\n$v")
-    !all(isequal(Δt), diff(v[!, i])) && error("incompatible index for time step = $Δt\n$v")
+    !all(isequal(Δt), delta.(diff(v[!, i]))) && error("incompatible index for time step = $Δt\n$v")
     V = _type
     Provide{V}(v)
 end

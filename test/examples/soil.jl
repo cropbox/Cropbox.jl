@@ -201,7 +201,7 @@ end
 #TODO: support convenient way to set up custom Clock
 #TODO: support unit reference again?
 @system SoilClock(Clock) <: Clock begin
-    step => 15u"minute" ~ preserve(u"hr", parameter)
+    step => 15u"minute" ~ preserve::rational(u"hr", parameter)
 end
 @system SoilContext(Context) <: Context begin
     context ~ ::Context(override)

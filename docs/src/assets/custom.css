@@ -1,0 +1,11 @@
+/* Gadfly emits top-level SVG plots with physical dimensions. Keep their
+   desktop size, but allow them to shrink inside narrow documentation pages. */
+.content > svg {
+    height: auto;
+    max-width: 100%;
+}
+
+.content img {
+    height: auto;
+    max-width: 100%;
+}

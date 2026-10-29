@@ -9,6 +9,20 @@
         @test s.a' == 1 && s.b' == 2 && s.c' == 3
     end
 
+    @testset "rational clock conversion" begin
+        @system STrackRationalClock(Controller) begin
+            t(context.clock.time) ~ track::float(u"hr")
+        end
+        s = instance(STrackRationalClock; config=:Clock => (:step => 10u"minute"))
+        @test s.t' == 0u"hr"
+        @test s.t' isa Cropbox.Quantity{Float64}
+        for _ in 1:6
+            update!(s)
+        end
+        @test s.context.clock.time' === (1//1)u"hr"
+        @test s.t' == 1u"hr"
+    end
+
     @testset "cross reference" begin
         @test_throws LoadError @eval @system STrackXRef(Controller) begin
             a(b) => b ~ track

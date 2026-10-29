@@ -245,4 +245,21 @@ using Dates: Date, Time
         @test N[3] == "t1"
         @test N[4] == "t2"
     end
+
+    @testset "dataframe array unitfy" begin
+        df = DataFrame()
+        df."a (m)" = [0]
+        R = Cropbox.unitfy([df])
+        r = R[1]
+        @test Cropbox.unittype(eltype(r[!, 1])) == u"m"
+        N = names(r)
+        @test N[1] == "a"
+    end
+
+    @testset "dataframe array unitfy nothing" begin
+        l = [DataFrame(a=0u"m")]
+        R = Cropbox.unitfy(l, nothing)
+        N = names(R[1])
+        @test N[1] == "a"
+    end
 end

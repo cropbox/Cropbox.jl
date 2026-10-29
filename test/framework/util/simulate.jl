@@ -49,6 +49,66 @@ using Dates
         @test r3[end, :b] == 2 * 24 * 365.25
     end
 
+    @testset "floating-point stop" begin
+        @system SSimulateFloatingStop(Controller)
+        local r
+        @test_logs (:warn, r"floating-point value converted") r = simulate(
+            SSimulateFloatingStop;
+            config=:Clock => (:step => 1u"minute"),
+            stop=0.1u"hr",
+            verbose=false,
+        )
+        @test r.time[end] === (1//10)u"hr"
+    end
+
+    @testset "floating-point snap" begin
+        @system SSimulateFloatingSnap(Controller)
+        local r
+        @test_logs (:warn, r"floating-point value converted") r = simulate(
+            SSimulateFloatingSnap;
+            config=:Clock => (:step => 1u"minute"),
+            stop=(1//10)u"hr",
+            snap=0.05u"hr",
+            verbose=false,
+        )
+        @test r.time == [0//1, 1//20, 1//10]u"hr"
+    end
+
+    @testset "off-grid stop" begin
+        @system SSimulateOffGridStop(Controller)
+        r = simulate(
+            SSimulateOffGridStop;
+            config=:Clock => (:step => 7u"minute"),
+            stop=1u"hr",
+            verbose=false,
+        )
+        @test r.time[end-1] === (14//15)u"hr"
+        @test r.time[end] === (21//20)u"hr"
+    end
+
+    @testset "subhourly timestep" begin
+        @system SSimulateSubhourly(Controller) begin
+            total => 1 ~ accumulate
+        end
+        hourly = simulate(
+            SSimulateSubhourly;
+            config=:Clock => (:step => 1u"hr"),
+            stop=1u"hr",
+            snap=1u"hr",
+            verbose=false,
+        )
+        subhourly = simulate(
+            SSimulateSubhourly;
+            config=:Clock => (:step => 10u"minute"),
+            stop=1u"hr",
+            snap=1u"hr",
+            verbose=false,
+        )
+        @test subhourly.time == hourly.time == (0:1)u"hr"
+        @test subhourly.total ≈ hourly.total
+        @test subhourly.total ≈ [0.0, 1.0]
+    end
+
     @testset "stop count" begin
         @system SSimulateStopCount(Controller) begin
             a => 1 ~ preserve(parameter)

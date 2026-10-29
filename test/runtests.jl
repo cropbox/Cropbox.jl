@@ -1,6 +1,8 @@
 using Cropbox
 using Test
 
+const FieldAccessError = isdefined(Base, :FieldError) ? getfield(Base, :FieldError) : ErrorException
+
 @testset "cropbox" begin
     @testset "framework" begin
         include("framework/macro.jl")

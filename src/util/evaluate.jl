@@ -61,7 +61,7 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     metric = metricfunc(metric)
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parseindex(index, S) |> values |> Tuple
-    snap(s) = getproperty.(s, IV) .|> value in IC
+    snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
     NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
     T1 = NT[end-n+1:end]
     residual(c) = begin
