@@ -4,6 +4,7 @@ env:
   REGISTRY_IMAGE: cropbox/cropbox
 jobs:
   build:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
