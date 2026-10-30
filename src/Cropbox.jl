@@ -33,6 +33,7 @@ include("util/hierarchy.jl")
 include("util/plot.jl")
 include("util/visualize.jl")
 include("util/manipulate.jl")
+include("util/serve.jl")
 
 include("precompile.jl")
 
