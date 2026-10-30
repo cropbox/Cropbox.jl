@@ -1,35 +1,19 @@
 import Crayons
-import Highlights
+import JuliaSyntaxHighlighting
 
-#HACK: produce an empty string for `stylesheet()` under "text/plain"
-function Highlights.Format.render(::IO, ::MIME"text/plain", ::Highlights.Themes.Theme) end
-
-function Highlights.Format.render(io::IO, ::MIME"text/plain", tokens::Highlights.Format.TokenIterator)
-    for (str, id, style) in tokens
-        fg = style.fg.active ? map(Int, (style.fg.r, style.fg.g, style.fg.b)) : nothing
-        bg = style.bg.active ? map(Int, (style.bg.r, style.bg.g, style.bg.b)) : nothing
-        crayon = Crayons.Crayon(
-            foreground = fg,
-            background = bg,
-            bold       = style.bold,
-            italics    = style.italic,
-            underline  = style.underline,
-        )
-        print(io, crayon, str, inv(crayon))
-    end
+highlightcode(io::IO, ::MIME"text/plain", source) = print(io, JuliaSyntaxHighlighting.highlight(source))
+highlightcode(io::IO, m::MIME"text/html", source) = begin
+    print(io, """
+    <style>
+        @import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css);
+    </style>
+    <pre style="font-family: 'Fira Code'; font-size: x-small">""")
+    show(io, m, JuliaSyntaxHighlighting.highlight(source))
+    print(io, "</pre>")
 end
 
-writecodehtml(filename::AbstractString, source; lexer=Highlights.Lexers.JuliaLexer, theme=Highlights.Themes.TangoTheme) = begin
-    open(filename, "w") do io
-        print(io, """
-        <style>
-            @import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css);
-            pre.hljl { font-family: 'Fira Code'; font-size: x-small }
-        </style>
-        """)
-        Highlights.stylesheet(io, MIME("text/html"), theme)
-        Highlights.highlight(io, MIME("text/html"), source, lexer, theme)
-   end
+writecodehtml(filename::AbstractString, source) = open(filename, "w") do io
+    highlightcode(io, MIME("text/html"), source)
 end
 
 abstract type TokenColor end

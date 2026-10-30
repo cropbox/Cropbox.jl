@@ -49,21 +49,24 @@ look(io::IO, m::MIME, a...; kw...) = error("undefined look: $a")
 look(m::Module, s::Symbol; kw...) = look(getfield(m, s); kw...)
 
 look(io::IO, m::MIME, s::Union{S,Type{S}}; header=true, doc=true, system=true, kw...) where {S<:System} = begin
+    color = m isa MIME"text/plain" && get(io, :color, true)
     print(io, join(filter!(!isempty, strip.([
-        doc ? buf2str(io -> lookdoc(io, m, s; header, kw...)) : "",
-        system ? buf2str(io -> looksystem(io, m, s; header, kw...)) : "",
+        doc ? buf2str(io -> lookdoc(io, m, s; header, kw...); color) : "",
+        system ? buf2str(io -> looksystem(io, m, s; header, kw...); color) : "",
     ])), "\n\n"))
 end
 look(io::IO, m::MIME, S::Type{<:System}, k::Symbol; header=true, doc=true, code=true, kw...) = begin
+    color = m isa MIME"text/plain" && get(io, :color, true)
     print(io, join(filter!(!isempty, strip.([
-        doc ? buf2str(io -> lookdoc(io, m, S, k; header, kw...)) : "",
-        code ? buf2str(io -> lookcode(io, m, S, k; header, kw...)) : "",
+        doc ? buf2str(io -> lookdoc(io, m, S, k; header, kw...); color) : "",
+        code ? buf2str(io -> lookcode(io, m, S, k; header, kw...); color) : "",
     ])), "\n\n"))
 end
 look(io::IO, m::MIME, s::S, k::Symbol; header=true, value=true, kw...) where {S<:System} = begin
+    color = m isa MIME"text/plain" && get(io, :color, true)
     print(io, join(filter!(!isempty, strip.([
-        buf2str(io -> look(io, m, S, k; header, kw...)),
-        value ? buf2str(io -> lookvalue(io, m, s, k; header, kw...)) : "",
+        buf2str(io -> look(io, m, S, k; header, kw...); color),
+        value ? buf2str(io -> lookvalue(io, m, s, k; header, kw...); color) : "",
     ])), "\n\n"))
 end
 
@@ -135,8 +138,7 @@ lookcode(io::IO, m::MIME, ::Union{S,Type{S}}, k::Symbol; header=false, kw...) wh
     d = dependency(S)
     n = canonicalname(k, S)
     v = d.M[n]
-    Highlights.stylesheet(io, m, Highlights.Themes.DefaultTheme)
-    Highlights.highlight(io, m, "  " * string(v.line), Highlights.Lexers.JuliaLexer)
+    highlightcode(io, m, "  " * string(v.line))
 end
 lookvalue(io::IO, m::MIME, s::System, k::Symbol; header=false, kw...) = begin
     lookheader(io, m, "[value]"; header)
