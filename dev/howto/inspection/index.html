@@ -28,17 +28,17 @@ look(InspectDemo, :mass)</code></pre><pre class="documenter-example-output"><cod
   <span class="sgr94">mass</span><span class="sgr90">[doc]</span>
 
 <span class="sgr90">[code]</span>
-  mass(rate) <span class="sgr38_2" style="color:#666"><span class="sgr1">~</span></span> accumulate(u&quot;g&quot;)</code></pre><p>On an instance, <code>look</code> also displays the current value.</p><pre><code class="language-julia hljs">s = instance(InspectDemo)
+  mass(rate) ~ accumulate(u<span class="sgr32">&quot;g&quot;</span>)</code></pre><p>On an instance, <code>look</code> also displays the current value.</p><pre><code class="language-julia hljs">s = instance(InspectDemo)
 look(s, :mass)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
 
 <span class="sgr90">[code]</span>
-  mass(rate) <span class="sgr38_2" style="color:#666"><span class="sgr1">~</span></span> accumulate(u&quot;g&quot;)
+  mass(rate) ~ accumulate(u<span class="sgr32">&quot;g&quot;</span>)
 
 <span class="sgr90">[value]</span>
 0.0 g</code></pre><p>The macro form avoids quoting a variable name:</p><pre><code class="language-julia hljs">@look InspectDemo.mass</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
 
 <span class="sgr90">[code]</span>
-  mass(rate) <span class="sgr38_2" style="color:#666"><span class="sgr1">~</span></span> accumulate(u&quot;g&quot;)</code></pre><p><code>@look s.f(x)</code> has another meaning: it evaluates a function-like Cropbox variable. Use the function form <code>look(s, :f)</code> when the goal is declaration inspection.</p><h2 id="Inspect-dependency-relationships"><a class="docs-heading-anchor" href="#Inspect-dependency-relationships">Inspect dependency relationships</a><a id="Inspect-dependency-relationships-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-dependency-relationships" title="Permalink"></a></h2><p><code>look</code> is the stable declaration view. Two qualified structural helpers expose complementary graphs:</p><pre><code class="language-julia hljs">d = Cropbox.dependency(InspectDemo)
+  mass(rate) ~ accumulate(u<span class="sgr32">&quot;g&quot;</span>)</code></pre><p><code>@look s.f(x)</code> has another meaning: it evaluates a function-like Cropbox variable. Use the function form <code>look(s, :f)</code> when the goal is declaration inspection.</p><h2 id="Inspect-dependency-relationships"><a class="docs-heading-anchor" href="#Inspect-dependency-relationships">Inspect dependency relationships</a><a id="Inspect-dependency-relationships-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-dependency-relationships" title="Permalink"></a></h2><p><code>look</code> is the stable declaration view. Two qualified structural helpers expose complementary graphs:</p><pre><code class="language-julia hljs">d = Cropbox.dependency(InspectDemo)
 h = Cropbox.hierarchy(InspectDemo; skipcontext = true)</code></pre><p><code>dependency</code> follows variables and generated update stages; it is useful for checking evaluation order and cycles. <code>hierarchy</code> follows mixins and child systems; dashed edges denote mixins. Cropbox uses its bundled Graphviz executable to render either graph as SVG on supported platforms. A static copy can be written for documentation:</p><pre><code class="language-julia hljs">Cropbox.writeimage(&quot;dependency&quot;, d; format = :svg)
 Cropbox.writeimage(&quot;hierarchy&quot;, h; format = :svg)</code></pre><p>The text representation remains available without invoking Graphviz.</p><p>These helpers are qualified because their graph representation is implementation-oriented rather than a stable serialization format. Explain the scientific relationships in the surrounding text instead of asking readers to infer model meaning from every generated stage.</p><h2 id="Navigate-an-instance"><a class="docs-heading-anchor" href="#Navigate-an-instance">Navigate an instance</a><a id="Navigate-an-instance-1"></a><a class="docs-heading-anchor-permalink" href="#Navigate-an-instance" title="Permalink"></a></h2><p><code>dive(s)</code> opens a terminal menu for walking through nested systems and values. It is not interactive in Jupyter; there it falls back to a simpler display. Use <code>look</code>, property access, or explicit output paths in notebooks.</p><h2 id="Read-values-in-Julia-code"><a class="docs-heading-anchor" href="#Read-values-in-Julia-code">Read values in Julia code</a><a id="Read-values-in-Julia-code-1"></a><a class="docs-heading-anchor-permalink" href="#Read-values-in-Julia-code" title="Permalink"></a></h2><pre><code class="language-julia hljs">s.rate&#39;
 value(s.mass)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.0 g</code></pre><p>Postfix <code>&#39;</code> is concise for interactive work. <code>value(...)</code> is clearer in helper functions. Do not assume a system field is a bare number.</p><h2 id="Visualize-an-existing-result"><a class="docs-heading-anchor" href="#Visualize-an-existing-result">Visualize an existing result</a><a id="Visualize-an-existing-result-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-an-existing-result" title="Permalink"></a></h2><p><code>visualize</code> works directly with vectors, and <code>visualize!</code> adds another series to the same result:</p><pre><code class="language-julia hljs">x = collect(1:5)
@@ -60,20 +60,20 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-53a2f212-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-713e663b-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-53a2f212-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-53a2f212-3">
+<g class="plotroot xscalable yscalable" id="img-713e663b-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-713e663b-3">
     <g transform="translate(70.84,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">time (hr)</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-53a2f212-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-713e663b-4">
     <g transform="translate(17.96,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -100,78 +100,78 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
       </g>
     </g>
   </g>
-  <g class="guide colorkey" id="img-53a2f212-5">
-    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-53a2f212-6">
-      <g transform="translate(130.35,47.75)" id="img-53a2f212-7">
+  <g class="guide colorkey" id="img-713e663b-5">
+    <g fill="#4C404B" font-size="2.82" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" id="img-713e663b-6">
+      <g transform="translate(130.35,47.75)" id="img-713e663b-7">
         <g class="primitive">
           <text dy="0.35em">mass</text>
         </g>
       </g>
     </g>
-    <g stroke-width="0.3" id="img-53a2f212-8">
-      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-53a2f212-9">
-        <g transform="translate(127.54,47.75)" id="img-53a2f212-10">
+    <g stroke-width="0.3" id="img-713e663b-8">
+      <g stroke="#FFFFFF" stroke-opacity="0.000" fill-opacity="1" fill="#00BFFF" id="img-713e663b-9">
+        <g transform="translate(127.54,47.75)" id="img-713e663b-10">
           <circle cx="0" cy="0" r="0.7" class="primitive"/>
         </g>
       </g>
     </g>
-    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-53a2f212-11">
-      <g transform="translate(126.73,44.44)" id="img-53a2f212-12">
+    <g fill="#362A35" font-size="3.18" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" stroke="#000000" stroke-opacity="0.000" id="img-713e663b-11">
+      <g transform="translate(126.73,44.44)" id="img-713e663b-12">
         <g class="primitive">
           <text dy="-0em"></text>
         </g>
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-53a2f212-13)">
-    <g id="img-53a2f212-14">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-53a2f212-15">
-        <g transform="translate(70.84,45.52)" id="img-53a2f212-16">
+  <g clip-path="url(#img-713e663b-13)">
+    <g id="img-713e663b-14">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-713e663b-15">
+        <g transform="translate(70.84,45.52)" id="img-713e663b-16">
           <path d="M-54.89,-40.52 L54.89,-40.52 54.89,40.52 -54.89,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-53a2f212-17">
-        <g transform="translate(70.84,84.04)" id="img-53a2f212-18">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-713e663b-17">
+        <g transform="translate(70.84,84.04)" id="img-713e663b-18">
           <path fill="none" d="M-54.89,0 L54.89,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.84,64.78)" id="img-53a2f212-19">
+        <g transform="translate(70.84,64.78)" id="img-713e663b-19">
           <path fill="none" d="M-54.89,0 L54.89,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.84,45.52)" id="img-53a2f212-20">
+        <g transform="translate(70.84,45.52)" id="img-713e663b-20">
           <path fill="none" d="M-54.89,0 L54.89,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.84,26.26)" id="img-53a2f212-21">
+        <g transform="translate(70.84,26.26)" id="img-713e663b-21">
           <path fill="none" d="M-54.89,0 L54.89,0 " class="primitive"/>
         </g>
-        <g transform="translate(70.84,7)" id="img-53a2f212-22">
+        <g transform="translate(70.84,7)" id="img-713e663b-22">
           <path fill="none" d="M-54.89,0 L54.89,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-53a2f212-23">
-        <g transform="translate(17.96,45.52)" id="img-53a2f212-24">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-713e663b-23">
+        <g transform="translate(17.96,45.52)" id="img-713e663b-24">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(44.4,45.52)" id="img-53a2f212-25">
+        <g transform="translate(44.4,45.52)" id="img-713e663b-25">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(70.84,45.52)" id="img-53a2f212-26">
+        <g transform="translate(70.84,45.52)" id="img-713e663b-26">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(97.29,45.52)" id="img-53a2f212-27">
+        <g transform="translate(97.29,45.52)" id="img-713e663b-27">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(123.73,45.52)" id="img-53a2f212-28">
+        <g transform="translate(123.73,45.52)" id="img-713e663b-28">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-53a2f212-29">
+      <g class="plotpanel" id="img-713e663b-29">
         <metadata>
           <boundingbox value="15.956666666666663mm 5.0mm 109.7713562373095mm 81.04333333333335mm"/>
           <unitbox value="-0.07563484372887432 8.20767533422749 4.151269687457749 -8.415350668454982"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-53a2f212-30">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-53a2f212-31">
-            <g transform="translate(70.84,45.52)" id="img-53a2f212-32">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-713e663b-30">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-713e663b-31">
+            <g transform="translate(70.84,45.52)" id="img-713e663b-32">
               <path fill="none" d="M-52.89,38.52 L-26.44,19.26 0,0 26.44,-19.26 52.89,-38.52 " class="primitive"/>
             </g>
           </g>
@@ -179,35 +179,35 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-53a2f212-33">
-    <g transform="translate(14.96,84.04)" id="img-53a2f212-34">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-713e663b-33">
+    <g transform="translate(14.96,84.04)" id="img-713e663b-34">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">0</text>
       </g>
     </g>
-    <g transform="translate(14.96,64.78)" id="img-53a2f212-35">
+    <g transform="translate(14.96,64.78)" id="img-713e663b-35">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">2</text>
       </g>
     </g>
-    <g transform="translate(14.96,45.52)" id="img-53a2f212-36">
+    <g transform="translate(14.96,45.52)" id="img-713e663b-36">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">4</text>
       </g>
     </g>
-    <g transform="translate(14.96,26.26)" id="img-53a2f212-37">
+    <g transform="translate(14.96,26.26)" id="img-713e663b-37">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">6</text>
       </g>
     </g>
-    <g transform="translate(14.96,7)" id="img-53a2f212-38">
+    <g transform="translate(14.96,7)" id="img-713e663b-38">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">8</text>
       </g>
     </g>
   </g>
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-53a2f212-39">
-    <g transform="translate(8.64,43.52)" id="img-53a2f212-40">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-713e663b-39">
+    <g transform="translate(8.64,43.52)" id="img-713e663b-40">
       <g class="primitive">
         <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)"> (g)</text>
       </g>
@@ -215,7 +215,7 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
   </g>
 </g>
 <defs>
-  <clipPath id="img-53a2f212-13">
+  <clipPath id="img-713e663b-13">
     <path d="M15.96,5 L125.73,5 125.73,86.04 15.96,86.04 " />
   </clipPath>
 </defs>
@@ -239,20 +239,20 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-64815915-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-58e70ba0-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-64815915-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-64815915-3">
+<g class="plotroot xscalable yscalable" id="img-58e70ba0-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-58e70ba0-3">
     <g transform="translate(76.19,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">time (hr)</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-64815915-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-58e70ba0-4">
     <g transform="translate(17.96,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -279,55 +279,55 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-64815915-5)">
-    <g id="img-64815915-6">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-64815915-7">
-        <g transform="translate(76.19,45.52)" id="img-64815915-8">
+  <g clip-path="url(#img-58e70ba0-5)">
+    <g id="img-58e70ba0-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-58e70ba0-7">
+        <g transform="translate(76.19,45.52)" id="img-58e70ba0-8">
           <path d="M-60.23,-40.52 L60.23,-40.52 60.23,40.52 -60.23,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-64815915-9">
-        <g transform="translate(76.19,84.04)" id="img-64815915-10">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-58e70ba0-9">
+        <g transform="translate(76.19,84.04)" id="img-58e70ba0-10">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,64.78)" id="img-64815915-11">
+        <g transform="translate(76.19,64.78)" id="img-58e70ba0-11">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,45.52)" id="img-64815915-12">
+        <g transform="translate(76.19,45.52)" id="img-58e70ba0-12">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,26.26)" id="img-64815915-13">
+        <g transform="translate(76.19,26.26)" id="img-58e70ba0-13">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,7)" id="img-64815915-14">
+        <g transform="translate(76.19,7)" id="img-58e70ba0-14">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-64815915-15">
-        <g transform="translate(17.96,45.52)" id="img-64815915-16">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-58e70ba0-15">
+        <g transform="translate(17.96,45.52)" id="img-58e70ba0-16">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(47.07,45.52)" id="img-64815915-17">
+        <g transform="translate(47.07,45.52)" id="img-58e70ba0-17">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,45.52)" id="img-64815915-18">
+        <g transform="translate(76.19,45.52)" id="img-58e70ba0-18">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(105.31,45.52)" id="img-64815915-19">
+        <g transform="translate(105.31,45.52)" id="img-58e70ba0-19">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(134.42,45.52)" id="img-64815915-20">
+        <g transform="translate(134.42,45.52)" id="img-58e70ba0-20">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-64815915-21">
+      <g class="plotpanel" id="img-58e70ba0-21">
         <metadata>
           <boundingbox value="15.956666666666678mm 5.0mm 120.46468957064283mm 81.04333333333334mm"/>
           <unitbox value="-0.06869034751642487 8.20767533422749 4.137380695032849 -8.415350668454982"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-64815915-22">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-64815915-23">
-            <g transform="translate(76.19,45.52)" id="img-64815915-24">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-58e70ba0-22">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-58e70ba0-23">
+            <g transform="translate(76.19,45.52)" id="img-58e70ba0-24">
               <path fill="none" d="M-58.23,38.52 L-29.12,19.26 0,0 29.12,-19.26 58.23,-38.52 " class="primitive"/>
             </g>
           </g>
@@ -335,35 +335,35 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-64815915-25">
-    <g transform="translate(14.96,84.04)" id="img-64815915-26">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-58e70ba0-25">
+    <g transform="translate(14.96,84.04)" id="img-58e70ba0-26">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">0</text>
       </g>
     </g>
-    <g transform="translate(14.96,64.78)" id="img-64815915-27">
+    <g transform="translate(14.96,64.78)" id="img-58e70ba0-27">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">2</text>
       </g>
     </g>
-    <g transform="translate(14.96,45.52)" id="img-64815915-28">
+    <g transform="translate(14.96,45.52)" id="img-58e70ba0-28">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">4</text>
       </g>
     </g>
-    <g transform="translate(14.96,26.26)" id="img-64815915-29">
+    <g transform="translate(14.96,26.26)" id="img-58e70ba0-29">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">6</text>
       </g>
     </g>
-    <g transform="translate(14.96,7)" id="img-64815915-30">
+    <g transform="translate(14.96,7)" id="img-58e70ba0-30">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">8</text>
       </g>
     </g>
   </g>
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-64815915-31">
-    <g transform="translate(8.64,43.52)" id="img-64815915-32">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-58e70ba0-31">
+    <g transform="translate(8.64,43.52)" id="img-58e70ba0-32">
       <g class="primitive">
         <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">mass (g)</text>
       </g>
@@ -371,7 +371,7 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
   </g>
 </g>
 <defs>
-  <clipPath id="img-64815915-5">
+  <clipPath id="img-58e70ba0-5">
     <path d="M15.96,5 L136.42,5 136.42,86.04 15.96,86.04 " />
   </clipPath>
 </defs>
@@ -402,20 +402,20 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-6230b666-1">
+<g stroke="#000000" stroke-opacity="0.000" fill="#FFFFFF" id="img-cf6e39c2-1">
   <g transform="translate(70.71,50)">
     <path d="M-70.71,-50 L70.71,-50 70.71,50 -70.71,50  z" class="primitive"/>
   </g>
 </g>
-<g class="plotroot xscalable yscalable" id="img-6230b666-2">
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-6230b666-3">
+<g class="plotroot xscalable yscalable" id="img-cf6e39c2-2">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-cf6e39c2-3">
     <g transform="translate(76.19,93.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">rate (g hr^-1)</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-6230b666-4">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-cf6e39c2-4">
     <g transform="translate(17.96,87.04)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0</text>
@@ -437,58 +437,58 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-6230b666-5)">
-    <g id="img-6230b666-6">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-6230b666-7">
-        <g transform="translate(76.19,45.52)" id="img-6230b666-8">
+  <g clip-path="url(#img-cf6e39c2-5)">
+    <g id="img-cf6e39c2-6">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-cf6e39c2-7">
+        <g transform="translate(76.19,45.52)" id="img-cf6e39c2-8">
           <path d="M-60.23,-40.52 L60.23,-40.52 60.23,40.52 -60.23,40.52  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-6230b666-9">
-        <g transform="translate(76.19,84.04)" id="img-6230b666-10">
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-cf6e39c2-9">
+        <g transform="translate(76.19,84.04)" id="img-cf6e39c2-10">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,71.2)" id="img-6230b666-11">
+        <g transform="translate(76.19,71.2)" id="img-cf6e39c2-11">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,58.36)" id="img-6230b666-12">
+        <g transform="translate(76.19,58.36)" id="img-cf6e39c2-12">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,45.52)" id="img-6230b666-13">
+        <g transform="translate(76.19,45.52)" id="img-cf6e39c2-13">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,32.68)" id="img-6230b666-14">
+        <g transform="translate(76.19,32.68)" id="img-cf6e39c2-14">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,19.84)" id="img-6230b666-15">
+        <g transform="translate(76.19,19.84)" id="img-cf6e39c2-15">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
-        <g transform="translate(76.19,7)" id="img-6230b666-16">
+        <g transform="translate(76.19,7)" id="img-cf6e39c2-16">
           <path fill="none" d="M-60.23,0 L60.23,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-6230b666-17">
-        <g transform="translate(17.96,45.52)" id="img-6230b666-18">
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-cf6e39c2-17">
+        <g transform="translate(17.96,45.52)" id="img-cf6e39c2-18">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(56.78,45.52)" id="img-6230b666-19">
+        <g transform="translate(56.78,45.52)" id="img-cf6e39c2-19">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(95.6,45.52)" id="img-6230b666-20">
+        <g transform="translate(95.6,45.52)" id="img-cf6e39c2-20">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
-        <g transform="translate(134.42,45.52)" id="img-6230b666-21">
+        <g transform="translate(134.42,45.52)" id="img-cf6e39c2-21">
           <path fill="none" d="M0,-40.52 L0,40.52 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-6230b666-22">
+      <g class="plotpanel" id="img-cf6e39c2-22">
         <metadata>
           <boundingbox value="15.956666666666678mm 5.0mm 120.46468957064283mm 81.04333333333334mm"/>
           <unitbox value="-0.05151776063731865 6.155756500670618 3.103035521274637 -6.311513001341236"/>
         </metadata>
-        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-6230b666-23">
-          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-6230b666-24">
-            <g transform="translate(76.19,64.78)" id="img-6230b666-25">
+        <g stroke-width="0.3" fill="#000000" fill-opacity="0.000" class="geometry" id="img-cf6e39c2-23">
+          <g class="color_LCHab{Float32}(70.0f0,60.0f0,240.0f0)" stroke-dasharray="none" stroke-opacity="1" stroke="#00BFFF" id="img-cf6e39c2-24">
+            <g transform="translate(76.19,64.78)" id="img-cf6e39c2-25">
               <path fill="none" d="M-58.23,19.26 L-58.23,19.26 -58.23,19.26 -38.82,19.26 -38.82,12.84 -38.82,6.42 -19.41,19.26 -19.41,6.42 -19.41,-6.42 0,19.26 0,0 0,-19.26 19.41,19.26 19.41,-6.42 19.41,-32.1 38.82,19.26 38.82,-12.84 38.82,-44.94 58.23,19.26 58.23,-19.26 58.23,-57.78 " class="primitive"/>
             </g>
           </g>
@@ -496,45 +496,45 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-6230b666-26">
-    <g transform="translate(14.96,84.04)" id="img-6230b666-27">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-cf6e39c2-26">
+    <g transform="translate(14.96,84.04)" id="img-cf6e39c2-27">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">0</text>
       </g>
     </g>
-    <g transform="translate(14.96,71.2)" id="img-6230b666-28">
+    <g transform="translate(14.96,71.2)" id="img-cf6e39c2-28">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">1</text>
       </g>
     </g>
-    <g transform="translate(14.96,58.36)" id="img-6230b666-29">
+    <g transform="translate(14.96,58.36)" id="img-cf6e39c2-29">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">2</text>
       </g>
     </g>
-    <g transform="translate(14.96,45.52)" id="img-6230b666-30">
+    <g transform="translate(14.96,45.52)" id="img-cf6e39c2-30">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">3</text>
       </g>
     </g>
-    <g transform="translate(14.96,32.68)" id="img-6230b666-31">
+    <g transform="translate(14.96,32.68)" id="img-cf6e39c2-31">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">4</text>
       </g>
     </g>
-    <g transform="translate(14.96,19.84)" id="img-6230b666-32">
+    <g transform="translate(14.96,19.84)" id="img-cf6e39c2-32">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">5</text>
       </g>
     </g>
-    <g transform="translate(14.96,7)" id="img-6230b666-33">
+    <g transform="translate(14.96,7)" id="img-cf6e39c2-33">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">6</text>
       </g>
     </g>
   </g>
-  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-6230b666-34">
-    <g transform="translate(8.64,43.52)" id="img-6230b666-35">
+  <g font-size="3.53" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-cf6e39c2-34">
+    <g transform="translate(8.64,43.52)" id="img-cf6e39c2-35">
       <g class="primitive">
         <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">mass (g)</text>
       </g>
@@ -542,9 +542,9 @@ visualize(r, :time, :mass; kind = :line)</code></pre><?xml version="1.0" encodin
   </g>
 </g>
 <defs>
-  <clipPath id="img-6230b666-5">
+  <clipPath id="img-cf6e39c2-5">
     <path d="M15.96,5 L136.42,5 136.42,86.04 15.96,86.04 " />
   </clipPath>
 </defs>
 </svg>
-<p>Use <code>group</code> for separate series and two sweep dimensions for a heatmap. For analysis beyond quick exploration, construct configurations explicitly with <code>@config</code>, call <code>simulate</code>, and retain the resulting DataFrame.</p><h2 id="Compare-observations-and-estimates"><a class="docs-heading-anchor" href="#Compare-observations-and-estimates">Compare observations and estimates</a><a id="Compare-observations-and-estimates-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-observations-and-estimates" title="Permalink"></a></h2><p><code>visualize(obs, Model, ...)</code> overlays observations and model output, while <code>visualize(obs, Model, target; index=...)</code> can produce an observation-versus- estimate plot. See <a href="../../tutorials/evaluation/#evaluation-tutorial">Evaluate and Calibrate Models</a> for a complete workflow.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Run Simulations and Shape Output</a><a class="docs-footer-nextpage" href="../../tutorials/evaluation/">Evaluate and Calibrate Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Thursday 29 October 2026 16:33">Thursday 29 October 2026</span>. Using Julia version 1.13.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<p>Use <code>group</code> for separate series and two sweep dimensions for a heatmap. For analysis beyond quick exploration, construct configurations explicitly with <code>@config</code>, call <code>simulate</code>, and retain the resulting DataFrame.</p><h2 id="Compare-observations-and-estimates"><a class="docs-heading-anchor" href="#Compare-observations-and-estimates">Compare observations and estimates</a><a id="Compare-observations-and-estimates-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-observations-and-estimates" title="Permalink"></a></h2><p><code>visualize(obs, Model, ...)</code> overlays observations and model output, while <code>visualize(obs, Model, target; index=...)</code> can produce an observation-versus- estimate plot. See <a href="../../tutorials/evaluation/#evaluation-tutorial">Evaluate and Calibrate Models</a> for a complete workflow.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Run Simulations and Shape Output</a><a class="docs-footer-nextpage" href="../../tutorials/evaluation/">Evaluate and Calibrate Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Friday 30 October 2026 00:54">Friday 30 October 2026</span>. Using Julia version 1.13.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
