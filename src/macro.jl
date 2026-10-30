@@ -442,7 +442,8 @@ genfieldunits(infos) = @q filter!(p -> !isnothing(p[1]), Dict(
 
 genstruct(name, type, infos, consts, substs, incl, scope) = begin
     #FIXME: simple `gensym(name)` leads to very strange invalid redefinition of constant error on Julia 1.6.0
-    _S = esc(gensym(Symbol(:_, name)))
+    G = GlobalRef(scope, gensym(Symbol(:_, name)))
+    _S = esc(G.name)
     S = esc(name)
     T = esc(type)
     N = Meta.quot(name)
@@ -461,13 +462,11 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         Core.@__doc__ abstract type $S <: $T end
         $S(; kw...) = $_S(; kw...)
         let $(constpatches...)
-            # HACK: We want to define `typefor` before the type is fully defined
-            # because it may be used in the `fields`. Because of the order that
-            # struct definitions happen to get evaluated in, type supertype definition
-            # is the only place where we have access to the incomplete $_S before evaluating
-            # the fields. The extra let is required to due a lowering bug
-            # (https://github.com/JuliaLang/julia/issues/56510).
-            Core.@__doc__ mutable struct $_S <: ((let $_S=$_S; ($C.typefor(::Type{<:$S}) = $_S); end); $S)
+            # Use the provisional type for recursive fields, then its completed global binding.
+            # The inner let avoids JuliaLang/julia#56510.
+            Core.@__doc__ mutable struct $_S <: ((let $_S=$_S
+                $C.typefor(::Type{<:$S}) = isdefined($scope, $(Meta.quot(G.name))) ? $G : $_S
+            end); $S)
                 $(fields...)
                 function $_S(; __kwargs__...)
                     $predecl

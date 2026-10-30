@@ -30,6 +30,7 @@
         end
         sc = instance(SProduceSingleController)
         s = sc.s
+        @test eltype(s.a.productions) == Cropbox.Production{<:typeof(s)}
         @test length(s.a) == 0
         @test collect(s.a) == []
         update!(sc)
