@@ -130,7 +130,7 @@
         @test instance(SSolveCoefficients).x' ≈ -1
         x = only(Cropbox.Symbolics.@variables x)
         for p in (x + sin(x), x + 1/x)
-            @test_throws ArgumentError Cropbox.polynomialcoefficients(p, x)
+            @test_throws ArgumentError Cropbox.genpolynomialcoeffs(p, x)
         end
         @test Cropbox.genpolynomialexpr(Cropbox.Symbolics.Num(1//10^12)) === 1e-12
     end

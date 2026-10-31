@@ -24,12 +24,12 @@ genpolynomial(v::VarInfo; scope) = begin
     #HACK: use scope of caller, avoiding eval into precompiled Cropbox module
     scope.eval(@q let $(V...)
         Cropbox.Symbolics.@variables $(V...)
-        Cropbox.polynomialcoefficients(begin
+        Cropbox.genpolynomialcoeffs(begin
             $(v.body)
         end, $x)
     end)
 end
-polynomialcoefficients(p, x) = begin
+genpolynomialcoeffs(p, x) = begin
     terms, residual = Symbolics.semipolynomial_form(p, [x], Inf)
     iszero(Symbolics.Num(Symbolics.simplify(residual))) ||
         throw(ArgumentError("solve requires a polynomial in $x; residual: $residual"))
