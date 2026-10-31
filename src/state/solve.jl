@@ -16,21 +16,35 @@ constructortags(::Val{:Solve}) = (:unit,)
 ⩵(x, y) = x - y
 export ⩵
 
-using SymPy: SymPy, sympy
+import Symbolics
 genpolynomial(v::VarInfo; scope) = begin
     x = v.name
     V = extractfuncargpair.(v.args) .|> first
     push!(V, x)
     #HACK: use scope of caller, avoiding eval into precompiled Cropbox module
-    p = scope.eval(@q let $(V...)
-        Cropbox.SymPy.@syms $(V...)
-        Cropbox.sympy.Poly(begin
+    scope.eval(@q let $(V...)
+        Cropbox.Symbolics.@variables $(V...)
+        Cropbox.polynomialcoefficients(begin
             $(v.body)
         end, $x)
     end)
-    reverse(p.all_coeffs())
 end
-genpolynomialexpr(p) = SymPy.simplify(p) |> repr |> Meta.parse
+polynomialcoefficients(p, x) = begin
+    terms, residual = Symbolics.semipolynomial_form(p, [x], Inf)
+    iszero(Symbolics.Num(Symbolics.simplify(residual))) ||
+        throw(ArgumentError("solve requires a polynomial in $x; residual: $residual"))
+    n = maximum((Int(Symbolics.degree(m, x)) for m in keys(terms)); init=0)
+    Q = fill(Symbolics.Num(0), n+1)
+    for (m, c) in terms
+        Q[Int(Symbolics.degree(m, x))+1] = c
+    end
+    Q
+end
+genpolynomialexpr(p) = begin
+    ex = Symbolics.simplify(p) |> Symbolics.toexpr
+    # Preserve numeric division without overflowing intermediate Rational values.
+    MacroTools.postwalk(x -> x isa Rational ? float(x) : x, ex)
+end
 genpolynomialunits(U, n) = [@q($U^$(i-1)) for i in n:-1:1]
 
 import PolynomialRoots

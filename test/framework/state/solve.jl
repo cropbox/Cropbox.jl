@@ -122,6 +122,19 @@
         @test instance(SSolveSparseUnit).x' == 200u"cm"
     end
 
+    @testset "symbolic coefficients" begin
+        @system SSolveCoefficients(Controller) begin
+            a => π/2 ~ preserve
+            x(a) => (x + sin(a)) ~ solve
+        end
+        @test instance(SSolveCoefficients).x' ≈ -1
+        x = only(Cropbox.Symbolics.@variables x)
+        for p in (x + sin(x), x + 1/x)
+            @test_throws ArgumentError Cropbox.polynomialcoefficients(p, x)
+        end
+        @test Cropbox.genpolynomialexpr(Cropbox.Symbolics.Num(1//10^12)) === 1e-12
+    end
+
     @testset "vanishing leading coefficients" begin
         @test instance(SSolve, config=:SSolve => (a=0, b=2, c=-4)).x' == 2
         @test instance(SSolveUnitScale, config=:SSolveUnitScale => (a=0, b=2, c=1)).x' == -50u"cm"

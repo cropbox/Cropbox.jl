@@ -335,6 +335,9 @@ comparison. Use Julia's `==` when a Boolean result is intended.
 
 Solves a polynomial residual and selects a root.
 
+Polynomial coefficients are generated with Symbolics.jl when the system is
+defined; solving at runtime uses Julia and does not require Python.
+
 Supported tags: `lower`, `upper`, `pick`, `unit`.
 
 `lower` and `upper` filter real candidates; `pick` selects from those remaining
