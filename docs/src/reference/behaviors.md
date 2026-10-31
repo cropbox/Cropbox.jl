@@ -348,6 +348,11 @@ root finding for higher degrees. Complex roots are not returned. The expression
 must be polynomial in the solved variable; use `bisect` for a bracketed
 nonlinear response.
 
+If a leading coefficient becomes zero at runtime, `solve` reduces the degree
+before solving and applies the same bounds. If all nonconstant coefficients
+vanish, it raises an `ArgumentError` rather than choosing a root of a constant
+residual.
+
 ### [`bisect`](@id behavior-bisect)
 
 Solves a nonlinear residual by bisection. The residual is written as a

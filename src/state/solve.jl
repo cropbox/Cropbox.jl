@@ -28,18 +28,16 @@ genpolynomial(v::VarInfo; scope) = begin
             $(v.body)
         end, $x)
     end)
-    Q = p.coeffs()
-    #HACK: normalize coefficient to avoid runtime unit generation
-    Q = Q / Q[1] |> reverse .|> SymPy.simplify
-    Q .|> repr .|> Meta.parse
+    reverse(p.all_coeffs())
 end
+genpolynomialexpr(p) = SymPy.simplify(p) |> repr |> Meta.parse
 genpolynomialunits(U, n) = [@q($U^$(i-1)) for i in n:-1:1]
 
 import PolynomialRoots
 solvepolynomial(p, pu) = begin
     sp = [deunitfy(q, qu) for (q, qu) in zip(p, pu)]
     r = PolynomialRoots.roots(sp)
-    real.(filter!(isreal, r))
+    real.(filter!(x -> isreal(x) || abs(imag(x)) <= eps(real(x)), r))
 end
 solvequadratic(a, b, c) = begin
     (a == 0) && return (-c/b,)
@@ -70,12 +68,23 @@ gendefault(v::VarInfo, ::Val{:Solve}) = nothing
 genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; scope, kw...) = begin
     U = gettag(v, :unit)
     isnothing(U) && (U = @q(u"NoUnits"))
-    P = genpolynomial(v; scope)
-    n = length(P)
-    PU = genpolynomialunits(U, n)
     lower = gettag(v, :lower)
     upper = gettag(v, :upper)
     pick = gettag(v, :pick).value
+    body = genpolynomialbody(genpolynomial(v; scope); U, lower, upper, pick)
+    val = genbody(v, body)
+    genstore(v, val)
+end
+
+genpolynomialbody(Q; U, lower, upper, pick) = begin
+    n = length(Q)
+    n < 2 && return @q throw(ArgumentError("solve requires a nonzero nonconstant coefficient"))
+    leading = genpolynomialexpr(Q[end])
+    fallback() = genpolynomialbody(Q[1:end-1]; U, lower, upper, pick)
+    leading isa Number && iszero(leading) && return fallback()
+    # Normalize each degree separately to avoid runtime unit generation.
+    P = genpolynomialexpr.(Q ./ Q[end])
+    PU = genpolynomialunits(U, n)
     body = if n == 2 # linear
         @gensym a b xl xu
         @q let $a = $(esc(P[2])),
@@ -108,6 +117,10 @@ genupdate(v::VarInfo, ::Val{:Solve}, ::MainStep; scope, kw...) = begin
             $l |> $pick
         end
     end
-    val = genbody(v, body)
-    genstore(v, val)
+    leading isa Number && return body
+    @q if iszero($(esc(leading)))
+        $(fallback())
+    else
+        $body
+    end
 end
