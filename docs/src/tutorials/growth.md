@@ -4,6 +4,15 @@ This tutorial translates a logistic growth equation into a Cropbox
 specification, configures a scenario, runs the model, and examines the result.
 It follows the equation-to-model sequence used in Cropbox courses and workshops.
 
+Before starting, add the packages used below to your active Julia environment:
+
+```julia
+using Pkg
+Pkg.add(["Cropbox", "DataFrames"])
+```
+
+Run the code blocks in order in the same Julia session.
+
 ## Start from the process equation
 
 Let whole-plant biomass ``W`` follow logistic growth:
@@ -162,7 +171,7 @@ data used for calibration separate from independent validation data; see
 
 - [DSL Syntax](@ref dsl-syntax) explains every declaration component.
 - [Configure Models and Scenarios](@ref configuration-workflow) covers merging
-  configurations and parameter sweeps.
+  configurations and parameter comparisons.
 - [Run Simulations and Shape Output](@ref simulation-workflow) covers stopping,
   snapshots, and output selectors.
 - [Weather-driven Phenology](@ref phenology-tutorial) adds calendar time and

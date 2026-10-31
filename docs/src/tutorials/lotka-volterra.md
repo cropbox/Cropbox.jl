@@ -6,6 +6,14 @@ learn two patterns that occur throughout crop modeling: several states changing
 together and a base process being extended without copying the whole
 specification.
 
+Add the packages used below to your active Julia environment, then run the
+blocks in order in the same session:
+
+```julia
+using Pkg
+Pkg.add(["Cropbox", "CSV", "DataFrames"])
+```
+
 ## Start from the Lotka–Volterra equations
 
 Let prey population ``N`` and predator population ``P`` follow
@@ -59,7 +67,7 @@ order and would be rejected.
 
 The `init` tags are explicit because zero populations would remain at the
 trivial zero solution. The process omits `Controller` so it can be reused; the
-executable root adds the controller once.
+runnable model adds the controller once.
 
 ## Configure and simulate
 
@@ -145,6 +153,9 @@ The source
 remains with this manual. `unitfy` reads the unit annotation in `Year (yr)` and
 removes it from the column name.
 
+Download [`pelts.csv`](pelts.csv) into your working directory before running
+the following block. `pwd()` shows which directory Julia is using.
+
 ```@example lotka
 pelts = CSV.read(
     "pelts.csv",
@@ -199,7 +210,7 @@ valid Julia syntax. Explicit compatible units are most useful when the search
 interval is naturally expressed on a different time scale.
 
 For the density-dependent model, add a bounded `K` parameter and compare both
-models on held-out years rather than judging only their calibration error.
+models on validation years that were not used for calibration.
 Retain the time step, bounds, metric, optimizer options, and package versions.
 See [Evaluate and Calibrate Models](@ref evaluation-tutorial) for multi-target and
 multi-environment workflows.

@@ -34,10 +34,12 @@ cap prevents the following `Tx` condition from being reached. Use only the
 threshold needed by the model, or test the combined response over the full
 temperature range before adopting both.
 
-The component is a rate response; accumulate `ΔT` or use `r` in a larger
-phenology system according to that system's time convention. The weather-driven
-tutorial shows a simpler explicit thermal-time declaration when the full
-component is unnecessary.
+Choose the output according to the model's time convention. Accumulating `ΔT`
+over elapsed days gives conventional thermal time in `K*d`. By contrast,
+integrating `r = ΔT / Δt` adds one `ΔT` contribution per update, so changing the
+update interval changes that accumulation. The
+[weather-driven tutorial](@ref phenology-tutorial) shows a simpler explicit
+thermal-time declaration when the full component is unnecessary.
 
 ### `BetaFunction`
 
@@ -104,7 +106,7 @@ date (:Date),TMAX (°C),TMIN (°C)
 2025-04-02,22,9
 ```
 
-Configure parameters on the executable root type when the store is mixed into
+Configure parameters on the top-level model type when the store is mixed into
 that root:
 
 ```julia
@@ -159,7 +161,7 @@ The most frequently used exported infrastructure systems are:
 | `Clock` | tracks elapsed time, step, initialization, and tick |
 | `Calendar` | maps clock time to `ZonedDateTime` and `Date` |
 
-`Controller` belongs on the executable root. It normalizes the supplied
+`Controller` belongs on the top-level model. It normalizes the supplied
 configuration and constructs one `Context`; nested systems receive that same
 context from their parent. `Context` in turn constructs the configured `Clock`.
 This is why ordinary components should not add their own controller or clock.
@@ -177,6 +179,19 @@ The default clock unit is hours. A plain configured number therefore means
 hours; write an explicit quantity such as `1u"d"` when another unit is
 intended. Both `time` and `tick` advance once per update. Output `snap` rules
 only select states after this update schedule has been defined.
+
+`init`, `step`, and `time` store rational quantities (`Rational{Int64}` with a
+time unit); `tick` is an integer. This keeps intervals such as ten minutes exact
+in the hour-based clock: `10u"minute"` becomes `(1//6)u"hr"`. Prefer integer
+quantities or rational fractions for time settings. Floating-point inputs such
+as `1.0u"minute"` or `0.1u"hr"` are converted to rational values with a warning;
+write `1u"minute"` or `6u"minute"` when those are the intended intervals.
+Ordinary model states remain floating-point unless declared otherwise.
+
+Duration-based `stop` and `snap` settings also use the clock's exact time scale.
+See the [simulation workflow](@ref simulation-workflow) for an executable
+subdaily example. Exact time keeping does not change the model's integration
+method or make an off-grid event occur between updates.
 
 `Calendar` is not included in `Context` automatically. Add it as a child or
 mixin when a model needs civil time:

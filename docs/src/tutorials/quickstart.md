@@ -104,7 +104,9 @@ result = simulate(Growth;
 The initial state is included when the default snapshot rule is used. The
 default index is `context.clock.time`, displayed as `time`.
 
-To stop after a duration instead, pass a number or quantity.
+To stop after an elapsed duration, pass a time quantity. An integer instead
+counts updates: with the configured 30-minute step, `stop = 4` and
+`stop = 2u"hr"` both run for two hours.
 
 ```@example quickstart
 simulate(Growth; config, stop = 2u"hr", target = :mass)

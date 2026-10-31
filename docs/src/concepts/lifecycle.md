@@ -5,6 +5,10 @@ follows one executable system from configuration through construction, manual
 updates, simulation, and output. Keeping those stages separate prevents many
 common Cropbox mistakes.
 
+Read this page for the order of operations. The
+[simulation workflow](@ref simulation-workflow) provides recipes for selecting
+and saving output once that order is familiar.
+
 ## 1. Declare an executable system
 
 ```@example lifecycle
@@ -57,6 +61,12 @@ updates. The later `snap` option controls only which updated states become
 output rows, so numerical resolution and output frequency remain separate
 decisions.
 
+The built-in clock stores exact rational times. For example, a step of
+`10u"minute"` is stored as `(1//6)u"hr"`, and six updates reach exactly one
+hour. Prefer integer quantities or rational fractions for clock settings;
+floating-point time values are converted with a warning. This affects time
+keeping, not the numerical precision of every model variable.
+
 ### [Calendar](@id Calendar)
 
 `Calendar` maps elapsed time to a `ZonedDateTime` and date. Add or mix in a
@@ -64,14 +74,16 @@ component that uses it when a model depends on civil dates, time zones, or
 date-indexed weather data.
 
 ```julia
-config = @config (
+calendar_config = @config (
     Clock => :step => 1u"d",
     Calendar => :init => ZonedDateTime(2025, 4, 1, tz"UTC"),
 )
 ```
 
-`ZonedDateTime` and `tz"..."` are re-exported by Cropbox. Use the plain clock
-when elapsed model time is sufficient.
+This separate configuration illustrates a model that includes `Calendar`; it
+does not change the `Counter` configuration above. `ZonedDateTime` and `tz"..."`
+are re-exported by Cropbox. Use the plain clock when elapsed model time is
+sufficient.
 
 ## 3. Construct and initialize
 

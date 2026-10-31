@@ -14,7 +14,7 @@ end
 instance(Process)  # no root context/configuration source
 ```
 
-Keep reusable process systems controller-free, then compose an executable root:
+Keep reusable process systems controller-free, then add a controller:
 
 ```julia
 @system Model(Process, Controller)
@@ -141,7 +141,7 @@ the residual at `lower` and `upper` first and confirm that it changes sign.
 
 Large parameter sets can compensate for structural errors and produce weakly
 identified fits. Begin with process diagnosis, defensible bounds, one target,
-and a small optimizer budget. Validate on held-out environments.
+and a small optimizer budget. Use separate environments for validation.
 
 ## Timing compilation instead of simulation
 
