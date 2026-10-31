@@ -13,8 +13,6 @@ jobs:
       - uses: julia-actions/setup-julia@v2
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-        env:
-          PYTHON: ""
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

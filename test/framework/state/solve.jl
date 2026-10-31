@@ -98,4 +98,77 @@
         s = instance(SSolveEqual)
         @test s.x1' == s.x2'
     end
+
+    @testset "missing coefficients" begin
+        @system SSolveSparse(Controller) begin
+            x => 2x ~ solve
+            y => (y^2 ⩵ 4) ~ solve
+            z => (z^2 ⩵ 4) ~ solve(pick=:minimum)
+            w => (w^2 - 2w) ~ solve(pick=:minimum)
+            r => (r^3 ⩵ 8) ~ solve
+        end
+        s = instance(SSolveSparse)
+        @test s.x' == 0
+        @test s.y' == 2
+        @test s.z' == -2
+        @test s.w' == 0
+        @test s.r' ≈ 2
+
+        @system SSolveSparseUnit(Controller) begin
+            a => 1 ~ preserve(u"m^-1")
+            c => -4 ~ preserve(u"m")
+            x(a, c) => (a*x^2 + c) ~ solve(u"cm")
+        end
+        @test instance(SSolveSparseUnit).x' == 200u"cm"
+    end
+
+    @testset "symbolic coefficients" begin
+        @system SSolveCoefficients(Controller) begin
+            a => π/2 ~ preserve
+            x(a) => (x + sin(a)) ~ solve
+        end
+        @test instance(SSolveCoefficients).x' ≈ -1
+        x = only(Cropbox.Symbolics.@variables x)
+        for p in (x + sin(x), x + 1/x)
+            @test_throws ArgumentError Cropbox.genpolynomialcoeffs(p, x)
+        end
+        @test Cropbox.genpolynomialexpr(Cropbox.Symbolics.Num(1//10^12)) === 1e-12
+    end
+
+    @testset "vanishing leading coefficients" begin
+        @test instance(SSolve, config=:SSolve => (a=0, b=2, c=-4)).x' == 2
+        @test instance(SSolveUnitScale, config=:SSolveUnitScale => (a=0, b=2, c=1)).x' == -50u"cm"
+
+        @system SSolveVaryingDegree(Controller) begin
+            a ~ preserve(parameter)
+            b ~ preserve(parameter)
+            c ~ preserve(parameter)
+            d ~ preserve(parameter)
+            x(a, b, c, d) => (a*x^3 + b*x^2 + c*x + d) ~ solve(pick=:minimum, lower=-3, upper=3)
+        end
+        @test instance(SSolveVaryingDegree, config=:SSolveVaryingDegree => (a=0, b=1, c=0, d=-4)).x' == -2
+        @test instance(SSolveVaryingDegree, config=:SSolveVaryingDegree => (a=0, b=0, c=2, d=-4)).x' == 2
+        @test instance(SSolveVaryingDegree, config=:SSolveVaryingDegree => (a=0, b=0, c=1, d=-4)).x' == 3
+        for d in (0, 1)
+            @test_throws ArgumentError instance(SSolveVaryingDegree, config=:SSolveVaryingDegree => (a=0, b=0, c=0, d=d))
+        end
+
+        @system SSolveBallBerry(Controller) begin
+            g0 => 0.01 ~ preserve(u"mol/m^2/s/bar", parameter)
+            g1 => 13.1 ~ preserve(parameter)
+            gb => 0.5 ~ preserve(u"mol/m^2/s/bar")
+            A_net => 20 ~ preserve(u"μmol/m^2/s", parameter)
+            Cs => 400 ~ preserve(u"μbar")
+            RH => 60 ~ preserve(u"percent")
+            hs(g0, g1, gb, A_net, Cs, RH) => begin
+                gs = g0 + g1*A_net*hs/Cs
+                (hs-RH)*gb ⩵ (1-hs)*gs
+            end ~ solve(lower=0, upper=1)
+        end
+        for config in ((A_net=0,), (g1=0,))
+            s = instance(SSolveBallBerry; config=:SSolveBallBerry => config)
+            @test s.hs' ≈ (0.5*0.6+0.01)/(0.5+0.01)
+        end
+        @test instance(SSolveBallBerry, config=:SSolveBallBerry => (g0=0, A_net=0)).hs' ≈ 0.6
+    end
 end

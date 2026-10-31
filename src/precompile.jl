@@ -9,6 +9,11 @@ using PrecompileTools: @setup_workload, @compile_workload
     c = @config
 
     @compile_workload begin
+        let x, g0, g1, gb, A, Cs, RH
+            Symbolics.@variables x g0 g1 gb A Cs RH
+            Q = genpolynomialcoeffs((x-RH)*gb - (1-x)*(g0+g1*A*x/Cs), x)
+            genpolynomialbody(Q; U=:(u"NoUnits"), lower=-Inf, upper=Inf, pick=:maximum)
+        end
         r = simulate(S, config=c)
         simulate(S, configs=[c])
         visualize(r, :time, :c; backend=:UnicodePlots)

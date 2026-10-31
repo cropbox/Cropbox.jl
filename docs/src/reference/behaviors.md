@@ -335,6 +335,9 @@ comparison. Use Julia's `==` when a Boolean result is intended.
 
 Solves a polynomial residual and selects a root.
 
+Polynomial coefficients are generated with Symbolics.jl when the system is
+defined; solving at runtime uses Julia and does not require Python.
+
 Supported tags: `lower`, `upper`, `pick`, `unit`.
 
 `lower` and `upper` filter real candidates; `pick` selects from those remaining
@@ -347,6 +350,11 @@ that fallback.
 root finding for higher degrees. Complex roots are not returned. The expression
 must be polynomial in the solved variable; use `bisect` for a bracketed
 nonlinear response.
+
+If a leading coefficient becomes zero at runtime, `solve` reduces the degree
+before solving and applies the same bounds. If all nonconstant coefficients
+vanish, it raises an `ArgumentError` rather than choosing a root of a constant
+residual.
 
 ### [`bisect`](@id behavior-bisect)
 
