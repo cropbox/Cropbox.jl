@@ -137,7 +137,7 @@ evaluate(obs::DataFrame, est::DataFrame; index=nothing, target, metric=nothing, 
         df = DataFrames.innerjoin(obs, est, on=I, makeunique=true)
         df = df[!, [IO..., TO..., TE1...]]
         DataFrames.dropmissing!(df)
-        r = [(df[!, e], df[!, o]) for (e, o) in zip(TO, TE1)]
+        r = [(df[!, e], df[!, o]) for (e, o) in zip(TE1, TO)]
     end
     cost() = begin
         R = [residual()]
