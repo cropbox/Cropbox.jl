@@ -100,14 +100,14 @@ ENV CROPBOX_DIR=${REPO_DIR}
 RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
 
 # install commonly used packages
-#TODO: Restore Plots/StatsPlots and MLJ after the plotting/widget migration (see #46).
-RUN julia -e 'using Pkg; pkg"add Cairo CairoMakie CSV DataFrames DataFramesMeta DataStructures Distributions Fontconfig StatsBase TimeZones TypedTables Unitful WGLMakie";'
+#TODO: Restore MLJ once ARFFFiles supports Parsers 3 (see #46).
+RUN julia -e 'using Pkg; pkg"add Cairo CairoMakie CSV DataFrames DataFramesMeta DataStructures Distributions Fontconfig Plots StatsBase StatsPlots TimeZones TypedTables Unitful WGLMakie";'
 
 #HACK: ensure MKL_jll artifacts downloaded (perhaps an issue with PackageCompiler 1.6+)
 RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
 
 # install Cropbox-related packages
-RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop";'
+RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop"; Pkg.precompile(; strict = true); using CropRootBox, Garlic, LeafGasExchange, SimpleCrop;'
 
 # clean up as root
 USER root
