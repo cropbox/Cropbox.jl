@@ -73,6 +73,14 @@ detectbackend() = begin
         :UnicodePlots
     end
 end
+detectbackend(::Nothing) = detectbackend()
+
+plotbackend(p, backend) = begin
+    b = detectbackend(p)
+    !isnothing(p) && !isnothing(backend) && backend != b &&
+        throw(ArgumentError("cannot append $backend output to a $b visualization"))
+    isnothing(backend) ? b : backend
+end
 
 """
     plot(df::DataFrame, x, y; <keyword arguments>) -> Plot
@@ -145,6 +153,7 @@ plot(X::Vector, Ys::Vector{<:Vector}; kw...) = plot!(nothing, X, Ys; kw...)
 plot!(p::Union{Plot,Nothing}, X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot!(p, X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
 plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     kind=:scatter,
+    linestyle=:solid,
     title=nothing,
     xlab=nothing, ylab=nothing,
     legend=nothing, legendpos=nothing,
@@ -155,6 +164,10 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     aspect=nothing,
     backend=nothing,
 ) = begin
+    linestyle in (:solid, :dash, :dot, :dashdot, :dashdotdot) ||
+        throw(ArgumentError("unsupported line style: $linestyle"))
+    backend = plotbackend(p, backend)
+    isnothing(legendpos) && (legendpos = getplotopt(p, :legendpos))
     u(a) = extractunit(a)
     xunit = getplotopt(p, :xunit, xunit)
     yunit = getplotopt(p, :yunit, yunit)
@@ -194,8 +207,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     colors = isnothing(colors) ? repeat([nothing], n) : colors
     title = isnothing(title) ? "" : string(title)
 
-    isnothing(backend) && (backend = detectbackend())
-    plot2!(Val(backend), p, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
+    plot2!(Val(backend), p, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
 end
 
 plot(df::DataFrame, x, y, z;
@@ -230,7 +242,7 @@ plot(df::DataFrame, x, y, z;
     legend = isnothing(legend) ? true : legend
 
     isnothing(backend) && (backend = detectbackend())
-    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect)
+    plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, zgap, zlabgap, aspect)
 end
 
 include("plot/UnicodePlots.jl")

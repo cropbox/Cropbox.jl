@@ -1,0 +1,44 @@
+using DataFrames
+
+@testset "visualize" begin
+    @testset "$backend" for backend in (:Gadfly, :UnicodePlots)
+        p = visualize([0, 4]u"hr", [0, 4]u"g"; kind=:line, name="model", backend)
+        @test visualize!(p, [0, 4]u"hr", [4, 0]u"g"; kind=:line, name="reference") === p
+        @test Cropbox.detectbackend(p) == backend
+        @test visualize!(p, 120u"minute", 2000u"mg", "An = 10\ngs = 0.2"; color=:red) === p
+        @test p.opt[:xlim] == p.opt[:ylim] == (0, 4)
+
+        output = backend == :Gadfly ? repr(MIME"text/html"(), p) : repr(MIME"text/plain"(), p[])
+        @test occursin("An = 10", output)
+        @test occursin("gs = 0.2", output)
+        @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; backend=backend == :Gadfly ? :UnicodePlots : :Gadfly)
+        @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; linestyle=:unknown)
+        @test_throws ArgumentError visualize!(p, 2, 2, "text"; align=:unknown)
+    end
+
+    @testset "line style and legend position" begin
+        G = Cropbox.Gadfly
+        pos = (0.1, -0.3)
+        p = visualize([0, 4], [0, 4]; backend=:Gadfly, kind=:line, name="model", legendpos=pos)
+        key = only(filter(g -> g isa G.Guide.ManualDiscreteKey, p[].guides))
+        keypos = copy(key.pos)
+        visualize!(p, [0, 4], [4, 0]; kind=:line, name="reference", linestyle=:dot)
+        @test key.pos == keypos
+        @test p.opt[:legendpos] == pos
+        @test key.labels == ["model", "reference"]
+        @test p[].layers[end].theme.line_style == [:dot]
+        @test occursin("<svg", repr(MIME"text/html"(), p))
+
+        p = visualize([0, 4], [0, 4]; backend=:UnicodePlots, kind=:line)
+        @test_logs (:warn, r"renders line style dot as a solid line") visualize!(p, [0, 4], [4, 0]; kind=:line, linestyle=:dot)
+    end
+
+    @testset "heatmap limits and colorbar" begin
+        df = DataFrame(x=[1, 1, 2, 2], y=[1, 2, 1, 2], z=[2., 3., 4., 5.])
+        for legend in (true, false)
+            p = @test_logs visualize(df, :x, :y, :z; backend=:UnicodePlots, zlim=(0, 10), legend)
+            @test p[].cmap.lim == (0, 10)
+            @test p[].cmap.bar == legend
+        end
+    end
+end

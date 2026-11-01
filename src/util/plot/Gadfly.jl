@@ -1,6 +1,8 @@
 import Gadfly
 
-plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect) = begin
+detectbackend(::Plot{<:Gadfly.Plot}) = :Gadfly
+
+plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect) = begin
     n = length(Ys)
     Xs = [X for _ in 1:n]
     kinds = [kind for _ in 1:n]
@@ -31,6 +33,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
         key_title_font_size=9*Gadfly.pt,
         key_position=isempty(keypos) ? :right : :inside,
         point_size=0.7*Gadfly.mm,
+        line_style=[linestyle],
         discrete_highlight_color=_->Gadfly.RGBA(1, 1, 1, 0),
     )
 
@@ -120,7 +123,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
             layers...,
             theme,
         )
-        p = Plot(obj; Xs, Ys, kinds, colors, title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect)
+        p = Plot(obj; Xs, Ys, kinds, colors, title, xlab, ylab, legend, legendpos, names, xlim, ylim, xunit, yunit, aspect)
     else
         obj = p.obj
         n0 = length(obj.layers)
@@ -134,7 +137,7 @@ plot2!(::Val{:Gadfly}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, l
     p
 end
 
-plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect) = begin
+plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, zgap, zlabgap, aspect) = begin
     if kind == :heatmap
         geom = Gadfly.Geom.rectbin
         data = (x=X, y=Y, color=Z)
@@ -207,7 +210,22 @@ plot3!(::Val{:Gadfly}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab
         theme;
         data...,
     )
-    Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect)
+    Plot(obj; X, Y, Z, kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, aspect)
+end
+
+plottext!(::Val{:Gadfly}, p, x, y, text; color, align) = begin
+    theme = p.obj.theme
+    color = isnothing(color) ? theme.minor_label_color : parse(Gadfly.Colorant, color)
+    halign = (left=Gadfly.hleft, center=Gadfly.hcenter, right=Gadfly.hright)[align]
+    guide = Gadfly.Guide.annotation(Gadfly.compose(
+        Gadfly.context(),
+        Gadfly.Compose.text(x, y, text, halign, Gadfly.vcenter),
+        Gadfly.font(theme.minor_label_font),
+        Gadfly.fontsize(theme.minor_label_font_size),
+        Gadfly.fill(color),
+    ))
+    Gadfly.push!(p.obj, guide)
+    p
 end
 
 #HACK: use non-interactive SVG instead of SVGJS
