@@ -533,8 +533,8 @@ for saving figures.
 
 Archived workshop and course notebooks may continue to use their original
 versioned environments or Docker image digests. Updating those materials is
-separate from this package migration. `manipulate` still uses Interact/WebIO;
-its Bonito replacement and support for newer Jupyter versions are separate work.
+separate from this package migration. `manipulate` now uses Bonito instead of
+Interact/WebIO; its return value is a Bonito `App`, not an Interact widget.
 
 ## Common failures
 
@@ -583,11 +583,82 @@ manipulate(VisualTrajectory, :time, :mass;
 )
 ```
 
-Ranges and arrays make sliders; arrays of symbols or enum values and
-dictionaries make drop-down controls; Booleans make check boxes. Interactive
-widgets require a working WebIO provider. Without one, Cropbox warns and
-returns a single static callback result, which is useful for testing the code
-but is not interactive.
+Numeric ranges and arrays make sliders; arrays of symbols or enum values and
+dictionaries make drop-down controls; Booleans make check boxes. Dictionary
+keys are the displayed labels and their values are passed to the callback.
+An explicit `config` sets the initial selection; otherwise sliders start at
+the middle element and drop-down controls start at the first option.
+
+Slider readouts update while dragging, but the model is recalculated only when
+the change is committed, such as when the mouse button is released. The
+callback receives the selected values with their model units restored, merged
+with the baseline configuration.
+
+Callbacks can also return numbers, strings, tables, or other displayable values:
+
+```julia
+manipulate(c -> c[:VisualTrajectory][:rate];
+    parameters = VisualTrajectory => :rate => 0:0.25:2,
+    config = VisualTrajectory => :rate => 1,
+)
+```
+
+JupyterLab 4 and Notebook 7 need `jupyter-server-proxy` installed in the Python
+environment that runs Jupyter:
+
+```sh
+python -m pip install jupyter-server-proxy
+```
+
+Restart the Jupyter server after installation. Cropbox's Docker image includes
+this dependency. No WebIO extension, separate Bonito import, or widget macro
+is needed: execute the `manipulate(...)` cell to display the controls and plot.
+A live Julia kernel is required for recalculation; saved notebook or HTML
+output does not run the model on its own.
+
+With the default Bonito configuration, Cropbox requests an automatically
+assigned port before displaying the first widget. Separate notebook kernels
+can therefore run widgets at the same time without selecting ports manually.
+An existing Bonito server, a nondefault port, or an explicit proxy is left unchanged.
+
+When updating older workshop or course notebooks, remove this WebIO
+initialization cell:
+
+```julia
+Cropbox.Interact.WebIO.setup(:ijulia)
+```
+
+It initialized WebIO in the older notebook/sysimage environment. Interact is
+no longer a Cropbox dependency, so that line now errors. It does not need a
+replacement for an ordinary first run. Archived notebooks using their original
+Cropbox environment should keep their original setup.
+
+!!! warning "Notebook reloads with Bonito 5.2"
+    A normal browser refresh can reconnect, but replacing the first interactive
+    output and then refreshing can leave controls disconnected (`Bonito is not
+    defined` in the browser console). A disconnected session can also expire
+    after about 30 seconds, leaving saved controls unresponsive. To recover
+    without restarting Julia, run:
+
+    ```julia
+    Cropbox.Bonito.Page(listen_port = 0)
+    ```
+
+    Then re-run the interactive output cells. This resets all Bonito widget
+    sessions, not the model definitions or other Julia variables. Selections
+    return to each call's initial configuration. Do not run this inside each
+    `manipulate` call. This is a temporary recovery step, not a
+    required initialization cell or a fix for saved outputs. An upstream fix is
+    proposed in [Bonito #423](https://github.com/SimonDanisch/Bonito.jl/pull/423).
+
+    `listen_port = 0` lets a new Bonito server choose a free port. Ordinary
+    `manipulate` calls already select this default automatically; the `Page`
+    call is only needed here to reset the disconnected sessions. If a fixed
+    port or proxy is configured for your deployment, preserve those settings
+    when resetting the page.
+
+Outside a notebook, `manipulate` still returns a Bonito `App` for an HTML-capable
+display, rather than silently returning a single static plot.
 
 Treat a widget as an exploration tool. Save the selected values as an explicit
 `Config` before using them in a reproducible analysis.

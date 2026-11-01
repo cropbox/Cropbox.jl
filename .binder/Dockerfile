@@ -1,6 +1,5 @@
 #BEGIN: jupyter/datascience-notebook
-#HACK: pin Jupyter Lab 3.x to ensure WebIO.jl (Interact.jl) working
-FROM jupyter/scipy-notebook:lab-3.6.3
+FROM quay.io/jupyter/scipy-notebook:latest
 
 # Fix: https://github.com/hadolint/hadolint/wiki/DL4006
 # Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
@@ -93,8 +92,7 @@ ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
 RUN pip install \
     'jupyter-server-proxy' \
     'nbgitpuller' \
-    'nbresuse' \
-    'webio_jupyter_extension'
+    'jupyter-resource-usage'
 
 # ensure Cropbox.jl added/built and available outside home directory
 ENV JULIA_PROJECT=""

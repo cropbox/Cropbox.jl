@@ -125,7 +125,7 @@ visualize(InspectDemo, :time, :mass;
 
 ## Interactively explore parameters
 
-In a Jupyter Notebook with a working WebIO provider, `manipulate` adds widgets
+In JupyterLab or Notebook with `jupyter-server-proxy`, `manipulate` adds widgets
 that update a visualization as parameter values change.
 
 ```julia
