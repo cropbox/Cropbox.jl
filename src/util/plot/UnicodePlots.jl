@@ -1,6 +1,8 @@
 import UnicodePlots
 
-plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect, width=40, height=15) = begin
+detectbackend(::Plot{<:UnicodePlots.Plot}) = :UnicodePlots
+
+plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect, width=40, height=15) = begin
     canvas = if get(ENV, "CI", nothing) == "true"
         UnicodePlots.DotCanvas
     else
@@ -30,6 +32,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     end
 
     !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
+    linestyle != :solid && @warn "UnicodePlots renders line style $linestyle as a solid line"
 
     create_colors(colors; n0=0) = begin
         n = length(colors)
@@ -67,7 +70,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
         UnicodePlots.label!(obj, :r, legend)
         annotate_x_axis!(obj)
         annotate_y_axis!(obj)
-        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, names, xlim, ylim, xunit, yunit, aspect, width, height)
+        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, legendpos, names, xlim, ylim, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
@@ -81,7 +84,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, title, xlab, y
     p
 end
 
-plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, zgap, zlabgap, aspect, width=nothing, height=30) = begin
+plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, zgap, zlabgap, aspect, width=nothing, height=30) = begin
     if kind == :heatmap
         ;
     elseif kind == :contour
@@ -90,7 +93,6 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
         error("unrecognized plot kind = $kind")
     end
 
-    !legend && @warn "unsupported legend = $legend"
     !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
 
     !isnothing(zgap) && @warn "unsupported contour interval = $zgap"
@@ -110,7 +112,17 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
 
     !isnothing(aspect) && (width = round(Int, aspect * height))
 
-    #TODO: support zlim (minz/maxz currentyl fixed in UnicodePlots)
-    obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xfact, yfact, xlim, ylim, xoffset, yoffset, width, height)
-    Plot(obj; X, Y, Z, kind, title, xlab, ylab, zlab, xlim, ylim, zlim, aspect, width, height)
+    obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xfact, yfact, xlim, ylim, zlim, colorbar=legend, xoffset, yoffset, width, height)
+    Plot(obj; X, Y, Z, kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, aspect, width, height)
+end
+
+plottext!(::Val{:UnicodePlots}, p, x, y, text; color, align) = begin
+    color = isnothing(color) ? :normal : color
+    lines = split(text, '\n')
+    dy = UnicodePlots.height(p.obj.graphics) / UnicodePlots.nrows(p.obj.graphics)
+    for (i, line) in enumerate(lines)
+        yy = y + ((length(lines) + 1) / 2 - i) * dy
+        UnicodePlots.annotate!(p.obj, x, yy, line; color, halign=align)
+    end
+    p
 end

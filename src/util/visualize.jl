@@ -1,9 +1,9 @@
 """
     visualize(<arguments>; <keyword arguments>) -> Plot
 
-Make a plot from an output collected by running necessary simulations. A convenient function to run both `simulate` and `plot` together.
+Visualize existing arrays or a DataFrame, or run the necessary simulations and visualize their output.
 
-See also: [`visualize!`](@ref), [`simulate`](@ref), [`plot`](@ref), [`manipulate`](@ref)
+See also: [`visualize!`](@ref), [`simulate`](@ref), [`manipulate`](@ref)
 
 # Examples
 ```julia-repl
@@ -45,6 +45,20 @@ See also: [`visualize`](@ref)
 - `p::Union{Plot,Nothing}`: plot object to be updated; `nothing` creates a new plot.
 """
 visualize!(a...; kw...) = plot!(a...; kw...)
+
+"""
+    visualize!(p::Plot, x::Number, y::Number, text::AbstractString; color=nothing, align=:left)
+
+Add text at data coordinates without changing axis limits or the legend.
+Coordinates use the existing axis units; compatible unitful values are converted.
+`align` is `:left`, `:center`, or `:right`. Newlines separate multiple lines of text.
+"""
+visualize!(p::Plot, x::Number, y::Number, text::AbstractString; color=nothing, align=:left) = begin
+    align in (:left, :center, :right) || throw(ArgumentError("unsupported text alignment: $align"))
+    x = deunitfy(x, getplotopt(p, :xunit))
+    y = deunitfy(y, getplotopt(p, :yunit))
+    plottext!(Val(detectbackend(p)), p, x, y, text; color, align)
+end
 
 visualize(S::Type{<:System}, x, y; kw...) = visualize!(nothing, S, x, y; kw...)
 visualize!(p, S::Type{<:System}, x, y;

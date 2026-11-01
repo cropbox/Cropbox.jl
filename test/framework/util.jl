@@ -3,4 +3,5 @@
     include("util/simulate.jl")
     include("util/calibrate.jl")
     include("util/evaluate.jl")
+    include("util/visualize.jl")
 end

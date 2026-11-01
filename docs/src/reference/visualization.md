@@ -164,9 +164,20 @@ visualize!(p_units, [0, 4]u"hr", [3, 3]u"g";
 )
 ```
 
-`visualize!` changes and returns the same Cropbox `Plot`. Use `p[]`, `p'`, or
-`value(p)` only when direct access to the backend object is
-needed, for example to call a backend-specific export function.
+`visualize!` changes and returns the same Cropbox `Plot`. Reference lines and
+text annotations can be added through this API without modifying the backend
+object:
+
+```julia
+visualize!(p, [1, 3], [4, 2]; kind=:line, color=:gray, linestyle=:dot, name="")
+visualize!(p, 2, 4, "Reference\nline"; align=:center)
+```
+
+`linestyle` accepts `:solid` (the default), `:dash`, `:dot`, `:dashdot`, and
+`:dashdotdot`. UnicodePlots draws solid lines and warns when another style is
+requested. Text uses data coordinates and the existing axis units, converting
+compatible unitful values. It does not change the axis limits or add a legend
+entry. `align` accepts `:left` (the default), `:center`, and `:right`.
 
 To save a Gadfly result without adding another plotting package:
 
@@ -304,9 +315,9 @@ All appended layers must use compatible axis units. `visualize!` does not
 retain a simulation table, so call `simulate` explicitly when those values are
 needed for later statistics or export.
 
-Keep the backend consistent across appended calls. If the initial call sets
-`backend` explicitly, pass the same value to each `visualize!` call; the
-current implementation does not infer that keyword from the existing wrapper.
+Appended calls inherit the existing backend and legend position. There is no
+need to repeat `backend`; explicitly selecting a different backend for an
+existing visualization is an error.
 
 ## Observations and model estimates
 
@@ -444,6 +455,7 @@ The main two-dimensional options are:
 | `name`, `names` | one series label or several series labels |
 | `legend`, `legendpos` | legend title/visibility and inside position |
 | `color`, `colors` | one color or parallel series colors |
+| `linestyle` | line pattern, defaulting to `:solid` |
 | `xlim`, `ylim` | displayed data limits |
 | `xunit`, `yunit` | units used for conversion and axis labels |
 | `ycat` | explicit category order for a step plot |
@@ -462,8 +474,8 @@ accept zoned values directly.
 
 Cropbox chooses Gadfly in Jupyter, Pluto, VS Code, and Documenter, and
 UnicodePlots in a plain terminal. Set `backend` when output must be identical
-across environments. Backend-specific plot objects remain an escape hatch, but
-code written against them is less portable than code using the options above.
+across environments. Use `visualize` and `visualize!` for drawing and annotations
+so that notebook code does not depend on a backend's internal plot structure.
 
 Backend behavior is not completely identical:
 
@@ -471,6 +483,8 @@ Backend behavior is not completely identical:
 |---|---|---|
 | line, scatter, and step | supported | supported |
 | `:scatterline` | points plus line | line rendering |
+| text annotations | supported | supported within terminal resolution |
+| non-solid `linestyle` | supported | solid lines with a warning |
 | heatmap | supported | supported on a regular grid |
 | contour | supported | warns and falls back to a heatmap |
 | inside `legendpos` | supported | ignored with a warning |
