@@ -5,4 +5,5 @@
     include("util/evaluate.jl")
     include("util/visualize.jl")
     include("util/makie.jl")
+    include("util/manipulate.jl")
 end
