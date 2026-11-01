@@ -460,11 +460,15 @@ The main two-dimensional options are:
 | `xunit`, `yunit` | units used for conversion and axis labels |
 | `ycat` | explicit category order for a step plot |
 | `aspect` | requested width-to-height relation |
-| `backend` | `:Gadfly` or `:UnicodePlots` |
+| `backend` | `:Gadfly`, `:UnicodePlots`, or `:Makie` |
 
 For three-column plots, `zlab`, `zlim`, `zgap`, and `zlabgap` control the color
-or contour dimension. `legendpos=(x, y)` places a Gadfly legend inside the plot
-at relative coordinates; the terminal backend warns and ignores that option.
+or contour dimension. `legendpos = (x, y)` places a Gadfly or Makie legend at
+relative coordinates: `x` locates its left edge from the panel's left edge,
+and `y` offsets its centre downward from the panel's centre. For example,
+`(0.1, -0.3)` places it near the upper left. The terminal backend warns and
+ignores that option. Makie also accepts named positions such as `:lt` and `:rb`
+for a series legend.
 
 Set `legend=false` to hide the legend. Units are inferred from arrays or
 DataFrame columns. An explicit `xunit` or `yunit` converts compatible values
@@ -494,6 +498,39 @@ Use `backend=:Gadfly` for publication figures that rely on contour labels,
 inside legends, or exact graphical composition. Use `:UnicodePlots` for fast
 terminal diagnostics.
 
+### Makie backend
+
+Cropbox installs and loads Makie and its CairoMakie renderer as regular
+dependencies. No separate installation or `using CairoMakie` is needed to
+display a Makie plot in a notebook. The environment's default backend is
+unchanged during this migration; select `backend = :Makie` to use it.
+
+```julia
+using Cropbox
+
+p = visualize([0, 1, 2], [0, 1, 4]; backend = :Makie, kind = :line, name = "Model", legendpos = (0.1, -0.3))
+visualize!(p, [0, 1, 2], [0, 1.1, 3.8]; name = "Observed")
+visualize!(p, 1, 3, "Example")
+Cropbox.CairoMakie.save("figure.pdf", p[])
+```
+
+The built-in Classic style follows Cropbox's Gadfly colors, lighter text,
+compact legends, and calendar labels. It requests Verdana; Makie falls back
+to its bundled font when Verdana is unavailable. It does not bundle fonts.
+The style is scoped to the figure and does not change the global Makie theme.
+Cropbox does not expose theme selection; use Makie directly for custom styling.
+
+This adapter supports lines, scatter, scatterlines, categorical steps,
+horizontal/vertical lines, heatmaps, contours (including labels), and text.
+It retains units and explicit limits; in particular `zlim` is the exact color
+range, not Gadfly's sometimes expanded tick range. Grid rows may be unordered;
+missing grid cells remain blank. Dates use Makie's native calendar conversion.
+
+Makie is not yet the default, and this is not a claim of pixel equivalence.
+Existing `Gadfly.Plot` mutations must be replaced with public
+`visualize!` calls. Full notebook and live `manipulate` validation, advanced
+layout/export APIs, and removal of Gadfly remain separate migration steps.
+
 ## Common failures
 
 - A vector of systems requires parallel `configs`, `names`, and `colors` in the
@@ -504,7 +541,7 @@ terminal diagnostics.
   before plotting.
 - Appended layers must have compatible units. `xunit` and `yunit` convert
   compatible quantities; they do not assign dimensions to unrelated values.
-- An explicitly selected backend must be repeated on appended calls.
+- Appended calls inherit the existing backend; do not select a different one.
 - A grouped response curve may contain every snapshot from every configuration.
   Select one time point explicitly when a dynamic run would otherwise join
   unrelated trajectories.
