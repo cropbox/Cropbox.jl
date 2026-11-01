@@ -247,5 +247,6 @@ end
 
 include("plot/UnicodePlots.jl")
 include("plot/Gadfly.jl")
+include("plot/Makie.jl")
 
 export plot, plot!
