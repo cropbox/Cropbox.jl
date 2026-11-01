@@ -186,7 +186,7 @@ between model updates.
 ```@example evaluation
 p = visualize(residuals, :time, :residual;
     kind = :scatterline,
-    backend = :Gadfly,
+    backend = :Makie,
     xlab = "Time",
     ylab = "Predicted - observed mass",
     title = "Validation residuals",
@@ -194,7 +194,7 @@ p = visualize(residuals, :time, :residual;
 )
 visualize!(p, [4, 6]u"d", [0, 0]u"g";
     kind = :line,
-    backend = :Gadfly,
+    backend = :Makie,
     color = :lightgray,
     legend = false,
 )

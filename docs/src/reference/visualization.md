@@ -179,28 +179,21 @@ requested. Text uses data coordinates and the existing axis units, converting
 compatible unitful values. It does not change the axis limits or add a legend
 entry. `align` accepts `:left` (the default), `:center`, and `:right`.
 
-To save a Gadfly result without adding another plotting package:
+To save a graphical result, use the included CairoMakie renderer:
 
 ```julia
 p = visualize(series, :hour, :observed;
-    kind = :line,
-    backend = :Gadfly,
+    kind = :line, backend = :Makie,
 )
 
-p[] |> Cropbox.Gadfly.SVG("observed.svg")
+Cropbox.CairoMakie.save("observed.svg", p[])
+Cropbox.CairoMakie.save("observed.pdf", p[])
+Cropbox.CairoMakie.save("observed.png", p[])
 ```
 
-PDF export additionally requires the `Cairo` and `Fontconfig` packages to be
-installed and imported in the current environment:
-
-```julia
-import Cairo, Fontconfig
-
-p[] |> Cropbox.Gadfly.PDF("observed.pdf")
-```
-
-The returned wrapper remains the portable part of the API; `Cropbox.Gadfly`
-is intentionally backend-specific.
+No additional package installation or import is needed for these formats.
+The returned wrapper remains the portable part of the API; `p[]` now contains
+a Makie `Figure` for graphical output.
 
 ## Visualize a simulation
 
@@ -432,7 +425,7 @@ visualize(VisualResponse, :input, :slope, :response;
     ylab = "Slope",
     zlab = "Response",
     aspect = 1.4,
-    backend = :Gadfly,
+    backend = :Makie,
 )
 ```
 
@@ -440,7 +433,7 @@ Three-column `visualize(df, x, y, z)` uses the same renderer. Set
 `kind=:contour` for contour lines. `zlim` fixes the color or contour range,
 `zgap` controls contour spacing, and `zlabgap` requests labels at a chosen
 interval. Contour rendering and the gap options are currently more complete in
-the Gadfly backend than in the terminal backend. Supply a complete, regularly
+the Makie backend than in the terminal backend. Supply a complete, regularly
 ordered x-by-y grid for portable heatmap output; `visualize` creates that grid
 from its two factors.
 
@@ -460,10 +453,10 @@ The main two-dimensional options are:
 | `xunit`, `yunit` | units used for conversion and axis labels |
 | `ycat` | explicit category order for a step plot |
 | `aspect` | requested width-to-height relation |
-| `backend` | `:Gadfly`, `:UnicodePlots`, or `:Makie` |
+| `backend` | `:Makie` or `:UnicodePlots` |
 
 For three-column plots, `zlab`, `zlim`, `zgap`, and `zlabgap` control the color
-or contour dimension. `legendpos = (x, y)` places a Gadfly or Makie legend at
+or contour dimension. `legendpos = (x, y)` places a Makie legend at
 relative coordinates: `x` locates its left edge from the panel's left edge,
 and `y` offsets its centre downward from the panel's centre. For example,
 `(0.1, -0.3)` places it near the upper left. The terminal backend warns and
@@ -476,14 +469,14 @@ before plotting; it does not reinterpret an incompatible number. `ZonedDateTime`
 columns are converted to `DateTime` because the graphical backend does not
 accept zoned values directly.
 
-Cropbox chooses Gadfly in Jupyter, Pluto, VS Code, and Documenter, and
+Cropbox chooses Makie in Jupyter, Pluto, VS Code, and Documenter, and
 UnicodePlots in a plain terminal. Set `backend` when output must be identical
 across environments. Use `visualize` and `visualize!` for drawing and annotations
 so that notebook code does not depend on a backend's internal plot structure.
 
 Backend behavior is not completely identical:
 
-| Feature | Gadfly | UnicodePlots |
+| Feature | Makie | UnicodePlots |
 |---|---|---|
 | line, scatter, and step | supported | supported |
 | `:scatterline` | points plus line | line rendering |
@@ -494,16 +487,16 @@ Backend behavior is not completely identical:
 | inside `legendpos` | supported | ignored with a warning |
 | `zgap`, `zlabgap` | supported for contours | ignored with a warning |
 
-Use `backend=:Gadfly` for publication figures that rely on contour labels,
-inside legends, or exact graphical composition. Use `:UnicodePlots` for fast
+Use `backend = :Makie` for graphical output, contour labels, and inside
+legends. Use `:UnicodePlots` for fast
 terminal diagnostics.
 
 ### Makie backend
 
 Cropbox installs and loads Makie and its CairoMakie renderer as regular
 dependencies. No separate installation or `using CairoMakie` is needed to
-display a Makie plot in a notebook. The environment's default backend is
-unchanged during this migration; select `backend = :Makie` to use it.
+display a Makie plot in a notebook. Makie is the default in graphical
+environments; select `backend = :Makie` explicitly when running in a terminal.
 
 ```julia
 using Cropbox
@@ -526,10 +519,22 @@ It retains units and explicit limits; in particular `zlim` is the exact color
 range, not Gadfly's sometimes expanded tick range. Grid rows may be unordered;
 missing grid cells remain blank. Dates use Makie's native calendar conversion.
 
-Makie is not yet the default, and this is not a claim of pixel equivalence.
-Existing `Gadfly.Plot` mutations must be replaced with public
-`visualize!` calls. Full notebook and live `manipulate` validation, advanced
-layout/export APIs, and removal of Gadfly remain separate migration steps.
+### Migrating from Gadfly
+
+Normal `visualize` and `visualize!` calls keep their signatures and options,
+but the output is not pixel-identical. Font fallback, tick labels, legend
+layout, and heatmap color ranges may differ.
+
+Cropbox no longer installs Gadfly or supports it as a backend. Replace explicit
+`backend = :Gadfly` with `backend = :Makie`. Code that accesses `Gadfly.Plot`
+fields or uses `Cropbox.Gadfly.SVG` or `PDF` must also change: use public
+`visualize!` calls for annotations and layers, and the export examples above
+for saving figures.
+
+Archived workshop and course notebooks may continue to use their original
+versioned environments or Docker image digests. Updating those materials is
+separate from this package migration. `manipulate` still uses Interact/WebIO;
+its Bonito replacement and support for newer Jupyter versions are separate work.
 
 ## Common failures
 
@@ -549,7 +554,7 @@ layout/export APIs, and removal of Gadfly remain separate migration steps.
   differently zoned index values can silently reduce or multiply the points;
   inspect the joined table when the count is unexpected.
 - Backend warnings usually indicate a presentation limitation, not a failed
-  simulation. Re-run with `backend=:Gadfly` before changing model equations.
+  simulation. Re-run with `backend = :Makie` before changing model equations.
 
 ## Interactive parameter controls
 
