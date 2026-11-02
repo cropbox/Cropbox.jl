@@ -109,4 +109,16 @@ manipulate(args...; parameters, config = (), kwargs...) = manipulate(function (c
     visualize(args...; config = c, kwargs...)
 end; parameters, config)
 
+"""
+    Cropbox.reset_manipulate()
+
+Reset notebook widget connections if controls stop responding after a refresh.
+Then re-run the `manipulate(...)` output cells; their selections return to the
+initial configuration. This resets all Bonito widget sessions in the current
+Julia kernel, while preserving other Julia variables and server settings.
+
+Use only for recovery, not during normal initialization or inside `manipulate`.
+"""
+reset_manipulate() = Bonito.Page()
+
 export manipulate
