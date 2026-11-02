@@ -4,18 +4,30 @@
     B = Cropbox.Bonito
     serverconfig = B.SERVER_CONFIGURATION
     settings = map(x -> x[], serverconfig)
+    page, subsession = B.CURRENT_SESSION[], B.FORCE_SUBSESSION_RENDERING[]
+    assets = B.FORCED_ASSET_SERVER[]
     try
+        B.force_asset_server!(B.NoServer)
         for (port, proxy, expected) in ((9384, "", 0), (9390, "", 9390), (9384, "/proxy/9384", 9384))
             serverconfig.listen_port[], serverconfig.proxy_url[] = port, proxy
             manipulate(identity; parameters = ())
+            session = B.Session(B.NoConnection(); asset_server = B.NoServer())
+            B.CURRENT_SESSION[] = session
+            @test isnothing(Cropbox.reset_manipulate())
+            @test isnothing(B.CURRENT_SESSION[])
+            @test session.status == B.CLOSED
             @test serverconfig.listen_port[] == expected
             @test serverconfig.proxy_url[] == proxy
         end
+        @test isnothing(Cropbox.reset_manipulate())
         @test isnothing(B.GLOBAL_SERVER[])
     finally
         for (r, v) in zip(serverconfig, settings)
             r[] = v
         end
+        B.CURRENT_SESSION[] = page
+        B.force_subsession!(subsession)
+        B.force_asset_server!(assets)
     end
     session = B.Session(B.NoConnection(); asset_server = B.NoServer())
     try

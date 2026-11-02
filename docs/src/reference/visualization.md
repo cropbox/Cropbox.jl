@@ -8,6 +8,7 @@ needs to be simulated.
 |---|---|---|
 | `visualize`, `visualize!` | vectors, a `DataFrame`, a system, or data plus a system | draw existing data or run any needed simulations and draw the result |
 | `manipulate` | a callback or `visualize` arguments | add parameter widgets in a supported notebook |
+| `Cropbox.reset_manipulate` | no arguments | reset widget connections after a failed notebook refresh |
 
 For a saved analysis, it is usually clearest to call `simulate`, keep its
 `DataFrame`, and plot that table. Direct system visualization is convenient for
@@ -644,21 +645,22 @@ Cropbox environment should keep their original setup.
     without restarting Julia, run:
 
     ```julia
-    Cropbox.Bonito.Page(listen_port = 0)
+    Cropbox.reset_manipulate()
     ```
 
     Then re-run the interactive output cells. This resets all Bonito widget
-    sessions, not the model definitions or other Julia variables. Selections
-    return to each call's initial configuration. Do not run this inside each
-    `manipulate` call. This is a temporary recovery step, not a
+    sessions in the current Julia kernel, not the model definitions or other
+    Julia variables. Existing calibration results remain available; there is no
+    need to restart the kernel or run every cell again. Widget selections return
+    to each call's initial configuration. Existing port and proxy settings are
+    preserved. Do not run this inside each `manipulate` call. This is a recovery step, not a
     required initialization cell or a fix for saved outputs. An upstream fix is
     proposed in [Bonito #423](https://github.com/SimonDanisch/Bonito.jl/pull/423).
 
-    `listen_port = 0` lets a new Bonito server choose a free port. Ordinary
-    `manipulate` calls already select this default automatically; the `Page`
-    call is only needed here to reset the disconnected sessions. If a fixed
-    port or proxy is configured for your deployment, preserve those settings
-    when resetting the page.
+    For teaching notebooks, keep a separate cell containing this command,
+    labelled "Run only if widgets stop responding after a refresh". Students
+    can run that cell and then the desired `manipulate(...)` cells without
+    remembering a recovery command. Skip it during normal use.
 
 Outside a notebook, `manipulate` still returns a Bonito `App` for an HTML-capable
 display, rather than silently returning a single static plot.
