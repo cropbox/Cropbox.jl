@@ -19,9 +19,7 @@ Base.showable(m::MIME, p::Plot) = showable(m, p.obj)
 
 Base.show(p::Plot) = show(p.obj)
 Base.show(io::IO, p::Plot) = show(io, p.obj)
-#HACK: custom hook for intercepting 3-args show() from each backend (i.e. Gadfly)
-Base.show(io::IO, m::MIME, p::Plot) = _show(io, m, p.obj)
-_show(io::IO, m::MIME, o) = show(io, m, o)
+Base.show(io::IO, m::MIME, p::Plot) = show(io, m, p.obj)
 Base.show(io::IO, ::MIME"text/plain", p::P) where {P<:Plot} = show(io, "<$P>")
 
 Base.display(p::Plot) = display(p.obj)
@@ -42,10 +40,7 @@ convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c)
 convertcolumn(c) = c
 extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(a)
-extractarray(df::DataFrame, n) = begin
-    #HACK: Gadfly doesn't support ZonedDateTime
-    convertcolumn(extractcolumn(df, n))
-end
+extractarray(df::DataFrame, n) = convertcolumn(extractcolumn(df, n))
 
 findlim(array::Vector{<:Number}) = begin
     a = skipmissing(array)
@@ -68,7 +63,7 @@ detectbackend() = begin
        isdefined(Main, :PlutoRunner) ||
        isdefined(Main, :Documenter) && any(t -> startswith(string(t.func), "#makedocs#"), stacktrace()) ||
        haskey(ENV, "NJS_VERSION")
-        :Gadfly
+        :Makie
     else
         :UnicodePlots
     end
@@ -76,6 +71,7 @@ end
 detectbackend(::Nothing) = detectbackend()
 
 plotbackend(p, backend) = begin
+    backend == :Gadfly && throw(ArgumentError("Gadfly is no longer supported; use backend = :Makie"))
     b = detectbackend(p)
     !isnothing(p) && !isnothing(backend) && backend != b &&
         throw(ArgumentError("cannot append $backend output to a $b visualization"))
@@ -241,12 +237,11 @@ plot(df::DataFrame, x, y, z;
     title = isnothing(title) ? "" : string(title)
     legend = isnothing(legend) ? true : legend
 
-    isnothing(backend) && (backend = detectbackend())
+    backend = plotbackend(nothing, backend)
     plot3!(Val(backend), X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, zgap, zlabgap, aspect)
 end
 
 include("plot/UnicodePlots.jl")
-include("plot/Gadfly.jl")
 include("plot/Makie.jl")
 
 export plot, plot!

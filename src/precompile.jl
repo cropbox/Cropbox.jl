@@ -17,12 +17,10 @@ using PrecompileTools: @setup_workload, @compile_workload
         r = simulate(S, config=c)
         simulate(S, configs=[c])
         visualize(r, :time, :c; backend=:UnicodePlots)
-        visualize(r, :time, :c; backend=:Gadfly)[] #|> Cropbox.Gadfly.SVGJS()
-        visualize(r, :time, :c; kind=:line, backend=:Gadfly)' #|> Cropbox.Gadfly.SVG()
+        visualize(r, :time, :c; backend = :Makie)[]
+        visualize(r, :time, :c; kind = :line, backend = :Makie)'
         visualize(S, :time, :c; backend=:UnicodePlots)
-        visualize(S, :time, :c; backend=:Gadfly)[] #|> Cropbox.Gadfly.SVGJS()
-        #visualize(S, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.PDF()
-        #visualize(S, :time, :c; backend=:Gadfly)[] |> Cropbox.Gadfly.PNG()
+        visualize(S, :time, :c; backend = :Makie)[]
         #r |> display
         #display(MIME("text/html"), r)
     end
