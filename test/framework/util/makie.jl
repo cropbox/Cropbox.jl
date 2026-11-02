@@ -24,6 +24,24 @@
     @test visualize!(p, [1, 3]; kind = :hline) === p
     @test visualize!(p, [1, 3]; kind = :vline) === p
 
+    for (kind, limits, unit) in (
+        (:hline, (; xlim = (0, 4)), (; yunit = u"g")),
+        (:vline, (; ylim = (0, 4)), (; xunit = u"g")),
+    )
+        q = visualize(2000u"mg"; backend = :Makie, kind, limits..., unit...)
+        @test q.opt[:Xs] == [[2]]
+        @test q.opt[kind == :hline ? :ylim : :xlim] == (1, 3)
+    end
+
+    cats = [2, 1]
+    q = visualize([0, 1], [1, 2]; backend = :Makie, kind = :step, ycat = cats)
+    @test visualize!(q, [0, 1], [2, 3]; kind = :step) === q
+    @test q.opt[:axis].yticks[] == (1:3, ["2", "1", "3"])
+    @test q.opt[:ycat] == [2, 1, 3]
+    @test cats == [2, 1]
+    @test last.(q.opt[:axis].scene.plots[1][1][]) == [2, 1]
+    @test last.(q.opt[:axis].scene.plots[2][1][]) == [1, 3]
+
     dates = [DateTime(2020, 1, 1), DateTime(2020, 2, 1)]
     q = visualize(dates, [1, 2]; backend = :Makie, kind = :line)
     @test q.opt[:xlim] == Tuple(dates)
@@ -49,13 +67,16 @@
     @test !ax.leftspinevisible[]
     @test M.Makie.theme(:fontsize)[] == fontsize
     @test showable(MIME"image/png"(), p)
+    signature = b"\x89PNG\r\n\x1a\n"
     io = IOBuffer()
     show(io, MIME"image/png"(), p)
-    @test take!(io)[1:8] == [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    @test take!(io)[1:8] == signature
     mktempdir() do dir
-        M.save(joinpath(dir, "plot.svg"), p[])
-        M.save(joinpath(dir, "plot.png"), p[])
+        for ext in ("png", "svg", "pdf")
+            M.save(joinpath(dir, "plot.$ext"), p[])
+        end
+        @test read(joinpath(dir, "plot.png"), 8) == signature
         @test occursin("<svg", read(joinpath(dir, "plot.svg"), String))
-        @test filesize(joinpath(dir, "plot.png")) > 0
+        @test read(joinpath(dir, "plot.pdf"), 5) == b"%PDF-"
     end
 end

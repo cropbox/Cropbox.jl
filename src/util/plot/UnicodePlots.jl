@@ -101,7 +101,7 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     arr(a) = sort(unique(a))
     x = arr(X)
     y = arr(Y)
-    M = reshape(Z, length(y), length(x))
+    M = reshape(Z[sortperm(collect(zip(X, Y)))], length(y), length(x))
 
     offset(a) = a[1]
     xoffset = offset(x)
