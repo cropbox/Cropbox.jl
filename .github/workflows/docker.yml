@@ -1,5 +1,8 @@
 name: docker
 on: [push]
+permissions:
+  contents: read
+  packages: write
 env:
   REGISTRY_IMAGE: cropbox/cropbox
 jobs:
@@ -24,6 +27,16 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - id: build
         uses: docker/build-push-action@v5
         with:
@@ -32,7 +45,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           build-args: REPO_DIR=/home/Cropbox.jl
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,"name=${{ env.REGISTRY_IMAGE }},quay.io/${{ env.REGISTRY_IMAGE }},ghcr.io/${{ env.REGISTRY_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
       - run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
@@ -61,8 +74,21 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
-      - run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+          for registry in docker.io quay.io ghcr.io; do
+            docker buildx imagetools create \
+              $(jq -cr --arg registry "$registry" '.tags | map("-t " + $registry + "/" + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+              $(printf "$registry/${REGISTRY_IMAGE}@sha256:%s " *)
+            docker buildx imagetools inspect "$registry/${REGISTRY_IMAGE}:${{ steps.meta.outputs.version }}"
+          done
