@@ -1,6 +1,5 @@
 #BEGIN: jupyter/datascience-notebook
-#HACK: pin Jupyter Lab 3.x to ensure WebIO.jl (Interact.jl) working
-FROM jupyter/scipy-notebook:lab-3.6.3
+FROM quay.io/jupyter/scipy-notebook:latest
 
 # Fix: https://github.com/hadolint/hadolint/wiki/DL4006
 # Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
@@ -93,8 +92,10 @@ ENV JUPYTER_DATA_DIR=/opt/conda/share/jupyter
 RUN pip install \
     'jupyter-server-proxy' \
     'nbgitpuller' \
-    'nbresuse' \
-    'webio_jupyter_extension'
+    'jupyter-resource-usage'
+
+# use the notebook origin for widget connections through forwarded ports
+ENV BONITO_JUPYTER_REMOTE_HOST=""
 
 # ensure Cropbox.jl added/built and available outside home directory
 ENV JULIA_PROJECT=""
@@ -102,7 +103,7 @@ ENV CROPBOX_DIR=${REPO_DIR}
 RUN julia -e 'import Pkg; Pkg.add(url="'${CROPBOX_DIR}'"); Pkg.build("Cropbox");'
 
 # install commonly used packages
-#TODO: Restore Plots/StatsPlots and MLJ after the plotting/widget migration (see #46).
+#TODO: Reassess optional notebook packages for future course updates (see #46).
 RUN julia -e 'using Pkg; pkg"add Cairo CairoMakie CSV DataFrames DataFramesMeta DataStructures Distributions Fontconfig StatsBase TimeZones TypedTables Unitful WGLMakie";'
 
 #HACK: ensure MKL_jll artifacts downloaded (perhaps an issue with PackageCompiler 1.6+)
@@ -110,6 +111,7 @@ RUN julia -e 'import Pkg; Pkg.add("MKL_jll"); using MKL_jll;'
 
 # install Cropbox-related packages
 RUN julia -e 'using Pkg; pkg"add CropRootBox Garlic LeafGasExchange SimpleCrop";'
+RUN julia -e 'using Pkg; Pkg.precompile(; strict = true); using Cropbox, CropRootBox, Garlic, LeafGasExchange, SimpleCrop;'
 
 # clean up as root
 USER root
