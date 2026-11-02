@@ -535,7 +535,8 @@ for saving figures.
 Archived workshop and course notebooks may continue to use their original
 versioned environments or Docker image digests. Updating those materials is
 separate from this package migration. `manipulate` now uses Bonito instead of
-Interact/WebIO; its return value is a Bonito `App`, not an Interact widget.
+Interact/WebIO; its return value is a Bonito-backed display object, not an
+Interact widget.
 
 ## Common failures
 
@@ -617,6 +618,9 @@ is needed: execute the `manipulate(...)` cell to display the controls and plot.
 A live Julia kernel is required for recalculation; saved notebook or HTML
 output does not run the model on its own.
 
+Each IJulia output uses an isolated frame and connection so widgets in different
+notebooks do not share browser state. The `manipulate(...)` call is unchanged.
+
 The Docker image uses notebook-relative proxy URLs, so forwarding Jupyter to a
 different host port does not require a widget setup cell.
 
@@ -638,11 +642,10 @@ replacement for an ordinary first run. Archived notebooks using their original
 Cropbox environment should keep their original setup.
 
 !!! warning "Notebook reloads with Bonito 5.2"
-    A normal browser refresh can reconnect, but replacing the first interactive
-    output and then refreshing can leave controls disconnected (`Bonito is not
-    defined` in the browser console). A disconnected session can also expire
-    after about 30 seconds, leaving saved controls unresponsive. To recover
-    without restarting Julia, run:
+    A normal browser refresh can reconnect while the kernel and widget session
+    remain alive. Saved output can show the initial values rather than the last
+    live selection; re-run the relevant `manipulate(...)` cell when resuming work.
+    If controls remain unresponsive, recover without restarting Julia by running:
 
     ```julia
     Cropbox.reset_manipulate()
@@ -662,7 +665,7 @@ Cropbox environment should keep their original setup.
     can run that cell and then the desired `manipulate(...)` cells without
     remembering a recovery command. Skip it during normal use.
 
-Outside a notebook, `manipulate` still returns a Bonito `App` for an HTML-capable
+Outside IJulia, `manipulate` still returns a Bonito `App` for an HTML-capable
 display, rather than silently returning a single static plot.
 
 Treat a widget as an exploration tool. Save the selected values as an explicit
