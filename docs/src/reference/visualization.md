@@ -117,6 +117,8 @@ Two-dimensional plots support these `kind` values:
 
 `step` automatically treats Boolean values and other repeated categories as
 ordered levels. Supply `ycat` when their display order must be explicit.
+For Makie step plots, appending new categories keeps the existing order and
+adds the new levels at the end.
 
 ```@example visref
 visualize(series, :hour, :reached;
@@ -153,14 +155,14 @@ visualize!(p, 3;
 )
 ```
 
-The one-value `:hline` and `:vline` helpers currently work most reliably when
-both axes are unitless or use compatible dimensions. For a plot with time on x
-and mass on y, draw a two-point unit-aware line instead:
+The one-value `:hline` and `:vline` helpers use the y-axis and x-axis units,
+respectively. Compatible units are converted, even when the axes have
+different dimensions:
 
 ```@example visref
 p_units = visualize(series, :hour, :observed; kind = :scatter)
-visualize!(p_units, [0, 4]u"hr", [3, 3]u"g";
-    kind = :line,
+visualize!(p_units, 3000u"mg";
+    kind = :hline,
     name = "threshold",
 )
 ```
@@ -187,14 +189,16 @@ p = visualize(series, :hour, :observed;
     kind = :line, backend = :Makie,
 )
 
+Cropbox.CairoMakie.save("observed.png", p[])
 Cropbox.CairoMakie.save("observed.svg", p[])
 Cropbox.CairoMakie.save("observed.pdf", p[])
-Cropbox.CairoMakie.save("observed.png", p[])
 ```
 
 No additional package installation or import is needed for these formats.
-The returned wrapper remains the portable part of the API; `p[]` now contains
-a Makie `Figure` for graphical output.
+The returned wrapper remains the portable part of the API; `p[]` (or `p'`)
+extracts its Makie `Figure` for graphical output. Cropbox does not provide a
+separate plot-saving function. Notebook display keeps CairoMakie's default
+PNG output; saved files use the format selected by the filename extension.
 
 ## Visualize a simulation
 
@@ -509,8 +513,9 @@ Cropbox.CairoMakie.save("figure.pdf", p[])
 ```
 
 The built-in Classic style follows Cropbox's Gadfly colors, lighter text,
-compact legends, and calendar labels. It requests Verdana; Makie falls back
-to its bundled font when Verdana is unavailable. It does not bundle fonts.
+compact legends, and calendar labels. It uses Makie's bundled Noto Sans,
+with tick-label size 10 and axis-label/title size 12. This avoids
+depending on system fonts; the bundled font does not include CJK glyphs.
 The style is scoped to the figure and does not change the global Makie theme.
 Cropbox does not expose theme selection; use Makie directly for custom styling.
 
@@ -530,7 +535,8 @@ Cropbox no longer installs Gadfly or supports it as a backend. Replace explicit
 `backend = :Gadfly` with `backend = :Makie`. Code that accesses `Gadfly.Plot`
 fields or uses `Cropbox.Gadfly.SVG` or `PDF` must also change: use public
 `visualize!` calls for annotations and layers, and the export examples above
-for saving figures.
+for saving figures. For example, replace `p[] |> Cropbox.Gadfly.PDF("figure.pdf")`
+with `Cropbox.CairoMakie.save("figure.pdf", p[])`.
 
 Archived workshop and course notebooks may continue to use their original
 versioned environments or Docker image digests. Updating those materials is

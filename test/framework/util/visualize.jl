@@ -6,6 +6,16 @@ using DataFrames
     end
     @test_throws ArgumentError visualize([0, 1], [0, 1]; backend = :Gadfly)
 
+    @testset "classic fonts" begin
+        p = visualize([0, 1], [0, 1]; backend = :Makie)
+        ax = p.opt[:axis]
+        fonts = Cropbox.Makie.theme(ax.scene, :fonts)
+        @test Cropbox.Makie.to_font(fonts, :regular).family_name == "Noto Sans"
+        @test Cropbox.Makie.to_font(fonts, :bold).style_name == "Bold"
+        @test ax.xticklabelsize[] == ax.yticklabelsize[] == 10
+        @test ax.xlabelsize[] == ax.ylabelsize[] == ax.titlesize[] == 12
+    end
+
     @testset "$backend" for backend in (:Makie, :UnicodePlots)
         p = visualize([0, 4]u"hr", [0, 4]u"g"; kind = :line, name = "model", backend)
         @test visualize!(p, [0, 4]u"hr", [4, 0]u"g"; kind = :line, name = "reference") === p
@@ -16,6 +26,12 @@ using DataFrames
         output = backend == :Makie ? only(p.opt[:axis].scene.plots[end].text[]) : repr(MIME"text/plain"(), p[])
         @test occursin("An = 10", output)
         @test occursin("gs = 0.2", output)
+        for (kind, value) in ((:hline, 2000u"mg"), (:vline, 120u"minute"))
+            @test visualize!(p, value; kind) === p
+            @test p.opt[:Xs][end] == [2]
+            @test p.opt[:xlim] == p.opt[:ylim] == (0, 4)
+            @test_throws ArgumentError visualize(value; kind, backend)
+        end
         @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; backend = backend == :Makie ? :UnicodePlots : :Makie)
         @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; linestyle = :unknown)
         @test_throws ArgumentError visualize!(p, 2, 2, "text"; align = :unknown)
@@ -44,5 +60,7 @@ using DataFrames
             @test p[].cmap.lim == (0, 10)
             @test p[].cmap.bar == legend
         end
+        output(df) = repr(MIME"text/plain"(), visualize(df, :x, :y, :z; backend = :UnicodePlots)[]; context = :color => true)
+        @test output(df) == output(df[[4, 1, 3, 2], :])
     end
 end

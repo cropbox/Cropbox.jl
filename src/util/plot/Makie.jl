@@ -20,6 +20,7 @@ end
 
 theme_classic() = begin
     major, minor = "#564A55", "#6C606B"
+    fonts = (; regular = Makie.assetpath("fonts", "NotoSans-Regular.ttf"), bold = Makie.assetpath("fonts", "NotoSans-Bold.ttf"))
     # Gadfly's categorical palette, expressed using Colors through Makie.
     colors = Makie.distinguishable_colors(32, [Makie.LCHab(70, 60, 240)];
         transform = c -> Makie.deuteranopic(c, 0.5),
@@ -28,18 +29,18 @@ theme_classic() = begin
         for r in range(0, 1; length = 256)]
     Makie.Theme(;
         size = (480, 320), figure_padding = (14, 7, 7, 14),
-        fontsize = 10, fonts = (; regular = "Verdana", bold = "Verdana"), textcolor = major,
+        fontsize = 12, fonts, textcolor = major,
         palette = (; color = colors), colormap,
         linewidth = 0.85, markersize = 4,
         Scatter = (; strokewidth = 0), ScatterLines = (; strokewidth = 0),
         Axis = (;
             backgroundcolor = :white,
-            titlefont = :regular, titlesize = 10, titlecolor = major, titlegap = 12,
-            xlabelsize = 10, ylabelsize = 10,
+            titlefont = :regular, titlesize = 12, titlecolor = major, titlegap = 12,
+            xlabelsize = 12, ylabelsize = 12,
             xlabelcolor = major, ylabelcolor = major,
             xlabelpadding = 12, ylabelpadding = 12,
             xtickformat = classic_ticklabels, ytickformat = classic_ticklabels,
-            xticklabelsize = 8, yticklabelsize = 8,
+            xticklabelsize = 10, yticklabelsize = 10,
             xticklabelcolor = minor, yticklabelcolor = minor,
             xticklabelpad = 5, yticklabelpad = 5,
             xticksvisible = false, yticksvisible = false,
@@ -50,14 +51,14 @@ theme_classic() = begin
         Legend = (;
             framevisible = false,
             padding = (0, 0, 0, 0),
-            titlefont = :regular, titlesize = 9, titlecolor = "#362A35",
+            titlefont = :regular, titlesize = 11, titlecolor = "#362A35",
             titlehalign = :left, titlegap = 4,
-            labelsize = 8, labelcolor = "#4C404B",
+            labelsize = 10, labelcolor = "#4C404B",
             patchsize = (12, 8), patchlabelgap = 4, rowgap = 1),
         Colorbar = (;
             width = 7, height = 90, tellheight = false,
-            labelsize = 9, labelcolor = major,
-            ticklabelsize = 8, ticklabelcolor = minor,
+            labelsize = 11, labelcolor = major,
+            ticklabelsize = 10, ticklabelcolor = minor,
             ticksvisible = false, spinewidth = 0,
             topspinevisible = false, rightspinevisible = false, leftspinevisible = false, bottomspinevisible = false))
 end
@@ -107,7 +108,6 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
             xlim, ylim, ycat, xunit, yunit, aspect)
         if !isnothing(ycat)
             axis.ytickformat = Makie.automatic
-            axis.yticks = (1:length(ycat), string.(ycat))
         end
     end
     ax = p.opt[:axis]
@@ -115,6 +115,10 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
     n0 = length(p.opt[:colors])
     n = kind in (:hline, :vline) ? 1 : length(Ys)
     cats = p.opt[:ycat]
+    if !isnothing(cats)
+        !isnothing(ycat) && (cats = p.opt[:ycat] = union(cats, ycat))
+        ax.yticks = (1:length(cats), string.(cats))
+    end
     for i in 1:n
         c = isempty(colors) ? nothing : colors[i]
         color = isnothing(c) ? palette[mod1(n0 + i, length(palette))] :

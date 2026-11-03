@@ -129,19 +129,25 @@ See also: [`plot!`](@ref), [`visualize`](@ref)
 plot(v::Number; kw...) = plot([v]; kw...)
 plot!(p::Union{Plot,Nothing}, v::Number; kw...) = plot!(p, [v]; kw...)
 plot(V::Vector; kw...) = plot!(nothing, V; kw...)
-plot!(p::Union{Plot,Nothing}, X::Vector; kind, xlim=nothing, ylim=nothing, kw...) = begin
+plot!(p::Union{Plot,Nothing}, X::Vector;
+    kind, xlim = nothing, ylim = nothing, xunit = nothing, yunit = nothing, kw...
+) = begin
     xlim = getplotopt(p, :xlim, xlim)
     ylim = getplotopt(p, :ylim, ylim)
+    xunit = getplotopt(p, :xunit, xunit)
+    yunit = getplotopt(p, :yunit, yunit)
     if kind == :hline
-        isnothing(xlim) && error("hline requires `xlim`: $V")
-        ylim = isnothing(ylim) ? findlim(X) : ylim
+        isnothing(xlim) && throw(ArgumentError("hline requires `xlim`"))
+        isnothing(yunit) && (yunit = extractunit(X))
+        ylim = isnothing(ylim) ? findlim(deunitfy(X, yunit)) : ylim
     elseif kind == :vline
-        isnothing(ylim) && error("vline requires `ylim`: $V")
-        xlim = isnothing(xlim) ? findlim(X) : xlim
+        isnothing(ylim) && throw(ArgumentError("vline requires `ylim`"))
+        isnothing(xunit) && (xunit = extractunit(X))
+        xlim = isnothing(xlim) ? findlim(deunitfy(X, xunit)) : xlim
     else
         error("unsupported `kind` for single value plot: $kind")
     end
-    plot!(p, X, []; kind, xlim, ylim, kw...)
+    plot!(p, X, []; kind, xlim, ylim, xunit, yunit, kw...)
 end
 
 plot(X::Vector, Y::Vector; name=nothing, color=nothing, kw...) = plot(X, [Y]; names=isnothing(name) ? nothing : [name], colors=[color], kw...)
@@ -167,11 +173,11 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     u(a) = extractunit(a)
     xunit = getplotopt(p, :xunit, xunit)
     yunit = getplotopt(p, :yunit, yunit)
-    isnothing(xunit) && (xunit = u(X))
-    isnothing(yunit) && (yunit = promoteunit(u.(Ys)...))
+    isnothing(xunit) && kind != :hline && (xunit = u(X))
+    isnothing(yunit) && (yunit = kind == :hline ? u(X) : promoteunit(u.(Ys)...))
 
     arr(a, u) = deunitfy(a, u)
-    X = arr(X, xunit)
+    X = arr(X, kind == :hline ? yunit : xunit)
     Ys = arr.(Ys, yunit)
 
     isnothing(xlim) && (xlim = findlim(X))
