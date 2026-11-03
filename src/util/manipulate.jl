@@ -15,6 +15,36 @@ const MANIPULATE_STYLE = Styles(
     CSS(" label :focus-visible", "outline" => "2px solid #47839c", "outline-offset" => "2px"),
 )
 
+#TODO: remove this wrapper and session tracking once Bonito fixes notebook reloads
+# and cross-kernel isolation; retest two notebooks in one JupyterLab page first.
+# https://github.com/SimonDanisch/Bonito.jl/issues/123
+# https://github.com/SimonDanisch/Bonito.jl/pull/423
+struct ManipulateApp
+    app::Bonito.App
+end
+
+const MANIPULATE_SESSIONS = WeakKeyDict{Bonito.Session,Nothing}()
+
+Base.show(io::IO, ::ManipulateApp) = print(io, "Cropbox interactive output")
+Base.showable(::MIME"text/html", ::ManipulateApp) = true
+Base.show(io::IO, mime::MIME"text/html", widget::ManipulateApp) = begin
+    # Bonito shares DOM ids and a JS connection across outputs; isolate notebook kernels.
+    session = Bonito.Session(Bonito.WebSocketConnection(); asset_server = Bonito.NoServer(), title = widget.app.title)
+    session.io_context[] = Bonito.get_io_context(io)
+    MANIPULATE_SESSIONS[session] = nothing
+    html = sprint(x -> Bonito.page_html(x, session, widget.app))
+    Bonito.mark_displayed!(session)
+    onload = """
+        const body = this.contentDocument.body;
+        const resize = () => { this.style.height = Math.ceil(body.getBoundingClientRect().height) + 'px'; };
+        new this.contentWindow.ResizeObserver(resize).observe(body);
+        resize();
+        """
+    show(io, mime, DOM.iframe(;
+        srcdoc = html, title = "Cropbox interactive output", style = "border:0;width:100%;height:100px", onload))
+    nothing
+end
+
 manipulatewidget(session, V, v, u) = begin
     V isa Type && V <: Enum && (V = collect(instances(V)))
     if V isa Bool
@@ -45,6 +75,7 @@ end
 
 Create an interactive output updated by callback `f`, displayed as a Bonito app.
 JupyterLab and Notebook require `jupyter-server-proxy` and a running Julia kernel.
+Notebook outputs are isolated so widgets in different notebooks do not share connections.
 
 # Arguments
 - `f::Function`: callback returning a plot or another displayable value; interactively updated configuration `c` is provided.
@@ -61,18 +92,21 @@ manipulate(f::Function; parameters, config = ()) = begin
     C = configure(config)
     K = parameterkeys(P)
     U = parameterunits(P)
-    Bonito.App(; title = "Cropbox") do session
+    notebook = isdefined(Main, :IJulia) && Main.IJulia.inited
+    app = Bonito.App(; title = "Cropbox") do session
         O = Bonito.Observable[]
         L = []
         for (s, Q) in P
-            push!(L, DOM.div(string(s); style = "color:#6b5787;margin-top:0.5em"))
+            s == Symbol(0) || push!(L, DOM.div(string(s); style = "color:#6b5787;margin-top:0.5em"))
             for (k, V) in Q
                 u = fieldunit(s, k)
                 w, o = manipulatewidget(session, V, option(C, s, k), u)
                 n = if w isa Bonito.Slider
-                    readout = DOM.output(o[]; style = "min-width:3em;text-align:right;color:#47839c")
-                    Bonito.onjs(session, o, js"value => $(readout).textContent = value")
-                    w.attributes[:oninput] = js"event => $(readout).textContent = $(w.values).value[event.target.valueAsNumber - 1]"
+                    labels = [repr(v; context = :compact => true) for v in w.values[]]
+                    width = max(3, maximum(length, labels))
+                    readout = DOM.output(labels[w.index[]]; style = "width:$(width)ch;flex-shrink:0;text-align:right;color:#47839c")
+                    Bonito.onjs(session, w.index, js"index => $(readout).textContent = $(labels)[index - 1]")
+                    w.attributes[:oninput] = js"event => $(readout).textContent = $(labels)[event.target.valueAsNumber - 1]"
                     DOM.div(w, readout; style = "display:flex;align-items:center;gap:0.75em;min-width:0")
                 else
                     w
@@ -89,8 +123,12 @@ manipulate(f::Function; parameters, config = ()) = begin
                 f(configure(C, X, codify(X, :__manipulate__)))
             end
         end
-        DOM.div(DOM.div(L...; style = MANIPULATE_STYLE), output)
+        dom = DOM.div(DOM.div(L...; style = MANIPULATE_STYLE), output)
+        # Iframes do not inherit the notebook's page styles.
+        notebook && pushfirst!(Bonito.children(dom), DOM.style("body {margin:0;font:14px system-ui;color:#333;} img {max-width:100%;height:auto;}"))
+        dom
     end
+    notebook ? ManipulateApp(app) : app
 end
 
 """
@@ -119,6 +157,10 @@ Julia kernel, while preserving other Julia variables and server settings.
 
 Use only for recovery, not during normal initialization or inside `manipulate`.
 """
-reset_manipulate() = Bonito.Page()
+reset_manipulate() = begin
+    foreach(close, collect(keys(MANIPULATE_SESSIONS)))
+    empty!(MANIPULATE_SESSIONS)
+    Bonito.Page()
+end
 
 export manipulate
