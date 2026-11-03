@@ -27,6 +27,17 @@ Base.display(d::AbstractDisplay, p::Plot) = display(d, p.obj)
 Base.display(m::MIME, p::Plot) = display(m, p.obj)
 Base.display(d::AbstractDisplay, m::MIME, p::Plot) = display(d, m, p.obj)
 
+"""
+    Cropbox.writeimage(name::AbstractString, p::Plot; format=nothing, kwargs...)
+
+Save a Makie visualization as PNG, SVG, or PDF and return the output filename.
+The filename extension selects the format; `format` appends it when needed.
+Additional keywords are passed to CairoMakie's `save`, e.g. `px_per_unit = 2`.
+For terminal plots, create the visualization with `backend = :Makie` first.
+"""
+writeimage(::AbstractString, p::Plot; kw...) =
+    throw(ArgumentError("image export is not supported for $(detectbackend(p)); use backend = :Makie"))
+
 extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
 extractcolumn(df::DataFrame, n::String) = extractcolumn(df, Symbol(n))
 extractcolumn(df::DataFrame, n::Expr) = begin

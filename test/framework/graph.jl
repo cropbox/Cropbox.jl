@@ -7,6 +7,7 @@
         @test ds == "[config → clock → context]"
         n = tempname()
         @test Cropbox.writeimage(n, d; format=:svg) == n*".svg"
+        @test Cropbox.writeimage(n*".svg", d; format = :svg) == n*".svg"
     end
 
     @testset "hierarchy" begin
