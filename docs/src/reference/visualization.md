@@ -182,23 +182,25 @@ requested. Text uses data coordinates and the existing axis units, converting
 compatible unitful values. It does not change the axis limits or add a legend
 entry. `align` accepts `:left` (the default), `:center`, and `:right`.
 
-To save a graphical result, use the included CairoMakie renderer:
+To save a graphical result, use `Cropbox.writeimage`:
 
 ```julia
 p = visualize(series, :hour, :observed;
     kind = :line, backend = :Makie,
 )
 
-Cropbox.CairoMakie.save("observed.png", p[])
-Cropbox.CairoMakie.save("observed.svg", p[])
-Cropbox.CairoMakie.save("observed.pdf", p[])
+Cropbox.writeimage("observed.png", p)
+Cropbox.writeimage("observed.svg", p)
+Cropbox.writeimage("observed.pdf", p)
 ```
 
-No additional package installation or import is needed for these formats.
-The returned wrapper remains the portable part of the API; `p[]` (or `p'`)
-extracts its Makie `Figure` for graphical output. Cropbox does not provide a
-separate plot-saving function. Notebook display keeps CairoMakie's default
-PNG output; saved files use the format selected by the filename extension.
+The function returns the output filename and needs no additional package
+installation or import. The filename extension selects PNG, SVG, or PDF;
+`Cropbox.writeimage("observed", p; format = :pdf)` appends the extension.
+Additional options such as `px_per_unit = 2` are passed to CairoMakie's `save`.
+Image export requires `backend = :Makie`; UnicodePlots terminal output is not
+converted automatically. Notebook display keeps CairoMakie's default PNG output.
+For direct Makie use, `p[]` (or `p'`) still extracts the underlying `Figure`.
 
 ## Visualize a simulation
 
@@ -509,7 +511,7 @@ using Cropbox
 p = visualize([0, 1, 2], [0, 1, 4]; backend = :Makie, kind = :line, name = "Model", legendpos = (0.1, -0.3))
 visualize!(p, [0, 1, 2], [0, 1.1, 3.8]; name = "Observed")
 visualize!(p, 1, 3, "Example")
-Cropbox.CairoMakie.save("figure.pdf", p[])
+Cropbox.writeimage("figure.pdf", p)
 ```
 
 The built-in Classic style follows Cropbox's Gadfly colors, lighter text,
@@ -542,7 +544,7 @@ Cropbox no longer installs Gadfly or supports it as a backend. Replace explicit
 fields or uses `Cropbox.Gadfly.SVG` or `PDF` must also change: use public
 `visualize!` calls for annotations and layers, and the export examples above
 for saving figures. For example, replace `p[] |> Cropbox.Gadfly.PDF("figure.pdf")`
-with `Cropbox.CairoMakie.save("figure.pdf", p[])`.
+with `Cropbox.writeimage("figure.pdf", p)`.
 
 Archived workshop and course notebooks may continue to use their original
 versioned environments or Docker image digests. Updating those materials is

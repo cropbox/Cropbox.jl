@@ -71,6 +71,12 @@ end
 
 detectbackend(::Plot{<:Makie.Figure}) = :Makie
 
+writeimage(name::AbstractString, p::Plot{<:Makie.Figure}; format = nothing, kw...) = begin
+    name, _ = imagefile(name, format)
+    CairoMakie.save(name, p[]; backend = CairoMakie, kw...)
+    name
+end
+
 figure(; title, xlab, ylab, aspect) = Makie.with_theme(theme_classic()) do
     f = Makie.Figure()
     aspect = isnothing(aspect) ? nothing : Makie.AxisAspect(aspect)

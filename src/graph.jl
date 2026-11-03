@@ -56,16 +56,21 @@ writedot(name::AbstractString, g::Graph; style=()) = begin
     name
 end
 
-import Graphviz_jll
-writeimage(name::AbstractString, g::Graph; format=nothing, style=()) = begin
+imagefile(name::AbstractString, format) = begin
     ext = splitext(name)[2]
     if isnothing(format)
         format = ext[2:end]
         isempty(format) && error("format unspecified")
     else
         format = string(format)
-        ext != format && (name *= "."*format)
+        ext != "."*format && (name *= "."*format)
     end
+    name, format
+end
+
+import Graphviz_jll
+writeimage(name::AbstractString, g::Graph; format=nothing, style=()) = begin
+    name, format = imagefile(name, format)
     dot = writedot(g; style)
     cmd = `$(Graphviz_jll.dot()) -T$format $dot -o $name`
     success(cmd) || error("cannot execute: $cmd")

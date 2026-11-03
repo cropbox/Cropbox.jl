@@ -83,10 +83,18 @@
     @test take!(io)[1:8] == signature
     mktempdir() do dir
         for ext in ("png", "svg", "pdf")
-            M.save(joinpath(dir, "plot.$ext"), p[])
+            name = joinpath(dir, "plot.$ext")
+            @test Cropbox.writeimage(name, p) == name
         end
         @test read(joinpath(dir, "plot.png"), 8) == signature
         @test occursin("<svg", read(joinpath(dir, "plot.svg"), String))
         @test read(joinpath(dir, "plot.pdf"), 5) == b"%PDF-"
+        name = joinpath(dir, "explicit")
+        @test Cropbox.writeimage(name, p; format = :png, px_per_unit = 1) == name*".png"
+        @test Cropbox.writeimage(name*".png", p; format = "png") == name*".png"
+        @test !isfile(name*".png.png")
+        @test_throws ErrorException Cropbox.writeimage(name, p)
+        q = visualize([0, 1], [0, 1]; backend = :UnicodePlots)
+        @test_throws ArgumentError Cropbox.writeimage(name*".png", q)
     end
 end
