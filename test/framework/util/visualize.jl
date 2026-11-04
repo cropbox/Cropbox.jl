@@ -71,6 +71,62 @@ using DataFrames
         end
     end
 
+    @testset "stored estimates" begin
+        @system VisualizeComparison(Controller) begin
+            rate => 1 ~ preserve(parameter, u"g/hr")
+            a(rate) ~ accumulate(u"g")
+            b(a) => 2a ~ track(u"g")
+        end
+        est = simulate(VisualizeComparison; target = [:a, :b], stop = 3, verbose = false)
+        obs = est[[4, 2, 1], :]
+        obs.time = [180, 60, 0]u"minute"
+        obs.a .+= 0.1u"g"
+        obs.b .+= 0.2u"g"
+        obs.note = fill("observed", 3)
+        est.note = fill("estimated", 4)
+        before = copy(obs), copy(est)
+        points(p, i = 1) = sort(collect(zip(p.opt[:Xs][i], p.opt[:Ys][i])))
+
+        @testset "$backend" for backend in (:Makie, :UnicodePlots)
+            p = visualize(obs, est, :a; index = :time, name = "saved", colors = [:red], backend)
+            @test points(p) == [(0.1, 0), (1.1, 1), (3.1, 3)]
+            @test p.opt[:kinds] == [:scatter, :line]
+            @test p.opt[:colors][1] == :red
+            @test p.opt[:xlim] == p.opt[:ylim] == (0, 4)
+            @test p.opt[:Xs][end] == p.opt[:Ys][end] == [0, 4]
+            q = visualize(obs, VisualizeComparison, :a; index = :time => "context.clock.time", stop = 3, backend)
+            @test points(q) == points(p)
+            @test visualize!(p, obs, est, :a; index = :time) === p
+            @test points(p, 3) == points(p)
+            q = visualize(view(obs, :, :), view(est, :, :), :a; index = :time, backend)
+            @test points(q) == points(p)
+
+            for source in (est, VisualizeComparison)
+                opts = source isa DataFrame ? (; index = :time) : (; index = :time => "context.clock.time", stop = 3)
+                q = visualize(obs, source, [:a, :b]; colors = [:red, :blue], backend, opts...)
+                @test points(q) == points(p)
+                @test points(q, 2) == [(0.2, 0), (2.2, 2), (6.2, 6)]
+                @test q.opt[:colors][1:2] == [:red, :blue]
+            end
+
+            renamed = rename(obs, :time => :hour, :a => :measured)
+            q = visualize(renamed, est, "measured" => "a"; index = "hour" => "time", backend)
+            @test points(q) == points(p)
+            maps = [(; system = VisualizeComparison),
+                (; system = VisualizeComparison, config = VisualizeComparison => :rate => 2)]
+            q = visualize(obs, maps, :a; index = :time => "context.clock.time", stop = 3, backend)
+            @test points(q) == points(p)
+            @test points(q, 2) == [(0.1, 0), (1.1, 2), (3.1, 6)]
+
+            o = DataFrame(id = [1, 1, 2], time = [1, 1, 1]u"hr", a = [10, 10, 20])
+            e = DataFrame(id = [2, 1, 3], time = [60, 60, 60]u"minute", a = [21, 11, 31])
+            q = visualize(o, e, :a; index = [:id, :time], backend)
+            @test points(q) == [(10, 11), (10, 11), (20, 21)]
+            @test_throws ArgumentError visualize(obs, est[1:0, :], :a; index = :time, backend)
+            @test isequal((obs, est), before)
+        end
+    end
+
     @testset "heatmap limits and colorbar" begin
         df = DataFrame(x=[1, 1, 2, 2], y=[1, 2, 1, 2], z=[2., 3., 4., 5.])
         @test_throws ArgumentError visualize(df, :x, :y, :z; backend = :Gadfly)

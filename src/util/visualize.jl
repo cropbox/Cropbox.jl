@@ -170,6 +170,30 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     p
 end
 
+visualize(obs::AbstractDataFrame, est::AbstractDataFrame, y; kw...) = visualize!(nothing, obs, est, y; kw...)
+visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y; name = "", kw...) = visualize!(p, obs, est, [y]; names = [name], kw...)
+visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y::Vector;
+    index, names = nothing, plotopts...
+) = begin
+    Xs, Ys = aligndata(obs, est, y; index)
+    isnothing(names) && (names = [string(o) == string(e) ? "$o" : "$o ⇒ $e" for (o, e) in parsetarget(y, obs)])
+    _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
+end
+
+aligndata(obs, est, y; index) = begin
+    I = parseindex(index, obs)
+    T = parsetarget(y, obs)
+    K = Symbol.(keys(I))
+    O, E = [gensym(:obs) for _ in T], [gensym(:est) for _ in T]
+    # copy only the needed columns, keeping target names distinct across tables
+    obs = DataFrames.select(obs, K, (collect(keys(T)) .=> O)...)
+    est = DataFrames.select(est, (collect(values(I)) .=> K)..., (collect(values(T)) .=> E)...)
+    normalize!(obs, est; on = K)
+    df = DataFrames.innerjoin(obs, est; on = K)
+    isempty(df) && throw(ArgumentError("no matching indices between observations and estimates"))
+    extractarray.(Ref(df), O), extractarray.(Ref(df), E)
+end
+
 visualize(obs::DataFrame, S::Type{<:System}, y::Vector; kw...) = visualize!(nothing, obs, S, y; kw...)
 visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
     index,
@@ -178,22 +202,10 @@ visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
     stop=nothing, snap=nothing,
     names=nothing, plotopts...
 ) = begin
-    #HACK: use copy due to normalize!
-    obs = copy(obs)
     I = parseindex(index, S) |> keys |> collect
-    T = parsetarget(y, S)
-    Yo = T |> keys |> collect
-    Ye = T |> values |> collect
-
+    Ye = parsetarget(y, S) |> values |> collect
     est = simulate(S; config, configs, base, index, target=Ye, stop, snap, verbose=false)
-    normalize!(obs, est, on=I)
-    df = DataFrames.innerjoin(obs, est, on=I)
-    Xs = extractarray.(Ref(df), Yo)
-    Ys = extractarray.(Ref(df), Ye)
-
-    isnothing(names) && (names = [o == e ? "$o" : "$o ⇒ $e" for (o, e) in T])
-
-    _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
+    visualize!(p, obs, est, y; index = I, names, plotopts...)
 end
 
 visualize(obs::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, obs, S, y; kw...)
@@ -206,16 +218,13 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
     stop=nothing, snap=nothing,
     names=nothing, plotopts...
 ) = begin
-    #HACK: use copy due to normalize!
-    obs = copy(obs)
     I = parseindex(index, obs) |> keys |> collect
-    yo, ye = parsetarget(y, obs) |> collect |> only
+    ye = parsetarget(y, obs) |> values |> only
 
     ests = map(m -> simulate(; m..., base, index, target=ye, stop, snap, verbose=false), maps)
-    normalize!(obs, ests..., on=I)
-    dfs = map(est -> DataFrames.innerjoin(obs, est, on=I), ests)
-    Xs = extractarray.(dfs, yo)
-    Ys = extractarray.(dfs, ye)
+    data = [aligndata(obs, est, y; index = I) for est in ests]
+    Xs = [only(X) for (X, Y) in data]
+    Ys = [only(Y) for (X, Y) in data]
 
     isnothing(names) && (names = ["$(m.system)" for m in maps])
 
@@ -236,10 +245,11 @@ _visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, col
     end
     L = [lim[1], lim[2]]
 
-    for (X, Y, name) in zip(Xs, Ys, names)
-        p = plot!(p, X, Y; kind=:scatter, name, xlab, ylab, xlim=lim, ylim=lim, aspect=1, plotopts...)
+    for (X, Y, name, color) in zip(Xs, Ys, names, colors)
+        p = plot!(p, X, Y; kind = :scatter, name, color, xlab, ylab, xlim = lim, ylim = lim, aspect = 1, plotopts...)
     end
-    !isnothing(lim) && plot!(p, L, L, kind=:line, color=:lightgray, name="")
+    color = detectbackend(p) == :UnicodePlots ? :light_gray : :lightgray
+    plot!(p, L, L; kind = :line, color, name = "")
     p
 end
 

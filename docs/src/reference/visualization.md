@@ -23,6 +23,7 @@ The public call families are:
 | `visualize([System1, System2], x, y)` | compare compatible systems |
 | `visualize(df, System, x, y)` | overlay observations and a simulated trajectory |
 | `visualize(obs, System, y; index)` | observation-versus-estimate plot |
+| `visualize(obs, est, y; index)` | compare observations with an already simulated `DataFrame` |
 | `visualize(System, x, y, z)` | two-factor heatmap or contour plot |
 | `visualize!` | append to an existing `Plot` and return the same wrapper |
 
@@ -356,8 +357,8 @@ models on the same observations.
 
 ### Observation versus estimate
 
-Omit the x argument and supply `index`. Cropbox simulates only at matching
-indices, joins observations and estimates, draws points, and adds the 1:1 line.
+Omit the x argument and supply `index`. Cropbox joins observations and estimates
+at matching indices, draws points, and adds the 1:1 line.
 
 ```@example visref
 visualize(observations,
@@ -369,6 +370,30 @@ visualize(observations,
     name = "model",
 )
 ```
+
+A saved simulation table can replace the system argument. No simulation is
+rerun, and neither input table is modified:
+
+```@example visref
+estimates = simulate(VisualTrajectory; target = :mass, stop = 4u"hr")
+visualize(observations, estimates, :measured => :mass;
+    index = :hour => :time,
+    name = "saved model",
+)
+```
+
+Here pairs map observation column names to estimate column names, including
+the `index` columns. Use a single name when the names match, for example
+`visualize(obs, est, :mass; index = :time)`. Both tables may contain unrelated
+columns with the same names. Compatible index units such as hours and minutes
+are converted before matching; rows are matched by index, not by their order.
+Multiple index columns are supported, for example `index = [:site, :time]`.
+Only matched rows are plotted, and an empty match is an error. Duplicate keys
+follow DataFrames' inner-join semantics: every matching pair is included.
+
+Use `visualize!(p, obs, est, y; index, options...)` to append to an existing
+plot. A scalar target uses `name`; a vector of targets uses `names` and
+`colors`, just like the system-based comparison.
 
 A vector target draws one observation-versus-estimate series for each target.
 For several model specifications of one target, pass named tuples with
