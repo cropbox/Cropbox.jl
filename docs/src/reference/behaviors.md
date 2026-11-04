@@ -97,17 +97,90 @@ snapshot rather than a declaration-order-dependent partial update.
 
 ### [`flag`](@id behavior-flag)
 
-Stores a Boolean condition. `once` makes a true event irreversible.
+Stores a Boolean condition. An ordinary flag describes whether a condition is
+true now; `once` records whether it has ever become true during this instance's
+updates.
 
-Supported tags: `parameter`, `override`, `extern`, `once`.
+Supported tags: `parameter`, `override`, `extern`, `once`, `when`.
+
+#### Conditional evaluation and irreversible events
 
 ```julia
-triggered(signal, threshold) => signal >= threshold ~ flag(once)
+active(signal, threshold) => signal >= threshold ~ flag(when = enabled)
+occurred(signal, threshold) => signal >= threshold ~ flag(once, when = enabled)
 ```
+
+For each applicable update, the rules are applied in this order:
+
+1. If `once` is set and the flag is already true, keep true without evaluating
+   its body, regardless of `when`.
+2. Otherwise, if `when` is true, evaluate the body and store its Boolean result.
+3. Otherwise, skip the body and store false. The previous value is not retained
+   by an ordinary flag.
+
+Omitting `when` enables evaluation on every update. A true `when` is an ongoing
+permission to evaluate, not just the instant at which it changes from false to
+true. False results do not consume `once`: evaluation continues on enabled
+updates until the first true result. After that, the flag is latched true and
+its body is no longer evaluated. This is neither a one-update pulse nor a rule
+to evaluate the body just once.
+
+The following sequence distinguishes an input condition from the flags that
+observe it. The input condition can be true while evaluation is disabled.
+
+| Update | `when` | Input condition | `flag(when = enabled)` | `flag(once, when = enabled)` |
+|---|---|---|---|---|
+| 0 | false | false | false | false |
+| 1 | true | false | false | false |
+| 2 | false | true | false | false |
+| 3 | true | true | true | true |
+| 4 | true | false | false | true |
+| 5 | false | true | false | true |
+| 6 | true | true | true | true |
+
+At update 2, the disabled condition cannot trigger either flag. At update 3,
+both become true. The ordinary flag subsequently follows the enabled condition;
+the `once` flag stays true even when the input becomes false or `when` is
+disabled. Skipping this body does not stop other states from updating their own
+values.
+
+Computed flags start internally at false, but `instance` performs an initial
+update: an enabled true condition can therefore make a flag true before
+`instance` returns. The table's update 0 represents that initial evaluation,
+not an extra simulation step.
 
 Use `once` only when the condition itself may later become false but the event
 must remain recorded. A monotonic threshold such as accumulated thermal time
 normally needs only `flag`.
+
+#### Initial values, opposite polarity, and lifetime
+
+`flag` deliberately does not accept `init`. For an ordinary computed flag,
+`when = false` always means false, matching `track::Bool` without an `init`.
+Use `track::Bool(init = ..., when = ...)` if a configurable fallback value is
+needed without irreversible event memory.
+
+To express "true until the first failure, then always false", remember the
+failure and derive its complement:
+
+```julia
+failed(signal, threshold) => signal < threshold ~ flag(once, when = enabled)
+valid(failed) => !failed ~ flag
+```
+
+`valid` stays true until an enabled evaluation detects failure. It then stays
+false, even if the signal recovers or evaluation is disabled. This records a
+failure event rather than changing the direction of `once`.
+
+The memory belongs to the model instance. Setting `when` to false does not
+reset it, and advancing to another calendar year does not reset it either. A
+fresh instance has fresh flag state; a model spanning repeated seasons needs to
+represent its cycle boundaries explicitly.
+
+These update rules concern computed flags. A `parameter` flag retains its
+configured value or declared parameter default, and an `override` flag is not
+updated by this declaration. Adding `when` or `once` does not change those
+ownership rules.
 
 ### [`remember`](@id behavior-remember)
 
@@ -117,12 +190,35 @@ that update, and then preserves the captured value.
 Supported tags: `init`, `when`, `unit`.
 
 ```julia
-maturity_date(date) ~ remember(when = mature)
+mass_at_maturity(mass) ~ remember(when = mature, u"g")
 ```
 
 Without `init`, the stored value starts at zero in the declared type and unit.
 `when` should name the event that performs the one-time capture. After capture,
 later changes in the body and condition do not change the remembered value.
+
+Unlike `flag(once)`, `remember` captures a value, not necessarily a true result.
+For example, `remember::Bool` also freezes a captured false value. To record the
+same Boolean event history as a latched flag, capture the constant true when a
+separate condition first becomes true:
+
+```julia
+eligible(signal, threshold) => signal >= threshold ~ flag
+occurred => true ~ remember::Bool(when = eligible)
+```
+
+Here `occurred` has the same value history as `flag(once)` with that condition,
+but the separate `eligible` flag continues updating after capture. To record
+the signal's value at the event instead, capture `signal` rather than true.
+
+For ordinary computed states, the distinction is:
+
+| Behavior | When evaluation is enabled | When `when` is false |
+|---|---|---|
+| `track` | Recompute the body. | Store `init`, or zero if absent. |
+| `flag` | Recompute the Boolean body. | Store false. |
+| `flag(once)` | Evaluate until the first true result, then keep true. | Store false before the event; keep true after it. |
+| `remember` | Capture the body on the first enabled update only. | Keep the captured value, or `init`/zero before capture. |
 
 ## Time and numerical change
 
@@ -386,7 +482,7 @@ row is rejected during `@system` expansion.
 |---|---|
 | `preserve` | `parameter`, `optional`, `override`, `extern`, `ref`, `min`, `max`, `round`, `unit` |
 | `track` | `override`, `extern`, `ref`, `skip`, `init`, `when`, `min`, `max`, `round`, `unit` |
-| `flag` | `parameter`, `override`, `extern`, `once` |
+| `flag` | `parameter`, `override`, `extern`, `once`, `when` |
 | `remember` | `init`, `when`, `unit` |
 | `accumulate` | `init`, `time`, `timeunit`, `reset`, `when`, `min`, `max`, `unit` |
 | `capture` | `time`, `timeunit`, `when`, `unit` |
@@ -422,9 +518,11 @@ system boundaries and document who supplies the value.
 
 - `init`: starting value or starting index, depending on the behavior.
 - `when`: supply a Boolean condition whose effect depends on the behavior;
-  `track` falls back to `init` or zero, cumulative behaviors use a zero rate,
-  `remember` captures once, and `produce` gates child requests.
-- `once`: prevent a `flag` from returning to false.
+  `track` falls back to `init` or zero, `flag` falls back to false unless already
+  latched true by `once`, cumulative behaviors use a zero rate, `remember`
+  captures once, and `produce` gates child requests.
+- `once`: evaluate an enabled `flag` until its first true result, then retain
+  true without evaluating the body, regardless of later `when` values.
 - `reset`: return an accumulator to its `init` value on the next update when
   the tag expression is true.
 - `skip`: omit a tracked field from ordinary update traversal where the model
