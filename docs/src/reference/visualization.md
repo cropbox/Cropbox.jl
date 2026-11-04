@@ -177,7 +177,7 @@ visualize!(p, 2, 4, "Reference\nline"; align=:center)
 ```
 
 `linestyle` accepts `:solid` (the default), `:dash`, `:dot`, `:dashdot`, and
-`:dashdotdot`. UnicodePlots draws solid lines and warns when another style is
+`:dashdotdot`, or a vector with one style per y series. UnicodePlots draws solid lines and warns when another style is
 requested. Text uses data coordinates and the existing axis units, converting
 compatible unitful values. It does not change the axis limits or add a legend
 entry. `align` accepts `:left` (the default), `:center`, and `:right`.

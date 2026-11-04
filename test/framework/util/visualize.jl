@@ -48,8 +48,21 @@ using DataFrames
         @test p.opt[:axis].scene.plots[end].linestyle[].value == [0, 1, 3]
         @test occursin("data:image/png;base64,", repr(MIME"text/html"(), p))
 
+        p = visualize([0, 4], [[0, 4], [4, 0]]; backend = :Makie, kind = :line, linestyle = [:solid, :dot])
+        @test p.opt[:axis].scene.plots[1].linestyle[].value == [0]
+        @test p.opt[:axis].scene.plots[2].linestyle[].value == [0, 1, 3]
+        @test_throws ArgumentError visualize([0, 4], [[0, 4], [4, 0]]; linestyle = [:solid])
+
         p = visualize([0, 4], [0, 4]; backend=:UnicodePlots, kind=:line)
         @test_logs (:warn, r"renders line style dot as a solid line") visualize!(p, [0, 4], [4, 0]; kind=:line, linestyle=:dot)
+    end
+
+    @testset "single date" begin
+        for t in (Cropbox.Dates.Date(2026, 1, 1), Cropbox.Dates.DateTime(2026, 1, 1))
+            p = visualize(DataFrame(time = [t], y = [1]), :time, :y; backend = :Makie)
+            @test p.opt[:xlim] == (t - Cropbox.Dates.Day(1), t + Cropbox.Dates.Day(1))
+            @test occursin("<svg", repr(MIME"image/svg+xml"(), p))
+        end
     end
 
     @testset "heatmap limits and colorbar" begin

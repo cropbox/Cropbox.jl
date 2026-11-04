@@ -10,6 +10,7 @@ const FieldAccessError = isdefined(Base, :FieldError) ? getfield(Base, :FieldErr
         include("framework/system.jl")
         include("framework/unit.jl")
         include("framework/config.jl")
+        include("framework/webapi.jl")
         include("framework/graph.jl")
         include("framework/util.jl")
     end
