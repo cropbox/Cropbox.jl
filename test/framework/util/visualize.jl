@@ -57,6 +57,12 @@ using DataFrames
         @test_logs (:warn, r"renders line style dot as a solid line") visualize!(p, [0, 4], [4, 0]; kind=:line, linestyle=:dot)
     end
 
+    @testset "UnicodePlots colors" for color in (:red, (255, 0, 0))
+        p = visualize([0, 1], [0, 1]; backend = :UnicodePlots, color)
+        @test visualize!(p, [0, 1], [1, 0]; color = 1) === p
+        @test p.opt[:colors] == [color, color]
+    end
+
     @testset "single date" begin
         for t in (Cropbox.Dates.Date(2026, 1, 1), Cropbox.Dates.DateTime(2026, 1, 1))
             p = visualize(DataFrame(time = [t], y = [1]), :time, :y; backend = :Makie)
