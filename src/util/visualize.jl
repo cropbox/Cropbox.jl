@@ -180,20 +180,6 @@ visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y::Vector;
     _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
 end
 
-aligndata(obs, est, y; index) = begin
-    I = parseindex(index, obs)
-    T = parsetarget(y, obs)
-    K = Symbol.(keys(I))
-    O, E = [gensym(:obs) for _ in T], [gensym(:est) for _ in T]
-    # copy only the needed columns, keeping target names distinct across tables
-    obs = DataFrames.select(obs, K, (collect(keys(T)) .=> O)...)
-    est = DataFrames.select(est, (collect(values(I)) .=> K)..., (collect(values(T)) .=> E)...)
-    normalize!(obs, est; on = K)
-    df = DataFrames.innerjoin(obs, est; on = K)
-    isempty(df) && throw(ArgumentError("no matching indices between observations and estimates"))
-    extractarray.(Ref(df), O), extractarray.(Ref(df), E)
-end
-
 visualize(obs::DataFrame, S::Type{<:System}, y::Vector; kw...) = visualize!(nothing, obs, S, y; kw...)
 visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
     index,
@@ -232,6 +218,7 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
 end
 
 _visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...) = begin
+    Xs, Ys = convertcolumn.(Xs), convertcolumn.(Ys)
     isnothing(xlab) && (xlab = "Observation")
     isnothing(ylab) && (ylab = "Model")
 

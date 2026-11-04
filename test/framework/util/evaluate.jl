@@ -13,6 +13,7 @@ using DataFrames
             sum(E .- O)
         end
         @test evaluate(obs, est; index=:time, target=:mass, metric) == 4.0
+        @test evaluate(obs, est; target = :mass, metric) == 4.0
 
         # Symmetric errors do not reveal a reversal; these denominators do.
         expected = (
@@ -59,6 +60,40 @@ using DataFrames
         obs_nan = DataFrame(time=[1], mass=[10.0])
         est_nan = DataFrame(time=[1], mass=[NaN])
         @test isnan(evaluate(obs_nan, est_nan; index=:time, target=:mass))
+    end
+
+    @testset "index alignment and input preservation" begin
+        obs = DataFrame(hour = [1, 2, 3]u"hr", mass = [10.0, 20.0, 30.0], note = fill("observed", 3))
+        est = DataFrame(time = [180, 60, 240]u"minute", predicted = [33.0, 11.0, 999.0], note = fill("estimated", 3))
+        before = copy(obs), copy(est)
+        target = :mass => :predicted
+        for index in (:hour => :time, "hour" => "time")
+            @test evaluate(obs, est; index, target, metric = :mae) == 2.0
+            @test evaluate(view(obs, :, :), view(est, :, :); index, target, metric = :mae) == 2.0
+        end
+        @test evaluate(rename(obs, :hour => :time), est; target, metric = :mae) == 2.0
+        @test isequal((obs, est), before)
+
+        o = DataFrame(site = [1, 2], time = [1, 1]u"hr", mass = [10.0, 20.0])
+        e = DataFrame(site = [2, 1], t = [60, 60]u"minute", mass = [22.0, 11.0])
+        @test evaluate(o, e; index = [:site, :time => :t], target = :mass, metric = :mae) == 1.5
+    end
+
+    @testset "complete matching rows" begin
+        obs = DataFrame(time = 1:3, a = [1, 2, 3], b = [10, missing, 30])
+        est = DataFrame(time = 1:3, a = [2, 100, 5], b = [11, 22, 33])
+        @test evaluate(obs, est; target = [:a, :b], metric = (E, O) -> sum(E .- O)) == (3, 4)
+        @test_throws ArgumentError evaluate(obs, est[1:0, :]; target = :a)
+        @test_throws ArgumentError evaluate(obs[1:1, :], est[3:3, :]; target = :a)
+        @test_throws ArgumentError evaluate(obs[2:2, :], est; target = :b)
+    end
+
+    @testset "target types" begin
+        T = Cropbox.TimeZones
+        t = T.ZonedDateTime(2026, 1, 1, T.TimeZone("UTC"))
+        obs = DataFrame(time = [1], event = [t])
+        est = DataFrame(time = [1], event = [T.astimezone(t, T.TimeZone("Asia/Seoul"))])
+        @test evaluate(obs, est; target = :event, metric = (E, O) -> only(E) - only(O)) == Cropbox.Dates.Millisecond(0)
     end
 
     @testset "system and two-table agreement" begin
