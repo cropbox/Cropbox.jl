@@ -38,7 +38,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         n = length(colors)
         C = collect(Iterators.take(Iterators.cycle(UnicodePlots.COLOR_CYCLE[]), n+n0))[n0+begin:end]
         f(c::Int, _) = p.opt[:colors][c]
-        f(c, _) = c in keys(UnicodePlots.color_encode) ? c : :normal
+        f(c, _) = c
         f(::Nothing, i) = C[i]
         [f(c, i) for (i, c) in enumerate(colors)]
     end
