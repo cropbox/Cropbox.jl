@@ -132,6 +132,7 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
         ax.yticks = (1:length(cats), string.(cats))
     end
     for i in 1:n
+        style = linestyle isa AbstractVector ? linestyle[i] : linestyle
         c = isempty(colors) ? nothing : colors[i]
         color = isnothing(c) ? palette[mod1(n0 + i, length(palette))] :
             c isa Integer ? p.opt[:colors][c] : c
@@ -139,7 +140,7 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
         Y = kind in (:hline, :vline) ? [] : Ys[i]
         if kind in (:hline, :vline)
             draw! = kind == :hline ? Makie.hlines! : Makie.vlines!
-            obj = draw!(ax, X; color, linestyle)
+            obj = draw!(ax, X; color, linestyle = style)
         else
             y = isnothing(cats) ? coalesce.(Y, NaN) : Int.(indexin(Y, cats))
             order = kind == :scatter ? eachindex(X) : sortperm(X)
@@ -147,11 +148,11 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
             obj = if kind == :scatter
                 Makie.scatter!(ax, x, y; color)
             elseif kind == :step
-                Makie.stairs!(ax, x, y; color, linestyle, step = :post)
+                Makie.stairs!(ax, x, y; color, linestyle = style, step = :post)
             elseif kind == :scatterline
-                Makie.scatterlines!(ax, x, y; color, linestyle)
+                Makie.scatterlines!(ax, x, y; color, linestyle = style)
             else
-                Makie.lines!(ax, x, y; color, linestyle)
+                Makie.lines!(ax, x, y; color, linestyle = style)
             end
         end
         if !isempty(name)

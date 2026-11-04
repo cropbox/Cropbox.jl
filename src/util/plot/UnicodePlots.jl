@@ -32,7 +32,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
     end
 
     !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
-    linestyle != :solid && @warn "UnicodePlots renders line style $linestyle as a solid line"
+    all(==(:solid), linestyle isa AbstractVector ? linestyle : (linestyle,)) || @warn "UnicodePlots renders line style $linestyle as a solid line"
 
     create_colors(colors; n0=0) = begin
         n = length(colors)

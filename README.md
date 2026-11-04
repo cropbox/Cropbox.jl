@@ -22,6 +22,8 @@ Cropbox is a declarative modeling framework specifically designed for developing
 
 ## Tutorials
 
+- [Web services and dashboards](examples/webapi/README.md): runnable model services, HTTP API calls, and an optional MCP adapter
+
 - Cropbox Workshop: [2021](https://github.com/cropbox/cropbox-workshop-2021), [2022](https://github.com/cropbox/cropbox-workshop-2022), [2025](https://github.com/cropbox/cropbox-workshop-2025) (Korea), [2022](https://github.com/cropbox/cropbox-workshop-2022-tw) (Taiwan)
 - [UW SEFS 508](https://github.com/uwkimlab/plant_modeling) -- "Plant Modeling" course at University of Washington
 - [Cropbox Tutorial](https://github.com/cropbox/cropbox-tutorial-KSAFM2020) presented at [KSAFM](http://www.ksafm.org/en/) 2020 Workshop

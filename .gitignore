@@ -1,3 +1,5 @@
 Manifest.toml
 deps/build.log
 docs/build/
+__pycache__/
+.venv/

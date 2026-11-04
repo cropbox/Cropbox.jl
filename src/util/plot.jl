@@ -60,7 +60,10 @@ findlim(array::Vector{<:Number}) = begin
     #HACK: avoid empty range
     l == u ? (l-1, l+1) : (l, u)
 end
-findlim(array) = extrema(skipmissing(array))
+findlim(array) = begin
+    l, u = extrema(skipmissing(array))
+    l == u && l isa Union{Dates.Date,Dates.DateTime} ? (l - Dates.Day(1), u + Dates.Day(1)) : (l, u)
+end
 
 label(l, u) = begin
     l = isnothing(l) ? "" : l
@@ -177,8 +180,10 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     aspect=nothing,
     backend=nothing,
 ) = begin
-    linestyle in (:solid, :dash, :dot, :dashdot, :dashdotdot) ||
+    all(s -> s in (:solid, :dash, :dot, :dashdot, :dashdotdot), linestyle isa AbstractVector ? linestyle : (linestyle,)) ||
         throw(ArgumentError("unsupported line style: $linestyle"))
+    linestyle isa AbstractVector && length(linestyle) != length(Ys) &&
+        throw(ArgumentError("line styles must contain one entry per y variable"))
     backend = plotbackend(p, backend)
     isnothing(legendpos) && (legendpos = getplotopt(p, :legendpos))
     u(a) = extractunit(a)
