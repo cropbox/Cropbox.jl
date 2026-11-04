@@ -97,6 +97,7 @@ visualize!(p, S::Type{<:System}, x, y;
         legend!(k, T)
         string.(v)
     end
+    checklengths(n; names, colors)
     isnothing(colors) && (colors = repeat([nothing], n))
     isnothing(ylab) && (ylab = y)
 
@@ -113,6 +114,7 @@ end
 visualize(SS::Vector, x, y; kw...) = visualize!(nothing, SS, x, y; kw...)
 visualize!(p, SS::Vector, x, y; configs=[], names=nothing, colors=nothing, kw...) = begin
     n = length(SS)
+    checklengths(n; names, colors)
     isempty(configs) && (configs = repeat([()], n))
     @assert length(configs) == n
     isnothing(names) && (names = string.(nameof.(SS)))
@@ -156,6 +158,7 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
     isnothing(yunit) && (yunit = u(yo))
 
     n = length(SS)
+    checklengths(n; names, colors)
     isempty(configs) && (configs = repeat([()], n))
     @assert length(configs) == n
     isnothing(names) && (names = string.(nameof.(SS)))
@@ -236,6 +239,7 @@ _visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, col
     isnothing(ylab) && (ylab = "Model")
 
     n = length(Ys)
+    checklengths(n; names, colors)
     isnothing(names) && (names = repeat([""], n))
     isnothing(colors) && (colors = repeat([nothing], n))
 

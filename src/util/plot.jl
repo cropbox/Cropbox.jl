@@ -53,7 +53,7 @@ extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(a)
 extractarray(df::DataFrame, n) = convertcolumn(extractcolumn(df, n))
 
-findlim(array::Vector{<:Number}) = begin
+findlim(array::Vector{<:Union{Number,Missing}}) = begin
     a = skipmissing(array)
     l = isempty(a) ? 0 : floor(minimum(a))
     u = isempty(a) ? 0 : ceil(maximum(a))
@@ -68,6 +68,12 @@ end
 label(l, u) = begin
     l = isnothing(l) ? "" : l
     hasunit(u) ? "$l ($u)" : "$l"
+end
+
+checklengths(n; kw...) = begin
+    for (k, v) in kw
+        isnothing(v) || length(v) == n || throw(ArgumentError("$k must contain $n entries (one per series)"))
+    end
 end
 
 detectbackend() = begin
@@ -120,6 +126,7 @@ plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=n
     Ys = arr.(ys)
 
     n = length(Ys)
+    checklengths(n; names, colors)
     xlab = isnothing(xlab) ? x : xlab
     ylab = isnothing(ylab) ? "" : ylab
     names = isnothing(names) ? repeat([nothing], n) : names
@@ -180,6 +187,8 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     aspect=nothing,
     backend=nothing,
 ) = begin
+    n = length(Ys)
+    checklengths(n; names, colors)
     all(s -> s in (:solid, :dash, :dot, :dashdot, :dashdotdot), linestyle isa AbstractVector ? linestyle : (linestyle,)) ||
         throw(ArgumentError("unsupported line style: $linestyle"))
     linestyle isa AbstractVector && length(linestyle) != length(Ys) &&
@@ -211,7 +220,6 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
         end
     end
 
-    n = length(Ys)
     xlab = label(xlab, xunit)
     ylab = label(ylab, yunit)
     if legend === false
