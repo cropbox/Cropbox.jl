@@ -102,11 +102,13 @@ visualize!(p, S::Type{<:System}, x, y;
     isnothing(ylab) && (ylab = y)
 
     s(c) = simulate(S; base, target=[x, y], configs=@config(c + !xstep), stop, snap, verbose=false)
-    r = s(C[1])
-    p = plot!(p, r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
-    for i in 2:n
-        r = s(C[i])
-        p = plot!(p, r, x, y; name=names[i], color=colors[i], plotopts...)
+    data = (s(c) for c in C)
+    if isnothing(p) && plotbackend(p, get(plotopts, :backend, nothing)) == :UnicodePlots
+        data = collect(data)
+    end
+    limits = groupplotlimits(p, data, x, [y]; plotopts...)
+    for (i, r) in enumerate(data)
+        p = plot!(p, r, x, y; ylab, legend, name = names[i], color = colors[i], plotopts..., limits...)
     end
     p
 end

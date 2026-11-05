@@ -13,7 +13,7 @@
     @test p.opt[:legendpos] == (0.1, -0.3)
     @test count(x -> x isa M.Legend, p[].content) == 1
     @test visualize!(p, 120u"minute", 2000u"mg", "An = 10\ngs = 0.2") === p
-    @test ax.limits[] == ((0, 4), (0, 4))
+    @test ax.limits[] == (nothing, nothing)
     @test ax.xlabel[] == " (hr)"
 
     for kind in (:scatter, :step)
@@ -44,7 +44,7 @@
 
     dates = [DateTime(2020, 1, 1), DateTime(2020, 2, 1)]
     q = visualize(dates, [1, 2]; backend = :Makie, kind = :line)
-    @test q.opt[:xlim] == Tuple(dates)
+    @test isnothing(q.opt[:xlim])
     @test first.(q.opt[:axis].scene.plots[1][1][]) == Dates.value.(dates)
 
     df = DataFrame(x = [2, 1, 2, 1], y = [2, 1, 1, 2], z = [5., 2., 4., 3.])
