@@ -161,8 +161,9 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
         end
         update!(p; Xs = [X], Ys = [Y], kinds = [kind], colors = [color], names = [name])
     end
-    Makie.xlims!(ax, p.opt[:xlim]...)
-    Makie.ylims!(ax, isnothing(cats) ? p.opt[:ylim] : (0.8, length(cats) + 0.2))
+    p.opt[:xlim], p.opt[:ylim] = xlim, ylim
+    Makie.xlims!(ax, xlim...)
+    Makie.ylims!(ax, isnothing(cats) ? ylim : (0.8, length(cats) + 0.2))
     any(!isempty, names) && legend!(p)
     p
 end
