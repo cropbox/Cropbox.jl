@@ -94,6 +94,11 @@ Passing several `y` columns draws several series. `names` controls their legend
 labels; `legend` is the legend title, not a Boolean switch for individual
 series.
 
+Provide one entry per series in `names` and `colors`, or leave them as `nothing`
+to use the defaults. A mismatched length raises an `ArgumentError` instead of
+silently omitting series. This also applies to grouped curves and model
+comparisons.
+
 ```@example visref
 visualize(series, :hour, [:observed, :smooth];
     kind = :line,

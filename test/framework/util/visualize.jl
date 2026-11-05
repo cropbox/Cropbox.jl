@@ -71,6 +71,54 @@ using DataFrames
         end
     end
 
+    @testset "constant and missing values" for backend in (:Makie, :UnicodePlots)
+        for (Y, lim) in (([1.0, missing], (0, 2)), ([1.5, missing], (1, 2)),
+            (Union{Missing,Float64}[missing, missing], (-1, 1)), ([1u"g", missing], (0, 2)))
+            p = visualize([0, 1], Y; backend)
+            @test p.opt[:ylim] == lim
+            @test isequal(coalesce.(p.opt[:Ys][1], NaN), coalesce.(Cropbox.deunitfy(Y), NaN))
+            backend == :Makie && show(IOBuffer(), MIME"image/png"(), p)
+        end
+    end
+
+    @testset "series option lengths" begin
+        @system VisualizeOptions(Controller) begin
+            x => 1 ~ preserve(parameter)
+            y(x) => 2x ~ track
+            z(x) => 3x ~ track
+        end
+        df = DataFrame(x = [1, 2], y = [2, 4], z = [3, 6])
+        systems = [VisualizeOptions, VisualizeOptions]
+        maps = [(; system = S) for S in systems]
+        group = VisualizeOptions => :x => [1, 2]
+        @testset "$backend" for backend in (:Makie, :UnicodePlots)
+            cases = (
+                arrays = opts -> visualize(df.x, [df.y, df.z]; backend, opts...),
+                dataframe = opts -> visualize(df, :x, [:y, :z]; backend, opts...),
+                systems = opts -> visualize(systems, :x, :y; backend, opts...),
+                grouped = opts -> visualize(VisualizeOptions, :x, :y; group, backend, opts...),
+                overlay = opts -> visualize(df, systems, :x, :y; backend, opts...),
+                comparison = opts -> visualize(df, df, [:y, :z]; index = :x, backend, opts...),
+                model = opts -> visualize(df, VisualizeOptions, [:y, :z]; index = :x, backend, opts...),
+                maps = opts -> visualize(df, maps, :y; index = :x, backend, opts...),
+            )
+            @testset "$name" for (name, f) in pairs(cases)
+                for n in (0, 1, 3), opts in ((; names = fill("series", n)), (; colors = fill(:red, n)))
+                    @test_throws ArgumentError f(opts)
+                end
+                @test length(f((; names = ["a", "b"], colors = [:red, :blue])).opt[:Ys]) ==
+                    (name in (:comparison, :model, :maps, :overlay) ? 3 : 2)
+            end
+            p = visualize(VisualizeOptions, :x, :y; group, names = :x, backend)
+            @test length(p.opt[:Ys]) == 2
+            for opts in ((; names = ["short"]), (; colors = [:red]))
+                @test_throws ArgumentError visualize!(p, df, :x, [:y, :z]; opts...)
+                @test length(p.opt[:Ys]) == 2
+            end
+            @test_throws ArgumentError visualize(df.x, [df.y, df.z]; names = ["short"], legend = false, backend)
+        end
+    end
+
     @testset "stored estimates" begin
         @system VisualizeComparison(Controller) begin
             rate => 1 ~ preserve(parameter, u"g/hr")
