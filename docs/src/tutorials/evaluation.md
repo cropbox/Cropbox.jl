@@ -36,6 +36,13 @@ evaluate(obs, est;
 The pair maps an observation column to an estimate column. Rows are joined by
 the index rather than assumed to be in the same order.
 
+For two tables, omitting `index` uses their `:time` columns. When index names
+differ, use a pair such as `index = :hour => :time`; compatible units are
+normalized without modifying either input. DataFrame views are also accepted.
+Unmatched rows are excluded, as are rows missing any of the requested targets.
+If no complete matching rows remain, evaluation raises an `ArgumentError`
+instead of returning a score. Non-finite values such as `NaN` are not dropped.
+
 ## Choose a metric
 
 RMSE and MAE are convenient starting points. Both the two-table and system

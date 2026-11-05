@@ -1,55 +1,7 @@
 using DataStructures: OrderedDict
 import DataFrames
-using StatsBase: StatsBase, mean
 import Random
 import BlackBoxOptim
-
-metricfunc(metric::Symbol) = begin
-    if metric == :rmse
-        (E, O) -> √mean((E .- O).^2)
-    elseif metric == :nrmse
-        (E, O) -> √mean((E .- O).^2) / mean(O)
-    elseif metric == :rmspe
-        (E, O) -> √mean(((E .- O) ./ O).^2)
-    elseif metric == :mae
-        (E, O) -> mean(abs.(E .- O))
-    elseif metric == :mape
-        (E, O) -> mean(abs.((E .- O) ./ O))
-    # Nash-Sutcliffe model efficiency coefficient (NSE)
-    elseif metric == :ef
-        (E, O) -> 1 - sum((E .- O).^2) / sum((O .- mean(O)).^2)
-    # Willmott's refined index of agreement (d_r)
-    elseif metric == :dr
-        (E, O) -> let a = sum(abs.(E .- O)),
-            b = 2sum(abs.(O .- mean(O)))
-            a <= b ? 1 - a/b : b/a - 1
-        end
-    else
-        error("unsupported metric: $metric")
-    end
-end
-metricfunc(metric) = metric
-
-#HACK: handle index columns with non-identical, but compatible units
-# https://github.com/JuliaData/DataFrames.jl/issues/2486
-normalize!(dfs::DataFrame...; on) = begin
-    n = length(dfs)
-    is(i::Symbol) = repeat([i], n)
-    is(i) = collect(i)
-    for i in on
-        cols = getindex.(dfs, !, is(i))
-        elts = eltype.(cols)
-        t = promote_type(elts...)
-        for (d, c, e) in zip(dfs, cols, elts)
-            e != t && setindex!(d, convert.(t, c), !, i)
-        end
-    end
-end
-
-indexequal(a, b) = isequal(a, b)
-indexequal(a::Number, b::Number) = isequal(promote(a, b)...)
-indexequal(a::Tuple, b::Tuple) = length(a) == length(b) && all(indexequal(x, y) for (x, y) in zip(a, b))
-indexcontains(x, xs) = any(y -> indexequal(x, y), xs)
 
 """
     calibrate(S, obs; <keyword arguments>) -> Config | OrderedDict
