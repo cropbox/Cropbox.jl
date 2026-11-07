@@ -3,7 +3,7 @@
 
 Declarative crop modeling framework. https://github.com/cropbox/Cropbox.jl
 
-See also: [`@system`](@ref), [`@config`](@ref), [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref), [`visualize`](@ref), [`manipulate`](@ref), [`describe`](@ref), [`serve`](@ref), [`dashboard`](@ref)
+See also: [`@system`](@ref), [`@config`](@ref), [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref), [`analyze`](@ref), [`visualize`](@ref), [`manipulate`](@ref), [`describe`](@ref), [`serve`](@ref), [`dashboard`](@ref)
 """
 module Cropbox
 
@@ -26,6 +26,7 @@ include("system/thermaltime.jl")
 include("util/simulate.jl")
 include("util/evaluate.jl")
 include("util/calibrate.jl")
+include("util/analyze.jl")
 include("util/gather.jl")
 include("util/color.jl")
 include("util/dive.jl")
