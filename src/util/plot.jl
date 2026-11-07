@@ -38,20 +38,20 @@ For terminal plots, create the visualization with `backend = :Makie` first.
 writeimage(::AbstractString, p::Plot; kw...) =
     throw(ArgumentError("image export is not supported for $(detectbackend(p)); use backend = :Makie"))
 
-extractcolumn(df::DataFrame, n::Symbol) = df[!, n]
-extractcolumn(df::DataFrame, n::String) = extractcolumn(df, Symbol(n))
-extractcolumn(df::DataFrame, n::Expr) = begin
+extractcolumn(df::AbstractDataFrame, n::Symbol) = df[!, n]
+extractcolumn(df::AbstractDataFrame, n::String) = extractcolumn(df, Symbol(n))
+extractcolumn(df::AbstractDataFrame, n::Expr) = begin
     ts(x) = x isa Symbol ? :(df[!, $(Meta.quot(x))]) : x
     te(x) = @capture(x, f_(a__)) ? :($f($(ts.(a)...))) : x
     #HACK: avoid world age problem for function scope eval
     e = Main.eval(:(df -> @. $(MacroTools.postwalk(te, n))))
     (() -> @eval $e($df))()
 end
-convertcolumn(c::Vector{ZonedDateTime}) = Dates.DateTime.(c)
+convertcolumn(c::AbstractVector{ZonedDateTime}) = Dates.DateTime.(c)
 convertcolumn(c) = c
-extractunit(df::DataFrame, n) = extractunit(extractcolumn(df, n))
+extractunit(df::AbstractDataFrame, n) = extractunit(extractcolumn(df, n))
 extractunit(a) = unittype(a)
-extractarray(df::DataFrame, n) = convertcolumn(extractcolumn(df, n))
+extractarray(df::AbstractDataFrame, n) = collect(convertcolumn(extractcolumn(df, n)))
 
 findlim(array::Vector{<:Union{Number,Missing}}) = begin
     a = skipmissing(array)
@@ -63,6 +63,34 @@ end
 findlim(array) = begin
     l, u = extrema(skipmissing(array))
     l == u && l isa Union{Dates.Date,Dates.DateTime} ? (l - Dates.Day(1), u + Dates.Day(1)) : (l, u)
+end
+
+plotlimit(f, p, key, lim) = begin
+    auto = isnothing(lim) && getplotopt(p, Symbol(key, :auto), true)
+    old = getplotopt(p, key)
+    if isnothing(lim)
+        if !isnothing(old) && (!auto || detectbackend(p) == :UnicodePlots)
+            lim = old
+        else
+            lim = f()
+            isnothing(old) || (lim = (min(old[1], lim[1]), max(old[2], lim[2])))
+        end
+    end
+    lim, auto
+end
+
+groupplotlimits(p, data, x, ys;
+    backend = nothing, xunit = nothing, yunit = nothing, xlim = nothing, ylim = nothing, kw...
+) = begin
+    # the terminal canvas needs the complete range before drawing.
+    (!isnothing(p) || plotbackend(p, backend) != :UnicodePlots) && return (;)
+    df = data isa AbstractDataFrame ? data : reduce(vcat, data)
+    X, Ys = extractarray(df, x), [extractarray(df, y) for y in ys]
+    isnothing(xunit) && (xunit = extractunit(X))
+    isnothing(yunit) && (yunit = promoteunit(extractunit.(Ys)...))
+    isnothing(xlim) && (xlim = findlim(deunitfy(X, xunit)))
+    isnothing(ylim) && (ylim = findlim(vcat(deunitfy.(Ys, yunit)...)))
+    (; xlim, ylim)
 end
 
 label(l, u) = begin
@@ -107,8 +135,8 @@ Plot a graph from provided data source. The type of graph is selected based on a
 
 See also: [`plot!`](@ref), [`visualize`](@ref)
 """
-plot(df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot(df, x, [y]; names=[name], colors=[color], kw...)
-plot(df::DataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
+plot(df::AbstractDataFrame, x, y; name=nothing, color=nothing, kw...) = plot(df, x, [y]; names=isnothing(name) ? nothing : [name], colors=isnothing(color) ? nothing : [color], kw...)
+plot(df::AbstractDataFrame, x, ys::Vector; kw...) = plot!(nothing, df, x, ys; kw...)
 """
     plot!(p, <arguments>; <keyword arguments>) -> Plot
 
@@ -119,8 +147,28 @@ See also: [`plot`](@ref)
 # Arguments
 - `p::Union{Plot,Nothing}`: plot object to be updated; `nothing` creates a new plot.
 """
-plot!(p::Union{Plot,Nothing}, df::DataFrame, x, y; name=nothing, color=nothing, kw...) = plot!(p, df, x, [y]; names=[name], colors=[color], kw...)
-plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, kw...) = begin
+plot!(p::Union{Plot,Nothing}, df::AbstractDataFrame, x, y; name=nothing, color=nothing, kw...) = plot!(p, df, x, [y]; names=isnothing(name) ? nothing : [name], colors=isnothing(color) ? nothing : [color], kw...)
+plot!(p::Union{Plot,Nothing}, df::AbstractDataFrame, x, ys::Vector;
+    group = nothing, xlab = nothing, ylab = nothing, legend = nothing, names = nothing, colors = nothing, kw...
+) = begin
+    if !isnothing(group)
+        groups = DataFrames.groupby(df, group; sort = false)
+        isempty(groups) && throw(ArgumentError("no groups to visualize"))
+        n = length(ys)
+        count = length(groups) * n
+        names isa Symbol && (names = fill(names, count))
+        checklengths(count; names, colors)
+        labels = [join((v isa AbstractString ? v : repr(deunitfy(v), context = :compact => true) for v in Tuple(k)), ", ") for k in keys(groups)]
+        isnothing(names) && (names = [n == 1 ? l : "$l: $y" for l in labels for y in ys])
+        isnothing(colors) && (colors = fill(nothing, count))
+        isnothing(legend) && (legend = join([label(k, extractunit(df, k)) for k in propertynames(first(keys(groups)))], ", "))
+        limits = groupplotlimits(p, df, x, ys; kw...)
+        for (i, d) in enumerate(groups)
+            ii = (i - 1) * n + 1:i * n
+            p = plot!(p, d, x, ys; xlab, ylab, legend, names = names[ii], colors = colors[ii], kw..., limits...)
+        end
+        return p
+    end
     arr(n) = extractarray(df, n)
     X = arr(x)
     Ys = arr.(ys)
@@ -135,7 +183,7 @@ plot!(p::Union{Plot,Nothing}, df::DataFrame, x, ys::Vector; xlab=nothing, ylab=n
     names = [n isa Symbol ? repr(deunitfy(only(unique(df[!, n]))), context=:compact=>true) : n for n in names]
     colors = isnothing(colors) ? repeat([nothing], n) : colors
 
-    plot!(p, X, Ys; xlab, ylab, names, colors, kw...)
+    plot!(p, X, Ys; xlab, ylab, legend, names, colors, kw...)
 end
 
 """
@@ -205,10 +253,16 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     X = arr(X, kind == :hline ? yunit : xunit)
     Ys = arr.(Ys, yunit)
 
-    isnothing(xlim) && (xlim = findlim(X))
-    if isnothing(ylim)
+    xlim, xlimauto = plotlimit(p, :xlim, xlim) do
+        findlim(X)
+    end
+    ylim, ylimauto = plotlimit(p, :ylim, ylim) do
         l = findlim.(Ys)
-        ylim = (minimum(minimum.(l)), maximum(maximum.(l)))
+        (minimum(minimum.(l)), maximum(maximum.(l)))
+    end
+    if kind in (:hline, :vline)
+        xlimauto = getplotopt(p, :xlimauto, xlimauto)
+        ylimauto = getplotopt(p, :ylimauto, ylimauto)
     end
 
     if kind == :step && isnothing(ycat)
@@ -233,7 +287,9 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     colors = isnothing(colors) ? repeat([nothing], n) : colors
     title = isnothing(title) ? "" : string(title)
 
-    plot2!(Val(backend), p, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
+    p = plot2!(Val(backend), p, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
+    p.opt[:xlimauto], p.opt[:ylimauto] = xlimauto, ylimauto
+    p
 end
 
 plot(df::DataFrame, x, y, z;

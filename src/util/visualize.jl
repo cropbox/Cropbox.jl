@@ -102,11 +102,11 @@ visualize!(p, S::Type{<:System}, x, y;
     isnothing(ylab) && (ylab = y)
 
     s(c) = simulate(S; base, target=[x, y], configs=@config(c + !xstep), stop, snap, verbose=false)
-    r = s(C[1])
-    p = plot!(p, r, x, y; ylab, legend, name=names[1], color=colors[1], plotopts...)
+    data = s.(C)
+    limits = groupplotlimits(p, data, x, [y]; plotopts...)
+    p = plot!(p, data[1], x, y; ylab, legend, name=names[1], color=colors[1], plotopts..., limits...)
     for i in 2:n
-        r = s(C[i])
-        p = plot!(p, r, x, y; name=names[i], color=colors[i], plotopts...)
+        p = plot!(p, data[i], x, y; name=names[i], color=colors[i], plotopts...)
     end
     p
 end

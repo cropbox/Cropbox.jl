@@ -119,6 +119,55 @@ using DataFrames
         end
     end
 
+    @testset "grouped data" begin
+        @system VisualizeGrowth(Controller) begin
+            a => 0.05 ~ preserve(parameter)
+            x(a, x) => a * x ~ accumulate(init = 1)
+        end
+        group = VisualizeGrowth => :a => [0.05, 0.1, 0.2]
+        df = simulate(VisualizeGrowth; configs = @config(!group), stop = 20, verbose = false)
+        df.site = fill("A", nrow(df))
+        df.y = 2df.x
+        before = copy(df)
+        @testset "$backend" for backend in (:Makie, :UnicodePlots)
+            p = visualize(VisualizeGrowth, :time, :x; group, stop = 20, kind = :line, backend)
+            q = visualize(df, :time, :x; group = :a, kind = :line, backend)
+            @test p.opt[:Ys] == q.opt[:Ys]
+            @test p.opt[:ylim] == q.opt[:ylim] == (1, 39)
+            @test q.opt[:legend] == "a"
+            @test q.opt[:names] == ["0.05", "0.1", "0.2"]
+            r = visualize(view(df, :, :), :time, :x; group = [:site, :a], backend)
+            @test r.opt[:Ys] == q.opt[:Ys]
+            r = visualize(df, :time, [:x, :y]; group = "a", colors = [:red, :blue, :red, :blue, :red, :blue], backend)
+            @test length(r.opt[:Ys]) == 6
+            @test r.opt[:ylim] == (1, 77)
+            r = visualize(reverse(df), :time, :x; group = :a, ylim = (0, 10), backend)
+            @test r.opt[:ylim] == (0, 10)
+            @test_throws ArgumentError visualize(df, :time, :x; group = :a, names = ["short"], backend)
+            @test_throws ArgumentError visualize(df[1:0, :], :time, :x; group = :a, backend)
+            @test_throws ArgumentError visualize!(q, df, :time, :x; group = :a, colors = [:red])
+            @test length(q.opt[:Ys]) == 3
+            @test isequal(df, before)
+            backend == :Makie && show(IOBuffer(), MIME"image/png"(), q)
+        end
+    end
+
+    @testset "appended limits" begin
+        p = visualize([0, 1]u"hr", [0, 1]u"g"; backend = :Makie)
+        visualize!(p, 0.5u"g"; kind = :hline)
+        @test visualize!(p, [0, 120]u"minute", [-1000, 5000]u"mg") === p
+        @test p.opt[:xlim] == (0, 2)
+        @test p.opt[:ylim] == (-1, 5)
+        @test p.opt[:axis].limits[] == ((0, 2), (-1, 5))
+        q = visualize([0, 1], [0, 1]; ylim = (0, 2), backend = :Makie)
+        visualize!(q, [0, 3], [0, 10])
+        @test q.opt[:axis].limits[] == ((0, 3), (0, 2))
+        visualize!(q, [0, 4], [0, 20]; ylim = (0, 15))
+        @test q.opt[:axis].limits[] == ((0, 4), (0, 15))
+        visualize!(q, [0, 2], [0, 30])
+        @test q.opt[:axis].limits[] == ((0, 4), (0, 15))
+    end
+
     @testset "stored estimates" begin
         @system VisualizeComparison(Controller) begin
             rate => 1 ~ preserve(parameter, u"g/hr")

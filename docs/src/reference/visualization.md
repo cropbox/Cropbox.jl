@@ -108,6 +108,28 @@ visualize(series, :hour, [:observed, :smooth];
 )
 ```
 
+### Grouped DataFrames
+
+Use `group` to split existing rows by one column or several columns. This does
+not run a simulation. Groups appear in first-occurrence order; their values
+provide the default legend labels.
+
+```@example visref
+grouped = simulate(VisualTrajectory;
+    configs = @config(!(VisualTrajectory => :rate => [1, 2, 3])),
+    stop = 4, verbose = false,
+)
+visualize(grouped, :time, :mass; group = :rate, kind = :line)
+```
+
+For example, `group = [:site, :treatment]` groups by both columns. With several
+`y` columns, each group contains one series per column, in the supplied order.
+Custom `names` and `colors` need one entry per resulting series. DataFrame views
+are also supported; the input table is not modified.
+
+The keyword is the same for model and table inputs: `group` on a system expands
+configurations and simulates them, while `group` on a table selects columns.
+
 ### Plot kinds
 
 Two-dimensional plots support these `kind` values:
@@ -181,6 +203,13 @@ object:
 visualize!(p, [1, 3], [4, 2]; kind=:line, color=:gray, linestyle=:dot, name="")
 visualize!(p, 2, 4, "Reference\nline"; align=:center)
 ```
+
+With Makie, automatic axis limits expand to include appended series. Explicit
+`xlim` or `ylim` stays fixed, and a new explicit limit in `visualize!` replaces
+the previous setting. Reference lines and text retain the existing limits.
+UnicodePlots uses a fixed canvas: grouped plots determine their complete range
+before drawing, but when manually appending to a terminal plot, supply the full
+range when creating it.
 
 `linestyle` accepts `:solid` (the default), `:dash`, `:dot`, `:dashdot`, and
 `:dashdotdot`, or a vector with one style per y series. UnicodePlots draws solid lines and warns when another style is

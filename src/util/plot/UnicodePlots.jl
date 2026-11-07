@@ -70,7 +70,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         UnicodePlots.label!(obj, :r, legend)
         annotate_x_axis!(obj)
         annotate_y_axis!(obj)
-        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], title, xlab, ylab, legend, legendpos, names, xlim, ylim, xunit, yunit, aspect, width, height)
+        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], names=[], title, xlab, ylab, legend, legendpos, xlim, ylim, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))
@@ -79,7 +79,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         color = colors[i]
         plot!(p.obj, X, Y; name, color)
         #TODO: remember colors
-        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color])
+        update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color], names=[name])
     end
     p
 end
