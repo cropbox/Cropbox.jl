@@ -25,6 +25,7 @@ that ordinary crop-model scripts rarely need the name, not that it is private.
 | `simulate`, `simulate!` | run fresh or existing systems | [Simulation](@ref Simulation1) |
 | `evaluate` | compare observations and estimates | [Simulation](@ref Simulation1) |
 | `calibrate` | search parameter bounds | [Simulation](@ref Simulation1) |
+| `analyze` | quantify parameter sensitivity | [Sensitivity analysis](@ref sensitivity-analysis) |
 | `visualize`, `visualize!` | visualize existing data or simulation results | [Visualization](@ref Visualization1) |
 | `manipulate` | add interactive parameter widgets | [Visualization](@ref Visualization1) |
 | `look`, `@look`, `dive` | inspect declarations and instances | [Inspection](@ref Inspection1) |
