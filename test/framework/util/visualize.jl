@@ -101,6 +101,15 @@ end
         @test visualize([0, 1], [false, false]; backend = :UnicodePlots, kind = :step).opt[:ycat] == [false, true]
     end
 
+    @testset "UnicodePlots dates" for T in (Cropbox.Dates.Date, Cropbox.Dates.DateTime)
+        X = [T(2026, 1, 1), T(2026, 1, 3)]
+        p = visualize(DataFrame(time = X, y = [0, 2]), :time, :y; backend = :UnicodePlots)
+        @test visualize!(p, [T(2026, 1, 2)], [1]) === p
+        @test p.opt[:Xs] == [X, [T(2026, 1, 2)]]
+        output = repr(MIME"text/plain"(), p[])
+        @test all(t -> occursin(string(t), output), X)
+    end
+
     @testset "constant and missing values" for backend in (:Makie, :UnicodePlots)
         for (Y, lim) in (([1.0, missing], (0, 2)), ([1.5, missing], (1, 2)),
             (Union{Missing,Float64}[missing, missing], (-1, 1)), ([1u"g", missing], (0, 2)))

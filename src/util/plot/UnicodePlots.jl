@@ -51,6 +51,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
     xlim_value(v::Dates.TimeType) = Dates.value(v)
     xlim_value(v) = v
     xlimval = xlim_value.(xlim)
+    x = xlim_value.(X)
 
     annotate_x_axis!(obj) = begin
         #HACK: override xlim string (for Date/DateTime)
@@ -81,7 +82,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         #HACK: UnicodePlots can't handle missing
         Y = coalesce.(Y, NaN)
         color = colors[i]
-        plot!(p.obj, X, Y; name, color)
+        plot!(p.obj, x, Y; name, color)
         #TODO: remember colors
         update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color], names=[name])
     end

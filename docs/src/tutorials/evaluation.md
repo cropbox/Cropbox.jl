@@ -43,9 +43,10 @@ and `c` change the accumulated output by those amounts.
 
 ```@example sensitivity
 visualize(result.table, :means_star, :parameter;
+    backend = :Makie,
     xlab = "Mean absolute effect", ylab = "Parameter",
     xlim = (0, 7), ycat = unique(result.table.parameter),
-    legend = false, backend = :Makie,
+    legend = false,
 )
 ```
 
@@ -93,9 +94,10 @@ variance.table
 
 ```@example sensitivity
 visualize(variance.table, :S1, :parameter;
+    backend = :Makie,
     xlab = "First-order sensitivity index", ylab = "Parameter",
     xlim = (0, 1), ycat = unique(variance.table.parameter),
-    legend = false, backend = :Makie,
+    legend = false,
 )
 ```
 
@@ -175,9 +177,10 @@ growth.table
 
 ```@example sensitivity
 visualize(growth.table, :means_star, :parameter;
+    backend = :Makie,
     xlab = "Mean absolute effect", ylab = "Parameter",
     xlim = (0, 100), ycat = growth.table.parameter[sortperm(growth.table.means_star)],
-    legend = false, backend = :Makie,
+    legend = false,
 )
 ```
 
@@ -385,8 +388,8 @@ between model updates.
 
 ```@example evaluation
 p = visualize(residuals, :time, :residual;
-    kind = :scatterline,
     backend = :Makie,
+    kind = :scatterline,
     xlab = "Time",
     ylab = "Predicted - observed mass",
     title = "Validation residuals",
@@ -394,7 +397,6 @@ p = visualize(residuals, :time, :residual;
 )
 visualize!(p, [4, 6]u"d", [0, 0]u"g";
     kind = :line,
-    backend = :Makie,
     color = :lightgray,
     legend = false,
 )
