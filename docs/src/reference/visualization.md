@@ -522,8 +522,8 @@ visualize(VisualResponse, :input, :slope, :response;
 Three-column `visualize(df, x, y, z)` uses the same renderer. Set
 `kind=:contour` for contour lines. `zlim` fixes the color or contour range,
 `zgap` controls contour spacing, and `zlabgap` requests labels at a chosen
-interval. Contour rendering and the gap options are currently more complete in
-the Makie backend than in the terminal backend. Grid rows may be unordered;
+interval. UnicodePlots draws contour lines using its native level selection;
+explicit `zgap` and `zlabgap` remain Makie-only. Grid rows may be unordered;
 missing cells and `missing` values are not interpolated. Duplicate coordinates are
 rejected. Terminal heatmaps need evenly spaced x and y coordinates; Makie also
 accepts irregular spacing.
@@ -543,6 +543,18 @@ copying it before plotting:
 ```@example visref
 grid = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 1, 2], z = [2., 3., 4., 5.])
 visualize(view(grid, :, :), :x, :y, :z; zlab = "Response")
+```
+
+Terminal contours also accept irregularly spaced coordinates, with at least
+two distinct values on each axis:
+
+```@example terminalcontour
+using Cropbox, DataFrames
+grid = DataFrame(x = repeat([0, 1, 3], inner = 3), y = repeat([0, 1, 2], 3), z = 0:8)
+visualize(grid, :x, :y, :z;
+    backend = :UnicodePlots,
+    kind = :contour, zlab = "Response", legend = false)
+ans[] # hide
 ```
 
 ## Labels, units, limits, and backends
@@ -591,7 +603,7 @@ Backend behavior is not completely identical:
 | text annotations | supported | supported within terminal resolution |
 | non-solid `linestyle` | supported | solid lines with a warning |
 | heatmap | supported | supported on a regular grid |
-| contour | supported | warns and falls back to a heatmap |
+| contour | supported | native contour lines |
 | inside `legendpos` | supported | ignored with a warning |
 | `zgap`, `zlabgap` | supported for contours | ignored with a warning |
 
@@ -663,9 +675,8 @@ Interact widget.
 - A vector of systems requires parallel `configs`, `names`, and `colors` in the
   same order. In particular, `configs` must have the same length as the system
   vector.
-- A heatmap requires a complete, regularly ordered factorial grid. Missing
-  combinations are better handled by constructing and checking a `DataFrame`
-  before plotting.
+- Grid coordinates must be unique. Missing cells are allowed; terminal
+  heatmaps require evenly spaced coordinates.
 - Appended layers must have compatible units. `xunit` and `yunit` convert
   compatible quantities; they do not assign dimensions to unrelated values.
 - Appended calls inherit the existing backend; do not select a different one.
