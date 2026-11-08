@@ -255,6 +255,20 @@ end
         end
     end
 
+    @testset "UnicodePlots heatmap grids" begin
+        df = DataFrame(x = [2, 1, 2], y = [2, 1, 1], z = [missing, 2., 4.])
+        @test isequal(last(Cropbox.makegrid(df.x, df.y, df.z)), [2 NaN; 4 NaN])
+        @test_throws ArgumentError visualize(vcat(df, df), :x, :y, :z; backend = :UnicodePlots)
+        for d in (df, df[2:2, :])
+            p = visualize(d, :x, :y, :z; backend = :UnicodePlots, aspect = 2)
+            @test size(p[].graphics.grid) == (length(unique(d.y)), length(unique(d.x)))
+            @test !isempty(repr(MIME"text/plain"(), p[]))
+            @test all(isfinite, p[].cmap.lim)
+        end
+        irregular = DataFrame(x = [0, 1, 3], y = [0, 0, 0], z = [1, 2, 3])
+        @test_throws ArgumentError visualize(irregular, :x, :y, :z; backend = :UnicodePlots)
+    end
+
     @testset "heatmap limits and colorbar" begin
         df = DataFrame(x=[1, 1, 2, 2], y=[1, 2, 1, 2], z=[2., 3., 4., 5.])
         @test_throws ArgumentError visualize(df, :x, :y, :z; backend = :Gadfly)

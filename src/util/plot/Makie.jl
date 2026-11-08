@@ -174,12 +174,7 @@ plot3!(::Val{:Makie}, X, Y, Z;
     kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, zgap, zlabgap, aspect,
 ) = begin
     kind in (:heatmap, :contour) || throw(ArgumentError("unrecognized plot kind = $kind"))
-    length(unique(zip(X, Y))) == length(Z) || throw(ArgumentError("grid coordinates must be unique"))
-    x, y = sort(unique(X)), sort(unique(Y))
-    M = fill(NaN, length(x), length(y))
-    for (xx, yy, z) in zip(X, Y, Z)
-        M[searchsortedfirst(x, xx), searchsortedfirst(y, yy)] = coalesce(z, NaN)
-    end
+    x, y, M = makegrid(X, Y, Z)
     obj, axis = figure(; title, xlab, ylab, aspect)
     layer = if kind == :heatmap
         Makie.heatmap!(axis, x, y, M; colorrange = zlim)
