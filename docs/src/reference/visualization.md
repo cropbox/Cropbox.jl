@@ -494,6 +494,33 @@ plot. A scalar target uses `name`; a vector of targets uses `names` and
 `colors`, just like the system-based comparison.
 
 A vector target draws one observation-versus-estimate series for each target.
+
+Saved estimates can also use `group` to draw one series per model without a
+manual join or another simulation:
+
+```@example groupedcomparison
+using Cropbox, DataFrames
+observed = DataFrame(year = 2020:2022, doy = [20., 22., 24.]u"d")
+predicted = DataFrame(
+    year = repeat(2020:2022, 2), model = repeat(["early", "late"], inner = 3),
+    doy = [19., NaN, 23., 21., 23., 25.]u"d")
+visualize(observed, predicted, :doy;
+    backend = :Makie,
+    index = :year, group = :model)
+```
+
+Grouping columns are taken from the estimate table; they need not exist in the
+observations. If a grouping column is present in both tables, Cropbox first
+matches its values, then joins the selected rows by `index`. Each estimate group
+must have at least one matching observation. DataFrame views are supported and
+neither table is changed.
+
+Groups follow their first appearance in the estimate table. With multiple
+targets, each group contains the targets in the supplied order. Custom `names`
+and `colors` need one entry per resulting series. All groups share one axis
+range and one 1:1 reference line; non-finite predictions remain in the data but
+are not drawn as points.
+
 For several model specifications of one target, pass named tuples with
 `system`, `config`, or `configs` fields:
 
