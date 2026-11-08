@@ -581,7 +581,7 @@ DataFrame views work here too, so filtering a saved table does not require
 copying it before plotting:
 
 ```@example visref
-grid = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 1, 2], z = [2., 3., 4., 5.])
+grid = DataFrame(x = [1, 1, 2, 2]u"hr", y = [1, 2, 1, 2]u"m", z = [2., 3., 4., 5.]u"g")
 visualize(view(grid, :, :), :x, :y, :z; zlab = "Response")
 ```
 

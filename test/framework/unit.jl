@@ -3,6 +3,9 @@ import Unitful
 using Dates: Date, Time
 
 @testset "unit" begin
+    @test Cropbox.unittype(view([1, 2]u"g", :)) == u"g"
+    @test Cropbox.unittype(view([1u"g", missing], :)) == u"g"
+
     @testset "unit" begin
         @system SUnit(Controller) begin
             a => 2 ~ track(u"m")

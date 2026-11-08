@@ -363,6 +363,9 @@ end
             p = visualize(view(df, [4, 1, 3, 2], :), :x, :y, :z; backend)
             @test p.opt[:Z] == df.z[[4, 1, 3, 2]]
             @test p.opt[:zlim] == (2, 5)
+            units = DataFrame(x = df.x*u"hr", y = df.y*u"m", z = df.z*u"g")
+            q = visualize(view(units, :, :), :x, :y, :z; backend)
+            @test (q.opt[:xunit], q.opt[:yunit], q.opt[:zunit]) == (u"hr", u"m", u"g")
         end
         @test_throws ArgumentError visualize(df, :x, :y, :z; backend = :Gadfly)
         for legend in (true, false)
