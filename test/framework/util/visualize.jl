@@ -70,6 +70,20 @@ end
         @test p.opt[:colors] == [color, color]
     end
 
+    @testset "UnicodePlots scatterline" begin
+        p = visualize([0, 1, 2], [0, 1, 0]; backend = :UnicodePlots, kind = :scatterline, name = "model")
+        marker = string(Cropbox.UnicodePlots.char_marker(:circle))
+        output = repr(MIME"text/plain"(), p[])
+        @test occursin(marker, output)
+        @test count("model", output) == 1
+        @test p.opt[:names] == ["model"]
+        @test visualize!(p, [0, 1, 2], [1, missing, 1]; kind = :scatterline) === p
+        @test length(p.opt[:Ys]) == 2
+        dates = [Cropbox.Dates.Date(2026, 1, d) for d in 1:3]
+        q = visualize(dates, [0, 1, 0]; backend = :UnicodePlots, kind = :scatterline)
+        @test occursin(marker, repr(MIME"text/plain"(), q[]))
+    end
+
     @testset "single date" begin
         for t in (Cropbox.Dates.Date(2026, 1, 1), Cropbox.Dates.DateTime(2026, 1, 1))
             p = visualize(DataFrame(time = [t], y = [1]), :time, :y; backend = :Makie)
