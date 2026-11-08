@@ -237,14 +237,12 @@ entry. `align` accepts `:left` (the default), `:center`, and `:right`.
 To save a graphical result, use `Cropbox.writeimage`:
 
 ```@example visref
-p = visualize(series, :hour, :observed;
-    kind = :line, backend = :Makie,
-)
+p = visualize(series, :hour, :observed; backend = :Makie, kind = :line)
 
 Cropbox.writeimage("observed.png", p)
 Cropbox.writeimage("observed.svg", p)
 Cropbox.writeimage("observed.pdf", p)
-p
+p # hide
 ```
 
 Download these exact exports as [PNG](observed.png), [SVG](observed.svg), or
@@ -291,8 +289,10 @@ mass, and soil-water components in the tutorials.
 end
 
 visualize(VisualPartition, :time, [:leaf_mass, :bulb_mass, :mass];
-    stop = 4u"hr", kind = :line,
-    names = ["leaf", "bulb", "total"], ylab = "Mass",
+    stop = 4u"hr",
+    kind = :line,
+    names = ["leaf", "bulb", "total"],
+    ylab = "Mass",
 )
 ```
 
@@ -506,6 +506,7 @@ The same factorial result can be rendered as contours:
 
 ```@example visref
 visualize(VisualResponse, :input, :slope, :response;
+    backend = :Makie,
     xstep = VisualResponse => :input => 0:0.25:4,
     ystep = VisualResponse => :slope => 0.25:0.25:2,
     kind = :contour,
@@ -515,7 +516,6 @@ visualize(VisualResponse, :input, :slope, :response;
     ylab = "Slope",
     zlab = "Response",
     aspect = 1.4,
-    backend = :Makie,
 )
 ```
 
@@ -599,6 +599,21 @@ Use `backend = :Makie` for graphical output, contour labels, and inside
 legends. Use `:UnicodePlots` for fast
 terminal diagnostics.
 
+### Dates in terminal plots
+
+The terminal backend accepts `Date` and `DateTime` values on the horizontal
+axis, including scatter plots. Axis labels retain the calendar values.
+
+```@example visdates
+using Cropbox, Dates
+
+dates = collect(Date(2026, 1, 1):Day(1):Date(2026, 1, 4))
+visualize(dates, [1, 3, 2, 4];
+    backend = :UnicodePlots,
+    xlab = "Date", ylab = "Value", legend = false)
+ans[] # hide
+```
+
 ### Makie backend
 
 Cropbox installs and loads Makie and its CairoMakie renderer as regular
@@ -610,12 +625,12 @@ environments; select `backend = :Makie` explicitly when running in a terminal.
 using Cropbox
 
 p = visualize([0, 1, 2], [0, 1, 4];
-    kind = :line, backend = :Makie,
-    name = "Model", legendpos = (0.1, -0.3))
+    backend = :Makie,
+    kind = :line, name = "Model", legendpos = (0.1, -0.3))
 visualize!(p, [0, 1, 2], [0, 1.1, 3.8]; name = "Observed")
 visualize!(p, 1, 3, "Example")
-Cropbox.writeimage("figure.pdf", p)
-p
+Cropbox.writeimage("figure.pdf", p) # hide
+p # hide
 ```
 
 The [PDF export](figure.pdf) contains the same plotted result.
