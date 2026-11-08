@@ -234,6 +234,18 @@ requested. Text uses data coordinates and the existing axis units, converting
 compatible unitful values. It does not change the axis limits or add a legend
 entry. `align` accepts `:left` (the default), `:center`, and `:right`.
 
+On a calendar axis, pass a `Date` or `DateTime` directly as the horizontal
+annotation coordinate. This works with both backends:
+
+```@example dateannotations
+using Cropbox, Dates
+dates = collect(Date(2026, 1, 1):Day(1):Date(2026, 1, 3))
+p = visualize(dates, [1, 3, 2];
+    backend = :Makie,
+    kind = :line, legend = false)
+visualize!(p, Date(2026, 1, 2), 2, "Measurement")
+```
+
 To save a graphical result, use `Cropbox.writeimage`:
 
 ```@example visref

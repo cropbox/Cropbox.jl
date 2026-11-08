@@ -47,13 +47,14 @@ See also: [`visualize`](@ref)
 visualize!(a...; kw...) = plot!(a...; kw...)
 
 """
-    visualize!(p::Plot, x::Number, y::Number, text::AbstractString; color=nothing, align=:left)
+    visualize!(p::Plot, x, y::Number, text::AbstractString; color=nothing, align=:left)
 
 Add text at data coordinates without changing axis limits or the legend.
 Coordinates use the existing axis units; compatible unitful values are converted.
+The horizontal coordinate also accepts `Date` or `DateTime` on a calendar axis.
 `align` is `:left`, `:center`, or `:right`. Newlines separate multiple lines of text.
 """
-visualize!(p::Plot, x::Number, y::Number, text::AbstractString; color=nothing, align=:left) = begin
+visualize!(p::Plot, x::Union{Number,Dates.TimeType}, y::Number, text::AbstractString; color=nothing, align=:left) = begin
     align in (:left, :center, :right) || throw(ArgumentError("unsupported text alignment: $align"))
     x = deunitfy(x, getplotopt(p, :xunit))
     y = deunitfy(y, getplotopt(p, :yunit))

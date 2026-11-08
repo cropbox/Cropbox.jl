@@ -2,6 +2,9 @@ import UnicodePlots
 
 detectbackend(::Plot{<:UnicodePlots.Plot}) = :UnicodePlots
 
+plotvalue(v::Dates.TimeType) = Dates.value(v)
+plotvalue(v) = v
+
 plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect, width=40, height=15) = begin
     isnothing(xlim) && (xlim = findlim(X))
     isnothing(ylim) && (ylim = findlim(vcat(Ys...)))
@@ -48,10 +51,8 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
     end
 
     #HACK: handle x-axis type of Date/DateTime adapted from UnicodePlots.lineplot()
-    xlim_value(v::Dates.TimeType) = Dates.value(v)
-    xlim_value(v) = v
-    xlimval = xlim_value.(xlim)
-    x = xlim_value.(X)
+    xlimval = plotvalue.(xlim)
+    x = plotvalue.(X)
 
     annotate_x_axis!(obj) = begin
         #HACK: override xlim string (for Date/DateTime)
@@ -129,7 +130,7 @@ plottext!(::Val{:UnicodePlots}, p, x, y, text; color, align) = begin
     dy = UnicodePlots.height(p.obj.graphics) / UnicodePlots.nrows(p.obj.graphics)
     for (i, line) in enumerate(lines)
         yy = y + ((length(lines) + 1) / 2 - i) * dy
-        UnicodePlots.annotate!(p.obj, x, yy, line; color, halign=align)
+        UnicodePlots.annotate!(p.obj, plotvalue(x), yy, line; color, halign=align)
     end
     p
 end
