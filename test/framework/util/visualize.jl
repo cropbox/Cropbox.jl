@@ -1,5 +1,11 @@
 using DataFrames
 
+plotbounds(p) = begin
+    haskey(p.opt, :axis) || return (p.opt[:xlim], p.opt[:ylim])
+    r = p.opt[:axis].finallimits[]
+    Tuple(zip(minimum(r), maximum(r)))
+end
+
 @testset "visualize" begin
     withenv("NJS_VERSION" => "test") do
         @test Cropbox.detectbackend(visualize([0, 1], [0, 1])) == :Makie
@@ -19,9 +25,10 @@ using DataFrames
     @testset "$backend" for backend in (:Makie, :UnicodePlots)
         p = visualize([0, 4]u"hr", [0, 4]u"g"; kind = :line, name = "model", backend)
         @test visualize!(p, [0, 4]u"hr", [4, 0]u"g"; kind = :line, name = "reference") === p
+        bounds = plotbounds(p)
         @test Cropbox.detectbackend(p) == backend
         @test visualize!(p, 120u"minute", 2000u"mg", "An = 10\ngs = 0.2"; color = :red) === p
-        @test p.opt[:xlim] == p.opt[:ylim] == (0, 4)
+        @test plotbounds(p) == bounds
 
         output = backend == :Makie ? only(p.opt[:axis].scene.plots[end].text[]) : repr(MIME"text/plain"(), p[])
         @test occursin("An = 10", output)
@@ -29,7 +36,7 @@ using DataFrames
         for (kind, value) in ((:hline, 2000u"mg"), (:vline, 120u"minute"))
             @test visualize!(p, value; kind) === p
             @test p.opt[:Xs][end] == [2]
-            @test p.opt[:xlim] == p.opt[:ylim] == (0, 4)
+            @test plotbounds(p) == bounds
             @test_throws ArgumentError visualize(value; kind, backend)
         end
         @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; backend = backend == :Makie ? :UnicodePlots : :Makie)
@@ -66,7 +73,14 @@ using DataFrames
     @testset "single date" begin
         for t in (Cropbox.Dates.Date(2026, 1, 1), Cropbox.Dates.DateTime(2026, 1, 1))
             p = visualize(DataFrame(time = [t], y = [1]), :time, :y; backend = :Makie)
-            @test p.opt[:xlim] == (t - Cropbox.Dates.Day(1), t + Cropbox.Dates.Day(1))
+            xlim, _ = plotbounds(p)
+            @test xlim[1] < xlim[2]
+            @test occursin("<svg", repr(MIME"image/svg+xml"(), p))
+            visualize!(p, [t + Cropbox.Dates.Day(2)], [2])
+            xlim, _ = plotbounds(p)
+            lasttime = Cropbox.Makie.convert_dim_value(p.opt[:axis], 1, t + Cropbox.Dates.Day(2))
+            @test xlim[1] <= lasttime <= xlim[2]
+            @test length(p.opt[:Xs]) == 2
             @test occursin("<svg", repr(MIME"image/svg+xml"(), p))
         end
     end
@@ -75,7 +89,13 @@ using DataFrames
         for (Y, lim) in (([1.0, missing], (0, 2)), ([1.5, missing], (1, 2)),
             (Union{Missing,Float64}[missing, missing], (-1, 1)), ([1u"g", missing], (0, 2)))
             p = visualize([0, 1], Y; backend)
-            @test p.opt[:ylim] == lim
+            if backend == :Makie
+                _, ylim = plotbounds(p)
+                @test all(isfinite, ylim)
+                @test all(v -> ylim[1] <= v <= ylim[2], skipmissing(Cropbox.deunitfy(Y)))
+            else
+                @test p.opt[:ylim] == lim
+            end
             @test isequal(coalesce.(p.opt[:Ys][1], NaN), coalesce.(Cropbox.deunitfy(Y), NaN))
             backend == :Makie && show(IOBuffer(), MIME"image/png"(), p)
         end
@@ -117,6 +137,66 @@ using DataFrames
             end
             @test_throws ArgumentError visualize(df.x, [df.y, df.z]; names = ["short"], legend = false, backend)
         end
+    end
+
+    @testset "grouped data" begin
+        @system VisualizeGrowth(Controller) begin
+            a => 0.05 ~ preserve(parameter)
+
+            x(a, x) => a * x ~ accumulate(init = 1)
+        end
+        group = VisualizeGrowth => :a => [0.05, 0.1, 0.2]
+        df = simulate(VisualizeGrowth; configs = @config(!group), stop = 20, verbose = false)
+        df.site = fill("A", nrow(df))
+        df.y = 2df.x
+        before = copy(df)
+        @testset "$backend" for backend in (:Makie, :UnicodePlots)
+            p = visualize(VisualizeGrowth, :time, :x; group, stop = 20, kind = :line, backend)
+            q = visualize(df, :time, :x; group = :a, kind = :line, backend)
+            @test p.opt[:Ys] == q.opt[:Ys]
+            @test plotbounds(p) == plotbounds(q)
+            _, ylim = plotbounds(q)
+            @test ylim[1] <= minimum(df.x) <= maximum(df.x) <= ylim[2]
+            @test q.opt[:legend] == "a"
+            @test q.opt[:names] == ["0.05", "0.1", "0.2"]
+            r = visualize(view(df, :, :), :time, :x; group = [:site, :a], backend)
+            @test r.opt[:Ys] == q.opt[:Ys]
+            r = visualize(df, :time, [:x, :y]; group = "a", colors = [:red, :blue, :red, :blue, :red, :blue], backend)
+            @test length(r.opt[:Ys]) == 6
+            _, ylim = plotbounds(r)
+            @test ylim[1] <= minimum(df.x) <= maximum(df.y) <= ylim[2]
+            r = visualize(reverse(df), :time, :x; group = :a, ylim = (0, 10), backend)
+            @test r.opt[:ylim] == (0, 10)
+            @test_throws ArgumentError visualize(df, :time, :x; group = :a, names = ["short"], backend)
+            @test_throws ArgumentError visualize(df[1:0, :], :time, :x; group = :a, backend)
+            @test_throws ArgumentError visualize!(q, df, :time, :x; group = :a, colors = [:red])
+            @test length(q.opt[:Ys]) == 3
+            @test isequal(df, before)
+            backend == :Makie && show(IOBuffer(), MIME"image/png"(), q)
+        end
+    end
+
+    @testset "appended limits" begin
+        p = visualize([0, 1]u"hr", [0, 1]u"g"; backend = :Makie)
+        bounds = plotbounds(p)
+        visualize!(p, 100u"g"; kind = :hline)
+        visualize!(p, 100u"hr", 100u"g", "outside")
+        @test plotbounds(p) == bounds
+        @test visualize!(p, [0, 120]u"minute", [-1000, 5000]u"mg") === p
+        xlim, ylim = plotbounds(p)
+        @test xlim[1] <= 0 <= 2 <= xlim[2]
+        @test ylim[1] <= -1 <= 5 <= ylim[2]
+        @test p.opt[:axis].limits[] == (nothing, nothing)
+
+        q = visualize([0, 1], [0, 1]; ylim = (0, 2), backend = :Makie)
+        visualize!(q, [0, 3], [0, 10])
+        @test last(plotbounds(q)) == (0, 2)
+        @test first(plotbounds(q))[2] >= 3
+        visualize!(q, [0, 4], [0, 20]; ylim = (0, 15))
+        @test last(plotbounds(q)) == (0, 15)
+        visualize!(q, [0, 2], [0, 30])
+        @test last(plotbounds(q)) == (0, 15)
+        @test first(plotbounds(q))[2] >= 4
     end
 
     @testset "stored estimates" begin

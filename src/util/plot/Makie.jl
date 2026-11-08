@@ -140,7 +140,7 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
         Y = kind in (:hline, :vline) ? [] : Ys[i]
         if kind in (:hline, :vline)
             draw! = kind == :hline ? Makie.hlines! : Makie.vlines!
-            obj = draw!(ax, X; color, linestyle = style)
+            obj = draw!(ax, X; color, linestyle = style, xautolimits = false, yautolimits = false)
         else
             y = isnothing(cats) ? coalesce.(Y, NaN) : Int.(indexin(Y, cats))
             order = kind == :scatter ? eachindex(X) : sortperm(X)
@@ -161,8 +161,11 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
         end
         update!(p; Xs = [X], Ys = [Y], kinds = [kind], colors = [color], names = [name])
     end
-    Makie.xlims!(ax, p.opt[:xlim]...)
-    Makie.ylims!(ax, isnothing(cats) ? p.opt[:ylim] : (0.8, length(cats) + 0.2))
+    p.opt[:xlim], p.opt[:ylim] = xlim, ylim
+    isnothing(cats) || (ylim = (0.8, length(cats) + 0.2))
+    isnothing(xlim) || Makie.xlims!(ax, xlim...)
+    isnothing(ylim) || Makie.ylims!(ax, ylim...)
+    Makie.reset_limits!(ax)
     any(!isempty, names) && legend!(p)
     p
 end
@@ -217,6 +220,7 @@ plottext!(::Val{:Makie}, p, x, y, text; color, align) = begin
     color = isnothing(color) ? ax.xticklabelcolor[] : color
     Makie.text!(ax, x, y;
         text, align = (align, :center),
+        xautolimits = false, yautolimits = false,
         color, fontsize = ax.xticklabelsize[], font = ax.xticklabelfont[])
     p
 end
