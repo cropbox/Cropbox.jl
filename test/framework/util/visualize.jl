@@ -44,6 +44,16 @@ end
         @test_throws ArgumentError visualize!(p, 2, 2, "text"; align = :unknown)
     end
 
+    @testset "date annotations" for backend in (:Makie, :UnicodePlots)
+        for t in (Cropbox.Dates.Date(2026, 1, 1), Cropbox.Dates.DateTime(2026, 1, 1))
+            p = visualize([t, t + Cropbox.Dates.Day(2)], [1, 3]; backend, kind = :line)
+            @test visualize!(p, t + Cropbox.Dates.Day(1), 2, "event") === p
+            output = backend == :Makie ? only(p.opt[:axis].scene.plots[end].text[]) : repr(MIME"text/plain"(), p[])
+            @test occursin("event", output)
+            backend == :Makie && show(IOBuffer(), MIME"image/png"(), p)
+        end
+    end
+
     @testset "line style and legend position" begin
         pos = (0.1, -0.3)
         p = visualize([0, 4], [0, 4]; backend = :Makie, kind = :line, name = "model", legendpos = pos)
