@@ -65,6 +65,16 @@ findlim(array) = begin
     l == u && l isa Union{Dates.Date,Dates.DateTime} ? (l - Dates.Day(1), u + Dates.Day(1)) : (l, u)
 end
 
+makegrid(X, Y, Z) = begin
+    length(unique(zip(X, Y))) == length(Z) || throw(ArgumentError("grid coordinates must be unique"))
+    x, y = sort(unique(X)), sort(unique(Y))
+    M = fill(NaN, length(x), length(y))
+    for (xx, yy, z) in zip(X, Y, Z)
+        M[searchsortedfirst(x, xx), searchsortedfirst(y, yy)] = coalesce(z, NaN)
+    end
+    x, y, M
+end
+
 groupplotlimits(p, data, x, ys;
     backend = nothing, xunit = nothing, yunit = nothing, xlim = nothing, ylim = nothing,
     kind = nothing, ycat = nothing, kw...

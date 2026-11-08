@@ -102,19 +102,21 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     !isnothing(zgap) && @warn "unsupported contour interval = $zgap"
     !isnothing(zlabgap) && @warn "unsupported countour label interval = $zlabgap"
 
-    arr(a) = sort(unique(a))
-    x = arr(X)
-    y = arr(Y)
-    M = reshape(Z[sortperm(collect(zip(X, Y)))], length(y), length(x))
+    x, y, M = makegrid(X, Y, Z)
+    M = permutedims(M)
 
-    offset(a) = a[1]
-    xoffset = offset(x)
-    yoffset = offset(y)
-    fact(a) = (a[end] - offset(a)) / (length(a) - 1)
+    xoffset, yoffset = first(x), first(y)
+    fact(a) = length(a) == 1 ? 1 : (last(a) - first(a)) / (length(a) - 1)
     xfact = fact(x)
     yfact = fact(y)
+    if kind == :heatmap
+        all(d -> isapprox(d, xfact), diff(x)) && all(d -> isapprox(d, yfact), diff(y)) ||
+            throw(ArgumentError("terminal heatmaps require evenly spaced coordinates"))
+    end
 
+    kind == :heatmap && (height = min(height, length(y)))
     !isnothing(aspect) && (width = round(Int, aspect * height))
+    kind == :heatmap && !isnothing(width) && (width = min(width, length(x)))
 
     obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xfact, yfact, xlim, ylim, zlim, colorbar=legend, xoffset, yoffset, width, height)
     Plot(obj; X, Y, Z, kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, aspect, width, height)

@@ -523,9 +523,19 @@ Three-column `visualize(df, x, y, z)` uses the same renderer. Set
 `kind=:contour` for contour lines. `zlim` fixes the color or contour range,
 `zgap` controls contour spacing, and `zlabgap` requests labels at a chosen
 interval. Contour rendering and the gap options are currently more complete in
-the Makie backend than in the terminal backend. Supply a complete, regularly
-ordered x-by-y grid for portable heatmap output; `visualize` creates that grid
-from its two factors.
+the Makie backend than in the terminal backend. Grid rows may be unordered;
+missing cells and `missing` values are not interpolated. Duplicate coordinates are
+rejected. Terminal heatmaps need evenly spaced x and y coordinates; Makie also
+accepts irregular spacing.
+
+```@example terminalheatmap
+using Cropbox, DataFrames
+grid = DataFrame([(; x, y, z = x + y) for x in 1:15 for y in 1:15])
+visualize(grid, :x, :y, :z;
+    backend = :UnicodePlots,
+    zlab = "Response", zlim = (0, 30))
+ans[] # hide
+```
 
 DataFrame views work here too, so filtering a saved table does not require
 copying it before plotting:
