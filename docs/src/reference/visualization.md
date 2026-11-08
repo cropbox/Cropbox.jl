@@ -587,7 +587,7 @@ Backend behavior is not completely identical:
 | Feature | Makie | UnicodePlots |
 |---|---|---|
 | line, scatter, and step | supported | supported |
-| `:scatterline` | points plus line | line rendering |
+| `:scatterline` | points plus line | points plus line |
 | text annotations | supported | supported within terminal resolution |
 | non-solid `linestyle` | supported | solid lines with a warning |
 | heatmap | supported | supported on a regular grid |
@@ -598,6 +598,18 @@ Backend behavior is not completely identical:
 Use `backend = :Makie` for graphical output, contour labels, and inside
 legends. Use `:UnicodePlots` for fast
 terminal diagnostics.
+
+### Terminal scatterlines
+
+Terminal scatterlines mark each observation as well as connecting them:
+
+```@example terminalscatterline
+using Cropbox
+visualize([0, 1, 2], [0, 1, 0];
+    backend = :UnicodePlots,
+    kind = :scatterline, legend = false)
+ans[] # hide
+```
 
 ### Dates in terminal plots
 

@@ -83,6 +83,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         Y = coalesce.(Y, NaN)
         color = colors[i]
         plot!(p.obj, x, Y; name, color)
+        kind == :scatterline && UnicodePlots.scatterplot!(p.obj, x, Y; color, marker = :circle)
         #TODO: remember colors
         update!(p; Xs=[X], Ys=[Y], kinds=[kind], colors=[color], names=[name])
     end
