@@ -66,7 +66,8 @@ findlim(array) = begin
 end
 
 groupplotlimits(p, data, x, ys;
-    backend = nothing, xunit = nothing, yunit = nothing, xlim = nothing, ylim = nothing, kw...
+    backend = nothing, xunit = nothing, yunit = nothing, xlim = nothing, ylim = nothing,
+    kind = nothing, ycat = nothing, kw...
 ) = begin
     # the terminal canvas needs the complete range before drawing.
     (!isnothing(p) || plotbackend(p, backend) != :UnicodePlots) && return (;)
@@ -74,8 +75,13 @@ groupplotlimits(p, data, x, ys;
     X, Ys = extractarray(df, x), [extractarray(df, y) for y in ys]
     isnothing(xunit) && (xunit = extractunit(X))
     isnothing(yunit) && (yunit = promoteunit(extractunit.(Ys)...))
+    Ys = deunitfy.(Ys, yunit)
     isnothing(xlim) && (xlim = findlim(deunitfy(X, xunit)))
-    isnothing(ylim) && (ylim = findlim(vcat(deunitfy.(Ys, yunit)...)))
+    isnothing(ylim) && (ylim = findlim(vcat(Ys...)))
+    if kind == :step
+        isnothing(ycat) && (ycat = all(isequal(Bool), eltype.(Ys)) ? [false, true] : unique(Iterators.flatten(Ys)))
+        return (; xlim, ylim, ycat)
+    end
     (; xlim, ylim)
 end
 

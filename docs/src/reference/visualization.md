@@ -150,6 +150,20 @@ ordered levels. Supply `ycat` when their display order must be explicit.
 For Makie step plots, appending new categories keeps the existing order and
 adds the new levels at the end.
 
+Terminal layers share the initial category order. List all categories in
+`ycat` before adding layers; an undeclared category raises an error rather than
+being drawn under the wrong label. Grouped tables infer the shared order from
+all groups.
+
+```@example terminalcategories
+using Cropbox
+p = visualize([0, 1], [:sown, :emerged];
+    backend = :UnicodePlots,
+    kind = :step, ycat = [:sown, :emerged, :mature], legend = false)
+visualize!(p, [0, 1], [:emerged, :mature]; kind = :step, legend = false)
+ans[] # hide
+```
+
 ```@example visref
 visualize(series, :hour, :reached;
     kind = :step,

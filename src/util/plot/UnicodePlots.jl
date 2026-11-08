@@ -17,6 +17,8 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         plot! = UnicodePlots.scatterplot!
     elseif kind == :step
         plot! = UnicodePlots.stairs!
+        ycat = something(getplotopt(p, :ycat), ycat)
+        all(in(ycat), Iterators.flatten(Ys)) || throw(ArgumentError("set ycat in the initial terminal plot to include every category"))
         #HACK: convert symbol array to integer index array
         ylim = (1, length(ycat))
         Ys = indexin.(Ys, Ref(ycat))
@@ -72,7 +74,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         UnicodePlots.label!(obj, :r, legend)
         annotate_x_axis!(obj)
         annotate_y_axis!(obj)
-        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], names=[], title, xlab, ylab, legend, legendpos, xlim, ylim, xunit, yunit, aspect, width, height)
+        p = Plot(obj; Xs=[], Ys=[], kinds=[], colors=[], names=[], title, xlab, ylab, legend, legendpos, xlim, ylim, ycat, xunit, yunit, aspect, width, height)
     end
     colors = create_colors(colors; n0=length(p.opt[:Ys]))
     for (i, (Y, name)) in enumerate(zip(Ys, names))

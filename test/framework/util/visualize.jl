@@ -85,6 +85,22 @@ end
         end
     end
 
+    @testset "UnicodePlots categories" begin
+        p = visualize([0, 1], [:a, :b]; backend = :UnicodePlots, kind = :step, ycat = [:a, :b, :c])
+        @test visualize!(p, [0, 1], [:b, :c]; kind = :step) === p
+        @test p.opt[:ycat] == [:a, :b, :c]
+        @test p.opt[:Ys] == [[1, 2], [2, 3]]
+        @test_throws ArgumentError visualize!(p, [0, 1], [:a, :d]; kind = :step)
+        @test length(p.opt[:Ys]) == 2
+
+        df = DataFrame(x = [0, 1, 0, 1], y = [:a, :b, :b, :c], run = [1, 1, 2, 2])
+        q = visualize(df, :x, :y; backend = :UnicodePlots, kind = :step, group = :run)
+        @test q.opt[:ycat] == [:a, :b, :c]
+        @test q.opt[:Ys] == [[1, 2], [2, 3]]
+        @test occursin("c", repr(MIME"text/plain"(), q[]))
+        @test visualize([0, 1], [false, false]; backend = :UnicodePlots, kind = :step).opt[:ycat] == [false, true]
+    end
+
     @testset "constant and missing values" for backend in (:Makie, :UnicodePlots)
         for (Y, lim) in (([1.0, missing], (0, 2)), ([1.5, missing], (1, 2)),
             (Union{Missing,Float64}[missing, missing], (-1, 1)), ([1u"g", missing], (0, 2)))
