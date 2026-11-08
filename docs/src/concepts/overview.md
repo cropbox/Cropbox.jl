@@ -151,7 +151,7 @@ updates, stopping, snapshots, and output selectors.
 and `calibrate` searches parameter ranges against that objective. Keep
 calibration and independent validation separate.
 
-```julia
+```@example concepts
 visualize(result, :time, :progress; kind = :line)
 ```
 

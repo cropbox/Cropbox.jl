@@ -40,14 +40,16 @@ using Cropbox
 using DataFrames
 
 @system VisualTrajectory(Controller) begin
-    rate          => 1.0           ~ preserve(parameter, u"g/hr")
+    rate => 1.0 ~ preserve(parameter, u"g/hr")
+
     mass(rate)                     ~ accumulate(u"g")
     reached(mass) => mass >= 3u"g" ~ flag
 end
 
 @system VisualResponse(Controller) begin
-    input                  => 0.0           ~ preserve(parameter)
-    slope                  => 1.0           ~ preserve(parameter)
+    input => 0.0 ~ preserve(parameter)
+    slope => 1.0 ~ preserve(parameter)
+
     response(input, slope) => slope * input ~ track(min = 0)
 end
 
@@ -199,9 +201,9 @@ visualize!(p_units, 3000u"mg";
 text annotations can be added through this API without modifying the backend
 object:
 
-```julia
-visualize!(p, [1, 3], [4, 2]; kind=:line, color=:gray, linestyle=:dot, name="")
-visualize!(p, 2, 4, "Reference\nline"; align=:center)
+```@example visref
+visualize!(p, [1, 3], [4, 2]; kind = :line, color = :gray, linestyle = :dot, name = "")
+visualize!(p, 2, 3.5, "Reference\nline"; align = :center)
 ```
 
 With Makie, automatic axis limits expand to include appended series. Explicit
@@ -220,7 +222,7 @@ entry. `align` accepts `:left` (the default), `:center`, and `:right`.
 
 To save a graphical result, use `Cropbox.writeimage`:
 
-```julia
+```@example visref
 p = visualize(series, :hour, :observed;
     kind = :line, backend = :Makie,
 )
@@ -228,7 +230,11 @@ p = visualize(series, :hour, :observed;
 Cropbox.writeimage("observed.png", p)
 Cropbox.writeimage("observed.svg", p)
 Cropbox.writeimage("observed.pdf", p)
+p
 ```
+
+Download these exact exports as [PNG](observed.png), [SVG](observed.svg), or
+[PDF](observed.pdf).
 
 The function returns the output filename and needs no additional package
 installation or import. The filename extension selects PNG, SVG, or PDF;
@@ -264,12 +270,15 @@ When `y` is a vector, all targets are drawn from the same simulation output.
 This is the form used for leaf gas-exchange limitation rates, garlic organ
 mass, and soil-water components in the tutorials.
 
-```julia
-visualize(Model, :time, [:leaf_mass, :bulb_mass, :total_mass];
-    config,
-    stop = :finished,
-    kind = :line,
-    names = ["leaf", "bulb", "total"],
+```@example visref
+@system VisualPartition(VisualTrajectory) begin
+    leaf_mass(mass) => 0.6mass ~ track(u"g")
+    bulb_mass(mass) => 0.4mass ~ track(u"g")
+end
+
+visualize(VisualPartition, :time, [:leaf_mass, :bulb_mass, :mass];
+    stop = 4u"hr", kind = :line,
+    names = ["leaf", "bulb", "total"], ylab = "Mass",
 )
 ```
 
@@ -434,7 +443,7 @@ A vector target draws one observation-versus-estimate series for each target.
 For several model specifications of one target, pass named tuples with
 `system`, `config`, or `configs` fields:
 
-```julia
+```@example visref
 models = [
     (; system = VisualTrajectory,
        config = VisualTrajectory => :rate => 0.9),
@@ -565,14 +574,19 @@ dependencies. No separate installation or `using CairoMakie` is needed to
 display a Makie plot in a notebook. Makie is the default in graphical
 environments; select `backend = :Makie` explicitly when running in a terminal.
 
-```julia
+```@example visref
 using Cropbox
 
-p = visualize([0, 1, 2], [0, 1, 4]; backend = :Makie, kind = :line, name = "Model", legendpos = (0.1, -0.3))
+p = visualize([0, 1, 2], [0, 1, 4];
+    kind = :line, backend = :Makie,
+    name = "Model", legendpos = (0.1, -0.3))
 visualize!(p, [0, 1, 2], [0, 1.1, 3.8]; name = "Observed")
 visualize!(p, 1, 3, "Example")
 Cropbox.writeimage("figure.pdf", p)
+p
 ```
+
+The [PDF export](figure.pdf) contains the same plotted result.
 
 The built-in Classic style follows Cropbox's Gadfly colors, lighter text,
 compact legends, and calendar labels. It uses Makie's bundled Noto Sans,

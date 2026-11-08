@@ -55,8 +55,11 @@ inspection.
 `look` is the stable declaration view. Two qualified structural helpers expose
 complementary graphs:
 
-```julia
+```@example inspectflow
 d = Cropbox.dependency(InspectDemo)
+```
+
+```@example inspectflow
 h = Cropbox.hierarchy(InspectDemo; skipcontext = true)
 ```
 
@@ -66,10 +69,14 @@ systems; dashed edges denote mixins. Cropbox uses its bundled Graphviz
 executable to render either graph as SVG on supported platforms. A static copy
 can be written for documentation:
 
-```julia
+```@example inspectflow
 Cropbox.writeimage("dependency", d; format = :svg)
 Cropbox.writeimage("hierarchy", h; format = :svg)
+nothing # hide
 ```
+
+Download the generated [dependency graph](dependency.svg) or
+[hierarchy graph](hierarchy.svg).
 
 The text representation remains available without invoking Graphviz.
 
@@ -99,11 +106,14 @@ functions. Do not assume a system field is a bare number.
 `visualize` works directly with vectors, and `visualize!` adds another series
 to the same result:
 
-```julia
+```@example inspectflow
 x = collect(1:5)
-p = visualize(x, 2 .* x; kind = :line)
-visualize!(p, x, 3 .* x; kind = :line)
+p = visualize(x, 2 .* x; kind = :line, name = "2x", ylim = (0, 15))
+visualize!(p, x, 3 .* x; kind = :line, name = "3x")
 ```
+
+The explicit range reserves space for both curves, including on a fixed-size
+terminal canvas.
 
 This form is useful for calculated curves that do not require a simulation.
 For model output, retain the DataFrame and name its columns explicitly.
