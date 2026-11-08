@@ -513,6 +513,14 @@ the Makie backend than in the terminal backend. Supply a complete, regularly
 ordered x-by-y grid for portable heatmap output; `visualize` creates that grid
 from its two factors.
 
+DataFrame views work here too, so filtering a saved table does not require
+copying it before plotting:
+
+```@example visref
+grid = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 1, 2], z = [2., 3., 4., 5.])
+visualize(view(grid, :, :), :x, :y, :z; zlab = "Response")
+```
+
 ## Labels, units, limits, and backends
 
 The main two-dimensional options are:

@@ -267,7 +267,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     plot2!(Val(backend), p, X, Ys; kind, linestyle, title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, ycat, xunit, yunit, aspect)
 end
 
-plot(df::DataFrame, x, y, z;
+plot(df::AbstractDataFrame, x, y, z;
     kind=:heatmap,
     title=nothing,
     legend=nothing, legendpos=nothing,
