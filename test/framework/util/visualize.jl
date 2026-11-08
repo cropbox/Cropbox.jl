@@ -318,6 +318,17 @@ end
         @test_throws ArgumentError visualize(irregular, :x, :y, :z; backend = :UnicodePlots)
     end
 
+    @testset "UnicodePlots contours" begin
+        df = DataFrame(x = repeat([0, 1, 3], inner = 2), y = repeat([0, 2], 3), z = 0:5)
+        p = @test_logs visualize(df, :x, :y, :z; backend = :UnicodePlots, kind = :contour, zlim = (0, 10), legend = false)
+        @test p[].graphics isa Cropbox.UnicodePlots.BrailleCanvas
+        @test p[].cmap.lim == (0, 10)
+        @test !p[].cmap.bar
+        @test !isempty(repr(MIME"text/plain"(), p[]))
+        @test_logs (:warn, r"unsupported contour interval") visualize(df, :x, :y, :z; backend = :UnicodePlots, kind = :contour, zgap = 2)
+        @test_throws ArgumentError visualize(df[1:2, :], :x, :y, :z; backend = :UnicodePlots, kind = :contour)
+    end
+
     @testset "heatmap limits and colorbar" begin
         df = DataFrame(x=[1, 1, 2, 2], y=[1, 2, 1, 2], z=[2., 3., 4., 5.])
         for backend in (:Makie, :UnicodePlots)

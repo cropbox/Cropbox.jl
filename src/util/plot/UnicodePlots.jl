@@ -92,13 +92,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
 end
 
 plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, zgap, zlabgap, aspect, width=nothing, height=30) = begin
-    if kind == :heatmap
-        ;
-    elseif kind == :contour
-        @warn "unsupported plot kind = $kind"
-    else
-        error("unrecognized plot kind = $kind")
-    end
+    kind in (:heatmap, :contour) || throw(ArgumentError("unrecognized plot kind = $kind"))
 
     !isnothing(legendpos) && @warn "unsupported legend position = $legendpos"
 
@@ -108,20 +102,20 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     x, y, M = makegrid(X, Y, Z)
     M = permutedims(M)
 
-    xoffset, yoffset = first(x), first(y)
-    fact(a) = length(a) == 1 ? 1 : (last(a) - first(a)) / (length(a) - 1)
-    xfact = fact(x)
-    yfact = fact(y)
-    if kind == :heatmap
-        all(d -> isapprox(d, xfact), diff(x)) && all(d -> isapprox(d, yfact), diff(y)) ||
-            throw(ArgumentError("terminal heatmaps require evenly spaced coordinates"))
-    end
-
     kind == :heatmap && (height = min(height, length(y)))
     !isnothing(aspect) && (width = round(Int, aspect * height))
     kind == :heatmap && !isnothing(width) && (width = min(width, length(x)))
-
-    obj = UnicodePlots.heatmap(M; title, xlabel=xlab, ylabel=ylab, zlabel=zlab, xfact, yfact, xlim, ylim, zlim, colorbar=legend, xoffset, yoffset, width, height)
+    options = (; title, xlabel = xlab, ylabel = ylab, zlabel = zlab, xlim, ylim, zlim, colorbar = legend, width, height)
+    obj = if kind == :heatmap
+        fact(a) = length(a) == 1 ? 1 : (last(a) - first(a)) / (length(a) - 1)
+        xfact, yfact = fact(x), fact(y)
+        all(d -> isapprox(d, xfact), diff(x)) && all(d -> isapprox(d, yfact), diff(y)) ||
+            throw(ArgumentError("terminal heatmaps require evenly spaced coordinates"))
+        UnicodePlots.heatmap(M; options..., xfact, yfact, xoffset = first(x), yoffset = first(y))
+    else
+        length(x) > 1 && length(y) > 1 || throw(ArgumentError("contours require at least two coordinates on each axis"))
+        UnicodePlots.contourplot(x, y, M; options...)
+    end
     Plot(obj; X, Y, Z, kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, aspect, width, height)
 end
 
