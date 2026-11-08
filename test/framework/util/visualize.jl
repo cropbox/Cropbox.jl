@@ -257,6 +257,11 @@ end
 
     @testset "heatmap limits and colorbar" begin
         df = DataFrame(x=[1, 1, 2, 2], y=[1, 2, 1, 2], z=[2., 3., 4., 5.])
+        for backend in (:Makie, :UnicodePlots)
+            p = visualize(view(df, [4, 1, 3, 2], :), :x, :y, :z; backend)
+            @test p.opt[:Z] == df.z[[4, 1, 3, 2]]
+            @test p.opt[:zlim] == (2, 5)
+        end
         @test_throws ArgumentError visualize(df, :x, :y, :z; backend = :Gadfly)
         for legend in (true, false)
             p = @test_logs visualize(df, :x, :y, :z; backend=:UnicodePlots, zlim=(0, 10), legend)
