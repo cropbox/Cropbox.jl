@@ -270,6 +270,7 @@ evaluate(observations, estimates;
     index,
     target,
     metric = :rmse,
+    warn = true,
 )
 
 evaluate(SystemType, observations;
@@ -277,6 +278,7 @@ evaluate(SystemType, observations;
     index = nothing,
     target,
     metric = :rmse,
+    warn = true,
     simulation_keywords...,
 )
 ```
@@ -289,8 +291,11 @@ Cropbox normalizes compatible index units and inner-joins rows on the index.
 Rows missing any requested observation target are omitted; the two-table form
 also omits missing estimates. An `ArgumentError` is raised if no complete matching rows remain.
 Rows are not compared merely because they have the same position. Partial
-matches still use the matching subset, so check index coverage when interpreting
+matches warn with the number of matched and complete observations. The score
+still uses the matching subset, so check index coverage when interpreting
 a score; an explicit `snap` may intentionally select fewer observations.
+Set `warn = false` to suppress this warning without changing the score or
+empty-match errors.
 
 Both evaluation forms support the following metrics:
 
@@ -327,6 +332,7 @@ calibrate(SystemType, observations;
     weight = nothing,
     pareto = false,
     optim = (),
+    warn = true,
     simulation_keywords...,
 )
 ```
@@ -375,6 +381,11 @@ Rows missing any requested observation target are omitted before the search.
 Candidates with no matching output receive an infinite penalty. If no finite
 result is found, calibration raises an `ArgumentError` instead of returning
 an unvalidated configuration. This does not change an explicit `snap` condition.
+Partial matching warns once per search, reporting coverage for the first finite
+candidate with incomplete coverage, not necessarily the final solution.
+Run `evaluate` with the fitted configuration to check its coverage.
+Use `warn = false` to suppress this warning across repeated calibration calls;
+this is independent of simulation `verbose` and optimizer `TraceMode`.
 
 With one target, calibration minimizes that target's objective. With several
 targets, it uses a multi-objective method. `weight` changes how a single

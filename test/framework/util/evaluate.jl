@@ -88,6 +88,26 @@ using DataFrames
         @test_throws ArgumentError evaluate(obs[2:2, :], est; target = :b)
     end
 
+    @testset "partial matching warning" begin
+        obs = DataFrame(time = [1, 1, 2, 3], mass = [1, 2, 3, missing])
+        est = DataFrame(time = [1, 1, 2], mass = [1, 2, missing])
+        @test_logs (:warn, r"2 of 3 complete observations matched") @test evaluate(obs, est; target = :mass, metric = :mae) == 0.5
+        @test_logs @test evaluate(obs, est; target = :mass, metric = :mae, warn = false) == 0.5
+        @test_logs evaluate(obs, obs; target = :mass)
+
+        @system SEvaluateMatching(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a)   ~ accumulate
+        end
+        obs = DataFrame(time = [1, 1]u"hr", a = [1, 2], b = [1, 2])
+        configs = [:SEvaluateMatching => :a => a for a in 1:2]
+        index = [:time => "context.clock.time", :a]
+        @test_logs evaluate(SEvaluateMatching, obs; configs, index, target = :b, stop = 1)
+        @test_logs (:warn, r"1 of 2 complete observations matched") @test evaluate(SEvaluateMatching, obs;
+            index, target = :b, stop = 1) == 0
+        @test_logs @test evaluate(SEvaluateMatching, obs; index, target = :b, stop = 1, warn = false) == 0
+    end
+
     @testset "target types" begin
         T = Cropbox.TimeZones
         t = T.ZonedDateTime(2026, 1, 1, T.TimeZone("UTC"))
@@ -119,7 +139,8 @@ using DataFrames
         @test_throws ArgumentError evaluate(SEvaluateMetricOrder, obs; target = :mass, stop = 3, snap = false)
 
         snap(s) = s.context.clock.time' == 1u"hr"
-        @test evaluate(SEvaluateMetricOrder, obs; target = :mass, stop = 3, snap) == 1.0
+        @test_logs (:warn, r"1 of 3 complete observations matched") @test evaluate(SEvaluateMetricOrder, obs;
+            target = :mass, stop = 3, snap) == 1.0
     end
 
     @testset "floating-point time index" begin

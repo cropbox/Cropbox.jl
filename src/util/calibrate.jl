@@ -24,6 +24,7 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 ## Calibration
 - `parameters`: parameters with a range of boundary values to be calibrated within.
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
+- `warn=true`: warn once per search about partial observation matching.
 
 ## Multi-objective
 - `weight=nothing`: weights for calibrating multiple targets; default assumes equal weights.
@@ -35,6 +36,8 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
 Rows missing any requested observation target are omitted before the search.
 An `ArgumentError` is raised if no complete observations or no finite result remain.
+Partial matches warn once per search, with counts for the first finite candidate
+that uses only part of the complete observations.
 
 See also: [`simulate`](@ref), [`evaluate`](@ref), [`@config`](@ref)
 
@@ -63,7 +66,7 @@ calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) =
         @error "redundant configurations" config configs
     end
 end
-calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
+calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), warn = true, kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     V = parametervalues(P)
@@ -78,10 +81,10 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parseindex(index, S) |> values |> Tuple
     snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-    residual(c) = begin
+    residual(c, rows) = begin
         est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
         isempty(est) && return repeat([Inf], n)
-        O, E = aligndata(obs, est, T; index = I, allowempty = true)
+        O, E = aligndata(obs, est, T; index = I, allowempty = true, rows)
         isempty(first(O)) && return repeat([Inf], n)
         [metric(e, o) for (o, e) in zip(O, E)]
     end
@@ -90,13 +93,19 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         c = config(X)
         l = length(configs)
         R = Vector(undef, l)
+        rows = warn ? [Int[] for _ in 1:l] : fill(nothing, l)
         Threads.@threads for i in 1:l
-            R[i] = residual(configure(configs[i], c))
+            R[i] = residual(configure(configs[i], c), rows[i])
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
         e = eachrow(hcat(A...)) |> sum
         # BlackBoxOptim expects Float64, not even Int
         e = Float64.(e)
+        if warn && all(isfinite, e)
+            if warnmatching(obs, Iterators.flatten(rows); context = "calibration candidate (shown once per search)")
+                warn = false
+            end
+        end
         multi ? Tuple(e) : e[1]
     end
     range = map((p, u) -> Float64.(Tuple(deunitfy(p, u))), V, U)

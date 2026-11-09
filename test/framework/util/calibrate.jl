@@ -68,6 +68,14 @@ using DataFrames
         params = :SCalibrateConfigsIndex => :a => A
         p = calibrate(SCalibrateConfigsIndex, obs, configs; stop=n, index, target, parameters=params)
         @test p[:SCalibrateConfigsIndex][:a] == 10
+
+        optim = (; MaxSteps = 4, PopulationSize = 6, TraceMode = :silent)
+        @test_logs calibrate(SCalibrateConfigsIndex, obs, configs; stop = n, index, target, parameters = params, optim)
+        p = @test_logs (:warn, r"calibration candidate.*1 of 2 complete observations matched") calibrate(SCalibrateConfigsIndex, obs;
+            stop = n, index, target, parameters = params, optim)
+        q = @test_logs calibrate(SCalibrateConfigsIndex, obs;
+            stop = n, index, target, parameters = params, optim, warn = false)
+        @test p[:SCalibrateConfigsIndex][:a] == q[:SCalibrateConfigsIndex][:a]
     end
 
     @testset "missing observations and empty matches" begin
