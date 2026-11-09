@@ -43,7 +43,8 @@ normalize!(dfs::DataFrame...; on) = begin
     end
 end
 
-aligndata(obs, est, y; index) = begin
+aligndata(obs, est, y; index, allowempty = false) = begin
+    isempty(est) && throw(ArgumentError("no matching indices between observations and estimates"))
     I = parseindex(index, obs)
     T = parsetarget(y, obs)
     K = Symbol.(keys(I))
@@ -53,8 +54,14 @@ aligndata(obs, est, y; index) = begin
     est = DataFrames.select(est, (collect(values(I)) .=> K)..., (collect(values(T)) .=> E)...)
     normalize!(obs, est; on = K)
     df = DataFrames.innerjoin(obs, est; on = K)
-    isempty(df) && throw(ArgumentError("no matching indices between observations and estimates"))
+    isempty(df) && !allowempty && throw(ArgumentError("no matching indices between observations and estimates"))
     getproperty.(Ref(df), O), getproperty.(Ref(df), E)
+end
+
+filterobservations(obs, target) = begin
+    obs = DataFrames.dropmissing(obs, target)
+    isempty(obs) && throw(ArgumentError("no complete observations for the requested targets"))
+    obs
 end
 
 indexequal(a, b) = isequal(a, b)
@@ -62,7 +69,6 @@ indexequal(a::Number, b::Number) = isequal(promote(a, b)...)
 indexequal(a::Tuple, b::Tuple) = length(a) == length(b) && all(indexequal(x, y) for (x, y) in zip(a, b))
 indexcontains(x, xs) = any(y -> indexequal(x, y), xs)
 
-#TODO: share code with calibrate()
 """
     evaluate(S, obs; <keyword arguments>) -> Number | Tuple
 
@@ -85,6 +91,8 @@ Compare output of simulation results for the given system `S` and observation da
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
 
 Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
+Rows missing any requested observation target are omitted. An `ArgumentError`
+is raised if no complete observations or no matching output remain.
 
 See also: [`simulate`](@ref), [`calibrate`](@ref), [`@config`](@ref)
 
@@ -113,10 +121,9 @@ evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     end
 end
 evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, kwargs...) = begin
-    #HACK: use copy due to normalize!
-    obs = copy(obs)
     I = parseindex(index, S) |> keys |> collect
     T = parsetarget(target, S) |> keys |> collect
+    obs = filterobservations(obs, T)
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
@@ -124,20 +131,15 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parseindex(index, S) |> values |> Tuple
     snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-    NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
-    T1 = NT[end-n+1:end]
-    residual(c) = begin
-        est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
-        isempty(est) && return repeat([Inf], n)
-        normalize!(est, obs, on=I)
-        df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
-        r = [(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
-    end
     cost() = begin
         l = length(configs)
         R = Vector(undef, l)
         Threads.@threads for i in 1:l
-            R[i] = residual(configs[i])
+            R[i] = simulate(S; config = configs[i], index, target, snap, verbose = false, kwargs...)
+        end
+        R = map(R) do est
+            O, E = aligndata(obs, est, T; index = I)
+            collect(zip(E, O))
         end
         e = map(getindex.(R, i) for i in 1:n) do r
             metric(vcat(first.(r)...), vcat(last.(r)...))

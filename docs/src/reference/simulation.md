@@ -285,9 +285,12 @@ For two tables, `target=:observed => :estimated` maps different column names.
 For a system, the same name is assumed unless a pair is supplied. Multiple
 targets return a tuple in target order.
 
-Cropbox normalizes compatible index units, inner-joins rows on the index, drops
-missing target pairs in the two-table form, and then applies the metric. It does
-not compare rows merely because they have the same position.
+Cropbox normalizes compatible index units and inner-joins rows on the index.
+Rows missing any requested observation target are omitted; the two-table form
+also omits missing estimates. An `ArgumentError` is raised if no complete matching rows remain.
+Rows are not compared merely because they have the same position. Partial
+matches still use the matching subset, so check index coverage when interpreting
+a score; an explicit `snap` may intentionally select fewer observations.
 
 Both evaluation forms support the following metrics:
 
@@ -367,6 +370,11 @@ configuration and sums those scores for each target. This differs from
 metric. A sum of site-year RMSE values is not a pooled RMSE, especially when
 site-years have different numbers of observations. Check which objective fits
 the study before calibrating.
+
+Rows missing any requested observation target are omitted before the search.
+Candidates with no matching output receive an infinite penalty. If no finite
+result is found, calibration raises an `ArgumentError` instead of returning
+an unvalidated configuration. This does not change an explicit `snap` condition.
 
 With one target, calibration minimizes that target's objective. With several
 targets, it uses a multi-objective method. `weight` changes how a single

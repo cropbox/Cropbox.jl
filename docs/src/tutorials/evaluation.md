@@ -288,10 +288,13 @@ evaluate(LinearGrowth, obs2;
 )
 ```
 
-Cropbox creates snapshots at observation indices, normalizes compatible index
-units, joins rows, and applies the metric. Empty or nonmatching output therefore
-usually indicates an index, time-zone, stop, or snapshot problem rather than a
-metric problem.
+Cropbox omits rows missing any requested observation target, creates snapshots
+at observation indices, normalizes compatible index units, and joins rows before
+applying the metric. No complete observations or no matching output raises an
+`ArgumentError`. Check the index, time zone, `stop`, and `snap` in that case.
+Partial matches still use the matching subset: a low score alone does not show
+that every observation was compared. An explicit `snap` is preserved and may
+intentionally select only some observation indices.
 
 ## Multiple targets
 
