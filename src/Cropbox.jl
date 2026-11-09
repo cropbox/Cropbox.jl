@@ -38,4 +38,6 @@ include("util/webapi.jl")
 
 include("precompile.jl")
 
+__init__() = CairoMakie.activate!(type = "svg")
+
 end

@@ -246,7 +246,14 @@ p = visualize(dates, [1, 3, 2];
 visualize!(p, Date(2026, 1, 2), 2, "Measurement")
 ```
 
-To save a graphical result, use `Cropbox.writeimage`:
+### Display and save formats
+
+Graphical output defaults to SVG in notebooks, documentation, and `manipulate`.
+Lines and text stay sharp when the page is zoomed. The Classic style and the
+480 × 320 display size are unchanged; narrow pages shrink the figure to fit.
+
+To save a graphical result, use `Cropbox.writeimage`. Display and export formats
+are independent:
 
 ```@example visref
 p = visualize(series, :hour, :observed; backend = :Makie, kind = :line)
@@ -263,9 +270,30 @@ Download these exact exports as [PNG](observed.png), [SVG](observed.svg), or
 The function returns the output filename and needs no additional package
 installation or import. The filename extension selects PNG, SVG, or PDF;
 `Cropbox.writeimage("observed", p; format = :pdf)` appends the extension.
-Additional options such as `px_per_unit = 2` are passed to CairoMakie's `save`.
+Additional options are passed to CairoMakie's `save`. For a higher-resolution
+PNG, use `Cropbox.writeimage("observed.png", p; px_per_unit = 3)`.
+The default `px_per_unit = 2` gives a 960 × 640 PNG for a 480 × 320 figure;
+this changes pixel resolution, not the font sizes or layout.
 Image export requires `backend = :Makie`; UnicodePlots terminal output is not
-converted automatically. Notebook display keeps CairoMakie's default PNG output.
+converted automatically.
+
+For subsequent graphical output, including `manipulate`, select PNG before
+running the plotting cell:
+
+```@example visref
+Cropbox.CairoMakie.activate!(type = "png")
+visualize(series, :hour, :observed; backend = :Makie, kind = :line)
+```
+
+```@setup visref
+Cropbox.CairoMakie.activate!(type = "svg")
+```
+
+Switch back with `Cropbox.CairoMakie.activate!(type = "svg")`. These settings
+apply to CairoMakie output in the current Julia session, not already displayed
+figures, and need no additional package installation or import. PNG can be
+useful for dense figures whose SVG output is slow to display.
+
 For direct Makie use, `p[]` (or `p'`) still extracts the underlying `Figure`.
 
 ## Visualize a simulation

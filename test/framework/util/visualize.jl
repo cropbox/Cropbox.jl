@@ -63,7 +63,7 @@ end
         @test p.opt[:legendpos] == pos
         @test p.opt[:labels] == ["model", "reference"]
         @test p.opt[:axis].scene.plots[end].linestyle[].value == [0, 1, 3]
-        @test occursin("data:image/png;base64,", repr(MIME"text/html"(), p))
+        @test occursin("<svg", repr(MIME"image/svg+xml"(), p))
 
         p = visualize([0, 4], [[0, 4], [4, 0]]; backend = :Makie, kind = :line, linestyle = [:solid, :dot])
         @test p.opt[:axis].scene.plots[1].linestyle[].value == [0]
