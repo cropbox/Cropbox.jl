@@ -31,6 +31,8 @@ exchange, garlic growth, SimpleCrop, layered soil, and root architecture models.
   [CropRootBox](@ref croprootbox-tutorial) tutorial.
 - Looking up syntax: use [DSL Syntax](@ref dsl-syntax) and
   [Behaviors and Tags](@ref behaviors-and-tags).
+- Choosing a plotting call: use the argument guide and paired backend examples
+  in the [Visualization API](@ref Visualization1).
 - Maintaining or extending a model package: combine
   [Systems and Composition](@ref system), [DSL Syntax](@ref dsl-syntax),
   [Inspection](@ref Inspection1), and
