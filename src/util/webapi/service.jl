@@ -490,7 +490,7 @@ widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S
         "controls" => controls,
         "outputs" => outputs,
         "tables" => d["tables"],
-        "simulation" => APIDict("stop" => get(u, "stop", APIDict("value" => 5, "unit" => "hr")), "snap" => get(u, "snap", nothing)),
+        "simulation" => APIDict("stop" => get(u, "stop", APIDict("value" => 5, "unit" => unitlabel(timeunit(clocktype(S))))), "snap" => get(u, "snap", nothing)),
         "visualize" => APIDict(
             "x" => APIDict("options" => options, "default" => x),
             "y" => APIDict("options" => options, "default" => isempty(ys) ? [] : [first(ys)]),

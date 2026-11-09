@@ -175,7 +175,8 @@ decodetable(d::AbstractDict) = begin
         end
         df = DataFrame()
         for (i, c) in enumerate(columns)
-            df[!, Symbol(c["name"])] = [length(r) >= i ? r[i] : missing for r in rows]
+            # absent and `null` cells are `missing`, which plotting and evaluation skip
+            df[!, Symbol(c["name"])] = [length(r) >= i && !isnothing(r[i]) ? r[i] : missing for r in rows]
         end
         applycolumns!(df, columns)
     end

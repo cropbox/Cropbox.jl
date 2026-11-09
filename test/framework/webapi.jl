@@ -136,7 +136,8 @@ using TimeZones
         @test payload["columns"] == [Dict("name" => "t", "type" => "Int64", "unit" => "hr"), Dict("name" => "v", "type" => "Float64", "unit" => nothing), Dict("name" => "s", "type" => "Symbol", "unit" => nothing)]
         @test payload["rows"] == [[0, 1.5, "x"], [1, nothing, "y"]]
         @test JSON.parse(JSON.json(payload))["rows"][2][2] === nothing
-        @test Cropbox.decode(JSON.parse(JSON.json(Dict("type" => "DataFrame", "columns" => payload["columns"], "rows" => payload["rows"])))).t == [0, 1]u"hr"
+        roundtrip = Cropbox.decode(JSON.parse(JSON.json(Dict("type" => "DataFrame", "columns" => payload["columns"], "rows" => payload["rows"]))))
+        @test roundtrip.t == [0, 1]u"hr" && roundtrip.v[1] == 1.5 && ismissing(roundtrip.v[2]) && roundtrip.s == [:x, :y]
     end
 
     @testset "requests" begin
@@ -222,6 +223,10 @@ using TimeZones
         @test occursin("<svg", stepped["body"])
         from_table = Cropbox.visualize_payload(SWebAPI, Dict("data" => Dict("type" => "DataFrame", "columns" => p["columns"], "rows" => p["rows"]), "x" => "time", "y" => "b", "kind" => "line"))
         @test occursin("<svg", from_table["body"])
+        # the dashboard plots the simulated table back with `null` cells and partial limits
+        gapped = Dict("type" => "DataFrame", "columns" => [Dict("name" => "time", "type" => "Int64", "unit" => "hr"), Dict("name" => "b", "type" => "Float64", "unit" => "m")], "rows" => [[0, 1.0], [1, nothing], [2, 3.0]])
+        from_gapped = Cropbox.visualize_payload(SWebAPI, Dict("data" => gapped, "x" => "time", "y" => ["b"], "kind" => "scatter", "plot" => Dict("xlim" => [nothing, 5], "ylim" => [0, nothing])))
+        @test occursin("<svg", from_gapped["body"])
         @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("stop" => 2))
         @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("y" => "b", "backend" => "UnicodePlots"))
         @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("y" => "b", "plot" => Dict("backend" => "Makie")))
@@ -245,6 +250,7 @@ using TimeZones
         @test first(w["outputs"])["target"] == "time" && first(w["outputs"])["unit"] == "hr"
         @test Set(v["target"] for v in w["outputs"]) == Set(["time", "b", "g"])
         @test w["simulation"] == Dict("stop" => Dict("value" => 5, "unit" => "hr"), "snap" => nothing)
+        @test Cropbox.widgetpayload(SWebTable)["simulation"]["stop"] == Dict("value" => 5, "unit" => "d")
         @test w["visualize"]["x"]["default"] == "time" && w["visualize"]["y"]["default"] == ["b"]
         @test only(w["panels"]) == Dict("title" => "Panel 1", "x" => "time", "y" => ["b"], "kind" => "line")
         @test !haskey(w, "sweeps")

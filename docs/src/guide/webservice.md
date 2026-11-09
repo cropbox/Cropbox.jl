@@ -152,7 +152,9 @@ dashboard(ServiceExample; ui=Dict(
 ```
 
 The bundled browser dashboard reads this metadata and calls the same operation
-routes as any other client.
+routes as any other client: one `POST /api/simulate` per run, with the table it
+returns passed back as `data` to `POST /api/visualize` for every panel. Only a
+panel bound to a `sweeps` entry (`xstep`) simulates again.
 
 ## Deployment boundary
 
