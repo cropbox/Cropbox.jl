@@ -113,7 +113,9 @@
 
         plotapp = manipulate(ManipulateTest, :time, :mass;
             parameters = ManipulateTest => :rate => 0:2, stop = 2, backend = :Makie)
-        @test last(B.children(plotapp.handler(session, nothing)))[] isa Cropbox.Plot
+        p = last(B.children(plotapp.handler(session, nothing)))[]
+        @test p isa Cropbox.Plot
+        @test occursin("image/svg+xml", repr(MIME"text/html"(), B.jsrender(session, p)))
         close(session)
         slider.index[] = 1
         @test length(seen) == 2

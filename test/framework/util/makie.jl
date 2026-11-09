@@ -66,6 +66,7 @@
 
     @test !ax.leftspinevisible[]
     @test M.Makie.theme(:fontsize)[] == fontsize
+    @test showable(MIME"image/svg+xml"(), p)
     @test showable(MIME"image/png"(), p)
     signature = b"\x89PNG\r\n\x1a\n"
     io = IOBuffer()
