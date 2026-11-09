@@ -110,6 +110,16 @@ using DataFrames
             table_score = evaluate(obs, est; index=:time, target=:mass, metric)
             @test table_score ≈ system_score
         end
+
+        incomplete = DataFrame(time = obs.time, mass = [10.0, missing, 30.0])
+        @test evaluate(SEvaluateMetricOrder, incomplete; target = :mass, stop = 3) ≈
+            evaluate(incomplete, est; target = :mass)
+        @test_throws ArgumentError evaluate(SEvaluateMetricOrder, incomplete[2:2, :]; target = :mass, stop = 3)
+        @test_throws ArgumentError evaluate(SEvaluateMetricOrder, obs; target = :mass, stop = 0, snap = true, metric = signed_error)
+        @test_throws ArgumentError evaluate(SEvaluateMetricOrder, obs; target = :mass, stop = 3, snap = false)
+
+        snap(s) = s.context.clock.time' == 1u"hr"
+        @test evaluate(SEvaluateMetricOrder, obs; target = :mass, stop = 3, snap) == 1.0
     end
 
     @testset "floating-point time index" begin

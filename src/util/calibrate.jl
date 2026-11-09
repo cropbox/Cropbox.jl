@@ -33,6 +33,8 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 - `optim=()`: extra options for `BlackBoxOptim.bboptimize`.
 
 Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
+Rows missing any requested observation target are omitted before the search.
+An `ArgumentError` is raised if no complete observations or no finite result remain.
 
 See also: [`simulate`](@ref), [`evaluate`](@ref), [`@config`](@ref)
 
@@ -62,14 +64,13 @@ calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) =
     end
 end
 calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), kwargs...) = begin
-    #HACK: use copy due to normalize!
-    obs = copy(obs)
     P = configure(parameters)
     K = parameterkeys(P)
     V = parametervalues(P)
     U = parameterunits(P)
     I = parseindex(index, S) |> keys |> collect
     T = parsetarget(target, S) |> keys |> collect
+    obs = filterobservations(obs, T)
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
@@ -77,14 +78,12 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parseindex(index, S) |> values |> Tuple
     snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-    NT = DataFrames.make_unique([propertynames(obs)..., T...], makeunique=true)
-    T1 = NT[end-n+1:end]
     residual(c) = begin
         est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
         isempty(est) && return repeat([Inf], n)
-        normalize!(est, obs, on=I)
-        df = DataFrames.innerjoin(est, obs, on=I, makeunique=true)
-        r = [metric(df[!, e], df[!, o]) for (e, o) in zip(T, T1)]
+        O, E = aligndata(obs, est, T; index = I, allowempty = true)
+        isempty(first(O)) && return repeat([Inf], n)
+        [metric(e, o) for (o, e) in zip(O, E)]
     end
     config(X) = parameterzip(K, X, U)
     cost(X) = begin
@@ -120,6 +119,8 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         optim_default...,
         optim...
     )
+    all(isfinite, BlackBoxOptim.best_fitness(r)) ||
+        throw(ArgumentError("no finite calibration result; check observation indices, stop, snap, and the metric"))
     if multi && pareto
         pf = BlackBoxOptim.pareto_frontier(r)
         OrderedDict(BlackBoxOptim.fitness.(pf) .=> config.(BlackBoxOptim.params.(pf)))

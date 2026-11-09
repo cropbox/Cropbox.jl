@@ -69,4 +69,26 @@ using DataFrames
         p = calibrate(SCalibrateConfigsIndex, obs, configs; stop=n, index, target, parameters=params)
         @test p[:SCalibrateConfigsIndex][:a] == 10
     end
+
+    @testset "missing observations and empty matches" begin
+        @system SCalibrateAlignment(Controller) begin
+            a => 1 ~ preserve(parameter)
+            b(a)   ~ accumulate
+        end
+        obs = DataFrame(time = [0, 1]u"hr", b = [missing, 2.0])
+        before = copy(obs)
+        parameters = :SCalibrateAlignment => :a => (0.0, 4.0)
+        optim = (; MaxSteps = 4, PopulationSize = 6, TraceMode = :silent)
+        metric(E, O) = begin
+            @test O == [2.0]
+            Cropbox.metricfunc(:rmse)(E, O)
+        end
+        p = calibrate(SCalibrateAlignment, obs; target = :b, stop = 1, parameters, metric, optim)
+        @test 0 <= p[:SCalibrateAlignment][:a] <= 4
+        @test isequal(obs, before)
+        @test_throws ArgumentError calibrate(SCalibrateAlignment, obs[1:1, :]; target = :b, stop = 1, parameters, optim)
+        @test_throws ArgumentError calibrate(SCalibrateAlignment, obs; target = :b, stop = 0, snap = true,
+            parameters, optim, metric = (E, O) -> 0.0)
+        @test_throws ArgumentError calibrate(SCalibrateAlignment, obs; target = :b, stop = 1, snap = false, parameters, optim)
+    end
 end
