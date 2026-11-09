@@ -17,7 +17,7 @@ class AdapterTests(unittest.TestCase):
                 service_url(url)
 
     def test_forward_units_without_rounding(self):
-        payload = {"config_entries": [{"path": "Example.a", "value": {"value": 1.23456789, "unit": "m"}}]}
+        payload = {"config": {"Example.a": {"value": 1.23456789, "unit": "m"}}}
         result = {"rows": [[1.23456789]], "columns": [{"name": "a", "unit": "m"}]}
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(result).encode())) as open_url:
             self.assertEqual(route_json("http://localhost:8000", "POST", "/api/simulate", payload), result)

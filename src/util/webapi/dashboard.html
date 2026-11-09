@@ -423,7 +423,7 @@
     function renderConditionOptions(...current) {
       const paths = (schema.outputs || [])
         .filter(output => output.state === "flag" || String(output.type || output.value_type || "").includes("Bool"))
-        .map(output => output.target_path || output.path || output.name);
+        .map(output => output.target || output.name);
       document.getElementById("condition-options").innerHTML = [...paths, ...current]
         .filter((value, index, all) => value && all.indexOf(value) === index)
         .map(value => `<option value="${esc(value)}"></option>`)
@@ -541,7 +541,7 @@
       if (customLabel) return localName(customLabel, system);
       const originalName = String(item.name || "");
       if (originalName && !originalName.startsWith("__")) return originalName;
-      return finalPathName(item.declared_path || path);
+      return finalPathName(item.declared || path);
     }
 
     function modelPanelMaximum() {
@@ -639,7 +639,7 @@
         ["Default", metadataValue(item.default, item.unit)],
         ["Unit", item.unit],
         ["Type", item.value_type || item.type || item.default?.type],
-        ["Path", item.path || item.config_path || item.declared_path || item.target_path],
+        ["Path", item.path || item.declared || item.target],
         ["Depends on", item.dependencies?.length ? item.dependencies.join(", ") : ""]
       ].filter(([, value]) => value !== null && value !== undefined && value !== "");
     }
@@ -804,7 +804,7 @@
     function tableRow(control) {
       const path = control.path || `${control.system}.${control.name}`;
       const system = control.system || "";
-      const columns = (control.consumers || control.columns || []).map(c => c.column || c.name).filter(Boolean).join(", ");
+      const columns = (control.columns || []).map(c => c.column || c.name).filter(Boolean).join(", ");
       const source = sourceForTarget(path);
       const sourceLabel = source ? (source.label || source.name || "external source") : "";
       return `<div class="tree-row inactive" data-tree-row data-kind="table" data-path="${esc(path)}" data-system="${esc(control.system || "")}" data-name="${esc(control.name || "")}">
@@ -924,12 +924,11 @@
 
     function tableColumnMetadata(path, content) {
       const table = (schema.tables || []).find(entry =>
-        entry.config_path === path || entry.path === path ||
-        (entry.accepted_config_paths || []).includes(path)
+        entry.path === path || entry.declared === path
       );
       const control = (schema.controls || []).find(entry =>
         entry.role === "table" &&
-        (entry.path === path || (entry.accepted_config_paths || []).includes(path))
+        (entry.path === path || entry.declared === path)
       );
       const lines = String(content || "").split(/\r?\n/).filter(line => line.trim());
       if (!lines.length) return [];
@@ -939,13 +938,15 @@
       const stopUnit = document.getElementById("stop-unit")?.value.trim() || null;
       return header.map((rawName, index) => {
         const name = rawName.trim();
-        const consumer = (table?.consumers || []).find(entry => String(entry.column) === name);
+        const consumer = (table?.columns || []).find(entry => String(entry.column) === name);
         const specification = declared.find(entry => String(entry.name || entry.column) === name);
         const isIndex = table && String(table.index || "index") === name;
+        const type = specification?.type || inferCsvType(sample[index]);
+        const temporal = ["Date", "DateTime", "ZonedDateTime"].includes(type);
         const column = {
           name,
-          type: specification?.type || inferCsvType(sample[index]),
-          unit: specification?.unit ?? consumer?.unit ?? (isIndex ? stopUnit : null)
+          type,
+          unit: specification?.unit ?? consumer?.unit ?? (isIndex && !temporal ? stopUnit : null)
         };
         if (specification?.timezone) column.timezone = specification.timezone;
         return column;
@@ -1039,12 +1040,12 @@
 
     function outputMetadata(path) {
       return (schema.outputs || []).find(output =>
-        output.target_path === path || output.path === path || output.name === path || output.alias === path
+        output.target === path || output.name === path || output.alias === path
       );
     }
 
     function outputPath(output) {
-      return output?.target_path || output?.path || output?.name || "";
+      return output?.target || output?.name || "";
     }
 
     function panelVariableOptions(values, selected) {
@@ -1349,7 +1350,7 @@
     }
 
     function requestFromControls(extra = {}) {
-      const config_entries = [];
+      const config = {};
       document.querySelectorAll("[data-override-enable]:checked").forEach(toggle => {
         const row = toggle.closest("[data-tree-row]");
         const kind = row.dataset.kind;
@@ -1364,10 +1365,7 @@
           const content = pasted || file?.content;
           if (content) {
             const columns = file?.columns?.length ? file.columns : tableColumnMetadata(path, content);
-            config_entries.push({
-              path,
-              value: { type: "CSV", filename: file?.filename || `${name}.csv`, content, columns }
-            });
+            config[path] = { type: "CSV", filename: file?.filename || `${name}.csv`, content, columns };
           }
           return;
         }
@@ -1382,11 +1380,10 @@
           try { value = JSON.parse(raw); }
           catch (_) { throw new Error(`${path} requires valid JSON.`); }
         }
-        config_entries.push({ path, value: unit ? { value, unit } : value });
+        config[path] = unit ? { value, unit } : value;
       });
-      const external = Object.fromEntries((schema.external_sources || []).map(source => [source.name || providerSystem(source), externalValues(source)]));
       const targets = selectedTargetNames();
-      const request = { config_entries, external, ...simulationRequestFields(), target: targets, ...extra };
+      const request = { config, ...simulationRequestFields(), target: targets, ...extra };
       return request;
     }
 
@@ -1548,11 +1545,11 @@
         if (xstep?.path) {
           const sweptPaths = new Set(
             (schema.controls || [])
-              .filter(control => (control.accepted_config_paths || [control.path]).includes(xstep.path))
+              .filter(control => [control.path, control.declared].includes(xstep.path))
               .map(control => control.path)
           );
           sweptPaths.add(xstep.path);
-          request.config_entries = (request.config_entries || []).filter(entry => !sweptPaths.has(entry.path));
+          for (const swept of sweptPaths) delete request.config[swept];
         }
         const res = await postJSON("/api/visualize", request);
         body.innerHTML = res.status === "ok" ? res.body : `<div class="error">${esc(res.error?.message || "Visualization failed.")}</div>`;

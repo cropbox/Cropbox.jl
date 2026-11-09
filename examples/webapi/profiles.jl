@@ -144,10 +144,10 @@ function garlic_profile()
     request_defaults = Dict{String,Any}(
         "stop" => "calendar.count",
         "snap" => (s -> Dates.hour(s.calendar.time') == 12),
-        "config_entries" => [Dict("path" => "Weather.s", "value" => Dict(
+        "config" => Dict("Weather.s" => Dict(
             "type" => "CSV", "filename" => basename(weather_path),
             "content" => read(weather_path, String), "columns" => columns,
-        ))],
+        )),
     )
     (; system=Garlic.Model, config, ui, request_defaults)
 end

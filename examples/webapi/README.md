@@ -106,18 +106,19 @@ connection. Using an LLM requires an independently configured MCP-capable host.
 
 ## Verification
 
-`Pkg.test()` includes small API function, serialization, and HTTP checks.
-Model integration tests run manually using the example environment:
+`Pkg.test()` covers the model description, the JSON codec, request parsing,
+the operation routes and loopback HTTP round trips (`test/framework/webapi.jl`).
+The example services are checked manually using the example environment:
 
 ```sh
 julia --project=. -e 'using Pkg; Pkg.test()'
-julia --project=examples/webapi examples/webapi/integration.jl
 julia --project=examples/webapi examples/webapi/check.jl
 .venv/bin/python -m unittest discover -s examples/webapi/mcp
 ```
 
-`integration.jl` checks model results against native calls, including phenology,
-SimpleCrop, LeafGasExchange, and Garlic. `check.jl` checks the three example services.
+`check.jl` starts the three example services and exercises their routes over
+HTTP. The model-equivalence script used for the published paper is preserved
+on the `webapi` branch (`examples/webapi/integration.jl`).
 
 To test the live MCP protocol, leave the cherry HTTP server running and use:
 

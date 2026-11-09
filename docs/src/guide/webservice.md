@@ -4,21 +4,20 @@ using Cropbox
 
 # Web service
 
-Cropbox can expose a system through the same metadata and simulation semantics
-used by `simulate()` and `visualize()`. The public interface has three entry
-points:
+Cropbox can expose a system through HTTP with the same semantics as
+`simulate()`, `visualize()`, `evaluate()` and `calibrate()`. The public
+interface has three entry points:
 
-* [`describe()`](@ref) projects system, parameter, variable, docstring, unit,
-  and provided-table metadata into JSON-compatible values.
-* [`serve()`](@ref) publishes that contract and the model operations over HTTP.
+* [`describe()`](@ref) projects systems, parameters, variables, docstrings,
+  units and provided-table bindings into JSON-compatible values.
+* [`serve()`](@ref) publishes that description and the model operations over HTTP.
 * [`dashboard()`](@ref) starts the same service with a browser frontend.
 
-## Inspect a model
+Runnable chilling-forcing, leaf gas-exchange and Garlic services are provided in
+[`examples/webapi`](https://github.com/cropbox/Cropbox.jl/tree/main/examples/webapi),
+together with an optional Python MCP adapter.
 
-Runnable chilling-forcing, leaf gas-exchange, and Garlic services are provided in
-[`examples/webapi`](https://github.com/cropbox/Cropbox.jl/tree/main/examples/webapi).
-That directory includes an isolated Julia environment, HTTP checks, and an
-optional Python MCP adapter. The examples use the Cropbox checkout directly.
+## Inspect a model
 
 ```@example WebService
 @system ServiceExample(Controller) begin
@@ -32,146 +31,133 @@ end
 model = describe(ServiceExample)
 (
     name = model["model"]["name"],
-    parameter = only(model["parameters"])["config_path"],
+    parameter = only(model["parameters"])["path"],
     unit = only(model["parameters"])["unit"],
+    default = only(model["parameters"])["default"],
 )
 ```
 
-`GET /api/model` contains only model-specific discovery fields. These are the
-contract version, model identity, systems, parameters, variables, and table
-bindings. Generic request structures are available from `GET /api/schema`, and
-`GET /api/openapi` associates those structures with HTTP routes. Clients can
-therefore inspect a model without receiving a second copy of route metadata.
+Every parameter, variable and table entry carries two kinds of paths: `path`
+is the configuration path (`System.name`, with `declared` naming the same
+parameter through the system that declared it) and `target` is the access path
+used for `target`, `index`, `stop`, `x` and `y` in requests (`leaf.area`).
+Parameters also report their declared `type`, `unit` and `default` value under
+the server configuration. `GET /api/model` serves this description;
+`GET /api/schema` and `GET /api/openapi` serve the generic request and response
+structures, and `GET /api/docs` renders them with Swagger UI.
 
 ## Start a service
-
-The default call serves the programming API and bundled dashboard and blocks
-until the server stops.
 
 ```julia
 serve(ServiceExample; host="127.0.0.1", port=8000)
 ```
 
-The equivalent dashboard-oriented entry point is:
+The equivalent dashboard-oriented entry point is `dashboard(ServiceExample)`.
+Use `dashboard=:none` with `serve()` when only programming routes are needed,
+and `async=true` to get the server object back instead of blocking.
+
+`config` and `options` passed to `serve()` are the base for every request.
+`request_defaults` holds trusted default request fields that are merged under
+each client request; this is where a Julia `snap` function or a bundled weather
+table belongs, because such values never travel to the client:
 
 ```julia
-dashboard(ServiceExample; host="127.0.0.1", port=8000)
+serve(ServiceExample;
+    config=:ServiceExample => :size => 3u"m",
+    request_defaults=Dict("stop" => Dict("value" => 24, "unit" => "hr")),
+)
 ```
 
-Use `dashboard=:none` with `serve()` when only programming routes are needed.
-Set `async=true` for tests or applications that manage the returned HTTP server
-object themselves.
+A client field replaces the corresponding default. Configurations are merged
+per parameter, so a client value for one parameter leaves the other defaults in
+place. Default `snap` settings are not applied to `evaluate` and `calibrate`,
+which align observations themselves.
 
-## Values, units, and tables
-
-Scalar values can include an explicit unit:
+## Requests
 
 ```json
 {
-  "config_entries": [
-    {"path": "ServiceExample.size", "value": {"value": 3, "unit": "m"}}
-  ],
+  "config": {"ServiceExample.size": {"value": 300, "unit": "cm"}},
   "stop": {"value": 4, "unit": "hr"},
   "target": ["reported_size"]
 }
 ```
 
-When a request specifies a compatible unit, the service converts the numeric
-value to that unit before it is passed to Cropbox or returned in a response.
-Non-finite floating-point results are represented as JSON `null`, because JSON
-does not define numeric literals for `NaN` or infinity.
+* `config` accepts flat `{"System.name": value}` entries, nested
+  `{"System": {"name": value}}` objects, or a mix. `configs` runs several
+  configurations (each merged over `config`) and stacks the results.
+* Scalar values are plain JSON values or objects `{"value", "unit", "type"}`.
+  Values are converted to the given unit before they reach the model, and
+  strings are coerced to the parameter's declared type.
+* `target`, `index`, `meta` and `base` take variable paths as strings or arrays;
+  an object maps output column names to paths. Unknown paths are rejected with
+  HTTP 422. `stop` and `snap` take a count, a `{value, unit}` duration or the
+  path of a condition variable.
+* `evaluate` and `calibrate` additionally take `observed` (a table), `metric`
+  and, for calibration, `parameters` with `[lower, upper]` or
+  `{lower, upper, unit}` bounds keyed like `config`.
+* `visualize` takes `x`, `y`, `kind`, `xstep` and plot options under `plot`,
+  and either simulates the model or plots a table passed as `data`.
 
-A `provide` parameter accepts a `DataFrame`, row-based JSON, or CSV content.
-CSV requests should include column metadata when names alone do not determine
-the units expected by downstream `drive` variables. For compatibility with
-existing Cropbox data, the service also recognizes simple `name (unit)` headers
-and an allowlisted set of type annotations such as `date (:Date)`. Arbitrary
-expressions in CSV headers are never evaluated. New clients should place unit,
-type, and time-zone declarations in the structured `columns` metadata.
+Responses carry `status`, `contract_version` and the result. Simulation tables
+list `columns` (name, type, unit) and `rows` of plain values; non-finite numbers
+are `null`. Errors use HTTP 400 for malformed JSON, 404/405 for routing, 422 for
+validation and 500 for execution failures, with a JSON `error` object.
+
+## Tables
+
+A `provide` parameter accepts CSV content or row arrays. Column metadata
+(`type`, `unit`, `timezone`) declares what cannot be inferred from the values;
+CSV headers may alternatively carry `name (unit)` or `name (:Type)` annotations
+when no `columns` are given. Header annotations are parsed as units and an
+allowlisted set of type names, never evaluated.
 
 ```json
 {
-  "config_entries": [{
-    "path": "Weather.s",
-    "value": {
+  "config": {
+    "Weather.s": {
       "type": "CSV",
-      "filename": "weather.csv",
       "content": "index,Tair\n2024-01-01T00:00:00+09:00,4.2\n",
       "columns": [
         {"name": "index", "type": "ZonedDateTime", "timezone": "Asia/Seoul"},
         {"name": "Tair", "type": "Float64", "unit": "°C"}
       ]
     }
-  }]
+  }
 }
 ```
 
-Timestamp strings may carry their own UTC offset. A `timezone` field converts
-those instants to the named zone and is required for local timestamps without
-an offset. The DSL alias `datetime` denotes `ZonedDateTime`. Declare `::DateTime`
-explicitly for a timestamp without a time zone. JSON values use the corresponding
-Julia type name in their `type` field, not the DSL alias.
-Dashboard profiles can declare the same metadata through
-`ui["table_inputs"]`, along with a label and the name of a server-configured
-default CSV. The browser uses this declaration when it builds an uploaded CSV
-request.
+Timestamps may carry their own offset; `timezone` converts them to the named
+zone and is required for local timestamps without an offset. Temporal columns
+cannot carry a unit. The table entries of the model description list the index
+column and the columns read by `drive` variables, with their units, so a client
+can construct a replacement table. Table parameters only accept table payloads;
+a bare string is rejected.
 
-Package-specific source formats should be normalized before the service starts.
-The HTTP contract remains CSV-based and does not require clients to implement a
-model package's private file parser.
+## Dashboard
 
-The model description identifies a table parameter as `TableInput` but does
-not serialize a default `DataFrame` held by the server configuration. The
-table binding entries report the accepted path, target path, index, consumer
-columns, and units needed to construct a replacement.
-Only client-relevant DSL tags are published. Internal clock wiring and
-macro-generated initialization tags remain implementation details.
+`GET /api/dashboard` derives dashboard metadata from the description: one
+editable control per parameter and table input (plus the runtime `Clock.step`),
+selectable outputs, default plot panels and the simulation defaults. Service
+profiles customize it through `ui`:
 
-`Clock.step` is emitted by the dashboard schema as a runtime configuration
-control retaining the configured value and unit. The time output uses the
-clock's declared unit, which is hours for `Clock` and days for `DailyClock`.
-A model-defined `time` output retains its own metadata, for example a calendar
-timestamp. The step control is derived by the service rather
-than synthesized by the browser and remains distinct from parameters extracted
-from the model DSL. Likewise, `controls` contains one entry per editable
-CSV/DataFrame input, whereas `tables` may contain several descriptors when
-nested systems consume the same `provide` input through different access paths.
+```julia
+dashboard(ServiceExample; ui=Dict(
+    "title" => "Plant size",
+    "outputs" => ["reported_size"],
+    "panels" => [Dict("x" => "time", "y" => ["reported_size"], "kind" => "line")],
+    "stop" => Dict("value" => 24, "unit" => "hr"),
+    "table_inputs" => [],   # label, default_filename and columns for provided tables
+))
+```
 
-The dashboard `simulation` object carries the service defaults for `stop` and
-`snap`. A stop value without a unit is an update count, a value with a unit is
-a duration, and a string identifies a model variable used as a stop condition.
-Snapshot settings may retain the trusted service default, supply a quantity
-interval, or identify a model condition. Selecting the service default omits
-`snap` from the browser request so `request_defaults` remains authoritative.
-Default and client `config_entries` are merged by configuration path. An
-uploaded table therefore replaces the server's CSV entry for the same
-`provide` path while unrelated default entries remain in the request.
-
-The model explorer groups editable entries by their declared system. Its add
-action selects a system and then a declared parameter or table, activates that
-entry, and moves directly to its editor. Clearing the entry removes it from the
-next request. Hovering or focusing the state icon beside an entry shows its
-description and structured metadata, including the default value, unit, type,
-path, and dependencies when available. Undeclared configuration paths are not
-offered because the service cannot validate their value type or unit from model
-metadata.
-
-Panel axes choose values from one simulation result. A trusted service profile
-may also assign an `xstep` preset to a panel so that `visualize` repeatedly runs
-the model over declared parameter values. This supports response curves such as
-assimilation against intercellular carbon dioxide or temperature. The bundled
-browser renders these preset panels but does not expose an editor for grouped
-parameter values.
+The bundled browser dashboard reads this metadata and calls the same operation
+routes as any other client.
 
 ## Deployment boundary
 
-The server executes model operations supplied by trusted application code.
-`request_defaults` is intended for trusted server-side values such as a Julia
-`snap` function and is not serialized to clients. The built-in server does not
-provide authentication, authorization, TLS termination, request quotas, or a
-job queue. Bind it to loopback for local work, or place it behind a production
-gateway that supplies those controls.
-
-Swagger UI is available at `/api/docs`. Its assets are loaded from a public CDN;
-the underlying OpenAPI document at `/api/openapi` remains available without the
-UI.
+The server executes model operations supplied by trusted application code. It
+has no authentication, authorization, TLS termination, request quotas or job
+queue. Bind it to loopback for local work, or place it behind a gateway that
+supplies those controls. Swagger UI at `/api/docs` loads its assets from a
+public CDN; the OpenAPI document at `/api/openapi` is served locally.
