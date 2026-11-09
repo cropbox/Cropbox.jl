@@ -43,7 +43,7 @@ normalize!(dfs::DataFrame...; on) = begin
     end
 end
 
-aligndata(obs, est, y; index, allowempty = false) = begin
+aligndata(obs, est, y; index, allowempty = false, rows = nothing) = begin
     isempty(est) && throw(ArgumentError("no matching indices between observations and estimates"))
     I = parseindex(index, obs)
     T = parsetarget(y, obs)
@@ -52,9 +52,12 @@ aligndata(obs, est, y; index, allowempty = false) = begin
     # copy only the needed columns, keeping target names distinct across tables
     obs = DataFrames.select(obs, K, (collect(keys(T)) .=> O)...)
     est = DataFrames.select(est, (collect(values(I)) .=> K)..., (collect(values(T)) .=> E)...)
+    row = gensym(:row)
+    isnothing(rows) || (obs[!, row] = 1:nrow(obs))
     normalize!(obs, est; on = K)
     df = DataFrames.innerjoin(obs, est; on = K)
     isempty(df) && !allowempty && throw(ArgumentError("no matching indices between observations and estimates"))
+    isnothing(rows) || append!(rows, df[!, row])
     getproperty.(Ref(df), O), getproperty.(Ref(df), E)
 end
 
@@ -62,6 +65,13 @@ filterobservations(obs, target) = begin
     obs = DataFrames.dropmissing(obs, target)
     isempty(obs) && throw(ArgumentError("no complete observations for the requested targets"))
     obs
+end
+
+warnmatching(obs, rows; context = "evaluation") = begin
+    matched, total = length(unique(rows)), nrow(obs)
+    0 < matched < total || return false
+    @warn "partial observation matching in $context: $matched of $total complete observations matched; check index, stop, and snap"
+    true
 end
 
 indexequal(a, b) = isequal(a, b)
@@ -89,10 +99,12 @@ Compare output of simulation results for the given system `S` and observation da
 
 ## Evaluation
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
+- `warn=true`: warn when only part of the complete observations match.
 
 Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
 Rows missing any requested observation target are omitted. An `ArgumentError`
 is raised if no complete observations or no matching output remain.
+Partial matches warn with the number of matched and complete observations.
 
 See also: [`simulate`](@ref), [`calibrate`](@ref), [`@config`](@ref)
 
@@ -120,7 +132,7 @@ evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         @error "redundant configurations" config configs
     end
 end
-evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, kwargs...) = begin
+evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, warn = true, kwargs...) = begin
     I = parseindex(index, S) |> keys |> collect
     T = parsetarget(target, S) |> keys |> collect
     obs = filterobservations(obs, T)
@@ -134,16 +146,18 @@ evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing,
     cost() = begin
         l = length(configs)
         R = Vector(undef, l)
+        rows = warn ? Int[] : nothing
         Threads.@threads for i in 1:l
             R[i] = simulate(S; config = configs[i], index, target, snap, verbose = false, kwargs...)
         end
         R = map(R) do est
-            O, E = aligndata(obs, est, T; index = I)
+            O, E = aligndata(obs, est, T; index = I, rows)
             collect(zip(E, O))
         end
         e = map(getindex.(R, i) for i in 1:n) do r
             metric(vcat(first.(r)...), vcat(last.(r)...))
         end
+        warn && warnmatching(obs, rows)
         multi ? Tuple(e) : only(e)
     end
     cost()
@@ -165,11 +179,13 @@ Compare observation data `obs` and estimation data `est` with a choice of evalua
 
 ## Evaluation
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
+- `warn=true`: warn when only part of the complete observations match.
 
 See also: [`evaluate`](@ref)
 
 Neither input table is modified. Rows missing any requested target are omitted.
 An `ArgumentError` is raised if no complete matching rows remain.
+Partial matches warn with the number of matched and complete observations.
 
 # Examples
 ```julia-repl
@@ -184,14 +200,17 @@ julia> evaluate(obs, est; index = :time, target = :b => :c)
 1.0 g
 ```
 """
-evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index = nothing, target, metric = nothing, kwargs...) = begin
+evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index = nothing, target, metric = nothing, warn = true, kwargs...) = begin
     isnothing(index) && (index = :time)
-    Xs, Ys = aligndata(obs, est, target; index)
+    obs = filterobservations(obs, collect(keys(parsetarget(target, obs))))
+    rows = warn ? Int[] : nothing
+    Xs, Ys = aligndata(obs, est, target; index, rows)
     isnothing(metric) && (metric = :rmse)
     metric = metricfunc(metric)
     keep = map((v...) -> all(!ismissing, v), Xs..., Ys...)
     any(keep) || throw(ArgumentError("no complete matching rows for the requested targets"))
     e = [metric(Y[keep], X[keep]) for (X, Y) in zip(Xs, Ys)]
+    warn && warnmatching(obs, rows[keep])
     length(e) == 1 ? only(e) : Tuple(e)
 end
 

@@ -293,8 +293,16 @@ at observation indices, normalizes compatible index units, and joins rows before
 applying the metric. No complete observations or no matching output raises an
 `ArgumentError`. Check the index, time zone, `stop`, and `snap` in that case.
 Partial matches still use the matching subset: a low score alone does not show
-that every observation was compared. An explicit `snap` is preserved and may
-intentionally select only some observation indices.
+that every observation was compared. A warning reports how many complete
+observations matched, for example `2 of 3 complete observations matched`.
+Rows missing any requested observation target are excluded from this total;
+for two tables, a match must also have complete estimates. Each observation row
+is counted once, even if multiple estimates match it. With `configs`, coverage
+is combined across configurations, so a site-specific run need not match other
+sites. This count does not change how duplicate matches contribute to the score.
+Use `warn = false` to suppress only this matching warning; it does not change
+the selected rows, metric, or errors for unusable observations.
+An explicit `snap` is preserved and may intentionally select only some indices.
 
 ## Multiple targets
 
@@ -436,6 +444,17 @@ sum of site-year RMSE values gives each site-year one score, while pooled RMSE
 also reflects how many observations each site-year contains. Ensure observation
 indices uniquely identify rows across environments and choose the objective
 deliberately.
+
+To avoid repeated messages during optimization, `calibrate` warns only for the
+first finite candidate with partial coverage. Those counts describe that
+candidate, not necessarily the selected solution. Evaluate the fitted
+configuration afterwards to check its coverage. The warning does not penalize
+partial matches or change the objective.
+Each `calibrate` call starts a new warning scope. In an outer loop or an
+interactive callback, use `warn = false` when the repeated warning is not useful,
+and evaluate the fitted configuration afterwards with warnings enabled.
+This is separate from `verbose = false`, which hides simulation progress, and
+`optim = (; TraceMode = :silent)`, which hides the optimizer's progress log.
 
 ## Multiple objectives
 
