@@ -756,6 +756,28 @@ Interact widget.
 - Backend warnings usually indicate a presentation limitation, not a failed
   simulation. Re-run with `backend = :Makie` before changing model equations.
 
+### Non-finite results
+
+`NaN` can represent an event that was not reached. Cropbox ignores `NaN` and
+`Inf` when it computes numeric axis ranges, without removing or replacing
+values in the input table. A line remains broken at a missing or non-finite
+result rather than connecting across it.
+
+```@example finiteplots
+using Cropbox, DataFrames
+events = DataFrame(year = 2020:2024, doy = [20., 21., NaN, 23., 24.]u"d")
+visualize(events, :year, :doy;
+    backend = :Makie,
+    kind = :scatterline, legend = false)
+```
+
+If no finite values are available for a range that Cropbox must infer, it
+raises an `ArgumentError`. Supply `ylim = (1, 366)`, for example, to show a
+terminal event series that is entirely `NaN`. Observation–estimate plots use
+`lim` for their common range. Regular Makie plots retain Makie's own automatic
+limits, including its defaults for an empty series. Explicit limits and the
+existing empty/`missing` defaults are unchanged.
+
 ## Interactive parameter controls
 
 The callback form receives a configuration made from the current widget values:

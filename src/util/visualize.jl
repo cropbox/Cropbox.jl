@@ -234,8 +234,7 @@ _visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, col
     isnothing(colors) && (colors = repeat([nothing], n))
 
     if isnothing(lim)
-        l = findlim.(deunitfy.([Xs..., Ys...]))
-        lim = (minimum(minimum.(l)), maximum(maximum.(l)))
+        lim = findlim(vcat(deunitfy.([Xs..., Ys...])...))
     end
     L = [lim[1], lim[2]]
 

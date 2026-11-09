@@ -55,8 +55,10 @@ extractarray(df::AbstractDataFrame, n) = collect(convertcolumn(extractcolumn(df,
 
 findlim(array::Vector{<:Union{Number,Missing}}) = begin
     a = skipmissing(array)
-    l = isempty(a) ? 0 : floor(minimum(a))
-    u = isempty(a) ? 0 : ceil(maximum(a))
+    isempty(a) && return (-1, 1)
+    a = Iterators.filter(isfinite, a)
+    isempty(a) && throw(ArgumentError("cannot infer plot limits without finite values; specify explicit limits"))
+    l, u = floor(minimum(a)), ceil(maximum(a))
     #HACK: avoid empty range
     l == u ? (l-1, l+1) : (l, u)
 end

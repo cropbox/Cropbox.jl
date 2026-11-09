@@ -150,6 +150,34 @@ end
         end
     end
 
+    @testset "non-finite limits" begin
+        @test Cropbox.findlim([NaN, -Inf, 1.5, Inf, missing]) == (1, 2)
+        @test_throws ArgumentError Cropbox.findlim([NaN, Inf])
+        obs = DataFrame(year = 2020:2022, doy = [20., 21., 22.]u"d")
+        est = DataFrame(year = 2020:2022, doy = [20., NaN, 22.]u"d")
+        unreached = DataFrame(year = 2020:2022, doy = fill(NaN*u"d", 3))
+        for backend in (:Makie, :UnicodePlots)
+            p = visualize(est, :year, :doy; backend, kind = :line)
+            @test all(isfinite, last(plotbounds(p)))
+            @test isequal(p.opt[:Ys][1], [20., NaN, 22.])
+            backend == :UnicodePlots && @test allequal(p[].graphics.grid)
+            backend == :Makie && show(IOBuffer(), MIME"image/png"(), p)
+
+            q = visualize(obs, est, :doy; index = :year, backend)
+            @test plotbounds(q) == ((20, 22), (20, 22))
+            @test isequal(q.opt[:Ys][1], [20., NaN, 22.])
+            @test all(isnan, visualize(obs, unreached, :doy; index = :year, backend).opt[:Ys][1])
+            @test_throws ArgumentError visualize(unreached, unreached, :doy; index = :year, backend)
+            backend == :Makie && show(IOBuffer(), MIME"image/png"(), q)
+
+            p = visualize(unreached, :year, :doy; backend, ylim = (1, 366))
+            @test last(plotbounds(p)) == (1, 366)
+            @test all(isnan, p.opt[:Ys][1])
+        end
+        @test_throws ArgumentError visualize(unreached, :year, :doy; backend = :UnicodePlots)
+        @test isequal(est.doy, [20., NaN, 22.]u"d")
+    end
+
     @testset "series option lengths" begin
         @system VisualizeOptions(Controller) begin
             x => 1 ~ preserve(parameter)
