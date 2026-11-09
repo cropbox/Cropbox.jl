@@ -50,8 +50,8 @@ DataAPI = "1"
 DataFrames = "1"
 DataStructures = "0.18, 0.19"
 Distributions = "0.25"
-# temporary FFTW interoperability workaround: https://github.com/cropbox/Cropbox.jl/issues/77
-FFTA = "=0.3.1"
+# temporary direct dependency until upstream excludes FFTA 0.3.2: https://github.com/cropbox/Cropbox.jl/issues/77
+FFTA = "0.3.3"
 GlobalSensitivity = "2.12.9"
 Graphs = "1"
 Graphviz_jll = "15.1"
