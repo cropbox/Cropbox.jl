@@ -74,7 +74,7 @@ end
 Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui=APIDict(), dashboard=:static) = begin
     c = configure(config)
     o = decodeoptions(options)
-    u = stringkeys(ui)
+    u = asobject(ui)
     frontend = dashboardfrontend(dashboard)
     description = describe(S; config=c)
     json(x) = (200, JSON_TYPE, JSON.json(x))
@@ -89,7 +89,7 @@ Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui
     for p in dashboardroutes(frontend)
         cache[p] = dashboardresponse(frontend, S)
     end
-    Service(S, c, o, stringkeys(request_defaults), u, frontend, description, parametertypes(description), targetpaths(description), cache)
+    Service(S, c, o, asobject(request_defaults), u, frontend, description, parametertypes(description), targetpaths(description), cache)
 end
 
 """
@@ -290,7 +290,7 @@ decodestep(x) = apierror("`xstep` must be an object")
 const PLOT_OPTIONS = ("kind", "title", "xlab", "ylab", "legend", "legendpos", "names", "colors", "xlim", "ylim", "xunit", "yunit", "aspect", "linestyle", "linestyles")
 
 decodeplot(x) = begin
-    d = stringkeys(x)
+    d = asobject(x)
     kw = Dict{Symbol,Any}()
     for (k, v) in d
         k in PLOT_OPTIONS || apierror("Unsupported plot option `$k`")
@@ -329,7 +329,7 @@ Run `simulate(S; ...)` from a JSON request and return a table payload.
 simulate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(), paths=nothing) = begin
     r = stringkeys(request)
     kw = simulationkwargs(S, r; config, options, paths)
-    verbose = parsebool(get(stringkeys(get(r, "api_options", nothing)), "verbose", false))
+    verbose = parsebool(get(asobject(get(r, "api_options", nothing)), "verbose", false))
     elapsed = @elapsed df = simulate(S; kw..., verbose)
     tablepayload(df; model=string(nameof(S)), elapsed)
 end
@@ -405,7 +405,7 @@ visualize_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     y = decodenames(y, paths)
     backend = get(r, "backend", "Makie")
     backend == "Makie" || apierror("Unsupported backend `$backend`; only Makie renders SVG")
-    plot = decodeplot(get(r, "plot", APIDict()))
+    plot = decodeplot(get(r, "plot", nothing))
     haskey(r, "kind") && !isnothing(r["kind"]) && (plot[:kind] = Symbol(r["kind"]))
     elapsed = @elapsed p = if haskey(r, "data")
         df = decode(r["data"])
@@ -437,7 +437,7 @@ plot `panels` and the `simulation` defaults. `ui` may override `title`,
 """
 widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S; config)) = begin
     d = description
-    u = stringkeys(ui)
+    u = asobject(ui)
     outputs = filter(v -> v["role"] == "output", d["variables"])
     i = findfirst(v -> v["target"] == "time", outputs)
     time = isnothing(i) ? timeoutput(S) : popat!(outputs, i)
@@ -466,8 +466,8 @@ widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S
         t = findfirst(t -> t["path"] == c["path"], d["tables"])
         isnothing(t) || (c["columns"] = d["tables"][t]["columns"])
     end
-    for spec in get(u, "table_inputs", [])
-        s = stringkeys(spec)
+    for spec in something(get(u, "table_inputs", nothing), [])
+        s = asobject(spec)
         path = get(s, "path", nothing)
         isnothing(path) && apierror("table input specification requires `path`")
         i = findfirst(c -> c["role"] == "table" && path in (c["path"], c["declared"]), controls)
@@ -534,7 +534,7 @@ control(p::APIDict) = begin
 end
 
 normalizepanel(panel, targets) = begin
-    p = stringkeys(panel)
+    p = asobject(panel)
     for k in ("x", "y")
         haskey(p, k) || continue
         p[k] = p[k] isa AbstractVector ? [get(targets, v, v) for v in p[k]] : get(targets, p[k], p[k])

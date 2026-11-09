@@ -28,9 +28,13 @@ apierror(message, category="validation") = throw(APIRequestError(category, Strin
 stringkeys(d::AbstractDict) = APIDict(string(k) => stringkeys(v) for (k, v) in d)
 stringkeys(d::NamedTuple) = stringkeys(Dict(pairs(d)))
 stringkeys(v::AbstractVector) = Any[stringkeys(x) for x in v]
-stringkeys(::Nothing) = APIDict()
-stringkeys(::Tuple{}) = APIDict()
 stringkeys(v) = v
+
+"An optional JSON object with string keys: `nothing` and `()` are empty; anything else must be an object."
+asobject(::Nothing) = APIDict()
+asobject(::Tuple{}) = APIDict()
+asobject(x::Union{AbstractDict,NamedTuple}) = stringkeys(x)
+asobject(x) = apierror("Expected an object, got `$(typeof(x))`")
 
 # --- units and scalar types ---------------------------------------------------
 
@@ -156,7 +160,7 @@ takes row arrays. Optional `columns` metadata (`name`, `type`, `unit`,
 `name (unit)` or `name (:Type)` annotations when no `columns` are given.
 """
 decodetable(d::AbstractDict) = begin
-    columns = [stringkeys(c) for c in get(d, "columns", [])]
+    columns = [asobject(c) for c in something(get(d, "columns", nothing), [])]
     for c in columns
         haskey(c, "name") || apierror("Every table column requires a `name`")
     end

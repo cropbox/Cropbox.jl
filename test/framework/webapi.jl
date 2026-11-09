@@ -113,12 +113,15 @@ using TimeZones
         @test Cropbox.decodeconfig(flat) === flat
         @test_throws Cropbox.APIRequestError Cropbox.decodeconfig([Dict("path" => "SWebAPI.a", "value" => 1)])
         @test_throws Cropbox.APIRequestError Cropbox.decodeconfig(Dict("a" => 1))
-        @test Cropbox.flatconfig(flat) == ["SWebAPI.a" => 200u"cm", "SWebAPI.c" => 3]
+        @test Dict(Cropbox.flatconfig(flat)) == Dict("SWebAPI.a" => 200u"cm", "SWebAPI.c" => 3)
         bounds = Cropbox.decodeconfig(Dict("SWebAPI.a" => [1, 2], "SWebAPI" => Dict("c" => Dict("lower" => 0, "upper" => 1, "unit" => "m"))); value = Cropbox.decodebounds)
         @test bounds[:SWebAPI][:a] == (1, 2) && bounds[:SWebAPI][:c] == (0u"m", 1u"m")
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds([1])
         @test Dict(pairs(Cropbox.decodeoptions(Dict("MaxSteps" => 4, "Method" => "xnes")))) == Dict(:MaxSteps => 4, :Method => :xnes)
         @test Cropbox.decodeoptions(()) == (;) && Cropbox.decodeoptions(nothing) == (;)
+        @test Cropbox.asobject(nothing) == Cropbox.asobject(()) == Cropbox.APIDict() && Cropbox.asobject((a = nothing,)) == Dict("a" => nothing)
+        @test_throws Cropbox.APIRequestError Cropbox.asobject("x")
+        @test Cropbox.decode([1, nothing, Dict("value" => 2, "unit" => "m")]) == [1, nothing, 2u"m"]
 
         @test Cropbox.encode(NaN) === nothing && Cropbox.encode(Inf) === nothing && Cropbox.encode(missing) === nothing
         @test Cropbox.encode(1 // 2) == 0.5 && Cropbox.encode(:x) == "x" && Cropbox.encode(Date(2024, 1, 2)) == "2024-01-02"
@@ -163,6 +166,7 @@ using TimeZones
         @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("path" => "SWebAPI.a", "start" => 1, "stop" => 3))
         plot = Cropbox.decodeplot(Dict("kind" => "scatter", "xlim" => [nothing, 5], "linestyles" => ["dash"], "title" => "t", "xunit" => "cm"))
         @test plot == Dict(:kind => :scatter, :xlim => (nothing, 5), :linestyle => [:dash], :title => "t", :xunit => u"cm")
+        @test Cropbox.decodeplot(nothing) == Dict{Symbol,Any}()
         @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("backend" => "Gadfly"))
         @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("xlim" => [1]))
     end
@@ -200,7 +204,7 @@ using TimeZones
             b(a) => a ~ accumulate
         end
         calibration = Dict(
-            "observed" => Dict("type" => "DataFrame", "columns" => [Dict("name" => "time", "type" => "Float64"), Dict("name" => "b", "type" => "Float64")], "rows" => [[10, 200]]),
+            "observed" => Dict("type" => "DataFrame", "columns" => [Dict("name" => "time", "type" => "Float64", "unit" => "hr"), Dict("name" => "b", "type" => "Float64")], "rows" => [[10, 200]]),
             "target" => "b", "stop" => 10,
             "parameters" => Dict("SWebAPICalibration.a" => [19.5, 20.5]),
             "optim" => Dict("MaxSteps" => 4, "TraceMode" => "silent"),
