@@ -177,13 +177,25 @@ visualize!(p, df::DataFrame, SS::Vector, x, y;
 end
 
 visualize(obs::AbstractDataFrame, est::AbstractDataFrame, y; kw...) = visualize!(nothing, obs, est, y; kw...)
-visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y; name = "", kw...) = visualize!(p, obs, est, [y]; names = [name], kw...)
+visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y; name = "", group = nothing, kw...) =
+    visualize!(p, obs, est, [y]; group, names = !isnothing(group) && name == "" ? nothing : [name], kw...)
 visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y::Vector;
-    index, names = nothing, plotopts...
+    index, group = nothing, names = nothing, colors = nothing, legend = nothing, plotopts...
 ) = begin
-    Xs, Ys = aligndata(obs, est, y; index)
-    isnothing(names) && (names = [string(o) == string(e) ? "$o" : "$o ⇒ $e" for (o, e) in parsetarget(y, obs)])
-    _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
+    targets = [string(o) == string(e) ? "$o" : "$o ⇒ $e" for (o, e) in parsetarget(y, obs)]
+    if isnothing(group)
+        Xs, Ys = aligndata(obs, est, y; index)
+        isnothing(names) && (names = targets)
+    else
+        groups, names, legend = preparegroups(est, targets; group, names, legend)
+        common = intersect(DataFrames.groupcols(groups), propertynames(obs))
+        data = map(pairs(groups)) do (key, d)
+            o = isempty(common) ? obs : filter(r -> all(k -> indexequal(r[k], key[k]), common), obs; view = true)
+            aligndata(o, d, y; index)
+        end
+        Xs, Ys = vcat(first.(data)...), vcat(last.(data)...)
+    end
+    _visualize_obs_vs_est!(p, Xs, Ys; names, colors, legend, plotopts...)
 end
 
 visualize(obs::DataFrame, S::Type{<:System}, y::Vector; kw...) = visualize!(nothing, obs, S, y; kw...)

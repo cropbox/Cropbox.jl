@@ -102,6 +102,16 @@ label(l, u) = begin
     hasunit(u) ? "$l ($u)" : "$l"
 end
 
+preparegroups(df, ys; group, names = nothing, legend = nothing) = begin
+    groups = DataFrames.groupby(df, group; sort = false)
+    isempty(groups) && throw(ArgumentError("no groups to visualize"))
+    n = length(ys)
+    labels = [join((v isa AbstractString ? v : repr(deunitfy(v), context = :compact => true) for v in Tuple(k)), ", ") for k in keys(groups)]
+    isnothing(names) && (names = [n == 1 ? l : "$l: $y" for l in labels for y in ys])
+    isnothing(legend) && (legend = join([label(k, extractunit(df, k)) for k in DataFrames.groupcols(groups)], ", "))
+    groups, names, legend
+end
+
 checklengths(n; kw...) = begin
     for (k, v) in kw
         isnothing(v) || length(v) == n || throw(ArgumentError("$k must contain $n entries (one per series)"))
@@ -156,16 +166,12 @@ plot!(p::Union{Plot,Nothing}, df::AbstractDataFrame, x, ys::Vector;
     group = nothing, xlab = nothing, ylab = nothing, legend = nothing, names = nothing, colors = nothing, kw...
 ) = begin
     if !isnothing(group)
-        groups = DataFrames.groupby(df, group; sort = false)
-        isempty(groups) && throw(ArgumentError("no groups to visualize"))
+        groups, names, legend = preparegroups(df, ys; group, names, legend)
         n = length(ys)
         count = length(groups) * n
         names isa Symbol && (names = fill(names, count))
         checklengths(count; names, colors)
-        labels = [join((v isa AbstractString ? v : repr(deunitfy(v), context = :compact => true) for v in Tuple(k)), ", ") for k in keys(groups)]
-        isnothing(names) && (names = [n == 1 ? l : "$l: $y" for l in labels for y in ys])
         isnothing(colors) && (colors = fill(nothing, count))
-        isnothing(legend) && (legend = join([label(k, extractunit(df, k)) for k in propertynames(first(keys(groups)))], ", "))
         limits = groupplotlimits(p, df, x, ys; kw...)
         for (i, d) in enumerate(groups)
             ii = (i - 1) * n + 1:i * n

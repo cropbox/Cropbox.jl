@@ -236,10 +236,12 @@ end
             @test ylim[1] <= minimum(df.x) <= maximum(df.x) <= ylim[2]
             @test q.opt[:legend] == "a"
             @test q.opt[:names] == ["0.05", "0.1", "0.2"]
+            @test visualize(df, :time, :x; group = :a, names = :a, backend).opt[:names] == q.opt[:names]
             r = visualize(view(df, :, :), :time, :x; group = [:site, :a], backend)
             @test r.opt[:Ys] == q.opt[:Ys]
             r = visualize(df, :time, [:x, :y]; group = "a", colors = [:red, :blue, :red, :blue, :red, :blue], backend)
             @test length(r.opt[:Ys]) == 6
+            @test r.opt[:names] == ["0.05: x", "0.05: y", "0.1: x", "0.1: y", "0.2: x", "0.2: y"]
             _, ylim = plotbounds(r)
             @test ylim[1] <= minimum(df.x) <= maximum(df.y) <= ylim[2]
             r = visualize(reverse(df), :time, :x; group = :a, ylim = (0, 10), backend)
@@ -329,6 +331,49 @@ end
             @test points(q) == [(10, 11), (10, 11), (20, 21)]
             @test_throws ArgumentError visualize(obs, est[1:0, :], :a; index = :time, backend)
             @test isequal((obs, est), before)
+
+            @testset "grouped estimates" begin
+                o = DataFrame(year = [2021, 2020, 2020], doy = [22., 20., 20.]u"d", flower = [44., 40., 40.]u"d")
+                e = DataFrame(year = [2020, 2021, 2021, 2020], model = ["A", "B", "A", "B"],
+                    doy = [21., 27., 23., 25.]u"d", flower = [42., 54., 46., 50.]u"d")
+                original = copy(o), copy(e)
+                p = visualize(o, e, :doy; index = :year, group = :model, backend,
+                    names = ["early", "late"], colors = [:red, :blue])
+                @test points(p) == [(20, 21), (20, 21), (22, 23)]
+                @test points(p, 2) == [(20, 25), (20, 25), (22, 27)]
+                @test p.opt[:names] == ["early", "late", ""]
+                @test p.opt[:colors][1:2] == [:red, :blue]
+                @test p.opt[:legend] == "model"
+                @test p.opt[:kinds] == [:scatter, :scatter, :line]
+                @test plotbounds(p) == ((20, 27), (20, 27))
+                backend == :Makie && show(IOBuffer(), MIME"image/png"(), p)
+
+                q = visualize(o, e, [:doy, :flower]; index = :year, group = :model, backend)
+                @test q.opt[:names] == ["A: doy", "A: flower", "B: doy", "B: flower", ""]
+                @test points(q, 2) == [(40, 42), (40, 42), (44, 46)]
+                @test points(q, 3) == points(p, 2)
+                @test visualize(o, e, :doy; index = :year, backend).opt[:names][1] == ""
+
+                os, es = copy(o), copy(e)
+                os.dose, es.dose = [1, 1, 2]u"g", [1000, 2000, 1000, 2000]u"mg"
+                q = visualize(view(os, :, :), view(es, :, :), :doy; index = :year, group = [:dose, :model], backend)
+                @test points(q) == [(20, 21), (22, 23)]
+                @test points(q, 2) == [(20, 25)]
+                @test q.opt[:legend] == "dose (mg), model"
+
+                unreached = copy(e)
+                unreached.doy[unreached.model .== "A"] .= NaN*u"d"
+                q = visualize(o, unreached, :doy; index = :year, group = :model, backend)
+                @test all(isnan, q.opt[:Ys][1])
+                @test points(q, 2) == points(p, 2)
+                for options in ((; names = ["short"]), (; colors = [:red]))
+                    @test_throws ArgumentError visualize(o, e, :doy; index = :year, group = :model, backend, options...)
+                end
+                @test_throws ArgumentError visualize(o, e[1:0, :], :doy; index = :year, group = :model, backend)
+                @test visualize!(p, o, e, :doy; index = :year, group = :model, lim = (20, 27)) === p
+                @test plotbounds(p) == ((20, 27), (20, 27))
+                @test isequal((o, e), original)
+            end
         end
     end
 
