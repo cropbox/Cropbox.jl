@@ -70,7 +70,8 @@ def create_mcp_adapter(url: str, name: str = "cropbox-service") -> FastMCP:
         """Request an SVG visualization using x, y, kind, and simulation settings.
 
         The response contains the MIME type and SVG text. This operation executes
-        the model and does not reuse a preceding simulation's results.
+        the model, unless the request carries a table as `data` (for example the
+        result of `simulate`), whose columns x and y then name.
         """
         return route_json(base_url, "POST", "/api/visualize", request)
 
