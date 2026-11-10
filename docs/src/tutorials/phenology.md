@@ -98,7 +98,7 @@ and child systems are assembled:
 ```@example phenology
 h = Cropbox.hierarchy(PhenologyModel; skipcontext = true)
 println(repr(MIME("text/plain"), h))
-nothing
+nothing # hide
 ```
 
 ![PhenologyModel system hierarchy](../assets/tutorials/phenology-hierarchy.svg)

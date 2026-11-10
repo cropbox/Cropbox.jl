@@ -9,3 +9,12 @@
     height: auto;
     max-width: 100%;
 }
+
+.terminal-example {
+    margin: 1rem 0 2rem;
+}
+
+.terminal-example summary {
+    cursor: pointer;
+    font-weight: 600;
+}

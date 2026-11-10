@@ -103,6 +103,10 @@ functions. Do not assume a system field is a bare number.
 
 ## Visualize an existing result
 
+For a side-by-side guide to argument combinations and their resulting plots,
+see [Choose a plotting call](@ref visualization-calls). That reference contains
+the full examples for both Makie and UnicodePlots.
+
 `visualize` works directly with vectors, and `visualize!` adds another series
 to the same result:
 

@@ -77,7 +77,7 @@ s = instance(GrowthModel;
 
 @show s.rate'
 @show s.mass'
-nothing
+nothing # hide
 ```
 
 If construction reports that a context or configuration source is missing,

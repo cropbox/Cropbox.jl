@@ -81,7 +81,7 @@ update stages:
 ```@example logistic
 d = Cropbox.dependency(LogisticGrowth)
 println(repr(MIME("text/plain"), d))
-nothing
+nothing # hide
 ```
 
 The text form gives the generated update order. The SVG below is written
