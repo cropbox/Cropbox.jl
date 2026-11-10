@@ -1,5 +1,6 @@
 import Makie
 import CairoMakie
+using Artifacts: @artifact_str
 using Dates: Date, DateTime, Time, year, month, day
 
 classic_ticklabels(values) = Makie.get_ticklabels(Makie.automatic, values)
@@ -21,7 +22,7 @@ end
 theme_classic() = begin
     # Makie 0.24 only searches its fallback list, not system fonts, for missing glyphs.
     lock(Makie.FONT_LOCK) do
-        font = Makie.to_font(joinpath(pkgdir(@__MODULE__), "assets", "fonts", "NotoSansCJKkr-Regular.otf"))
+        font = Makie.to_font(artifact"fonts/NotoSansCJKkr-Regular.otf")
         fallbacks = Makie.alternativefonts()
         font in fallbacks || push!(fallbacks, font)
     end

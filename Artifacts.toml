@@ -1,0 +1,6 @@
+[fonts]
+git-tree-sha1 = "57e9d686995aa58c1caad14c6c1242dafb3cdf58"
+
+    [[fonts.download]]
+    sha256 = "2d845af737896ede3600d49905378e016c4772d53d1335fc66e49af2f15959b7"
+    url = "https://github.com/cropbox/Cropbox.jl/releases/download/v0.4.1/cropbox-fonts-v1.tar.gz"
