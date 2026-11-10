@@ -3,7 +3,7 @@
   "info": {
     "title": "Cropbox Web API",
     "version": "0.2.0",
-    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, merged under trusted server-side `request_defaults`, and dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. Model-specific metadata comes from `GET /api/model`."
+    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, merged under trusted server-side `request_defaults`, and dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. A field that the operation or one of its objects does not define is rejected (422) rather than ignored. Model-specific metadata comes from `GET /api/model`."
   },
   "paths": {
     "/api/model": {
@@ -23,7 +23,7 @@
     "/api/schema": {
       "get": {
         "summary": "Schema fragments",
-        "description": "The route table and the component schemas of this document.",
+        "description": "The route table and the component schemas of this document as `definitions`, which they refer to each other by.",
         "responses": {"200": {"description": "Schema fragments", "content": {"application/json": {"schema": {"type": "object"}}}}}
       }
     },
@@ -88,7 +88,7 @@
             "value": {"type": ["number", "boolean", "string", "array", "null"]},
             "unit": {"type": ["string", "null"], "description": "Unit label such as `m`, `K*d`, `μmol/(m^2*s)`, `°C`."},
             "type": {"$ref": "#/components/schemas/TypeName"},
-            "timezone": {"type": "string", "description": "IANA zone for `ZonedDateTime` values without an offset."}
+            "timezone": {"type": "string", "description": "IANA zone of a `ZonedDateTime`. A value without an offset requires it; a value in a zone with daylight saving time carries it, so that the zone survives the round trip."}
           }}
         ]
       },
@@ -98,7 +98,7 @@
           "name": {"type": "string"},
           "type": {"$ref": "#/components/schemas/TypeName"},
           "unit": {"type": ["string", "null"]},
-          "timezone": {"type": "string"}
+          "timezone": {"type": "string", "description": "IANA zone of a `ZonedDateTime` column."}
         }
       },
       "TypeName": {
@@ -106,7 +106,7 @@
         "description": "Julia type name. On input `Bool`, `Int`/`Int64`, `Float64`, `String`, `Symbol`, `Date`, `DateTime` and `ZonedDateTime` convert the value (element-wise for arrays); any other name is informative and leaves the value as parsed."
       },
       "Table": {
-        "description": "A table given as CSV text or as columns and row arrays. CSV headers may carry `name (unit)` or `name (:Type)` annotations when no `columns` are given.",
+        "description": "A table given as CSV text or as columns and row arrays; a TablePayload response is one of the latter and can be sent back as it is. CSV headers may carry `name (unit)` or `name (:Type)` annotations when no `columns` are given. No column name may end in parentheses otherwise.",
         "oneOf": [
           {"type": "object", "required": ["type", "content"], "properties": {
             "type": {"const": "CSV"}, "content": {"type": "string"}, "filename": {"type": "string"},
@@ -120,12 +120,12 @@
         ]
       },
       "Config": {
-        "description": "Parameter values keyed by `System.name` paths, or nested `{System: {name: value}}` objects. Both shapes may be mixed. Table parameters take a Table.",
+        "description": "Parameter values keyed by `System.name` paths, or nested `{System: {name: value}}` objects. Both shapes may be mixed. A parameter of the model is addressed by its name or alias under its system or a mixin of it, and takes precedence over the server's value whichever of those either side used; other paths are rejected. Table parameters take a Table.",
         "type": "object",
         "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}, {"type": "object", "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}]}}]}
       },
       "Names": {
-        "description": "Variable paths such as `leaf.area`; `*` and `leaf.*` select every variable of a system, and an object maps output column names to paths. Paths of the model description are checked; indexed paths such as `leaves[1].area` are resolved at run time.",
+        "description": "Variable paths such as `leaf.area`, by name or alias; `*` and `leaf.*` select every variable of a system, `time` is the clock time, and an object maps output column names to paths. Paths are checked against the model; indexed paths such as `leaves[1].area` are resolved at run time.",
         "oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}, {"type": "object", "additionalProperties": {"type": "string"}}]
       },
       "Meta": {
@@ -150,7 +150,7 @@
       "SimulationRequest": {
         "allOf": [{"$ref": "#/components/schemas/RunRequest"}],
         "properties": {
-          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}`) or the path of a condition variable."},
+          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}`), a boolean or the path of a condition variable."},
           "nounit": {"type": "boolean"},
           "long": {"type": "boolean"}
         },
@@ -165,11 +165,11 @@
           "stop": {"$ref": "#/components/schemas/Value"},
           "snap": {"$ref": "#/components/schemas/Value"},
           "x": {"type": "string", "default": "time"},
-          "y": {"$ref": "#/components/schemas/Names"},
+          "y": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
           "kind": {"type": "string", "enum": ["line", "scatter", "scatterline", "step"]},
           "backend": {"type": "string", "enum": ["Makie"]},
-          "xstep": {"type": "object", "description": "A parameter varied across simulations, as a range (`start`, `stop`, `step`) or explicit `values`, in `unit`.", "required": ["path"], "properties": {"path": {"type": "string"}, "start": {"$ref": "#/components/schemas/Value"}, "stop": {"$ref": "#/components/schemas/Value"}, "step": {"$ref": "#/components/schemas/Value"}, "values": {"type": "array"}, "unit": {"type": "string"}}},
-          "plot": {"type": "object", "description": "Plot options: title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect, linestyle."},
+          "xstep": {"type": "object", "description": "A parameter varied across simulations, as a range (`start`, `stop`, `step`) or explicit `values`, in `unit`.", "required": ["path"], "additionalProperties": false, "properties": {"path": {"type": "string"}, "start": {"$ref": "#/components/schemas/Value"}, "stop": {"$ref": "#/components/schemas/Value"}, "step": {"$ref": "#/components/schemas/Value"}, "values": {"type": "array"}, "unit": {"type": "string"}}},
+          "plot": {"type": "object", "description": "Plot options: kind, title, xlab, ylab, legend, legendpos, names, colors, xlim and ylim (`[lower, upper]`, either may be null), xunit, yunit, aspect, and linestyle (`solid`, `dash`, `dot`, `dashdot` or `dashdotdot`, one or one for each of `y`)."},
           "data": {"$ref": "#/components/schemas/Table", "description": "Plot this table instead of simulating."}
         },
         "required": ["y"]
@@ -185,17 +185,17 @@
       "CalibrationRequest": {
         "allOf": [{"$ref": "#/components/schemas/EvaluationRequest"}],
         "properties": {
-          "parameters": {"type": "object", "description": "Bounds per parameter path: `[lower, upper]` or `{lower, upper, unit}`, in the same flat or nested shape as `config`."},
+          "parameters": {"type": "object", "description": "Bounds per parameter path: `[lower, upper]` or `{lower, upper, unit}`, in the same flat or nested shape as `config`. A path that several systems share through a mixin is calibrated through the path of one of them."},
           "weight": {"type": "array", "items": {"type": "number"}},
           "pareto": {"type": "boolean"},
-          "optim": {"type": "object", "description": "Options for the BlackBoxOptim optimizer (e.g. `MaxSteps`, `Method`)."}
+          "optim": {"type": "object", "description": "Options for the BlackBoxOptim optimizer: Method, MaxSteps, MaxTime, MaxFuncEvals, MaxStepsWithoutProgress, FitnessTolerance, MinDeltaFitnessTolerance, TargetFitness, PopulationSize, TraceMode, TraceInterval, RandomizeRngSeed, RngSeed."}
         },
         "required": ["parameters"]
       },
       "TablePayload": {
         "type": "object",
         "properties": {
-          "status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"},
+          "status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "type": {"const": "DataFrame"},
           "columns": {"type": "array", "items": {"$ref": "#/components/schemas/Column"}},
           "rows": {"type": "array", "items": {"type": "array"}, "description": "Plain values; non-finite numbers and missing values are null."},
           "summary": {"type": "object", "properties": {"nrow": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}
@@ -211,7 +211,7 @@
       },
       "CalibrationResponse": {
         "type": "object",
-        "properties": {"status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "operation": {"const": "calibrate"}, "metric": {"type": "string"}, "target": {}, "config": {"type": "object", "description": "Nested `{System: {name: Value}}` objects (keyed by metric tuple when `pareto` is set)."}, "summary": {"type": "object", "properties": {"nobs": {"type": "integer"}, "nparameters": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}}
+        "properties": {"status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "operation": {"const": "calibrate"}, "metric": {"type": "string"}, "target": {}, "config": {"type": "object", "description": "Nested `{System: {name: Value}}` objects with values in the declared units of their parameters (keyed by metric tuple when `pareto` is set)."}, "summary": {"type": "object", "properties": {"nobs": {"type": "integer"}, "nparameters": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}}
       },
       "ErrorResponse": {
         "type": "object",
@@ -229,7 +229,7 @@
         "properties": {
           "contract": {"type": "object", "properties": {"version": {"type": "string"}}},
           "model": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}}},
-          "systems": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}, "root": {"type": "boolean"}, "path": {"type": "string"}}}},
+          "systems": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}, "root": {"type": "boolean"}, "path": {"type": ["string", "null"], "description": "Access path from the root; null for a system that the model only produces while it runs."}}}},
           "parameters": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}},
           "variables": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}},
           "tables": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}}
@@ -241,10 +241,10 @@
           "system": {"type": "string"}, "name": {"type": "string"}, "alias": {"type": ["string", "null"]},
           "path": {"type": "string", "description": "Configuration path `System.name`."},
           "declared": {"type": "string", "description": "Configuration path through the declaring system (differs from `path` for mixins)."},
-          "target": {"type": "string", "description": "Access path usable in `target`, `index`, `stop`, `x`, `y`."},
+          "target": {"type": ["string", "null"], "description": "Access path usable in `target`, `index`, `stop`, `x`, `y`; null for a parameter of a produced system."},
           "description": {"type": "string"}, "state": {"type": ["string", "null"]}, "type": {"type": ["string", "null"]}, "unit": {"type": ["string", "null"]},
           "role": {"type": "string", "enum": ["parameter", "table", "output", "internal"]},
-          "default": {"description": "Value object with the default under the server configuration (parameters only)."},
+          "default": {"description": "Value object with the value in effect under the server configuration, which a client can send back (parameters only; null for tables)."},
           "tags": {"type": "object"}, "dependencies": {"type": "array", "items": {"type": "string"}},
           "index": {"description": "Index column of a provided table (tables only)."},
           "columns": {"type": "array", "description": "Columns read by `drive` variables (tables only).", "items": {"type": "object", "properties": {"variable": {"type": "string"}, "name": {"type": "string"}, "column": {"type": "string"}, "unit": {"type": ["string", "null"]}}}}
@@ -259,8 +259,13 @@
           "tables": {"type": "array"},
           "simulation": {"type": "object", "properties": {"stop": {}, "snap": {}}},
           "visualize": {"type": "object"},
-          "panels": {"type": "array", "items": {"type": "object", "properties": {"title": {"type": "string"}, "x": {"type": "string"}, "y": {"type": "array", "items": {"type": "string"}}, "kind": {"type": "string"}, "xstep": {}}}},
-          "sweeps": {"type": "array"}
+          "panels": {"type": "array", "description": "Plots of `outputs` targets, which include every variable a panel names.", "items": {"type": "object", "properties": {
+            "title": {"type": "string"}, "x": {"type": "string"}, "y": {"type": "array", "items": {"type": "string"}}, "kind": {"type": "string"},
+            "linestyles": {"type": "array", "items": {"type": "string"}, "description": "One line style for each of `y`."},
+            "xmin": {}, "xmax": {}, "ymin": {}, "ymax": {},
+            "xstep": {"type": "string", "description": "Path of the entry of `sweeps` that the panel simulates over."}
+          }}},
+          "sweeps": {"type": "array", "description": "Parameter sweeps for panels: the fields of `xstep` in a visualization request, with an optional `label`.", "items": {"type": "object"}}
         }
       },
       "Control": {
@@ -271,8 +276,10 @@
           "system": {"type": "string"}, "name": {"type": "string"}, "path": {"type": "string"}, "declared": {"type": "string"},
           "alias": {"type": ["string", "null"]}, "label": {"type": "string"}, "description": {"type": "string"},
           "unit": {"type": ["string", "null"]}, "default": {}, "value_type": {"type": "string"}, "state": {"type": ["string", "null"]},
-          "min": {}, "max": {}, "step": {"type": ["number", "null"]},
-          "accept": {"type": ["string", "null"]}, "columns": {"type": "array"}, "source": {"type": "string", "enum": ["dsl", "runtime"]}
+          "timezone": {"type": ["string", "null"], "description": "Zone of a `ZonedDateTime` default, to send along with an edited value."},
+          "min": {"type": ["number", "null"]}, "max": {"type": ["number", "null"]}, "step": {"type": ["number", "null"]},
+          "accept": {"type": ["string", "null"]}, "columns": {"type": "array"}, "default_filename": {"type": "string", "description": "Name of the table the server already provides (table inputs)."},
+          "source": {"type": "string", "enum": ["dsl", "runtime"]}
         }
       }
     }

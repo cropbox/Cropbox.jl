@@ -41,9 +41,13 @@ Every parameter, variable and table entry carries two kinds of paths: `path`
 is the configuration path (`System.name`, with `declared` naming the same
 parameter through the system that declared it) and `target` is the access path
 used for `target`, `index`, `stop`, `x` and `y` in requests (`leaf.area`).
-Parameters also report their declared `type`, `unit` and `default` value under
-the server configuration; a `default` object can be sent back unchanged as a
-configuration value. `GET /api/model` serves this description;
+Parameters also report their declared `type`, `unit` and `default`, the value in
+effect under the server configuration; a `default` object can be sent back
+unchanged as a configuration value. Systems that a model only `produce`s while
+it runs are described too: their parameters are configured like any other, but
+they have no fixed access path, so their `target` is `null`. The context is left
+out, apart from the parameters that the configuration sets, such as the clock
+step. `GET /api/model` serves this description;
 `GET /api/schema` and `GET /api/openapi` serve the generic request and response
 structures, and `GET /api/docs` renders them with Swagger UI.
 
@@ -73,8 +77,10 @@ serve(ServiceExample;
 
 A client field replaces the corresponding default. Configurations are merged
 per parameter, so a client value for one parameter leaves the rest of the base
-configuration in place. Default `snap` settings are not applied to `evaluate`
-and `calibrate`, which align observations themselves.
+configuration in place, and it wins whichever of the parameter's names (its
+alias, a mixin of its system) the client or the server configuration used.
+Defaults only apply to the operations that have the field: `snap` is not one of
+`evaluate` and `calibrate`, which align observations themselves.
 
 ## Requests
 
@@ -88,34 +94,45 @@ and `calibrate`, which align observations themselves.
 
 * `config` accepts flat `{"System.name": value}` entries, nested
   `{"System": {"name": value}}` objects, or a mix. A parameter is addressed by
-  name or alias, through its system or the mixin that declared it; an unknown
-  parameter of a described system is rejected. `configs` runs several
-  configurations (each merged over `config`) and stacks the results.
+  name or alias, through its system or a mixin of it. Clients can set the
+  parameters that the model declares, the clock and produced systems included;
+  any other path is rejected. `configs` runs several configurations (each
+  merged over `config`) and stacks the results.
 * Values are plain JSON values or objects `{"value", "unit", "type"}`; `value`
-  may be an array. Values are converted to the given unit before they reach the
-  model, and strings are coerced to the parameter's declared type.
-* `target` and `index` take variable paths as strings or arrays; `leaf.*`
-  selects every variable of a system and an object maps output column names to
-  paths. `base` names a system (`leaf`) that those paths are then relative to.
-  Unknown paths are rejected, except indexed ones such as `leaves[1].area`,
-  which only resolve at run time.
+  may be an array, or an array of rows for a `tabulate` or `interpolate`
+  parameter. Values are converted to the given unit before they reach the
+  model, and strings are coerced to the parameter's declared type. A zoned time
+  in a zone with daylight saving time also carries its `timezone`.
+* `target` and `index` take variable paths as strings or arrays, by name or
+  alias; `leaf.*` selects every variable of a system, `time` is the clock time
+  and an object maps output column names to paths. `base` names a system
+  (`leaf`) that those paths are then relative to. Unknown paths are rejected,
+  except indexed ones such as `leaves[1].area`, which only resolve at run time.
 * `meta` adds columns: a system name contributes that system's configured
   parameters, which tells the runs of `configs` apart, and an object
   contributes constant columns.
-* `stop` and `snap` take a count, a `{value, unit}` duration or the path of a
-  count or condition variable.
+* `stop` takes a count, a `{value, unit}` duration or the path of a count or
+  condition variable; `snap` takes a `{value, unit}` interval or the path of a
+  condition variable.
 * `evaluate` and `calibrate` additionally take `observed` (a table), `metric`
   and, for calibration, `parameters` with `[lower, upper]` or
-  `{lower, upper, unit}` bounds keyed like `config`.
+  `{lower, upper, unit}` bounds keyed like `config`. Bounds may be in any unit
+  of the parameter; the calibrated values come back in its declared unit.
 * `visualize` takes `x`, `y`, `kind`, `xstep` and plot options under `plot`,
   and either simulates the model or plots a table passed as `data`, whose
   columns `x` and `y` then name.
 
+A field that an operation does not have is rejected rather than ignored, as is
+an unknown field of a value, a table or `xstep`, so a misspelled request does
+not quietly run with defaults.
+
 Responses carry `status`, `contract_version` and the result. Simulation tables
 list `columns` (name, type, unit) and `rows` of plain values; non-finite numbers
-are `null`. Errors use HTTP 400 for malformed JSON, 404/405 for routing, 422 for
-a request that cannot be decoded or does not match the model, and 500 for
-failures while the model runs, with a JSON `error` object.
+are `null`. Such a response is itself a table that can be sent back, for
+example as the `data` of a plot. Unit labels are written in ASCII (`m*s^-1`).
+Errors use HTTP 400 for malformed JSON, 404/405 for routing, 422 for a request
+that cannot be decoded or does not match the model, and 500 for failures while
+the model runs, with a JSON `error` object.
 
 ## Tables
 
@@ -123,7 +140,8 @@ A `provide` parameter accepts CSV content or row arrays. Column metadata
 (`type`, `unit`, `timezone`) declares what cannot be inferred from the values;
 CSV headers may alternatively carry `name (unit)` or `name (:Type)` annotations
 when no `columns` are given. Header annotations are parsed as units and an
-allowlisted set of type names, never evaluated.
+allowlisted set of type names, never evaluated; a column name that still ends
+in parentheses is rejected, because Cropbox would evaluate what they hold.
 
 ```json
 {
@@ -164,6 +182,11 @@ dashboard(ServiceExample; ui=Dict(
 ))
 ```
 
+Outputs and panel variables are named by target, name or alias and may be
+parameters, for example a threshold drawn as a reference line; a name the model
+does not have is an error when the service starts. The variables of every panel
+are among the outputs, so one simulation feeds all panels.
+
 The bundled browser dashboard reads this metadata and calls the same operation
 routes as any other client: one `POST /api/simulate` per run, with the table it
 returns passed back as `data` to `POST /api/visualize` for every panel. Only a
@@ -176,3 +199,10 @@ has no authentication, authorization, TLS termination, request quotas or job
 queue. Bind it to loopback for local work, or place it behind a gateway that
 supplies those controls. Swagger UI at `/api/docs` loads its assets from a
 public CDN; the OpenAPI document at `/api/openapi` is served locally.
+
+Requests are data: clients set only parameters that the model declares, tables
+come only from the content they send, and nothing in a request is evaluated as
+code. A model can still declare a parameter that names a file for it to read,
+as the `filename` of the store systems (`DataFrameStore` and its relatives)
+does. Any client can set such a parameter, so serve those models to trusted
+clients only.
