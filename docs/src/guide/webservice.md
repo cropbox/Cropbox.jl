@@ -42,7 +42,8 @@ is the configuration path (`System.name`, with `declared` naming the same
 parameter through the system that declared it) and `target` is the access path
 used for `target`, `index`, `stop`, `x` and `y` in requests (`leaf.area`).
 Parameters also report their declared `type`, `unit` and `default` value under
-the server configuration. `GET /api/model` serves this description;
+the server configuration; a `default` object can be sent back unchanged as a
+configuration value. `GET /api/model` serves this description;
 `GET /api/schema` and `GET /api/openapi` serve the generic request and response
 structures, and `GET /api/docs` renders them with Swagger UI.
 
@@ -58,8 +59,10 @@ and `async=true` to get the server object back instead of blocking.
 
 `config` and `options` passed to `serve()` are the base for every request.
 `request_defaults` holds trusted default request fields that are merged under
-each client request; this is where a Julia `snap` function or a bundled weather
-table belongs, because such values never travel to the client:
+each client request; this is where a Julia `snap` function belongs, because
+such a value never travels to the client. A `config` given there in the JSON
+shape of a request (for example a bundled weather table as CSV) is decoded once
+and becomes part of the base configuration:
 
 ```julia
 serve(ServiceExample;
@@ -69,9 +72,9 @@ serve(ServiceExample;
 ```
 
 A client field replaces the corresponding default. Configurations are merged
-per parameter, so a client value for one parameter leaves the other defaults in
-place. Default `snap` settings are not applied to `evaluate` and `calibrate`,
-which align observations themselves.
+per parameter, so a client value for one parameter leaves the rest of the base
+configuration in place. Default `snap` settings are not applied to `evaluate`
+and `calibrate`, which align observations themselves.
 
 ## Requests
 
@@ -84,25 +87,35 @@ which align observations themselves.
 ```
 
 * `config` accepts flat `{"System.name": value}` entries, nested
-  `{"System": {"name": value}}` objects, or a mix. `configs` runs several
+  `{"System": {"name": value}}` objects, or a mix. A parameter is addressed by
+  name or alias, through its system or the mixin that declared it; an unknown
+  parameter of a described system is rejected. `configs` runs several
   configurations (each merged over `config`) and stacks the results.
-* Scalar values are plain JSON values or objects `{"value", "unit", "type"}`.
-  Values are converted to the given unit before they reach the model, and
-  strings are coerced to the parameter's declared type.
-* `target`, `index`, `meta` and `base` take variable paths as strings or arrays;
-  an object maps output column names to paths. Unknown paths are rejected with
-  HTTP 422. `stop` and `snap` take a count, a `{value, unit}` duration or the
-  path of a condition variable.
+* Values are plain JSON values or objects `{"value", "unit", "type"}`; `value`
+  may be an array. Values are converted to the given unit before they reach the
+  model, and strings are coerced to the parameter's declared type.
+* `target` and `index` take variable paths as strings or arrays; `leaf.*`
+  selects every variable of a system and an object maps output column names to
+  paths. `base` names a system (`leaf`) that those paths are then relative to.
+  Unknown paths are rejected, except indexed ones such as `leaves[1].area`,
+  which only resolve at run time.
+* `meta` adds columns: a system name contributes that system's configured
+  parameters, which tells the runs of `configs` apart, and an object
+  contributes constant columns.
+* `stop` and `snap` take a count, a `{value, unit}` duration or the path of a
+  count or condition variable.
 * `evaluate` and `calibrate` additionally take `observed` (a table), `metric`
   and, for calibration, `parameters` with `[lower, upper]` or
   `{lower, upper, unit}` bounds keyed like `config`.
 * `visualize` takes `x`, `y`, `kind`, `xstep` and plot options under `plot`,
-  and either simulates the model or plots a table passed as `data`.
+  and either simulates the model or plots a table passed as `data`, whose
+  columns `x` and `y` then name.
 
 Responses carry `status`, `contract_version` and the result. Simulation tables
 list `columns` (name, type, unit) and `rows` of plain values; non-finite numbers
 are `null`. Errors use HTTP 400 for malformed JSON, 404/405 for routing, 422 for
-validation and 500 for execution failures, with a JSON `error` object.
+a request that cannot be decoded or does not match the model, and 500 for
+failures while the model runs, with a JSON `error` object.
 
 ## Tables
 

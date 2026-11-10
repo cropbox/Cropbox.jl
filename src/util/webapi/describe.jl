@@ -119,21 +119,20 @@ describe(S::Type{<:System}; config=(), recursive=true, exclude=(Context,)) = beg
         isnothing(v.alias) || (byname[(v.system, v.alias)] = v)
     end
     defaults = parameterflatten(configure(parameters(S; recursive, exclude), config))
-    units = parameterunits(collect(keys(defaults)))
     parameters_ = [
         let v = get(byname, (system, name), nothing),
-            unit = isnothing(v) || isnothing(v.unit) ? (ismissing(u) ? nothing : u) : v.unit
+            # a configured parameter of a system outside the described tree is known by its value only
+            unit = isnothing(v) ? unitof(value) : v.unit,
             entry = isnothing(v) ? APIDict(
                 "system" => string(system), "name" => string(name), "alias" => nothing,
                 "path" => "$(system).$(name)", "declared" => "$(system).$(name)", "target" => string(name),
                 "description" => "", "state" => nothing, "type" => nothing, "unit" => unitlabel(unit),
                 "role" => "parameter", "tags" => APIDict(), "dependencies" => String[],
             ) : variableentry(v)
-            entry["unit"] = unitlabel(unit)
-            entry["default"] = entry["role"] == "table" ? nothing : encodevalue(value, unit)
+            entry["default"] = entry["role"] == "table" ? nothing : encodevalue(value, unit; type=entry["type"])
             entry
         end
-        for (((system, name), value), u) in zip(defaults, units)
+        for ((system, name), value) in defaults
     ]
     APIDict(
         "contract" => APIDict("version" => API_CONTRACT_VERSION),
@@ -182,23 +181,24 @@ tagsymbol(raw::QuoteNode) = tagsymbol(raw.value)
 tagsymbol(raw::Symbol) = raw
 tagsymbol(raw) = nothing
 
-"System types reachable from `S` as `(type, access path, root)` tuples, skipping `exclude`d systems."
+"""
+System types reachable from `S` through statically typed fields, as `(type,
+access path, root)` tuples in depth-first order. `exclude`d systems are skipped,
+and a type is not entered again below itself, so cyclic references end.
+"""
 systemtree(S::Type{<:System}; recursive=true, exclude=(Context,)) = begin
-    seen = Set{Any}()
     tree = Tuple{Any,String,Bool}[]
-    visit!(T, path, root) = begin
+    visit!(T, path, above) = begin
         any(E -> T <: E, exclude) && return
-        key = (typefor(T), path)
-        key in seen && return
-        push!(seen, key)
-        push!(tree, (T, path, root))
+        typefor(T) in above && return
+        push!(tree, (T, path, isempty(above)))
         recursive || return
         for f in subsystemsof(T)
             C = fieldtype(typefor(T), f)
-            C <: System && visit!(C, isempty(path) ? string(f) : "$(path).$(f)", false)
+            C <: System && visit!(C, isempty(path) ? string(f) : "$(path).$(f)", (above..., typefor(T)))
         end
     end
-    visit!(S, "", true)
+    visit!(S, "", ())
     tree
 end
 
@@ -208,33 +208,52 @@ systementries(S::Type{<:System}; recursive=true, exclude=(Context,)) = [
 ]
 
 """
-    parametertypes(description) -> Dict{String,Tuple}
+    ModelIndex(description)
 
-Map every configuration path accepted by a described model (`path` and
-`declared`) to its declared `(type, unit, role)`. Used to coerce and validate
-client-supplied configuration values.
+Lookup tables for validating requests against a model description:
+
+- `types`: every configuration path a described parameter accepts (through its
+  system or the system that declared it, by name or alias) with the declared
+  `(type, role)`;
+- `systems`: names of the described systems, whose parameters are all known;
+- `paths`: variable paths accepted as `target`, `index`, `stop`, `x` and `y`
+  (`time`, every variable by name or alias, and `*` / `system.*` wildcards).
 """
-parametertypes(description::APIDict) = begin
-    types = Dict{String,Tuple{Any,Any,String}}()
-    for p in description["parameters"]
-        for path in unique((p["path"], p["declared"]))
-            types[path] = (p["type"], p["unit"], p["role"])
-        end
+struct ModelIndex
+    types::Dict{String,Tuple{Any,String}}
+    systems::Set{String}
+    paths::Set{String}
+end
+ModelIndex(d::APIDict) = begin
+    systems = Set{String}(String(s["name"]) for s in d["systems"])
+    # a mixin is known as completely as the described systems that include it
+    for group in ("parameters", "tables"), p in d[group]
+        isnothing(p["state"]) || push!(systems, first(split(p["declared"], ".")))
     end
-    for t in description["tables"]
-        for path in unique((t["path"], t["declared"]))
-            types[path] = (nothing, nothing, "table")
-        end
+    ModelIndex(parametertypes(d), systems, targetpaths(d))
+end
+
+# `System.name` -> `System.alias`
+aliaspath(path, alias) = replace(path, r"[^.]+$" => alias)
+
+parametertypes(description::APIDict) = begin
+    types = Dict{String,Tuple{Any,String}}()
+    for group in ("parameters", "tables"), p in description[group], path in unique((p["path"], p["declared"]))
+        entry = (p["role"] == "table" ? nothing : p["type"], p["role"])
+        types[path] = entry
+        isnothing(p["alias"]) || (types[aliaspath(path, p["alias"])] = entry)
     end
     types
 end
 
-"Target paths that requests may reference as `target`, `index`, `stop`, `x` or `y`."
 targetpaths(description::APIDict) = begin
-    paths = Set{String}(("time",))
+    paths = Set{String}(("time", "*"))
+    for s in description["systems"]
+        isempty(s["path"]) || push!(paths, "$(s["path"]).*")
+    end
     for group in ("parameters", "variables", "tables"), v in description[group]
         push!(paths, v["target"])
-        isnothing(v["alias"]) || push!(paths, replace(v["target"], r"[^.]+$" => v["alias"]))
+        isnothing(v["alias"]) || push!(paths, aliaspath(v["target"], v["alias"]))
     end
     paths
 end

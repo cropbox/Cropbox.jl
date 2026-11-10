@@ -38,13 +38,13 @@ asobject(x) = apierror("Expected an object, got `$(typeof(x))`")
 
 # --- units and scalar types ---------------------------------------------------
 
-const UNIT_CHARS = Set(('°', '%', 'µ', 'μ', '*', '/', '^', '.', '-', '+', '⁻', '⁺', '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'))
+const UNIT_CHARS = Set(('°', '%', 'µ', 'μ', '*', '/', '^', '.', '-', '+', '(', ')', '⁻', '⁺', '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'))
 const SUPERSCRIPTS = Dict('⁻' => '-', '⁺' => '+', '⁰' => '0', '¹' => '1', '²' => '2', '³' => '3', '⁴' => '4', '⁵' => '5', '⁶' => '6', '⁷' => '7', '⁸' => '8', '⁹' => '9')
 
 """
     parseunit(s) -> Unitful.Units
 
-Parse a unit label such as `"m"`, `"K*d"`, `"μmol/mol"` or `"m s⁻¹"` with
+Parse a unit label such as `"m"`, `"K*d"`, `"μmol/(m^2*s)"` or `"m s⁻¹"` with
 `Unitful.uparse`, which only resolves unit names and arithmetic (no code is
 evaluated). Returns `nothing` for `nothing` or a blank string.
 """
@@ -82,9 +82,15 @@ const API_TYPES = Dict{String,Type}(
 )
 const TEMPORAL_TYPES = ("Date", "DateTime", "ZonedDateTime")
 
+"Scalar type converted on input for a type name; other names (`Vector{Float64}`, `Any`) leave values as parsed."
 apitype(::Nothing) = nothing
-apitype(s::AbstractString) = get(API_TYPES, String(s)) do
-    apierror("Unsupported type `$s`")
+apitype(s::AbstractString) = get(API_TYPES, s, nothing)
+apitype(s) = apierror("`type` must be a string, got `$s`")
+
+"Type name under which encoded values of type `T` read back: rationals travel as floats; `missing` and `nothing` have none."
+wiretype(T::Type) = begin
+    N = nonmissingtype(T)
+    N in (Union{}, Nothing) ? nothing : string(N <: Rational ? Float64 : N)
 end
 
 # --- decode: JSON -> Julia -----------------------------------------------------
@@ -95,12 +101,10 @@ end
 Convert a JSON-compatible value into a Julia value:
 
 - `null`, numbers, booleans and strings pass through;
-- `{"value": v, "unit": "m", "type": "Float64"}` becomes a (typed) quantity;
+- `{"value": v, "unit": "m", "type": "Float64"}` becomes a (typed) quantity; `v` may be an array;
 - `{"type": "CSV", "content": ...}` and `{"type": "DataFrame", "columns": ..., "rows": ...}` become a `DataFrame` (see `decodetable`);
 - arrays are decoded element-wise.
 """
-decode(::Nothing) = nothing
-decode(x::Union{Number,Bool,AbstractString}) = x
 decode(x::AbstractVector) = Any[decode(v) for v in x]
 decode(x::AbstractDict) = begin
     d = stringkeys(x)
@@ -113,10 +117,11 @@ decode(x::AbstractDict) = begin
 end
 decode(x) = x
 
-"Coerce `v` to the type named by `kind` (a string accepted by `apitype`, or a `Type`); `nothing`/`missing` pass through."
+"Coerce `v` (element-wise for arrays) to the type named by `kind` (see `apitype`) or to a `Type`; `nothing`/`missing` pass through."
 decodetyped(v, kind; timezone=nothing) = decodetyped(v, apitype(kind); timezone)
 decodetyped(v, ::Nothing; timezone=nothing) = v
 decodetyped(v, T::Type; timezone=nothing) = (isnothing(v) || ismissing(v)) ? v : coercevalue(v, T, timezone)
+decodetyped(v::AbstractVector, T::Type; timezone=nothing) = [decodetyped(x, T; timezone) for x in v]
 coercevalue(v, ::Type{Symbol}, tz) = Symbol(v)
 coercevalue(v, ::Type{String}, tz) = string(v)
 coercevalue(v, ::Type{Bool}, tz) = parsebool(v)
@@ -169,7 +174,8 @@ decodetable(d::AbstractDict) = begin
         decodecsv(String(d["content"]), columns)
     else
         isempty(columns) && apierror("DataFrame payload requires `columns`")
-        rows = get(d, "rows", [])
+        rows = something(get(d, "rows", nothing), [])
+        rows isa AbstractVector && all(r -> r isa AbstractVector, rows) || apierror("DataFrame payload `rows` must be an array of row arrays")
         for c in columns
             occursin(r"\([^()]+\)\s*$", String(c["name"])) && apierror("Structured table column names must not contain parenthesized metadata; use the column fields instead")
         end
@@ -228,9 +234,8 @@ applycolumns!(df::DataFrame, columns) = begin
         name in propertynames(df) || apierror("Table metadata refers to missing column `$(c["name"])`")
         kind = get(c, "type", nothing)
         timezone = get(c, "timezone", nothing)
-        # unknown type names (e.g. `Rational{Int64}` from an encoded table) keep the parsed values
-        T = isnothing(kind) ? (isnothing(timezone) ? nothing : ZonedDateTime) : get(API_TYPES, String(kind), nothing)
-        isnothing(T) || (df[!, name] = [decodetyped(x, T; timezone) for x in df[!, name]])
+        T = isnothing(kind) ? (isnothing(timezone) ? nothing : ZonedDateTime) : apitype(kind)
+        isnothing(T) || (df[!, name] = decodetyped(df[!, name], T; timezone))
         unit = parseunit(get(c, "unit", nothing))
         if !isnothing(unit)
             T in (Date, DateTime, ZonedDateTime) && apierror("Column `$(c["name"])` is temporal and cannot carry a unit")
@@ -246,6 +251,8 @@ end
 Convert a JSON configuration into a `Config`. Two shapes are accepted and may be
 mixed: nested `{"System": {"name": value}}` and flat `{"System.name": value}`.
 Values are decoded with `value` (scalars, `{value, unit}` objects or tables).
+A key without a dot whose object looks like a value or a table is rejected as
+a missing system name rather than read as a system.
 """
 decodeconfig(::Nothing; value=decode) = configure()
 decodeconfig(c::Config; value=decode) = c
@@ -253,12 +260,13 @@ decodeconfig(x::AbstractDict; value=decode) = begin
     d = stringkeys(x)
     P = Pair[]
     for (k, v) in d
-        if v isa AbstractDict && !occursin(".", k) && !haskey(v, "value") && !haskey(v, "type")
+        dots = count(==('.'), k)
+        if dots == 0 && v isa AbstractDict && !haskey(v, "value") && !(get(v, "type", nothing) in ("CSV", "DataFrame"))
             push!(P, Symbol(k) => OrderedDict{Symbol,Any}(Symbol(n) => value(w) for (n, w) in v))
-        elseif occursin(".", k)
+        elseif dots == 1
             push!(P, String(k) => value(v))
         else
-            apierror("Configuration key `$k` must be a `System.name` path or a nested system object")
+            apierror("Configuration key `$k` must be a `System.name` path or a system name holding an object of parameters")
         end
     end
     isempty(P) ? configure() : configure(P...)
@@ -325,15 +333,17 @@ encode(x) = string(x)
 unitof(x) = try unittype(x) catch; nothing end
 
 """
-    encodevalue(x, unit=nothing) -> {"value", "type", "unit"}
+    encodevalue(x, unit=nothing; type=nothing) -> {"value", "type", "unit"}
 
 Encode a scalar (or array) as a value object that keeps its unit. When `unit`
-is given the value is converted to it first.
+is given the value is converted to it first. `type` names the type a client
+should send back (a parameter's declared type); it defaults to the type of the
+encoded value.
 """
-encodevalue(x, unit=nothing) = begin
+encodevalue(x, unit=nothing; type=nothing) = begin
     u = isnothing(unit) ? unitof(x) : unit
     raw = hasunit(u) ? deunitfy(x, u) : deunitfy(x)
-    APIDict("value" => encode(raw), "type" => string(typeof(raw)), "unit" => unitlabel(u))
+    APIDict("value" => encode(raw), "type" => isnothing(type) ? wiretype(typeof(raw)) : type, "unit" => unitlabel(u))
 end
 
 """
@@ -345,7 +355,7 @@ tablepayload(df::DataFrame; model=nothing, elapsed=nothing) = begin
     N = DataFrames.names(df)
     plain = [deunitfy(df[!, n]) for n in N]
     columns = [
-        APIDict("name" => n, "type" => string(eltype(p)), "unit" => unitlabel(unitof(df[!, n])))
+        APIDict("name" => n, "type" => wiretype(eltype(p)), "unit" => unitlabel(unitof(df[!, n])))
         for (n, p) in zip(N, plain)
     ]
     rows = [Any[encode(p[i]) for p in plain] for i in 1:nrow(df)]

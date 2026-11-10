@@ -23,5 +23,6 @@ const FieldAccessError = isdefined(Base, :FieldError) ? getfield(Base, :FieldErr
         include("examples/soil.jl")
         include("examples/simplecrop.jl")
         include("examples/garlic.jl")
+        include("examples/webapi.jl")
     end
 end
