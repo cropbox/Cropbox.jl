@@ -16,6 +16,16 @@ const API_ROUTES = [
     (; method="POST", path="/api/calibrate", op=:calibrate),
 ]
 
+const RUN_KEYS = ("config", "configs", "index", "target", "meta", "base", "stop", "seed", "options")
+
+"Request fields each operation accepts. Any other field is rejected, so that a misspelled one is not silently ignored."
+const REQUEST_KEYS = (;
+    simulate = (RUN_KEYS..., "snap", "nounit", "long"),
+    evaluate = (RUN_KEYS..., "observed", "metric"),
+    calibrate = (RUN_KEYS..., "observed", "metric", "parameters", "weight", "pareto", "optim"),
+    visualize = ("config", "base", "stop", "snap", "x", "y", "kind", "backend", "plot", "xstep", "data"),
+)
+
 const JSON_TYPE = "application/json; charset=utf-8"
 const HTML_TYPE = "text/html; charset=utf-8"
 
@@ -42,12 +52,13 @@ dashboardfrontend(f::Symbol) = f == :static ? StaticDashboard() : f == :none ? N
     error("unsupported dashboard frontend: $f. Use :static, :none, false, or a DashboardFrontend object.")
 dashboardfrontend(path::AbstractString) = StaticDashboard(; path)
 
-"Routes served by a frontend; a custom frontend overrides this and `dashboardresponse`."
-dashboardroutes(::DashboardFrontend) = ["/dashboard"]
-dashboardroutes(::NoDashboard) = String[]
-dashboardroutes(f::StaticDashboard) = f.paths
-dashboardresponse(f::DashboardFrontend, ::Type{<:System}) = error("dashboard frontend $(typeof(f)) must implement Cropbox.dashboardresponse")
-dashboardresponse(::StaticDashboard, ::Type{<:System}) = (200, HTML_TYPE, asset("dashboard.html"))
+"Routes served by a frontend. A custom frontend overrides this and `dashboard_route_response`, which is called once per route when the service is built."
+dashboard_routes(::DashboardFrontend) = ["/dashboard"]
+dashboard_routes(::NoDashboard) = String[]
+dashboard_routes(f::StaticDashboard) = f.paths
+dashboard_route_response(f::DashboardFrontend, ::Type{<:System}; config=(), options=(), ui=APIDict()) =
+    error("dashboard frontend $(typeof(f)) must implement Cropbox.dashboard_route_response")
+dashboard_route_response(::StaticDashboard, ::Type{<:System}; config=(), options=(), ui=APIDict()) = (200, HTML_TYPE, asset("dashboard.html"))
 
 # --- service ------------------------------------------------------------------
 
@@ -69,24 +80,31 @@ struct Service
 end
 
 Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui=APIDict(), dashboard=:static) = begin
+    tree = systemtree(S)
+    V = variables(tree)
+    index = ModelIndex(tree, V)
     defaults = asobject(request_defaults)
     # a default configuration is decoded once and becomes part of the base configuration
-    c = configure(config, decodeconfig(pop!(defaults, "config", nothing)))
+    c = canonical(configure(config, checkconfig(decodeconfig(pop!(defaults, "config", nothing)), index)), index)
+    for k in keys(defaults)
+        any(K -> k in K, REQUEST_KEYS) || error("`request_defaults` has no request field `$k`")
+    end
+    options = decodeoptions(options)
     frontend = dashboardfrontend(dashboard)
-    description = describe(S; config=c)
+    d = description(S, tree, V; config=c)
     json(x) = (200, JSON_TYPE, JSON.json(x))
     cache = Dict{String,Tuple{Int,String,String}}(
-        "/api/model" => json(description),
-        "/api/dashboard" => json(widgetpayload(S; config=c, ui, description)),
+        "/api/model" => json(d),
+        "/api/dashboard" => json(widgetpayload(S; config=c, ui, description=d)),
         "/api/schema" => json(apischema()),
         "/api/openapi" => (200, JSON_TYPE, asset("openapi.json")),
         "/api/docs" => (200, HTML_TYPE, asset("swagger.html")),
         "/docs" => (200, HTML_TYPE, asset("swagger.html")),
     )
-    for p in dashboardroutes(frontend)
-        cache[p] = dashboardresponse(frontend, S)
+    for p in dashboard_routes(frontend)
+        cache[p] = dashboard_route_response(frontend, S; config=c, options, ui)
     end
-    Service(S, c, decodeoptions(options), defaults, ModelIndex(description), cache)
+    Service(S, c, options, defaults, index, cache)
 end
 
 """
@@ -104,29 +122,19 @@ respond(s::Service, method::AbstractString, target::AbstractString, body::Abstra
         target
     end
     try
-        route = findfirst(r -> r.path == path, API_ROUTES)
         if haskey(s.cache, path)
             method == "GET" || apierror("Method $method is not allowed for $path", "method")
             return s.cache[path]
         end
+        route = findfirst(r -> r.path == path, API_ROUTES)
         isnothing(route) && apierror("No route for $path", "routing")
         method == "POST" || apierror("Method $method is not allowed for $path", "method")
         op = API_ROUTES[route].op
-        request = applydefaults(s, parserequest(body), op)
-        payload = operate(s, op, request)
+        payload = OPERATIONS[op](s.system, applydefaults(s, parserequest(body), op); config=s.config, options=s.options, index=s.index)
         return (200, JSON_TYPE, JSON.json(payload))
     catch e
-        return errorresponse(e; path)
+        return errorresponse(rootcause(e); path)
     end
-end
-
-operate(s::Service, op::Symbol, r::APIDict) = begin
-    kw = (; config=s.config, options=s.options, index=s.index)
-    op == :simulate && return simulate_payload(s.system, r; kw...)
-    op == :visualize && return visualize_payload(s.system, r; kw...)
-    op == :evaluate && return evaluate_payload(s.system, r; kw...)
-    op == :calibrate && return calibrate_payload(s.system, r; kw...)
-    apierror("No route for $op", "routing")
 end
 
 parserequest(body::AbstractString) = begin
@@ -141,13 +149,12 @@ parserequest(body::AbstractString) = begin
 end
 
 """
-Merge the trusted server-side `request_defaults` under a client request; client
-fields win. `snap` defaults are not applied to `evaluate`/`calibrate`, which
-align observations themselves. (A default `config` is part of the service
-configuration, under which client configurations are merged per parameter.)
+Merge the trusted server-side `request_defaults` that an operation accepts
+under a client request; client fields win. (A default `config` is part of the
+service configuration, under which client configurations are merged per
+parameter.)
 """
-applydefaults(s::Service, request::APIDict, op::Symbol) =
-    merge(op in (:evaluate, :calibrate) ? filter(p -> p.first != "snap", s.defaults) : s.defaults, request)
+applydefaults(s::Service, request::APIDict, op::Symbol) = merge(filter(p -> p.first in REQUEST_KEYS[op], s.defaults), request)
 
 errorresponse(e::APIRequestError; path=nothing) = begin
     status = e.category == "syntax" ? 400 : e.category == "validation" ? 422 : e.category == "routing" ? 404 : e.category == "method" ? 405 : 500
@@ -162,130 +169,160 @@ errorpayload(code, category, message; path=nothing) = begin
     APIDict("status" => "error", "contract_version" => API_CONTRACT_VERSION, "error" => error)
 end
 
+# What went wrong in a threaded run, without the stack traces its task wrappers print.
+rootcause(e::TaskFailedException) = rootcause(e.task.result)
+rootcause(e::CompositeException) = isempty(e.exceptions) ? e : rootcause(first(e.exceptions))
+rootcause(e) = e
+
 # --- requests -----------------------------------------------------------------
 
-const SIMULATION_KEYS = ("config", "configs", "index", "target", "meta", "base", "stop", "snap", "seed", "nounit", "long", "options")
-const EVALUATION_KEYS = ("config", "configs", "index", "target", "meta", "base", "stop", "seed", "options")
-const VISUALIZATION_KEYS = ("config", "base", "stop", "snap")
+"A request as an object with string keys, holding only the fields its operation accepts."
+requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "a $op request")
 
 "Run request decoding `f`: a failure there is the client's (422 `validation`), not an execution error."
 decoding(f) = try
     f()
 catch e
-    e isa Union{APIRequestError,InterruptException} ? rethrow() : apierror(first(split(sprint(showerror, e), '\n')))
+    cause = rootcause(e)
+    cause isa Union{APIRequestError,InterruptException} ? throw(cause) : apierror(first(split(sprint(showerror, cause), '\n')))
 end
 
 """
-    simulationkwargs(S, request; config=(), options=(), index=nothing, keys=SIMULATION_KEYS)
+    simulationkwargs(request; config=(), options=(), index=nothing, fields=REQUEST_KEYS.simulate)
 
-Translate a JSON request into keyword arguments for `simulate` and friends.
-`config` and `options` are server-side bases merged under the request values.
-With a `ModelIndex`, configurations and the variable names in `index`,
-`target`, `base`, `stop` and `snap` are validated against the model.
+Translate the `fields` of a JSON request into keyword arguments for `simulate`
+and friends. `config` and `options` are server-side bases merged under the
+request values. With a `ModelIndex`, configurations and the variable names in
+`index`, `target`, `base`, `stop` and `snap` are checked against the model.
 """
-simulationkwargs(S::Type{<:System}, r::APIDict; config=(), options=(), index=nothing, keys=SIMULATION_KEYS) = begin
+simulationkwargs(r::APIDict; config=(), options=(), index=nothing, fields=REQUEST_KEYS.simulate) = begin
     kw = Dict{Symbol,Any}()
-    paths = isnothing(index) ? nothing : index.paths
-    client(x) = checkconfig(decodeconfig(x), index)
-    base = configure(config, client(get(r, "config", nothing)))
-    configs = if "configs" in keys && !isnothing(get(r, "configs", nothing))
-        r["configs"] isa AbstractVector || apierror("`configs` must be an array of configurations")
-        kw[:configs] = [configure(base, client(c)) for c in r["configs"]]
-    else
+    field(k) = k in fields ? get(r, k, nothing) : nothing
+    client(x) = canonical(checkconfig(decodeconfig(x), index), index)
+    base = configure(config, client(field("config")))
+    C = field("configs")
+    C isa Union{Nothing,AbstractVector} || apierror("`configs` must be an array of configurations")
+    # without configurations of its own, `configs` runs the single one
+    if isnothing(C) || isempty(C)
+        configs = [base]
         isempty(base) || (kw[:config] = base)
-        [base]
+    else
+        configs = kw[:configs] = [configure(base, client(c)) for c in C]
     end
-    root = "base" in keys ? get(r, "base", nothing) : nothing
-    isnothing(root) || (kw[:base] = checkbase(root, paths))
+    root = field("base")
+    isnothing(root) || (kw[:base] = checkbase(root, index))
     for k in ("index", "target")
-        k in keys && haskey(r, k) || continue
-        v = decodenames(r[k], paths; base=root)
+        v = decodenames(field(k), index; base=root)
         isnothing(v) || (kw[Symbol(k)] = v)
     end
-    "meta" in keys && !isnothing(get(r, "meta", nothing)) && (kw[:meta] = decodemeta(r["meta"], configs))
+    haskey(kw, :index) && (kw[:index] = clockindex(kw[:index], index; base=root))
+    isnothing(field("meta")) || (kw[:meta] = decodemeta(field("meta"), configs))
     for k in ("stop", "snap")
-        k in keys && haskey(r, k) || continue
-        v = decode(r[k])
-        isnothing(v) || (kw[Symbol(k)] = v isa AbstractString ? checkpath(v, paths) : v)
+        v = decode(field(k))
+        isnothing(v) && continue
+        if k == "snap" && v isa Real && !(v isa Bool)
+            apierror("`snap` must be an interval such as `{\"value\": 1, \"unit\": \"d\"}`, a boolean or a variable path")
+        elseif !(v isa Union{Number,AbstractString,Symbol,Function})
+            apierror("`$k` must be a number, a quantity or a variable path")
+        end
+        kw[Symbol(k)] = v isa AbstractString ? checkpath(v, index) : v
     end
-    "seed" in keys && !isnothing(get(r, "seed", nothing)) && (kw[:seed] = decodetyped(r["seed"], Int))
+    isnothing(field("seed")) || (kw[:seed] = decodetyped(field("seed"), Int))
     for k in ("nounit", "long")
-        k in keys && !isnothing(get(r, k, nothing)) && (kw[Symbol(k)] = parsebool(r[k]))
+        isnothing(field(k)) || (kw[Symbol(k)] = parsebool(field(k)))
     end
-    if "options" in keys
-        o = merge(decodeoptions(options), decodeoptions(get(r, "options", nothing)))
+    if "options" in fields
+        o = merge(decodeoptions(options), decodeoptions(field("options")))
         isempty(o) || (kw[:options] = o)
     end
     kw
 end
 
-"Description entry of a configuration path: `nothing` when its system is outside the description, an error when a described system has no such parameter."
-parameterentry(path::AbstractString, index::ModelIndex) = begin
-    entry = get(index.parameters, path, nothing)
-    isnothing(entry) && first(split(path, ".")) in index.systems && apierror("Unknown parameter `$path`")
-    entry
-end
-
 """
     checkconfig(config, index)
 
-Check a client configuration against the model: unknown parameters of a
-described system are rejected, table inputs must be table payloads, string
-values are coerced to the declared parameter type, and nested arrays become
-the matrix a `tabulate` or `interpolate` parameter takes.
+Check a client configuration against the model. Every entry has to set a
+parameter of the model, by any name Cropbox reads it from. A table input takes
+a table payload and nothing else does; a string is read as the declared type
+of its parameter, nested arrays as the matrix a `tabulate` or `interpolate`
+parameter takes, and a float as the exact value of a rational parameter (the
+clock step).
 """
 checkconfig(c::Config, ::Nothing) = c
 checkconfig(c::Config, index::ModelIndex) = begin
     P = Pair[]
-    for (path, value) in flatconfig(c)
-        entry = parameterentry(path, index)
-        if !isnothing(entry)
-            if entry["role"] == "table"
-                value isa DataFrame || apierror("Table parameter `$path` requires a CSV or DataFrame payload")
-            elseif value isa AbstractString && !(entry["type"] in (nothing, "String"))
-                value = decodetyped(value, entry["type"])
-            elseif entry["state"] in ("tabulate", "interpolate") && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
-                value = asmatrix(value)
-            end
+    for (system, F) in c, (name, value) in F
+        path = "$(system).$(name)"
+        K = get(index.parameters, path, nothing)
+        isnothing(K) && apierror("Unknown parameter `$path`")
+        table = any(v -> v.role == "table", K)
+        table == (value isa DataFrame) || apierror(table ? "Table parameter `$path` requires a CSV or DataFrame payload" : "Parameter `$path` does not take a table")
+        v = first(K)
+        if value isa AbstractString && !(v.type in (nothing, "String"))
+            value = decodetyped(value, v.type)
+        elseif v.state in (:Tabulate, :Interpolate) && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
+            value = asmatrix(value)
+        elseif v.type == "Rational{Int64}"
+            value = exactify(Rational{Int}, value; warn=false)
         end
-        push!(P, path => value)
+        push!(P, system => name => value)
     end
     isempty(P) ? c : configure(P...)
 end
 
-"A configuration path that `xstep` or calibration may vary: not a table, and known when its system is described."
-checkparameter(path::AbstractString, ::Nothing) = path
-checkparameter(path::AbstractString, index::ModelIndex) = begin
-    entry = parameterentry(path, index)
-    !isnothing(entry) && entry["role"] == "table" && apierror("Table parameter `$path` cannot be varied")
-    path
+"""
+The parameters a configuration path sets, as ones to vary (`xstep`,
+calibration): the path has to be known and no table. They are varied through
+their own configuration paths (`config` of each), which Cropbox reads before
+any other spelling.
+"""
+variedparameters(path::AbstractString, index::ModelIndex) = begin
+    K = get(index.parameters, path, nothing)
+    isnothing(K) && apierror("Unknown parameter `$path`")
+    any(v -> v.role == "table", K) && apierror("Table parameter `$path` cannot be varied")
+    K
 end
 
 # Paths indexing into produced or bundled systems (`leaves[1].area`, `leaves/*`) only resolve at run time.
 const DYNAMIC_PATH = r"[\[\]/]"
 
 """
-Check a variable path against the model. With `base`, names are relative to
-that system; `time` and `*` are always available. Paths under `context.` and
-dynamic paths are left for Cropbox to resolve.
+Check a variable path against the model. With `base`, the path is relative to
+that system. Every part of it may be an alias; indexed paths are left for
+Cropbox to resolve.
 """
 checkpath(v::AbstractString, ::Nothing; base=nothing) = v
-checkpath(v::AbstractString, paths; base=nothing) = begin
-    p = isnothing(base) || v in ("time", "*") ? v : "$base.$v"
-    (p in paths || startswith(v, "context.") || occursin(DYNAMIC_PATH, p)) ? v : apierror("Unknown variable path `$p`")
+checkpath(v::AbstractString, index::ModelIndex; base=nothing) = begin
+    p = isnothing(base) ? v : "$base.$v"
+    occursin(DYNAMIC_PATH, p) || byname(p, index) in index.paths || apierror("Unknown variable path `$p`")
+    v
+end
+
+# an access path with every alias replaced by the name it stands for
+byname(p::AbstractString, index::ModelIndex) = foldl(split(p, "."); init="") do path, part
+    k = isempty(path) ? String(part) : "$path.$part"
+    get(index.aliases, k, k)
 end
 
 checkbase(b::AbstractString, ::Nothing) = b
-checkbase(b::AbstractString, paths) = ("$b.*" in paths || occursin(DYNAMIC_PATH, b)) ? b : apierror("Unknown system path `$b`")
-checkbase(b, paths) = apierror("`base` must be a system path")
+checkbase(b::AbstractString, index::ModelIndex) =
+    occursin(DYNAMIC_PATH, b) || "$(byname(b, index)).*" in index.paths ? b : apierror("Unknown system path `$b`")
+checkbase(b, index) = apierror("`base` must be a system path")
 
-"Variable names: a path, an array of paths, or an object mapping output column names to paths."
-decodenames(::Nothing, paths; base=nothing) = nothing
-decodenames(v::AbstractString, paths; base=nothing) = checkpath(v, paths; base)
-decodenames(v::AbstractVector, paths; base=nothing) = Any[decodenames(x, paths; base) for x in v]
-decodenames(v::AbstractDict, paths; base=nothing) = [Symbol(k) => checkpath(String(x), paths; base) for (k, x) in v]
-decodenames(v::Number, paths; base=nothing) = apierror("Variable names must be a path, an array of paths or an object mapping column names to paths")
-decodenames(v, paths; base=nothing) = v  # a Julia value from the trusted `request_defaults`
+"Variable names: a path, an array of paths, or an object mapping output column names to paths. `time` is the clock time."
+decodenames(::Nothing, index; base=nothing) = nothing
+decodenames(v::AbstractString, index; base=nothing) = v == "time" ? v : checkpath(v, index; base)
+decodenames(v::AbstractVector, index; base=nothing) = Any[decodenames(x, index; base) for x in v]
+decodenames(v::AbstractDict, index; base=nothing) =
+    [Symbol(k) => (x isa AbstractString ? decodenames(x, index; base) : apierror("Column `$k` must name a variable path")) for (k, x) in v]
+decodenames(v::Number, index; base=nothing) = apierror("Variable names must be a path, an array of paths or an object mapping column names to paths")
+decodenames(v, index; base=nothing) = v  # a Julia value from the trusted `request_defaults`
+
+# As an index `time` is the clock time, the default index, unless the model has a variable of that name.
+clockindex(v::AbstractString, index::ModelIndex; base=nothing) =
+    v == "time" && !(byname(isnothing(base) ? v : "$base.$v", index) in index.paths) ? (:time => "context.clock.time") : v
+clockindex(v::AbstractVector, index::ModelIndex; base=nothing) = Any[clockindex(x, index; base) for x in v]
+clockindex(v, index; base=nothing) = v
 
 """
 `meta` adds columns to the result: a system name contributes that system's
@@ -302,14 +339,6 @@ decodemeta(v::AbstractDict, configs) = Pair{Symbol,Any}[Symbol(k) => decode(x) f
 decodemeta(v::Number, configs) = apierror("`meta` must be a system name, an array of them or an object of constant columns")
 decodemeta(v, configs) = v  # a Julia value from the trusted `request_defaults`
 
-decodeobserved(r::APIDict) = begin
-    obs = get(r, "observed", get(r, "obs", nothing))
-    isnothing(obs) && apierror("evaluate/calibrate requires `observed`")
-    df = decode(obs)
-    df isa DataFrame || apierror("`observed` must be a CSV or DataFrame table payload")
-    df
-end
-
 decodemetric(m) = begin
     metric = Symbol(m)
     try
@@ -320,47 +349,52 @@ decodemetric(m) = begin
     metric
 end
 
-"""`xstep` for `visualize`: `{"path": "S.a", "start": 1, "stop": 5, "step": 1, "unit": "m"}` or `{"path": ..., "values": [...], "unit": "m"}`."""
+"""
+`xstep` for `visualize`, the parameter varied across simulations:
+`{"path": "S.a", "start": 1, "stop": 5, "step": 1, "unit": "m"}` or
+`{"path": ..., "values": [...], "unit": "m"}`. Returns one configuration per
+value.
+"""
 decodestep(::Nothing, index=nothing) = nothing
 decodestep(x::AbstractDict, index=nothing) = begin
-    d = stringkeys(x)
-    path = haskey(d, "path") ? String(d["path"]) : haskey(d, "system") && haskey(d, "name") ? "$(d["system"]).$(d["name"])" :
-        apierror("`xstep` requires `path` or `system` and `name`")
-    parts = split(path, ".")
-    length(parts) == 2 || apierror("`xstep` path must be `System.parameter`")
-    checkparameter(path, index)
-    u = parseunit(get(d, "unit", nothing))
-    values = if haskey(d, "values")
-        v = decode(d["values"])
-        v isa AbstractVector || apierror("`xstep` values must be an array")
-        isnothing(u) ? v : unitfy(v, u)
+    d = checkkeys(stringkeys(x), ("path", "values", "start", "stop", "step", "unit"), "`xstep`")
+    path = get(d, "path", nothing)
+    path isa AbstractString && count(==('.'), path) == 1 || apierror("`xstep` requires `path`, a `System.parameter` configuration path")
+    values = if !isnothing(get(d, "values", nothing))
+        d["values"] isa AbstractVector || apierror("`xstep` values must be an array")
+        decode(d["values"])
     else
-        start = decode(get(d, "start", get(d, "min", nothing)))
-        stop = decode(get(d, "stop", get(d, "max", nothing)))
-        step = decode(get(d, "step", nothing))
-        any(isnothing, (start, stop, step)) && apierror("`xstep` requires `start`, `stop` and `step` (or `values`)")
-        isnothing(u) ? (start:step:stop) : (unitfy(start, u):unitfy(step, Unitful.absoluteunit(u)):unitfy(stop, u))
+        start, stop, step = (decode(get(d, k, nothing)) for k in ("start", "stop", "step"))
+        all(v -> v isa Number, (start, stop, step)) || apierror("`xstep` requires numeric `start`, `stop` and `step` (or `values`)")
+        start:step:stop
     end
-    Symbol(parts[1]) => Symbol(parts[2]) => values
+    u = parseunit(get(d, "unit", nothing))
+    isnothing(u) || (values = unitfy(values, u))
+    paths = isnothing(index) ? [path] : [v.config for v in variedparameters(path, index)]
+    [configure((p => v for p in paths)...) for v in values]
 end
 decodestep(x, index=nothing) = apierror("`xstep` must be an object")
 
-const PLOT_OPTIONS = ("kind", "title", "xlab", "ylab", "legend", "legendpos", "names", "colors", "xlim", "ylim", "xunit", "yunit", "aspect", "linestyle", "linestyles")
+const PLOT_OPTIONS = ("kind", "title", "xlab", "ylab", "legend", "legendpos", "names", "colors", "xlim", "ylim", "xunit", "yunit", "aspect", "linestyle")
+const PLOT_KINDS = ("line", "scatter", "scatterline", "step")
+const LINE_STYLES = ("solid", "dash", "dot", "dashdot", "dashdotdot")
+
+choice(v, options, what) = v in options ? Symbol(v) : apierror("Unsupported $what `$v`; use one of $(join(options, ", "))")
 
 decodeplot(x) = begin
-    d = asobject(x)
     kw = Dict{Symbol,Any}()
-    for (k, v) in d
-        k in PLOT_OPTIONS || apierror("Unsupported plot option `$k`")
-        key = k == "linestyles" ? :linestyle : Symbol(k)
-        kw[key] = if key in (:kind, :legendpos)
+    for (k, v) in checkkeys(asobject(x), PLOT_OPTIONS, "`plot`")
+        isnothing(v) && continue
+        kw[Symbol(k)] = if k == "kind"
+            choice(v, PLOT_KINDS, "plot kind")
+        elseif k == "linestyle"
+            v isa AbstractVector ? [choice(s, LINE_STYLES, "line style") for s in v] : choice(v, LINE_STYLES, "line style")
+        elseif k == "legendpos"
             v isa AbstractString ? Symbol(v) : v
-        elseif key == :linestyle
-            v isa AbstractVector ? Symbol.(v) : Symbol(v)
-        elseif key in (:xlim, :ylim)
+        elseif k in ("xlim", "ylim")
             v isa AbstractVector && length(v) == 2 || apierror("`$k` must be a two-element array")
             (v[1], v[2])
-        elseif key in (:xunit, :yunit)
+        elseif k in ("xunit", "yunit")
             parseunit(v)
         else
             v
@@ -390,16 +424,16 @@ operationpayload(S, operation; kw...) = APIDict(
 Run `simulate(S; ...)` from a JSON request and return a table payload.
 """
 simulate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(), index=nothing) = begin
-    r = stringkeys(request)
-    kw = decoding(() -> simulationkwargs(S, r; config, options, index))
+    kw = decoding(() -> simulationkwargs(requestobject(request, :simulate); config, options, index))
     elapsed = @elapsed df = simulate(S; kw..., verbose=false)
     tablepayload(df; model=string(nameof(S)), elapsed)
 end
 
 "Observations and keyword arguments shared by `evaluate` and `calibrate` requests."
-observationkwargs(S::Type{<:System}, r::APIDict, operation; kwargs...) = begin
-    obs = decodeobserved(r)
-    kw = simulationkwargs(S, r; kwargs..., keys=EVALUATION_KEYS)
+observationkwargs(r::APIDict, operation; kwargs...) = begin
+    obs = decode(get(r, "observed", nothing))
+    obs isa DataFrame || apierror("$operation requires `observed`, a CSV or DataFrame table payload")
+    kw = simulationkwargs(r; kwargs..., fields=REQUEST_KEYS.evaluate)
     haskey(kw, :target) || apierror("$operation requires `target`")
     isnothing(get(r, "metric", nothing)) || (kw[:metric] = decodemetric(r["metric"]))
     (obs, kw)
@@ -412,8 +446,7 @@ Run `evaluate(S, observed; ...)` from a JSON request. `observed` is a table
 payload; `target` is required and `metric` names the metric function.
 """
 evaluate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(), index=nothing) = begin
-    r = stringkeys(request)
-    obs, kw = decoding(() -> observationkwargs(S, r, "evaluate"; config, options, index))
+    obs, kw = decoding(() -> observationkwargs(requestobject(request, :evaluate), "evaluate"; config, options, index))
     elapsed = @elapsed value = evaluate(S, obs; kw...)
     values = value isa Union{Tuple,AbstractVector} ? collect(value) : [value]
     all(v -> (x = deunitfy(v); x isa Number && isfinite(x)), values) ||
@@ -426,6 +459,10 @@ evaluate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=()
     )
 end
 
+"Optimizer options a client may set. The other options of BlackBoxOptim (callbacks, files written on the server) stay with the service."
+const OPTIM_OPTIONS = ("Method", "MaxSteps", "MaxTime", "MaxFuncEvals", "MaxStepsWithoutProgress", "FitnessTolerance",
+    "MinDeltaFitnessTolerance", "TargetFitness", "PopulationSize", "TraceMode", "TraceInterval", "RandomizeRngSeed", "RngSeed")
+
 """
     calibrate_payload(S, request; config=(), options=(), index=nothing)
 
@@ -434,16 +471,15 @@ configuration paths to `[lower, upper]` bounds (or `{lower, upper, unit}`
 objects) in the same nested or flat shape as `config`.
 """
 calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(), index=nothing) = begin
-    r = stringkeys(request)
     obs, kw = decoding() do
-        o, k = observationkwargs(S, r, "calibrate"; config, options, index)
-        isnothing(get(r, "parameters", nothing)) && apierror("calibrate requires `parameters`")
-        k[:parameters] = decodeconfig(r["parameters"]; value=decodebounds)
-        isempty(k[:parameters]) && apierror("calibrate requires at least one parameter range")
-        foreach(p -> checkparameter(first(p), index), flatconfig(k[:parameters]))
+        r = requestobject(request, :calibrate)
+        o, k = observationkwargs(r, "calibrate"; config, options, index)
+        P = decodeconfig(get(r, "parameters", nothing); value=decodebounds)
+        isempty(P) && apierror("calibrate requires `parameters` with at least one range")
+        k[:parameters] = configure((calibrationrange(p, index) for p in flatconfig(P))...)
         isnothing(get(r, "weight", nothing)) || (k[:weight] = Float64.(decode(r["weight"])))
         isnothing(get(r, "pareto", nothing)) || (k[:pareto] = parsebool(r["pareto"]))
-        optim = decodeoptions(get(r, "optim", nothing))
+        optim = decodeoptions(checkkeys(asobject(get(r, "optim", nothing)), OPTIM_OPTIONS, "`optim`"))
         isempty(optim) || (k[:optim] = optim)
         (o, k)
     end
@@ -451,7 +487,7 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     operationpayload(S, "calibrate";
         metric = string(get(kw, :metric, :rmse)),
         target = encode(kw[:target]),
-        config = encode(result),
+        config = calibrated(result, index),
         summary = APIDict(
             "nobs" => nrow(obs),
             "nparameters" => length(parameterkeys(kw[:parameters])),
@@ -459,6 +495,21 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
         ),
     )
 end
+
+# `calibrate` searches plain numbers and only knows the units of systems defined in `Main`:
+# a range goes in under the parameter's own path, in its declared unit, and comes out in it.
+calibrationrange(p::Pair, ::Nothing) = p
+calibrationrange((path, bounds)::Pair, index::ModelIndex) = begin
+    K = variedparameters(path, index)
+    length(K) == 1 || apierror("`$path` sets parameters of several systems ($(join((v.config for v in K), ", "))); calibrate one of them")
+    v = only(K)
+    v.config => map(b -> deunitfy(unitfy(b, v.unit)), bounds)
+end
+
+calibrated(c::Config, index) = APIDict(string(s) => APIDict(string(k) => encodevalue(v, declaredunit("$s.$k", index)) for (k, v) in F) for (s, F) in c)
+calibrated(pareto::AbstractDict, index) = APIDict(string(fitness) => calibrated(c, index) for (fitness, c) in pareto)
+declaredunit(path, ::Nothing) = nothing
+declaredunit(path, index::ModelIndex) = first(index.parameters[path]).unit
 
 """
     visualize_payload(S, request; config=(), options=(), index=nothing)
@@ -469,27 +520,27 @@ Render an SVG with `visualize`. A request either simulates `S` (`config`,
 `xlab`, `ylab`, `legend`, `xlim`, `ylim`, ...).
 """
 visualize_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(), index=nothing) = begin
-    r = stringkeys(request)
     args, kw = decoding() do
-        y = get(r, "y", get(r, "target", nothing))
-        isnothing(y) && apierror("visualize requires `y` or `target`")
-        x = something(get(r, "x", nothing), "time")
-        backend = something(get(r, "backend", nothing), "Makie")
-        backend == "Makie" || apierror("Unsupported backend `$backend`; only Makie renders SVG")
+        r = requestobject(request, :visualize)
+        x, y = something(get(r, "x", nothing), "time"), get(r, "y", nothing)
+        x isa AbstractString || apierror("`x` must name one variable")
+        y isa Union{AbstractString,AbstractVector} || apierror("visualize requires `y`, a variable or an array of them")
+        something(get(r, "backend", nothing), "Makie") == "Makie" || apierror("Unsupported backend `$(r["backend"])`; only Makie renders SVG")
         plot = decodeplot(get(r, "plot", nothing))
-        isnothing(get(r, "kind", nothing)) || (plot[:kind] = Symbol(r["kind"]))
-        if haskey(r, "data")
+        isnothing(get(r, "kind", nothing)) || (plot[:kind] = choice(r["kind"], PLOT_KINDS, "plot kind"))
+        styles = get(plot, :linestyle, nothing)
+        styles isa AbstractVector && length(styles) != length(vcat(y)) && apierror("`linestyle` needs one style for each of `y`")
+        if !isnothing(get(r, "data", nothing))
             df = decode(r["data"])
             df isa DataFrame || apierror("`data` must be a CSV or DataFrame table payload")
             columns = DataFrames.names(df)
             ((df, tablecolumns(x, columns), tablecolumns(y, columns)), plot)
         else
-            k = simulationkwargs(S, r; config, options, index, keys=VISUALIZATION_KEYS)
+            k = simulationkwargs(r; config, index, fields=REQUEST_KEYS.visualize)
             xstep = decodestep(get(r, "xstep", nothing), index)
             isnothing(xstep) || (k[:xstep] = xstep)
-            paths = isnothing(index) ? nothing : index.paths
             base = get(k, :base, nothing)
-            ((S, decodenames(x, paths; base), decodenames(y, paths; base)), merge!(k, plot))
+            ((S, decodenames(x, index; base), decodenames(y, index; base)), merge!(k, plot))
         end
     end
     elapsed = @elapsed p = visualize(args...; kw..., backend=:Makie)
@@ -501,6 +552,8 @@ visualize_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     )
 end
 
+const OPERATIONS = (; simulate=simulate_payload, visualize=visualize_payload, evaluate=evaluate_payload, calibrate=calibrate_payload)
+
 # --- dashboard metadata -------------------------------------------------------
 
 """
@@ -509,7 +562,9 @@ end
 Dashboard metadata derived from [`describe`](@ref): editable `controls` (one per
 parameter and table input, plus the runtime `Clock.step`), selectable `outputs`,
 plot `panels` and the `simulation` defaults. `ui` may override `title`,
-`outputs`, `panels`, `sweeps`, `table_inputs`, `stop` and `snap`.
+`outputs`, `panels`, `sweeps`, `table_inputs`, `stop` and `snap`. Outputs and
+panel variables are named by target, name or alias and may be parameters; the
+variables of every panel are among the outputs.
 """
 widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S; config)) = begin
     d = description
@@ -517,14 +572,17 @@ widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S
     outputs = filter(v -> v["role"] == "output", d["variables"])
     i = findfirst(v -> v["target"] == "time", outputs)
     time = isnothing(i) ? timeoutput(S) : popat!(outputs, i)
-    requested = get(u, "outputs", nothing)
-    if !isnothing(requested)
-        # a requested output may also be a parameter, e.g. a threshold drawn as a reference line
-        named = entriesbyname(vcat(outputs, filter(p -> p["role"] == "parameter", d["parameters"])))
-        outputs = unique([named[string(name)] for name in requested if haskey(named, string(name))])
+    # an output may also be a parameter, e.g. a threshold drawn as a reference line
+    named = entriesbyname(vcat([time], outputs, filter(p -> p["role"] == "parameter" && !isnothing(p["target"]), d["parameters"])))
+    pick(name) = haskey(named, string(name)) ? named[string(name)] : error("dashboard variable `$name` is not one of $(d["model"]["name"])")
+    isnothing(get(u, "outputs", nothing)) || (outputs = Any[pick(name) for name in u["outputs"]])
+    panels = if isnothing(get(u, "panels", nothing))
+        y = [v["target"] for v in outputs if v !== time]
+        [APIDict("title" => "Panel 1", "x" => "time", "y" => y[1:min(1, end)], "kind" => "line")]
+    else
+        [panel(p, pick) for p in u["panels"]]
     end
-    outputs = vcat([time], outputs)
-    targets = Dict{String,String}(k => v["target"] for (k, v) in entriesbyname(outputs))
+    outputs = unique(vcat([time], outputs, [pick(name) for p in panels for name in vcat(p["x"], p["y"])]))
     controls = [control(p) for p in d["parameters"]]
     known = Set(c["path"] for c in controls)
     for t in d["tables"]
@@ -540,9 +598,9 @@ widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S
     for spec in something(get(u, "table_inputs", nothing), [])
         s = asobject(spec)
         path = get(s, "path", nothing)
-        isnothing(path) && apierror("table input specification requires `path`")
+        isnothing(path) && error("table input specification requires `path`")
         i = findfirst(c -> c["role"] == "table" && path in (c["path"], c["declared"]), controls)
-        isnothing(i) && apierror("table input specification does not match a provided table: $path")
+        isnothing(i) && error("table input specification does not match a provided table: $path")
         for key in ("label", "description", "accept", "columns", "default_filename")
             haskey(s, key) && (controls[i][key] = s[key])
         end
@@ -550,9 +608,6 @@ widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S
     filter!(c -> c["path"] != "Clock.step", controls)
     push!(controls, clockcontrol(S, config))
     options = [v["target"] for v in outputs]
-    x = "time"
-    ys = filter(!=(x), options)
-    panels = [normalizepanel(p, targets) for p in get(u, "panels", [APIDict("title" => "Panel 1", "x" => x, "y" => isempty(ys) ? [] : [first(ys)], "kind" => "line")])]
     payload = APIDict(
         "title" => get(u, "title", "$(d["model"]["name"]) Dashboard"),
         "contract" => d["contract"],
@@ -563,9 +618,9 @@ widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S
         "tables" => d["tables"],
         "simulation" => APIDict("stop" => get(u, "stop", APIDict("value" => 5, "unit" => unitlabel(timeunit(clocktype(S))))), "snap" => get(u, "snap", nothing)),
         "visualize" => APIDict(
-            "x" => APIDict("options" => options, "default" => x),
-            "y" => APIDict("options" => options, "default" => isempty(ys) ? [] : [first(ys)]),
-            "kind" => APIDict("options" => ["line", "scatter", "scatterline", "step"], "default" => "line"),
+            "x" => APIDict("options" => options, "default" => "time"),
+            "y" => APIDict("options" => options, "default" => options[2:min(2, end)]),
+            "kind" => APIDict("options" => collect(PLOT_KINDS), "default" => "line"),
             "backend" => APIDict("options" => ["Makie"], "default" => "Makie"),
         ),
         "panels" => panels,
@@ -588,13 +643,22 @@ entriesbyname(entries) = begin
     lookup
 end
 
+"A plot panel of the dashboard with the targets of the variables it names."
+panel(spec, pick) = begin
+    p = asobject(spec)
+    p["x"] = pick(get(p, "x", "time"))["target"]
+    p["y"] = [pick(name)["target"] for name in vcat(get(p, "y", []))]
+    p
+end
+
 "Editable control for a parameter or table entry of a description."
 control(p::APIDict) = begin
     table = p["role"] == "table"
-    default = get(p, "default", nothing)
-    type = table ? "TableInput" : something(p["type"], default isa AbstractDict ? default["type"] : nothing, "")
+    default = something(get(p, "default", nothing), APIDict())
+    type = table ? "TableInput" : something(p["type"], get(default, "type", nothing), "")
     kind = table ? "file" : type == "Bool" ? "checkbox" : occursin(r"^(Int|UInt|Float)", type) || !isnothing(p["unit"]) ? "number" : "text"
-    default = default isa AbstractDict ? default["value"] : nothing
+    # a bound given as an expression of other variables is not one a control can enforce
+    bound(k) = (b = get(p["tags"], k, nothing); b isa Real ? b : nothing)
     APIDict(
         "kind" => kind,
         "role" => table ? "table" : "parameter",
@@ -606,11 +670,12 @@ control(p::APIDict) = begin
         "label" => String(last(split(p["declared"], '.'))),
         "description" => p["description"],
         "unit" => p["unit"],
-        "default" => default,
+        "default" => get(default, "value", nothing),
         "value_type" => type,
+        "timezone" => get(default, "timezone", nothing),
         "state" => p["state"],
-        "min" => get(p["tags"], "min", nothing),
-        "max" => get(p["tags"], "max", nothing),
+        "min" => bound("min"),
+        "max" => bound("max"),
         "step" => occursin(r"^(Int|UInt)", type) ? 1 : kind == "number" ? 0.1 : nothing,
         "accept" => table ? ".csv,text/csv" : nothing,
         "columns" => [],
@@ -618,61 +683,42 @@ control(p::APIDict) = begin
     )
 end
 
-normalizepanel(panel, targets) = begin
-    p = asobject(panel)
-    for k in ("x", "y")
-        haskey(p, k) || continue
-        p[k] = p[k] isa AbstractVector ? [get(targets, v, v) for v in p[k]] : get(targets, p[k], p[k])
-    end
-    p
-end
-
 "Clock type driving `S` (`Clock` unless a custom context is used)."
-clocktype(S::Type{<:System}) = begin
-    for (T, _, _) in systemtree(S; exclude=())
-        T <: Clock && return T
-    end
-    Clock
-end
+clocktype(S::Type{<:System}) = fieldtype(typefor(fieldtype(typefor(S), :context)), :clock)
 
 timeoutput(S::Type{<:System}) = begin
     C = clocktype(S)
     v = only(filter(v -> v.name == :time, geninfos(C)))
-    APIDict(
-        "system" => string(namefor(C)), "name" => "time", "alias" => nothing,
-        "path" => "$(namefor(C)).time", "declared" => "$(namefor(C)).time", "target" => "time",
-        "description" => "Simulation time generated by the model clock.",
-        "state" => "advance", "type" => typelabel(gettag(v, :_type, nothing)), "unit" => unitlabel(timeunit(C)),
-        "role" => "output", "tags" => APIDict(), "dependencies" => String[], "source" => "runtime",
-    )
+    e = entry(; system=namefor(C), name=:time, description="Simulation time generated by the model clock.",
+        state=v.state, type=typelabel(gettag(v, :_type, nothing)), unit=timeunit(C), role="output")
+    e["source"] = "runtime"
+    e
 end
 
 clockcontrol(S::Type{<:System}, config) = begin
     C = clocktype(S)
-    # the configured step, looked up the way the clock itself does (own name first, then mixins), or its default
-    step = option(configure(config), names.(mixincollect(C)) |> reverse |> Iterators.flatten |> collect, :step)
+    # the configured step, looked up the way the clock itself does, or its default
+    step = option(configure(config), systemkeys(C), :step)
     ismissing(step) && (step = parameters(C)[namefor(C)][:step])
-    v = encodevalue(step)
-    APIDict(
-        "kind" => "number", "role" => "parameter", "system" => string(namefor(C)), "name" => "step",
-        "path" => "Clock.step", "declared" => "Clock.step", "alias" => nothing, "label" => "step",
-        "description" => "Simulation time step exposed as a runtime configuration control.",
-        "unit" => v["unit"], "default" => v["value"], "value_type" => v["type"], "state" => "preserve",
-        "min" => nothing, "max" => nothing, "step" => 1, "accept" => nothing, "columns" => [], "source" => "runtime",
-    )
+    e = entry(; system=namefor(C), name=:step, path="Clock.step", description="Simulation time step exposed as a runtime configuration control.",
+        state=:Preserve, unit=unitof(step), role="parameter")
+    e["default"] = encodevalue(step)
+    c = control(e)
+    c["step"], c["source"] = 1, "runtime"
+    c
 end
 
 # --- schema -------------------------------------------------------------------
 
-"Request/response schema fragments: the components of the static OpenAPI document plus the route table."
+"Request/response schema fragments: the schemas of the static OpenAPI document, referring to each other as `#/definitions/...`, plus the route table."
 apischema() = begin
-    doc = JSON.parse(asset("openapi.json"))
+    doc = JSON.parse(replace(asset("openapi.json"), "#/components/schemas/" => "#/definitions/"))
     APIDict(
         "\$schema" => "https://json-schema.org/draft/2020-12/schema",
         "title" => "Cropbox Web API",
         "contract_version" => API_CONTRACT_VERSION,
         "routes" => [APIDict("method" => r.method, "path" => r.path, "operation" => string(r.op)) for r in API_ROUTES],
-        "definitions" => get(get(doc, "components", APIDict()), "schemas", APIDict()),
+        "definitions" => doc["components"]["schemas"],
     )
 end
 
@@ -690,7 +736,8 @@ JSON payloads and dispatch them to `simulate`, `visualize`, `evaluate` and
 `request_defaults` holds trusted default request fields (for example a Julia
 `snap` function) merged under each client request. Its `config`, in the JSON
 shape of a request, is decoded once and merged over `config`; client values
-then replace individual parameters.
+then replace individual parameters, whichever of a parameter's names (alias,
+mixin) either side used.
 
 Routes:
 - `GET /api/model`, `GET /api/dashboard`, `GET /api/schema`, `GET /api/openapi`, `GET /api/docs`
@@ -699,7 +746,10 @@ Routes:
 
 The call blocks while serving unless `async=true`, which returns the server
 object. The service has no authentication or transport encryption; bind it to
-loopback unless it is placed behind an appropriate gateway.
+loopback unless it is placed behind an appropriate gateway. Clients can only
+set parameters that the model declares, and a table only from the data they
+send, but a model may itself declare a parameter that names a file to read
+(the `filename` of the store systems).
 """
 serve(S::Type{<:System}; host="127.0.0.1", port=8000, config=(), options=(), request_defaults=APIDict(), ui=APIDict(), dashboard=:static, async=false) = begin
     service = Service(S; config, options, request_defaults, ui, dashboard)
@@ -723,7 +773,9 @@ end
 
 Start the same service as [`serve`](@ref) with the browser frontend selected by
 `frontend` (`:static` for the bundled client, `:none` for the API only, or a
-custom `DashboardFrontend`).
+custom `DashboardFrontend`). A package can subtype `Cropbox.DashboardFrontend`
+and implement `Cropbox.dashboard_routes` and `Cropbox.dashboard_route_response`
+without changing the route contract.
 """
 dashboard(S::Type{<:System}; frontend=:static, kwargs...) = serve(S; dashboard=frontend, kwargs...)
 

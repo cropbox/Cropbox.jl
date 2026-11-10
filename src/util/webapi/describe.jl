@@ -1,8 +1,9 @@
 # Model introspection shared by the web API.
 #
-# `variables()` collects variable metadata once for a system tree and is the
-# single source for `describe()`; other tools (dashboards, documentation,
-# sensitivity analysis) can reuse it instead of walking `dependency()` again.
+# `variables()` collects variable metadata once for a system tree. It is the
+# single source for `describe()` and for the index that validates requests;
+# other tools (dashboards, documentation, sensitivity analysis) can reuse it
+# instead of walking `dependency()` again.
 
 import DataAPI: describe
 
@@ -19,49 +20,116 @@ const PUBLIC_TAGS = Set((
     variables(S::Type{<:System}; recursive=true, exclude=(Context,))
 
 Collect metadata for every variable declared in `S` and, when `recursive` is
-set, in its subsystems. Returns a vector of named tuples with fields:
+set, in the systems below it. Returns a vector of named tuples with fields:
 
 - `system`: name of the system owning the variable
-- `path`: access path of that system from the root (empty for the root)
+- `path`: access path of that system from the root (empty for the root,
+  `nothing` for a system that only exists once the model `produce`s it)
 - `name`, `alias`, `state`, `type`, `unit`, `description`
-- `target`: access path used as a simulation target (`"leaf.area"`)
+- `target`: access path used as a simulation target (`"leaf.area"`), or
+  `nothing` without a fixed path
 - `config`: configuration path (`"Leaf.area"`) and `declared`, the same path
   through the system that declared the variable (differs for mixins)
+- `systems`: the system names under which Cropbox looks the variable up in a
+  configuration, in order of precedence (the system, then its mixins)
 - `role`: `"parameter"`, `"table"` (a `provide` input), `"output"` or `"internal"`
 - `tags`: public DSL tags, `dependencies`: names of variables it reads
+- `excluded`: whether the system is one of `exclude` or below one. These (by
+  default the context with its clock) are left out of a description but are
+  configured and read like any other system
 - `info`: the underlying `VarInfo`
 
-Systems listed in `exclude` (and their subtrees) are skipped.
+A system reached through several paths is listed once per path.
 """
-variables(S::Type{<:System}; recursive=true, exclude=(Context,)) = begin
+variables(S::Type{<:System}; recursive=true, exclude=(Context,)) = variables(systemtree(S; recursive, exclude))
+variables(tree::AbstractVector) = begin
     V = NamedTuple[]
-    for (T, path, _) in systemtree(S; recursive, exclude)
-        system = namefor(T)
-        units = fieldunits(T)
-        for v in geninfos(T)
-            isnothing(v.state) && continue
-            name = v.name
-            push!(V, (;
+    bytype = Dict{Any,Any}()
+    for t in tree
+        # what a system type declares is the same on every path to it
+        D = get!(bytype, typefor(t.system)) do
+            system = namefor(t.system)
+            units = fieldunits(t.system)
+            systems = systemkeys(t.system)
+            [(;
                 system,
-                path,
-                name,
+                name = v.name,
                 alias = v.alias,
                 state = v.state,
                 type = typelabel(gettag(v, :_type, nothing)),
-                unit = get(units, name, nothing),
+                unit = get(units, v.name, nothing),
                 description = strip(v.docstring),
-                target = isempty(path) ? string(name) : "$(path).$(name)",
-                config = "$(system).$(uncanonicalname(name, system))",
-                declared = "$(v.system).$(uncanonicalname(name, v.system))",
+                config = "$(system).$(uncanonicalname(v.name, system))",
+                declared = "$(v.system).$(uncanonicalname(v.name, v.system))",
+                systems,
                 role = variablerole(v),
                 tags = publictags(v),
                 dependencies = sort!(string.(uncanonicalname.(collect(extract(v; tag=false))))),
                 info = v,
-            ))
+            ) for v in t.infos if !isnothing(v.state)]
+        end
+        path = t.path
+        for d in D
+            target = isnothing(path) ? nothing : isempty(path) ? string(d.name) : "$(path).$(d.name)"
+            push!(V, (; d..., path, target, excluded = t.excluded))
         end
     end
     V
 end
+
+"""
+System types below `S` as `(system, path, root, excluded, infos)` named tuples:
+first, depth first, the systems held in statically typed fields with their
+access `path`; then the types the model only `produce`s while it runs, once
+each and without a path (`nothing`). `excluded` marks the systems in `exclude`
+and everything below them. A type is not entered again below itself, so cyclic
+references end.
+"""
+systemtree(S::Type{<:System}; recursive=true, exclude=(Context,)) = begin
+    tree = NamedTuple[]
+    infos = Dict{Any,Any}()
+    produced = Tuple{Any,Bool}[]
+    visit!(T, path, above, excluded) = begin
+        C = typefor(T)
+        # an open type (`System`, a union) is only known once the model runs
+        isconcretetype(C) || return
+        (C in above || (isnothing(path) && haskey(infos, C))) && return
+        excluded |= any(E -> T <: E, exclude)
+        I = get!(() -> geninfos(T), infos, C)
+        push!(tree, (; system=T, path, root=path == "", excluded, infos=I))
+        recursive || return
+        for f in subsystemsof(T)
+            visit!(fieldtype(C, f), isnothing(path) ? nothing : isempty(path) ? string(f) : "$(path).$(f)", (above..., C), excluded)
+        end
+        for v in I
+            v.state == :Produce && push!(produced, (producedtype(T, v), excluded))
+        end
+    end
+    visit!(S, "", (), false)
+    while !isempty(produced)
+        T, excluded = popfirst!(produced)
+        isnothing(T) || visit!(T, nothing, (), excluded)
+    end
+    tree
+end
+
+# System type a `produce` variable declares for what it creates.
+producedtype(T, v::VarInfo) = try
+    P = Core.eval(scopeof(T), v.type)
+    P <: AbstractVector && (P = eltype(P))
+    P <: System ? P : nothing
+catch
+    nothing
+end
+
+"System names under which Cropbox looks up the parameters of `T`, in its order of precedence: the system, then its mixins."
+systemkeys(T) = collect(Symbol, Iterators.flatten(reverse(names.(collect(mixincollect(supertype(typefor(T))))))))
+
+"Names under which a variable is configured: its name and its alias."
+namekeys(v) = isnothing(v.alias) ? [v.name] : [v.name, v.alias]
+
+"Every `(system, name)` configuration key Cropbox reads for a parameter, in its order of precedence."
+spellings(v) = [(s, uncanonicalname(k, s)) for k in namekeys(v) for s in v.systems]
 
 variablerole(v::VarInfo) = begin
     v.state == :Provide && return "table"
@@ -80,17 +148,13 @@ publictags(v::VarInfo) = begin
     tags
 end
 
-# Tag expressions are quoted by the `@system` macro; evaluate the simple ones and
-# fall back to their source text.
+# Tag expressions are quoted by the `@system` macro: literals keep their value, anything else is source text.
 tagvalue(raw::QuoteNode) = tagvalue(raw.value)
 tagvalue(raw::Symbol) = string(uncanonicalname(raw))
 tagvalue(raw::Union{Number,Bool,AbstractString}) = encode(raw)
 tagvalue(raw::Nothing) = nothing
 tagvalue(raw::AbstractVector) = tagvalue.(raw)
-tagvalue(raw) = begin
-    v = try value(raw) catch; raw end
-    v === raw ? string(raw) : tagvalue(v)
-end
+tagvalue(raw) = string(raw)
 
 # Declared type expression (`_type` tag) rendered as a public type name.
 typelabel(::Nothing) = nothing
@@ -108,39 +172,47 @@ typelabel(raw) = string(raw)
     describe(S::Type{<:System}; config=(), recursive=true, exclude=(Context,))
 
 Return a JSON-compatible description of a Cropbox system: model identity,
-systems, parameters (with defaults under `config`), output variables and
+systems, parameters (with their values under `config`), output variables and
 provided-table bindings. It is served at `GET /api/model` by [`serve`](@ref) and
 can be used directly by other tools.
+
+Systems in `exclude` and below them are left out, except for their parameters
+that `config` sets (such as the clock step).
 """
 describe(S::Type{<:System}; config=(), recursive=true, exclude=(Context,)) = begin
-    V = variables(S; recursive, exclude)
-    byname = Dict((v.system, v.name) => v for v in V)
+    tree = systemtree(S; recursive, exclude)
+    description(S, tree, variables(tree); config, recursive, exclude)
+end
+
+description(S::Type{<:System}, tree, V; config=(), recursive=true, exclude=(Context,)) = begin
+    c = configure(config)
+    defaults = parameterflatten(parameters(S; recursive, exclude))
+    P = APIDict[]
+    seen = Set{Tuple{Symbol,Symbol}}()
     for v in V
-        isnothing(v.alias) || (byname[(v.system, v.alias)] = v)
+        istag(v.info, :parameter) || continue
+        # a system reached through several paths has one set of parameters
+        (v.system, v.name) in seen && continue
+        # the value Cropbox will use: `config` may set it through an alias or a mixin name
+        value = option(c, v.systems, namekeys(v))
+        v.excluded && ismissing(value) && continue
+        push!(seen, (v.system, v.name))
+        ismissing(value) && (value = get(defaults, (v.system, v.name), missing))
+        e = variableentry(v)
+        e["default"] = v.role == "table" ? nothing : encodedefault(value, v.unit, v.type)
+        push!(P, e)
     end
-    defaults = parameterflatten(configure(parameters(S; recursive, exclude), config))
-    parameters_ = [
-        let v = get(byname, (system, name), nothing),
-            # a configured parameter of a system outside the described tree is known by its value only
-            unit = isnothing(v) ? unitof(value) : v.unit,
-            entry = isnothing(v) ? APIDict(
-                "system" => string(system), "name" => string(name), "alias" => nothing,
-                "path" => "$(system).$(name)", "declared" => "$(system).$(name)", "target" => string(name),
-                "description" => "", "state" => nothing, "type" => nothing, "unit" => unitlabel(unit),
-                "role" => "parameter", "tags" => APIDict(), "dependencies" => String[],
-            ) : variableentry(v)
-            entry["default"] = entry["role"] == "table" ? nothing : encodedefault(value, unit, entry["type"])
-            entry
-        end
-        for ((system, name), value) in defaults
-    ]
+    described = [v for v in V if !v.excluded]
     APIDict(
         "contract" => APIDict("version" => API_CONTRACT_VERSION),
         "model" => APIDict("name" => string(nameof(S)), "module" => string(parentmodule(S))),
-        "systems" => systementries(S; recursive, exclude),
-        "parameters" => parameters_,
-        "variables" => [variableentry(v) for v in V if v.role in ("output", "internal")],
-        "tables" => [tableentry(v, V) for v in V if v.role == "table"],
+        "systems" => [
+            APIDict("name" => string(namefor(t.system)), "module" => string(parentmodule(t.system)), "root" => t.root, "path" => t.path)
+            for t in tree if !t.excluded
+        ],
+        "parameters" => P,
+        "variables" => [variableentry(v) for v in described if v.role in ("output", "internal") && !isnothing(v.target)],
+        "tables" => [tableentry(v, described) for v in described if v.role == "table"],
     )
 end
 
@@ -151,27 +223,31 @@ catch
     encodevalue(value; type)
 end
 
-variableentry(v) = APIDict(
-    "system" => string(v.system),
-    "name" => string(v.name),
-    "alias" => isnothing(v.alias) ? nothing : string(v.alias),
-    "path" => v.config,
-    "declared" => v.declared,
-    "target" => v.target,
-    "description" => String(v.description),
-    "state" => lowercase(string(v.state)),
-    "type" => v.type,
-    "unit" => unitlabel(v.unit),
-    "role" => v.role,
-    "tags" => v.tags,
-    "dependencies" => v.dependencies,
+"A description entry: parameters, variables, tables and the dashboard's own entries share these keys."
+entry(; system, name, alias=nothing, path="$(system).$(name)", declared=path, target=string(name), description="",
+        state=nothing, type=nothing, unit=nothing, role, tags=APIDict(), dependencies=String[]) = APIDict(
+    "system" => string(system),
+    "name" => string(name),
+    "alias" => isnothing(alias) ? nothing : string(alias),
+    "path" => path,
+    "declared" => declared,
+    "target" => target,
+    "description" => String(description),
+    "state" => isnothing(state) ? nothing : lowercase(string(state)),
+    "type" => type,
+    "unit" => unitlabel(unit),
+    "role" => role,
+    "tags" => tags,
+    "dependencies" => dependencies,
 )
+
+variableentry(v) = entry(; v.system, v.name, v.alias, path=v.config, v.declared, v.target, v.description, v.state, v.type, v.unit, v.role, v.tags, v.dependencies)
 
 # A `provide` table and the `drive` variables reading its columns.
 tableentry(t, V) = begin
-    entry = variableentry(t)
-    entry["index"] = tagvalue(gettag(t.info, :index, QuoteNode(:index)))
-    entry["columns"] = [
+    e = variableentry(t)
+    e["index"] = tagvalue(gettag(t.info, :index, QuoteNode(:index)))
+    e["columns"] = [
         APIDict(
             "variable" => d.target,
             "name" => string(d.name),
@@ -181,79 +257,71 @@ tableentry(t, V) = begin
         for d in V
         if d.state == :Drive && d.system == t.system && d.path == t.path && tagsymbol(gettag(d.info, :from, nothing)) == t.name
     ]
-    entry
+    e
 end
 
 tagsymbol(raw::QuoteNode) = tagsymbol(raw.value)
 tagsymbol(raw::Symbol) = raw
 tagsymbol(raw) = nothing
 
-"""
-System types reachable from `S` through statically typed fields, as `(type,
-access path, root)` tuples in depth-first order. `exclude`d systems are skipped,
-and a type is not entered again below itself, so cyclic references end.
-"""
-systemtree(S::Type{<:System}; recursive=true, exclude=(Context,)) = begin
-    tree = Tuple{Any,String,Bool}[]
-    visit!(T, path, above) = begin
-        any(E -> T <: E, exclude) && return
-        typefor(T) in above && return
-        push!(tree, (T, path, isempty(above)))
-        recursive || return
-        for f in subsystemsof(T)
-            C = fieldtype(typefor(T), f)
-            C <: System && visit!(C, isempty(path) ? string(f) : "$(path).$(f)", (above..., typefor(T)))
-        end
-    end
-    visit!(S, "", ())
-    tree
-end
-
-systementries(S::Type{<:System}; recursive=true, exclude=(Context,)) = [
-    APIDict("name" => string(namefor(T)), "module" => string(parentmodule(T)), "root" => root, "path" => path)
-    for (T, path, root) in systemtree(S; recursive, exclude)
-]
+# --- request validation index -------------------------------------------------
 
 """
-    ModelIndex(description)
+    ModelIndex(S)
 
-Lookup tables for validating requests against a model description:
+Lookup tables for checking requests against a model, built from every system
+that can be part of it (the context and produced systems included):
 
-- `parameters`: the description entry of every configuration path a described
-  parameter accepts (through its system or the system that declared it, by
-  name or alias);
-- `systems`: names of the described systems, whose parameters are all known;
+- `parameters`: the parameters, as entries of [`variables`](@ref), that each
+  configuration path sets. Cropbox reads a parameter through its name or alias
+  under its own system or any mixin of it, so several paths lead to one
+  parameter, and the path of a shared mixin leads to several;
 - `paths`: variable paths accepted as `target`, `index`, `stop`, `x` and `y`
-  (`time`, every variable by name or alias, and `*` / `system.*` wildcards).
+  (every variable with a fixed access path, and `*` / `system.*` wildcards);
+- `aliases`: access paths through an alias, each mapped to the path by name.
 """
 struct ModelIndex
-    parameters::Dict{String,APIDict}
-    systems::Set{String}
+    parameters::Dict{String,Vector{NamedTuple}}
     paths::Set{String}
-end
-ModelIndex(d::APIDict) = begin
-    parameters = Dict{String,APIDict}()
-    systems = Set{String}(String(s["name"]) for s in d["systems"])
-    for group in ("tables", "parameters"), p in d[group], path in unique((p["path"], p["declared"]))
-        parameters[path] = p
-        isnothing(p["alias"]) || (parameters[aliaspath(path, p["alias"])] = p)
-        # a mixin is known as completely as the described systems that include it
-        isnothing(p["state"]) || push!(systems, first(split(path, ".")))
-    end
-    ModelIndex(parameters, systems, targetpaths(d))
+    aliases::Dict{String,String}
 end
 
-# `System.name` -> `System.alias`
-aliaspath(path, alias) = replace(path, r"[^.]+$" => alias)
+ModelIndex(S::Type{<:System}) = (tree = systemtree(S); ModelIndex(tree, variables(tree)))
+ModelIndex(tree, V) = begin
+    parameters = Dict{String,Vector{NamedTuple}}()
+    seen = Set{Tuple{Symbol,Symbol}}()
+    for v in V
+        istag(v.info, :parameter) || continue
+        (v.system, v.name) in seen && continue
+        push!(seen, (v.system, v.name))
+        for (system, name) in spellings(v)
+            push!(get!(Vector{NamedTuple}, parameters, "$(system).$(name)"), v)
+        end
+    end
+    paths = Set{String}(("*",))
+    aliases = Dict{String,String}()
+    for t in tree
+        isnothing(t.path) && continue
+        below(name) = isempty(t.path) ? string(name) : "$(t.path).$(name)"
+        push!(paths, below("*"))
+        for v in t.infos
+            isnothing(v.state) || push!(paths, below(v.name))
+            isnothing(v.alias) || (aliases[below(v.alias)] = below(v.name))
+        end
+    end
+    ModelIndex(parameters, paths, aliases)
+end
 
-targetpaths(description::APIDict) = begin
-    paths = Set{String}(("time", "*"))
-    for s in description["systems"]
-        isempty(s["path"]) || push!(paths, "$(s["path"]).*")
-    end
-    for group in ("parameters", "variables", "tables"), v in description[group]
-        push!(paths, v["target"])
-        isnothing(v["alias"]) || push!(paths, aliaspath(v["target"], v["alias"]))
-    end
-    paths
+"""
+    canonical(config, index)
+
+Give every parameter of the model that `config` sets, under whatever spelling,
+an entry under its own system and name as well. Cropbox reads that entry first,
+so a canonical configuration merged over another replaces its values whichever
+spelling either used, as a client overriding a server default expects.
+"""
+canonical(c::Config, ::Nothing) = c
+canonical(c::Config, index::ModelIndex) = begin
+    K = unique(v -> (v.system, v.name), [v for (path, _) in flatconfig(c) for v in get(index.parameters, path, ())])
+    isempty(K) ? c : configure(c, (v.system => uncanonicalname(v.name, v.system) => option(c, v.systems, namekeys(v)) for v in K)...)
 end

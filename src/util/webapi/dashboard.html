@@ -1392,8 +1392,6 @@
       const preset = (schema.sweeps || []).find(s => sweepPath(s) === path);
       if (!preset) return null;
       return {
-        system: preset.system,
-        name: preset.name,
         path: preset.path || path,
         values: Array.isArray(preset.values) ? preset.values : undefined,
         start: preset.start,
@@ -1538,10 +1536,11 @@
         const xstep = sweepByPath(panel.xstep);
         const plotOptions = {
           ...bounds,
-          ...(panel.linestyles?.length === panel.y?.length ? { linestyles: panel.linestyles } : {})
+          ...(panel.linestyles?.length === panel.y?.length ? { linestyle: panel.linestyles } : {})
         };
         const plot = Object.keys(plotOptions).length ? plotOptions : undefined;
-        const request = requestFromControls({ x: panel.x || "time", y: panel.y, kind: normalizedPlotKind(panel.kind), xstep, ...(plot ? { plot } : {}) });
+        const request = requestFromControls({ x: panel.x || "time", y: panel.y, kind: normalizedPlotKind(panel.kind), ...(xstep ? { xstep } : {}), ...(plot ? { plot } : {}) });
+        delete request.target;
         if (xstep?.path) {
           const sweptPaths = new Set(
             (schema.controls || [])

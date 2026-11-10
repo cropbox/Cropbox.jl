@@ -14,11 +14,16 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
             all(isnothing, bounds) || (plot[limit] = bounds)
         end
         styles = get(panel, "linestyles", [])
-        !isempty(styles) && length(styles) == length(panel["y"]) && (plot["linestyles"] = styles)
+        !isempty(styles) && length(styles) == length(panel["y"]) && (plot["linestyle"] = styles)
         plot
     end
 
-    for (name, target, x) in (("cherry", "F", "time"), ("gasexchange", "A_net", "Ci"), ("garlic", "total_mass", "DAP"))
+    # `override` is a parameter the profile sets by one of its names (its own, a mixin's, an alias), which a client
+    # sets through another one that Cropbox would read after the profile's
+    for (name, target, x, override) in (
+            ("cherry", "F", "time", ("CherryBloomCF.temperature_threshold", :CherryBloomCF, :Tc, 12, "°C")),
+            ("gasexchange", "A_net", "Ci", ("ModelC3BB.carbon_dioxide", :ModelC3BB, :CO2, 800, "μmol/mol")),
+            ("garlic", "total_mass", "DAP", ("LeafInitiation.storage_days", :Phenology, :SD, 100, "d")))
         @testset "$name" begin
             p = WebAPIExamples.profile(name)
             service = Cropbox.Service(p.system; p.config, p.ui, p.request_defaults)
@@ -32,17 +37,24 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
             model = getjson("/api/model")
             @test !isempty(model["parameters"]) && !isempty(model["variables"])
             @test model == JSON.parse(JSON.json(describe(p.system; config = service.config)))
+            @test allunique(q["path"] for q in model["parameters"])
 
             # every default of the description can be sent back as a configuration
             defaults = Dict{String,Any}(q["path"] => q["default"] for q in model["parameters"] if !isnothing(q["default"]) && !isnothing(q["default"]["value"]))
             @test !isempty(defaults)
             decodes(path) = try
-                Cropbox.simulationkwargs(p.system, Dict{String,Any}("config" => Dict(path => defaults[path])); index = service.index)
+                Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict(path => defaults[path])); index = service.index)
                 true
             catch
                 false
             end
             @test filter(!decodes, sort!(collect(keys(defaults)))) == []
+
+            # the client's value is the one in effect
+            spelling, system, parameter, value, unit = override
+            client = Dict(spelling => Dict("value" => value, "unit" => unit))
+            merged = Cropbox.simulationkwargs(Dict{String,Any}("config" => client); config = service.config, index = service.index)[:config]
+            @test merged[system][parameter] == Cropbox.unitfy(value, Cropbox.parseunit(unit)) != service.config[system][parameter]
 
             dashboard = getjson("/api/dashboard")
             outputs = [o["target"] for o in dashboard["outputs"]]
@@ -83,6 +95,7 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
                 @test occursin("<svg", postjson("/api/visualize", Dict("x" => x, "y" => [target], "kind" => "line"))["body"])
                 @test postjson("/api/simulate", Dict("config" => defaults, "stop" => stop, "target" => [target]))["rows"] ==
                     [[row[1], row[i]] for row in result["rows"]]
+                @test postjson("/api/simulate", Dict("config" => client, "stop" => 1, "target" => [string(parameter)]))["rows"][1][2] == value
             end
         end
     end

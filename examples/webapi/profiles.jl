@@ -92,10 +92,8 @@ function gasexchange_profile()
                  "xstep" => "Weather.T_air", "ymin" => 0, "ymax" => 40),
         ],
         "sweeps" => [
-            Dict("path" => "Weather.CO2", "label" => "Weather.CO2", "system" => "Weather",
-                 "name" => "CO2", "start" => 10, "stop" => 1500, "step" => 10, "unit" => "μmol/mol"),
-            Dict("path" => "Weather.T_air", "label" => "Weather.T_air", "system" => "Weather",
-                 "name" => "T_air", "start" => 0, "stop" => 45, "step" => 1, "unit" => "°C"),
+            Dict("path" => "Weather.CO2", "label" => "Weather.CO2", "start" => 10, "stop" => 1500, "step" => 10, "unit" => "μmol/mol"),
+            Dict("path" => "Weather.T_air", "label" => "Weather.T_air", "start" => 0, "stop" => 45, "step" => 1, "unit" => "°C"),
         ],
     )
     (; system=LeafGasExchange.ModelC3BB, config, ui,
