@@ -129,7 +129,7 @@ describe(S::Type{<:System}; config=(), recursive=true, exclude=(Context,)) = beg
                 "description" => "", "state" => nothing, "type" => nothing, "unit" => unitlabel(unit),
                 "role" => "parameter", "tags" => APIDict(), "dependencies" => String[],
             ) : variableentry(v)
-            entry["default"] = entry["role"] == "table" ? nothing : encodevalue(value, unit; type=entry["type"])
+            entry["default"] = entry["role"] == "table" ? nothing : encodedefault(value, unit, entry["type"])
             entry
         end
         for ((system, name), value) in defaults
@@ -142,6 +142,13 @@ describe(S::Type{<:System}; config=(), recursive=true, exclude=(Context,)) = beg
         "variables" => [variableentry(v) for v in V if v.role in ("output", "internal")],
         "tables" => [tableentry(v, V) for v in V if v.role == "table"],
     )
+end
+
+# A default that cannot be converted to the declared unit as a whole (e.g. `interpolate` knots) is encoded as it is.
+encodedefault(value, unit, type) = try
+    encodevalue(value, unit; type)
+catch
+    encodevalue(value; type)
 end
 
 variableentry(v) = APIDict(
@@ -212,39 +219,32 @@ systementries(S::Type{<:System}; recursive=true, exclude=(Context,)) = [
 
 Lookup tables for validating requests against a model description:
 
-- `types`: every configuration path a described parameter accepts (through its
-  system or the system that declared it, by name or alias) with the declared
-  `(type, role)`;
+- `parameters`: the description entry of every configuration path a described
+  parameter accepts (through its system or the system that declared it, by
+  name or alias);
 - `systems`: names of the described systems, whose parameters are all known;
 - `paths`: variable paths accepted as `target`, `index`, `stop`, `x` and `y`
   (`time`, every variable by name or alias, and `*` / `system.*` wildcards).
 """
 struct ModelIndex
-    types::Dict{String,Tuple{Any,String}}
+    parameters::Dict{String,APIDict}
     systems::Set{String}
     paths::Set{String}
 end
 ModelIndex(d::APIDict) = begin
+    parameters = Dict{String,APIDict}()
     systems = Set{String}(String(s["name"]) for s in d["systems"])
-    # a mixin is known as completely as the described systems that include it
-    for group in ("parameters", "tables"), p in d[group]
-        isnothing(p["state"]) || push!(systems, first(split(p["declared"], ".")))
+    for group in ("tables", "parameters"), p in d[group], path in unique((p["path"], p["declared"]))
+        parameters[path] = p
+        isnothing(p["alias"]) || (parameters[aliaspath(path, p["alias"])] = p)
+        # a mixin is known as completely as the described systems that include it
+        isnothing(p["state"]) || push!(systems, first(split(path, ".")))
     end
-    ModelIndex(parametertypes(d), systems, targetpaths(d))
+    ModelIndex(parameters, systems, targetpaths(d))
 end
 
 # `System.name` -> `System.alias`
 aliaspath(path, alias) = replace(path, r"[^.]+$" => alias)
-
-parametertypes(description::APIDict) = begin
-    types = Dict{String,Tuple{Any,String}}()
-    for group in ("parameters", "tables"), p in description[group], path in unique((p["path"], p["declared"]))
-        entry = (p["role"] == "table" ? nothing : p["type"], p["role"])
-        types[path] = entry
-        isnothing(p["alias"]) || (types[aliaspath(path, p["alias"])] = entry)
-    end
-    types
-end
 
 targetpaths(description::APIDict) = begin
     paths = Set{String}(("time", "*"))

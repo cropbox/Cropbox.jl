@@ -36,7 +36,13 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
             # every default of the description can be sent back as a configuration
             defaults = Dict{String,Any}(q["path"] => q["default"] for q in model["parameters"] if !isnothing(q["default"]) && !isnothing(q["default"]["value"]))
             @test !isempty(defaults)
-            @test Cropbox.simulationkwargs(p.system, Dict{String,Any}("config" => defaults); index = service.index)[:config] isa Cropbox.Config
+            decodes(path) = try
+                Cropbox.simulationkwargs(p.system, Dict{String,Any}("config" => Dict(path => defaults[path])); index = service.index)
+                true
+            catch
+                false
+            end
+            @test filter(!decodes, sort!(collect(keys(defaults)))) == []
 
             dashboard = getjson("/api/dashboard")
             outputs = [o["target"] for o in dashboard["outputs"]]
@@ -48,10 +54,10 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
             # one simulation covers the selected output columns and every panel
             stop = dashboard["simulation"]["stop"]
             stop["value"] isa Number || (stop = stop["value"])
-            targets = setdiff(unique(vcat(outputs[2:min(5, end)], target, x, (vcat(panel["x"], panel["y"]) for panel in panels)...)), ["time"])
+            targets = unique(vcat(outputs[1:min(5, end)], target, x, (vcat(panel["x"], panel["y"]) for panel in panels)...))
             result = postjson("/api/simulate", Dict("config" => Dict(), "stop" => stop, "target" => targets))
             columns = [c["name"] for c in result["columns"]]
-            @test result["status"] == "ok" && !isempty(result["rows"]) && issubset(targets, columns)
+            @test result["status"] == "ok" && !isempty(result["rows"]) && issubset(targets, columns) && first(columns) == "time"
             @test first(result["columns"])["unit"] == first(dashboard["outputs"])["unit"]
             i = findfirst(==(target), columns)
             @test all(row -> row[i] isa Number && isfinite(row[i]), result["rows"])

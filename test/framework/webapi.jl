@@ -32,9 +32,12 @@ using TimeZones
         k: rate => 1 ~ preserve(parameter)
     end
 
-    @system SWebPlant(SWebRate, Controller) begin
+    # a mixin has to exist when the macro expands
+    @eval @system SWebPlant(SWebRate, Controller) begin
         leaf(context) ~ ::SWebLeaf
         total(x=leaf.doubled, k) => k * x ~ track(u"cm^2")
+        shares => [0.25 0.75; 0.5 0.5] ~ tabulate(rows=(:early, :late), columns=(:leaf, :root), parameter)
+        late_root(shares) => shares[:late].root ~ track
     end
 
     weather_csv = "index (d),tavg (°C)\n0,10\n1,12\n2,14\n"
@@ -65,7 +68,7 @@ using TimeZones
         @test isempty(d["tables"])
         index = Cropbox.ModelIndex(d)
         @test issubset(["length", "b", "time", "*"], index.paths) && index.systems == Set(["SWebAPI"])
-        @test index.types["SWebAPI.a"] == index.types["SWebAPI.length"] == ("Float64", "parameter")
+        @test index.parameters["SWebAPI.a"] === index.parameters["SWebAPI.length"] && index.parameters["SWebAPI.a"]["type"] == "Float64"
 
         configured = describe(SWebAPI; config = :SWebAPI => :a => 300u"cm")
         @test only(filter(p -> p["name"] == "a", configured["parameters"]))["default"]["value"] == 3
@@ -80,16 +83,17 @@ using TimeZones
         @test table["index"] == "index"
         @test only(table["columns"]) == Dict("variable" => "T", "name" => "T", "column" => "tavg", "unit" => "°C")
         @test only(filter(p -> p["name"] == "weather", t["parameters"]))["default"] === nothing
-        @test Cropbox.ModelIndex(t).types["SWebTable.weather"] == (nothing, "table")
+        @test Cropbox.ModelIndex(t).parameters["SWebTable.weather"]["role"] == "table"
 
         n = describe(SWebPlant)
         @test [(s["name"], s["path"], s["root"]) for s in n["systems"]] == [("SWebPlant", "", true), ("SWebLeaf", "leaf", false)]
         P = Dict(p["path"] => p for p in n["parameters"])
         @test P["SWebPlant.k"]["declared"] == "SWebRate.k" && P["SWebPlant.k"]["alias"] == "rate" && P["SWebPlant.k"]["target"] == "k"
         @test P["SWebLeaf.area"]["target"] == "leaf.area" && P["SWebLeaf.area"]["default"] == Dict("value" => 2, "type" => "Float64", "unit" => "cm^2")
-        @test Set(v["target"] for v in n["variables"] if v["role"] == "output") == Set(["total", "leaf.doubled"])
+        @test Set(v["target"] for v in n["variables"] if v["role"] == "output") == Set(["total", "leaf.doubled", "late_root"])
+        @test P["SWebPlant.shares"]["state"] == "tabulate" && P["SWebPlant.shares"]["default"]["value"] == [[0.25, 0.75], [0.5, 0.5]]
         index = Cropbox.ModelIndex(n)
-        @test issubset(["SWebPlant.k", "SWebRate.k", "SWebPlant.rate", "SWebRate.rate", "SWebLeaf.area", "SWebLeaf.A"], keys(index.types))
+        @test issubset(["SWebPlant.k", "SWebRate.k", "SWebPlant.rate", "SWebRate.rate", "SWebLeaf.area", "SWebLeaf.A"], keys(index.parameters))
         @test index.systems == Set(["SWebPlant", "SWebLeaf", "SWebRate"])
         @test issubset(["time", "*", "leaf.*", "total", "k", "rate", "leaf.area", "leaf.A", "leaf.doubled"], index.paths)
     end
@@ -161,6 +165,9 @@ using TimeZones
         @test Cropbox.encode(NaN) === nothing && Cropbox.encode(Inf) === nothing && Cropbox.encode(missing) === nothing
         @test Cropbox.encode(1 // 2) == 0.5 && Cropbox.encode(:x) == "x" && Cropbox.encode(Date(2024, 1, 2)) == "2024-01-02"
         @test Cropbox.encode(2u"m") == 2 && Cropbox.encode([1u"m", 2u"m"]) == [1, 2]
+        @test Cropbox.encode([1 2; 3 4]) == [[1, 2], [3, 4]] && Cropbox.encode(:a => 1) == ["a", 1]
+        @test Cropbox.asmatrix([[1, 2], [3, 4]]) == [1 2; 3 4]
+        @test_throws Cropbox.APIRequestError Cropbox.asmatrix([[1, 2], [3]])
         @test Cropbox.encodevalue(2u"m") == Dict("value" => 2, "type" => "Int64", "unit" => "m")
         @test Cropbox.encodevalue(2u"m", u"cm") == Dict("value" => 200, "type" => "Int64", "unit" => "cm")
         @test Cropbox.encodevalue(2.5) == Dict("value" => 2.5, "type" => "Float64", "unit" => nothing)
@@ -260,6 +267,10 @@ using TimeZones
         @test [c["name"] for c in runs["columns"]] == ["time", "total", "k", "site"]
         @test [r[2:end] for r in runs["rows"]] == [[4, 1, "A"], [4, 1, "A"], [8, 2, "A"], [8, 2, "A"]]
         @test_throws Cropbox.APIRequestError Cropbox.simulate_payload(SWebPlant, Dict("meta" => "SWebLeaf", "target" => "total"); index)
+        # a `tabulate` parameter travels as an array of rows
+        shares = merge(index.parameters["SWebPlant.shares"]["default"], Dict("value" => [[0.1, 0.9], [0.2, 0.8]]))
+        @test Cropbox.simulate_payload(SWebPlant, Dict("config" => Dict("SWebPlant.shares" => shares), "target" => "late_root", "stop" => 1); index)["rows"][end][2] == 0.8
+        @test Cropbox.simulate_payload(SWebPlant, Dict("target" => "late_root", "stop" => 1); index)["rows"][end][2] == 0.5
 
         observed = Dict("type" => "DataFrame",
             "columns" => [Dict("name" => "time", "type" => "Float64", "unit" => "hr"), Dict("name" => "b", "type" => "Float64", "unit" => "m")],

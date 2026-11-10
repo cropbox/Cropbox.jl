@@ -219,9 +219,9 @@ simulationkwargs(S::Type{<:System}, r::APIDict; config=(), options=(), index=not
     kw
 end
 
-"Index entry `(type, role)` of a configuration path: `nothing` when its system is outside the description, an error when a described system has no such parameter."
+"Description entry of a configuration path: `nothing` when its system is outside the description, an error when a described system has no such parameter."
 parameterentry(path::AbstractString, index::ModelIndex) = begin
-    entry = get(index.types, path, nothing)
+    entry = get(index.parameters, path, nothing)
     isnothing(entry) && first(split(path, ".")) in index.systems && apierror("Unknown parameter `$path`")
     entry
 end
@@ -230,8 +230,9 @@ end
     checkconfig(config, index)
 
 Check a client configuration against the model: unknown parameters of a
-described system are rejected, table inputs must be table payloads, and string
-values are coerced to the declared parameter type.
+described system are rejected, table inputs must be table payloads, string
+values are coerced to the declared parameter type, and nested arrays become
+the matrix a `tabulate` or `interpolate` parameter takes.
 """
 checkconfig(c::Config, ::Nothing) = c
 checkconfig(c::Config, index::ModelIndex) = begin
@@ -239,11 +240,12 @@ checkconfig(c::Config, index::ModelIndex) = begin
     for (path, value) in flatconfig(c)
         entry = parameterentry(path, index)
         if !isnothing(entry)
-            type, role = entry
-            if role == "table"
+            if entry["role"] == "table"
                 value isa DataFrame || apierror("Table parameter `$path` requires a CSV or DataFrame payload")
-            elseif value isa AbstractString && !(type in (nothing, "String"))
-                value = decodetyped(value, type)
+            elseif value isa AbstractString && !(entry["type"] in (nothing, "String"))
+                value = decodetyped(value, entry["type"])
+            elseif entry["state"] in ("tabulate", "interpolate") && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
+                value = asmatrix(value)
             end
         end
         push!(P, path => value)
@@ -255,7 +257,7 @@ end
 checkparameter(path::AbstractString, ::Nothing) = path
 checkparameter(path::AbstractString, index::ModelIndex) = begin
     entry = parameterentry(path, index)
-    !isnothing(entry) && entry[2] == "table" && apierror("Table parameter `$path` cannot be varied")
+    !isnothing(entry) && entry["role"] == "table" && apierror("Table parameter `$path` cannot be varied")
     path
 end
 

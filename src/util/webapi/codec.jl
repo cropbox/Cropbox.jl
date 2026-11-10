@@ -273,6 +273,12 @@ decodeconfig(x::AbstractDict; value=decode) = begin
 end
 decodeconfig(x; value=decode) = apierror("Configuration must be an object")
 
+"Rows given as nested arrays as a `Matrix`."
+asmatrix(rows::AbstractVector) = begin
+    allequal(length.(rows)) || apierror("Matrix rows must have the same length")
+    permutedims(reduce(hcat, rows))
+end
+
 "Convert a flat or nested configuration into `path => value` pairs with `System.name` paths."
 flatconfig(c::Config) = ["$(s).$(k)" => v for (s, F) in c for (k, v) in F]
 
@@ -308,8 +314,8 @@ decodeoptions(x) = apierror("Options must be an object")
 
 Convert a Julia value into a JSON-compatible value. Quantities lose their unit
 (use `encodevalue` to keep it), non-finite floats become `null`, dates
-become ISO strings, `Config` becomes nested objects of value objects and
-`DataFrame` becomes a table payload.
+become ISO strings, a matrix becomes an array of row arrays, `Config` becomes
+nested objects of value objects and `DataFrame` becomes a table payload.
 """
 encode(::Nothing) = nothing
 encode(::Missing) = nothing
@@ -323,7 +329,9 @@ encode(x::Union{Date,DateTime,ZonedDateTime}) = string(x)
 encode(x::Quantity) = encode(deunitfy(x))
 encode(x::Unitful.Units) = unitlabel(x)
 encode(x::AbstractVector) = Any[encode(v) for v in x]
+encode(x::AbstractMatrix) = Any[encode(collect(r)) for r in eachrow(x)]
 encode(x::Tuple) = encode(collect(x))
+encode(x::Pair) = Any[encode(x.first), encode(x.second)]
 encode(x::AbstractDict) = APIDict(string(k) => encode(v) for (k, v) in x)
 encode(x::NamedTuple) = encode(Dict(pairs(x)))
 encode(c::Config) = APIDict(string(s) => APIDict(string(k) => encodevalue(v) for (k, v) in F) for (s, F) in c)

@@ -92,7 +92,8 @@ and `calibrate`, which align observations themselves.
   parameter of a described system is rejected. `configs` runs several
   configurations (each merged over `config`) and stacks the results.
 * Values are plain JSON values or objects `{"value", "unit", "type"}`; `value`
-  may be an array. Values are converted to the given unit before they reach the
+  may be an array, or an array of rows for a `tabulate` or `interpolate`
+  parameter. Values are converted to the given unit before they reach the
   model, and strings are coerced to the parameter's declared type.
 * `target` and `index` take variable paths as strings or arrays; `leaf.*`
   selects every variable of a system and an object maps output column names to
