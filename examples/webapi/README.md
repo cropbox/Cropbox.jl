@@ -107,8 +107,10 @@ connection. Using an LLM requires an independently configured MCP-capable host.
 ## Verification
 
 `Pkg.test()` covers the model description, the JSON codec, request parsing,
-the operation routes and loopback HTTP round trips (`test/framework/webapi.jl`).
-The example services are checked manually using the example environment:
+the operation routes and loopback HTTP round trips (`test/framework/webapi.jl`),
+and drives the three example services with the requests the bundled dashboard
+sends (`test/examples/webapi.jl`). The same services can be checked over HTTP,
+together with the MCP adapter, using the example environment:
 
 ```sh
 julia --project=. -e 'using Pkg; Pkg.test()'
@@ -137,8 +139,8 @@ installing the optional Python dependencies:
 CROPBOX_MCP_PYTHON="$PWD/.venv/bin/python" julia --project=examples/webapi examples/webapi/check.jl
 ```
 
-This starts and closes a loopback service for each example. These optional
-checks run manually; API function tests are included in `Pkg.test()`.
+This starts and closes a loopback service for each example. These HTTP and
+MCP checks run manually.
 
 These examples target trusted local modeling work. Authentication, upload and
 execution limits, TLS termination, monitoring, and job management belong in a

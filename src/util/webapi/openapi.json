@@ -81,13 +81,13 @@
     },
     "schemas": {
       "Value": {
-        "description": "A scalar with an optional unit and declared type. Plain JSON numbers, booleans and strings are accepted wherever a Value is expected.",
+        "description": "A scalar or array with an optional unit and type. Plain JSON numbers, booleans and strings are accepted wherever a Value is expected.",
         "oneOf": [
           {"type": ["number", "boolean", "string", "null"]},
           {"type": "object", "required": ["value"], "properties": {
-            "value": {"type": ["number", "boolean", "string", "null"]},
-            "unit": {"type": ["string", "null"], "description": "Unit label such as `m`, `K*d`, `μmol*mol^-1`, `°C`."},
-            "type": {"type": ["string", "null"], "enum": ["Bool", "Int", "Float64", "String", "Symbol", "Date", "DateTime", "ZonedDateTime", null]},
+            "value": {"type": ["number", "boolean", "string", "array", "null"]},
+            "unit": {"type": ["string", "null"], "description": "Unit label such as `m`, `K*d`, `μmol/(m^2*s)`, `°C`."},
+            "type": {"$ref": "#/components/schemas/TypeName"},
             "timezone": {"type": "string", "description": "IANA zone for `ZonedDateTime` values without an offset."}
           }}
         ]
@@ -96,10 +96,14 @@
         "type": "object", "required": ["name"],
         "properties": {
           "name": {"type": "string"},
-          "type": {"type": ["string", "null"], "enum": ["Bool", "Int", "Float64", "String", "Symbol", "Date", "DateTime", "ZonedDateTime", null]},
+          "type": {"$ref": "#/components/schemas/TypeName"},
           "unit": {"type": ["string", "null"]},
           "timezone": {"type": "string"}
         }
+      },
+      "TypeName": {
+        "type": ["string", "null"],
+        "description": "Julia type name. On input `Bool`, `Int`/`Int64`, `Float64`, `String`, `Symbol`, `Date`, `DateTime` and `ZonedDateTime` convert the value (element-wise for arrays); any other name is informative and leaves the value as parsed."
       },
       "Table": {
         "description": "A table given as CSV text or as columns and row arrays. CSV headers may carry `name (unit)` or `name (:Type)` annotations when no `columns` are given.",
@@ -121,46 +125,60 @@
         "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}, {"type": "object", "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}]}}]}
       },
       "Names": {
-        "description": "Variable paths such as `leaf.area`; an object maps output column names to paths.",
+        "description": "Variable paths such as `leaf.area`; `*` and `leaf.*` select every variable of a system, and an object maps output column names to paths. Paths of the model description are checked; indexed paths such as `leaves[1].area` are resolved at run time.",
         "oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}, {"type": "object", "additionalProperties": {"type": "string"}}]
       },
-      "SimulationRequest": {
+      "Meta": {
+        "description": "Extra result columns: a system name adds that system's configured parameters (which tells the runs of `configs` apart), an object adds constant columns, and an array combines them.",
+        "oneOf": [{"type": "string"}, {"type": "object"}, {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "object"}]}}]
+      },
+      "RunRequest": {
+        "description": "Fields shared by simulation, evaluation and calibration requests.",
         "type": "object",
         "properties": {
           "config": {"$ref": "#/components/schemas/Config"},
           "configs": {"type": "array", "items": {"$ref": "#/components/schemas/Config"}, "description": "Several configurations, each merged over `config`, producing a stacked table."},
           "index": {"$ref": "#/components/schemas/Names"},
           "target": {"$ref": "#/components/schemas/Names"},
-          "meta": {"$ref": "#/components/schemas/Names"},
-          "base": {"type": "string"},
-          "stop": {"$ref": "#/components/schemas/Value", "description": "Update count (number), duration (`{value, unit}`) or the path of a condition variable (string)."},
-          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}`) or the path of a condition variable."},
+          "meta": {"$ref": "#/components/schemas/Meta"},
+          "base": {"type": "string", "description": "Path of the system (`leaf`) that `target`, `index`, `x` and `y` are relative to."},
+          "stop": {"$ref": "#/components/schemas/Value", "description": "Update count (number), duration (`{value, unit}`) or the path of a count or condition variable (string)."},
           "seed": {"type": "integer"},
-          "nounit": {"type": "boolean"},
-          "long": {"type": "boolean"},
           "options": {"type": "object", "description": "Keyword options for the system constructor."}
+        }
+      },
+      "SimulationRequest": {
+        "allOf": [{"$ref": "#/components/schemas/RunRequest"}],
+        "properties": {
+          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}`) or the path of a condition variable."},
+          "nounit": {"type": "boolean"},
+          "long": {"type": "boolean"}
         },
         "examples": [{"config": {"Plant.size": {"value": 3, "unit": "m"}}, "stop": {"value": 4, "unit": "hr"}, "target": ["size", "growth"]}]
       },
       "VisualizationRequest": {
-        "allOf": [{"$ref": "#/components/schemas/SimulationRequest"}],
+        "description": "Either simulates the model (`config`, `base`, `stop`, `snap`, `xstep`) or plots the table given as `data`, whose columns `x` and `y` then name.",
+        "type": "object",
         "properties": {
+          "config": {"$ref": "#/components/schemas/Config"},
+          "base": {"type": "string"},
+          "stop": {"$ref": "#/components/schemas/Value"},
+          "snap": {"$ref": "#/components/schemas/Value"},
           "x": {"type": "string", "default": "time"},
           "y": {"$ref": "#/components/schemas/Names"},
           "kind": {"type": "string", "enum": ["line", "scatter", "scatterline", "step"]},
           "backend": {"type": "string", "enum": ["Makie"]},
-          "xstep": {"type": "object", "properties": {"path": {"type": "string"}, "start": {"$ref": "#/components/schemas/Value"}, "stop": {"$ref": "#/components/schemas/Value"}, "step": {"$ref": "#/components/schemas/Value"}, "unit": {"type": "string"}, "values": {"type": "array"}}},
+          "xstep": {"type": "object", "description": "A parameter varied across simulations, as a range (`start`, `stop`, `step`) or explicit `values`, in `unit`.", "required": ["path"], "properties": {"path": {"type": "string"}, "start": {"$ref": "#/components/schemas/Value"}, "stop": {"$ref": "#/components/schemas/Value"}, "step": {"$ref": "#/components/schemas/Value"}, "values": {"type": "array"}, "unit": {"type": "string"}}},
           "plot": {"type": "object", "description": "Plot options: title, xlab, ylab, legend, legendpos, names, colors, xlim, ylim, xunit, yunit, aspect, linestyle."},
           "data": {"$ref": "#/components/schemas/Table", "description": "Plot this table instead of simulating."}
         },
         "required": ["y"]
       },
       "EvaluationRequest": {
-        "allOf": [{"$ref": "#/components/schemas/SimulationRequest"}],
+        "allOf": [{"$ref": "#/components/schemas/RunRequest"}],
         "properties": {
           "observed": {"$ref": "#/components/schemas/Table"},
-          "target": {"$ref": "#/components/schemas/Names"},
-          "metric": {"type": "string", "default": "rmse"}
+          "metric": {"type": "string", "enum": ["rmse", "nrmse", "rmspe", "mae", "mape", "ef", "dr"], "default": "rmse"}
         },
         "required": ["observed", "target"]
       },
@@ -179,7 +197,7 @@
         "properties": {
           "status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"},
           "columns": {"type": "array", "items": {"$ref": "#/components/schemas/Column"}},
-          "rows": {"type": "array", "items": {"type": "array"}, "description": "Plain values; non-finite numbers are null."},
+          "rows": {"type": "array", "items": {"type": "array"}, "description": "Plain values; non-finite numbers and missing values are null."},
           "summary": {"type": "object", "properties": {"nrow": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}
         }
       },
