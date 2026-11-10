@@ -17,7 +17,7 @@
     section { min-width: 0; padding: 14px; overflow: auto; }
     label { display: block; color: var(--muted); font-size: 12px; margin: 8px 0 4px; }
     input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; background: #fff; color: var(--ink); font: inherit; }
-    input:focus, select:focus, textarea:focus { border-color: #8bb6b2; outline: none; box-shadow: 0 0 0 2px rgba(37,111,108,.1); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     input[type="checkbox"] { width: auto; }
     input[type="range"] { padding: 0; }
     textarea { min-height: 110px; resize: vertical; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -34,7 +34,7 @@
     .heading { display: flex; align-items: center; gap: 6px; min-height: 28px; margin: 0 0 12px; }
     .heading.spaced { margin-top: 20px; }
     .run-tools { display: flex; align-items: center; gap: 8px; }
-    .status { color: var(--muted); font-size: 12px; }
+    .status { color: var(--muted); font-size: 12px; max-width: 45vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .status:empty { display: none; }
     .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #d5dde4; border-top-color: var(--accent); border-radius: 50%; animation: spin .75s linear infinite; }
     .run .spinner { border-color: rgba(255,255,255,.4); border-top-color: #fff; width: 16px; height: 16px; }
@@ -49,18 +49,18 @@
     .tree-section:first-child { margin-top: 2px; }
     .tree-row { border: 1px solid #e7edf3; border-radius: 6px; padding: 5px 6px; margin-bottom: 5px; background: #fff; }
     .tree-row.inactive { background: #fafbfc; }
-    .tree-row.inactive .tree-name, .tree-row.inactive .tree-unit { opacity: .6; }
     .tree-row.active { border-color: #9bc5c0; background: #f7fbfa; }
-    .tree-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+    .tree-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 6px; align-items: center; margin: 0; color: inherit; font-size: inherit; }
+    label.tree-head { cursor: pointer; }
     .tree-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
-    .tree-default { color: #8995a3; font-size: 11px; font-weight: 500; margin-left: 6px; }
-    .tree-unit { color: #8995a3; font-size: 11px; max-width: 120px; text-align: right; overflow-wrap: anywhere; }
+    .tree-default { color: var(--muted); font-size: 11px; font-weight: 500; margin-left: 6px; }
+    .tree-unit { color: var(--muted); font-size: 11px; max-width: 120px; text-align: right; overflow-wrap: anywhere; }
     .state-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; border: 1px solid #d9e2ec; color: #526170; background: #f7fafc; font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; cursor: help; }
     .editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; margin-top: 7px; }
     .editor input[type="range"] { grid-column: 1 / -1; }
     .editor.table { display: block; }
     .editor.table textarea { margin-top: 6px; }
-    .table-default { margin: 0 0 7px; color: #7a8795; font-size: 11px; }
+    .table-default { margin: 0 0 7px; color: var(--muted); font-size: 11px; }
     .unit { color: var(--muted); font-size: 12px; white-space: nowrap; }
     .card { border: 1px solid var(--line); border-radius: 8px; padding: 9px; background: #fff; }
     .card > label:first-child { margin-top: 0; }
@@ -81,9 +81,9 @@
     .y-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; max-height: 150px; overflow: auto; padding: 7px; border: 1px solid var(--line); border-radius: 6px; background: #fafbfd; }
     .range { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .panel-body { padding: 10px; overflow: auto; }
-    .panel-body.empty { display: flex; align-items: center; justify-content: center; min-height: 300px; color: #a9b4bf; text-align: center; }
-    .panel-body.empty svg { width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 1.6; }
-    .panel-body svg { max-width: 100%; height: auto; }
+    .panel-body.empty { display: flex; align-items: center; justify-content: center; min-height: 300px; color: var(--muted); text-align: center; }
+    .panel-body.empty svg { width: 32px; height: 32px; fill: none; stroke: #a9b4bf; stroke-width: 1.6; }
+    .panel-body img { max-width: 100%; height: auto; }
     .empty-panels { min-height: 150px; border: 1px dashed #cad3dc; border-radius: 8px; }
     .results { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); }
     .table-wrap { min-height: 180px; max-height: min(34vh, 420px); overflow: auto; border: 1px solid var(--line); background: #fff; }
@@ -154,22 +154,22 @@
         <div class="heading">
           <h2>Results</h2>
           <button type="button" id="download-results" class="icon-button" title="Download results as CSV" aria-label="Download results as CSV" onclick="downloadCSV()" disabled></button>
+          <span class="status" id="result-note"></span>
         </div>
         <div class="table-wrap"><table id="result"></table></div>
       </div>
     </section>
   </main>
   <script>
-    // State: the dashboard payload from GET /api/dashboard, the plot panels, uploaded CSV files
-    // keyed by configuration path, and the table returned by the last POST /api/simulate.
+    // State: the dashboard payload from GET /api/dashboard, the plot panels and the table returned
+    // by the last POST /api/simulate.
     let schema = null;
     let panels = [];
     let running = false;
-    const csvFiles = {};
     let result = { columns: [], rows: [] };
 
     const KINDS = ["line", "scatter", "scatterline", "step"];
-    const TEMPORAL = ["Date", "DateTime", "ZonedDateTime"];
+    const ROW_LIMIT = 500;
     const ICONS = {
       settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
       close: '<path d="M18 6 6 18M6 6l12 12"/>',
@@ -186,28 +186,28 @@
     const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
     const spinner = `<span class="spinner" aria-label="Working"></span>`;
     const selectOptions = (values, selected) => values.map(v => `<option value="${esc(v)}" ${v === selected ? "selected" : ""}>${esc(v)}</option>`).join("");
+    // Outputs are the variables the service offers for columns and panels, addressed by their targets.
     const outputs = () => schema.outputs || [];
-    const outputPath = o => o.target || o.name;
-    const outputMeta = path => outputs().find(o => o.target === path || o.name === path || o.alias === path);
-    const outputLabel = path => { const unit = outputMeta(path)?.unit; return unit ? `${path} (${unit})` : path; };
-    const plotKind = kind => KINDS.includes(kind) ? kind : kind === "point" ? "scatter" : "line";
+    const targets = () => outputs().map(o => o.target);
+    const outputMeta = target => outputs().find(o => o.target === target);
+    const outputLabel = target => { const unit = outputMeta(target)?.unit; return unit ? `${target} (${unit})` : target; };
+    const plotKind = kind => KINDS.includes(kind) ? kind : "line";
+
+    $("run-button").innerHTML = icon("play");
+    $("download-results").innerHTML = icon("download");
+    document.querySelector('[aria-label="Add panel"]').innerHTML = icon("plus");
 
     async function loadDashboard() {
-      schema = await (await fetch("/api/dashboard")).json();
+      const response = await fetch("/api/dashboard");
+      if (!response.ok) throw new Error(`The dashboard metadata could not be loaded (HTTP ${response.status}).`);
+      schema = await response.json();
       $("title").textContent = schema.title || `${schema.model.name} Dashboard`;
-      panels = (schema.panels || []).map(p => ({ ...defaultPanel(), ...p, y: p.y || [], kind: plotKind(p.kind), open: false }));
+      panels = (schema.panels || []).map(p => ({ ...defaultPanel(), ...p, y: [p.y ?? []].flat(), kind: plotKind(p.kind), open: false }));
       if (!panels.length) panels.push(defaultPanel());
-      renderStaticIcons();
       initSimulation();
       renderControls();
       renderOutputs();
       renderPanels();
-    }
-
-    function renderStaticIcons() {
-      $("run-button").innerHTML = icon("play");
-      $("download-results").innerHTML = icon("download");
-      document.querySelector('[aria-label="Add panel"]').innerHTML = icon("plus");
     }
 
     // --- simulation settings (stop, snap, output columns) ---------------------
@@ -227,7 +227,7 @@
       $("snap-mode").value = snapMode;
       if (snapMode === "interval") { $("snap-value").value = snap.value; $("snap-unit").value = snap.unit; }
       if (snapMode === "condition") $("snap-condition").value = snap.value;
-      const conditions = outputs().filter(o => o.state === "flag" || String(o.type || "").includes("Bool")).map(outputPath);
+      const conditions = outputs().filter(o => o.state === "flag" || String(o.type || "").includes("Bool")).map(o => o.target);
       $("condition-options").innerHTML = conditions.map(v => `<option value="${esc(v)}">`).join("");
       updateSimulationEditors();
     }
@@ -266,8 +266,8 @@
     }
 
     function renderOutputs() {
-      const vars = outputs().map(outputPath).filter(v => v !== "time");
-      $("output-select").innerHTML = vars.map((v, i) => `<label class="option"><input type="checkbox" value="${esc(v)}" ${i < 4 ? "checked" : ""}><span class="code">${esc(outputLabel(v))}</span></label>`).join("");
+      const vars = targets().filter(v => v !== "time");
+      $("output-select").innerHTML = vars.map((v, i) => `<label class="option" title="${esc(outputLabel(v))}"><input type="checkbox" value="${esc(v)}" ${i < 4 ? "checked" : ""}><span class="code">${esc(outputLabel(v))}</span></label>`).join("");
       $("output-select").querySelectorAll("input").forEach(el => el.addEventListener("change", () => result.columns.length && renderResultTable()));
     }
 
@@ -278,8 +278,8 @@
     function renderControls() {
       const groups = {};
       const group = system => groups[system] ||= { parameters: [], tables: [], variables: [] };
-      const rank = system => system === schema.model.name ? 0 : system === "Clock" ? 2 : 1;
-      const controls = [...(schema.controls || [])].sort((a, b) => rank(a.system) - rank(b.system) || a.path.localeCompare(b.path));
+      const rank = c => c.source === "runtime" ? 2 : c.system === schema.model.name ? 0 : 1;
+      const controls = [...(schema.controls || [])].sort((a, b) => rank(a) - rank(b) || a.path.localeCompare(b.path));
       for (const c of controls) group(c.system)[c.role === "table" ? "tables" : "parameters"].push(c);
       for (const o of outputs()) group(o.system).variables.push(o);
       const section = (title, rows) => rows.length ? `<div class="tree-section">${title}</div>${rows.join("")}` : "";
@@ -297,6 +297,8 @@
       root.querySelectorAll("[data-value]").forEach(el => el.addEventListener("input", syncSlider));
       root.querySelectorAll("[data-range]").forEach(el => el.addEventListener("input", syncValue));
       root.querySelectorAll("input[type='file']").forEach(el => el.addEventListener("change", readCsvFile));
+      // the metadata of a row is its tooltip, which a click on it is not meant to toggle the row for
+      root.querySelectorAll("label .state-icon").forEach(el => el.addEventListener("click", event => event.preventDefault()));
     }
 
     const compact = v => Array.isArray(v) ? `[${v.length} values]` : v && typeof v === "object" ? JSON.stringify(v) : String(v ?? "");
@@ -312,7 +314,7 @@
     function stateIcon(item) {
       const key = String(item.state || item.role || "").toLowerCase();
       const glyph = Object.entries(GLYPHS).find(([k]) => key.includes(k))?.[1] || "•";
-      return `<span class="state-icon" title="${esc(metadataText(item))}">${glyph}</span>`;
+      return `<span class="state-icon" tabindex="0" role="img" aria-label="${esc(metadataText(item))}" title="${esc(metadataText(item))}">${glyph}</span>`;
     }
 
     function inputType(control) {
@@ -320,7 +322,7 @@
       if (type.includes("zoneddatetime")) return "text";
       if (type.includes("datetime")) return "datetime-local";
       if (type === "date") return "date";
-      if (/matrix|vector|array/.test(type)) return "json";
+      if ((control.default !== null && typeof control.default === "object") || /matrix|vector|array/.test(type)) return "json";
       return control.kind === "checkbox" || control.kind === "number" ? control.kind : "text";
     }
 
@@ -330,45 +332,39 @@
       const step = c.step ?? "any";
       const range = type === "number" && c.min != null && c.max != null;
       return `<div class="tree-row inactive" data-row data-kind="parameter" data-path="${esc(c.path)}">
-        <div class="tree-head" onclick="toggleRow(event)">
+        <label class="tree-head">
           <input type="checkbox" data-enable aria-label="Override ${esc(c.path)}">
           ${stateIcon(c)}
           <span class="tree-name">${code(c.label || c.name)}${value === "" ? "" : `<span class="tree-default code">= ${esc(compact(value))}</span>`}</span>
           <span class="tree-unit code">${esc(c.unit || "")}</span>
-        </div>
+        </label>
         <div class="editor" hidden>
-          <input data-value data-kind="${type}" data-unit="${esc(c.unit || "")}" type="${type === "checkbox" ? "checkbox" : type === "json" ? "text" : type}" step="${esc(step)}"
-            value="${esc(type === "json" ? JSON.stringify(value) : value)}" ${type === "checkbox" && value === true ? "checked" : ""} disabled>
+          <input data-value data-kind="${type}" data-unit="${esc(c.unit || "")}" data-timezone="${esc(c.timezone || "")}" aria-label="Value of ${esc(c.path)}"
+            type="${type === "checkbox" ? "checkbox" : type === "json" ? "text" : type}" step="${esc(step)}"
+            value="${esc(type === "json" && value !== "" ? JSON.stringify(value) : value)}" ${type === "checkbox" && value === true ? "checked" : ""} disabled>
           <span class="unit code">${esc(c.unit || "")}</span>
-          ${range ? `<input data-range type="range" min="${esc(c.min)}" max="${esc(c.max)}" step="${esc(step)}" value="${esc(value)}" disabled>` : ""}
+          ${range ? `<input data-range type="range" min="${esc(c.min)}" max="${esc(c.max)}" step="${esc(step)}" value="${esc(value)}" aria-label="Value of ${esc(c.path)}" disabled>` : ""}
         </div>
       </div>`;
     }
 
     function tableRow(c) {
       return `<div class="tree-row inactive" data-row data-kind="table" data-path="${esc(c.path)}">
-        <div class="tree-head" onclick="toggleRow(event)">
+        <label class="tree-head">
           <input type="checkbox" data-enable aria-label="Provide ${esc(c.path)}">
           ${stateIcon(c)}
           <span class="tree-name">${code(c.label || c.name)}</span>
           <span class="tree-unit">CSV</span>
-        </div>
+        </label>
         <div class="editor table" hidden>
           ${c.default_filename ? `<div class="table-default">Configured CSV: ${code(c.default_filename)}</div>` : ""}
           <input type="file" accept="${esc(c.accept || ".csv,text/csv")}" aria-label="CSV file for ${esc(c.path)}" disabled>
-          <textarea data-text placeholder="CSV content can also be pasted here" aria-label="CSV text for ${esc(c.path)}" disabled></textarea>
+          <textarea data-text placeholder="Choose a CSV file or paste its content here" aria-label="CSV content for ${esc(c.path)}" disabled></textarea>
         </div>
       </div>`;
     }
 
     const variableRow = o => `<div class="tree-row"><div class="tree-head"><span></span>${stateIcon(o)}<span class="tree-name">${code(o.name)}</span><span class="tree-unit code">${esc(o.unit || "")}</span></div></div>`;
-
-    function toggleRow(event) {
-      if (event.target.closest("input, select, textarea, button, .state-icon")) return;
-      const box = event.currentTarget.querySelector("[data-enable]");
-      box.checked = !box.checked;
-      box.dispatchEvent(new Event("change"));
-    }
 
     function toggleOverride(event) {
       const row = event.target.closest("[data-row]");
@@ -388,9 +384,10 @@
       event.target.closest("[data-row]").querySelector("[data-value]").value = event.target.value;
     }
 
+    // A chosen file fills the text area, which is what gets sent: one place to see and edit the table.
     async function readCsvFile(event) {
       const file = event.target.files?.[0];
-      if (file) csvFiles[event.target.closest("[data-row]").dataset.path] = { filename: file.name, content: await file.text() };
+      if (file) event.target.closest("[data-row]").querySelector("[data-text]").value = await file.text();
     }
 
     // --- CSV column metadata for provided tables ------------------------------
@@ -409,36 +406,32 @@
       return values;
     }
 
-    function inferCsvType(text) {
-      const s = String(text ?? "").trim();
-      if (/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(s)) return "Float64";
-      if (/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/.test(s)) return "ZonedDateTime";
-      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return "DateTime";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return "Date";
-      if (/^(?:true|false)$/i.test(s)) return "Bool";
-      return "String";
-    }
+    const NUMBER = /^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/;
+    const ZONED = /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/;
 
-    // Column metadata for a pasted/uploaded CSV: declared `columns` of the table control (from the
-    // service `ui`) win, then the `drive` bindings of the model, then types inferred from the first row.
+    // Column metadata for a CSV, limited to what the server cannot read from the text: the `columns`
+    // a service declared for the table, the units of the columns that `drive` variables read, the unit
+    // of a numeric index (that of the clock step) and time stamps with an offset. A header that
+    // annotates its own columns, as in `tavg (°C)`, is left to speak for itself.
     function tableColumnMetadata(path, content) {
-      const table = (schema.tables || []).find(t => t.path === path || t.declared === path);
-      const control = (schema.controls || []).find(c => c.role === "table" && (c.path === path || c.declared === path));
-      const lines = String(content || "").split(/\r?\n/).filter(line => line.trim());
-      if (!lines.length) return [];
-      const header = parseCsvRow(lines[0]);
-      const sample = lines.length > 1 ? parseCsvRow(lines[1]) : [];
-      const stopUnit = $("stop-unit").value.trim() || null;
-      return header.map((raw, i) => {
-        const name = raw.trim();
-        const declared = (control?.columns || []).find(c => String(c.name ?? c.column) === name);
+      const lines = content.split(/\r?\n/).filter(line => line.trim());
+      const header = parseCsvRow(lines[0]).map(name => name.trim());
+      if (header.some(name => name.endsWith(")"))) return [];
+      const sample = lines.length > 1 ? parseCsvRow(lines[1]).map(cell => cell.trim()) : [];
+      const table = (schema.tables || []).find(t => t.path === path);
+      const control = (schema.controls || []).find(c => c.role === "table" && c.path === path);
+      const stepUnit = (schema.controls || []).find(c => c.path === "Clock.step")?.unit;
+      return header.map((name, i) => {
+        const declared = (control?.columns || []).find(c => String(c.column ?? c.name) === name);
         const binding = (table?.columns || []).find(c => String(c.column) === name);
-        const type = declared?.type || inferCsvType(sample[i]);
-        const isIndex = table && String(table.index || "index") === name && !TEMPORAL.includes(type);
-        const column = { name, type, unit: declared?.unit ?? binding?.unit ?? (isIndex ? stopUnit : null) };
-        if (declared?.timezone) column.timezone = declared.timezone;
-        return column;
-      });
+        const isIndex = name === String(table?.index || "index") && NUMBER.test(sample[i] ?? "");
+        return {
+          name,
+          type: declared?.type ?? (ZONED.test(sample[i] ?? "") ? "ZonedDateTime" : undefined),
+          unit: declared?.unit ?? binding?.unit ?? (isIndex ? stepUnit : undefined) ?? undefined,
+          timezone: declared?.timezone ?? undefined,
+        };
+      }).filter(c => c.type || c.unit || c.timezone);
     }
 
     // --- requests ---------------------------------------------------------------
@@ -449,15 +442,17 @@
         const row = box.closest("[data-row]");
         const path = row.dataset.path;
         if (row.dataset.kind === "table") {
-          const content = row.querySelector("[data-text]").value.trim() || csvFiles[path]?.content;
-          if (content) config[path] = { type: "CSV", content, columns: tableColumnMetadata(path, content) };
+          const content = row.querySelector("[data-text]").value.trim();
+          if (!content) throw new Error(`${path} is enabled but has no CSV content.`);
+          const columns = tableColumnMetadata(path, content);
+          config[path] = { type: "CSV", content, ...(columns.length ? { columns } : {}) };
           return;
         }
         const input = row.querySelector("[data-value]");
-        const kind = input.dataset.kind;
+        const { kind, unit, timezone } = input.dataset;
         if (kind === "checkbox") { config[path] = input.checked; return; }
         const raw = input.value.trim();
-        if (raw === "") return;
+        if (raw === "") throw new Error(`${path} is enabled but has no value.`);
         let value = raw;
         if (kind === "number") {
           value = Number(raw);
@@ -465,20 +460,21 @@
         } else if (kind === "json") {
           try { value = JSON.parse(raw); } catch { throw new Error(`${path} requires valid JSON.`); }
         }
-        config[path] = input.dataset.unit ? { value, unit: input.dataset.unit } : value;
+        config[path] = unit ? { value, unit } : timezone ? { value, timezone } : value;
       });
       return { config, ...simulationFields(), ...extra };
     }
 
     async function postJSON(path, payload) {
       const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error?.message || `${path} returned HTTP ${response.status}.`);
+      const body = await response.json().catch(() => null);
+      if (!response.ok || body?.status !== "ok") throw new Error(body?.error?.message || `${path} returned HTTP ${response.status} without a result.`);
       return body;
     }
 
     // One simulation per run: the table covers the selected output columns plus every variable the
     // panels plot, so panels are drawn from it without simulating again (sweeps are the exception).
+    // `time` is asked for as well: a model with a variable of that name reports it in that column.
     async function runWorkflow() {
       if (running) return;
       running = true;
@@ -488,9 +484,10 @@
       setStatus("");
       try {
         syncPanels();
+        const target = [...new Set(["time", ...selectedColumns(), ...panels.flatMap(p => [p.x, ...p.y])])];
+        const request = requestFromControls({ target });
         document.querySelectorAll(".panel-body").forEach(body => { body.classList.remove("empty"); body.innerHTML = spinner; });
-        const target = [...new Set([...selectedColumns(), ...panels.flatMap(p => [p.x, ...p.y])])].filter(v => v !== "time");
-        const res = await postJSON("/api/simulate", requestFromControls({ target }));
+        const res = await postJSON("/api/simulate", request);
         result = { columns: res.columns, rows: res.rows };
         renderResultTable();
         await renderAllPanels();
@@ -506,14 +503,12 @@
     // --- panels -----------------------------------------------------------------
 
     function defaultPanel() {
-      const vars = outputs().map(outputPath).filter(v => v !== "time");
-      const d = schema.visualize?.y?.default;
-      const y = (Array.isArray(d) ? d : [d]).filter(Boolean);
-      return { x: schema.visualize?.x?.default || "time", y: y.length ? y : vars.slice(0, 1), kind: "line", xstep: "", xmin: "", xmax: "", ymin: "", ymax: "", open: true };
+      const y = [schema.visualize?.y?.default ?? []].flat();
+      return { x: schema.visualize?.x?.default || "time", y: y.length ? y : targets().filter(v => v !== "time").slice(0, 1), kind: "line", xstep: "", xmin: "", xmax: "", ymin: "", ymax: "", open: true };
     }
 
     function renderPanels() {
-      const vars = outputs().map(outputPath);
+      const vars = targets();
       $("panels").innerHTML = panels.length ? panels.map((p, i) => `
         <div class="panel" data-panel="${i}">
           <div class="panel-head">
@@ -528,16 +523,21 @@
                 <label>Plot kind<select data-kind>${selectOptions(KINDS, p.kind)}</select></label>
               </div>
               <label>Y axis</label>
-              <div class="y-options">${vars.filter(v => v !== "time").map(v => `<label class="option"><input type="checkbox" data-y value="${esc(v)}" ${p.y.includes(v) ? "checked" : ""}><span class="code">${esc(outputLabel(v))}</span></label>`).join("")}</div>
+              <div class="y-options" role="group" aria-label="Y axis">${vars.filter(v => v !== "time").map(v => `<label class="option" title="${esc(outputLabel(v))}"><input type="checkbox" data-y value="${esc(v)}" ${p.y.includes(v) ? "checked" : ""}><span class="code">${esc(outputLabel(v))}</span></label>`).join("")}</div>
               <div class="grid-2">
-                <label>X limits<div class="range"><input type="number" step="any" data-xmin value="${esc(p.xmin)}" placeholder="min"><input type="number" step="any" data-xmax value="${esc(p.xmax)}" placeholder="max"></div></label>
-                <label>Y limits<div class="range"><input type="number" step="any" data-ymin value="${esc(p.ymin)}" placeholder="min"><input type="number" step="any" data-ymax value="${esc(p.ymax)}" placeholder="max"></div></label>
+                ${["x", "y"].map(axis => `<div><label>${axis.toUpperCase()} limits</label><div class="range">${["min", "max"].map(end =>
+                  `<input type="number" step="any" data-${axis}${end} value="${esc(p[axis + end])}" placeholder="${end}" aria-label="${axis.toUpperCase()} ${end}imum">`).join("")}</div></div>`).join("")}
               </div>
             </div>
           </div>
           <div class="panel-body empty" id="panel-body-${i}">${icon("moon")}</div>
         </div>`).join("") : `<div class="empty-panels" aria-label="No panels"></div>`;
-      $("panels").querySelectorAll("select, input").forEach(el => el.addEventListener("change", syncPanels));
+      // a changed panel is drawn again from the table at hand; a sweep simulates, so it waits for the next run
+      $("panels").querySelectorAll("select, input").forEach(el => el.addEventListener("change", event => {
+        syncPanels();
+        const index = Number(event.target.closest("[data-panel]").dataset.panel);
+        if (result.rows.length && !panels[index].xstep) renderPanel(index);
+      }));
     }
 
     function syncPanels() {
@@ -545,7 +545,11 @@
         const p = panels[Number(el.dataset.panel)];
         p.x = el.querySelector("[data-x]").value;
         p.kind = el.querySelector("[data-kind]").value;
-        p.y = [...el.querySelectorAll("[data-y]:checked")].map(input => input.value);
+        // the series keep their order and line styles; newly checked ones follow
+        const styles = new Map(p.y.map((v, i) => [v, p.linestyles?.[i]]));
+        const checked = [...el.querySelectorAll("[data-y]:checked")].map(input => input.value);
+        p.y = [...p.y.filter(v => checked.includes(v)), ...checked.filter(v => !p.y.includes(v))];
+        if (p.linestyles?.length) p.linestyles = p.y.map(v => styles.get(v) || "solid");
         for (const k of ["xmin", "xmax", "ymin", "ymax"]) p[k] = el.querySelector(`[data-${k}]`).value;
         p.open = !el.querySelector(".panel-settings").hidden;
       });
@@ -573,54 +577,63 @@
       panel.querySelector('[aria-label="Panel settings"]').setAttribute("aria-expanded", String(!settings.hidden));
     }
 
-    function limits(p) {
-      const bound = (text, label) => {
-        if (text === "" || text == null) return null;
-        const n = Number(text);
-        if (!Number.isFinite(n)) throw new Error(`${label} limits must be finite numbers.`);
-        return n;
-      };
+    function plotOptions(p) {
       const plot = {};
-      const xlim = [bound(p.xmin, "X"), bound(p.xmax, "X")];
-      const ylim = [bound(p.ymin, "Y"), bound(p.ymax, "Y")];
-      if (xlim.some(v => v !== null)) plot.xlim = xlim;
-      if (ylim.some(v => v !== null)) plot.ylim = ylim;
+      for (const axis of ["x", "y"]) {
+        const [lower, upper] = ["min", "max"].map(end => p[axis + end] === "" || p[axis + end] == null ? null : Number(p[axis + end]));
+        if (Number.isNaN(lower) || Number.isNaN(upper)) throw new Error(`${axis.toUpperCase()} limits must be numbers.`);
+        if (lower !== null && upper !== null && lower >= upper) throw new Error(`The ${axis.toUpperCase()} minimum must be below the maximum.`);
+        if (lower !== null || upper !== null) plot[axis + "lim"] = [lower, upper];
+      }
+      if (p.y.length && p.linestyles?.length === p.y.length) plot.linestyle = p.linestyles;
       return plot;
     }
 
-    // A panel whose `xstep` names a service-defined sweep re-simulates over that parameter.
+    // A panel whose `xstep` names a service-defined sweep simulates again over that parameter.
     function sweepFor(path) {
-      const s = path && (schema.sweeps || []).find(s => (s.path || `${s.system}.${s.name}`) === path);
-      return s ? Object.fromEntries(Object.entries({ path, values: s.values, start: s.start, stop: s.stop, step: s.step, unit: s.unit }).filter(([, v]) => v != null)) : null;
+      const sweep = path && (schema.sweeps || []).find(s => s.path === path);
+      return sweep ? Object.fromEntries(["path", "values", "start", "stop", "step", "unit"].filter(k => sweep[k] != null).map(k => [k, sweep[k]])) : null;
+    }
+
+    // The columns `names` of the last simulation as a table, or null when it lacks one of them.
+    function project(names) {
+      const indices = [...new Set(names)].map(name => result.columns.findIndex(c => c.name === name));
+      return indices.includes(-1) ? null : { columns: indices.map(i => result.columns[i]), rows: result.rows.map(row => indices.map(i => row[i])) };
     }
 
     async function renderPanel(index) {
       const p = panels[index];
       const body = $(`panel-body-${index}`);
       if (!p || !body) return;
+      // the latest request for a panel is the one that shows
+      const turn = body.dataset.turn = String(Number(body.dataset.turn || 0) + 1);
+      const placeholder = message => { body.classList.add("empty"); body.textContent = message; };
       body.classList.remove("empty");
-      const placeholder = message => { body.classList.add("empty"); body.innerHTML = esc(message); };
       if (!p.y.length) return placeholder("Select Y axis variables");
       if (new Set(p.y.map(v => outputMeta(v)?.unit || "")).size > 1) return placeholder("Selected variables use different units; put them in separate panels");
-      body.innerHTML = spinner;
       try {
-        const plot = limits(p);
+        const plot = plotOptions(p);
         const sweep = sweepFor(p.xstep);
         let request;
         if (sweep) {
           request = requestFromControls({ x: p.x, y: p.y, kind: p.kind, xstep: sweep, plot });
-          for (const c of schema.controls || []) if ([c.path, c.declared].includes(sweep.path)) delete request.config[c.path];
-          delete request.config[sweep.path];
         } else {
-          const indices = [...new Set([p.x, ...p.y])].map(v => result.columns.findIndex(c => c.name === v));
-          if (indices.includes(-1)) return placeholder("Run the simulation to plot these variables");
-          const data = { type: "DataFrame", columns: indices.map(i => result.columns[i]), rows: result.rows.map(row => indices.map(i => row[i])) };
-          request = { data, x: p.x, y: p.y, kind: p.kind, plot };
+          const data = project([p.x, ...p.y]);
+          if (!data) return placeholder("Run the simulation to plot these variables");
+          if (!data.rows.length) return placeholder("The simulation returned no rows");
+          request = { data: { type: "DataFrame", ...data }, x: p.x, y: p.y, kind: p.kind, plot };
         }
+        body.innerHTML = spinner;
         const res = await postJSON("/api/visualize", request);
-        body.innerHTML = res.body;
+        if (body.dataset.turn !== turn) return;
+        // shown as an image, so that nothing in the SVG becomes part of this page
+        const image = new Image();
+        image.alt = `${p.y.join(", ")} over ${p.x}`;
+        image.src = URL.createObjectURL(new Blob([res.body], { type: "image/svg+xml" }));
+        image.onload = () => URL.revokeObjectURL(image.src);
+        body.replaceChildren(image);
       } catch (error) {
-        body.innerHTML = `<div class="error">${esc(error.message || error)}</div>`;
+        if (body.dataset.turn === turn) body.innerHTML = `<div class="error">${esc(error.message || error)}</div>`;
       }
     }
 
@@ -632,8 +645,7 @@
 
     function visibleTable() {
       const keep = new Set(["time", ...selectedColumns()]);
-      const indices = result.columns.map((c, i) => keep.has(c.name) ? i : -1).filter(i => i >= 0);
-      return { columns: indices.map(i => result.columns[i]), rows: result.rows.map(row => indices.map(i => row[i])) };
+      return project(result.columns.map(c => c.name).filter(name => keep.has(name)));
     }
 
     function formatNumber(value) {
@@ -646,7 +658,12 @@
     function renderResultTable() {
       const { columns, rows } = visibleTable();
       $("result").innerHTML = `<tr>${columns.map(c => `<th title="${esc(c.type || "")}">${code(c.name)}${c.unit ? ` (${code(c.unit)})` : ""}</th>`).join("")}</tr>`
-        + rows.map(row => `<tr>${row.map(v => `<td>${esc(formatNumber(v))}</td>`).join("")}</tr>`).join("");
+        + rows.slice(0, ROW_LIMIT).map(row => `<tr>${row.map(v => `<td>${esc(formatNumber(v))}</td>`).join("")}</tr>`).join("");
+      const absent = selectedColumns().filter(name => !columns.some(c => c.name === name));
+      $("result-note").textContent = [
+        rows.length > ROW_LIMIT ? `The first ${ROW_LIMIT} of ${rows.length} rows; the download has all of them.` : "",
+        absent.length ? `Run again for ${absent.join(", ")}.` : "",
+      ].filter(Boolean).join(" ");
       $("download-results").disabled = !rows.length;
     }
 
@@ -663,14 +680,17 @@
       URL.revokeObjectURL(a.href);
     }
 
+    // A failed run leaves nothing of the run before it to plot or download.
     function showError(message) {
+      result = { columns: [], rows: [] };
       $("result").innerHTML = `<tr><td class="error">${esc(message)}</td></tr>`;
+      $("result-note").textContent = "";
       $("download-results").disabled = true;
       document.querySelectorAll(".panel-body").forEach(body => { body.classList.remove("empty"); body.innerHTML = `<div class="error">${esc(message)}</div>`; });
       setStatus(message);
     }
 
-    const setStatus = message => { $("status").textContent = message; };
+    const setStatus = message => { $("status").textContent = $("status").title = message; };
 
     loadDashboard().catch(error => setStatus(error.message));
   </script>
