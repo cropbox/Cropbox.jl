@@ -75,16 +75,16 @@ add!(h::Hierarchy, a::Symbol, T) = nothing
 label(n::Symbol) = string(n)
 labels(h::Hierarchy; kw...) = label.(nodes(h))
 
-edgestyle(h::Hierarchy, e::Symbol) = begin
-    if e == :mixin
-        "dashed"
-    elseif e == :loop
-        "loop"
-    else
-        "solid"
-    end
+graphstyle(h::Hierarchy; ratio=0.5, rankdir=:BT, ranksep=0.15, nodesep=0.15, splines=:spline, kw...) = begin
+    invoke(graphstyle, Tuple{Graph}, h; ratio, rankdir, ranksep, nodesep, splines, kw...)
 end
-edgestyles(h::Hierarchy; kw...) = Dict(e => edgestyle(h, s) for (e, s) in h.E)
+
+nodeattrs(h::Hierarchy; kw...) = Dict(
+    i => (label=graphlabel(label; bold=true),)
+    for (i, label) in enumerate(labels(h))
+)
+
+edgeattrs(h::Hierarchy; kw...) = Dict(e => (style="dashed",) for (e, s) in h.E if s == :mixin)
 
 Base.show(io::IO, h::Hierarchy) = print(io, "Hierarchy")
 Base.show(io::IO, ::MIME"text/plain", h::Hierarchy) = begin
