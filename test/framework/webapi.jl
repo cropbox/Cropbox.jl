@@ -136,6 +136,22 @@ end
         @test Cropbox.canonical(@config(:System => :k => 1, :SWebPlant => :rate => 2, :SWebRate => :k => 3), index)[:SWebPlant][:k] == 3
         @test Cropbox.canonical(@config(:Other => :x => 1), index) == @config(:Other => :x => 1)
 
+        # every state that holds a value is an output; a function, a table or a produced system is not
+        @system SWebStates(Controller) begin
+            t(context.clock.tick) ~ track
+            w(t) => t >= 2 ~ flag
+            i => -1 ~ preserve
+            r(t) ~ remember(init=i, when=w)
+            a ~ advance
+            lo => 0 ~ preserve
+            hi => 1 ~ preserve
+            f(hi; x) => hi * x ~ integrate(from=lo, to=hi)
+            h(; x) => x ~ call
+        end
+        roles = Dict(v["name"] => v["role"] for v in describe(SWebStates)["variables"])
+        @test all(name -> roles[name] == "output", ["t", "w", "i", "r", "a", "lo", "hi", "f"]) && roles["h"] == "internal"
+        @test [v["target"] for v in Cropbox.widgetpayload(SWebStates)["outputs"]] == ["time", "t", "w", "i", "r", "a", "lo", "hi", "f"]
+
         # produced systems have no fixed path but are configured like the others
         pod = describe(SWebPod)
         @test [(s["name"], s["path"]) for s in pod["systems"]] == [("SWebPod", ""), ("SWebSeed", nothing)]
@@ -221,7 +237,7 @@ end
         @test Cropbox.decodebounds(Dict("lower" => Dict("value" => 1, "unit" => "cm"), "upper" => Dict("value" => 2, "unit" => "cm"))) == (1u"cm", 2u"cm")
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds([1])
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds(Dict("lower" => 0))
-        @test_throws Cropbox.APIRequestError Cropbox.decodebounds(Dict("min" => 0, "max" => 1))
+        @test_throws "it is `lower` since contract" Cropbox.decodebounds(Dict("min" => 0, "upper" => 1))
         @test Dict(pairs(Cropbox.decodeoptions(Dict("MaxSteps" => 4, "Method" => "xnes")))) == Dict(:MaxSteps => 4, :Method => :xnes)
         @test Cropbox.decodeoptions(()) == (;) && Cropbox.decodeoptions(nothing) == (;)
         @test Cropbox.asobject(nothing) == Cropbox.asobject(()) == Cropbox.APIDict() && Cropbox.asobject((a = nothing,)) == Dict("a" => nothing)
@@ -391,12 +407,15 @@ end
         @test 19.5 <= c["config"]["SWebAPICalibration"]["a"]["value"] <= 20.5
         @test_throws Cropbox.APIRequestError Cropbox.calibrate_payload(SWebAPICalibration, delete!(copy(calibration), "parameters"))
         @test_throws Cropbox.APIRequestError Cropbox.calibrate_payload(SWebAPICalibration, merge(calibration, Dict("parameters" => Dict("SWebAPICalibration.zzz" => [0, 1]))); index = Cropbox.ModelIndex(SWebAPICalibration))
-        @test_throws Cropbox.APIRequestError Cropbox.calibrate_payload(SWebAPICalibration, merge(calibration, Dict("optim" => Dict("SaveParameters" => true))))
+        for option in ("SaveTrace", "SaveFitnessTraceToCsv", "SaveParameters")
+            @test_throws Cropbox.APIRequestError Cropbox.calibrate_payload(SWebAPICalibration, merge(calibration, Dict("optim" => Dict(option => true))))
+        end
         # bounds in any unit of a parameter by any of its names, for a system that `calibrate` cannot look up
         growth = Dict(
             "observed" => Dict("type" => "CSV", "content" => "time (hr),h (cm)\n10,200\n"), "target" => "h", "stop" => 10,
             "parameters" => Dict("SWebGrowth.rate" => Dict("lower" => 0.195, "upper" => 0.205, "unit" => "m/hr")),
-            "optim" => Dict("MaxSteps" => 4, "TraceMode" => "silent"),
+            # any option of the optimizer goes through, except the ones that write files where the service runs
+            "optim" => Dict("MaxSteps" => 4, "TraceMode" => "silent", "MaxNumStepsWithoutFuncEvals" => 50),
         )
         r = Cropbox.calibrate_payload(WebAPITestModels.SWebGrowth, growth; index = Cropbox.ModelIndex(WebAPITestModels.SWebGrowth))["config"]["SWebGrowth"]["r"]
         @test 19.5 <= r["value"] <= 20.5 && r["unit"] == "cm*hr^-1"
@@ -554,7 +573,20 @@ end
             status, _, body = post(route, bad)
             @test status == 422 && body["error"]["category"] == "validation"
         end
-        @test_throws ErrorException Cropbox.Service(SWebAPI; request_defaults = Dict("stopp" => 1))
+        @test_throws Cropbox.APIRequestError Cropbox.Service(SWebAPI; request_defaults = Dict("stopp" => 1))
+        @test_throws Cropbox.APIRequestError Cropbox.Service(SWebAPI; ui = Dict("external_sources" => []))
+        # a field of the earlier contract is answered with what replaced it
+        for (route, former, replacement) in (
+                ("/api/simulate", Dict("target" => "a", "config_entries" => []), "`config`"),
+                ("/api/evaluate", Dict("target" => "b", "obs" => Dict()), "`observed`"),
+                ("/api/visualize", Dict("target" => "b"), "`y`"),
+                ("/api/visualize", Dict("y" => "b", "plot" => Dict("linestyles" => ["dash"])), "`linestyle`"),
+                ("/api/visualize", Dict("y" => "b", "xstep" => Dict("system" => "SWebAPI", "name" => "a", "values" => [1])), "`path`"),
+                ("/api/visualize", Dict("y" => "b", "xstep" => Dict("path" => "SWebAPI.a", "min" => 1, "stop" => 2, "step" => 1)), "`start`"),
+                ("/api/visualize", Dict("y" => "b", "xstep" => Dict("path" => "SWebAPI.a", "start" => 1, "max" => 2, "step" => 1)), "`stop`"))
+            status, _, body = post(route, former)
+            @test status == 422 && occursin("it is $replacement since contract 0.2.0", body["error"]["message"])
+        end
         # an empty `configs` and an explicit `time` index keep the defaults
         status, _, body = post("/api/simulate", Dict("target" => "a", "configs" => [], "index" => "time"))
         @test status == 200 && [c["name"] for c in body["columns"]] == ["time", "a"] && body["rows"][1] == [0, 3]
@@ -587,8 +619,10 @@ end
         plant = Cropbox.Service(SWebPlant; config = (:SWebPlant => :k => 2, :SWebLeaf => :area => 1u"cm^2"), dashboard = :none)
         total(config) = JSON.parse(Cropbox.respond(plant, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => "total", "stop" => 1)))[3])["rows"][end][2]
         @test total(Dict()) == 4 && total(Dict("SWebRate.rate" => 5)) == 10 && total(Dict("System.k" => 5, "SWebLeaf.A" => Dict("value" => 2, "unit" => "cm^2"))) == 20
-        @test Cropbox.dashboardfrontend(false) isa Cropbox.NoDashboard
-        @test_throws ErrorException Cropbox.dashboardfrontend(:bogus)
+        @test Cropbox.dashboardpaths(:static) == ["/", "/dashboard"] && Cropbox.dashboardpaths("/ui") == ["/ui"]
+        @test isempty(Cropbox.dashboardpaths(false)) && isempty(Cropbox.dashboardpaths(:none)) && isempty(Cropbox.dashboardpaths(nothing))
+        @test_throws ErrorException Cropbox.dashboardpaths(:bogus)
+        @test_throws ErrorException Cropbox.dashboardpaths("ui")
     end
 
     @testset "http" begin
