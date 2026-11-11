@@ -26,39 +26,19 @@ const REQUEST_KEYS = (;
     visualize = ("config", "base", "stop", "snap", "x", "y", "kind", "backend", "plot", "xstep", "data"),
 )
 
+"Request fields of contract 0.1 and what replaced them, named in the error when a client still sends one."
+const FORMER_FIELDS = ("config_entries" => "config", "obs" => "observed", "target" => "y")
+
 const JSON_TYPE = "application/json; charset=utf-8"
 const HTML_TYPE = "text/html; charset=utf-8"
 
 asset(name) = read(joinpath(@__DIR__, name), String)
 
-# --- dashboard frontends ------------------------------------------------------
-
-abstract type DashboardFrontend end
-struct NoDashboard <: DashboardFrontend end
-struct StaticDashboard <: DashboardFrontend
-    paths::Vector{String}
-end
-StaticDashboard(; path=nothing, paths=nothing) = begin
-    P = !isnothing(paths) ? String.(paths) : isnothing(path) ? ["/", "/dashboard"] : [String(path)]
-    isempty(P) && error("dashboard paths must not be empty")
-    all(startswith("/"), P) || error("dashboard paths must start with /")
-    StaticDashboard(unique(P))
-end
-
-dashboardfrontend(f::DashboardFrontend) = f
-dashboardfrontend(::Nothing) = NoDashboard()
-dashboardfrontend(f::Bool) = f ? StaticDashboard() : NoDashboard()
-dashboardfrontend(f::Symbol) = f == :static ? StaticDashboard() : f == :none ? NoDashboard() :
-    error("unsupported dashboard frontend: $f. Use :static, :none, false, or a DashboardFrontend object.")
-dashboardfrontend(path::AbstractString) = StaticDashboard(; path)
-
-"Routes served by a frontend. A custom frontend overrides this and `dashboard_route_response`, which is called once per route when the service is built."
-dashboard_routes(::DashboardFrontend) = ["/dashboard"]
-dashboard_routes(::NoDashboard) = String[]
-dashboard_routes(f::StaticDashboard) = f.paths
-dashboard_route_response(f::DashboardFrontend, ::Type{<:System}; config=(), options=(), ui=APIDict()) =
-    error("dashboard frontend $(typeof(f)) must implement Cropbox.dashboard_route_response")
-dashboard_route_response(::StaticDashboard, ::Type{<:System}; config=(), options=(), ui=APIDict()) = (200, HTML_TYPE, asset("dashboard.html"))
+"Paths that serve the bundled dashboard page: `/` and `/dashboard` for `:static`, a path of its own, or none for `:none` and `false`."
+dashboardpaths(d::Symbol) = d == :static ? ["/", "/dashboard"] : d == :none ? String[] : error("unsupported dashboard: $d. Use :static, :none, false or a path.")
+dashboardpaths(d::Bool) = d ? dashboardpaths(:static) : String[]
+dashboardpaths(::Nothing) = String[]
+dashboardpaths(path::AbstractString) = startswith(path, "/") ? [String(path)] : error("a dashboard path must start with /")
 
 # --- service ------------------------------------------------------------------
 
@@ -86,11 +66,8 @@ Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui
     defaults = asobject(request_defaults)
     # a default configuration is decoded once and becomes part of the base configuration
     c = canonical(configure(config, checkconfig(decodeconfig(pop!(defaults, "config", nothing)), index)), index)
-    for k in keys(defaults)
-        any(K -> k in K, REQUEST_KEYS) || error("`request_defaults` has no request field `$k`")
-    end
+    checkkeys(defaults, unique(Iterators.flatten(REQUEST_KEYS)), "`request_defaults`"; former=FORMER_FIELDS)
     options = decodeoptions(options)
-    frontend = dashboardfrontend(dashboard)
     d = description(S, tree, V; config=c)
     json(x) = (200, JSON_TYPE, JSON.json(x))
     cache = Dict{String,Tuple{Int,String,String}}(
@@ -101,8 +78,8 @@ Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui
         "/api/docs" => (200, HTML_TYPE, asset("swagger.html")),
         "/docs" => (200, HTML_TYPE, asset("swagger.html")),
     )
-    for p in dashboard_routes(frontend)
-        cache[p] = dashboard_route_response(frontend, S; config=c, options, ui)
+    for p in dashboardpaths(dashboard)
+        cache[p] = (200, HTML_TYPE, asset("dashboard.html"))
     end
     Service(S, c, options, defaults, index, cache)
 end
@@ -177,7 +154,7 @@ rootcause(e) = e
 # --- requests -----------------------------------------------------------------
 
 "A request as an object with string keys, holding only the fields its operation accepts."
-requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "a $op request")
+requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "a $op request"; former=FORMER_FIELDS)
 
 "Run request decoding `f`: a failure there is the client's (422 `validation`), not an execution error."
 decoding(f) = try
@@ -357,7 +334,7 @@ value.
 """
 decodestep(::Nothing, index=nothing) = nothing
 decodestep(x::AbstractDict, index=nothing) = begin
-    d = checkkeys(stringkeys(x), ("path", "values", "start", "stop", "step", "unit"), "`xstep`")
+    d = checkkeys(stringkeys(x), ("path", "values", "start", "stop", "step", "unit"), "`xstep`"; former=("system" => "path", "name" => "path", "min" => "start", "max" => "stop"))
     path = get(d, "path", nothing)
     path isa AbstractString && count(==('.'), path) == 1 || apierror("`xstep` requires `path`, a `System.parameter` configuration path")
     values = if !isnothing(get(d, "values", nothing))
@@ -383,7 +360,7 @@ choice(v, options, what) = v in options ? Symbol(v) : apierror("Unsupported $wha
 
 decodeplot(x) = begin
     kw = Dict{Symbol,Any}()
-    for (k, v) in checkkeys(asobject(x), PLOT_OPTIONS, "`plot`")
+    for (k, v) in checkkeys(asobject(x), PLOT_OPTIONS, "`plot`"; former=("linestyles" => "linestyle",))
         isnothing(v) && continue
         kw[Symbol(k)] = if k == "kind"
             choice(v, PLOT_KINDS, "plot kind")
@@ -459,9 +436,8 @@ evaluate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=()
     )
 end
 
-"Optimizer options a client may set. The other options of BlackBoxOptim (callbacks, files written on the server) stay with the service."
-const OPTIM_OPTIONS = ("Method", "MaxSteps", "MaxTime", "MaxFuncEvals", "MaxStepsWithoutProgress", "FitnessTolerance",
-    "MinDeltaFitnessTolerance", "TargetFitness", "PopulationSize", "TraceMode", "TraceInterval", "RandomizeRngSeed", "RngSeed")
+"Optimizer options that write files where the service runs, which a client may not set."
+const SERVER_OPTIM_OPTIONS = ("SaveTrace", "SaveFitnessTraceToCsv", "SaveParameters")
 
 """
     calibrate_payload(S, request; config=(), options=(), index=nothing)
@@ -479,8 +455,9 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
         k[:parameters] = configure((calibrationrange(p, index) for p in flatconfig(P))...)
         isnothing(get(r, "weight", nothing)) || (k[:weight] = Float64.(decode(r["weight"])))
         isnothing(get(r, "pareto", nothing)) || (k[:pareto] = parsebool(r["pareto"]))
-        optim = decodeoptions(checkkeys(asobject(get(r, "optim", nothing)), OPTIM_OPTIONS, "`optim`"))
-        isempty(optim) || (k[:optim] = optim)
+        optim = asobject(get(r, "optim", nothing))
+        any(in(keys(optim)), SERVER_OPTIM_OPTIONS) && apierror("`optim` options that write files on the server are not available: $(join(SERVER_OPTIM_OPTIONS, ", "))")
+        isempty(optim) || (k[:optim] = decodeoptions(optim))
         (o, k)
     end
     elapsed = @elapsed result = calibrate(S, obs; kw...)
@@ -568,7 +545,7 @@ variables of every panel are among the outputs.
 """
 widgetpayload(S::Type{<:System}; config=(), ui=APIDict(), description=describe(S; config)) = begin
     d = description
-    u = asobject(ui)
+    u = checkkeys(asobject(ui), ("title", "outputs", "panels", "sweeps", "table_inputs", "stop", "snap"), "`ui`")
     outputs = filter(v -> v["role"] == "output", d["variables"])
     i = findfirst(v -> v["target"] == "time", outputs)
     time = isnothing(i) ? timeoutput(S) : popat!(outputs, i)
@@ -742,7 +719,7 @@ mixin) either side used.
 Routes:
 - `GET /api/model`, `GET /api/dashboard`, `GET /api/schema`, `GET /api/openapi`, `GET /api/docs`
 - `POST /api/simulate`, `POST /api/visualize`, `POST /api/evaluate`, `POST /api/calibrate`
-- `GET /` and `GET /dashboard` (bundled browser dashboard; `dashboard=:none` disables)
+- `GET /` and `GET /dashboard` (bundled browser dashboard; `dashboard="/path"` serves it there instead and `dashboard=:none` disables it)
 
 The call blocks while serving unless `async=true`, which returns the server
 object. The service has no authentication or transport encryption; bind it to
@@ -771,11 +748,9 @@ end
 """
     dashboard(S::Type{<:System}; frontend=:static, kwargs...)
 
-Start the same service as [`serve`](@ref) with the browser frontend selected by
-`frontend` (`:static` for the bundled client, `:none` for the API only, or a
-custom `DashboardFrontend`). A package can subtype `Cropbox.DashboardFrontend`
-and implement `Cropbox.dashboard_routes` and `Cropbox.dashboard_route_response`
-without changing the route contract.
+Start the same service as [`serve`](@ref). `frontend` is passed on as its
+`dashboard` option: `:static` for the bundled browser client at `/` and
+`/dashboard`, a path to serve it at instead, or `:none` for the API only.
 """
 dashboard(S::Type{<:System}; frontend=:static, kwargs...) = serve(S; dashboard=frontend, kwargs...)
 

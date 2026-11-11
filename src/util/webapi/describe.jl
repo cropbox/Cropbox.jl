@@ -8,7 +8,7 @@
 import DataAPI: describe
 
 "Variable states whose values are meaningful simulation outputs."
-const OUTPUT_STATES = (:Track, :Accumulate, :Capture, :Drive, :Preserve, :Flag, :Bisect, :Solve)
+const OUTPUT_STATES = (:Track, :Accumulate, :Capture, :Integrate, :Advance, :Remember, :Drive, :Preserve, :Flag, :Bisect, :Solve)
 
 "DSL tags published to clients; the remaining tags are implementation details."
 const PUBLIC_TAGS = Set((
