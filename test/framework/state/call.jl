@@ -1,3 +1,5 @@
+using TimeZones
+
 @testset "call" begin
     @testset "basic" begin
         @system SCall(Controller) begin
@@ -38,5 +40,31 @@
         @test s.b' === 2u"m"
         @test s.a' |> Cropbox.deunitfy isa Int
         @test s.b' |> Cropbox.deunitfy isa Int
+    end
+
+    @testset "local wrapper" begin
+        f(x) = Cropbox.FunctionWrapper{Float64,Tuple{Float64}}(y -> y - x)(2x)
+        @test f(1.5) === 1.5
+    end
+
+    @testset "deepcopy" begin
+        @system SCallCopy(Controller) begin
+            a       => 1     ~ accumulate
+            f(a; x) => a + x ~ call
+        end
+        s = instance(SCallCopy)
+        t = deepcopy(s)
+        update!(t)
+        @test t.f(1) == 2
+        @test s.f(1) == 1
+    end
+
+    @testset "non-isbits argument and return" begin
+        @system SCallDate(Controller) begin
+            f(; x::ZonedDateTime) => x ~ call::ZonedDateTime
+        end
+        s = instance(SCallDate)
+        t = ZonedDateTime(2020, 1, 1, tz"UTC")
+        @test s.f(t) == t
     end
 end

@@ -1,5 +1,6 @@
 #TODO: consider MethodWrapper: https://julialang.zulipchat.com/#narrow/stream/274208-helpdesk-.28published.29/topic/Constraining.20method.20signatures/near/262358928
-#TODO: use vendored FunctionWrappers for now: https://github.com/JuliaLang/julia/issues/40187
+#TODO: use a registered release containing these GC and deepcopy fixes.
+# https://github.com/JuliaLang/FunctionWrappers.jl/commit/9a1dfd82c62f72cdad525f16a3047bb4c8b98bd9
 include("../../lib/FunctionWrappers/FunctionWrappers.jl")
 using .FunctionWrappers: FunctionWrapper
 struct Call{V,F<:FunctionWrapper} <: State{V}
