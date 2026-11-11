@@ -462,8 +462,7 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $S(; kw...) = $_S(; kw...)
         let $(constpatches...)
             # Use the provisional type for recursive fields, then its completed global binding.
-            # The inner let avoids JuliaLang/julia#56510.
-            Core.@__doc__ mutable struct $_S <: ((let $_S=$_S
+            Core.@__doc__ mutable struct $_S <: ((begin
                 $C.typefor(::Type{<:$S}) = isdefined($scope, $(Meta.quot(G.name))) ? $G : $_S
             end); $S)
                 $(fields...)
