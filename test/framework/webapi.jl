@@ -237,7 +237,7 @@ end
         @test Cropbox.decodebounds(Dict("lower" => Dict("value" => 1, "unit" => "cm"), "upper" => Dict("value" => 2, "unit" => "cm"))) == (1u"cm", 2u"cm")
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds([1])
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds(Dict("lower" => 0))
-        @test_throws "it is `lower` since contract" Cropbox.decodebounds(Dict("min" => 0, "upper" => 1))
+        @test_throws Cropbox.APIRequestError Cropbox.decodebounds(Dict("min" => 0, "max" => 1))
         @test Dict(pairs(Cropbox.decodeoptions(Dict("MaxSteps" => 4, "Method" => "xnes")))) == Dict(:MaxSteps => 4, :Method => :xnes)
         @test Cropbox.decodeoptions(()) == (;) && Cropbox.decodeoptions(nothing) == (;)
         @test Cropbox.asobject(nothing) == Cropbox.asobject(()) == Cropbox.APIDict() && Cropbox.asobject((a = nothing,)) == Dict("a" => nothing)
@@ -575,18 +575,6 @@ end
         end
         @test_throws Cropbox.APIRequestError Cropbox.Service(SWebAPI; request_defaults = Dict("stopp" => 1))
         @test_throws Cropbox.APIRequestError Cropbox.Service(SWebAPI; ui = Dict("external_sources" => []))
-        # a field of the earlier contract is answered with what replaced it
-        for (route, former, replacement) in (
-                ("/api/simulate", Dict("target" => "a", "config_entries" => []), "`config`"),
-                ("/api/evaluate", Dict("target" => "b", "obs" => Dict()), "`observed`"),
-                ("/api/visualize", Dict("target" => "b"), "`y`"),
-                ("/api/visualize", Dict("y" => "b", "plot" => Dict("linestyles" => ["dash"])), "`linestyle`"),
-                ("/api/visualize", Dict("y" => "b", "xstep" => Dict("system" => "SWebAPI", "name" => "a", "values" => [1])), "`path`"),
-                ("/api/visualize", Dict("y" => "b", "xstep" => Dict("path" => "SWebAPI.a", "min" => 1, "stop" => 2, "step" => 1)), "`start`"),
-                ("/api/visualize", Dict("y" => "b", "xstep" => Dict("path" => "SWebAPI.a", "start" => 1, "max" => 2, "step" => 1)), "`stop`"))
-            status, _, body = post(route, former)
-            @test status == 422 && occursin("it is $replacement since contract 0.2.0", body["error"]["message"])
-        end
         # an empty `configs` and an explicit `time` index keep the defaults
         status, _, body = post("/api/simulate", Dict("target" => "a", "configs" => [], "index" => "time"))
         @test status == 200 && [c["name"] for c in body["columns"]] == ["time", "a"] && body["rows"][1] == [0, 3]

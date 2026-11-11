@@ -3,7 +3,7 @@
   "info": {
     "title": "Cropbox Web API",
     "version": "0.2.0",
-    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, merged under trusted server-side `request_defaults`, and dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. A field that the operation or one of its objects does not define is rejected (422) rather than ignored; for a field of contract 0.1 the error names its replacement. Model-specific metadata comes from `GET /api/model`."
+    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, merged under trusted server-side `request_defaults`, and dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. A field that the operation or one of its objects does not define is rejected (422) rather than ignored. Model-specific metadata comes from `GET /api/model`."
   },
   "paths": {
     "/api/model": {
