@@ -12,6 +12,14 @@ end
     end
     @test_throws ArgumentError visualize([0, 1], [0, 1]; backend = :Gadfly)
 
+    @testset "column expressions" begin
+        df = DataFrame(x = [1, 2], a = [2, 4], b = [1, 4])
+        for backend in (:Makie, :UnicodePlots)
+            p = visualize(df, :x, [:(a / b), :(a^-2)]; backend, kind = :line)
+            @test p.opt[:Ys] == [[2.0, 1.0], [0.25, 0.0625]]
+        end
+    end
+
     @testset "classic fonts" begin
         p = visualize([0, 1], [0, 1]; backend = :Makie)
         ax = p.opt[:axis]
