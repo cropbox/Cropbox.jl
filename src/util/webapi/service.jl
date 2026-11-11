@@ -154,7 +154,7 @@ rootcause(e) = e
 # --- requests -----------------------------------------------------------------
 
 "A request as an object with string keys, holding only the fields its operation accepts."
-requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "a $op request"; former=FORMER_FIELDS)
+requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "the $op request"; former=FORMER_FIELDS)
 
 "Run request decoding `f`: a failure there is the client's (422 `validation`), not an execution error."
 decoding(f) = try
