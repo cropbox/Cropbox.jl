@@ -40,9 +40,10 @@ using Cropbox
 using DataFrames
 
 @system LogisticGrowth(Controller) begin
-    r: growth_rate       => 0.05                 ~ preserve(parameter, u"g/g/d")
-    Wf: final_biomass    => 300                  ~ preserve(parameter, u"g")
-    W0: initial_biomass  => 0.25                 ~ preserve(parameter, u"g")
+    r: growth_rate      => 0.05 ~ preserve(parameter, u"g/g/d")
+    Wf: final_biomass   => 300  ~ preserve(parameter, u"g")
+    W0: initial_biomass => 0.25 ~ preserve(parameter, u"g")
+
     W(W, r, Wf): biomass => r * W * (1 - W / Wf) ~ accumulate(init = W0, u"g")
 
     t(context.clock.time): time ~ track(u"d")
@@ -75,27 +76,25 @@ Use `look` for the complete declaration or one variable.
 look(LogisticGrowth, :W)
 ```
 
-`Cropbox.dependency` exposes the graph Cropbox uses to order declarations and
-update stages:
+`visualize` exposes the graph Cropbox uses to order declarations and update
+stages, without running a simulation:
 
 ```@example logistic
-d = Cropbox.dependency(LogisticGrowth)
+d = visualize(LogisticGrowth)
+```
+
+The terminal representation gives the generated update order:
+
+```@example logistic
 println(repr(MIME("text/plain"), d))
 nothing # hide
 ```
 
-The text form gives the generated update order. The SVG below is written
-directly from the same graph object:
-
-```julia
-Cropbox.writeimage("logistic-dependency", d; format = :svg)
-```
-
-![LogisticGrowth dependency relationships](../assets/tutorials/logistic-dependency.svg)
-
-*Direct `writeimage` output from `dependency(LogisticGrowth)`. Generated stages
-such as `∘context`, `⋆context`, and `⋆W` remain visible because this is the
-actual scheduling graph rather than a redrawn scientific summary.*
+Generated stages such as `∘context`, `⋆context`, and `⋆W` remain visible because
+this is the actual scheduling graph rather than a redrawn scientific summary.
+The two rectangles `W` and `⋆W` refer to phases of one accumulating variable,
+not two biomass pools. See [Model structure](@ref visualization-structure) for
+the shape legend, focused selections, and image export.
 
 ## Configure a scenario
 

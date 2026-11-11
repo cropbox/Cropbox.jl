@@ -2,6 +2,8 @@
     visualize(<arguments>; <keyword arguments>) -> Plot
 
 Visualize existing arrays or a DataFrame, or run the necessary simulations and visualize their output.
+With only a system type, `visualize(S; kind=:dependency)` instead returns a
+static structural graph; use `kind=:hierarchy` for system composition.
 
 See also: [`visualize!`](@ref), [`simulate`](@ref), [`manipulate`](@ref)
 
@@ -34,10 +36,66 @@ julia> visualize(S, :time, :a; stop=5, kind=:line)
 ```
 """
 visualize(a...; kw...) = plot(a...; kw...)
+
+"""
+    visualize(S::Type{<:System}; kind=:dependency) -> Graph
+    visualize(S::Type{<:System}, selector; kind=:dependency, depth=1, direction=:both) -> Dependency
+
+Show a system's declared structure without running a simulation. `kind` is
+`:dependency` for variables and their generated update stages, or `:hierarchy`
+for system composition and mixins. The hierarchy omits nested `Context`
+infrastructure. Simulation plots still use `visualize(S, x, y; ...)`.
+
+For dependency graphs, a selector may be a variable name, a `source => target`
+pair, or a vector combining names and pairs. Names select neighborhoods:
+`depth=0` keeps only the named variables, and each additional level crosses one
+variable boundary. `direction` is `:up` for inputs, `:down` for affected variables,
+or `:both`. Pairs select every directed path between their endpoints, independent
+of `depth` and `direction`; each endpoint may also be a vector of names.
+Several selectors combine their results. Unknown names and pairs with no path
+raise an `ArgumentError`.
+Paths follow generated update stages and do not cross from a state's
+post-update stage to its main stage in the next timestep.
+
+`[:a, :c]` selects the union of two neighborhoods, which may be disconnected or
+include side branches. `:a => :c` selects the connecting paths regardless of
+their length, without off-path neighbors. Both retain all generated phases of
+included variables and configuration sources for included parameters. Selected
+names and path endpoints are emphasized in bold.
+
+The returned graph has a text representation in a terminal and an SVG display
+in notebooks. Use [`Cropbox.writeimage`](@ref) to save an image, or
+[`Cropbox.writedot`](@ref) for renderer-independent Graphviz source. Rendering
+options, such as `style=(group=:system,)`, belong to these export functions.
+
+# Examples
+```julia
+visualize(GrowingDegree)
+visualize(GrowingDegree; kind=:hierarchy)
+visualize(GrowingDegree, :r; depth=2, direction=:up)
+visualize(GrowingDegree, [:T, :r])
+visualize(GrowingDegree, :T => :r)
+visualize(GrowingDegree, [:Tb, :T => :r])
+```
+"""
+visualize(S::Type{<:System}; kind=:dependency) = begin
+    kind == :dependency && return dependency(S)
+    kind == :hierarchy && return hierarchy(S; skipcontext=true)
+    throw(ArgumentError("structure kind must be :dependency or :hierarchy"))
+end
+visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector};
+    kind=:dependency, depth::Integer=1, direction=:both,
+) = begin
+    kind == :dependency || throw(ArgumentError("variable selectors require kind=:dependency"))
+    selectors = selector isa AbstractVector ? selector : [selector]
+    selectiondependency(dependency(S), selectors; depth, direction)
+end
+
 """
     visualize!(p, <arguments>; <keyword arguments>) -> Plot
 
-Update an existing `Plot` object `p` by appending a new graph made with `visualize`.
+Update an existing `Plot` object `p` by appending a plot layer made with `visualize`.
+This operation does not apply to structural graphs.
 
 See also: [`visualize`](@ref)
 

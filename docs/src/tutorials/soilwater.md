@@ -57,7 +57,7 @@ The main systems are:
 The actual type hierarchy can be inspected directly:
 
 ```@example soil-water-transport
-Cropbox.hierarchy(SoilWater.SoilController; skipcontext = true)
+visualize(SoilWater.SoilController; kind = :hierarchy)
 ```
 
 ## Divide the profile into layers
