@@ -6,7 +6,7 @@
         @test Cropbox.namefor(SSystemName) == :SSystemName
         S = typeof(s)
         @test Cropbox.typefor(SSystemName) === S
-        @test startswith(string(S), "var\"##_SSystemName#")
+        @test startswith(string(S), "var\"##SSystemName#")
         @test S <: SSystemName
         @test Cropbox.namefor(S) == :SSystemName
     end
