@@ -9,6 +9,7 @@ using PrecompileTools: @setup_workload, @compile_workload
     c = @config
 
     @compile_workload begin
+        unitfy(DataFrame("x (g/cm^2)" => [1]))
         let x, g0, g1, gb, A, Cs, RH
             Symbolics.@variables x g0 g1 gb A Cs RH
             Q = genpolynomialcoeffs((x-RH)*gb - (1-x)*(g0+g1*A*x/Cs), x)
