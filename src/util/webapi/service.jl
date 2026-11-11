@@ -26,9 +26,6 @@ const REQUEST_KEYS = (;
     visualize = ("config", "base", "stop", "snap", "x", "y", "kind", "backend", "plot", "xstep", "data"),
 )
 
-"Request fields of contract 0.1 and what replaced them, named in the error when a client still sends one."
-const FORMER_FIELDS = ("config_entries" => "config", "obs" => "observed", "target" => "y")
-
 const JSON_TYPE = "application/json; charset=utf-8"
 const HTML_TYPE = "text/html; charset=utf-8"
 
@@ -66,7 +63,7 @@ Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui
     defaults = asobject(request_defaults)
     # a default configuration is decoded once and becomes part of the base configuration
     c = canonical(configure(config, checkconfig(decodeconfig(pop!(defaults, "config", nothing)), index)), index)
-    checkkeys(defaults, unique(Iterators.flatten(REQUEST_KEYS)), "`request_defaults`"; former=FORMER_FIELDS)
+    checkkeys(defaults, unique(Iterators.flatten(REQUEST_KEYS)), "`request_defaults`")
     options = decodeoptions(options)
     d = description(S, tree, V; config=c)
     json(x) = (200, JSON_TYPE, JSON.json(x))
@@ -154,7 +151,7 @@ rootcause(e) = e
 # --- requests -----------------------------------------------------------------
 
 "A request as an object with string keys, holding only the fields its operation accepts."
-requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "the $op request"; former=FORMER_FIELDS)
+requestobject(request::AbstractDict, op::Symbol) = checkkeys(stringkeys(request), REQUEST_KEYS[op], "the $op request")
 
 "Run request decoding `f`: a failure there is the client's (422 `validation`), not an execution error."
 decoding(f) = try
@@ -334,7 +331,7 @@ value.
 """
 decodestep(::Nothing, index=nothing) = nothing
 decodestep(x::AbstractDict, index=nothing) = begin
-    d = checkkeys(stringkeys(x), ("path", "values", "start", "stop", "step", "unit"), "`xstep`"; former=("system" => "path", "name" => "path", "min" => "start", "max" => "stop"))
+    d = checkkeys(stringkeys(x), ("path", "values", "start", "stop", "step", "unit"), "`xstep`")
     path = get(d, "path", nothing)
     path isa AbstractString && count(==('.'), path) == 1 || apierror("`xstep` requires `path`, a `System.parameter` configuration path")
     values = if !isnothing(get(d, "values", nothing))
@@ -360,7 +357,7 @@ choice(v, options, what) = v in options ? Symbol(v) : apierror("Unsupported $wha
 
 decodeplot(x) = begin
     kw = Dict{Symbol,Any}()
-    for (k, v) in checkkeys(asobject(x), PLOT_OPTIONS, "`plot`"; former=("linestyles" => "linestyle",))
+    for (k, v) in checkkeys(asobject(x), PLOT_OPTIONS, "`plot`")
         isnothing(v) && continue
         kw[Symbol(k)] = if k == "kind"
             choice(v, PLOT_KINDS, "plot kind")

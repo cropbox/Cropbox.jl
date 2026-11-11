@@ -36,16 +36,10 @@ asobject(::Tuple{}) = APIDict()
 asobject(x::Union{AbstractDict,NamedTuple}) = stringkeys(x)
 asobject(x) = apierror("Expected an object, got `$(typeof(x))`")
 
-"""
-Reject the fields of object `d` outside `allowed`, so that a misspelled field is
-not silently ignored. `former` pairs names of an earlier contract with their
-replacements, which the error then points to.
-"""
-checkkeys(d::AbstractDict, allowed, what; former=()) = begin
+"Reject the fields of object `d` outside `allowed`, so that a misspelled field is not silently ignored."
+checkkeys(d::AbstractDict, allowed, what) = begin
     for k in keys(d)
-        k in allowed && continue
-        i = findfirst(f -> f.first == k, former)
-        apierror("Unknown field `$k` in $what; " * (isnothing(i) ? "expected $(join(allowed, ", "))" : "it is `$(former[i].second)` since contract $API_CONTRACT_VERSION"))
+        k in allowed || apierror("Unknown field `$k` in $what; expected $(join(allowed, ", "))")
     end
     d
 end
@@ -329,7 +323,7 @@ decodebounds(x::AbstractVector) = begin
     numericbounds(decode(x[1]), decode(x[2]))
 end
 decodebounds(x::AbstractDict) = begin
-    d = checkkeys(stringkeys(x), ("lower", "upper", "unit"), "a parameter range"; former=("min" => "lower", "max" => "upper"))
+    d = checkkeys(stringkeys(x), ("lower", "upper", "unit"), "a parameter range")
     u = parseunit(get(d, "unit", nothing))
     bound(k) = (b = decode(get(d, k, nothing)); isnothing(u) ? b : unitfy(b, u))
     numericbounds(bound("lower"), bound("upper"))

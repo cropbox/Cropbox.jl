@@ -9,7 +9,7 @@ Run the following commands from the root of this checkout.
 julia --project=examples/webapi -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
 ```
 
-The environment installs registered Garlic, LeafGasExchange, and SimpleCrop versions
+The environment installs registered Garlic and LeafGasExchange versions
 and uses Cropbox from this checkout, not a globally installed Cropbox version.
 The first load and first plot can take longer while Julia compiles the code.
 
@@ -82,8 +82,8 @@ dashboard do not require a separate frontend build.
 
 Application-specific defaults and panel presets belong in `profiles.jl`. A
 custom frontend can consume `/api/model`, `/api/schema`, and `/api/dashboard`
-and call the same execution routes. `dashboard()` uses the bundled HTML frontend
-by default. The separate Stipple experiment is not a dependency of this package.
+and call the same execution routes. `dashboard()` serves the bundled HTML page.
+The separate Stipple experiment is not a dependency of this package.
 
 ## Optional MCP adapter
 
@@ -119,9 +119,7 @@ julia --project=examples/webapi examples/webapi/check.jl
 ```
 
 `check.jl` starts the three example services and exercises their routes over
-HTTP. `integration.jl`, which compared the routes of contract 0.1 with native
-calls for a set of models, is part of Cropbox 0.4.1 and 0.4.2 (tag `v0.4.2`);
-the guide lists what changes for a client of that contract.
+HTTP.
 
 To test the live MCP protocol, leave the cherry HTTP server running and use:
 

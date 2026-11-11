@@ -212,34 +212,3 @@ code. A model can still declare a parameter that names a file for it to read,
 as the `filename` of the store systems (`DataFrameStore` and its relatives)
 does. Any client can set such a parameter, so serve those models to trusted
 clients only.
-
-## Moving from contract 0.1
-
-Cropbox 0.4.1 and 0.4.2 served contract 0.1. Contract 0.2 keeps one spelling
-for each thing, so requests and clients written for 0.1 change as follows. A
-request that still uses a renamed field is answered with an error that names
-its replacement.
-
-| Contract 0.1 | Contract 0.2 |
-|:--|:--|
-| `"config_entries": [{"path": "S.a", "value": v}]` | `"config": {"S.a": v}` |
-| names as `[{"name": "len", "path": "a"}]` | `{"len": "a"}` |
-| calibration `parameters` as a list of entries | `{"S.a": [lower, upper]}` or `{"S.a": {"lower": l, "upper": u, "unit": "m"}}` |
-| `obs` | `observed` |
-| `min`, `max` | `lower`, `upper` for bounds; `start`, `stop` in `xstep` |
-| `xstep` with `system` and `name` | `xstep` with `path` |
-| `plot.linestyles` | `plot.linestyle` |
-| `target` of a visualization | `y` |
-| `api_options` | removed |
-| `config_path`, `declared_path`, `target_path` in descriptions | `path`, `declared`, `target` |
-| `accepted_config_paths` | removed: a parameter takes its name or alias under its system or a mixin of it |
-| `consumers` of a table | `columns` |
-| unit labels such as `m s^-1` | `m*s^-1`, which parse as they are written |
-| `ui` entries `external_sources` and `external_inputs`, `external_table_payload()` | removed: fetch the data and send it as a table |
-| `dashboard=` a custom `DashboardFrontend` | removed: serve another page from the application that uses the routes |
-
-Contract 0.1 ignored what it did not know. Fields that an operation does not
-have, parameters that the model does not declare and variable paths that it
-does not have are now rejected with status 422, and a request with the wrong
-method gets 405 instead of 404. To run a client written for contract 0.1 as it
-is, use Cropbox 0.4.2.
