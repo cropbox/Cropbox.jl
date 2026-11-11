@@ -119,8 +119,9 @@ julia --project=examples/webapi examples/webapi/check.jl
 ```
 
 `check.jl` starts the three example services and exercises their routes over
-HTTP. The model-equivalence script used for the published paper is preserved
-on the `webapi` branch (`examples/webapi/integration.jl`).
+HTTP. `integration.jl`, which compared the routes of contract 0.1 with native
+calls for a set of models, is part of Cropbox 0.4.1 and 0.4.2 (tag `v0.4.2`);
+the guide lists what changes for a client of that contract.
 
 To test the live MCP protocol, leave the cherry HTTP server running and use:
 

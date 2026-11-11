@@ -92,6 +92,9 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
 
             # the season-long Garlic run is not repeated for the remaining checks
             if name != "garlic"
+                # the service returns the table of the native call
+                native = simulate(p.system; p.config, stop = Cropbox.unitfy(stop["value"], Cropbox.parseunit(stop["unit"])), target = [Symbol(target)], verbose = false)
+                @test [row[i] for row in result["rows"]] == Cropbox.deunitfy(native[!, target])
                 @test occursin("<svg", postjson("/api/visualize", Dict("x" => x, "y" => [target], "kind" => "line"))["body"])
                 @test postjson("/api/simulate", Dict("config" => defaults, "stop" => stop, "target" => [target]))["rows"] ==
                     [[row[1], row[i]] for row in result["rows"]]
