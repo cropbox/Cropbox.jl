@@ -441,8 +441,7 @@ genfieldunits(infos) = @q filter!(p -> !isnothing(p[1]), Dict(
 ))
 
 genstruct(name, type, infos, consts, substs, incl, scope) = begin
-    #FIXME: simple `gensym(name)` leads to very strange invalid redefinition of constant error on Julia 1.6.0
-    G = GlobalRef(scope, gensym(Symbol(:_, name)))
+    G = GlobalRef(scope, gensym(name))
     _S = esc(G.name)
     S = esc(name)
     T = esc(type)
