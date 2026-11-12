@@ -1,4 +1,5 @@
 using DataStructures: OrderedDict, DefaultOrderedDict
+using InteractiveUtils: subtypes
 const _Config = OrderedDict{Symbol,Any}
 """
     Config
@@ -157,6 +158,83 @@ parameterzip(K, V, U) = begin
     configure(l)
 end
 
+resolveparameters(c, S::Type{<:System}) = begin
+    hints = DataType[]
+    hint(c) = nothing
+    hint(c::Pair) = c.first isa Type{<:System} && push!(hints, typefor(c.first))
+    hint(c::Union{Tuple,AbstractDict}) = foreach(hint, c)
+    hint(c)
+    K = parameterkeys(configure(c))
+    isempty(K) && throw(ArgumentError("specify at least one varying parameter"))
+
+    M = Dict{DataType,Vector{DataType}}()
+    dynamic = Set{DataType}()
+    pending = DataType[]
+    visit(T) = begin
+        T = typefor(T)
+        if isabstracttype(T)
+            T in dynamic || push!(pending, T)
+            push!(dynamic, T)
+            return
+        end
+        haskey(M, T) && return
+        M[T] = typefor.(collect(mixincollect(T)))
+        for k in fieldnamesunique(T)
+            F = fieldtype(T, k)
+            C = F <: System ? F : eltype(F)
+            C <: System && visit(C)
+        end
+    end
+    visit(S)
+    declared = Set(keys(M))
+    # loaded subtypes are possible children, not proof that a producer creates them
+    while !isempty(pending)
+        T = pop!(pending)
+        T == System || foreach(visit, subtypes(T))
+    end
+
+    entries(t) = Dict(k => v.name for v in geninfos(t) if istag(v, :parameter) for k in names(v))
+    known = unique(Iterators.flatten(values(M)))
+    P = Dict(t => entries(t) for t in known)
+    used = Set{Tuple{DataType,Symbol}}()
+    unverified = Tuple{Symbol,Symbol}[]
+    R = map(K) do (s, k)
+        candidates = s == Symbol(0) ? [typefor(S)] : [t for t in known if s in names(t)]
+        if isempty(candidates) && System in dynamic
+            candidates = filter(t -> isconcretetype(t) && s in names(t), hints)
+            if isempty(candidates)
+                for m in unique([parentmodule.(known); parentmodule.(collect(dynamic)); Main])
+                    t = try getsystem(m, s) catch; nothing end
+                    t isa Type{<:System} || continue
+                    t = typefor(t)
+                    isconcretetype(t) && s in names(t) && push!(candidates, t)
+                end
+            end
+            unique!(candidates)
+            isempty(candidates) && throw(ArgumentError("cannot resolve system $s for dynamic model $(namefor(S)); use a system type or qualified name"))
+        end
+        isempty(candidates) && throw(ArgumentError("system $s is not part of model $(namefor(S))"))
+        length(candidates) == 1 || throw(ArgumentError("system $s matches multiple systems; use a qualified name to vary one independently"))
+        t = only(candidates)
+        params = get!(P, t) do
+            entries(t)
+        end
+        name = get(params, canonicalname(k, namefor(t)), nothing)
+        isnothing(name) && throw(ArgumentError("not a parameter: $s.$k"))
+        targets = [(r, name) for (r, m) in M if t in m && haskey(P[r], name)]
+        if isempty(targets) && System in dynamic
+            push!(targets, (t, name))
+        end
+        isempty(targets) && throw(ArgumentError("parameter $s.$k is not used by model $(namefor(S))"))
+        any(p -> first(p) ∉ declared, targets) && push!(unverified, (first(names(t)), name))
+        any(in(used), targets) && throw(ArgumentError("parameter specified more than once: $s.$k"))
+        union!(used, targets)
+        (t, name)
+    end
+    isempty(unverified) || @warn "cannot verify whether dynamic parameters are used by model $(namefor(S)); check the resolved systems" parameters = unverified
+    R
+end
+
 codify(c::Config, p) = begin
     p = Symbol(p)
     K = [(p, Symbol(string(s, '.', k))) for (s, k) in parameterkeys(c)]
@@ -186,7 +264,7 @@ option(c::Config, S::Vector{Symbol}, K::Vector{Symbol}) = begin
     v = missing
     for (s, k) in Iterators.product(S, K)
         #HACK: support private parameter (i.e. :S => :_a for S._a)
-        k = uncanonicalname(k, s)
+        k = uncanonicalname(k, Symbol(last(split(string(s), '.'))))
         v = option(c, s, k)
         !ismissing(v) && break
     end

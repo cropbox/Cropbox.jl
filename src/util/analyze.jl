@@ -52,6 +52,11 @@ options and batch evaluation are rejected rather than silently ignored.
 continuous parameters. Sampling uses a unit box mapped to those bounds, so
 Morris effects are per full parameter range, not per physical input unit.
 Morris effects retain output units; Sobol/eFAST indices are dimensionless.
+Parameter names are resolved against the model's participating systems and mixins,
+using the same validation as `calibrate`. Use a qualified name to select one of
+several same-named systems; `:0` selects the root system.
+Dynamic child parameters are checked against their resolved types, with one
+warning if participation cannot be verified before sampling.
 
 Use `config` or `configs`, not both. Every condition is evaluated at the same
 sampled parameter sets; conditions and targets remain separate in `table`.
@@ -80,26 +85,17 @@ analyze(summarize::Union{Function,Nothing}, S::Type{<:System};
     checkgsa(method, gsa)
     isempty(config) || isempty(configs) || throw(ArgumentError("config and configs cannot be used together"))
     C = isempty(configs) ? [configure(config)] : configure.(configs)
-    P = configure(((k == Symbol(0) ? namefor(S) : k) => v for (k, v) in configure(parameters))...)
+    P = configure(parameters)
     K = parameterkeys(P)
-    isempty(K) && throw(ArgumentError("specify at least one varying parameter"))
+    R = resolveparameters(parameters, S)
+    U = parameterunits(R)
     if method isa GlobalSensitivity.Morris && !isempty(method.p_steps)
         length(method.p_steps) == length(K) && all(>(1), method.p_steps) ||
             throw(ArgumentError("Morris p_steps must contain one grid size greater than one per parameter"))
     end
-    identities = Tuple{Symbol,Symbol}[]
-    U = map(K) do (system, key)
-        type = system == namefor(S) ? S : typefor(system, scopeof(S))
-        name = canonicalname(key, system)
-        vars = [v.info for v in dependency(type).N]
-        i = findfirst(v -> istag(v, :parameter) && name in names(v), vars)
-        isnothing(i) && throw(ArgumentError("not a parameter: $system.$key"))
-        id = (system, vars[i].name)
-        id in identities && throw(ArgumentError("parameter specified more than once through an alias: $system.$key"))
-        push!(identities, id)
-        eltype(vartype(type, name)) <: Union{Integer,Quantity{<:Integer}} &&
-            throw(ArgumentError("analyze requires continuous parameters: $system.$key"))
-        fieldunit(type, name)
+    for (type, key) in R
+        eltype(vartype(type, key)) <: Union{Integer,Quantity{<:Integer}} &&
+            throw(ArgumentError("analyze requires continuous parameters: $(namefor(type)).$key"))
     end
     # https://github.com/SciML/GlobalSensitivity.jl/issues/229; remove after the upstream fix.
     if method isa GlobalSensitivity.eFAST && length(K) == 2 && (gsa.samples - 1) ÷ (4 * method.num_harmonics^2) > 1
@@ -156,7 +152,7 @@ analyze(summarize::Union{Function,Nothing}, S::Type{<:System};
     table = DataFrame(
         config = repeat(collect(1:length(C)); inner = length(targets), outer = length(K)),
         target = repeat(targets, length(C) * length(K)),
-        system = repeat(first.(K); inner = n), parameter = repeat(last.(K); inner = n),
+        system = repeat([s == Symbol(0) ? namefor(S) : s for (s, _) in K]; inner = n), parameter = repeat(last.(K); inner = n),
         lower = repeat(unitfy.(lower, U); inner = n), upper = repeat(unitfy.(last.(bounds), U); inner = n))
     if method isa GlobalSensitivity.Morris
         u = repeat(method.relative_scale ? fill(nothing, n) : units, length(K))
