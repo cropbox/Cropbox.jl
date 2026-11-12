@@ -110,14 +110,11 @@ configure(c) = error("unrecognized configuration: $c")
 configure() = Config()
 _configure(k::Symbol, v) = Config(k => _configure(v))
 _configure(k::String, v) = begin
-    a = Symbol.(split(k, "."))
-    n = length(a)
-    if n == 2
+    a = Symbol.(rsplit(k, "."; limit = 2))
+    if length(a) == 2
         Config(a[1] => _configure(a[2] => v))
-    elseif n == 1
-        Config(a[1] => _configure(v))
     else
-        error("unrecognized configuration key string: $k")
+        Config(a[1] => _configure(v))
     end
 end
 _configure(S::Type{<:System}, l) = begin
@@ -244,7 +241,7 @@ codify(c::Config, p) = begin
 end
 decodify(c::Config, p) = begin
     p = Symbol(p)
-    K = [Pair(Symbol.(split(string(k), "."))...) for k in keys(c[p])]
+    K = [Pair(Symbol.(rsplit(string(k), "."; limit = 2))...) for k in keys(c[p])]
     V = [v for v in values(c[p])]
     U = parameterunits(K)
     parameterzip(K, V, U)
