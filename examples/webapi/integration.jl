@@ -1,11 +1,14 @@
+# The example services, driven without a socket by the requests that the bundled dashboard sends, and compared
+# with native calls. This loads Garlic and LeafGasExchange and runs a season of Garlic, so it is run by hand:
+#
+#     julia --project=examples/webapi examples/webapi/integration.jl
 using Cropbox
 using JSON
 using Test
 
-# The example services of `examples/webapi`, driven with the requests the bundled dashboard sends.
-include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
+include(joinpath(@__DIR__, "profiles.jl"))
 
-@testset "webapi" begin
+@testset "Web API example services" begin
     # `plot` options of a dashboard panel
     plotoptions(panel) = begin
         plot = Dict{String,Any}()
@@ -63,9 +66,9 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
             # panels only plot variables the dashboard offers as outputs
             @test all(panel -> issubset(vcat(panel["x"], panel["y"]), outputs), panels)
 
-            # one simulation covers the selected output columns and every panel
+            # one simulation covers the selected output columns and every panel, from the `stop` the service defaults to
             stop = dashboard["simulation"]["stop"]
-            stop["value"] isa Number || (stop = stop["value"])
+            @test stop == JSON.parse(JSON.json(p.request_defaults["stop"])) && isnothing(dashboard["simulation"]["snap"])
             targets = unique(vcat(outputs[1:min(5, end)], target, x, (vcat(panel["x"], panel["y"]) for panel in panels)...))
             result = postjson("/api/simulate", Dict("config" => Dict(), "stop" => stop, "target" => targets))
             columns = [c["name"] for c in result["columns"]]

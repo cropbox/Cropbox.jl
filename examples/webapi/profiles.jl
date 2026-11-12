@@ -59,7 +59,6 @@ function cherry_profile()
     )
     ui = Dict(
         "title" => "Cherry Bloom Dashboard",
-        "stop" => Dict("value" => 242, "unit" => "d"),
         "outputs" => ["T", "ΔT", "C", "Rc", "F", "Rf", "d", "m", "chill_progress", "bloom_progress"],
         "panels" => [
             Dict("x" => "time", "y" => ["C", "F", "Rc", "Rf"], "kind" => "line",
@@ -83,7 +82,6 @@ function gasexchange_profile()
     targets = ["Ac", "Aj", "Ap", "A_net"]
     ui = Dict(
         "title" => "Leaf Gas Exchange Dashboard",
-        "stop" => Dict("value" => 1, "unit" => "hr"),
         "outputs" => [targets..., "gs", "Ci", "T", "PFD", "CO2", "T_air"],
         "panels" => [
             Dict("x" => "Ci", "y" => targets, "kind" => "line",
@@ -129,7 +127,6 @@ function garlic_profile()
     ))
     ui = Dict(
         "title" => "Garlic Crop Model Dashboard",
-        "stop" => Dict("value" => "calendar.count", "unit" => ""),
         "outputs" => ["DAP", "leaves_appeared", "leaves_mature", "leaves_dropped",
                       "green_leaf_area", "leaf_mass", "bulb_mass", "scape_mass", "total_mass"],
         "panels" => [

@@ -58,6 +58,16 @@ end
         seeds => produce(SWebSeed) ~ produce::SWebSeed[]
     end
 
+    # a value the constructor is given rather than a parameter, and a model that fails when it runs
+    @system SWebExternal(Controller) begin
+        a    ~ preserve(extern)
+        x(a) ~ track
+    end
+
+    @system SWebBroken(Controller) begin
+        x => error("broken") ~ track
+    end
+
     weather_csv = "index (d),tavg (°C)\n0,10\n1,12\n2,14\n"
     weather_table = Dict("type" => "CSV", "content" => weather_csv)
 
@@ -220,6 +230,13 @@ end
         @test eltype(mixed.t) == typeof(1.0u"hr") && eltype(mixed.n) == Union{Missing,Int} && mixed.s == ["a", 1, "c"]
         @test_throws Cropbox.APIRequestError Cropbox.decode(Dict("type" => "CSV"))
         @test_throws Cropbox.APIRequestError Cropbox.decode(Dict("type" => "DataFrame", "columns" => [Dict("name" => "a")], "rows" => [Dict("a" => 1)]))
+        # no value is dropped: column names are unique and a row has no more cells than there are columns
+        ab = [Dict("name" => "a"), Dict("name" => "b")]
+        @test_throws Cropbox.APIRequestError Cropbox.decode(Dict("type" => "DataFrame", "columns" => [Dict("name" => "a"), Dict("name" => "a")], "rows" => [[1, 100], [2, 200]]))
+        @test_throws Cropbox.APIRequestError Cropbox.decode(Dict("type" => "DataFrame", "columns" => ab, "rows" => [[0, 1, 999], [1, 2, 888]]))
+        @test_throws Cropbox.APIRequestError Cropbox.decode(Dict("type" => "CSV", "content" => "a,b\n1,2\n", "columns" => [Dict("name" => "a"), Dict("name" => "a")]))
+        short = Cropbox.decode(Dict("type" => "DataFrame", "columns" => ab, "rows" => [[0], [1, 2]]))
+        @test short.a == [0, 1] && ismissing(short.b[1]) && short.b[2] == 2
 
         flat = Cropbox.decodeconfig(Dict("SWebAPI.a" => Dict("value" => 200, "unit" => "cm"), "SWebAPI.c" => 3))
         nested = Cropbox.decodeconfig(Dict("SWebAPI" => Dict("a" => Dict("value" => 200, "unit" => "cm"), "c" => 3)))
@@ -276,15 +293,17 @@ end
         r = Dict{String,Any}(
             "config" => Dict("SWebAPI.a" => Dict("value" => 200, "unit" => "cm")),
             "stop" => Dict("value" => 1, "unit" => "hr"), "target" => ["a", "b"], "index" => "time",
-            "seed" => 7, "nounit" => "true", "options" => Dict("x" => 1),
+            "seed" => 7, "nounit" => "true",
         )
         kw = Cropbox.simulationkwargs(r; index)
         @test kw[:config] == @config(:SWebAPI => :a => 200u"cm")
         # `time` as an index is the clock time, which this model has no variable for
         @test kw[:stop] == 1u"hr" && kw[:target] == ["a", "b"] && kw[:index] == (:time => "context.clock.time")
-        @test kw[:seed] == 7 && kw[:nounit] === true && kw[:options] == (x = 1,)
+        @test kw[:seed] == 7 && kw[:nounit] === true && !haskey(kw, :options)
+        # constructor options are the service's; a request has none
         merged = Cropbox.simulationkwargs(r; config = :SWebAPI => (a = 3u"m", c = 5), options = (y = 2,))
-        @test merged[:config] == @config(:SWebAPI => (a = 200u"cm", c = 5)) && merged[:options] == (y = 2, x = 1)
+        @test merged[:config] == @config(:SWebAPI => (a = 200u"cm", c = 5)) && merged[:options] == (y = 2,)
+        @test_throws Cropbox.APIRequestError Cropbox.requestobject(Dict("target" => "a", "options" => Dict("x" => 1)), :simulate)
         multi = Cropbox.simulationkwargs(Dict{String,Any}("configs" => [Dict("SWebAPI.a" => 1), Dict("SWebAPI.a" => 2)]); config = :SWebAPI => :c => 5)
         @test multi[:configs] == [@config(:SWebAPI => (a = 1, c = 5)), @config(:SWebAPI => (a = 2, c = 5))] && !haskey(multi, :config)
         @test Cropbox.simulationkwargs(Dict{String,Any}("stop" => "g", "target" => Dict("len" => "length")); index)[:target] == [:len => "length"]
@@ -304,11 +323,21 @@ end
         @test step == (1 // 2)u"hr" && Cropbox.deunitfy(step) isa Rational
         @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebSeed.mass" => 2)); index = Cropbox.ModelIndex(SWebPod))[:config] == @config(:SWebSeed => :mass => 2)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => weather_table)); index)
+        # a parameter that holds one value takes no array, and a quantity only in a unit it can be converted from
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => [1, 2])); index)
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "kg"))); index)
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.c" => Dict("value" => 1, "unit" => "m"))); index)
+        converted = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 250, "unit" => "cm"))); index)[:config][:SWebAPI][:a]
+        @test converted == 2.5u"m" && Cropbox.Unitful.unit(converted) == u"m"
         # an empty `configs` runs the single configuration
         @test Cropbox.simulationkwargs(Dict{String,Any}("configs" => []); config = :SWebAPI => :c => 5) == Dict(:config => @config(:SWebAPI => :c => 5))
         @test Cropbox.simulationkwargs(Dict{String,Any}("stop" => true, "snap" => false)) == Dict(:stop => true, :snap => false)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("snap" => 5))
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("stop" => [1, 2]))
+        # a quantity for `stop` or `snap` is a duration
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("stop" => Dict("value" => 1, "unit" => "kg")); index)
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("snap" => Dict("value" => 1, "unit" => "m")); index)
+        @test Cropbox.simulationkwargs(Dict{String,Any}("stop" => Dict("value" => 2, "unit" => "d"), "snap" => Dict("value" => 30, "unit" => "minute")); index) == Dict(:stop => 2u"d", :snap => 30u"minute")
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("target" => Dict("len" => 5)); index)
         @test Cropbox.simulationkwargs(Dict{String,Any}("index" => ["time", "b"], "target" => "context.clock.tick"); index)[:index] == [:time => "context.clock.time", "b"]
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("target" => "context.clock.tock"); index)
@@ -332,12 +361,21 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("path" => "a", "values" => [1]))
         @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("path" => "SWebAPI.a", "start" => 1, "stop" => 3))
         @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("system" => "SWebAPI", "name" => "a", "values" => [1, 2]))
-        plot = Cropbox.decodeplot(Dict("kind" => "scatter", "xlim" => [nothing, 5], "linestyle" => ["dash"], "title" => "t", "xunit" => "cm", "ylab" => nothing))
-        @test plot == Dict(:kind => :scatter, :xlim => (nothing, 5), :linestyle => [:dash], :title => "t", :xunit => u"cm")
+        # its values are checked as those of a configuration are, and there has to be one
+        @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("path" => "SWebAPI.a", "values" => [1], "unit" => "kg"), index)
+        @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("path" => "SWebAPI.a", "values" => [[1, 2]]), index)
+        @test_throws Cropbox.APIRequestError Cropbox.decodestep(Dict("path" => "SWebAPI.a", "values" => []))
+        # every run of a sweep is over the configuration of the request
+        swept = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.c" => 5), "xstep" => Dict("path" => "SWebAPI.length", "values" => [1, 2]));
+            config = :SWebAPI => :n => 4, index, fields = Cropbox.REQUEST_KEYS.visualize)
+        @test swept[:configs] == [@config(:SWebAPI => (n = 4, c = 5, a = 1)), @config(:SWebAPI => (n = 4, c = 5, a = 2))] && !haskey(swept, :config)
+        plot = Cropbox.decodeplot(Dict("xlim" => [nothing, 5], "linestyle" => ["dash"], "title" => "t", "xunit" => "cm", "ylab" => nothing))
+        @test plot == Dict(:xlim => (nothing, 5), :linestyle => [:dash], :title => "t", :xunit => u"cm")
         @test Cropbox.decodeplot(nothing) == Dict{Symbol,Any}()
-        @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("backend" => "Gadfly"))
+        # the kind of plot is a field of the request, and there is one backend
+        @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("kind" => "scatter"))
+        @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("backend" => "Makie"))
         @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("xlim" => [1]))
-        @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("kind" => "pie"))
         @test_throws Cropbox.APIRequestError Cropbox.decodeplot(Dict("linestyle" => "wavy"))
     end
 
@@ -391,6 +429,9 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.evaluate_payload(SWebAPI, Dict("target" => "b", "stop" => 2))
         @test_throws Cropbox.APIRequestError Cropbox.evaluate_payload(SWebAPI, Dict("observed" => "obs.csv", "target" => "b"))
         @test_throws Cropbox.APIRequestError Cropbox.evaluate_payload(SWebAPI, Dict("observed" => observed, "target" => "b", "stop" => 2, "metric" => "nope"))
+        # observations that match no output or lack the target are the request's error
+        @test_throws Cropbox.APIRequestError Cropbox.evaluate_payload(SWebAPI, Dict("observed" => merge(observed, Dict("rows" => [[100, 2]])), "target" => "b", "stop" => 2))
+        @test_throws Cropbox.APIRequestError Cropbox.evaluate_payload(SWebAPI, Dict("observed" => observed, "target" => "a", "stop" => 2))
 
         @system SWebAPICalibration(Controller) begin
             a => 0 ~ preserve(parameter)
@@ -420,7 +461,7 @@ end
         r = Cropbox.calibrate_payload(WebAPITestModels.SWebGrowth, growth; index = Cropbox.ModelIndex(WebAPITestModels.SWebGrowth))["config"]["SWebGrowth"]["r"]
         @test 19.5 <= r["value"] <= 20.5 && r["unit"] == "cm*hr^-1"
 
-        v = Cropbox.visualize_payload(SWebAPI, Dict("y" => "b", "stop" => Dict("value" => 2, "unit" => "hr"), "plot" => Dict("kind" => "scatterline", "title" => "b over time")))
+        v = Cropbox.visualize_payload(SWebAPI, Dict("y" => "b", "stop" => Dict("value" => 2, "unit" => "hr"), "kind" => "scatterline", "plot" => Dict("title" => "b over time")))
         @test v["status"] == "ok" && v["operation"] == "visualize" && v["format"] == "svg" && v["content_type"] == "image/svg+xml"
         @test startswith(strip(v["body"]), "<?xml") || startswith(strip(v["body"]), "<svg")
         @test occursin("<svg", v["body"])
@@ -444,7 +485,13 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("data" => other, "x" => "day", "y" => "b"))
         @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("stop" => 2))
         @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("y" => "b", "backend" => "UnicodePlots"))
-        @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("y" => "b", "plot" => Dict("backend" => "Makie")))
+        # what the plot rejects in a finished table is the request's error: one label for two series, units that share no axis
+        @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("y" => ["a", "b"], "stop" => 1, "plot" => Dict("names" => ["one"])))
+        @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("data" => other, "x" => "day", "y" => ["day", "height"]))
+        @test_throws Cropbox.APIRequestError Cropbox.visualize_payload(SWebAPI, Dict("y" => []))
+        # the constructor options of the service reach every operation that runs the model
+        @test Cropbox.simulate_payload(SWebExternal, Dict("target" => "x", "stop" => 1); options = (a = 3,))["rows"][end][2] == 3
+        @test occursin("<svg", Cropbox.visualize_payload(SWebExternal, Dict("y" => "x", "stop" => 1); options = (a = 3,))["body"])
 
         t = Cropbox.simulate_payload(SWebTable, Dict("config" => Dict("SWebTable.weather" => weather_table), "stop" => Dict("value" => 2, "unit" => "d"), "target" => "T"))
         @test [r[2] for r in t["rows"]] == [10, 12, 14] && t["columns"][2]["unit"] == "°C"
@@ -466,15 +513,21 @@ end
         @test Set(v["target"] for v in w["outputs"]) == Set(["time", "b", "g"])
         @test w["simulation"] == Dict("stop" => Dict("value" => 5, "unit" => "hr"), "snap" => nothing)
         @test Cropbox.widgetpayload(SWebTable)["simulation"]["stop"] == Dict("value" => 5, "unit" => "d")
-        @test w["visualize"]["x"]["default"] == "time" && w["visualize"]["y"]["default"] == ["b"]
+        # nothing a dashboard does not read
+        @test Set(keys(w)) == Set(["title", "model", "controls", "outputs", "tables", "simulation", "panels"])
         @test only(w["panels"]) == Dict("title" => "Panel 1", "x" => "time", "y" => ["b"], "kind" => "line")
         @test !haskey(w, "sweeps")
 
-        ui = Dict("title" => "Custom", "outputs" => ["g"], "panels" => [Dict("title" => "Flag", "x" => "time", "y" => ["g"])],
-            "stop" => Dict("value" => 3, "unit" => "hr"), "snap" => Dict("value" => 1, "unit" => "hr"), "sweeps" => [Dict("path" => "SWebAPI.a")])
-        w2 = Cropbox.widgetpayload(SWebAPI; config = :SWebAPI => :a => 4u"m", ui)
+        ui = Dict("title" => "Custom", "outputs" => ["g"], "panels" => [Dict("title" => "Flag", "x" => "time", "y" => ["g"])], "sweeps" => [Dict("path" => "SWebAPI.a")])
+        # a dashboard starts from the `stop` and `snap` among the request defaults of the service
+        defaults = Dict("stop" => 3u"hr", "snap" => Dict("value" => 1, "unit" => "hr"))
+        w2 = Cropbox.widgetpayload(SWebAPI; config = :SWebAPI => :a => 4u"m", ui, defaults)
         @test w2["title"] == "Custom" && [v["target"] for v in w2["outputs"]] == ["time", "g"]
-        @test only(w2["panels"])["y"] == ["g"] && w2["simulation"]["stop"]["value"] == 3 && w2["sweeps"] == ui["sweeps"]
+        @test only(w2["panels"])["y"] == ["g"] && w2["sweeps"] == ui["sweeps"]
+        @test w2["simulation"] == Dict("stop" => Dict("value" => 3, "type" => "Int64", "unit" => "hr"), "snap" => Dict("value" => 1, "unit" => "hr"))
+        # a condition is shown by its path; a Julia function stays with the service
+        @test Cropbox.widgetpayload(SWebAPI; defaults = Dict("stop" => :g, "snap" => identity))["simulation"] == Dict("stop" => "g", "snap" => nothing)
+        @test_throws Cropbox.APIRequestError Cropbox.widgetpayload(SWebAPI; ui = Dict("stop" => 3))
         @test only(filter(c -> c["path"] == "SWebAPI.a", w2["controls"]))["default"] == 4
 
         # requested outputs resolve by target, name or alias and may name parameters
@@ -524,10 +577,24 @@ end
 
         status, type, body = getroute("/api/model")
         @test status == 200 && type == "application/json; charset=utf-8" && JSON.parse(body)["model"]["name"] == "SWebAPI"
-        @test JSON.parse(getroute("/api/dashboard")[3])["title"] == "SWebAPI Dashboard"
+        board = JSON.parse(getroute("/api/dashboard")[3])
+        @test board["title"] == "SWebAPI Dashboard" && board["simulation"] == Dict("stop" => defaults["stop"], "snap" => defaults["snap"])
         schema = JSON.parse(getroute("/api/schema")[3])
         @test schema["contract_version"] == "0.2.0" && any(r -> r["path"] == "/api/simulate" && r["method"] == "POST", schema["routes"])
         @test schema["definitions"]["SimulationRequest"]["allOf"] == [Dict("\$ref" => "#/definitions/RunRequest")] && !occursin("#/components/", getroute("/api/schema")[3])
+        # the document lists the fields that each operation accepts and the dashboard metadata that is served
+        properties(name) = begin
+            d = schema["definitions"][name]
+            P = Set{String}(keys(get(d, "properties", Dict())))
+            for r in get(d, "allOf", [])
+                union!(P, properties(String(last(split(r["\$ref"], "/")))))
+            end
+            P
+        end
+        for (op, name) in pairs((simulate = "SimulationRequest", evaluate = "EvaluationRequest", calibrate = "CalibrationRequest", visualize = "VisualizationRequest"))
+            @test properties(name) == Set(Cropbox.REQUEST_KEYS[op])
+        end
+        @test issubset(keys(board), properties("WidgetPayload"))
         openapi = JSON.parse(getroute("/api/openapi")[3])
         @test openapi["info"]["version"] == "0.2.0" && Set(keys(openapi["paths"])) == Set(["/api/model", "/api/dashboard", "/api/schema", "/api/openapi", "/api/docs", "/api/simulate", "/api/visualize", "/api/evaluate", "/api/calibrate"])
         @test getroute("/api/docs")[1] == 200 && occursin("swagger-ui", getroute("/api/docs")[3]) && getroute("/docs")[1] == 200
@@ -557,11 +624,20 @@ end
         @test status == 422 && occursin("zzz", body["error"]["message"])
         status, _, body = post("/api/simulate", Dict("target" => "a", "config" => [Dict("path" => "SWebAPI.a", "value" => 1)]))
         @test status == 422
-        status, _, body = post("/api/simulate", Dict("target" => "a", "stop" => Dict("value" => 1, "unit" => "kg")))
-        @test status == 500 && body["error"]["category"] == "execution" && body["error"]["code"] == "execution_failed"
-        # values that cannot be decoded are the client's error, not an execution failure
+        # what fails while the model runs is an execution error, reported by its cause without stack traces
+        broken = Cropbox.Service(SWebBroken; dashboard = :none)
+        for (route, request) in (("/api/simulate", Dict("target" => "x")), ("/api/visualize", Dict("y" => "x")),
+                                 ("/api/evaluate", Dict("target" => "x", "observed" => Dict("type" => "CSV", "content" => "time (hr),x\n0,1\n"))))
+            status, _, body = Cropbox.respond(broken, "POST", route, JSON.json(request))
+            failure = JSON.parse(body)["error"]
+            @test status == 500 && failure["category"] == "execution" && failure["code"] == "execution_failed"
+            @test occursin("broken", failure["message"]) && !occursin("Stacktrace", failure["message"]) && !occursin("TaskFailedException", failure["message"])
+        end
+        # values the model cannot take are the client's error, not an execution failure
         for bad in (Dict("seed" => "abc"), Dict("config" => Dict("SWebAPI.n" => Dict("value" => 1.5, "type" => "Int"))),
-                    Dict("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "nounit"))), Dict("meta" => "Nope"), Dict("base" => "nope"))
+                    Dict("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "nounit"))), Dict("meta" => "Nope"), Dict("base" => "nope"),
+                    Dict("config" => Dict("SWebAPI.a" => [1, 2])), Dict("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "kg"))),
+                    Dict("stop" => Dict("value" => 1, "unit" => "kg")))
             status, _, body = post("/api/simulate", merge(Dict{String,Any}("target" => "a"), bad))
             @test status == 422 && body["error"]["category"] == "validation"
         end
@@ -569,7 +645,8 @@ end
         @test status == 422 && occursin("zzz", body["error"]["message"])
         # fields an operation does not have are rejected, not ignored, and defaults only apply where they are fields
         for (route, bad) in (("/api/simulate", Dict("target" => "a", "config_entries" => [])), ("/api/simulate", Dict("target" => "a", "snap" => 5)),
-                             ("/api/visualize", Dict("y" => "b", "options" => Dict("x" => 2))), ("/api/evaluate", Dict("target" => "b", "snap" => true)))
+                             ("/api/simulate", Dict("target" => "a", "options" => Dict("x" => 2))), ("/api/visualize", Dict("y" => "b", "backend" => "Makie")),
+                             ("/api/visualize", Dict("y" => "b", "plot" => Dict("kind" => "line"))), ("/api/evaluate", Dict("target" => "b", "snap" => true)))
             status, _, body = post(route, bad)
             @test status == 422 && body["error"]["category"] == "validation"
         end
@@ -584,9 +661,13 @@ end
         @test status == 200 && body["value"]["value"] == 0.0 && body["summary"]["nobs"] == 3
         status, _, body = post("/api/evaluate", Dict("observed" => observed, "target" => "b", "index" => "time"))
         @test status == 200 && body["value"]["value"] == 0.0
-        # a failure inside the threaded runs is reported by its cause, without stack traces
-        status, _, body = post("/api/evaluate", Dict("observed" => observed, "target" => "b", "stop" => Dict("value" => 1, "unit" => "kg")))
-        @test status == 500 && !occursin("Stacktrace", body["error"]["message"]) && !occursin("TaskFailedException", body["error"]["message"])
+        # observations the outputs do not match, or that lack the target, are the request's error
+        status, _, body = post("/api/evaluate", Dict("observed" => Dict("type" => "CSV", "content" => "time (hr),b (m)\n100,3\n"), "target" => "b"))
+        @test status == 422 && body["error"]["category"] == "validation" && occursin("no matching", body["error"]["message"])
+        @test post("/api/evaluate", Dict("observed" => observed, "target" => "a"))[1] == 422
+        # so is a table that would lose values
+        table = Dict("type" => "DataFrame", "columns" => [Dict("name" => "a"), Dict("name" => "b")], "rows" => [[0, 1, 999], [1, 2, 888]])
+        @test post("/api/visualize", Dict("data" => table, "x" => "a", "y" => "b"))[1] == 422
         status, _, body = post("/api/visualize", Dict("y" => "b"))
         @test status == 200 && body["format"] == "svg"
 
@@ -611,6 +692,42 @@ end
         @test isempty(Cropbox.dashboardpaths(false)) && isempty(Cropbox.dashboardpaths(:none)) && isempty(Cropbox.dashboardpaths(nothing))
         @test_throws ErrorException Cropbox.dashboardpaths(:bogus)
         @test_throws ErrorException Cropbox.dashboardpaths("ui")
+
+        # a default configuration replaces the base one, and a client's the default, whichever name of a parameter each used
+        aliased = Cropbox.Service(SWebAPI; config = :SWebAPI => :a => 3, request_defaults = Dict("config" => Dict("SWebAPI.length" => 4)), dashboard = :none)
+        served(config) = JSON.parse(Cropbox.respond(aliased, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => "a")))[3])["rows"][1][2]
+        @test served(Dict()) == 4 && served(Dict("SWebAPI.length" => 5)) == 5 && served(Dict("Controller.a" => 6)) == 6
+        @test only(filter(q -> q["path"] == "SWebAPI.a", JSON.parse(Cropbox.respond(aliased, "GET", "/api/model")[3])["parameters"]))["default"]["value"] == 4
+
+        # the constructor options of the service reach the operations that run the model
+        external = Cropbox.Service(SWebExternal; options = (a = 3,), dashboard = :none)
+        @test JSON.parse(Cropbox.respond(external, "POST", "/api/simulate", JSON.json(Dict("target" => "x", "stop" => 1)))[3])["rows"][end][2] == 3
+        @test Cropbox.respond(external, "POST", "/api/visualize", JSON.json(Dict("y" => "x", "stop" => 1)))[1] == 200
+    end
+
+    @testset "guide" begin
+        # the model of the web service guide, and what the guide says its requests return
+        @system SWebGuide(Controller) begin
+            "Height gained per hour."
+            r: growth_rate => 0.5 ~ preserve(parameter, u"cm/hr")
+            "Plant height."
+            h(r): height ~ accumulate(u"cm")
+        end
+        model = describe(SWebGuide)
+        parameter = only(model["parameters"])
+        @test parameter["path"] == "SWebGuide.r" && parameter["alias"] == "growth_rate" && parameter["unit"] == "cm*hr^-1"
+        @test [v["target"] for v in model["variables"]] == ["h"]
+        service = Cropbox.Service(SWebGuide; config = :SWebGuide => :r => 2u"cm/hr", request_defaults = Dict("stop" => Dict("value" => 3, "unit" => "d")))
+        request = Dict("config" => Dict("SWebGuide.growth_rate" => Dict("value" => 10, "unit" => "mm/hr")), "stop" => Dict("value" => 3, "unit" => "hr"), "target" => ["height"])
+        status, _, body = Cropbox.respond(service, "POST", "/api/simulate", JSON.json(request))
+        table = JSON.parse(body)
+        @test status == 200 && table["columns"] == [Dict("name" => "time", "type" => "Float64", "unit" => "hr"), Dict("name" => "height", "type" => "Float64", "unit" => "cm")]
+        @test table["rows"] == [[0, 0], [1, 1], [2, 2], [3, 3]] && table["summary"]["nrow"] == 4
+        # the table goes back as `data`, with no second simulation
+        status, _, body = Cropbox.respond(service, "POST", "/api/visualize", JSON.json(Dict("data" => table, "x" => "time", "y" => "height", "kind" => "line")))
+        @test status == 200 && occursin("<svg", JSON.parse(body)["body"])
+        # the dashboard starts from the request defaults
+        @test JSON.parse(Cropbox.respond(service, "GET", "/api/dashboard")[3])["simulation"]["stop"] == Dict("value" => 3, "unit" => "d")
     end
 
     @testset "http" begin

@@ -190,12 +190,15 @@ parses CSV text; `{"type": "DataFrame", "columns": [...], "rows": [[...], ...]}`
 takes row arrays, so that the table of a response can be sent back as it is.
 Optional `columns` metadata (`name`, `type`, `unit`, `timezone`) converts and
 unitfies columns. CSV headers may alternatively carry `name (unit)` or
-`name (:Type)` annotations when no `columns` are given.
+`name (:Type)` annotations when no `columns` are given. Column names are
+unique and a row has no more cells than there are columns, so that no value is
+dropped; a cell that is absent or `null` is `missing`.
 """
 decodetable(d::AbstractDict) = begin
     checkkeys(d, TABLE_KEYS, "a table")
     columns = [checkkeys(asobject(c), ("name", "type", "unit", "timezone"), "a table column") for c in something(get(d, "columns", nothing), [])]
     all(c -> get(c, "name", nothing) isa AbstractString, columns) || apierror("Every table column requires a `name`")
+    allunique(c["name"] for c in columns) || apierror("Table column names must be unique")
     df = if d["type"] == "CSV"
         get(d, "content", nothing) isa AbstractString || apierror("CSV payload requires `content`")
         decodecsv(String(d["content"]), columns)
@@ -203,6 +206,7 @@ decodetable(d::AbstractDict) = begin
         isempty(columns) && apierror("DataFrame payload requires `columns`")
         rows = something(get(d, "rows", nothing), [])
         rows isa AbstractVector && all(r -> r isa AbstractVector, rows) || apierror("DataFrame payload `rows` must be an array of row arrays")
+        all(r -> length(r) <= length(columns), rows) || apierror("A table row has more cells than the $(length(columns)) `columns`")
         df = DataFrame()
         for (i, c) in enumerate(columns)
             # absent and `null` cells are `missing`, which plotting and evaluation skip

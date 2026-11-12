@@ -2,6 +2,7 @@
     @testset "basic" begin
         @system SClock(Controller)
         s = instance(SClock)
+        @test Cropbox.timeunit(Context) == Cropbox.timeunit(typeof(s.context)) == u"hr"
         @test s.context.clock.init' isa Cropbox.Quantity{Rational{Int64}}
         @test s.context.clock.step' isa Cropbox.Quantity{Rational{Int64}}
         @test s.context.clock.time' isa Cropbox.Quantity{Rational{Int64}}
@@ -76,6 +77,7 @@
             child(context=child_context) ~ ::SSubhourlyChild
         end
         s = instance(SSubhourlyParent)
+        @test Cropbox.timeunit(SSubhourlyContext) == Cropbox.timeunit(typeof(s.child.context)) == u"hr"
         update!(s)
         @test s.context.clock.time' === (1//1)u"hr"
         @test s.child.context.clock.time' === (1//1)u"hr"
@@ -87,6 +89,7 @@
             a => 1 ~ accumulate
         end
         s = instance(SClockDaily)
+        @test Cropbox.timeunit(Cropbox.DailyContext) == Cropbox.timeunit(typeof(s.context)) == u"d"
         @test s.context isa Cropbox.DailyContext
         @test s.context.clock isa Cropbox.DailyClock
         @test s.context.clock.time' isa Cropbox.Quantity{Rational{Int64}}

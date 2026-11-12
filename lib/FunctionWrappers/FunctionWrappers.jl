@@ -4,36 +4,18 @@ __precompile__(true)
 
 module FunctionWrappers
 
-# Used to bypass NULL check
-if VERSION >= v"1.6.0-DEV.663"
-    @inline function assume(v::Bool)
-        Base.llvmcall(
-            ("""
-             declare void @llvm.assume(i1)
-             define void @fw_assume(i8)
-             {
-                 %v = trunc i8 %0 to i1
-                 call void @llvm.assume(i1 %v)
-                 ret void
-             }
-             """, "fw_assume"), Cvoid, Tuple{Bool}, v)
-    end
+if VERSION >= v"1.5.0"
+    Base.@pure pass_by_value(T) = Base.allocatedinline(T)
 else
-    @inline function assume(v::Bool)
-        Base.llvmcall(("declare void @llvm.assume(i1)",
-                       """
-                       %v = trunc i8 %0 to i1
-                       call void @llvm.assume(i1 %v)
-                       ret void
-                       """), Cvoid, Tuple{Bool}, v)
-    end
+    Base.@pure pass_by_value(T) = isbitstype(T)
 end
 
-#HACK: avoid strange LocalScan error on Julia 1.5, 1.7
-# https://github.com/yuyichao/FunctionWrappers.jl/issues/17
-#HACK: avoid cfunction return type error on Julia 1.8
-# https://github.com/yuyichao/FunctionWrappers.jl/issues/25
-Base.@pure pass_by_value(T) = isbitstype(T)
+if VERSION >= v"1.8.0-DEV.1460"
+    # Restriction from https://github.com/JuliaLang/julia/pull/43953
+    Base.@pure pass_by_value_ret(T) = isbitstype(T)
+else
+    Base.@pure pass_by_value_ret(T) = pass_by_value(T)
+end
 
 Base.@pure is_singleton(@nospecialize(T)) = isdefined(T, :instance)
 # Base.@pure get_instance(@nospecialize(T)) = Base.getfield(T, :instance)
@@ -61,7 +43,7 @@ end
 
 # Convert return type and generates cfunction signatures
 Base.@pure map_rettype(T) =
-    (pass_by_value(T) || T === Any || is_singleton(T)) ? T : Ref{T}
+    (pass_by_value_ret(T) || T === Any || is_singleton(T)) ? T : Ref{T}
 Base.@pure function map_cfunc_argtype(T)
     if is_singleton(T)
         return Ref{T}
@@ -106,6 +88,19 @@ end
 Base.convert(::Type{T}, obj) where {T<:FunctionWrapper} = T(obj)
 Base.convert(::Type{T}, obj::T) where {T<:FunctionWrapper} = obj
 
+# `FunctionWrapper` is this package's entire user-facing API, but it has never been
+# exported or marked public, so every caller reaches it as a qualified access into an
+# undeclared name. Tooling that audits public-API boundaries (ExplicitImports.jl) flags
+# those, and downstream packages carry ignore entries for this one specifically.
+#
+# `public` is a Julia 1.11 keyword and a parse error on older versions, so it goes
+# through `Meta.parse` behind a `@static if`. Nothing changes for Julia < 1.11, and
+# nothing is exported on any version: `FunctionWrappers.FunctionWrapper` and
+# `import FunctionWrappers: FunctionWrapper` keep working exactly as before.
+@static if VERSION >= v"1.11"
+    eval(Meta.parse("public FunctionWrapper"))
+end
+
 @noinline function reinit_wrapper(f::FunctionWrapper{Ret,Args}) where {Ret,Args}
     objref = f.obj
     objT = f.objT
@@ -113,6 +108,16 @@ Base.convert(::Type{T}, obj::T) where {T<:FunctionWrapper} = obj
     f.ptr = ptr
     f.objptr = Base.unsafe_convert(Ref{objT}, objref)
     return ptr
+end
+
+# The default `deepcopy` copies `obj` but copies `ptr` and `objptr` as plain pointers, so
+# the copy would keep calling the original object, without keeping it alive. Re-derive the
+# pointers from the copy's own object.
+function Base.deepcopy_internal(f::FunctionWrapper, stackdict::IdDict)
+    haskey(stackdict, f) && return stackdict[f]
+    g = invoke(Base.deepcopy_internal, Tuple{Any,IdDict}, f, stackdict)
+    reinit_wrapper(g)
+    return g
 end
 
 @generated function do_ccall(f::FunctionWrapper{Ret,Args}, args) where {Ret,Args}
@@ -124,10 +129,10 @@ end
         if ptr == C_NULL
             # For precompile support
             ptr = reinit_wrapper(f)
+            @assert ptr != C_NULL
         end
-        assume(ptr != C_NULL)
         objptr = f.objptr
-        ccall(ptr, $(map_rettype(Ret)),
+        GC.@preserve f ccall(ptr, $(map_rettype(Ret)),
               (Ptr{Cvoid}, $((map_argtype(Arg) for Arg in Args.parameters)...)),
               objptr, $((:(convert($(Args.parameters[i]), args[$i]))
                          for i in 1:length(Args.parameters))...))
