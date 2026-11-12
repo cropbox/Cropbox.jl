@@ -1,11 +1,14 @@
+# The example services, driven without a socket by the requests that the bundled dashboard sends, and compared
+# with native calls. This loads Garlic and LeafGasExchange and runs a season of Garlic, so it is run by hand:
+#
+#     julia --project=examples/webapi examples/webapi/integration.jl
 using Cropbox
 using JSON
 using Test
 
-# The example services of `examples/webapi`, driven with the requests the bundled dashboard sends.
-include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
+include(joinpath(@__DIR__, "profiles.jl"))
 
-@testset "webapi" begin
+@testset "Web API example services" begin
     # `plot` options of a dashboard panel
     plotoptions(panel) = begin
         plot = Dict{String,Any}()

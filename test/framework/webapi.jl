@@ -705,6 +705,31 @@ end
         @test Cropbox.respond(external, "POST", "/api/visualize", JSON.json(Dict("y" => "x", "stop" => 1)))[1] == 200
     end
 
+    @testset "guide" begin
+        # the model of the web service guide, and what the guide says its requests return
+        @system SWebGuide(Controller) begin
+            "Height gained per hour."
+            r: growth_rate => 0.5 ~ preserve(parameter, u"cm/hr")
+            "Plant height."
+            h(r): height ~ accumulate(u"cm")
+        end
+        model = describe(SWebGuide)
+        parameter = only(model["parameters"])
+        @test parameter["path"] == "SWebGuide.r" && parameter["alias"] == "growth_rate" && parameter["unit"] == "cm*hr^-1"
+        @test [v["target"] for v in model["variables"]] == ["h"]
+        service = Cropbox.Service(SWebGuide; config = :SWebGuide => :r => 2u"cm/hr", request_defaults = Dict("stop" => Dict("value" => 3, "unit" => "d")))
+        request = Dict("config" => Dict("SWebGuide.growth_rate" => Dict("value" => 10, "unit" => "mm/hr")), "stop" => Dict("value" => 3, "unit" => "hr"), "target" => ["height"])
+        status, _, body = Cropbox.respond(service, "POST", "/api/simulate", JSON.json(request))
+        table = JSON.parse(body)
+        @test status == 200 && table["columns"] == [Dict("name" => "time", "type" => "Float64", "unit" => "hr"), Dict("name" => "height", "type" => "Float64", "unit" => "cm")]
+        @test table["rows"] == [[0, 0], [1, 1], [2, 2], [3, 3]] && table["summary"]["nrow"] == 4
+        # the table goes back as `data`, with no second simulation
+        status, _, body = Cropbox.respond(service, "POST", "/api/visualize", JSON.json(Dict("data" => table, "x" => "time", "y" => "height", "kind" => "line")))
+        @test status == 200 && occursin("<svg", JSON.parse(body)["body"])
+        # the dashboard starts from the request defaults
+        @test JSON.parse(Cropbox.respond(service, "GET", "/api/dashboard")[3])["simulation"]["stop"] == Dict("value" => 3, "unit" => "d")
+    end
+
     @testset "http" begin
         server = serve(SWebAPI; host = "127.0.0.1", port = 0, async = true, request_defaults = Dict("stop" => 1))
         try
