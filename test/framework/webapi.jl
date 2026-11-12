@@ -176,6 +176,10 @@ end
         @test Cropbox.parseunit("μmol/mol") == u"μmol/mol" && Cropbox.parseunit("μmol/(m^2*s)") == u"μmol/m^2/s"
         @test Cropbox.parseunit("") === nothing && Cropbox.parseunit(nothing) === nothing
         @test_throws Cropbox.APIRequestError Cropbox.parseunit("Base.eval")
+        # only unit names and arithmetic: no other call, no quantity
+        for bad in ("exit(1)", "run(`true`)", "m[1]", "1.5*m", "(m, s)")
+            @test_throws Cropbox.APIRequestError Cropbox.parseunit(bad)
+        end
         @test_throws Cropbox.APIRequestError Cropbox.parseunit("nounit")
         for u in (u"m", u"K*d", u"μmol/mol", u"°C", u"percent", u"m/s^2", u"μmol/m^2/s", u"kPa^(1//2)")
             @test Cropbox.parseunit(Cropbox.unitlabel(u)) == u
