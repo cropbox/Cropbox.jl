@@ -1,165 +1,143 @@
 # [How Cropbox Works](@id cropbox-concepts)
 
-Cropbox is a modeling framework rather than one particular crop model. It is
-best understood as a small vocabulary for declaring a model graph. The graph
-describes what each variable means and what it depends on; the framework turns
-that graph into an ordered update routine.
+The [Quick Start](@ref quick-start) runs a small logistic growth model. This page
+explains its declarations and introduces two more behaviors, without changing
+the growth equation.
 
-## Core building blocks
-
-A Cropbox model is built from five closely related elements: systems,
-variables, dependencies, behaviors, and a shared context.
-
-### System
-
-A `System` is a reusable model component containing variables. A system can
-represent a process such as phenology, an environment such as weather, or an
-entire model. Systems are composed through mixins and through variables that
-hold other systems.
-
-### Variable
-
-A variable has a short programmatic name, an optional alias, dependencies, a
-formula or initial value, and an update behavior.
+## Read a declaration
 
 ```julia
-response(temperature, base): effective_temperature =>
-    temperature - base ~ track(min = 0, u"K")
+W(W, r, Wf): biomass => r * W * (1 - W / Wf) ~ accumulate(init = W0, u"g")
 ```
 
-Here `response` depends on `temperature` and `base`; `effective_temperature` is
-an alias; the expression is recalculated by `track`; `min = 0` applies a lower
-bound to the stored value; and the result has units of kelvin.
+Read this from left to right:
 
-### Dependency
+- `W` is the short variable name; `biomass` is its descriptive alias.
+- `(W, r, Wf)` lists the values used in the equation.
+- The expression after `=>` calculates a rate of change.
+- `accumulate`, after `~`, integrates that rate over time.
+- The tags `init = W0` and `u"g"` set the initial value and stored unit.
 
-Dependencies are listed in parentheses after the variable name. Cropbox orders
-variables so a dependency is current before its consumer is evaluated. Ordinary
-cycles are rejected; state that changes over time is expressed through a
-behavior such as `accumulate`.
+The dependency on `W` itself is intentional: growth depends on the current
+biomass. An accumulated state carries its value from one time step to the
+next. This differs from a circular set of algebraic equations that has no
+starting value.
 
-### Behavior
+## Four common behaviors
 
-The word after `~` describes how a value changes:
+A behavior describes how a variable gets its value. Most first models can be
+read using these four:
 
-| Behavior | Meaning | Typical use |
+| Behavior | Meaning | Growth example |
 |---|---|---|
-| `preserve` | Initialize once | parameter or constant |
-| `track` | Recalculate on update | algebraic equation |
-| `accumulate` | Integrate a rate over time | biomass or thermal time |
-| `flag` | Track a Boolean condition | emergence, maturity, stop |
+| `preserve` | Initialize a value and keep it. | The parameter `r`. |
+| `track` | Recalculate a value from its dependencies. | The current growth rate `g`. |
+| `accumulate` | Integrate a rate over time. | Biomass `W`. |
+| `flag` | Store whether a condition is true. | Whether biomass has reached a chosen threshold. |
 
-Tags refine a behavior. For example, `parameter`, `init`, `when`, `min`, and
-`max` change configuration, initialization, conditional updates, and bounds.
-Data input, interpolation, numerical solvers, and dynamic child systems use
-additional behaviors documented in [Behaviors and Tags](@ref behaviors-and-tags).
-
-### Context
-
-Systems share a `Context` containing configuration and a `Clock`. A top-level
-`Controller` creates that context. Child systems receive it from their parent,
-which keeps time and configuration consistent across the model.
-
-## Modeling workflow
-
-Cropbox separates model development into three recurring phases. A
-specification describes the model independently of a particular run,
-simulation applies scenarios and advances model state, and the resulting data
-support two complementary activities: visualization and evaluation.
-
-![Cropbox modeling workflow](../assets/modeling-workflow.svg)
-
-### 1. Specification
-
-Use `@system` to declare variables, dependencies, equations, and behaviors.
-Cropbox parses this specification, analyzes its dependency graph, and generates
-the Julia types and update routines used during simulation. Mixins compose
-reusable systems, while `parameter` tags define the inputs that configuration
-may supply. Unit tags make compatible conversion and dimensional checking part
-of the specification.
+We can name the rate separately and add a stopping condition:
 
 ```@example concepts
 using Cropbox
 
-@system TemperatureResponse begin
-    T: temperature         => 20            ~ preserve(parameter, u"°C")
-    Tb: base_temperature   => 5             ~ preserve(parameter, u"°C")
+@system LogisticGrowth(Controller) begin
+    r: growth_rate      => 0.05                 ~ preserve(parameter, u"d^-1")
+    Wf: final_biomass   => 300                  ~ preserve(parameter, u"g")
+    W0: initial_biomass => 0.25                 ~ preserve(parameter, u"g")
 
-    Δt(context.clock.step): timestep        ~ preserve(u"hr")
-    r(T, Tb, Δt): response => (T - Tb) / Δt ~ track(min = 0, u"K/hr")
+    g(W, r, Wf): growth => r * W * (1 - W / Wf) ~ track(u"g/d")
+    W(g): biomass                               ~ accumulate(init = W0, u"g")
+
+    ready(W, Wf)        => W >= 0.9Wf           ~ flag
 end
+nothing # hide
+```
 
-@system Development(TemperatureResponse, Controller) begin
-    progress(r) ~ accumulate(u"K")
-end
+`g` and `W` now expose the rate and the accumulated state separately.
+`ready` becomes true when biomass reaches 90% of `Wf`; this is a numerical
+threshold for the example, not a biological definition of maturity.
 
-config = @config TemperatureResponse => (
-    T = 18,
-    Tb = 4,
+A tag modifies a behavior. Here `parameter` makes a preserved value
+configurable, `init` supplies the initial biomass, and unit tags declare
+dimensions. Additional behaviors and the complete tag rules belong in
+[Behaviors and Tags](@ref behaviors-and-tags).
+
+## Systems and dependencies
+
+A system groups declarations into a reusable model component. The names in
+parentheses identify dependencies, so Cropbox can update a derived value after
+the values it needs. You do not have to write the update routine yourself.
+
+Components can be combined with mixins or kept separate as child systems.
+`Controller` supplies a shared `Context` containing configuration and the
+clock. This lets components use the same scenario and model time. The next
+page, [Systems and Composition](@ref system), explains those two ways to
+combine systems.
+
+## Modeling workflow
+
+The same three stages apply to a small example and a whole-crop model:
+
+![Cropbox modeling workflow](../assets/modeling-workflow.svg)
+
+### Specify the model
+
+Declare variables, dependencies, equations, behaviors, and units with
+`@system`. The declaration defines a reusable model type; it does not run a
+simulation.
+
+### Configure and simulate
+
+Apply a scenario without changing the equations:
+
+```@example concepts
+config = @config (
+    LogisticGrowth => :r => 0.07,
+    Clock => :step => 1u"d",
 )
 ```
 
-Short names keep dependencies and equations compact. Descriptive aliases such
-as `temperature`, `base_temperature`, `timestep`, and `response` remain
-available when reading an instance or selecting output. `Δt` reads the
-configured `Clock.step`, so the response equation does not bake in a fixed
-update interval. The configuration supplies plain numbers for `T` and `Tb`;
-Cropbox applies their declared unit and displays them as `18 °C` and `4 °C`.
-
-This small example treats `T - Tb` as a contribution **per update**: dividing
-by `Δt` and then accumulating adds that contribution once each step. A shorter
-step therefore adds more contributions over the same elapsed time. It is not
-a time-step-independent thermal-time model; for degree-day accumulation, follow
-the [weather-driven phenology tutorial](@ref phenology-tutorial), which integrates
-a temperature difference over elapsed time.
-
-Continue with [DSL Syntax](@ref dsl-syntax), [System](@ref system), and
-[Configure Models and Scenarios](@ref configuration-workflow). The
-[Quick Start](@ref quick-start) develops a complete small specification.
-
-### 2. Simulation
-
-`@config` supplies parameter values and infrastructure settings without changing
-the specification. `instance` constructs a model for interactive inspection.
-`simulate` constructs and advances a fresh instance, applies stopping and
-snapshot rules, and returns selected variables as a DataFrame. The same
-specification can therefore be run with many scenarios and output selections.
+The plain value `0.07` acquires the unit declared by `r`. Using the system
+type as the key also allows parameter names and units to be checked.
 
 ```@example concepts
-s = instance(Development; config)
-current_response = s.response'
-
-result = simulate(Development;
+result = simulate(LogisticGrowth;
     config,
-    stop = 3u"hr",
-    target = [:response, :progress],
+    stop = :ready,
+    target = [:W, :g, :ready],
 )
-
-first(result, 3)
+last(result, 3)
 ```
 
-A system field is a Cropbox state object rather than a bare number; postfix `'`
-or `value` retrieves its current value outside a declaration. See
-[Model Execution](@ref model-execution) and
-[Run Simulations and Shape Output](@ref simulation-workflow) for construction,
-updates, stopping, snapshots, and output selectors.
+Each call to `simulate` starts a fresh model. Here `stop = :ready` checks
+the model's own condition. [Model Execution](@ref model-execution) explains
+instances, time steps, stopping, and saved output.
 
-### 3. Visualization and evaluation
+### Visualize and evaluate
 
-`visualize` explores trajectories, scenarios, and observations.
-`evaluate` compares model estimates with observed data using a selected metric,
-and `calibrate` searches parameter ranges against that objective. Keep
-calibration and independent validation separate.
+The Quick Start plots biomass over time. Keeping `g` in the output also lets
+us ask a different question: at which biomass is growth fastest?
 
 ```@example concepts
-visualize(result, :time, :progress; kind = :line)
+visualize(result, :W, :g;
+    kind = :line,
+    xlab = "Biomass",
+    ylab = "Growth rate",
+    legend = false,
+)
 ```
 
-Continue with [Inspect and Visualize Models](@ref inspection-workflow) and the
-[Evaluate and Calibrate Models](@ref evaluation-tutorial) workflow.
+The rate rises and then falls as `W` approaches `Wf`. This curve is read
+against biomass, not time.
 
-## Where to go next
+When observations are available, `evaluate` compares them with model
+estimates and `calibrate` searches parameter ranges. Follow
+[Evaluate and Calibrate Models](@ref evaluation-tutorial) when you reach that
+stage; neither is needed to understand the declarations above.
 
-Follow the [Quick Start](@ref quick-start) to apply all three stages to a small
-model, then choose a domain tutorial from the navigation. Use the workflow and
-reference pages when you need more control over an individual stage.
+## Continue learning
+
+Continue with [Systems and Composition](@ref system), then
+[Model Execution](@ref model-execution). Use [DSL Syntax](@ref dsl-syntax)
+when you need a particular grammar form, rather than reading the full reference
+before the next example.
