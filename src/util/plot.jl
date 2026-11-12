@@ -45,7 +45,7 @@ extractcolumn(df::AbstractDataFrame, n::Expr) = begin
     te(x) = @capture(x, f_(a__)) ? :($f($(ts.(a)...))) : x
     #HACK: avoid world age problem for function scope eval
     e = Main.eval(:(df -> @. $(MacroTools.postwalk(te, n))))
-    (() -> @eval $e($df))()
+    Base.invokelatest(e, df)
 end
 convertcolumn(c::AbstractVector{ZonedDateTime}) = Dates.DateTime.(c)
 convertcolumn(c) = c

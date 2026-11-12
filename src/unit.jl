@@ -50,8 +50,6 @@ unitfy(v::Number, u::Units) = Quantity(v, u)
 unitfy(v::AbstractArray, u::Units) = unitfy.(v, u)
 unitfy(v::Tuple, u::Units) = unitfy.(v, u)
 unitfy(v::Quantity, u::Units) = Unitful.uconvert(u, v)
-unitfy(v::AbstractArray{<:Union{Quantity,Missing}}, u::Units) = unitfy.(v, u)
-unitfy(v::Tuple{Vararg{Union{Quantity,Missing}}}, u::Units) = unitfy.(v, u)
 unitfy(v::UnitRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(1, Unitful.absoluteunit(u)), unitfy(v.stop, u))
 unitfy(v::StepRange, u::Units) = StepRange(unitfy(v.start, u), unitfy(step(v), Unitful.absoluteunit(u)), unitfy(v.stop, u))
 unitfy(v::StepRangeLen, u::Units) = begin
@@ -99,7 +97,7 @@ for f in (:unitfy, :deunitfy)
 end
 
 import Dates
-import JuliaInterpreter
+import Symbolics
 unitfy(df::AbstractDataFrame; kw...) = begin
     #HACK: default constructor for common types to avoid scope binding issue
     D = merge(Dict(
@@ -120,15 +118,10 @@ unitfy(df::AbstractDataFrame; kw...) = begin
             #TODO: remove fallback eval in favor of explict constructor mapping
             haskey(D, e) ? D[e] : Main.eval(e)
         else
-            #HACK: use JuliaInterpreter to avoid eval during precompilation
-            #Unitful.uparse(s)
-            # https://github.com/PainterQubits/Unitful.jl/issues/649
-            e = Meta.parse(s)
-            if isa(e, Symbol)
-                Unitful.lookup_units(Unitful, e)
-            else
-                JuliaInterpreter.finish_and_return!(JuliaInterpreter.Frame(Unitful, e))
-            end
+            #HACK: avoid Unitful.uparse eval during precompilation
+            # https://github.com/JuliaPhysics/Unitful.jl/issues/649
+            e = Unitful.lookup_units(Unitful, Meta.parse(s))
+            Symbolics.parse_expr_to_symbolic(e, Unitful)
         end
     end
     u(m) = missing

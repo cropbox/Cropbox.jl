@@ -203,6 +203,14 @@ using Dates: Date, Time
         @test N[4] == "d"
     end
 
+    @testset "dataframe unit expressions" begin
+        for (s, u) in ("m^-2" => u"m^-2", "√m" => u"√m", "°C" => u"°C", "percent" => u"percent")
+            r = unitfy(DataFrame("x ($s)" => [1, missing]))
+            @test isequal(r.x, [1u, missing])
+        end
+        @test_throws ArgumentError unitfy(DataFrame("x (m/unknownunit)" => [1]))
+    end
+
     @testset "dataframe auto type" begin
         df = DataFrame()
         z = ["2020-10-08"]
