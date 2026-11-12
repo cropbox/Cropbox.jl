@@ -46,22 +46,21 @@ end
 
 # --- units and scalar types ---------------------------------------------------
 
-const UNIT_CHARS = Set(('°', '%', 'µ', 'μ', '*', '/', '^', '.', '-', '+', '(', ')', '⁻', '⁺', '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'))
 const SUPERSCRIPTS = Dict('⁻' => '-', '⁺' => '+', '⁰' => '0', '¹' => '1', '²' => '2', '³' => '3', '⁴' => '4', '⁵' => '5', '⁶' => '6', '⁷' => '7', '⁸' => '8', '⁹' => '9')
 
 """
     parseunit(s) -> Unitful.Units
 
 Parse a unit label such as `"m"`, `"K*d"`, `"μmol/(m^2*s)"` or `"m s⁻¹"` with
-`Unitful.uparse`, which only resolves unit names and arithmetic (no code is
-evaluated). Returns `nothing` for `nothing` or a blank string.
+`Unitful.uparse`, which accepts only unit names and the arithmetic operators
+(`*`, `/`, `^`, `√`, `+`, `-`, `//`) and rejects any other call or syntax.
+Returns `nothing` for `nothing` or a blank string.
 """
 parseunit(::Nothing) = nothing
 parseunit(u::Unitful.Units) = u
 parseunit(s::AbstractString) = begin
     t = strip(s)
     isempty(t) && return nothing
-    all(c -> isletter(c) || isdigit(c) || isspace(c) || c in UNIT_CHARS, t) || apierror("Invalid characters in unit `$s`")
     u = try
         Unitful.uparse(t)
     catch
