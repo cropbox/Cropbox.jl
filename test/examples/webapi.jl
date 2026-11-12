@@ -63,9 +63,9 @@ include(joinpath(@__DIR__, "..", "..", "examples", "webapi", "profiles.jl"))
             # panels only plot variables the dashboard offers as outputs
             @test all(panel -> issubset(vcat(panel["x"], panel["y"]), outputs), panels)
 
-            # one simulation covers the selected output columns and every panel
+            # one simulation covers the selected output columns and every panel, from the `stop` the service defaults to
             stop = dashboard["simulation"]["stop"]
-            stop["value"] isa Number || (stop = stop["value"])
+            @test stop == JSON.parse(JSON.json(p.request_defaults["stop"])) && isnothing(dashboard["simulation"]["snap"])
             targets = unique(vcat(outputs[1:min(5, end)], target, x, (vcat(panel["x"], panel["y"]) for panel in panels)...))
             result = postjson("/api/simulate", Dict("config" => Dict(), "stop" => stop, "target" => targets))
             columns = [c["name"] for c in result["columns"]]

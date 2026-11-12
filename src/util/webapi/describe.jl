@@ -278,12 +278,14 @@ that can be part of it (the context and produced systems included):
   parameter, and the path of a shared mixin leads to several;
 - `paths`: variable paths accepted as `target`, `index`, `stop`, `x` and `y`
   (every variable with a fixed access path, and `*` / `system.*` wildcards);
-- `aliases`: access paths through an alias, each mapped to the path by name.
+- `aliases`: access paths through an alias, each mapped to the path by name;
+- `time`: the unit of the clock time, in which a `stop` or `snap` duration is read.
 """
 struct ModelIndex
     parameters::Dict{String,Vector{NamedTuple}}
     paths::Set{String}
     aliases::Dict{String,String}
+    time::Units
 end
 
 ModelIndex(S::Type{<:System}) = (tree = systemtree(S); ModelIndex(tree, variables(tree)))
@@ -309,8 +311,11 @@ ModelIndex(tree, V) = begin
             isnothing(v.alias) || (aliases[below(v.alias)] = below(v.name))
         end
     end
-    ModelIndex(parameters, paths, aliases)
+    ModelIndex(parameters, paths, aliases, timeunit(clocktype(first(tree).system)))
 end
+
+"Clock type driving `S` (`Clock` unless a custom context is used)."
+clocktype(S::Type{<:System}) = fieldtype(typefor(fieldtype(typefor(S), :context)), :clock)
 
 """
     canonical(config, index)

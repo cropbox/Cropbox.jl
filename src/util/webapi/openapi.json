@@ -3,7 +3,7 @@
   "info": {
     "title": "Cropbox Web API",
     "version": "0.2.0",
-    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, merged under trusted server-side `request_defaults`, and dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. A field that the operation or one of its objects does not define is rejected (422) rather than ignored. Model-specific metadata comes from `GET /api/model`."
+    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, the fields it leaves out are filled in from the trusted `request_defaults` of the server (what the client sends wins), and the request is dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. A request that the model or its data cannot take is rejected (422 `validation`) before or apart from the run: a field that the operation or one of its objects does not define, a value in a unit or shape its parameter does not take, observations that match no output. A failure while the model runs is a 500 (`execution`). Model-specific metadata comes from `GET /api/model`."
   },
   "paths": {
     "/api/model": {
@@ -16,7 +16,7 @@
     "/api/dashboard": {
       "get": {
         "summary": "Dashboard metadata",
-        "description": "Editable controls, selectable outputs, plot panels and simulation defaults derived from the model description.",
+        "description": "What the bundled dashboard is built from: editable controls, selectable outputs and plot panels derived from the model description, and the `stop` and `snap` that the service defaults to.",
         "responses": {"200": {"description": "Dashboard metadata", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WidgetPayload"}}}}}
       }
     },
@@ -46,7 +46,7 @@
     "/api/visualize": {
       "post": {
         "summary": "Render a plot as SVG",
-        "description": "Either simulates the model (`config`, `stop`, `snap`, `base`, `xstep`) or plots a table passed as `data`.",
+        "description": "Draws one table, `y` against `x`: the table passed as `data`, or the one from simulating the model (`config`, `stop`, `snap`, `base`, `xstep`). This is the table form of `visualize`; its grouped, layered and observation forms are not available over HTTP.",
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VisualizationRequest"}}}},
         "responses": {
           "200": {"description": "SVG document", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VisualizationResponse"}}}},
@@ -106,7 +106,7 @@
         "description": "Julia type name. On input `Bool`, `Int`/`Int64`, `Float64`, `String`, `Symbol`, `Date`, `DateTime` and `ZonedDateTime` convert the value (element-wise for arrays); any other name is informative and leaves the value as parsed."
       },
       "Table": {
-        "description": "A table given as CSV text or as columns and row arrays; a TablePayload response is one of the latter and can be sent back as it is. CSV headers may carry `name (unit)` or `name (:Type)` annotations when no `columns` are given. No column name may end in parentheses otherwise.",
+        "description": "A table given as CSV text or as columns and row arrays; a TablePayload response is one of the latter and can be sent back as it is. CSV headers may carry `name (unit)` or `name (:Type)` annotations when no `columns` are given. No column name may end in parentheses otherwise. Column names are unique and a row has no more cells than there are columns; a cell that is absent or null is a missing value.",
         "oneOf": [
           {"type": "object", "required": ["type", "content"], "properties": {
             "type": {"const": "CSV"}, "content": {"type": "string"}, "filename": {"type": "string"},
@@ -120,7 +120,7 @@
         ]
       },
       "Config": {
-        "description": "Parameter values keyed by `System.name` paths, or nested `{System: {name: value}}` objects. Both shapes may be mixed. A parameter of the model is addressed by its name or alias under its system or a mixin of it, and takes precedence over the server's value whichever of those either side used; other paths are rejected. Table parameters take a Table.",
+        "description": "Parameter values keyed by `System.name` paths, or nested `{System: {name: value}}` objects. Both shapes may be mixed. A parameter of the model is addressed by its name or alias under its system or a mixin of it, and takes precedence over the server's value whichever of those either side used; other paths are rejected. A parameter of a scalar type takes one value, and a quantity in a unit that converts to the declared one. Table parameters take a Table.",
         "type": "object",
         "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}, {"type": "object", "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}]}}]}
       },
@@ -142,22 +142,21 @@
           "target": {"$ref": "#/components/schemas/Names"},
           "meta": {"$ref": "#/components/schemas/Meta"},
           "base": {"type": "string", "description": "Path of the system (`leaf`) that `target`, `index`, `x` and `y` are relative to."},
-          "stop": {"$ref": "#/components/schemas/Value", "description": "Update count (number), duration (`{value, unit}`) or the path of a count or condition variable (string)."},
-          "seed": {"type": "integer"},
-          "options": {"type": "object", "description": "Keyword options for the system constructor."}
+          "stop": {"$ref": "#/components/schemas/Value", "description": "Update count (number), duration (`{value, unit}` in a unit of the clock time) or the path of a count or condition variable (string)."},
+          "seed": {"type": "integer"}
         }
       },
       "SimulationRequest": {
         "allOf": [{"$ref": "#/components/schemas/RunRequest"}],
         "properties": {
-          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}`), a boolean or the path of a condition variable."},
+          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}` in a unit of the clock time), a boolean or the path of a condition variable."},
           "nounit": {"type": "boolean"},
           "long": {"type": "boolean"}
         },
         "examples": [{"config": {"Plant.size": {"value": 3, "unit": "m"}}, "stop": {"value": 4, "unit": "hr"}, "target": ["size", "growth"]}]
       },
       "VisualizationRequest": {
-        "description": "Either simulates the model (`config`, `base`, `stop`, `snap`, `xstep`) or plots the table given as `data`, whose columns `x` and `y` then name.",
+        "description": "Plots the table given as `data`, whose columns `x` and `y` then name, or else simulates the model (`config`, `base`, `stop`, `snap`, `xstep`) and plots the variables `x` and `y`. A single `y` is named on its axis and several in a legend.",
         "type": "object",
         "properties": {
           "config": {"$ref": "#/components/schemas/Config"},
@@ -167,9 +166,8 @@
           "x": {"type": "string", "default": "time"},
           "y": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
           "kind": {"type": "string", "enum": ["line", "scatter", "scatterline", "step"]},
-          "backend": {"type": "string", "enum": ["Makie"]},
           "xstep": {"type": "object", "description": "A parameter varied across simulations, as a range (`start`, `stop`, `step`) or explicit `values`, in `unit`.", "required": ["path"], "additionalProperties": false, "properties": {"path": {"type": "string"}, "start": {"$ref": "#/components/schemas/Value"}, "stop": {"$ref": "#/components/schemas/Value"}, "step": {"$ref": "#/components/schemas/Value"}, "values": {"type": "array"}, "unit": {"type": "string"}}},
-          "plot": {"type": "object", "description": "Plot options: kind, title, xlab, ylab, legend, legendpos, names, colors, xlim and ylim (`[lower, upper]`, either may be null), xunit, yunit, aspect, and linestyle (`solid`, `dash`, `dot`, `dashdot` or `dashdotdot`, one or one for each of `y`)."},
+          "plot": {"type": "object", "description": "Plot options: title, xlab, ylab, legend, legendpos, names, colors, xlim and ylim (`[lower, upper]`, either may be null), xunit, yunit, aspect, and linestyle (`solid`, `dash`, `dot`, `dashdot` or `dashdotdot`, one or one for each of `y`)."},
           "data": {"$ref": "#/components/schemas/Table", "description": "Plot this table instead of simulating."}
         },
         "required": ["y"]
@@ -253,12 +251,11 @@
       "WidgetPayload": {
         "type": "object",
         "properties": {
-          "title": {"type": "string"}, "contract": {"type": "object"}, "model": {"type": "object"}, "systems": {"type": "array"},
+          "title": {"type": "string"}, "model": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}}},
           "controls": {"type": "array", "items": {"$ref": "#/components/schemas/Control"}},
           "outputs": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}},
           "tables": {"type": "array"},
-          "simulation": {"type": "object", "properties": {"stop": {}, "snap": {}}},
-          "visualize": {"type": "object"},
+          "simulation": {"type": "object", "description": "The `stop` and `snap` among the `request_defaults` of the service, as a request takes them, for a client to start from. `stop` is five units of the clock time when the service has none; `snap` is null when it has none or one only Julia can express.", "properties": {"stop": {}, "snap": {}}},
           "panels": {"type": "array", "description": "Plots of `outputs` targets, which include every variable a panel names.", "items": {"type": "object", "properties": {
             "title": {"type": "string"}, "x": {"type": "string"}, "y": {"type": "array", "items": {"type": "string"}}, "kind": {"type": "string"},
             "linestyles": {"type": "array", "items": {"type": "string"}, "description": "One line style for each of `y`."},

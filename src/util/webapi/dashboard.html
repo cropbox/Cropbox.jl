@@ -1023,10 +1023,8 @@
 
     function defaultPanel() {
       const vars = panelVars();
-      const x = vars.includes("time") ? "time" : (schema.visualize.x.default || vars[0]);
-      const defaults = Array.isArray(schema.visualize.y.default) ? schema.visualize.y.default : [schema.visualize.y.default].filter(Boolean);
-      const y = defaults.filter(value => value !== x);
-      return { _id: `panel-${nextPanelId++}`, x, y: y.length ? y : vars.filter(value => value !== x).slice(0, 1), kind: "line", xstep: "", linestyles: [], xmin: "", xmax: "", ymin: "", ymax: "", settingsOpen: true };
+      const x = vars.includes("time") ? "time" : vars[0];
+      return { _id: `panel-${nextPanelId++}`, x, y: vars.filter(value => value !== x).slice(0, 1), kind: "line", xstep: "", linestyles: [], xmin: "", xmax: "", ymin: "", ymax: "", settingsOpen: true };
     }
 
     function panelVars() {
