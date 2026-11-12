@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cropbox Dashboard</title>
+  <link rel="icon" href="data:,">
   <style>
     :root { color-scheme: light; --line:#d8dee8; --ink:#1d2630; --muted:#5d6875; --fill:#f5f7fa; --panel:#fff; --accent:#256f6c; --danger:#b24646; }
     * { box-sizing: border-box; }
@@ -486,7 +487,7 @@
         syncPanels();
         const target = [...new Set(["time", ...selectedColumns(), ...panels.flatMap(p => [p.x, ...p.y])])];
         const request = requestFromControls({ target });
-        document.querySelectorAll(".panel-body").forEach(body => { body.classList.remove("empty"); body.innerHTML = spinner; });
+        clearPanels(spinner);
         const res = await postJSON("/api/simulate", request);
         result = { columns: res.columns, rows: res.rows };
         renderResultTable();
@@ -503,8 +504,7 @@
     // --- panels -----------------------------------------------------------------
 
     function defaultPanel() {
-      const y = [schema.visualize?.y?.default ?? []].flat();
-      return { x: schema.visualize?.x?.default || "time", y: y.length ? y : targets().filter(v => v !== "time").slice(0, 1), kind: "line", xstep: "", xmin: "", xmax: "", ymin: "", ymax: "", open: true };
+      return { x: "time", y: targets().filter(v => v !== "time").slice(0, 1), kind: "line", xstep: "", xmin: "", xmax: "", ymin: "", ymax: "", open: true };
     }
 
     function renderPanels() {
@@ -601,12 +601,24 @@
       return indices.includes(-1) ? null : { columns: indices.map(i => result.columns[i]), rows: result.rows.map(row => indices.map(i => row[i])) };
     }
 
+    // Whatever changes what a panel shows takes a turn, and a plot only shows if its turn is still the latest:
+    // not after a later request for the panel, and not after the panels were cleared.
+    const nextTurn = body => body.dataset.turn = String(Number(body.dataset.turn || 0) + 1);
+
+    // A new run and a failed one clear every panel, so no plot that is still on its way shows over them.
+    function clearPanels(html) {
+      document.querySelectorAll(".panel-body").forEach(body => {
+        nextTurn(body);
+        body.classList.remove("empty");
+        body.innerHTML = html;
+      });
+    }
+
     async function renderPanel(index) {
       const p = panels[index];
       const body = $(`panel-body-${index}`);
       if (!p || !body) return;
-      // the latest request for a panel is the one that shows
-      const turn = body.dataset.turn = String(Number(body.dataset.turn || 0) + 1);
+      const turn = nextTurn(body);
       const placeholder = message => { body.classList.add("empty"); body.textContent = message; };
       body.classList.remove("empty");
       if (!p.y.length) return placeholder("Select Y axis variables");
@@ -686,7 +698,7 @@
       $("result").innerHTML = `<tr><td class="error">${esc(message)}</td></tr>`;
       $("result-note").textContent = "";
       $("download-results").disabled = true;
-      document.querySelectorAll(".panel-body").forEach(body => { body.classList.remove("empty"); body.innerHTML = `<div class="error">${esc(message)}</div>`; });
+      clearPanels(`<div class="error">${esc(message)}</div>`);
       setStatus(message);
     }
 
