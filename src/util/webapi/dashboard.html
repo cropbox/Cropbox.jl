@@ -440,7 +440,8 @@
 
       const snapSpec = schema.simulation?.snap;
       const snap = simulationParts(snapSpec);
-      const snapMode = snapSpec === null || snapSpec === undefined ? "default" : (conditionLike(snap) ? "condition" : "interval");
+      // `true` or `false` is left to the service, which applies it when the request has no `snap`
+      const snapMode = snapSpec === null || snapSpec === undefined || typeof snapSpec === "boolean" ? "default" : (conditionLike(snap) ? "condition" : "interval");
       document.getElementById("snap-mode").value = snapMode;
       document.getElementById("snap-value").value = snapMode === "interval" ? snap.value : 1;
       document.getElementById("snap-unit").value = snapMode === "interval" ? snap.unit : "d";

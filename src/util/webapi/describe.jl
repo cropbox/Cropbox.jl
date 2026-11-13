@@ -102,25 +102,54 @@ systemtree(S::Type{<:System}; recursive=true, exclude=(Context,)) = begin
             visit!(fieldtype(C, f), isnothing(path) ? nothing : isempty(path) ? string(f) : "$(path).$(f)", (above..., C), excluded)
         end
         for v in I
-            v.state == :Produce && push!(produced, (producedtype(T, v), excluded))
+            v.state == :Produce || continue
+            for P in producedtypes(T, v)
+                push!(produced, (P, excluded))
+            end
         end
     end
     visit!(S, "", (), false)
     while !isempty(produced)
         T, excluded = popfirst!(produced)
-        isnothing(T) || visit!(T, nothing, (), excluded)
+        visit!(T, nothing, (), excluded)
     end
     tree
 end
 
-# System type a `produce` variable declares for what it creates.
-producedtype(T, v::VarInfo) = try
-    P = Core.eval(scopeof(T), v.type)
-    P <: AbstractVector && (P = eltype(P))
-    P <: System ? P : nothing
-catch
-    nothing
+"""
+System types that a `produce` variable of `T` creates: the type it declares when
+that is one system, and otherwise the systems that its body passes to `produce`
+(`produce(Child; config)`) among those of the declared kind (`produce::Family[]`,
+or any system without a declaration). Empty when neither names one, as for a type
+computed while the model runs.
+"""
+producedtypes(T, v::VarInfo) = begin
+    resolve(x) = try
+        P = Core.eval(scopeof(T), x)
+        P isa Type && P <: AbstractVector && (P = eltype(P))
+        P isa Type && P <: System ? P : nothing
+    catch
+        nothing
+    end
+    declared = something(resolve(v.type), System)
+    isconcretetype(typefor(declared)) && return [declared]
+    found = []
+    walk(x) = nothing
+    walk(x::Expr) = begin
+        if x.head == :call && !isempty(x.args) && x.args[1] in (:produce, :(Cropbox.produce))
+            # keyword arguments come first in the call when they follow a semicolon
+            A = filter(a -> !(a isa Expr && a.head in (:parameters, :kw)), x.args[2:end])
+            # a name only: what a call would compute is only known once the model runs
+            isempty(A) || !(first(A) isa Symbol || Meta.isexpr(first(A), :.)) || push!(found, resolve(first(A)))
+        end
+        foreach(walk, x.args)
+    end
+    walk(v.body)
+    unique(P for P in found if !isnothing(P) && P <: declared && isconcretetype(typefor(P)))
 end
+
+"`produce` variables of the tree whose systems `producedtypes` cannot name, as `System.name` paths."
+openproduce(tree) = unique(["$(namefor(t.system)).$(v.name)" for t in tree for v in t.infos if v.state == :Produce && isempty(producedtypes(t.system, v))])
 
 "System names under which Cropbox looks up the parameters of `T`, in its order of precedence: the system, then its mixins."
 systemkeys(T) = collect(Symbol, Iterators.flatten(reverse(names.(collect(mixincollect(supertype(typefor(T))))))))
@@ -181,12 +210,14 @@ that `config` sets (such as the clock step).
 """
 describe(S::Type{<:System}; config=(), recursive=true, exclude=(Context,)) = begin
     tree = systemtree(S; recursive, exclude)
-    description(S, tree, variables(tree); config, recursive, exclude)
+    description(S, tree, variables(tree); config)
 end
 
-description(S::Type{<:System}, tree, V; config=(), recursive=true, exclude=(Context,)) = begin
+description(S::Type{<:System}, tree, V; config=()) = begin
     c = configure(config)
-    defaults = parameterflatten(parameters(S; recursive, exclude))
+    # the defaults of each system the tree reached, rather than a second walk that would follow open types
+    systems = unique(t -> typefor(t.system), [t for t in tree if !t.excluded])
+    defaults = merge(Dict(), (parameterflatten(parameters(t.system)) for t in systems)...)
     P = APIDict[]
     seen = Set{Tuple{Symbol,Symbol}}()
     for v in V
@@ -279,13 +310,16 @@ that can be part of it (the context and produced systems included):
 - `paths`: variable paths accepted as `target`, `index`, `stop`, `x` and `y`
   (every variable with a fixed access path, and `*` / `system.*` wildcards);
 - `aliases`: access paths through an alias, each mapped to the path by name;
-- `time`: the unit of the clock time, in which a `stop` or `snap` duration is read.
+- `time`: the unit of the clock time, in which a `stop` or `snap` duration is read;
+- `open`: the `produce` variables whose systems are only known once the model
+  runs. Their parameters cannot be checked, so a request cannot set them.
 """
 struct ModelIndex
     parameters::Dict{String,Vector{NamedTuple}}
     paths::Set{String}
     aliases::Dict{String,String}
     time::Units
+    open::Vector{String}
 end
 
 ModelIndex(S::Type{<:System}) = (tree = systemtree(S); ModelIndex(tree, variables(tree)))
@@ -311,7 +345,7 @@ ModelIndex(tree, V) = begin
             isnothing(v.alias) || (aliases[below(v.alias)] = below(v.name))
         end
     end
-    ModelIndex(parameters, paths, aliases, timeunit(clocktype(first(tree).system)))
+    ModelIndex(parameters, paths, aliases, timeunit(clocktype(first(tree).system)), openproduce(tree))
 end
 
 "Clock type driving `S` (`Clock` unless a custom context is used)."

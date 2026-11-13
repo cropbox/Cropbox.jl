@@ -242,7 +242,7 @@ checkconfig(c::Config, index::ModelIndex) = begin
     for (system, F) in c, (name, value) in F
         path = "$(system).$(name)"
         K = get(index.parameters, path, nothing)
-        isnothing(K) && apierror("Unknown parameter `$path`")
+        isnothing(K) && unknownparameter(path, index)
         table = any(v -> v.role == "table", K)
         table == (value isa DataFrame) || apierror(table ? "Table parameter `$path` requires a CSV or DataFrame payload" : "Parameter `$path` does not take a table")
         push!(P, system => name => parametervalue(value, first(K), path))
@@ -251,12 +251,31 @@ checkconfig(c::Config, index::ModelIndex) = begin
 end
 
 """
+A path that sets no parameter the service knows. When the model produces
+systems whose types are only known while it runs, the path may belong to one of
+them; the service cannot check such a parameter and does not set it, and says so.
+"""
+unknownparameter(path, index) = begin
+    isempty(index.open) && apierror("Unknown parameter `$path`")
+    apierror("Unknown parameter `$path`. The systems that $(join(("`$p`" for p in index.open), ", ")) produce are only known once the model runs, so the service cannot check or set their parameters")
+end
+
+"Whether a plain value, or the number of a quantity, is one that a parameter of the scalar type `T` takes."
+takes(::Type{Bool}, x) = x isa Bool
+takes(::Type{Int}, x) = x isa Real && !(x isa Bool) && isinteger(x)
+takes(::Type{<:Union{Float64,Rational}}, x) = x isa Real && !(x isa Bool)
+takes(::Type{<:Union{String,Symbol}}, x) = x isa Union{AbstractString,Symbol}
+takes(T::Type, x) = x isa T
+
+"""
 A value as the parameter `v` takes it: a string is read as the declared type,
 nested arrays as the matrix a `tabulate` or `interpolate` parameter takes, and
 a float as the exact value of a rational parameter (the clock step). A
 parameter of a scalar type takes no array, and a quantity for it is converted
 to the declared unit here, so that one it cannot be converted from is the
-request's error rather than a failure to construct the model.
+request's error rather than a failure to construct the model. So is a value
+of another type than the declared one, `null` included: a fraction for an
+integer, a number for a flag.
 """
 parametervalue(value, v, path) = begin
     matrix = v.state in (:Tabulate, :Interpolate)
@@ -264,7 +283,13 @@ parametervalue(value, v, path) = begin
     scalar && value isa AbstractVector && apierror("Parameter `$path` takes one value, not an array")
     if value isa AbstractString && !(v.type in (nothing, "String"))
         value = decodetyped(value, v.type)
-    elseif matrix && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
+    end
+    if scalar
+        T = get(API_TYPES, v.type, Rational{Int})
+        takes(T, value isa Quantity ? ustrip(value) : value) ||
+            apierror("Parameter `$path` takes a value of type $(v.type), not `$(something(value, "null"))`")
+    end
+    if matrix && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
         value = asmatrix(value)
     elseif v.type == "Rational{Int64}"
         value = exactify(Rational{Int}, value; warn=false)
@@ -285,7 +310,7 @@ any other spelling.
 """
 variedparameters(path::AbstractString, index::ModelIndex) = begin
     K = get(index.parameters, path, nothing)
-    isnothing(K) && apierror("Unknown parameter `$path`")
+    isnothing(K) && unknownparameter(path, index)
     any(v -> v.role == "table", K) && apierror("Table parameter `$path` cannot be varied")
     K
 end
