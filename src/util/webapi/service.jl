@@ -286,7 +286,7 @@ parametervalue(value, v, path) = begin
     end
     if scalar
         T = get(API_TYPES, v.type, Rational{Int})
-        takes(T, value isa Quantity ? ustrip(value) : value) ||
+        takes(T, value isa Quantity ? Unitful.ustrip(value) : value) ||
             apierror("Parameter `$path` takes a value of type $(v.type), not `$(something(value, "null"))`")
     end
     if matrix && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
