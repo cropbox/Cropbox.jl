@@ -1,6 +1,40 @@
 using DataStructures: OrderedDict
 
+module MConfigA
+using Cropbox
+
+@system Leaf begin
+    a: rate => 1 ~ preserve(parameter, u"cm/hr")
+end
+end
+
+module MConfigB
+using Cropbox
+
+@system Leaf begin
+    a: rate => 10 ~ preserve(parameter, u"cm/hr")
+end
+end
+
 @testset "config" begin
+    @testset "qualified names" begin
+        @system SConfigQualified(Controller) begin
+            a(context) ~ ::MConfigA.Leaf
+            b(context) ~ ::MConfigB.Leaf
+        end
+
+        c = Cropbox.configure("Main.MConfigA.Leaf.rate" => 2u"cm/hr", "MConfigB.Leaf.rate" => 3u"cm/hr")
+        @test c == @config Symbol("Main.MConfigA.Leaf") => :rate => 2u"cm/hr", Symbol("MConfigB.Leaf") => :rate => 3u"cm/hr"
+        @test eltype(c) == Pair{Symbol,Any}
+        s = instance(SConfigQualified; config = c)
+        @test (s.a.a', s.b.a') == (2u"cm/hr", 3u"cm/hr")
+        @test Cropbox.decodify(Cropbox.codify(c, :meta), :meta) == c
+
+        c = Cropbox.configure(parameters(SConfigQualified; recursive = true), MConfigA.Leaf => :a => 4)
+        @test c[:Leaf][:a] == instance(SConfigQualified; config = c).a.a'
+        @test Cropbox.option(c, [:Leaf], :a) == 4u"cm/hr"
+    end
+
     @testset "configure" begin
         @testset "default" begin
             c = Cropbox.Config()
@@ -466,9 +500,9 @@ using DataStructures: OrderedDict
             @test C[:S][:a] == 1
         end
         
-        @testset "error" begin
+        @testset "qualified" begin
             c = "S.a.b" => 1
-            @test_throws ErrorException Cropbox.configure(c)
+            @test Cropbox.configure(c)[Symbol("S.a")][:b] == 1
         end
     end
     
@@ -574,6 +608,7 @@ using DataStructures: OrderedDict
             s = instance(SConfigOptionPrivate, config=c)
             @test s.b' == 2
             @test s.c' == 6
+            @test instance(SConfigOptionPrivate; config = (c, "Main.SConfigOptionPrivate._a" => 2)).b' == 4
         end
     end
 end
