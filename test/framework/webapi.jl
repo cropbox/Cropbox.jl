@@ -329,6 +329,8 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.decodeconfig(Dict("a" => Dict("value" => 1, "unit" => "m")))
         # a flat path may name the system with its modules; only the model says whether it has one
         @test Cropbox.decodeconfig(Dict("Model.SWebAPI.a" => 1)) == @config(Symbol("Model.SWebAPI") => :a => 1)
+        # and so may the system of a nested object, as a calibration answers
+        @test Cropbox.decodeconfig(Dict("Model.SWebAPI" => Dict("a" => 1))) == @config(Symbol("Model.SWebAPI") => :a => 1)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("Model.SWebAPI.a" => 1)); index = Cropbox.ModelIndex(SWebAPI))
         @test Cropbox.decodeconfig(Dict("Soil" => Dict("type" => "clay"))) == @config(:Soil => :type => "clay")
         @test Dict(Cropbox.flatconfig(flat)) == Dict("SWebAPI.a" => 200u"cm", "SWebAPI.c" => 3)
@@ -835,15 +837,32 @@ end
         @test [(readA(c), readB(c)) for c in swept(twinA)] == [(3, 7), (4, 7)]
         @test [(readA(c), readB(c)) for c in swept("SWebTwin.a")] == [(3, 3), (4, 4)]
         # and a calibration of one of them by its qualified path
-        bounded = Cropbox.calibrationrange(twinA => [0, 10], both.config, both.index)
+        bounded = Cropbox.calibrationrange(twinA => [0, 10], both.index)
         @test first(bounded) == Symbol(first(names(WebAPITestModels.NamesakeA.SWebTwin))) && last(last(bounded)) == [0, 10]
-        @test_throws Cropbox.APIRequestError Cropbox.calibrationrange("SWebTwin.a" => [0, 10], both.config, both.index)
-        # a calibrated parameter that the base holds under a spelling read first is calibrated, not left at the base value
+        @test_throws Cropbox.APIRequestError Cropbox.calibrationrange("SWebTwin.a" => [0, 10], both.index)
+        # its answer, under the qualified name of the system, goes back as a configuration as it is
+        status, _, body = Cropbox.respond(both, "POST", "/api/calibrate", JSON.json(Dict(
+            "observed" => Dict("type" => "CSV", "content" => "time (hr),x.a\n0,3\n"), "target" => "x.a", "stop" => 1,
+            "parameters" => Dict(twinA => [0, 10]), "optim" => Dict("MaxSteps" => 500))))
+        answer = JSON.parse(body)["config"]
+        @test status == 200 && only(keys(answer)) == chop(twinA; tail = 2)
+        status, _, body = Cropbox.respond(both, "POST", "/api/simulate", JSON.json(Dict("config" => answer, "target" => ["x.a", "y.a"])))
+        @test status == 200 && isapprox(JSON.parse(body)["rows"][1][2], 3; atol = 0.05) && JSON.parse(body)["rows"][1][3] == 7
+        # a calibrated parameter that the base holds under a spelling read first is calibrated, not left at the base
+        # value, in a run of several configurations as in one; the answer goes by the system's own name
         shadow = Cropbox.Service(SWebAPI; config = own => 3, dashboard = :none)
-        status, _, body = Cropbox.respond(shadow, "POST", "/api/calibrate", JSON.json(Dict(
-            "observed" => Dict("type" => "CSV", "content" => "time (hr),a (m)\n0,7\n"), "target" => "a", "stop" => 1,
-            "parameters" => Dict("SWebAPI.a" => [0, 10]), "optim" => Dict("MaxSteps" => 500))))
-        @test status == 200 && isapprox(only(values(JSON.parse(body)["config"]))["a"]["value"], 7; atol = 0.05)
+        for extra in (Dict(), Dict("configs" => [Dict()]), Dict("configs" => [Dict("SWebAPI.c" => 1)]))
+            status, _, body = Cropbox.respond(shadow, "POST", "/api/calibrate", JSON.json(merge(Dict(
+                "observed" => Dict("type" => "CSV", "content" => "time (hr),a (m)\n0,7\n"), "target" => "a", "stop" => 1,
+                "parameters" => Dict("SWebAPI.a" => [0, 10]), "optim" => Dict("MaxSteps" => 500)), extra)))
+            calibrated = JSON.parse(body)["config"]
+            @test status == 200 && only(keys(calibrated)) == "SWebAPI" && isapprox(calibrated["SWebAPI"]["a"]["value"], 7; atol = 0.05)
+        end
+        # `meta` records the values in effect, a client's through an alias of a mixin over the server's own name
+        metered = Cropbox.Service(SWebPlant; config = :SWebPlant => :k => 3, dashboard = :none)
+        kw = Cropbox.simulationkwargs(Dict{String,Any}("configs" => [Dict("SWebRate.rate" => 4), Dict("SWebRate.rate" => 5)], "meta" => "SWebPlant");
+            metered.config, index = metered.index)
+        @test [c[:SWebPlant][:k] for c in kw[:configs]] == [4, 5] && kw[:meta] == :SWebPlant
 
         # the constructor options of the service reach the operations that run the model
         external = Cropbox.Service(SWebExternal; options = (a = 3,), dashboard = :none)
