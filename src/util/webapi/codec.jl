@@ -284,24 +284,26 @@ applycolumns!(df::DataFrame, columns) = begin
 end
 
 """
-    decodeconfig(x; value=decode) -> Config
+    decodeconfig(x; value=decode, isvalue=isvalueobject) -> Config
 
 Convert a JSON configuration into a `Config`. Two shapes are accepted and may be
 mixed: nested `{"System": {"name": value}}` and flat `{"System.name": value}`,
 where the system may carry its modules (`Main.Plant.Leaf.a`) to tell it from a
 namesake. Values are decoded with `value` (scalars, `{value, unit}` objects or tables).
-A key without a dot whose object looks like a value or a table is rejected as
-a missing system name rather than read as a system.
+An object is a value where `isvalue` says so, and otherwise holds the parameters
+of a system, so a parameter may have any name (`{"Main.M.Leaf": {"lower": 1}}`).
+A key without a dot whose object is a value is rejected as a missing system name
+rather than read as a system.
 """
-decodeconfig(::Nothing; value=decode) = configure()
-decodeconfig(c::Config; value=decode) = c
-decodeconfig(x::AbstractDict; value=decode) = begin
+decodeconfig(::Nothing; kw...) = configure()
+decodeconfig(c::Config; kw...) = c
+decodeconfig(x::AbstractDict; value=decode, isvalue=isvalueobject) = begin
     d = stringkeys(x)
     P = Pair[]
     for (k, v) in d
-        # an object that is neither a value, a table nor a range holds the parameters of a system, which may be named
-        # with its modules (`{"Main.M.Leaf": {"a": 1}}`, as a calibration answers); anything else under a dotted key is a value
-        if v isa AbstractDict && !isvalueobject(k, v)
+        # an object that is not a value holds the parameters of a system, which may be named with its modules
+        # (`{"Main.M.Leaf": {"a": 1}}`, as a calibration answers); anything else under a dotted key is a value
+        if v isa AbstractDict && !isvalue(v)
             push!(P, Symbol(k) => OrderedDict{Symbol,Any}(Symbol(n) => value(w) for (n, w) in v))
         elseif occursin('.', k)
             push!(P, String(k) => value(v))
@@ -311,9 +313,16 @@ decodeconfig(x::AbstractDict; value=decode) = begin
     end
     isempty(P) ? configure() : configure(P...)
 end
-decodeconfig(x; value=decode) = apierror("Configuration must be an object")
-isvalueobject(k, v) = haskey(v, "value") || get(v, "type", nothing) in ("CSV", "DataFrame") ||
-    occursin('.', k) && !isempty(v) && issubset(keys(v), ("lower", "upper", "unit"))
+decodeconfig(x; kw...) = apierror("Configuration must be an object")
+"A `{value, unit}` object or a table."
+isvalueobject(v) = haskey(v, "value") || get(v, "type", nothing) in ("CSV", "DataFrame")
+"""
+A `{lower, upper, unit}` range. A system holding parameters named so is told apart
+by what they hold: each a range itself (an array, or an object that is not a
+value), where the bounds of a range are numbers, `{value, unit}` objects or strings.
+"""
+israngeobject(v) = !isempty(v) && issubset(keys(v), ("lower", "upper", "unit")) &&
+    !any(b -> b isa AbstractVector || b isa AbstractDict && !isvalueobject(b), values(v))
 
 "Rows given as nested arrays as a `Matrix`."
 asmatrix(rows::AbstractVector) = begin

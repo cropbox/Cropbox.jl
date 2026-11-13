@@ -509,7 +509,7 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     obs, kw = validating() do
         r = requestobject(request, :calibrate)
         o, k = observationkwargs(r, "calibrate"; config, options, index)
-        P = decodeconfig(get(r, "parameters", nothing); value=decodebounds)
+        P = decodeconfig(get(r, "parameters", nothing); value=decodebounds, isvalue=israngeobject)
         isempty(P) && apierror("calibrate requires `parameters` with at least one range")
         k[:parameters] = configure((calibrationrange(p, index) for p in flatconfig(P))...)
         isnothing(get(r, "weight", nothing)) || (k[:weight] = Float64.(decode(r["weight"])))

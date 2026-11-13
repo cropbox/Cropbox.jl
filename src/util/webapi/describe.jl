@@ -360,9 +360,11 @@ clocktype(S::Type{<:System}) = fieldtype(typefor(fieldtype(typefor(S), :context)
 
 `client` merged over `base` so that every value `client` sets for a parameter of
 the model is the one Cropbox reads, and the one a reader of the configuration
-finds, `meta` among them. Where `base` holds the parameter under a name of its
-own system (the plain one, or the module-qualified one that Cropbox reads
-first), that entry takes the client value in place. Where `base` still wins
+finds, `meta` among them. Where `base` holds the parameter under a name that
+reaches its own system alone (the plain one, or a module-qualified one that
+Cropbox reads first), that entry takes the client value in place; an entry
+under a name other systems answer to as well (`Shared.Leaf` of `A.Shared.Leaf`
+and `B.Shared.Leaf`) stays theirs. Where `base` still wins
 through a mixin name read before the client's spelling, the client value is
 written under the system's own name, which Cropbox reads before any mixin.
 Nothing else in `base` changes, so a setting under a mixin name that also
@@ -375,19 +377,21 @@ override(base, client, index::ModelIndex) = begin
     updates = Pair[]
     for v in K
         x = option(client, v.systems, namekeys(v))
-        own = ownnames(v, index)
-        held = [(s, k) for (s, k) in spellings(v) if !ismissing(option(base, s, k))]
-        append!(updates, [s => k => x for (s, k) in held if s in own])
+        own = ownspellings(v, index)
+        held = [(s, k) for (s, k) in own if !ismissing(option(base, s, k))]
+        append!(updates, [s => k => x for (s, k) in held])
         merged = configure(base, client, updates...)
         w = findfirst(((s, k),) -> !ismissing(option(merged, s, k)), spellings(v))
         s, k = spellings(v)[w]
-        s in own || !ismissing(option(client, s, k)) || push!(updates, ownkey(v, index) => uncanonicalname(v.name, v.system) => x)
+        (s, k) in own || !ismissing(option(client, s, k)) || push!(updates, ownkey(v, index) => uncanonicalname(v.name, v.system) => x)
     end
     configure(base, client, updates...)
 end
 
-"The names of the system of `v` that reach no other: its own, without the plain one when a namesake in another module shares that."
-ownnames(v, index) = filter(s -> shortname(s) == v.system && (s != v.system || ownkey(v, index) == v.system), v.systems)
+"The spellings of `v` that reach its system alone: names of its own, not of a mixin, that no other system of the model answers to."
+ownspellings(v, index) = filter(spellings(v)) do (s, k)
+    shortname(s) == v.system && all(u -> first(u.systems) == first(v.systems), get(index.parameters, "$s.$k", ()))
+end
 
 "The system name a parameter is written under: its own, or its module-qualified one when a namesake shares that."
 ownkey(v, index) = begin
