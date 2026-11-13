@@ -304,29 +304,12 @@ parametervalue(value, v, path) = begin
         apierror("Parameter `$path` takes a value of type $(v.type)$(isnothing(v.unit) ? "" : " in $(unitlabel(v.unit))"), not `$(something(given, "null"))`")
     v.type == "Rational{Int64}" ? exactify(Rational{Int}, value; warn=false) : value
 end
-    if scalar
-        T = get(API_TYPES, v.type, Rational{Int})
-        takes(T, value isa Quantity ? Unitful.ustrip(value) : value) ||
-            apierror("Parameter `$path` takes a value of type $(v.type), not `$(something(value, "null"))`")
-    end
-    if matrix && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
-        value = asmatrix(value)
-    elseif v.type == "Rational{Int64}"
-        value = exactify(Rational{Int}, value; warn=false)
-    end
-    scalar && value isa Quantity || return value
-    try
-        unitfy(value, v.unit)
-    catch
-        apierror("Parameter `$path` takes $(something(unitlabel(v.unit), "no unit")), not `$value`")
-    end
-end
 
 """
 The parameters a configuration path sets, as ones to vary (`xstep`,
 calibration): the path has to be known and no table. They are varied through
-their own configuration paths (`config` of each), which Cropbox reads before
-any other spelling.
+their own configuration paths (`config` of each), the spelling that a canonical
+base keeps, so that no other spelling of theirs is left to win over them.
 """
 variedparameters(path::AbstractString, index::ModelIndex) = begin
     K = get(index.parameters, path, nothing)
