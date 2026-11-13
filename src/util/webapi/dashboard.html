@@ -224,7 +224,8 @@
       else $("stop-condition").value = stop.value;
       const snapSpec = schema.simulation?.snap;
       const snap = valueParts(snapSpec);
-      const snapMode = snapSpec == null ? "default" : isCondition(snap) ? "condition" : "interval";
+      // `true` or `false` is left to the service, which applies it when the request has no `snap`
+      const snapMode = snapSpec == null || typeof snapSpec === "boolean" ? "default" : isCondition(snap) ? "condition" : "interval";
       $("snap-mode").value = snapMode;
       if (snapMode === "interval") { $("snap-value").value = snap.value; $("snap-unit").value = snap.unit; }
       if (snapMode === "condition") $("snap-condition").value = snap.value;

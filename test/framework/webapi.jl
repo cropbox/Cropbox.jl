@@ -10,6 +10,22 @@ using Cropbox
     r: rate => 1 ~ preserve(parameter, u"cm/hr")
     h(r): height ~ accumulate(u"cm")
 end
+
+# systems that a model produces without declaring their type, or declaring only their kind
+abstract type SWebFamily <: Cropbox.System end
+@system SWebChild <: SWebFamily begin
+    c => 1 ~ preserve(parameter, u"m")
+end
+@system SWebFamilies(Controller) begin
+    kids(config) => produce(SWebChild; config) ~ produce::SWebFamily[]
+end
+@system SWebUntyped(Controller) begin
+    kids(config) => produce(SWebChild; config) ~ produce
+end
+childtype() = SWebChild
+@system SWebComputed(Controller) begin
+    kids(config) => produce(childtype(); config) ~ produce
+end
 end
 
 @testset "webapi" begin
@@ -66,6 +82,27 @@ end
 
     @system SWebBroken(Controller) begin
         x => error("broken") ~ track
+    end
+
+    @testset "produced systems" begin
+        M = WebAPITestModels
+        # the systems a `produce` declares only by kind, or not at all, are those its body passes to `produce`
+        for S in (M.SWebFamilies, M.SWebUntyped)
+            index = Cropbox.ModelIndex(S)
+            @test haskey(index.parameters, "SWebChild.c") && isempty(index.open)
+            # describing them follows the systems found once, with no second walk into the open declaration
+            d = describe(S)
+            @test only(filter(p -> p["path"] == "SWebChild.c", d["parameters"]))["default"]["value"] == 1
+            @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebChild.c" => 2)); index)[:config] == @config(:SWebChild => :c => 2)
+            service = Cropbox.Service(S; dashboard = :none)
+            @test Cropbox.respond(service, "POST", "/api/simulate", JSON.json(Dict("config" => Dict("SWebChild.c" => 2), "stop" => 1)))[1] == 200
+        end
+        # a system computed while the model runs cannot be checked, and the rejection says why
+        index = Cropbox.ModelIndex(M.SWebComputed)
+        @test index.open == ["SWebComputed.kids"] && !haskey(index.parameters, "SWebChild.c")
+        e = try Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebChild.c" => 2)); index) catch e; e end
+        @test e isa Cropbox.APIRequestError && occursin("`SWebComputed.kids`", e.message) && occursin("only known once the model runs", e.message)
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebComputed.nope" => 2)); index)
     end
 
     weather_csv = "index (d),tavg (°C)\n0,10\n1,12\n2,14\n"
@@ -331,6 +368,12 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => [1, 2])); index)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "kg"))); index)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.c" => Dict("value" => 1, "unit" => "m"))); index)
+        # a plain value has the declared type: an integer for `Int`, a boolean for `Bool`, a value rather than null
+        for (path, x) in (("SWebAPI.n", 1.5), ("SWebAPI.n", nothing), ("SWebAPI.n", true), ("SWebAPI.f", 2), ("SWebAPI.f", nothing), ("SWebAPI.c", true), ("SWebAPI.c", nothing))
+            @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict(path => x)); index)
+        end
+        typed = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.n" => 2.0, "SWebAPI.f" => false, "SWebAPI.c" => 3)); index)[:config][:SWebAPI]
+        @test typed[:n] == 2 && typed[:f] === false && typed[:c] == 3
         converted = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 250, "unit" => "cm"))); index)[:config][:SWebAPI][:a]
         @test converted == 2.5u"m" && Cropbox.Unitful.unit(converted) == u"m"
         # an empty `configs` runs the single configuration
@@ -641,7 +684,8 @@ end
         for bad in (Dict("seed" => "abc"), Dict("config" => Dict("SWebAPI.n" => Dict("value" => 1.5, "type" => "Int"))),
                     Dict("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "nounit"))), Dict("meta" => "Nope"), Dict("base" => "nope"),
                     Dict("config" => Dict("SWebAPI.a" => [1, 2])), Dict("config" => Dict("SWebAPI.a" => Dict("value" => 1, "unit" => "kg"))),
-                    Dict("stop" => Dict("value" => 1, "unit" => "kg")))
+                    Dict("stop" => Dict("value" => 1, "unit" => "kg")), Dict("config" => Dict("SWebAPI.n" => 1.5)),
+                    Dict("config" => Dict("SWebAPI.n" => nothing)), Dict("config" => Dict("SWebAPI.f" => 2)))
             status, _, body = post("/api/simulate", merge(Dict{String,Any}("target" => "a"), bad))
             @test status == 422 && body["error"]["category"] == "validation"
         end
