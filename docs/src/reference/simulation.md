@@ -354,6 +354,14 @@ are needed, put them on the values (for example
 `[0, 2]u"yr^-1"`; `(0, 2)u"yr^-1"` is not valid Julia syntax. The result is a
 `Config` containing the selected values in model units.
 
+`calibrate` and `analyze` check parameter definitions against declared child
+systems and mixins. A misspelled parameter, ambiguous system name, or system
+outside a fully known hierarchy is an error. The key `:0` selects the root.
+Abstract child types also admit their loaded subtypes and mixins; untyped `produce`
+needs a resolvable type or qualified name (`Child => :rate => (0, 1)` or
+`Symbol("MyModels.Child") => :rate => (0, 1)`). Dynamic matches warn once before
+searching: the child may never be created or affect the result.
+
 Cropbox uses
 [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl)
 differential-evolution methods. `optim` is a named tuple forwarded to

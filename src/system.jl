@@ -4,7 +4,7 @@ namefor(s::S) where {S<:System} = namefor(S)
 namefor(S) = nameof(S)
 typefor(s::S) where {S<:System} = S
 Base.names(s::S) where {S<:System} = names(S)
-Base.names(S::Type{<:System}) = (n = split(String(Symbol(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
+Base.names(S::Type{<:System}) = (n = split(string(scopeof(S), '.', namefor(S)), "."); [Symbol(join(n[i:end], ".")) for i in 1:length(n)])
 
 Base.length(s::System) = length(fieldnamesunique(s))
 Base.iterate(s::System) = iterate(s, 1)
