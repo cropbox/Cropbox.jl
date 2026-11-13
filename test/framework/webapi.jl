@@ -835,8 +835,8 @@ end
         @test [(readA(c), readB(c)) for c in swept(twinA)] == [(3, 7), (4, 7)]
         @test [(readA(c), readB(c)) for c in swept("SWebTwin.a")] == [(3, 3), (4, 4)]
         # and a calibration of one of them by its qualified path
-        P = Cropbox.calibrationrange(twinA => [0, 10], both.config, both.index)
-        @test first(P) == Symbol(first(names(WebAPITestModels.NamesakeA.SWebTwin))) && last(last(P)) == [0, 10]
+        bounded = Cropbox.calibrationrange(twinA => [0, 10], both.config, both.index)
+        @test first(bounded) == Symbol(first(names(WebAPITestModels.NamesakeA.SWebTwin))) && last(last(bounded)) == [0, 10]
         @test_throws Cropbox.APIRequestError Cropbox.calibrationrange("SWebTwin.a" => [0, 10], both.config, both.index)
         # a calibrated parameter that the base holds under a spelling read first is calibrated, not left at the base value
         shadow = Cropbox.Service(SWebAPI; config = own => 3, dashboard = :none)
