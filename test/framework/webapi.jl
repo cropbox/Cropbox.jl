@@ -45,6 +45,30 @@ end
     y(context) ~ ::NamesakeB.SWebTwin
 end
 
+# and two whose modules share a name, so that `Shared.SWebLeaf` reaches both; `lower` is also a key of a range
+module SharedA
+module Shared
+using Cropbox
+@system SWebLeaf begin
+    a => 1 ~ preserve(parameter)
+    lower => 1 ~ preserve(parameter)
+end
+end
+end
+module SharedB
+module Shared
+using Cropbox
+@system SWebLeaf begin
+    a => 2 ~ preserve(parameter)
+    lower => 1 ~ preserve(parameter)
+end
+end
+end
+@system SWebLeaves(Controller) begin
+    x(context) ~ ::SharedA.Shared.SWebLeaf
+    y(context) ~ ::SharedB.Shared.SWebLeaf
+end
+
 # a parameter shared through a mixin: by systems produced while the model runs, and by one that counts it in integers
 @system SWebShared begin
     k => 2 ~ preserve(parameter)
@@ -334,11 +358,15 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("Model.SWebAPI.a" => 1)); index = Cropbox.ModelIndex(SWebAPI))
         @test Cropbox.decodeconfig(Dict("Soil" => Dict("type" => "clay"))) == @config(:Soil => :type => "clay")
         @test Dict(Cropbox.flatconfig(flat)) == Dict("SWebAPI.a" => 200u"cm", "SWebAPI.c" => 3)
-        bounds = Cropbox.decodeconfig(Dict("SWebAPI.a" => [1, 2], "SWebAPI" => Dict("c" => Dict("lower" => 0, "upper" => 1, "unit" => "m"))); value = Cropbox.decodebounds)
+        decoderanges(x) = Cropbox.decodeconfig(x; value = Cropbox.decodebounds, isvalue = Cropbox.israngeobject)
+        bounds = decoderanges(Dict("SWebAPI.a" => [1, 2], "SWebAPI" => Dict("c" => Dict("lower" => 0, "upper" => 1, "unit" => "m"))))
         @test bounds[:SWebAPI][:a] == (1, 2) && bounds[:SWebAPI][:c] == (0u"m", 1u"m")
         # a range object under a flat path is a value, while one under a module-qualified system holds its parameters
-        ranged = Cropbox.decodeconfig(Dict("SWebAPI.c" => Dict("lower" => 0, "upper" => 1), "Main.SWebAPI" => Dict("a" => Dict("lower" => 1, "upper" => 2))); value = Cropbox.decodebounds)
+        ranged = decoderanges(Dict("SWebAPI.c" => Dict("lower" => 0, "upper" => 1), "Main.SWebAPI" => Dict("a" => Dict("lower" => 1, "upper" => 2))))
         @test ranged[:SWebAPI][:c] == (0, 1) && ranged[Symbol("Main.SWebAPI")][:a] == (1, 2)
+        # parameters named like the keys of a range hold ranges, and values outside calibration are never ranges
+        @test decoderanges(Dict("Main.SWebAPI" => Dict("lower" => [0, 1], "unit" => Dict("lower" => 2, "upper" => 3))))[Symbol("Main.SWebAPI")] == Dict(:lower => (0, 1), :unit => (2, 3))
+        @test Cropbox.decodeconfig(Dict("Main.SWebAPI" => Dict("lower" => 1.5, "upper" => 2)))[Symbol("Main.SWebAPI")] == Dict(:lower => 1.5, :upper => 2)
         @test Cropbox.decodebounds(Dict("lower" => Dict("value" => 1, "unit" => "cm"), "upper" => Dict("value" => 2, "unit" => "cm"))) == (1u"cm", 2u"cm")
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds([1])
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds(Dict("lower" => 0))
@@ -851,6 +879,21 @@ end
         @test status == 200 && only(keys(answer)) == chop(twinA; tail = 2)
         status, _, body = Cropbox.respond(both, "POST", "/api/simulate", JSON.json(Dict("config" => answer, "target" => ["x.a", "y.a"])))
         @test status == 200 && isapprox(JSON.parse(body)["rows"][1][2], 3; atol = 0.05) && JSON.parse(body)["rows"][1][3] == 7
+        # a value for one system leaves a base value under a name it shares with another to that one, whichever name the
+        # client uses; the name both answer to sets both
+        leafA = string(first(names(WebAPITestModels.SharedA.Shared.SWebLeaf)))
+        leaves = Cropbox.Service(WebAPITestModels.SWebLeaves; config = "Shared.SWebLeaf.a" => 3, dashboard = :none)
+        leafpair(config) = JSON.parse(Cropbox.respond(leaves, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => ["x.a", "y.a"])))[3])["rows"][1][2:3]
+        @test leafpair(Dict()) == [3, 3] && leafpair(Dict("$leafA.a" => 5)) == [5, 3] && leafpair(Dict("SharedA.Shared.SWebLeaf.a" => 5)) == [5, 3]
+        @test leafpair(Dict(leafA => Dict("a" => 5))) == [5, 3] && leafpair(Dict("Shared.SWebLeaf.a" => 5)) == [5, 5] && leafpair(Dict("SWebLeaf.a" => 6)) == [6, 6]
+        # a calibration of a parameter named like a key of a range answers a configuration that goes back as it is
+        status, _, body = Cropbox.respond(leaves, "POST", "/api/calibrate", JSON.json(Dict(
+            "observed" => Dict("type" => "CSV", "content" => "time (hr),x.lower\n0,3\n"), "target" => "x.lower", "stop" => 1,
+            "parameters" => Dict("$leafA.lower" => [0, 10]), "optim" => Dict("MaxSteps" => 500))))
+        answer = JSON.parse(body)["config"]
+        @test status == 200 && only(keys(answer)) == leafA && only(keys(answer[leafA])) == "lower"
+        status, _, body = Cropbox.respond(leaves, "POST", "/api/simulate", JSON.json(Dict("config" => answer, "target" => ["x.lower", "y.lower"])))
+        @test status == 200 && isapprox(JSON.parse(body)["rows"][1][2], 3; atol = 0.05) && JSON.parse(body)["rows"][1][3] == 1
         # a calibrated parameter that the base holds under a spelling read first is calibrated, not left at the base
         # value, in a run of several configurations as in one; the answer goes by the system's own name
         shadow = Cropbox.Service(SWebAPI; config = own => 3, dashboard = :none)
