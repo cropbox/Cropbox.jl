@@ -61,10 +61,10 @@ Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui
     V = variables(tree)
     index = ModelIndex(tree, V)
     defaults = asobject(request_defaults)
-    # A default configuration is decoded once and becomes part of the base configuration. Each is made
-    # canonical first, so that a default replaces a base value whichever of the parameter's names either used.
+    # A default configuration is decoded once and becomes part of the base configuration, replacing a base
+    # value whichever of the parameter's names either used.
     default = checkconfig(decodeconfig(pop!(defaults, "config", nothing)), index)
-    c = configure(canonical(configure(config), index), canonical(default, index))
+    c = override(config, default, index)
     checkkeys(defaults, unique(Iterators.flatten(REQUEST_KEYS)), "`request_defaults`")
     options = decodeoptions(options)
     d = description(S, tree, V; config=c)
@@ -186,20 +186,20 @@ model.
 simulationkwargs(r::APIDict; config=(), options=(), index=nothing, fields=REQUEST_KEYS.simulate) = begin
     kw = Dict{Symbol,Any}()
     field(k) = k in fields ? get(r, k, nothing) : nothing
-    client(x) = canonical(checkconfig(decodeconfig(x), index), index)
-    # the base is made canonical as well, so that the client replaces it whichever spelling either used
-    base = configure(canonical(configure(config), index), client(field("config")))
+    client(x) = checkconfig(decodeconfig(x), index)
+    # a client value replaces a base one whichever spelling either used
+    base = override(config, client(field("config")), index)
     C = field("configs")
     C isa Union{Nothing,AbstractVector} || apierror("`configs` must be an array of configurations")
     steps = decodestep(field("xstep"), index)
     if !isnothing(steps)
-        configs = kw[:configs] = [configure(base, c) for c in steps]
+        configs = kw[:configs] = [override(base, c, index) for c in steps]
     elseif isnothing(C) || isempty(C)
         # without configurations of its own, `configs` runs the single one
         configs = [base]
         isempty(base) || (kw[:config] = base)
     else
-        configs = kw[:configs] = [configure(base, client(c)) for c in C]
+        configs = kw[:configs] = [override(base, client(c), index) for c in C]
     end
     root = field("base")
     isnothing(root) || (kw[:base] = checkbase(root, index))
@@ -246,7 +246,8 @@ checkconfig(c::Config, index::ModelIndex) = begin
         isnothing(K) && unknownparameter(path, index)
         table = any(v -> v.role == "table", K)
         table == (value isa DataFrame) || apierror(table ? "Table parameter `$path` requires a CSV or DataFrame payload" : "Parameter `$path` does not take a table")
-        push!(P, system => name => parametervalue(value, first(K), path))
+        # every system the path sets has to take the value; the first one's reading is kept, its unit with it
+        push!(P, system => name => first([parametervalue(value, v, path) for v in K]))
     end
     isempty(P) ? c : configure(P...)
 end
@@ -308,8 +309,8 @@ end
 """
 The parameters a configuration path sets, as ones to vary (`xstep`,
 calibration): the path has to be known and no table. They are varied through
-their own configuration paths (`config` of each), the spelling that a canonical
-base keeps, so that no other spelling of theirs is left to win over them.
+their own names (`ownkey`); `override` and `calibrationrange` see that no base
+spelling Cropbox reads first is left to win over them.
 """
 variedparameters(path::AbstractString, index::ModelIndex) = begin
     K = get(index.parameters, path, nothing)
@@ -394,7 +395,7 @@ decodestep(::Nothing, index=nothing) = nothing
 decodestep(x::AbstractDict, index=nothing) = begin
     d = checkkeys(stringkeys(x), ("path", "values", "start", "stop", "step", "unit"), "`xstep`")
     path = get(d, "path", nothing)
-    path isa AbstractString && count(==('.'), path) == 1 || apierror("`xstep` requires `path`, a `System.parameter` configuration path")
+    path isa AbstractString && occursin('.', path) || apierror("`xstep` requires `path`, a `System.parameter` configuration path")
     values = if !isnothing(get(d, "values", nothing))
         d["values"] isa AbstractVector || apierror("`xstep` values must be an array")
         decode(d["values"])
@@ -408,7 +409,7 @@ decodestep(x::AbstractDict, index=nothing) = begin
     isnothing(u) || (values = unitfy(values, u))
     isnothing(index) && return [configure(path => x) for x in values]
     K = variedparameters(path, index)
-    [configure((v.config => parametervalue(x, v, path) for v in K)...) for x in values]
+    [configure((ownkey(v, index) => uncanonicalname(v.name, v.system) => parametervalue(x, v, path) for v in K)...) for x in values]
 end
 decodestep(x, index=nothing) = apierror("`xstep` must be an object")
 
@@ -510,7 +511,8 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
         o, k = observationkwargs(r, "calibrate"; config, options, index)
         P = decodeconfig(get(r, "parameters", nothing); value=decodebounds)
         isempty(P) && apierror("calibrate requires `parameters` with at least one range")
-        k[:parameters] = configure((calibrationrange(p, index) for p in flatconfig(P))...)
+        base = get(k, :config, Config())
+        k[:parameters] = configure((calibrationrange(p, base, index) for p in flatconfig(P))...)
         isnothing(get(r, "weight", nothing)) || (k[:weight] = Float64.(decode(r["weight"])))
         isnothing(get(r, "pareto", nothing)) || (k[:pareto] = parsebool(r["pareto"]))
         optim = asobject(get(r, "optim", nothing))
@@ -531,14 +533,18 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     )
 end
 
-# `calibrate` searches plain numbers and only knows the units of systems defined in `Main`:
-# a range goes in under the parameter's own path, in its declared unit, and comes out in it.
-calibrationrange(p::Pair, ::Nothing) = p
-calibrationrange((path, bounds)::Pair, index::ModelIndex) = begin
+# A range goes in under the parameter's own name, in its declared unit, and comes out in it. A system that shares
+# its name with one from another module goes by its module-qualified name, as does a parameter that the base
+# configuration holds under a spelling Cropbox reads before the own name; otherwise the base value would stand.
+calibrationrange(p::Pair, base, ::Nothing) = p
+calibrationrange((path, bounds)::Pair, base, index::ModelIndex) = begin
     K = variedparameters(path, index)
     length(K) == 1 || apierror("`$path` sets parameters of several systems ($(join((v.config for v in K), ", "))); calibrate one of them")
     v = only(K)
-    v.config => map(b -> deunitfy(unitfy(b, v.unit)), bounds)
+    name = uncanonicalname(v.name, v.system)
+    system = ownkey(v, index)
+    shadowed(base, configure(system => name => 0), v) && (system = first(v.systems))
+    system => name => map(b -> deunitfy(unitfy(b, v.unit)), bounds)
 end
 
 calibrated(c::Config, index) = APIDict(string(s) => APIDict(string(k) => encodevalue(v, declaredunit("$s.$k", index)) for (k, v) in F) for (s, F) in c)
