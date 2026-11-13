@@ -1,4 +1,5 @@
-using GlobalSensitivity, Random
+using GlobalSensitivity, Random, Unitful
+isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
 
 @testset "analyze" begin
     @system SAnalyze(Controller) begin
@@ -107,6 +108,27 @@ using GlobalSensitivity, Random
             target = :temperature, parameters = SAnalyzeTemperature => :temperature => [0, 10]u"°C",
             method, gsa, stop = 0)
         @test only(r.table.means) ≈ 10u"K"
+    end
+
+    @testset "module parameters" begin
+        method = Morris(num_trajectory = 4, total_num_trajectory = 4, len_design_mat = 4)
+        for S in (MCalibrateUnit.Model, MCalibrateOuter.Model)
+            r = analyze(S; target = :b => "g.b", parameters = :Growth => :rate => (0, 1),
+                method, gsa, stop = 10)
+            @test only(r.table.means) ≈ 0.1u"m"
+            @test only(r.table.upper) == 1u"cm/hr"
+        end
+        @test_throws ArgumentError analyze(MCalibrateOuter.PairModel; target = :b => "g.b",
+            parameters = :Growth => :rate => (0, 1), stop = 10)
+        @test_throws ArgumentError analyze(MCalibrateOuter.Model; target = :b => "g.b",
+            parameters = :MissingGrowth => :rate => (0, 1), stop = 10)
+
+        for S in (MCalibrateUnit.Dynamic, MCalibrateOuter.Unspecified)
+            r = @test_logs (:warn, r"cannot verify whether dynamic parameters") analyze(S;
+                target = :a => "g[1].a", parameters = MCalibrateUnit.Growth => :rate => (0, 1),
+                method, gsa, stop = 1)
+            @test only(r.table.means) ≈ 1u"cm/hr"
+        end
     end
 
     @testset "variance methods" begin

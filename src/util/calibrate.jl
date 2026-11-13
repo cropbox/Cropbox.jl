@@ -38,6 +38,12 @@ Rows missing any requested observation target are omitted before the search.
 An `ArgumentError` is raised if no complete observations or no finite result remain.
 Partial matches warn once per search, with counts for the first finite candidate
 that uses only part of the complete observations.
+Parameter names and units are resolved against the model's declared systems and
+mixins. For dynamic children whose types are not known, an explicit system type
+or a name resolved in the model's modules or `Main` supplies the parameter definition.
+Its existence and unit are checked, but unverified participation is reported once
+before optimization. Unknown or ambiguous names, non-parameters and duplicate
+targets raise an `ArgumentError`. The key `:0` selects the root system.
 
 See also: [`simulate`](@ref), [`evaluate`](@ref), [`@config`](@ref)
 
@@ -70,7 +76,7 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     P = configure(parameters)
     K = parameterkeys(P)
     V = parametervalues(P)
-    U = parameterunits(P)
+    U = parameterunits(resolveparameters(parameters, S))
     I = parseindex(index, S) |> keys |> collect
     T = parsetarget(target, S) |> keys |> collect
     obs = filterobservations(obs, T)
