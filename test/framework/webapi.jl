@@ -196,9 +196,10 @@ end
         P = Dict(p["path"] => p for p in spelled["parameters"])
         @test P["SWebPlant.k"]["default"]["value"] == 3 && P["SWebLeaf.area"]["default"]["value"] == 5
         canonical = Cropbox.canonical(@config(:SWebRate => :rate => 3), index)
-        @test canonical == @config(:SWebRate => :rate => 3, :SWebPlant => :k => 3)
-        # the own name of a parameter comes first, so a canonical configuration merged over another wins by any spelling
-        @test Cropbox.canonical(@config(:System => :k => 1, :SWebPlant => :rate => 2, :SWebRate => :k => 3), index)[:SWebPlant][:k] == 3
+        @test canonical == @config(:SWebPlant => :k => 3)
+        # one spelling stays, with the value Cropbox reads, so a canonical configuration merged over another wins by any spelling
+        spelled = Cropbox.canonical(@config(:System => :k => 1, :SWebPlant => :rate => 2, :SWebRate => :k => 3), index)
+        @test spelled[:SWebPlant][:k] == 3 && !haskey(spelled.config, :SWebRate) && !haskey(spelled[:SWebPlant], :rate)
         @test Cropbox.canonical(@config(:Other => :x => 1), index) == @config(:Other => :x => 1)
 
         # every state that holds a value is an output; a function, a table or a produced system is not
@@ -374,7 +375,7 @@ end
         # indexed and bundle paths only resolve at run time
         @test Cropbox.simulationkwargs(Dict{String,Any}("target" => "leaves[1].area"); index)[:target] == "leaves[1].area"
         # every configuration is checked, by name or alias
-        @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.length" => "2.5")); index)[:config] == @config(:SWebAPI => (length = 2.5, a = 2.5))
+        @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.length" => "2.5")); index)[:config] == @config(:SWebAPI => :a => 2.5)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.zzz" => 1)); index)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("configs" => [Dict("SWebAPI.a" => 1), Dict("SWebAPI.zzz" => 1)]); index)
         # clients set what the model declares: the context and produced systems included, nothing else
@@ -403,7 +404,7 @@ end
             @test_throws Cropbox.APIRequestError count(bad)
         end
         @test JSON.parse(Cropbox.respond(Cropbox.Service(SWebCount; dashboard = :none), "POST", "/api/simulate",
-            JSON.json(Dict("config" => Dict("SWebCount.d" => Dict("value" => 1.5, "unit" => "km")), "target" => "d", "stop" => 1))))["rows"][1][2] == 1500
+            JSON.json(Dict("config" => Dict("SWebCount.d" => Dict("value" => 1.5, "unit" => "km")), "target" => "d", "stop" => 1)))[3])["rows"][1][2] == 1500
         typed = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.n" => 2.0, "SWebAPI.f" => false, "SWebAPI.c" => 3)); index)[:config][:SWebAPI]
         @test typed[:n] == 2 && typed[:f] === false && typed[:c] == 3
         converted = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 250, "unit" => "cm"))); index)[:config][:SWebAPI][:a]
