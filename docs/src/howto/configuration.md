@@ -45,6 +45,19 @@ configurations loaded from text formats or assembled dynamically before the
 model package is loaded. Inspect the accepted surface with
 `parameters(Experiment)`.
 
+System types are stored as short-name Symbol keys, not as distinct type identities.
+To configure same-named systems from different modules independently, use qualified
+names. A string path splits at its last dot; the equivalent Symbol form is
+`Symbol("ModelA.Leaf") => :rate => 2`.
+
+```@example configflow
+scoped = @config "ModelA.Leaf.rate" => 2, "ModelB.Leaf.rate" => 3
+```
+
+Qualified names take precedence over short names when a model reads its configuration;
+merging still replaces only identical keys. `parameters` and `describe` continue to
+list systems by short name, so they do not distinguish same-named systems.
+
 Values without units are interpreted in the unit declared by the variable.
 Supplying explicit compatible quantities is clearer when configurations cross
 files or packages.

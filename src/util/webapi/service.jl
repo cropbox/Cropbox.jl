@@ -187,7 +187,8 @@ simulationkwargs(r::APIDict; config=(), options=(), index=nothing, fields=REQUES
     kw = Dict{Symbol,Any}()
     field(k) = k in fields ? get(r, k, nothing) : nothing
     client(x) = canonical(checkconfig(decodeconfig(x), index), index)
-    base = configure(config, client(field("config")))
+    # the base is made canonical as well, so that the client replaces it whichever spelling either used
+    base = configure(canonical(configure(config), index), client(field("config")))
     C = field("configs")
     C isa Union{Nothing,AbstractVector} || apierror("`configs` must be an array of configurations")
     steps = decodestep(field("xstep"), index)
@@ -260,30 +261,49 @@ unknownparameter(path, index) = begin
     apierror("Unknown parameter `$path`. The systems that $(join(("`$p`" for p in index.open), ", ")) produce are only known once the model runs, so the service cannot check or set their parameters")
 end
 
-"Whether a plain value, or the number of a quantity, is one that a parameter of the scalar type `T` takes."
-takes(::Type{Bool}, x) = x isa Bool
-takes(::Type{Int}, x) = x isa Real && !(x isa Bool) && isinteger(x)
-takes(::Type{<:Union{Float64,Rational}}, x) = x isa Real && !(x isa Bool)
-takes(::Type{<:Union{String,Symbol}}, x) = x isa Union{AbstractString,Symbol}
-takes(T::Type, x) = x isa T
+"""
+Whether a parameter of the scalar type `T` takes the plain value `x`: one that
+converts to `T` exactly (`2.0` for an `Int`, not `1.5` or `1e30`), with a flag
+only for a `Bool` and nothing but a flag for it.
+"""
+takes(T, x) = (x isa Bool) == (T === Bool) && try
+    convert(T, x)
+    true
+catch
+    false
+end
 
 """
 A value as the parameter `v` takes it: a string is read as the declared type,
 nested arrays as the matrix a `tabulate` or `interpolate` parameter takes, and
 a float as the exact value of a rational parameter (the clock step). A
-parameter of a scalar type takes no array, and a quantity for it is converted
-to the declared unit here, so that one it cannot be converted from is the
-request's error rather than a failure to construct the model. So is a value
-of another type than the declared one, `null` included: a fraction for an
-integer, a number for a flag.
+parameter of a scalar type takes one value. A quantity for it is converted to
+the declared unit, and the number in that unit has to convert to the declared
+type, so that `1.5 km` is a whole number of metres and `150 cm` is not. What
+fails here, `null` included, is the request's error rather than a failure to
+construct the model.
 """
 parametervalue(value, v, path) = begin
+    given = value
     matrix = v.state in (:Tabulate, :Interpolate)
     scalar = !matrix && (v.type in keys(API_TYPES) || v.type == "Rational{Int64}")
     scalar && value isa AbstractVector && apierror("Parameter `$path` takes one value, not an array")
-    if value isa AbstractString && !(v.type in (nothing, "String"))
-        value = decodetyped(value, v.type)
+    value isa AbstractString && !(v.type in (nothing, "String")) && (value = decodetyped(value, v.type))
+    if matrix && value isa AbstractVector && !isempty(value) && all(x -> x isa AbstractVector, value)
+        return asmatrix(value)
     end
+    scalar || return value
+    if value isa Quantity
+        value = try
+            unitfy(value, v.unit)
+        catch
+            apierror("Parameter `$path` takes $(something(unitlabel(v.unit), "no unit")), not `$given`")
+        end
+    end
+    takes(get(API_TYPES, v.type, Rational{Int}), value isa Quantity ? Unitful.ustrip(value) : value) ||
+        apierror("Parameter `$path` takes a value of type $(v.type)$(isnothing(v.unit) ? "" : " in $(unitlabel(v.unit))"), not `$(something(given, "null"))`")
+    v.type == "Rational{Int64}" ? exactify(Rational{Int}, value; warn=false) : value
+end
     if scalar
         T = get(API_TYPES, v.type, Rational{Int})
         takes(T, value isa Quantity ? Unitful.ustrip(value) : value) ||

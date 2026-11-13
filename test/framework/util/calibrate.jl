@@ -1,4 +1,5 @@
 using DataFrames
+isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
 
 @testset "calibrate" begin
     @testset "basic" begin
@@ -29,6 +30,91 @@ using DataFrames
         @test p[:SCalibrateUnit][:a] ≈ a
         r = simulate(SCalibrateUnit, stop=n, config=p)
         @test r[r.time .== t, :][1, :b] == b
+    end
+
+    @testset "module units" begin
+        S = MCalibrateOuter.Model
+        target = :b => "g.b"
+        obs = DataFrame(time = [10.0]u"hr", b = [200.0]u"cm")
+        optim = (; MaxSteps = 2000, TraceMode = :silent)
+        for bounds in ((0.0, 1.0) .* u"m/hr", (0.0, 100.0))
+            p = calibrate(S, obs; target, stop = 10, parameters = :Growth => :rate => bounds, optim)
+            @test p[:Growth][:rate] ≈ 20u"cm/hr"
+            @test simulate(S; config = p, stop = 10, target)[end, :b] ≈ 2u"m"
+        end
+    end
+
+    @testset "parameter matching" begin
+        S = MCalibrateOuter.Model
+        units(S, p) = Cropbox.parameterunits(Cropbox.resolveparameters(Cropbox.configure(p), S))
+        for T in (MCalibrateUnit.Growth, MCalibrateUnit.Model, S, MCalibrateOuter.Mixed)
+            @test units(T, :Growth => :rate => (0, 1)) == [u"cm/hr"]
+        end
+        @test units(MCalibrateUnit.Growth, :0 => :rate => (0, 1)) == [u"cm/hr"]
+        @test units(MCalibrateOuter.Produced, :Growth => :rate => (0, 1)) == [u"cm/hr"]
+        @test_throws ArgumentError units(S, :MissingGrowth => :rate => (0, 1))
+        @test_throws ArgumentError units(S, :Growth => :typo => (0, 1))
+        @test_throws ArgumentError units(S, :Growth => :b => (0, 1))
+        @test_throws ArgumentError units(S, :Growth => (a = (0, 1), rate = (0, 1)))
+        @test_throws ArgumentError units(MCalibrateOuter.Mixed,
+            (:Mixed => :a => (0, 1), :Growth => :a => (0, 1)))
+        @test_throws ArgumentError units(MCalibrateOuter.PairModel, :Growth => :rate => (0, 1))
+        @test units(MCalibrateOuter.PairModel, Symbol(MCalibrateUnit.Growth) => :rate => (0, 1)) == [u"cm/hr"]
+        @test_throws ArgumentError("parameter Growth.rate is not used by model Fixed") units(MCalibrateOuter.Fixed, :Growth => :rate => (0, 1))
+
+        @system SCalibrateQualified(Controller) begin
+            a: rate => 1 ~ preserve(parameter, u"cm/hr")
+            _b      => 1 ~ preserve(parameter)
+
+            b(_b) ~ track
+        end
+        key = Symbol("Main.SCalibrateQualified")
+        @test units(SCalibrateQualified, key => :rate => (0, 1)) == [u"cm/hr"]
+        @test instance(SCalibrateQualified; config = key => :rate => 2).a' == 2u"cm/hr"
+        @test units(SCalibrateQualified, key => :_b => (0, 1)) == [nothing]
+        @test instance(SCalibrateQualified; config = key => :_b => 2).b' == 2
+
+        c = (:Growth => :rate => 3, Symbol("Main.MCalibrateUnit.Growth") => :rate => 4)
+        s = instance(MCalibrateOuter.PairModel; config = c)
+        @test (s.g.a', s.h.a') == (4u"cm/hr", 3u"m/hr")
+
+        obs = DataFrame(time = [10.0]u"hr", b = [0.0]u"m")
+        @test_throws ArgumentError calibrate(S, obs; target = :b => "g.b", stop = 10,
+            parameters = :MissingGrowth => :rate => (0, 1))
+    end
+
+    @testset "dynamic parameters" begin
+        resolve(S, p) = Cropbox.resolveparameters(p, S)
+        S = MCalibrateUnit.Dynamic
+        p = :Child => (; rate = (0, 100), c = (0, 2))
+        R = @test_logs (:warn, r"cannot verify whether dynamic parameters") resolve(S, p)
+        @test Cropbox.parameterunits(R) == [u"cm/hr", nothing]
+        @test_throws ArgumentError("not a parameter: Child.typo") resolve(S, :Child => :typo => (0, 1))
+        @test_throws ArgumentError resolve(S, :Child => (; a = (0, 1), rate = (0, 1)))
+        @test_throws ArgumentError("system MissingChild is not part of model Dynamic") resolve(S, :MissingChild => :a => (0, 1))
+
+        @test_throws ArgumentError resolve(S, Symbol("Main.MCalibrateOuter.Growth") => :rate => (0, 1))
+        @test_throws ArgumentError resolve(S, (:Child => :rate => (0, 1), :Growth => :rate => (0, 1)))
+        p = :Growth => :rate => (0, 1)
+        R = @test_logs (:warn, r"cannot verify whether dynamic parameters") resolve(S, p)
+        @test Cropbox.parameterunits(R) == [u"cm/hr"]
+        R = @test_logs (:warn, r"cannot verify whether dynamic parameters") resolve(S, :OtherChild => :rate => (0, 1))
+        @test Cropbox.parameterunits(R) == [u"cm/hr"]
+
+        S = MCalibrateOuter.Unspecified
+        p = MCalibrateUnit.Growth => :rate => (0, 100)
+        R = @test_logs (:warn, r"cannot verify whether dynamic parameters") resolve(S, p)
+        @test Cropbox.parameterunits(R) == [u"cm/hr"]
+        key = first(names(MCalibrateUnit.Growth))
+        R = @test_logs (:warn, r"cannot verify whether dynamic parameters") resolve(S, key => :rate => (0, 100))
+        @test Cropbox.parameterunits(R) == [u"cm/hr"]
+        @test_throws ArgumentError("cannot resolve system MissingChild for dynamic model Unspecified; use a system type or qualified name") resolve(S, :MissingChild => :a => (0, 1))
+
+        for T in (S, MCalibrateUnit.Dynamic)
+            s = instance(T; config = :Growth => :rate => 20)
+            update!(s)
+            @test only(s.g).a' == 20u"cm/hr"
+        end
     end
 
     @testset "config" begin

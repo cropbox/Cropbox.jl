@@ -158,7 +158,10 @@ systemkeys(T) = collect(Symbol, Iterators.flatten(reverse(names.(collect(mixinco
 namekeys(v) = isnothing(v.alias) ? [v.name] : [v.name, v.alias]
 
 "Every `(system, name)` configuration key Cropbox reads for a parameter, in its order of precedence."
-spellings(v) = [(s, uncanonicalname(k, s)) for k in namekeys(v) for s in v.systems]
+spellings(v) = [(s, uncanonicalname(k, shortname(s))) for k in namekeys(v) for s in v.systems]
+
+"The name of a system without its modules: `Leaf` for `Main.Plant.Leaf`."
+shortname(s) = Symbol(last(split(string(s), '.')))
 
 variablerole(v::VarInfo) = begin
     v.state == :Provide && return "table"
@@ -325,11 +328,12 @@ end
 ModelIndex(S::Type{<:System}) = (tree = systemtree(S); ModelIndex(tree, variables(tree)))
 ModelIndex(tree, V) = begin
     parameters = Dict{String,Vector{NamedTuple}}()
+    # a system is told apart from a namesake in another module by its most specific name, the first it answers to
     seen = Set{Tuple{Symbol,Symbol}}()
     for v in V
         istag(v.info, :parameter) || continue
-        (v.system, v.name) in seen && continue
-        push!(seen, (v.system, v.name))
+        (first(v.systems), v.name) in seen && continue
+        push!(seen, (first(v.systems), v.name))
         for (system, name) in spellings(v)
             push!(get!(Vector{NamedTuple}, parameters, "$(system).$(name)"), v)
         end
@@ -354,13 +358,25 @@ clocktype(S::Type{<:System}) = fieldtype(typefor(fieldtype(typefor(S), :context)
 """
     canonical(config, index)
 
-Give every parameter of the model that `config` sets, under whatever spelling,
-an entry under its own system and name as well. Cropbox reads that entry first,
-so a canonical configuration merged over another replaces its values whichever
-spelling either used, as a client overriding a server default expects.
+Write every parameter of the model that `config` sets under one spelling, its
+own system and name, with the value Cropbox reads from the spellings `config`
+used (a module-qualified system name and an alias among them); the other
+spellings go. A canonical configuration merged over another then replaces its
+values whichever spelling either side used, as a client overriding a server
+default expects: no spelling that Cropbox reads first is left to win over it.
+A system that shares its name with one from another module keeps its
+module-qualified name, so the value stays its own.
 """
 canonical(c::Config, ::Nothing) = c
 canonical(c::Config, index::ModelIndex) = begin
-    K = unique(v -> (v.system, v.name), [v for (path, _) in flatconfig(c) for v in get(index.parameters, path, ())])
-    isempty(K) ? c : configure(c, (v.system => uncanonicalname(v.name, v.system) => option(c, v.systems, namekeys(v)) for v in K)...)
+    K = unique(v -> (first(v.systems), v.name), [v for (path, _) in flatconfig(c) for v in get(index.parameters, path, ())])
+    isempty(K) && return c
+    rest = [s => k => x for (s, F) in c for (k, x) in F if !haskey(index.parameters, "$(s).$(k)")]
+    configure(rest..., (ownkey(v, index) => uncanonicalname(v.name, v.system) => option(c, v.systems, namekeys(v)) for v in K)...)
+end
+
+"The system name a parameter is written under: its own, or its module-qualified one when a namesake shares that."
+ownkey(v, index) = begin
+    K = index.parameters["$(v.system).$(uncanonicalname(v.name, v.system))"]
+    length(unique(first(u.systems) for u in K)) > 1 ? first(v.systems) : v.system
 end

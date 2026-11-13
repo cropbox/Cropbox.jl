@@ -12,10 +12,10 @@
     end
 
     @testset "names" begin
-        @test names(System) == [:System]
-        @test names(Controller) == [:Controller]
-        @test names(Context) == [:Context]
-        @test names(Clock) == [:Clock]
+        @test names(System) == [Symbol("Cropbox.System"), :System]
+        @test names(Controller) == [Symbol("Cropbox.Controller"), :Controller]
+        @test names(Context) == [Symbol("Cropbox.Context"), :Context]
+        @test names(Clock) == [Symbol("Cropbox.Clock"), :Clock]
     end
 
     @testset "iteration" begin
