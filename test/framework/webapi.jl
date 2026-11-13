@@ -26,6 +26,24 @@ childtype() = SWebChild
 @system SWebComputed(Controller) begin
     kids(config) => produce(childtype(); config) ~ produce
 end
+
+# two systems of one name from different modules in one model
+module NamesakeA
+using Cropbox
+@system SWebTwin begin
+    a => 1 ~ preserve(parameter)
+end
+end
+module NamesakeB
+using Cropbox
+@system SWebTwin begin
+    a => 2 ~ preserve(parameter)
+end
+end
+@system SWebTwins(Controller) begin
+    x(context) ~ ::NamesakeA.SWebTwin
+    y(context) ~ ::NamesakeB.SWebTwin
+end
 end
 
 @testset "webapi" begin
@@ -287,7 +305,9 @@ end
         @test_throws Cropbox.APIRequestError Cropbox.decodeconfig([Dict("path" => "SWebAPI.a", "value" => 1)])
         @test_throws Cropbox.APIRequestError Cropbox.decodeconfig(Dict("a" => 1))
         @test_throws Cropbox.APIRequestError Cropbox.decodeconfig(Dict("a" => Dict("value" => 1, "unit" => "m")))
-        @test_throws Cropbox.APIRequestError Cropbox.decodeconfig(Dict("Model.SWebAPI.a" => 1))
+        # a flat path may name the system with its modules; only the model says whether it has one
+        @test Cropbox.decodeconfig(Dict("Model.SWebAPI.a" => 1)) == @config(Symbol("Model.SWebAPI") => :a => 1)
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("Model.SWebAPI.a" => 1)); index = Cropbox.ModelIndex(SWebAPI))
         @test Cropbox.decodeconfig(Dict("Soil" => Dict("type" => "clay"))) == @config(:Soil => :type => "clay")
         @test Dict(Cropbox.flatconfig(flat)) == Dict("SWebAPI.a" => 200u"cm", "SWebAPI.c" => 3)
         bounds = Cropbox.decodeconfig(Dict("SWebAPI.a" => [1, 2], "SWebAPI" => Dict("c" => Dict("lower" => 0, "upper" => 1, "unit" => "m"))); value = Cropbox.decodebounds)
@@ -372,6 +392,18 @@ end
         for (path, x) in (("SWebAPI.n", 1.5), ("SWebAPI.n", nothing), ("SWebAPI.n", true), ("SWebAPI.f", 2), ("SWebAPI.f", nothing), ("SWebAPI.c", true), ("SWebAPI.c", nothing))
             @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict(path => x)); index)
         end
+        # the declared type is checked in the declared unit: 1.5 km is 1500 m, 150 cm is no whole number of metres
+        @system SWebCount(Controller) begin
+            d => 2 ~ preserve::int(parameter, u"m")
+        end
+        counted = Cropbox.ModelIndex(SWebCount)
+        count(x) = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebCount.d" => x)); index = counted)[:config][:SWebCount][:d]
+        @test count(Dict("value" => 1.5, "unit" => "km")) == 1500u"m" && count(Dict("value" => 2, "unit" => "km")) == 2000u"m" && count(3) == 3
+        for bad in (Dict("value" => 150, "unit" => "cm"), 1e30, Dict("value" => 1e30, "unit" => "m"), 1.5, true)
+            @test_throws Cropbox.APIRequestError count(bad)
+        end
+        @test JSON.parse(Cropbox.respond(Cropbox.Service(SWebCount; dashboard = :none), "POST", "/api/simulate",
+            JSON.json(Dict("config" => Dict("SWebCount.d" => Dict("value" => 1.5, "unit" => "km")), "target" => "d", "stop" => 1))))["rows"][1][2] == 1500
         typed = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.n" => 2.0, "SWebAPI.f" => false, "SWebAPI.c" => 3)); index)[:config][:SWebAPI]
         @test typed[:n] == 2 && typed[:f] === false && typed[:c] == 3
         converted = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 250, "unit" => "cm"))); index)[:config][:SWebAPI][:a]
@@ -746,6 +778,20 @@ end
         served(config) = JSON.parse(Cropbox.respond(aliased, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => "a")))[3])["rows"][1][2]
         @test served(Dict()) == 4 && served(Dict("SWebAPI.length" => 5)) == 5 && served(Dict("Controller.a" => 6)) == 6
         @test only(filter(q -> q["path"] == "SWebAPI.a", JSON.parse(Cropbox.respond(aliased, "GET", "/api/model")[3])["parameters"]))["default"]["value"] == 4
+
+        # so does a server value set under the module-qualified name of the system, which Cropbox reads first
+        own = "$(first(names(SWebAPI))).a"
+        for qualified in (Cropbox.Service(SWebAPI; config = own => 3, dashboard = :none),
+                          Cropbox.Service(SWebAPI; request_defaults = Dict("config" => Dict(own => 3)), dashboard = :none))
+            value(config) = JSON.parse(Cropbox.respond(qualified, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => "a")))[3])["rows"][1][2]
+            @test value(Dict()) == 3 && value(Dict("SWebAPI.a" => 4)) == 4 && value(Dict("SWebAPI.length" => 5)) == 5 && value(Dict(own => 6)) == 6
+        end
+        # a namesake from another module keeps its own value, and the shared name sets both
+        twins = WebAPITestModels.SWebTwins
+        twinA = "$(first(names(WebAPITestModels.NamesakeA.SWebTwin))).a"
+        paired = Cropbox.Service(twins; config = twinA => 5, dashboard = :none)
+        pair(config) = JSON.parse(Cropbox.respond(paired, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => ["x.a", "y.a"])))[3])["rows"][1][2:3]
+        @test pair(Dict()) == [5, 2] && pair(Dict("SWebTwin.a" => 7)) == [7, 7] && pair(Dict(twinA => 8)) == [8, 2]
 
         # the constructor options of the service reach the operations that run the model
         external = Cropbox.Service(SWebExternal; options = (a = 3,), dashboard = :none)

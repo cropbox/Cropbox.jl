@@ -287,8 +287,9 @@ end
     decodeconfig(x; value=decode) -> Config
 
 Convert a JSON configuration into a `Config`. Two shapes are accepted and may be
-mixed: nested `{"System": {"name": value}}` and flat `{"System.name": value}`.
-Values are decoded with `value` (scalars, `{value, unit}` objects or tables).
+mixed: nested `{"System": {"name": value}}` and flat `{"System.name": value}`,
+where the system may carry its modules (`Main.Plant.Leaf.a`) to tell it from a
+namesake. Values are decoded with `value` (scalars, `{value, unit}` objects or tables).
 A key without a dot whose object looks like a value or a table is rejected as
 a missing system name rather than read as a system.
 """
@@ -301,7 +302,7 @@ decodeconfig(x::AbstractDict; value=decode) = begin
         dots = count(==('.'), k)
         if dots == 0 && v isa AbstractDict && !haskey(v, "value") && !(get(v, "type", nothing) in ("CSV", "DataFrame"))
             push!(P, Symbol(k) => OrderedDict{Symbol,Any}(Symbol(n) => value(w) for (n, w) in v))
-        elseif dots == 1
+        elseif dots >= 1
             push!(P, String(k) => value(v))
         else
             apierror("Configuration key `$k` must be a `System.name` path or a system name holding an object of parameters")
