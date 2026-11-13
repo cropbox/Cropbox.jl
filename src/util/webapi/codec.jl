@@ -299,9 +299,9 @@ decodeconfig(x::AbstractDict; value=decode) = begin
     d = stringkeys(x)
     P = Pair[]
     for (k, v) in d
-        # an object that is neither a value nor a table holds the parameters of a system, which may be named with its
-        # modules (`{"Main.M.Leaf": {"a": 1}}`, as a calibration answers); anything else under a dotted key is a value
-        if v isa AbstractDict && !haskey(v, "value") && !(get(v, "type", nothing) in ("CSV", "DataFrame"))
+        # an object that is neither a value, a table nor a range holds the parameters of a system, which may be named
+        # with its modules (`{"Main.M.Leaf": {"a": 1}}`, as a calibration answers); anything else under a dotted key is a value
+        if v isa AbstractDict && !isvalueobject(k, v)
             push!(P, Symbol(k) => OrderedDict{Symbol,Any}(Symbol(n) => value(w) for (n, w) in v))
         elseif occursin('.', k)
             push!(P, String(k) => value(v))
@@ -312,6 +312,8 @@ decodeconfig(x::AbstractDict; value=decode) = begin
     isempty(P) ? configure() : configure(P...)
 end
 decodeconfig(x; value=decode) = apierror("Configuration must be an object")
+isvalueobject(k, v) = haskey(v, "value") || get(v, "type", nothing) in ("CSV", "DataFrame") ||
+    occursin('.', k) && !isempty(v) && issubset(keys(v), ("lower", "upper", "unit"))
 
 "Rows given as nested arrays as a `Matrix`."
 asmatrix(rows::AbstractVector) = begin
