@@ -299,10 +299,11 @@ decodeconfig(x::AbstractDict; value=decode) = begin
     d = stringkeys(x)
     P = Pair[]
     for (k, v) in d
-        dots = count(==('.'), k)
-        if dots == 0 && v isa AbstractDict && !haskey(v, "value") && !(get(v, "type", nothing) in ("CSV", "DataFrame"))
+        # an object that is neither a value nor a table holds the parameters of a system, which may be named with its
+        # modules (`{"Main.M.Leaf": {"a": 1}}`, as a calibration answers); anything else under a dotted key is a value
+        if v isa AbstractDict && !haskey(v, "value") && !(get(v, "type", nothing) in ("CSV", "DataFrame"))
             push!(P, Symbol(k) => OrderedDict{Symbol,Any}(Symbol(n) => value(w) for (n, w) in v))
-        elseif dots >= 1
+        elseif occursin('.', k)
             push!(P, String(k) => value(v))
         else
             apierror("Configuration key `$k` must be a `System.name` path or a system name holding an object of parameters")

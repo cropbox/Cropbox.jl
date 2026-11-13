@@ -57,7 +57,10 @@ include(joinpath(@__DIR__, "profiles.jl"))
             spelling, system, parameter, value, unit = override
             client = Dict(spelling => Dict("value" => value, "unit" => unit))
             merged = Cropbox.simulationkwargs(Dict{String,Any}("config" => client); config = service.config, index = service.index)[:config]
-            @test merged[system][parameter] == Cropbox.unitfy(value, Cropbox.parseunit(unit)) != service.config[system][parameter]
+            # read as Cropbox reads it, through every spelling of the parameter
+            v = first(service.index.parameters["$system.$parameter"])
+            effective(c) = Cropbox.option(c, v.systems, Cropbox.namekeys(v))
+            @test effective(merged) == Cropbox.unitfy(value, Cropbox.parseunit(unit)) != effective(service.config)
 
             dashboard = getjson("/api/dashboard")
             outputs = [o["target"] for o in dashboard["outputs"]]

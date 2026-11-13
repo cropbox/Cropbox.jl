@@ -358,28 +358,36 @@ clocktype(S::Type{<:System}) = fieldtype(typefor(fieldtype(typefor(S), :context)
 """
     override(base, client, index)
 
-`client` merged over `base` so that Cropbox reads every value `client` sets for
-a parameter of the model. Cropbox reads the spellings of a parameter in a fixed
-order: its name before its alias, and its system by the module-qualified name
-before the plain one and before a mixin. Where `base` holds a parameter under a
-spelling read before the one `client` used, the client value is written once
-more under the spelling read first of all. Nothing is removed, so a base setting
-that the index cannot trace, such as one under a mixin name that also reaches
-systems produced while the model runs, keeps its meaning.
+`client` merged over `base` so that every value `client` sets for a parameter of
+the model is the one Cropbox reads, and the one a reader of the configuration
+finds, `meta` among them. Where `base` holds the parameter under a name of its
+own system (the plain one, or the module-qualified one that Cropbox reads
+first), that entry takes the client value in place. Where `base` still wins
+through a mixin name read before the client's spelling, the client value is
+written under the system's own name, which Cropbox reads before any mixin.
+Nothing else in `base` changes, so a setting under a mixin name that also
+reaches systems produced while the model runs keeps its meaning.
 """
 override(base, client, ::Nothing) = configure(base, client)
 override(base, client, index::ModelIndex) = begin
     base, client = configure(base), configure(client)
     K = unique(v -> (first(v.systems), v.name), [v for (path, _) in flatconfig(client) for v in get(index.parameters, path, ())])
-    configure(base, client, (first(v.systems) => uncanonicalname(v.name, v.system) => option(client, v.systems, namekeys(v)) for v in K if shadowed(base, client, v))...)
+    updates = Pair[]
+    for v in K
+        x = option(client, v.systems, namekeys(v))
+        own = ownnames(v, index)
+        held = [(s, k) for (s, k) in spellings(v) if !ismissing(option(base, s, k))]
+        append!(updates, [s => k => x for (s, k) in held if s in own])
+        merged = configure(base, client, updates...)
+        w = findfirst(((s, k),) -> !ismissing(option(merged, s, k)), spellings(v))
+        s, k = spellings(v)[w]
+        s in own || !ismissing(option(client, s, k)) || push!(updates, ownkey(v, index) => uncanonicalname(v.name, v.system) => x)
+    end
+    configure(base, client, updates...)
 end
 
-"Whether `base` holds the parameter `v` under a spelling that Cropbox reads before every one that `given` holds it under."
-shadowed(base, given, v) = begin
-    held(c) = findfirst(((s, k),) -> !ismissing(option(c, s, k)), spellings(v))
-    i, j = held(base), held(given)
-    !isnothing(i) && !isnothing(j) && i < j
-end
+"The names of the system of `v` that reach no other: its own, without the plain one when a namesake in another module shares that."
+ownnames(v, index) = filter(s -> shortname(s) == v.system && (s != v.system || ownkey(v, index) == v.system), v.systems)
 
 "The system name a parameter is written under: its own, or its module-qualified one when a namesake shares that."
 ownkey(v, index) = begin

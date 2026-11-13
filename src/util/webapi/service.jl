@@ -511,8 +511,7 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
         o, k = observationkwargs(r, "calibrate"; config, options, index)
         P = decodeconfig(get(r, "parameters", nothing); value=decodebounds)
         isempty(P) && apierror("calibrate requires `parameters` with at least one range")
-        base = get(k, :config, Config())
-        k[:parameters] = configure((calibrationrange(p, base, index) for p in flatconfig(P))...)
+        k[:parameters] = configure((calibrationrange(p, index) for p in flatconfig(P))...)
         isnothing(get(r, "weight", nothing)) || (k[:weight] = Float64.(decode(r["weight"])))
         isnothing(get(r, "pareto", nothing)) || (k[:pareto] = parsebool(r["pareto"]))
         optim = asobject(get(r, "optim", nothing))
@@ -533,22 +532,31 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     )
 end
 
-# A range goes in under the parameter's own name, in its declared unit, and comes out in it. A system that shares
-# its name with one from another module goes by its module-qualified name, as does a parameter that the base
-# configuration holds under a spelling Cropbox reads before the own name; otherwise the base value would stand.
-calibrationrange(p::Pair, base, ::Nothing) = p
-calibrationrange((path, bounds)::Pair, base, index::ModelIndex) = begin
+# A range goes in, in the declared unit, under the module-qualified name of the system, which Cropbox reads
+# before any other spelling in every configuration of the run; so the search moves the value the model reads.
+# It comes out under the system's own name (`calibrated`), as a request can send it back.
+calibrationrange(p::Pair, ::Nothing) = p
+calibrationrange((path, bounds)::Pair, index::ModelIndex) = begin
     K = variedparameters(path, index)
     length(K) == 1 || apierror("`$path` sets parameters of several systems ($(join((v.config for v in K), ", "))); calibrate one of them")
     v = only(K)
-    name = uncanonicalname(v.name, v.system)
-    system = ownkey(v, index)
-    shadowed(base, configure(system => name => 0), v) && (system = first(v.systems))
-    system => name => map(b -> deunitfy(unitfy(b, v.unit)), bounds)
+    first(v.systems) => uncanonicalname(v.name, v.system) => map(b -> deunitfy(unitfy(b, v.unit)), bounds)
 end
 
-calibrated(c::Config, index) = APIDict(string(s) => APIDict(string(k) => encodevalue(v, declaredunit("$s.$k", index)) for (k, v) in F) for (s, F) in c)
+calibrated(c::Config, index) = begin
+    R = APIDict()
+    for (s, F) in c, (k, v) in F
+        get!(R, string(calibratedsystem(s, k, index)), APIDict())[string(k)] = encodevalue(v, declaredunit("$s.$k", index))
+    end
+    R
+end
 calibrated(pareto::AbstractDict, index) = APIDict(string(fitness) => calibrated(c, index) for (fitness, c) in pareto)
+"The name a calibrated parameter goes back under: its system's own, module-qualified only for a namesake."
+calibratedsystem(s, k, ::Nothing) = s
+calibratedsystem(s, k, index::ModelIndex) = begin
+    K = get(index.parameters, "$s.$k", nothing)
+    isnothing(K) ? s : ownkey(first(K), index)
+end
 declaredunit(path, ::Nothing) = nothing
 declaredunit(path, index::ModelIndex) = first(index.parameters[path]).unit
 
