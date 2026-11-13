@@ -356,23 +356,29 @@ end
 clocktype(S::Type{<:System}) = fieldtype(typefor(fieldtype(typefor(S), :context)), :clock)
 
 """
-    canonical(config, index)
+    override(base, client, index)
 
-Write every parameter of the model that `config` sets under one spelling, its
-own system and name, with the value Cropbox reads from the spellings `config`
-used (a module-qualified system name and an alias among them); the other
-spellings go. A canonical configuration merged over another then replaces its
-values whichever spelling either side used, as a client overriding a server
-default expects: no spelling that Cropbox reads first is left to win over it.
-A system that shares its name with one from another module keeps its
-module-qualified name, so the value stays its own.
+`client` merged over `base` so that Cropbox reads every value `client` sets for
+a parameter of the model. Cropbox reads the spellings of a parameter in a fixed
+order: its name before its alias, and its system by the module-qualified name
+before the plain one and before a mixin. Where `base` holds a parameter under a
+spelling read before the one `client` used, the client value is written once
+more under the spelling read first of all. Nothing is removed, so a base setting
+that the index cannot trace, such as one under a mixin name that also reaches
+systems produced while the model runs, keeps its meaning.
 """
-canonical(c::Config, ::Nothing) = c
-canonical(c::Config, index::ModelIndex) = begin
-    K = unique(v -> (first(v.systems), v.name), [v for (path, _) in flatconfig(c) for v in get(index.parameters, path, ())])
-    isempty(K) && return c
-    rest = [s => k => x for (s, F) in c for (k, x) in F if !haskey(index.parameters, "$(s).$(k)")]
-    configure(rest..., (ownkey(v, index) => uncanonicalname(v.name, v.system) => option(c, v.systems, namekeys(v)) for v in K)...)
+override(base, client, ::Nothing) = configure(base, client)
+override(base, client, index::ModelIndex) = begin
+    base, client = configure(base), configure(client)
+    K = unique(v -> (first(v.systems), v.name), [v for (path, _) in flatconfig(client) for v in get(index.parameters, path, ())])
+    configure(base, client, (first(v.systems) => uncanonicalname(v.name, v.system) => option(client, v.systems, namekeys(v)) for v in K if shadowed(base, client, v))...)
+end
+
+"Whether `base` holds the parameter `v` under a spelling that Cropbox reads before every one that `given` holds it under."
+shadowed(base, given, v) = begin
+    held(c) = findfirst(((s, k),) -> !ismissing(option(c, s, k)), spellings(v))
+    i, j = held(base), held(given)
+    !isnothing(i) && !isnothing(j) && i < j
 end
 
 "The system name a parameter is written under: its own, or its module-qualified one when a namesake shares that."

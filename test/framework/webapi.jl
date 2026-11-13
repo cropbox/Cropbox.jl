@@ -44,6 +44,24 @@ end
     x(context) ~ ::NamesakeA.SWebTwin
     y(context) ~ ::NamesakeB.SWebTwin
 end
+
+# a parameter shared through a mixin: by systems produced while the model runs, and by one that counts it in integers
+@system SWebShared begin
+    k => 2 ~ preserve(parameter)
+end
+@system SWebKid(SWebShared) begin
+    n => 1 ~ preserve(parameter)
+end
+kidtype() = SWebKid
+@system SWebOpen(SWebShared, Controller) begin
+    kids(config) => produce(kidtype(); config) ~ produce
+end
+@system SWebWhole(SWebShared) begin
+    k => 2 ~ preserve::int(parameter)
+end
+@system SWebMixed(SWebShared, Controller) begin
+    whole(context) ~ ::SWebWhole
+end
 end
 
 @testset "webapi" begin
@@ -195,12 +213,15 @@ end
         @test allunique(p["path"] for p in spelled["parameters"])
         P = Dict(p["path"] => p for p in spelled["parameters"])
         @test P["SWebPlant.k"]["default"]["value"] == 3 && P["SWebLeaf.area"]["default"]["value"] == 5
-        canonical = Cropbox.canonical(@config(:SWebRate => :rate => 3), index)
-        @test canonical == @config(:SWebPlant => :k => 3)
-        # one spelling stays, with the value Cropbox reads, so a canonical configuration merged over another wins by any spelling
-        spelled = Cropbox.canonical(@config(:System => :k => 1, :SWebPlant => :rate => 2, :SWebRate => :k => 3), index)
-        @test spelled[:SWebPlant][:k] == 3 && !haskey(spelled.config, :SWebRate) && !haskey(spelled[:SWebPlant], :rate)
-        @test Cropbox.canonical(@config(:Other => :x => 1), index) == @config(:Other => :x => 1)
+        # a client value is the one Cropbox reads, whichever spelling the base and the client used
+        rate(c) = instance(SWebPlant; config = c).k'
+        qualified = Symbol(first(names(SWebPlant)))
+        @test rate(Cropbox.override(@config(:SWebPlant => :k => 1), @config(:SWebRate => :rate => 3), index)) == 3
+        @test rate(Cropbox.override(@config(qualified => :k => 1), @config(:SWebPlant => :rate => 2), index)) == 2
+        @test rate(Cropbox.override(@config(:SWebPlant => :rate => 1), @config(:SWebRate => :k => 4), index)) == 4
+        # and nothing of the base goes: a base the client does not shadow stays as it was written
+        @test Cropbox.override(@config(:SWebRate => :rate => 3), @config(:SWebLeaf => :A => 1), index) == @config(:SWebRate => :rate => 3, :SWebLeaf => :A => 1)
+        @test Cropbox.override((), @config(:Other => :x => 1), index) == @config(:Other => :x => 1)
 
         # every state that holds a value is an output; a function, a table or a produced system is not
         @system SWebStates(Controller) begin
@@ -375,7 +396,7 @@ end
         # indexed and bundle paths only resolve at run time
         @test Cropbox.simulationkwargs(Dict{String,Any}("target" => "leaves[1].area"); index)[:target] == "leaves[1].area"
         # every configuration is checked, by name or alias
-        @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.length" => "2.5")); index)[:config] == @config(:SWebAPI => :a => 2.5)
+        @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.length" => "2.5")); index)[:config] == @config(:SWebAPI => :length => 2.5)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.zzz" => 1)); index)
         @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("configs" => [Dict("SWebAPI.a" => 1), Dict("SWebAPI.zzz" => 1)]); index)
         # clients set what the model declares: the context and produced systems included, nothing else
@@ -405,6 +426,17 @@ end
         end
         @test JSON.parse(Cropbox.respond(Cropbox.Service(SWebCount; dashboard = :none), "POST", "/api/simulate",
             JSON.json(Dict("config" => Dict("SWebCount.d" => Dict("value" => 1.5, "unit" => "km")), "target" => "d", "stop" => 1)))[3])["rows"][1][2] == 1500
+        # a path that sets a parameter of several systems has to suit every one of them
+        mixed = Cropbox.ModelIndex(WebAPITestModels.SWebMixed)
+        @test_throws Cropbox.APIRequestError Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebShared.k" => 1.5)); index = mixed)
+        @test Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebShared.k" => 3)); index = mixed)[:config] == @config(:SWebShared => :k => 3)
+        # a base setting that reaches systems the index cannot see stays, beside the client value for the root
+        opened = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebOpen.k" => 4));
+            config = :SWebShared => :k => 5, index = Cropbox.ModelIndex(WebAPITestModels.SWebOpen))[:config]
+        @test Cropbox.option(opened, [:SWebKid, :SWebShared], :k) == 5 && Cropbox.option(opened, names(WebAPITestModels.SWebOpen), :k) == 4
+        # `meta` goes by the spelling the configuration used, a mixin name included
+        metas = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebRate.rate" => 3), "meta" => "SWebRate"); index = Cropbox.ModelIndex(SWebPlant))
+        @test metas[:meta] == :SWebRate
         typed = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.n" => 2.0, "SWebAPI.f" => false, "SWebAPI.c" => 3)); index)[:config][:SWebAPI]
         @test typed[:n] == 2 && typed[:f] === false && typed[:c] == 3
         converted = Cropbox.simulationkwargs(Dict{String,Any}("config" => Dict("SWebAPI.a" => Dict("value" => 250, "unit" => "cm"))); index)[:config][:SWebAPI][:a]
@@ -793,6 +825,25 @@ end
         paired = Cropbox.Service(twins; config = twinA => 5, dashboard = :none)
         pair(config) = JSON.parse(Cropbox.respond(paired, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => ["x.a", "y.a"])))[3])["rows"][1][2:3]
         @test pair(Dict()) == [5, 2] && pair(Dict("SWebTwin.a" => 7)) == [7, 7] && pair(Dict(twinA => 8)) == [8, 2]
+        # so does a sweep over one of them, by its qualified path, and over both by the shared name
+        twinB = "$(first(names(WebAPITestModels.NamesakeB.SWebTwin))).a"
+        both = Cropbox.Service(twins; config = (twinA => 5, twinB => 7), dashboard = :none)
+        readA(c) = Cropbox.option(c, names(WebAPITestModels.NamesakeA.SWebTwin), :a)
+        readB(c) = Cropbox.option(c, names(WebAPITestModels.NamesakeB.SWebTwin), :a)
+        swept(path) = Cropbox.simulationkwargs(Dict{String,Any}("xstep" => Dict("path" => path, "values" => [3, 4]));
+            both.config, index = both.index, fields = Cropbox.REQUEST_KEYS.visualize)[:configs]
+        @test [(readA(c), readB(c)) for c in swept(twinA)] == [(3, 7), (4, 7)]
+        @test [(readA(c), readB(c)) for c in swept("SWebTwin.a")] == [(3, 3), (4, 4)]
+        # and a calibration of one of them by its qualified path
+        P = Cropbox.calibrationrange(twinA => [0, 10], both.config, both.index)
+        @test first(P) == Symbol(first(names(WebAPITestModels.NamesakeA.SWebTwin))) && last(last(P)) == [0, 10]
+        @test_throws Cropbox.APIRequestError Cropbox.calibrationrange("SWebTwin.a" => [0, 10], both.config, both.index)
+        # a calibrated parameter that the base holds under a spelling read first is calibrated, not left at the base value
+        shadow = Cropbox.Service(SWebAPI; config = own => 3, dashboard = :none)
+        status, _, body = Cropbox.respond(shadow, "POST", "/api/calibrate", JSON.json(Dict(
+            "observed" => Dict("type" => "CSV", "content" => "time (hr),a (m)\n0,7\n"), "target" => "a", "stop" => 1,
+            "parameters" => Dict("SWebAPI.a" => [0, 10]), "optim" => Dict("MaxSteps" => 500))))
+        @test status == 200 && isapprox(only(values(JSON.parse(body)["config"]))["a"]["value"], 7; atol = 0.05)
 
         # the constructor options of the service reach the operations that run the model
         external = Cropbox.Service(SWebExternal; options = (a = 3,), dashboard = :none)
