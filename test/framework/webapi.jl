@@ -336,6 +336,9 @@ end
         @test Dict(Cropbox.flatconfig(flat)) == Dict("SWebAPI.a" => 200u"cm", "SWebAPI.c" => 3)
         bounds = Cropbox.decodeconfig(Dict("SWebAPI.a" => [1, 2], "SWebAPI" => Dict("c" => Dict("lower" => 0, "upper" => 1, "unit" => "m"))); value = Cropbox.decodebounds)
         @test bounds[:SWebAPI][:a] == (1, 2) && bounds[:SWebAPI][:c] == (0u"m", 1u"m")
+        # a range object under a flat path is a value, while one under a module-qualified system holds its parameters
+        ranged = Cropbox.decodeconfig(Dict("SWebAPI.c" => Dict("lower" => 0, "upper" => 1), "Main.SWebAPI" => Dict("a" => Dict("lower" => 1, "upper" => 2))); value = Cropbox.decodebounds)
+        @test ranged[:SWebAPI][:c] == (0, 1) && ranged[Symbol("Main.SWebAPI")][:a] == (1, 2)
         @test Cropbox.decodebounds(Dict("lower" => Dict("value" => 1, "unit" => "cm"), "upper" => Dict("value" => 2, "unit" => "cm"))) == (1u"cm", 2u"cm")
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds([1])
         @test_throws Cropbox.APIRequestError Cropbox.decodebounds(Dict("lower" => 0))
