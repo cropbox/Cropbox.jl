@@ -29,25 +29,23 @@ Base.show(io::IO, s::Call) = print(io, "<call>")
 
 gencallargtype(t) = isnothing(t) ? :Float64 : esc(t)
 
+gencalltype(V, kwargs) = begin
+    extract(a) = let k, t, u
+        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
+        @q $C.valuetype($(gencallargtype(t)), $u)
+    end
+    @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
+end
+
 updatetags!(d, ::Val{:Call}; kwargs, _...) = begin
-    #FIXME: lower duplicate efforts in genvartype()
     N = d[:_type]
     U = d[:unit]
     V = @q $C.valuetype($N, $U)
-    extract(a) = let k, t, u
-        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        @q $C.valuetype($(gencallargtype(t)), $u)
-    end
-    F = @q FunctionWrapper{$V, Tuple{$(extract.(kwargs)...)}}
-    d[:_calltype] = F
+    d[:_calltype] = gencalltype(V, kwargs)
 end
 
 genvartype(v::VarInfo, ::Val{:Call}; V, _...) = begin
-    extract(a) = let k, t, u
-        @capture(a, k_::t_(u_) | k_::t_ | k_(u_) | k_)
-        @q $C.valuetype($(gencallargtype(t)), $u)
-    end
-    F = @q FunctionWrapper{$V, Tuple{$(extract.(v.kwargs)...)}}
+    F = gencalltype(V, v.kwargs)
     @q Call{$V,$F}
 end
 
