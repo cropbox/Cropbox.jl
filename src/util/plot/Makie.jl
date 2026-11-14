@@ -18,6 +18,13 @@ classic_ticklabels(values::AbstractVector{<:Union{Date,DateTime}}) = begin
     labels
 end
 
+# Gadfly's categorical palette, expressed using Colors through Makie.
+const CLASSIC_COLORS = Makie.distinguishable_colors(32, [Makie.LCHab(70, 60, 240)];
+    transform = c -> Makie.deuteranopic(c, 0.5),
+    lchoices = [65, 70, 75, 80], cchoices = [0, 50, 60, 70], hchoices = range(0, 330; length = 24))
+const CLASSIC_COLORMAP = [Makie.LCHab(min(80, 100 - 70abs(2r - 1)^1.5), max(10, 40abs(2r - 1)), (1-r)*260 + r*10)
+    for r in range(0, 1; length = 256)]
+
 theme_classic() = begin
     # Makie 0.24 only searches its fallback list, not system fonts, for missing glyphs.
     lock(Makie.FONT_LOCK) do
@@ -27,16 +34,10 @@ theme_classic() = begin
     end
     major, minor = "#564A55", "#6C606B"
     fonts = (; regular = Makie.assetpath("fonts", "NotoSans-Regular.ttf"), bold = Makie.assetpath("fonts", "NotoSans-Bold.ttf"))
-    # Gadfly's categorical palette, expressed using Colors through Makie.
-    colors = Makie.distinguishable_colors(32, [Makie.LCHab(70, 60, 240)];
-        transform = c -> Makie.deuteranopic(c, 0.5),
-        lchoices = [65, 70, 75, 80], cchoices = [0, 50, 60, 70], hchoices = range(0, 330; length = 24))
-    colormap = [Makie.LCHab(min(80, 100 - 70abs(2r - 1)^1.5), max(10, 40abs(2r - 1)), (1-r)*260 + r*10)
-        for r in range(0, 1; length = 256)]
     Makie.Theme(;
         size = (480, 320), figure_padding = (14, 32, 7, 14),
         fontsize = 12, fonts, textcolor = major,
-        palette = (; color = colors), colormap,
+        palette = (; color = CLASSIC_COLORS), colormap = CLASSIC_COLORMAP,
         linewidth = 0.85, markersize = 4,
         Scatter = (; strokewidth = 0), ScatterLines = (; strokewidth = 0),
         Axis = (;
