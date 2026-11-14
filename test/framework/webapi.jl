@@ -3,7 +3,6 @@ using Dates
 using JSON
 using TimeZones
 
-# a system outside `Main`, where `calibrate` cannot look up units by system name
 module WebAPITestModels
 using Cropbox
 @system SWebGrowth(Controller) begin
