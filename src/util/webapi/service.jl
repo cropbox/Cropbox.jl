@@ -63,7 +63,7 @@ Service(S::Type{<:System}; config=(), options=(), request_defaults=APIDict(), ui
     defaults = asobject(request_defaults)
     # A default configuration is decoded once and becomes part of the base configuration, replacing a base
     # value whichever of the parameter's names either used.
-    default = checkconfig(decodeconfig(pop!(defaults, "config", nothing)), index)
+    default = checkconfig(decodeconfig(pop!(defaults, "config", nothing); known=configkey(index)), index)
     c = override(config, default, index)
     checkkeys(defaults, unique(Iterators.flatten(REQUEST_KEYS)), "`request_defaults`")
     options = decodeoptions(options)
@@ -186,7 +186,7 @@ model.
 simulationkwargs(r::APIDict; config=(), options=(), index=nothing, fields=REQUEST_KEYS.simulate) = begin
     kw = Dict{Symbol,Any}()
     field(k) = k in fields ? get(r, k, nothing) : nothing
-    client(x) = checkconfig(decodeconfig(x), index)
+    client(x) = checkconfig(decodeconfig(x; known=configkey(index)), index)
     # a client value replaces a base one whichever spelling either used
     base = override(config, client(field("config")), index)
     C = field("configs")
@@ -509,7 +509,7 @@ calibrate_payload(S::Type{<:System}, request::AbstractDict; config=(), options=(
     obs, kw = validating() do
         r = requestobject(request, :calibrate)
         o, k = observationkwargs(r, "calibrate"; config, options, index)
-        P = decodeconfig(get(r, "parameters", nothing); value=decodebounds, isvalue=israngeobject)
+        P = decodeconfig(get(r, "parameters", nothing); value=decodebounds, isvalue=israngeobject, known=configkey(index))
         isempty(P) && apierror("calibrate requires `parameters` with at least one range")
         k[:parameters] = configure((calibrationrange(p, index) for p in flatconfig(P))...)
         isnothing(get(r, "weight", nothing)) || (k[:weight] = Float64.(decode(r["weight"])))

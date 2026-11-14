@@ -393,6 +393,19 @@ ownspellings(v, index) = filter(spellings(v)) do (s, k)
     shortname(s) == v.system && all(u -> first(u.systems) == first(v.systems), get(index.parameters, "$s.$k", ()))
 end
 
+"""
+    configkey(index) -> Function
+
+Whether a key of a configuration names a system of the model (`true`), the path of
+one of its parameters (`false`), or neither (`nothing`), for `decodeconfig` to tell
+`{"Model": {"value": 1}}`, a parameter named `value`, from a value object.
+"""
+configkey(::Nothing) = Returns(nothing)
+configkey(index::ModelIndex) = begin
+    systems = Set(first(rsplit(path, '.'; limit=2)) for path in keys(index.parameters))
+    k -> k in systems ? true : haskey(index.parameters, k) ? false : nothing
+end
+
 "The system name a parameter is written under: its own, or its module-qualified one when a namesake shares that."
 ownkey(v, index) = begin
     K = index.parameters["$(v.system).$(uncanonicalname(v.name, v.system))"]

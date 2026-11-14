@@ -284,26 +284,28 @@ applycolumns!(df::DataFrame, columns) = begin
 end
 
 """
-    decodeconfig(x; value=decode, isvalue=isvalueobject) -> Config
+    decodeconfig(x; value=decode, isvalue=isvalueobject, known=Returns(nothing)) -> Config
 
 Convert a JSON configuration into a `Config`. Two shapes are accepted and may be
 mixed: nested `{"System": {"name": value}}` and flat `{"System.name": value}`,
 where the system may carry its modules (`Main.Plant.Leaf.a`) to tell it from a
 namesake. Values are decoded with `value` (scalars, `{value, unit}` objects or tables).
-An object is a value where `isvalue` says so, and otherwise holds the parameters
-of a system, so a parameter may have any name (`{"Main.M.Leaf": {"lower": 1}}`).
+An object under a key that `known` says names a system of the model (`true`)
+holds its parameters, so a parameter may have any name (`{"Leaf": {"value": 1}}`),
+and one under a parameter path (`false`) is a value. For a key the model does not
+know (`nothing`), an object is a value where `isvalue` says so.
 A key without a dot whose object is a value is rejected as a missing system name
 rather than read as a system.
 """
 decodeconfig(::Nothing; kw...) = configure()
 decodeconfig(c::Config; kw...) = c
-decodeconfig(x::AbstractDict; value=decode, isvalue=isvalueobject) = begin
+decodeconfig(x::AbstractDict; value=decode, isvalue=isvalueobject, known=Returns(nothing)) = begin
     d = stringkeys(x)
     P = Pair[]
     for (k, v) in d
-        # an object that is not a value holds the parameters of a system, which may be named with its modules
-        # (`{"Main.M.Leaf": {"a": 1}}`, as a calibration answers); anything else under a dotted key is a value
-        if v isa AbstractDict && !isvalue(v)
+        # an object under the name of a system, which may carry its modules (`{"Main.M.Leaf": {"a": 1}}`, as a
+        # calibration answers), holds its parameters; anything else under a dotted key is a value
+        if v isa AbstractDict && something(known(k), !isvalue(v))
             push!(P, Symbol(k) => OrderedDict{Symbol,Any}(Symbol(n) => value(w) for (n, w) in v))
         elseif occursin('.', k)
             push!(P, String(k) => value(v))

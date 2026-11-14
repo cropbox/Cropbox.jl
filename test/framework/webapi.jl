@@ -69,6 +69,11 @@ end
     y(context) ~ ::SharedB.Shared.SWebLeaf
 end
 
+# a parameter named like the key of a value object
+@system SWebValue(Controller) begin
+    value => 1 ~ preserve(parameter)
+end
+
 # a parameter shared through a mixin: by systems produced while the model runs, and by one that counts it in integers
 @system SWebShared begin
     k => 2 ~ preserve(parameter)
@@ -894,6 +899,18 @@ end
         @test status == 200 && only(keys(answer)) == leafA && only(keys(answer[leafA])) == "lower"
         status, _, body = Cropbox.respond(leaves, "POST", "/api/simulate", JSON.json(Dict("config" => answer, "target" => ["x.lower", "y.lower"])))
         @test status == 200 && isapprox(JSON.parse(body)["rows"][1][2], 3; atol = 0.05) && JSON.parse(body)["rows"][1][3] == 1
+        # a parameter named `value` is set through its system as through its path, by a server as by a client
+        valued = Cropbox.Service(WebAPITestModels.SWebValue; request_defaults = Dict("config" => Dict("SWebValue" => Dict("value" => 2))), dashboard = :none)
+        valuerun(config) = Cropbox.respond(valued, "POST", "/api/simulate", JSON.json(Dict("config" => config, "target" => "value")))
+        valueof(config) = (r = valuerun(config); r[1] == 200 ? JSON.parse(r[3])["rows"][1][2] : r[1])
+        @test valueof(Dict()) == 2 && valueof(Dict("SWebValue" => Dict("value" => 4))) == 4 && valueof(Dict("SWebValue.value" => 4)) == 4
+        @test valueof(Dict("SWebValue.value" => Dict("value" => 5))) == 5 && valueof(Dict("SWebValue" => Dict("value" => Dict("value" => 6)))) == 6
+        @test valueof(Dict("value" => Dict("value" => 4))) == 422
+        status, _, body = Cropbox.respond(valued, "POST", "/api/calibrate", JSON.json(Dict(
+            "observed" => Dict("type" => "CSV", "content" => "time (hr),value\n0,3\n"), "target" => "value", "stop" => 1,
+            "parameters" => Dict("SWebValue" => Dict("value" => [0, 10])), "optim" => Dict("MaxSteps" => 500))))
+        answer = JSON.parse(body)["config"]
+        @test status == 200 && only(keys(answer)) == "SWebValue" && isapprox(valueof(answer), 3; atol = 0.05)
         # a calibrated parameter that the base holds under a spelling read first is calibrated, not left at the base
         # value, in a run of several configurations as in one; the answer goes by the system's own name
         shadow = Cropbox.Service(SWebAPI; config = own => 3, dashboard = :none)
