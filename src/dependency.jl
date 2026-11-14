@@ -5,9 +5,11 @@ struct Dependency <: Graph
     N::Vector{VarNode}
     I::Dict{VarNode,Int}
     M::Dict{Symbol,VarInfo}
+    focus::Set{Symbol}
 end
 
-dependency(M::Dict{Symbol,VarInfo}) = Dependency(DiGraph(), VarNode[], Dict{VarNode,VarInfo}(), M)
+Dependency(g, N, I, M) = Dependency(g, N, I, M, Set{Symbol}())
+dependency(M::Dict{Symbol,VarInfo}) = Dependency(DiGraph(), VarNode[], Dict{VarNode,Int}(), M)
 dependency(V::Vector{VarInfo}) = begin
     M = Dict{Symbol,VarInfo}()
     for v in V
@@ -23,6 +25,100 @@ dependency(::Type{S}) where {S<:System} = dependency(geninfos(S))
 dependency(::S) where {S<:System} = dependency(S)
 
 graph(d::Dependency) = d.g
+stylekeys(::Dependency) = (GRAPH_STYLE_KEYS..., :alias, :group)
+
+phasenodes(d::Dependency, v::VarInfo) = filter(
+    n -> haskey(d.I, n), VarNode.(Ref(v), (PreStep(), MainStep(), PostStep())),
+)
+phaseindices(d::Dependency, I) = Set(
+    d.I[n] for v in Set(d.N[i].info for i in I) for n in phasenodes(d, v)
+)
+
+configindices(d::Dependency, I) = Set(
+    j for i in I if istag(d.N[i].info, :parameter)
+    for j in Graphs.inneighbors(d.g, i) if d.N[j].info.name == :config
+)
+
+checkselection(depth, direction) = begin
+    depth >= 0 || throw(ArgumentError("depth must be non-negative"))
+    direction in (:up, :down, :both) ||
+        throw(ArgumentError("direction must be :up, :down, or :both"))
+end
+
+varinfos(d::Dependency, names) = unique(map(names) do name
+    haskey(d.M, name) || throw(ArgumentError("variable $(repr(name)) not found"))
+    d.M[name]
+end)
+
+focusindices(d::Dependency, focus::Symbol; depth, direction) = begin
+    target = only(varinfos(d, [focus]))
+    I = Set(d.I[n] for n in phasenodes(d, target))
+    frontier = copy(I)
+    neighbors = direction == :up ? Graphs.inneighbors : direction == :down ? Graphs.outneighbors : Graphs.all_neighbors
+    for _ in 1:depth
+        adjacent = (j for i in frontier for j in neighbors(d.g, i))
+        frontier = setdiff(phaseindices(d, adjacent), I)
+        isempty(frontier) && break
+        union!(I, frontier)
+    end
+    I, [target.name]
+end
+
+pathnames(x::Symbol) = [x]
+pathnames(x::AbstractVector{Symbol}) = begin
+    isempty(x) && throw(ArgumentError("path endpoint cannot be empty"))
+    unique(x)
+end
+pathnames(x) = throw(ArgumentError("path endpoint must be a Symbol or a vector of Symbols: $(repr(x))"))
+
+reachable(g, roots, neighbors) = begin
+    seen = Set{Int}(roots)
+    frontier = collect(roots)
+    while !isempty(frontier)
+        i = pop!(frontier)
+        for j in neighbors(g, i)
+            if j ∉ seen
+                push!(seen, j)
+                push!(frontier, j)
+            end
+        end
+    end
+    seen
+end
+
+pathindices(d::Dependency, path::Pair) = begin
+    sources = pathnames(first(path))
+    targets = pathnames(last(path))
+    sourceinfo = varinfos(d, sources)
+    targetinfo = varinfos(d, targets)
+    source = findall(n -> n.info in sourceinfo, d.N)
+    target = findall(n -> n.info in targetinfo, d.N)
+    forward = reachable(d.g, source, Graphs.outneighbors)
+    backward = reachable(d.g, target, Graphs.inneighbors)
+    I = intersect(forward, backward)
+    isempty(I) && throw(ArgumentError("no dependency path from $(repr(first(path))) to $(repr(last(path)))"))
+
+    I, [v.name for v in [sourceinfo; targetinfo]]
+end
+
+selectiondependency(d::Dependency, selectors::AbstractVector; depth::Integer=1, direction=:both) = begin
+    isempty(selectors) && throw(ArgumentError("at least one selector is required"))
+    checkselection(depth, direction)
+    selected = map(selectors) do selector
+        if selector isa Symbol
+            focusindices(d, selector; depth, direction)
+        elseif selector isa Pair
+            pathindices(d, selector)
+        else
+            throw(ArgumentError("selector must be a Symbol or Pair: $(repr(selector))"))
+        end
+    end
+    I = phaseindices(d, Iterators.flatten(first.(selected)))
+    focus = Set(Iterators.flatten(last.(selected)))
+    g, J = Graphs.induced_subgraph(d.g, sort!(collect(union(I, configindices(d, I)))))
+    N = d.N[J]
+    Dependency(g, N, Dict(n => i for (i, n) in enumerate(N)), d.M, focus)
+end
 
 node!(d::Dependency, n::VarNode) = begin
     if !haskey(d.I, n)
@@ -44,7 +140,7 @@ firstnode(d::Dependency, v::VarInfo) = begin
         n = VarNode(v, t())
         haskey(d.I, n) && return n
     end
-    @error "no node found for $a"
+    error("no node found for $(v.name)")
 end
 
 extract(v::VarInfo; equation=true, tag=true, include=(), exclude=()) = begin
@@ -161,13 +257,81 @@ label(n::VarNode; alias=false) = begin
     tag = string(n.step)
     tag * name
 end
-labels(d::Dependency; kw...) = label.(d.N; kw...)
+labels(d::Dependency; alias=false, kw...) = label.(d.N; alias)
 
-edgestyle(d::Dependency, a::VarNode, b::VarNode) = ""
-edgestyles(d::Dependency; kw...) = Dict(
-    let a = src(e), b = dst(e)
-        (a, b) => edgestyle(d, d.N[a], d.N[b])
-    end for e in edges(d.g)
+graphstyle(d::Dependency; rankdir=:TB, splines=:spline, kw...) = begin
+    invoke(graphstyle, Tuple{Graph}, d; rankdir, splines, kw...)
+end
+
+stateattrs(s) = begin
+    if s in (:Accumulate, :Capture, :Integrate, :Advance)
+        (shape=:box, margin="0.09,0.05", penwidth=0.5)
+    elseif s == :Drive
+        (shape=:parallelogram, margin="0.01,0.00", penwidth=0.5)
+    elseif s == :Provide
+        (shape=:cylinder, labelloc=:b, margin="0.07,0.04", penwidth=0.5)
+    elseif s == :Flag
+        (shape=:diamond, penwidth=0.5)
+    elseif s in (:Bisect, :Solve)
+        (shape=:hexagon, penwidth=0.5)
+    elseif s == :Produce
+        (shape=:box, style=:rounded, peripheries=2, margin="0.09,0.05", penwidth=0.5)
+    else
+        (;)
+    end
+end
+
+nodeattrs(d::Dependency; fontsize=9, alias=false, kw...) = begin
+    Dict(i => begin
+        n = d.N[i]
+        v = n.info
+        plain = istag(v, :context) || v.name in (:context, :config)
+        a = plain ? (;) : stateattrs(v.state)
+        phases = phasenodes(d, v)
+        size = if length(phases) > 1 && v.state in (:Accumulate, :Capture, :Integrate, :Advance, :Produce)
+            chars = maximum(textwidth(label(m; alias)) for m in phases)
+            (width=round(chars * 0.6 * fontsize / 72 + 0.18; digits=3),
+             height=round(1.4 * fontsize / 72 + 0.10; digits=3))
+        else
+            (;)
+        end
+        bold = v.name in d.focus
+        italic = !plain && v.state in (:Hold, :Wrap, :Call, :Bring)
+        text = bold || italic ? (label=graphlabel(label(n; alias); bold, italic),) : (;)
+        stroke = n.step isa PreStep ? (style=haskey(a, :style) ? string(a.style, ",dashed") : "dashed",) : (;)
+        merge(a, size, text, stroke)
+    end for i in eachindex(d.N))
+end
+
+clusters(d::Dependency; group=:none, kw...) = begin
+    group == :none && return Pair{String,Vector{Int}}[]
+    group == :system || throw(ArgumentError("group must be :none or :system"))
+    framework = (:System, :Context, :Clock, :Config, :Controller, :Calendar)
+    groups = OrderedDict{Symbol,Vector{Int}}()
+    for (i, n) in enumerate(d.N)
+        s = n.info.system
+        s in framework && continue
+        push!(get!(Vector{Int}, groups, s), i)
+    end
+    [string(s) => I for (s, I) in groups]
+end
+
+edgeattrs(d::Dependency, a::Integer, b::Integer) = begin
+    x, y = d.N[a], d.N[b]
+    if x.info == y.info
+        (arrowhead=:vee, penwidth=0.3, weight=4)
+    elseif x.info.name == :config && istag(y.info, :parameter)
+        (style=:dotted, arrowhead=:obox)
+    elseif y.step isa PreStep
+        (arrowhead=:onormal,)
+    elseif x.info.system == y.info.system
+        (weight=2,)
+    else
+        (;)
+    end
+end
+edgeattrs(d::Dependency; kw...) = Dict(
+    (src(e), dst(e)) => edgeattrs(d, src(e), dst(e)) for e in edges(d.g)
 )
 
 Base.show(io::IO, d::Dependency) = print(io, "Dependency")
@@ -175,7 +339,7 @@ Base.show(io::IO, ::MIME"text/plain", d::Dependency) = begin
     color = get(io, :color, false)
     VC = tokencolor(VarColor(); color)
     MC = tokencolor(MiscColor(); color)
-    print(io, MC("["))
-    print(io, join(VC.(label.(sort(d))), MC(" → ")))
+    print(io, MC("Dependency update order: ["))
+    print(io, join(VC.(label.(sort(d))), MC(", ")))
     print(io, MC("]"))
 end

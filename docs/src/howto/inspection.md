@@ -52,22 +52,22 @@ inspection.
 
 ## Inspect dependency relationships
 
-`look` is the stable declaration view. Two qualified structural helpers expose
-complementary graphs:
+`look` shows declarations; `visualize` shows their relationships without running
+a simulation:
 
 ```@example inspectflow
-d = Cropbox.dependency(InspectDemo)
+d = visualize(InspectDemo)
 ```
 
 ```@example inspectflow
-h = Cropbox.hierarchy(InspectDemo; skipcontext = true)
+h = visualize(InspectDemo; kind = :hierarchy)
 ```
 
-`dependency` follows variables and generated update stages; it is useful for
-checking evaluation order and cycles. `hierarchy` follows mixins and child
-systems; dashed edges denote mixins. Cropbox uses its bundled Graphviz
-executable to render either graph as SVG on supported platforms. A static copy
-can be written for documentation:
+The default `kind = :dependency` follows variables and generated update stages;
+`kind = :hierarchy` follows mixins and child systems, omitting nested `Context`
+infrastructure. Dashed hierarchy edges denote mixins. Cropbox uses its bundled
+Graphviz executable to render either graph as SVG on supported platforms. A
+static copy can be written for documentation:
 
 ```@example inspectflow
 Cropbox.writeimage("dependency", d; format = :svg)
@@ -80,10 +80,21 @@ Download the generated [dependency graph](dependency.svg) or
 
 The text representation remains available without invoking Graphviz.
 
-These helpers are qualified because their graph representation is
-implementation-oriented rather than a stable serialization format. Explain the
-scientific relationships in the surrounding text instead of asking readers to
-infer model meaning from every generated stage.
+To inspect just the inputs to `mass`, select its upstream neighborhood:
+
+```@example inspectflow
+visualize(InspectDemo, :mass; direction = :up)
+```
+
+See [Model structure](@ref visualization-structure) for shape and arrow meanings,
+system grouping, and the difference between selecting neighborhoods and paths.
+These are static declaration graphs, not runtime traces. Explain the scientific
+relationships alongside the graph rather than inferring them from node shape.
+
+For worked model examples, compare the accumulating state in
+[Logistic Growth](@ref logistic-growth-tutorial), the grouped input-to-state path in
+[Weather-driven Phenology](@ref phenology-tutorial), and a local process in
+[SimpleCrop](@ref simplecrop-tutorial).
 
 ## Navigate an instance
 
