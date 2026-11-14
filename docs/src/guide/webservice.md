@@ -148,9 +148,12 @@ plotted without a second simulation:
 }
 ```
 
-`POST /api/visualize` answers with the SVG text in `body`. The same table
-saves as CSV with `name (unit)` headers, which a request reads back with their
-units.
+`POST /api/visualize` answers with the SVG text in `body`. The bundled
+dashboard works this way: one simulation per run fills the result table, every
+panel is drawn from that table, and a changed panel is drawn again from the
+table at hand. Only a panel that sweeps a parameter (`xstep`) simulates, once
+for each value. The same table saves as CSV with `name (unit)` headers, which
+a request reads back with their units.
 
 The HTTP operation draws one table, `y` against `x`. Groups, layers,
 observations against estimates and response surfaces are forms of
