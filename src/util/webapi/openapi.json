@@ -1,0 +1,284 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cropbox Web API",
+    "version": "0.2.0",
+    "description": "HTTP interface to a Cropbox system. Every POST request is stateless: the body is parsed, the fields it leaves out are filled in from the trusted `request_defaults` of the server (what the client sends wins), and the request is dispatched to `simulate`, `visualize`, `evaluate` or `calibrate`. A request that the model or its data cannot take is rejected (422 `validation`) before or apart from the run: a field that the operation or one of its objects does not define, a value in a unit or shape its parameter does not take, observations that match no output. A failure while the model runs is a 500 (`execution`). Model-specific metadata comes from `GET /api/model`."
+  },
+  "paths": {
+    "/api/model": {
+      "get": {
+        "summary": "Model description",
+        "description": "Systems, parameters with defaults, output variables and provided-table bindings of the served system.",
+        "responses": {"200": {"description": "Model description", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ModelDescription"}}}}}
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "summary": "Dashboard metadata",
+        "description": "What the bundled dashboard is built from: editable controls, selectable outputs and plot panels derived from the model description, and the `stop` and `snap` that the service defaults to.",
+        "responses": {"200": {"description": "Dashboard metadata", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WidgetPayload"}}}}}
+      }
+    },
+    "/api/schema": {
+      "get": {
+        "summary": "Schema fragments",
+        "description": "The route table and the component schemas of this document as `definitions`, which they refer to each other by.",
+        "responses": {"200": {"description": "Schema fragments", "content": {"application/json": {"schema": {"type": "object"}}}}}
+      }
+    },
+    "/api/openapi": {
+      "get": {"summary": "This OpenAPI document", "responses": {"200": {"description": "OpenAPI document", "content": {"application/json": {"schema": {"type": "object"}}}}}}
+    },
+    "/api/docs": {
+      "get": {"summary": "Swagger UI", "responses": {"200": {"description": "HTML page rendering this document", "content": {"text/html": {}}}}}
+    },
+    "/api/simulate": {
+      "post": {
+        "summary": "Run a simulation",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SimulationRequest"}}}},
+        "responses": {
+          "200": {"description": "Simulation table", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/TablePayload"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}, "500": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/api/visualize": {
+      "post": {
+        "summary": "Render a plot as SVG",
+        "description": "Draws one table, `y` against `x`: the table passed as `data`, or the one from simulating the model (`config`, `stop`, `snap`, `base`, `xstep`). This is the table form of `visualize`; its grouped, layered and observation forms are not available over HTTP.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VisualizationRequest"}}}},
+        "responses": {
+          "200": {"description": "SVG document", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VisualizationResponse"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}, "500": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/api/evaluate": {
+      "post": {
+        "summary": "Evaluate a metric against observations",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EvaluationRequest"}}}},
+        "responses": {
+          "200": {"description": "Metric value(s)", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EvaluationResponse"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}, "500": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/api/calibrate": {
+      "post": {
+        "summary": "Calibrate parameters against observations",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CalibrationRequest"}}}},
+        "responses": {
+          "200": {"description": "Calibrated configuration", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CalibrationResponse"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}, "500": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Error": {"description": "Error", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}}
+    },
+    "schemas": {
+      "Value": {
+        "description": "A scalar or array with an optional unit and type. Plain JSON numbers, booleans and strings are accepted wherever a Value is expected.",
+        "oneOf": [
+          {"type": ["number", "boolean", "string", "null"]},
+          {"type": "object", "required": ["value"], "properties": {
+            "value": {"type": ["number", "boolean", "string", "array", "null"]},
+            "unit": {"type": ["string", "null"], "description": "Unit label such as `m`, `K*d`, `μmol/(m^2*s)`, `°C`."},
+            "type": {"$ref": "#/components/schemas/TypeName"},
+            "timezone": {"type": "string", "description": "IANA zone of a `ZonedDateTime`. A value without an offset requires it; a value in a zone with daylight saving time carries it, so that the zone survives the round trip."}
+          }}
+        ]
+      },
+      "Column": {
+        "type": "object", "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"$ref": "#/components/schemas/TypeName"},
+          "unit": {"type": ["string", "null"]},
+          "timezone": {"type": "string", "description": "IANA zone of a `ZonedDateTime` column."}
+        }
+      },
+      "TypeName": {
+        "type": ["string", "null"],
+        "description": "Julia type name. On input `Bool`, `Int`/`Int64`, `Float64`, `String`, `Symbol`, `Date`, `DateTime` and `ZonedDateTime` convert the value (element-wise for arrays); any other name is informative and leaves the value as parsed."
+      },
+      "Table": {
+        "description": "A table given as CSV text or as columns and row arrays; a TablePayload response is one of the latter and can be sent back as it is. CSV headers may carry `name (unit)` or `name (:Type)` annotations when no `columns` are given. No column name may end in parentheses otherwise. Column names are unique and a row has no more cells than there are columns; a cell that is absent or null is a missing value.",
+        "oneOf": [
+          {"type": "object", "required": ["type", "content"], "properties": {
+            "type": {"const": "CSV"}, "content": {"type": "string"}, "filename": {"type": "string"},
+            "columns": {"type": "array", "items": {"$ref": "#/components/schemas/Column"}}
+          }},
+          {"type": "object", "required": ["type", "columns", "rows"], "properties": {
+            "type": {"const": "DataFrame"},
+            "columns": {"type": "array", "items": {"$ref": "#/components/schemas/Column"}},
+            "rows": {"type": "array", "items": {"type": "array"}}
+          }}
+        ]
+      },
+      "Config": {
+        "description": "Parameter values keyed by `System.name` paths, or nested `{System: {name: value}}` objects. Both shapes may be mixed. A parameter of the model is addressed by its name or alias under its system or a mixin of it, whose name may carry its modules (`Main.Plant.Leaf.a`) to tell it from a namesake, and takes precedence over the server's value whichever of those either side used; other paths are rejected. A parameter of a scalar type takes one value, and a quantity in a unit that converts to the declared one. Table parameters take a Table.",
+        "type": "object",
+        "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}, {"type": "object", "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/Value"}, {"$ref": "#/components/schemas/Table"}]}}]}
+      },
+      "Names": {
+        "description": "Variable paths such as `leaf.area`, by name or alias; `*` and `leaf.*` select every variable of a system, `time` is the clock time, and an object maps output column names to paths. Paths are checked against the model; indexed paths such as `leaves[1].area` are resolved at run time.",
+        "oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}, {"type": "object", "additionalProperties": {"type": "string"}}]
+      },
+      "Meta": {
+        "description": "Extra result columns: a system name adds that system's configured parameters (which tells the runs of `configs` apart), an object adds constant columns, and an array combines them.",
+        "oneOf": [{"type": "string"}, {"type": "object"}, {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "object"}]}}]
+      },
+      "RunRequest": {
+        "description": "Fields shared by simulation, evaluation and calibration requests.",
+        "type": "object",
+        "properties": {
+          "config": {"$ref": "#/components/schemas/Config"},
+          "configs": {"type": "array", "items": {"$ref": "#/components/schemas/Config"}, "description": "Several configurations, each merged over `config`, producing a stacked table."},
+          "index": {"$ref": "#/components/schemas/Names"},
+          "target": {"$ref": "#/components/schemas/Names"},
+          "meta": {"$ref": "#/components/schemas/Meta"},
+          "base": {"type": "string", "description": "Path of the system (`leaf`) that `target`, `index`, `x` and `y` are relative to."},
+          "stop": {"$ref": "#/components/schemas/Value", "description": "Update count (number), duration (`{value, unit}` in a unit of the clock time) or the path of a count or condition variable (string)."},
+          "seed": {"type": "integer"}
+        }
+      },
+      "SimulationRequest": {
+        "allOf": [{"$ref": "#/components/schemas/RunRequest"}],
+        "properties": {
+          "snap": {"$ref": "#/components/schemas/Value", "description": "Snapshot interval (`{value, unit}` in a unit of the clock time), a boolean or the path of a condition variable."},
+          "nounit": {"type": "boolean"},
+          "long": {"type": "boolean"}
+        },
+        "examples": [{"config": {"Plant.size": {"value": 3, "unit": "m"}}, "stop": {"value": 4, "unit": "hr"}, "target": ["size", "growth"]}]
+      },
+      "VisualizationRequest": {
+        "description": "Plots the table given as `data`, whose columns `x` and `y` then name, or else simulates the model (`config`, `base`, `stop`, `snap`, `xstep`) and plots the variables `x` and `y`. A single `y` is named on its axis and several in a legend.",
+        "type": "object",
+        "properties": {
+          "config": {"$ref": "#/components/schemas/Config"},
+          "base": {"type": "string"},
+          "stop": {"$ref": "#/components/schemas/Value"},
+          "snap": {"$ref": "#/components/schemas/Value"},
+          "x": {"type": "string", "default": "time"},
+          "y": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+          "kind": {"type": "string", "enum": ["line", "scatter", "scatterline", "step"]},
+          "xstep": {"type": "object", "description": "A parameter varied across simulations, as a range (`start`, `stop`, `step`) or explicit `values`, in `unit`.", "required": ["path"], "additionalProperties": false, "properties": {"path": {"type": "string"}, "start": {"$ref": "#/components/schemas/Value"}, "stop": {"$ref": "#/components/schemas/Value"}, "step": {"$ref": "#/components/schemas/Value"}, "values": {"type": "array"}, "unit": {"type": "string"}}},
+          "plot": {"type": "object", "description": "Plot options: title, xlab, ylab, legend, legendpos, names, colors, xlim and ylim (`[lower, upper]`, either may be null), xunit, yunit, aspect, and linestyle (`solid`, `dash`, `dot`, `dashdot` or `dashdotdot`, one or one for each of `y`)."},
+          "data": {"$ref": "#/components/schemas/Table", "description": "Plot this table instead of simulating."}
+        },
+        "required": ["y"]
+      },
+      "EvaluationRequest": {
+        "allOf": [{"$ref": "#/components/schemas/RunRequest"}],
+        "properties": {
+          "observed": {"$ref": "#/components/schemas/Table"},
+          "metric": {"type": "string", "enum": ["rmse", "nrmse", "rmspe", "mae", "mape", "ef", "dr"], "default": "rmse"}
+        },
+        "required": ["observed", "target"]
+      },
+      "CalibrationRequest": {
+        "allOf": [{"$ref": "#/components/schemas/EvaluationRequest"}],
+        "properties": {
+          "parameters": {"type": "object", "description": "Bounds per parameter path: `[lower, upper]` or `{lower, upper, unit}`, in the same flat or nested shape as `config`. A path that several systems share through a mixin is calibrated through the path of one of them."},
+          "weight": {"type": "array", "items": {"type": "number"}},
+          "pareto": {"type": "boolean"},
+          "optim": {"type": "object", "description": "Options for the BlackBoxOptim optimizer (e.g. `MaxSteps`, `Method`, `PopulationSize`), except those that write files where the service runs (`SaveTrace`, `SaveFitnessTraceToCsv`, `SaveParameters`)."}
+        },
+        "required": ["parameters"]
+      },
+      "TablePayload": {
+        "type": "object",
+        "properties": {
+          "status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "type": {"const": "DataFrame"},
+          "columns": {"type": "array", "items": {"$ref": "#/components/schemas/Column"}},
+          "rows": {"type": "array", "items": {"type": "array"}, "description": "Plain values; non-finite numbers and missing values are null."},
+          "summary": {"type": "object", "properties": {"nrow": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}
+        }
+      },
+      "VisualizationResponse": {
+        "type": "object",
+        "properties": {"status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "operation": {"const": "visualize"}, "format": {"const": "svg"}, "content_type": {"const": "image/svg+xml"}, "body": {"type": "string"}, "summary": {"type": "object"}}
+      },
+      "EvaluationResponse": {
+        "type": "object",
+        "properties": {"status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "operation": {"const": "evaluate"}, "metric": {"type": "string"}, "target": {}, "value": {"description": "A Value object, or an array of them for several targets."}, "summary": {"type": "object", "properties": {"nobs": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}}
+      },
+      "CalibrationResponse": {
+        "type": "object",
+        "properties": {"status": {"const": "ok"}, "contract_version": {"type": "string"}, "model": {"type": "string"}, "operation": {"const": "calibrate"}, "metric": {"type": "string"}, "target": {}, "config": {"type": "object", "description": "Nested `{System: {name: Value}}` objects with values in the declared units of their parameters (keyed by metric tuple when `pareto` is set)."}, "summary": {"type": "object", "properties": {"nobs": {"type": "integer"}, "nparameters": {"type": "integer"}, "elapsed_ms": {"type": "integer"}}}}
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"const": "error"}, "contract_version": {"type": "string"},
+          "error": {"type": "object", "properties": {
+            "code": {"type": "string", "enum": ["invalid_request", "not_found", "method_not_allowed", "execution_failed"]},
+            "category": {"type": "string", "enum": ["syntax", "validation", "routing", "method", "execution"]},
+            "message": {"type": "string"}, "path": {"type": "string"}, "retryable": {"type": "boolean"}
+          }}
+        }
+      },
+      "ModelDescription": {
+        "type": "object",
+        "properties": {
+          "contract": {"type": "object", "properties": {"version": {"type": "string"}}},
+          "model": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}}},
+          "systems": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}, "root": {"type": "boolean"}, "path": {"type": ["string", "null"], "description": "Access path from the root; null for a system that the model only produces while it runs."}}}},
+          "parameters": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}},
+          "variables": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}},
+          "tables": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}}
+        }
+      },
+      "Variable": {
+        "type": "object",
+        "properties": {
+          "system": {"type": "string"}, "name": {"type": "string"}, "alias": {"type": ["string", "null"]},
+          "path": {"type": "string", "description": "Configuration path `System.name`."},
+          "declared": {"type": "string", "description": "Configuration path through the declaring system (differs from `path` for mixins)."},
+          "target": {"type": ["string", "null"], "description": "Access path usable in `target`, `index`, `stop`, `x`, `y`; null for a parameter of a produced system."},
+          "description": {"type": "string"}, "state": {"type": ["string", "null"]}, "type": {"type": ["string", "null"]}, "unit": {"type": ["string", "null"]},
+          "role": {"type": "string", "enum": ["parameter", "table", "output", "internal"]},
+          "default": {"description": "Value object with the value in effect under the server configuration, which a client can send back (parameters only; null for tables)."},
+          "tags": {"type": "object"}, "dependencies": {"type": "array", "items": {"type": "string"}},
+          "index": {"description": "Index column of a provided table (tables only)."},
+          "columns": {"type": "array", "description": "Columns read by `drive` variables (tables only).", "items": {"type": "object", "properties": {"variable": {"type": "string"}, "name": {"type": "string"}, "column": {"type": "string"}, "unit": {"type": ["string", "null"]}}}}
+        }
+      },
+      "WidgetPayload": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"}, "model": {"type": "object", "properties": {"name": {"type": "string"}, "module": {"type": "string"}}},
+          "controls": {"type": "array", "items": {"$ref": "#/components/schemas/Control"}},
+          "outputs": {"type": "array", "items": {"$ref": "#/components/schemas/Variable"}},
+          "tables": {"type": "array"},
+          "simulation": {"type": "object", "description": "The `stop` and `snap` among the `request_defaults` of the service, as a request takes them, for a client to start from. `stop` is five units of the clock time when the service has none; `snap` is null when it has none or one only Julia can express.", "properties": {"stop": {}, "snap": {}}},
+          "panels": {"type": "array", "description": "Plots of `outputs` targets, which include every variable a panel names.", "items": {"type": "object", "properties": {
+            "title": {"type": "string"}, "x": {"type": "string"}, "y": {"type": "array", "items": {"type": "string"}}, "kind": {"type": "string"},
+            "linestyles": {"type": "array", "items": {"type": "string"}, "description": "One line style for each of `y`."},
+            "xmin": {}, "xmax": {}, "ymin": {}, "ymax": {},
+            "xstep": {"type": "string", "description": "Path of the entry of `sweeps` that the panel simulates over."}
+          }}},
+          "sweeps": {"type": "array", "description": "Parameter sweeps for panels: the fields of `xstep` in a visualization request, with an optional `label`.", "items": {"type": "object"}}
+        }
+      },
+      "Control": {
+        "type": "object",
+        "properties": {
+          "kind": {"type": "string", "enum": ["number", "checkbox", "text", "file"]},
+          "role": {"type": "string", "enum": ["parameter", "table"]},
+          "system": {"type": "string"}, "name": {"type": "string"}, "path": {"type": "string"}, "declared": {"type": "string"},
+          "alias": {"type": ["string", "null"]}, "label": {"type": "string"}, "description": {"type": "string"},
+          "unit": {"type": ["string", "null"]}, "default": {}, "value_type": {"type": "string"}, "state": {"type": ["string", "null"]},
+          "timezone": {"type": ["string", "null"], "description": "Zone of a `ZonedDateTime` default, to send along with an edited value."},
+          "min": {"type": ["number", "null"]}, "max": {"type": ["number", "null"]}, "step": {"type": ["number", "null"]},
+          "accept": {"type": ["string", "null"]}, "columns": {"type": "array"}, "default_filename": {"type": "string", "description": "Name of the table the server already provides (table inputs)."},
+          "source": {"type": "string", "enum": ["dsl", "runtime"]}
+        }
+      }
+    }
+  }
+}

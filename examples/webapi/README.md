@@ -1,66 +1,52 @@
 # Web API examples
 
-Three applications use the same `describe`, `serve`, and `dashboard` functions.
-Run the following commands from the root of this checkout.
+Three services built with the same `describe`, `serve` and `dashboard`
+functions. This page says how to run them. What a service does is in the
+[Web service guide](https://cropbox.github.io/Cropbox.jl/dev/guide/webservice/),
+and what its routes take and return in the
+[Web API reference](https://cropbox.github.io/Cropbox.jl/dev/reference/webapi/).
 
-## Prepare the Julia environment
+| Application | Shows | Input |
+| --- | --- | --- |
+| `cherry` | Units, aliases, parameter overrides and accumulated states | Fixed synthetic seasonal temperatures |
+| `gasexchange` | Coupled component paths and response-curve presets | Package physiology with specified weather conditions |
+| `garlic` | CSV replacement of a provided table and dated whole-plant outputs | Normalized CUH weather and package KM/CUH/P2 presets |
+
+Run the commands below from the root of this checkout.
+
+## Prepare the environment
 
 ```sh
 julia --project=examples/webapi -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
 ```
 
-The environment installs registered Garlic, LeafGasExchange, and SimpleCrop versions
-and uses Cropbox from this checkout, not a globally installed Cropbox version.
-The first load and first plot can take longer while Julia compiles the code.
+The environment installs the registered Garlic and LeafGasExchange packages
+and uses Cropbox from this checkout. The first load and the first plot take
+longer while Julia compiles.
 
-## Inspect and run
-
-```sh
-julia --project=examples/webapi
-```
-
-```julia
-using Cropbox
-include("examples/webapi/profiles.jl")
-
-p = WebAPIExamples.profile("cherry")
-metadata = describe(p.system; config=p.config)
-metadata["parameters"]
-
-server = serve(p.system; config=p.config, ui=p.ui,
-    request_defaults=p.request_defaults, port=8000, async=true)
-
-# When finished, release the listening socket.
-close(server)
-```
-
-`async=true` returns the server handle without blocking the Julia caller. It does
-not create an asynchronous simulation job queue. For an API without a web
-frontend, pass `dashboard=:none` to `serve`. The equivalent UI-oriented call is
-`dashboard(p.system; config=p.config, ui=p.ui, request_defaults=p.request_defaults)`.
-
-For a blocking process, choose one application:
+## Run a service
 
 ```sh
 julia --project=examples/webapi examples/webapi/server.jl cherry 8000
 ```
 
 Replace `cherry` with `gasexchange` or `garlic`. Open
-<http://127.0.0.1:8000/dashboard>, then use the Run button. Ctrl+C stops the server.
-Use a different port if one is already occupied. Services bind to loopback only.
+<http://127.0.0.1:8000/dashboard> and use the Run button; Ctrl+C stops the
+server. Services bind to loopback only.
 
-| Application | Main interface feature | Input |
-| --- | --- | --- |
-| `cherry` | Units, aliases, parameter overrides, and accumulated states | Fixed synthetic seasonal temperatures |
-| `gasexchange` | Coupled component paths and response-curve presets | Package physiology with specified weather conditions |
-| `garlic` | CSV replacement of a provided table and dated whole-plant outputs | Normalized CUH weather and package KM/CUH/P2 presets |
+From a Julia session, the same service without blocking it:
 
-The cherry series is illustrative, not observational validation data. The Garlic
-CSV in `test/examples/data/garlic` was converted from
-[`Garlic.jl v0.1.29`, `data/CUH/2014.wea`](https://github.com/cropbox/Garlic.jl/blob/v0.1.29/data/CUH/2014.wea)
-(MIT license). Run `convert.jl` in that directory to reproduce it.
-HTTP requests and the dashboard use CSV, not the WEA parser.
-Physiological parameters in the gas-exchange package are not adjusted here.
+```julia
+using Cropbox
+include("examples/webapi/profiles.jl")
+
+p = WebAPIExamples.profile("cherry")
+server = serve(p.system; p.config, p.ui, p.request_defaults, port=8000, async=true)
+close(server)   # when finished
+```
+
+`profiles.jl` holds what is specific to each application: the configuration,
+the request defaults and the panels of its dashboard.
 
 ## Call the routes
 
@@ -68,29 +54,20 @@ With the cherry service running:
 
 ```sh
 curl http://127.0.0.1:8000/api/model
-curl http://127.0.0.1:8000/api/schema
-curl http://127.0.0.1:8000/api/openapi
 curl http://127.0.0.1:8000/api/dashboard
+curl http://127.0.0.1:8000/api/openapi
 curl -H 'Content-Type: application/json' -d '{"target":["C","F","m"]}' http://127.0.0.1:8000/api/simulate
 curl -H 'Content-Type: application/json' -d '{"x":"time","y":["C","F"],"kind":"line"}' http://127.0.0.1:8000/api/visualize
 ```
 
-Simulation responses contain columns, units, and rows. Visualization responses
-contain `content_type` and SVG text in `body`. Swagger UI is available at
-`/api/docs` and loads its assets from a public CDN. The model service and bundled
-dashboard do not require a separate frontend build.
-
-Application-specific defaults and panel presets belong in `profiles.jl`. A
-custom frontend can consume `/api/model`, `/api/schema`, and `/api/dashboard`
-and call the same execution routes. `dashboard()` uses the bundled HTML frontend
-by default. The separate Stipple experiment is not a dependency of this package.
+Swagger UI is at <http://127.0.0.1:8000/api/docs>.
 
 ## Optional MCP adapter
 
-The adapter is a separate Python process. It forwards requests to an already
-running Cropbox service. It does not execute Julia or implement another model.
-It provides four tools and four read-only resources with `cropbox://service/`
-identifiers. These are MCP identifiers, not additional HTTP routes.
+The adapter is a separate Python process that forwards requests to a running
+Cropbox service. It executes no Julia and holds no model. Its four tools and
+four read-only resources (`cropbox://service/...`) are MCP identifiers, not
+additional HTTP routes.
 
 ```sh
 python3 -m venv .venv
@@ -98,16 +75,16 @@ python3 -m venv .venv
 .venv/bin/python examples/webapi/mcp/adapter.py --url http://127.0.0.1:8000
 ```
 
-An MCP host should launch that command using the absolute paths to the Python
-executable and `adapter.py`. The host communicates over standard input/output,
-and the adapter communicates with Cropbox over HTTP. Model settings follow the
-JSON schemas exposed by the service. No API key or LLM is needed to test this
-connection. Using an LLM requires an independently configured MCP-capable host.
+An MCP host launches that command with absolute paths to the Python
+executable and `adapter.py`, and talks to it over standard input and output.
+No API key or LLM is needed to test the connection.
 
 ## Verification
 
-`Pkg.test()` includes small API function, serialization, and HTTP checks.
-Model integration tests run manually using the example environment:
+`Pkg.test()` covers the model description, the JSON codec, request handling,
+the operations and loopback HTTP round trips with small models
+(`test/framework/webapi.jl`). The checks that load Garlic and LeafGasExchange
+run by hand in the example environment:
 
 ```sh
 julia --project=. -e 'using Pkg; Pkg.test()'
@@ -116,29 +93,32 @@ julia --project=examples/webapi examples/webapi/check.jl
 .venv/bin/python -m unittest discover -s examples/webapi/mcp
 ```
 
-`integration.jl` checks model results against native calls, including phenology,
-SimpleCrop, LeafGasExchange, and Garlic. `check.jl` checks the three example services.
+* `integration.jl` drives the three services with the requests that the
+  bundled dashboard sends, without a socket, and compares the cherry and
+  gas-exchange tables with native `simulate` calls.
+* `check.jl` starts each service on a loopback port and exercises its routes
+  over HTTP. With `CROPBOX_MCP_PYTHON="$PWD/.venv/bin/python"` set, it also
+  runs the MCP protocol check against each of them.
+* The unit tests of the adapter need no running service.
 
-To test the live MCP protocol, leave the cherry HTTP server running and use:
+To check the MCP protocol against one running service:
 
 ```sh
 .venv/bin/python examples/webapi/mcp/check.py --url http://127.0.0.1:8000
 ```
 
-For gas exchange use `--target A_net --x Ci`, or for Garlic use
-`--target total_mass --x DAP`. The protocol check reads all resources and calls
-all tools. It is not an LLM reliability evaluation.
+For gas exchange add `--target A_net --x Ci`, and for Garlic
+`--target total_mass --x DAP`. The check reads every resource and calls every
+tool; it does not evaluate an LLM.
 
-To check the HTTP and MCP protocols for all three models in one run, after
-installing the optional Python dependencies:
+## Data and scope
 
-```sh
-CROPBOX_MCP_PYTHON="$PWD/.venv/bin/python" julia --project=examples/webapi examples/webapi/check.jl
-```
+The cherry temperatures are illustrative, not observations. The Garlic CSV in
+`test/examples/data/garlic` was converted from
+[`Garlic.jl v0.1.29`, `data/CUH/2014.wea`](https://github.com/cropbox/Garlic.jl/blob/v0.1.29/data/CUH/2014.wea)
+(MIT license); `convert.jl` in that directory reproduces it. The physiological
+parameters of the gas-exchange package are used as they are.
 
-This starts and closes a loopback service for each example. These optional
-checks run manually; API function tests are included in `Pkg.test()`.
-
-These examples target trusted local modeling work. Authentication, upload and
-execution limits, TLS termination, monitoring, and job management belong in a
-deployment layer before exposing a service to untrusted users.
+These examples are for trusted local modeling work. Authentication, upload and
+execution limits, TLS termination, monitoring and job management belong in a
+deployment layer in front of a service that others can reach.

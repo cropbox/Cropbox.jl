@@ -33,7 +33,7 @@ end
                     @test !isempty(request_json(base, "GET", route))
                 end
                 dashboard = request_json(base, "GET", "/api/dashboard")
-                time_output = only(filter(v -> v["target_path"] == "time", dashboard["outputs"]))
+                time_output = only(filter(v -> v["target"] == "time", dashboard["outputs"]))
                 @test occursin("run-button", String(HTTP.get(base * "/dashboard").body))
                 result = request_json(base, "POST", "/api/simulate", Dict("target" => ["time", target]))
                 @test result["status"] == "ok"
