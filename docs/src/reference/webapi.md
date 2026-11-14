@@ -106,7 +106,10 @@ A value is a plain JSON value, or an object with a `value` and optionally its
 `{"System": {"name": value}}` objects, or a mix of them. A parameter is
 addressed by its name or alias, under its system or a mixin of it. A flat path
 may name the system with its modules (`Main.Plant.Leaf.a`) to tell it from a
-system of the same name in another module; the plain name sets both. Clients
+system of the same name in another module; the plain name sets both, and a
+nested object may be keyed the same way, as a calibration answers. An object
+under the name of a system holds its parameters, whatever they are called
+(`{"Model": {"value": 1}}`), and one under a parameter path is its value. Clients
 set the parameters that the model declares, the clock and produced systems
 included; any other path is rejected.
 
