@@ -1,4 +1,4 @@
-# [Model Gallery](@id Gallery)
+# [Models and Resources](@id Gallery)
 
 These packages demonstrate different Cropbox workflows. Their biological
 parameters and model-specific APIs belong to their own repositories; this manual

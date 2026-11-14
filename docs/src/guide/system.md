@@ -1,9 +1,9 @@
 # [Systems and Composition](@id system)
 
-A Cropbox system is a reusable model component. It groups variables and their
-dependencies into one specification, from a small temperature response to an
-entire crop model. `@system` analyzes that specification and creates a Julia
-system type; `instance` constructs a particular initialized model from the type.
+A Cropbox system groups variables and their dependencies into a reusable model
+component. Here we separate the growth process from the executable model used
+in the Quick Start. `@system` creates a Julia system type; `instance` constructs
+a particular initialized model from that type.
 
 This distinction is important: declaring a system does not run it, and changing
 a configuration does not rewrite its equations.
@@ -14,19 +14,22 @@ a configuration does not rewrite its equations.
 using Cropbox
 
 @system GrowthProcess begin
-    rate: growth_rate => 1.5 ~ preserve(parameter, u"g/hr")
-    mass(rate)               ~ accumulate(u"g")
+    r: growth_rate       => 0.05                 ~ preserve(parameter, u"d^-1")
+    Wf: final_biomass    => 300                  ~ preserve(parameter, u"g")
+    W0: initial_biomass  => 0.25                 ~ preserve(parameter, u"g")
+
+    W(W, r, Wf): biomass => r * W * (1 - W / Wf) ~ accumulate(init = W0, u"g")
 end
 
-@system GrowthModel(GrowthProcess, Controller)
+@system LogisticGrowth(GrowthProcess, Controller)
 ```
 
 `GrowthProcess` is reusable and has no root controller of its own.
-`GrowthModel` composes that process with `Controller`, making it suitable for
+`LogisticGrowth` composes that process with `Controller`, making it suitable for
 `instance`, `simulate`, and `visualize`.
 
 Use [DSL Syntax](@ref dsl-syntax) for the complete header and variable grammar.
-Use `look(GrowthModel)` to inspect the composed declaration.
+Use `look(LogisticGrowth)` to inspect the composed declaration.
 
 ## [Compose systems with mixins](@id Mixin)
 
@@ -70,13 +73,18 @@ A reusable process normally omits `Controller`. The system passed directly to
 creates the shared runtime context and configuration used by the composed
 model.
 
+An instance field such as `s.r` is a Cropbox state, not a bare number. Postfix
+`'` reads its current value, including units: `s.r'` is equivalent to
+`value(s.r)`. Reading a value does not advance the model. See
+[Values and Units](@ref utility-api) for the full reference.
+
 ```@example systemguide
-s = instance(GrowthModel;
-    config = GrowthProcess => :rate => 2,
+s = instance(LogisticGrowth;
+    config = GrowthProcess => :r => 0.07,
 )
 
-@show s.rate'
-@show s.mass'
+@show s.r'
+@show s.W'
 nothing # hide
 ```
 

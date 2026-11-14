@@ -1,6 +1,8 @@
 using Documenter
 using Cropbox
 
+include("checks/navigation.jl")
+
 makedocs(
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
@@ -20,29 +22,44 @@ makedocs(
             "How Cropbox Works" => "concepts/overview.md",
             "Systems and Composition" => "guide/system.md",
             "Model Execution" => "concepts/lifecycle.md",
-            "DSL Syntax" => "reference/dsl.md",
-            "Behaviors and Tags" => "reference/behaviors.md",
         ],
-        "Learn by Example" => [
-            "Logistic Growth" => "tutorials/growth.md",
-            "Weather-driven Phenology" => "tutorials/phenology.md",
-            "Predator–Prey Model" => "tutorials/lotka-volterra.md",
-            "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",
-            "Garlic Growth Model" => "tutorials/garlic.md",
-            "SimpleCrop" => "tutorials/simplecrop.md",
-            "Soil Water Transport" => "tutorials/soilwater.md",
-            "Root System Architecture" => "tutorials/croprootbox.md",
+        "Tutorials" => [
+            "Learning Path" => "tutorials/index.md",
+            "Build a Model" => [
+                "Logistic Growth" => "tutorials/growth.md",
+                "Weather-driven Phenology" => "tutorials/phenology.md",
+                "Predator–Prey Model" => "tutorials/lotka-volterra.md",
+            ],
+            "Model Studies" => [
+                "Models and Resources" => "gallery.md",
+                "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",
+                "Garlic Growth Model" => "tutorials/garlic.md",
+                "SimpleCrop" => "tutorials/simplecrop.md",
+                "Soil Water Transport" => "tutorials/soilwater.md",
+                "Root System Architecture" => "tutorials/croprootbox.md",
+            ],
         ],
-        "Workflows" => [
+        "Guides" => [
             "Configure Models and Scenarios" => "howto/configuration.md",
             "Run Simulations and Shape Output" => "howto/simulation.md",
             "Inspect and Visualize Models" => "howto/inspection.md",
             "Evaluate and Calibrate Models" => "tutorials/evaluation.md",
+            "Sensitivity Analysis" => "howto/sensitivity.md",
+            "Projects and Model Packages" => "guide/projects.md",
             "Web Services and Dashboards" => "guide/webservice.md",
+            "Troubleshooting" => [
+                "Frequently Asked Questions" => "faq.md",
+                "Common Mistakes" => "troubleshooting/common-mistakes.md",
+                "Performance and Reproducibility" => "troubleshooting/performance.md",
+            ],
         ],
-        "API Reference" => [
+        "Reference" => [
+            "How to Use the Reference" => "reference/overview.md",
+            "DSL Syntax" => "reference/dsl.md",
+            "Behaviors and Tags" => "reference/behaviors.md",
             "Declarations" => "reference/declaration.md",
             "Simulation API" => "reference/simulation.md",
+            "Sensitivity Analysis API" => "reference/sensitivity.md",
             "Visualization API" => "reference/visualization.md",
             "Inspection API" => "reference/inspection.md",
             "Web API" => "reference/webapi.md",
@@ -51,12 +68,6 @@ makedocs(
             "Built-in Model Components" => "reference/components.md",
             "API Index" => "reference/index.md",
         ],
-        "Troubleshooting" => [
-            "Frequently Asked Questions" => "faq.md",
-            "Common Mistakes" => "troubleshooting/common-mistakes.md",
-            "Performance and Reproducibility" => "troubleshooting/performance.md",
-        ],
-        "Model Gallery" => "gallery.md",
     ]
 )
 

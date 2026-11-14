@@ -106,7 +106,7 @@ Supported tags: `parameter`, `override`, `extern`, `once`, `when`.
 #### Conditional evaluation and irreversible events
 
 ```julia
-active(signal, threshold) => signal >= threshold ~ flag(when = enabled)
+active(signal, threshold)   => signal >= threshold ~ flag(when = enabled)
 occurred(signal, threshold) => signal >= threshold ~ flag(once, when = enabled)
 ```
 
@@ -165,7 +165,7 @@ failure and derive its complement:
 
 ```julia
 failed(signal, threshold) => signal < threshold ~ flag(once, when = enabled)
-valid(failed) => !failed ~ flag
+valid(failed)             => !failed            ~ flag
 ```
 
 `valid` stays true until an enabled evaluation detects failure. It then stays
@@ -204,7 +204,7 @@ separate condition first becomes true:
 
 ```julia
 eligible(signal, threshold) => signal >= threshold ~ flag
-occurred => true ~ remember::Bool(when = eligible)
+occurred                   => true                ~ remember::Bool(when = eligible)
 ```
 
 Here `occurred` has the same value history as `flag(once)` with that condition,
