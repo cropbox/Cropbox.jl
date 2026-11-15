@@ -57,8 +57,8 @@ Keep units at the model boundary. Here the table contains plain numbers and the
     calendar(context)   ~ ::Calendar
     date(calendar.date) ~ track::date
 
-    data                ~ provide(parameter, index = :date, init = date)
-    T: temperature      ~ drive(from = data, by = :Tavg, u"°C")
+    data           ~ provide(parameter, index = :date, init = date)
+    T: temperature ~ drive(from = data, by = :Tavg, u"°C")
 end
 ```
 
@@ -70,14 +70,15 @@ operations.
 
 ```@example phenology
 @system ThermalTime begin
-    Tb: base_temperature                    => 5                 ~ preserve(parameter, u"°C")
-    Topt: optimum_temperature               => 30                ~ preserve(parameter, u"°C")
-    requirement                             => 75                ~ preserve(parameter, u"K*d")
+    Tb: base_temperature      => 5  ~ preserve(parameter, u"°C")
+    Topt: optimum_temperature => 30 ~ preserve(parameter, u"°C")
+    requirement               => 75 ~ preserve(parameter, u"K*d")
 
-    Tbounded(T, Topt)                       => T                 ~ track(max = Topt, u"°C")
-    ΔT(Tbounded, Tb): effective_temperature => Tbounded - Tb     ~ track(min = 0, u"K")
-    TT(ΔT): thermal_time                                         ~ accumulate(u"K*d")
-    mature(TT, requirement)                 => TT >= requirement ~ flag
+    Tbounded(T, Topt)                       => T             ~ track(max = Topt, u"°C")
+    ΔT(Tbounded, Tb): effective_temperature => Tbounded - Tb ~ track(min = 0, u"K")
+
+    TT(ΔT): thermal_time                   ~ accumulate(u"K*d")
+    mature(TT, R = requirement) => TT >= R ~ flag
 end
 ```
 
@@ -86,30 +87,57 @@ lower bound of effective temperature. The equation therefore contains no
 hidden clamping function. `accumulate` combines effective temperature with the
 daily clock step and stores kelvin-days.
 
+`R = requirement` is a local argument alias; it shortens the maturity equation
+without renaming the model variable.
+
 ## Compose the executable model
 
 ```@example phenology
 @system PhenologyModel(ThermalTime, Weather, Controller)
 ```
 
-`Cropbox.hierarchy` shows how the reusable process, environment, controller,
-and child systems are assembled:
+`visualize` with `kind = :hierarchy` shows how the reusable process,
+environment, controller, and child systems are assembled:
 
 ```@example phenology
-h = Cropbox.hierarchy(PhenologyModel; skipcontext = true)
-println(repr(MIME("text/plain"), h))
-nothing # hide
+visualize(PhenologyModel; kind = :hierarchy)
 ```
 
-![PhenologyModel system hierarchy](../assets/tutorials/phenology-hierarchy.svg)
-
-*Direct `writeimage` output from
-`hierarchy(PhenologyModel; skipcontext = true)`. Dashed arrows identify mixins;
-solid arrows identify child-system relationships. The runtime context is
-omitted while the `Calendar` used by `Weather` remains visible.*
+Dashed arrows identify mixins; solid arrows identify child-system
+relationships. The runtime context is omitted while the `Calendar` used by
+`Weather` remains visible.
 
 The final system contains the process, environment, and root controller. The
 same `ThermalTime` component can be reused with another weather implementation.
+
+## Follow weather into the thermal state
+
+A variable path follows the input table through the accumulated thermal state
+to the maturity flag. Grouping by system separates the weather and process
+declarations without changing the selection:
+
+```@example phenology
+g = visualize(PhenologyModel, :data => :mature; style = (group = :system,))
+```
+
+The cylinder `data` provides the table, the parallelogram `T` reads a row,
+the rectangles represent phases of the accumulated `TT`, and the diamond
+`mature` tests the threshold. The gray boundaries name declaring mixins,
+not separate runtime instances.
+
+The post-update stage `⋆TT` stores the new rate for the next time advance;
+the main stage `TT` integrates the stored rate and supplies `mature`.
+The path selector treats both stages as one variable when following influence,
+but the picture retains the original scheduling edges. The selected path can
+therefore span timesteps; it is not a same-timestep execution chain or an
+additional edge from `⋆TT` back to `TT`.
+
+This selection omits off-path inputs such as `Tb`, `Topt`, and `requirement`;
+it is not a complete list of model inputs. Use `visualize(PhenologyModel)` for the full
+graph, or `visualize(PhenologyModel, :mature; depth = 2, direction = :up)`
+for its local upstream neighborhood. The graph is available before supplying
+weather data or running the model; it does not show which dates satisfy the
+maturity condition.
 
 ## Configure the scenario
 
@@ -334,7 +362,7 @@ Useful next exercises are:
 
 - add optimum and ceiling temperatures with a beta response;
 - replace `mature` with several stage flags;
-- use `remember(when=mature)` to capture the maturity date;
+- use `remember(when = mature)` to capture the maturity date;
 - compare simulated dates with observations using `evaluate`;
 - calibrate `Tb` and `requirement` on some years, then use other years for
   validation.

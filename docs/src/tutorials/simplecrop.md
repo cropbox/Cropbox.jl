@@ -51,6 +51,39 @@ The annotated CSV headers retain dates, units, and column types. Cropbox
 normalizes them when the corresponding `provide` and `drive` variables are
 constructed.
 
+## Inspect the composition and one process
+
+Start with the system hierarchy rather than displaying every variable:
+
+```@example simplecrop
+visualize(SimpleCrop.Model; kind = :hierarchy)
+```
+
+Then inspect the direct inputs to potential growth `Pg`:
+
+```@example simplecrop
+visualize(SimpleCrop.Model, :Pg; direction = :up)
+```
+
+This neighborhood brings together radiation `PAR`, water stress `SWFAC`,
+canopy area `LAI`, and the other declared inputs to `Pg`. It includes the
+generated phases of any selected state, but not all upstream calculations.
+Increase `depth` to follow those calculations, or select a path such as
+`:PAR => :W` to follow radiation through to biomass.
+
+These calls inspect the type, without constructing the model or running a
+scenario. For comparison, export the complete dependency graph separately:
+
+```@example simplecrop
+Cropbox.writeimage("simplecrop-dependency.svg", visualize(SimpleCrop.Model))
+nothing # hide
+```
+
+The [full dependency graph](simplecrop-dependency.svg) is intentionally not
+embedded here: its many variables are useful for detailed inspection, while
+the hierarchy and focused graph answer smaller questions. See
+[Model structure](@ref visualization-structure) for selection and grouping rules.
+
 ## Configure and run the model
 
 ```@example simplecrop

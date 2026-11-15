@@ -2,16 +2,18 @@
     visualize(<arguments>; <keyword arguments>) -> Plot
 
 Visualize existing arrays or a DataFrame, or run the necessary simulations and visualize their output.
+With only a system type, `visualize(S; kind = :dependency)` instead returns a
+static structural graph; use `kind = :hierarchy` for system composition.
 
 See also: [`visualize!`](@ref), [`simulate`](@ref), [`manipulate`](@ref)
 
 # Examples
 ```julia-repl
 julia> @system S(Controller) begin
-           a(a) => a ~ accumulate(init=1)
+           a(a) => a ~ accumulate(init = 1)
        end;
 
-julia> visualize(S, :time, :a; stop=5, kind=:line)
+julia> visualize(S, :time, :a; stop = 5, kind = :line)
        ┌────────────────────────────────────────┐
     32 │                                       :│
        │                                      : │
@@ -34,10 +36,77 @@ julia> visualize(S, :time, :a; stop=5, kind=:line)
 ```
 """
 visualize(a...; kw...) = plot(a...; kw...)
+
+"""
+    visualize(S::Type{<:System}; kind = :dependency, style = ()) -> Graph
+    visualize(S::Type{<:System}, selector;
+        kind = :dependency, depth = 1, direction = :both, style = ()) -> Graph
+
+Show a system's declared structure without running a simulation. `kind` is
+`:dependency` for variables and their generated update stages, or `:hierarchy`
+for system composition and mixins. The hierarchy omits nested `Context`
+infrastructure. Simulation plots still use `visualize(S, x, y; ...)`.
+
+For dependency graphs, a selector may be a variable name, a `source => target`
+pair, or a vector combining names and pairs. Names select neighborhoods:
+`depth = 0` keeps only the named variables, and each additional level crosses one
+variable boundary. `direction` is `:up` for inputs, `:down` for affected variables,
+or `:both`. Pairs select directed variable paths between their endpoints, independent
+of `depth` and `direction`; each endpoint may also be a vector of names.
+Several selectors combine their results. Unknown names and pairs with no path
+raise an `ArgumentError`.
+Path selection treats the phases of a variable as one, so a path can pass
+through an accumulating state. Context scheduling phases remain distinct to
+avoid connecting otherwise unrelated variables. The displayed graph retains
+the original update stages and edges; a selected path is not necessarily a
+same-timestep execution chain.
+
+`[:a, :c]` selects the union of two neighborhoods, which may be disconnected or
+include side branches. `:a => :c` selects the connecting paths regardless of
+their length, without off-path neighbors. Both retain all generated phases of
+included variables and configuration sources for included parameters. Selected
+names and path endpoints are emphasized in bold.
+
+The returned graph has a text representation in a terminal and an SVG display
+in notebooks. Pass rendering options such as `style = (group = :system,)` to
+display a grouped graph directly. Use [`Cropbox.writeimage`](@ref) to save an
+image, or [`Cropbox.writedot`](@ref) for renderer-independent Graphviz source.
+Exports inherit these options and can override them with their own `style`.
+
+# Examples
+```julia
+visualize(GrowingDegree)
+visualize(GrowingDegree; kind = :hierarchy)
+visualize(GrowingDegree, :r; depth = 2, direction = :up)
+visualize(GrowingDegree, [:T, :r])
+visualize(GrowingDegree, :T => :r)
+visualize(GrowingDegree, [:Tb, :T => :r])
+visualize(GrowingDegree; style = (group = :system,))
+```
+"""
+visualize(S::Type{<:System}; kind=:dependency, style=()) = begin
+    g = if kind == :dependency
+        dependency(S)
+    elseif kind == :hierarchy
+        hierarchy(S; skipcontext=true)
+    else
+        throw(ArgumentError("structure kind must be :dependency or :hierarchy"))
+    end
+    styledgraph(g, style)
+end
+visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector};
+    kind=:dependency, depth::Integer=1, direction=:both, style=(),
+) = begin
+    kind == :dependency || throw(ArgumentError("variable selectors require kind=:dependency"))
+    selectors = selector isa AbstractVector ? selector : [selector]
+    styledgraph(selectiondependency(dependency(S), selectors; depth, direction), style)
+end
+
 """
     visualize!(p, <arguments>; <keyword arguments>) -> Plot
 
-Update an existing `Plot` object `p` by appending a new graph made with `visualize`.
+Update an existing `Plot` object `p` by appending a plot layer made with `visualize`.
+This operation does not apply to structural graphs.
 
 See also: [`visualize`](@ref)
 
@@ -47,7 +116,8 @@ See also: [`visualize`](@ref)
 visualize!(a...; kw...) = plot!(a...; kw...)
 
 """
-    visualize!(p::Plot, x, y::Number, text::AbstractString; color=nothing, align=:left)
+    visualize!(p::Plot, x, y::Number, text::AbstractString;
+        color = nothing, align = :left)
 
 Add text at data coordinates without changing axis limits or the legend.
 Coordinates use the existing axis units; compatible unitful values are converted.

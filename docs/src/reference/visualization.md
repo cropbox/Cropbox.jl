@@ -2,7 +2,9 @@
 
 Cropbox provides one main visualization family and an optional interactive
 wrapper. The same calls work with existing data or with a model that still
-needs to be simulated.
+needs to be simulated. To inspect declarations without running the model, use
+`visualize(S)` or `visualize(S; kind = :hierarchy)`; see
+[Model structure](@ref visualization-structure).
 
 Choose a call by its inputs and the comparison you want to draw. The table
 below links to examples in the same order. Each main example has a Makie figure
@@ -39,8 +41,8 @@ a scalar or vector of reference values.
 | `visualize!(p, X, Y)` | [another data series on an existing plot](#Append-data-and-annotations) | no |
 | `visualize!(p, x, y, text)` | [text at a data coordinate](#Append-data-and-annotations) | no |
 
-All calls return a Cropbox `Plot`. The argument combination determines where
-the data come from and what is compared; [`kind`](#Plot-kinds-and-layers)
+All plotting calls in this table return a Cropbox `Plot`. The argument combination
+determines where the data come from and what is compared; [`kind`](#Plot-kinds-and-layers)
 selects points, lines, steps, heatmaps, or contours where supported. In
 particular, dropping `x` from `visualize(obs, S, x, y)` and supplying `index`
 changes a trajectory overlay into an observation–estimate comparison.
@@ -782,7 +784,7 @@ ans[] # hide
 ### Gridded DataFrames
 
 Three-column `visualize(df, x, y, z)` uses the same renderer. Set
-`kind=:contour` for contour lines. `zlim` fixes the color or contour range,
+`kind = :contour` for contour lines. `zlim` fixes the color or contour range,
 `zgap` controls contour spacing, and `zlabgap` requests labels at a chosen
 interval. UnicodePlots draws contour lines using its native level selection;
 explicit `zgap` and `zlabgap` remain Makie-only. Grid rows may be unordered;
@@ -1079,7 +1081,7 @@ and `y` offsets its centre downward from the panel's centre. For example,
 ignores that option. Makie also accepts named positions such as `:lt` and `:rb`
 for a series legend.
 
-Set `legend=false` to hide the legend. Units are inferred from arrays or
+Set `legend = false` to hide the legend. Units are inferred from arrays or
 DataFrame columns. An explicit `xunit` or `yunit` converts compatible values
 before plotting; it does not reinterpret an incompatible number. `ZonedDateTime`
 columns are converted to `DateTime` because the graphical backend does not
