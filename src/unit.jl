@@ -4,24 +4,18 @@ export @u_str
 exactify(::Type, v; warn=true) = v
 exactify(::Type{Rational{I}}, v::Integer; warn=true) where {I<:Integer} = convert(Rational{I}, v)
 exactify(::Type{Rational{I}}, v::Rational; warn=true) where {I<:Integer} = convert(Rational{I}, v)
-exactify(::Type{Rational{I}}, v::AbstractFloat; warn=true) where {I<:Integer} = begin
-    isfinite(v) || throw(ArgumentError("rational value must be finite: $v"))
-    r = rationalize(I, v)
-    if warn
-        literal = denominator(r) == 1 ? string(numerator(r)) : "$(numerator(r))//$(denominator(r))"
-        @warn "floating-point value converted to an exact rational value; use an integer or rational literal to avoid this warning" value=v rational=r literal
-    end
-    r
-end
-exactify(::Type{Rational{I}}, v::Quantity{F}; warn=true) where {I<:Integer,F<:AbstractFloat} = begin
-    x = Unitful.ustrip(v)
+exactify(::Type{Rational{I}}, v::Union{AbstractFloat,Quantity{<:AbstractFloat}}; warn = true) where {I<:Integer} = begin
+    x = deunitfy(v)
     isfinite(x) || throw(ArgumentError("rational value must be finite: $v"))
     r = rationalize(I, x)
     u = Unitful.unit(v)
     q = r * u
     if warn
-        literal = denominator(r) == 1 ? "$(numerator(r))u\"$u\"" : "($(numerator(r))//$(denominator(r)))u\"$u\""
-        @warn "floating-point value converted to an exact rational value; use an integer or rational literal to avoid this warning" value=v rational=q literal
+        literal = denominator(r) == 1 ? string(numerator(r)) : "$(numerator(r))//$(denominator(r))"
+        if v isa Quantity
+            literal = denominator(r) == 1 ? "$(literal)u\"$u\"" : "($literal)u\"$u\""
+        end
+        @warn "floating-point value converted to an exact rational value; use an integer or rational literal to avoid this warning" value = v rational = q literal
     end
     q
 end
