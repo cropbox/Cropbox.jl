@@ -6,6 +6,16 @@ using Dates: Date, Time
     @test Cropbox.unittype(view([1, 2]u"g", :)) == u"g"
     @test Cropbox.unittype(view([1u"g", missing], :)) == u"g"
 
+    @testset "exact rational conversion" begin
+        for u in (u"NoUnits", u"hr")
+            for (v, r) in ((1., 1//1), (0.1, 1//10))
+                @test_logs (:warn, r"floating-point value converted") @test Cropbox.exactify(Rational{Int64}, v*u) === r*u
+                @test_logs @test Cropbox.exactify(Rational{Int64}, v*u; warn = false) === r*u
+            end
+            @test_throws ArgumentError Cropbox.exactify(Rational{Int64}, Inf*u)
+        end
+    end
+
     @testset "unit" begin
         @system SUnit(Controller) begin
             a => 2 ~ track(u"m")
