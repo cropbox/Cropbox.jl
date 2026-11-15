@@ -36,7 +36,7 @@ Base.collect(b::Bundle{S}) where {S<:System} = begin
         g(::Nothing) = nothing
         g(v)
     else
-        l = copy(v)
+        l = v
     end
     f = getfield(b, :filter)
     if !isnothing(f)
