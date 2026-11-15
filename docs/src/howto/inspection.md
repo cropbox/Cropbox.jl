@@ -127,15 +127,9 @@ r = simulate(InspectDemo; stop = 4u"hr", target = :mass)
 visualize(r, :time, :mass; kind = :line)
 ```
 
-The same function accepts vectors or DataFrames and can also run a system
-itself.
-
-```@example inspectflow
-visualize(InspectDemo, :time, :mass;
-    stop = 4u"hr",
-    kind = :line,
-)
-```
+To simulate and plot in one call, pass the system type instead of a DataFrame,
+as in the [Quick Start](@ref quick-start). The
+[Visualization API](@ref visualization-calls) compares both call forms.
 
 ## Interactively explore parameters
 
@@ -158,20 +152,35 @@ interactive widget is not a substitute for a saved experiment design.
 
 ## Plot a parameter response
 
-For a model with a configurable input, `xstep` creates the configurations needed
-for a response curve.
+For a model with a configurable input, create one configuration per input value
+and compare one time point from each run. Here `snap` keeps only the state at
+two hours.
 
 ```@example inspectflow
-visualize(InspectDemo, :rate, :mass;
-    xstep = InspectDemo => :rate => 0:0.5:3,
+configs = @config !(InspectDemo => :rate => 0:0.5:3)
+responses = simulate(InspectDemo;
+    configs,
     stop = 2u"hr",
+    snap = s -> s.context.clock.time' == 2u"hr",
+    target = [:rate, :mass],
+)
+
+visualize(responses, :rate, :mass;
     kind = :line,
+    xlab = "Growth rate",
+    ylab = "Biomass after two hours",
+    legend = false,
 )
 ```
 
-Use `group` for separate series and two input ranges for a heatmap. For
-analysis beyond quick exploration, construct configurations explicitly with
-`@config`, call `simulate`, and retain the resulting DataFrame.
+There is one point per growth rate, with biomass equal to the rate multiplied
+by two hours. Without selecting a time point, this dynamic model contributes
+every saved snapshot at each rate; joining those rows creates a sawtooth rather
+than the intended response curve.
+
+Keep `responses` for later analysis. The [Visualization API](@ref
+Visualization1) also shows the `xstep` shorthand for direct response plots,
+`group` for separate series, and two input ranges for a heatmap.
 
 ## Compare observations and estimates
 

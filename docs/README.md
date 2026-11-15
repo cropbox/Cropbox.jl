@@ -24,9 +24,9 @@ have an older layout. Both sites are published automatically through GitHub Page
   and [systems and composition](https://cropbox.github.io/Cropbox.jl/dev/guide/system/),
   then follow the
   [model execution flow](https://cropbox.github.io/Cropbox.jl/dev/concepts/lifecycle/).
-- Want to build a model step by step? Follow the logistic-growth,
-  weather-driven phenology, and predator–prey tutorials under
-  **Learn by Example**.
+- Want to build a model step by step? Follow the
+  [Learning Path](https://cropbox.github.io/Cropbox.jl/dev/tutorials/) through
+  logistic growth, weather-driven phenology, and predator–prey models.
 - Already have a model? Use the task-oriented guides for configuration,
   simulation, inspection, visualization, evaluation, and calibration.
 - Looking for exact syntax or options? Go directly to the DSL and public API
@@ -56,12 +56,10 @@ and simulation workflow, and includes figures generated from the model output.
 | Section | What it contains |
 |---|---|
 | **Start Here** | overview, installation, and a first runnable model |
-| **Core Concepts** | modeling workflow, system composition, model execution, DSL syntax, behaviors, and tags |
-| **Learn by Example** | progressively larger models and scientific applications |
-| **Workflows** | practical recipes for configuration, simulation, inspection, and output |
-| **API Reference** | declarations, simulation, visualization, inspection, utilities, and components |
-| **Troubleshooting** | FAQ, common mistakes, performance, and reproducibility advice |
-| **Model Gallery** | related model packages, workshops, and learning resources |
+| **Core Concepts** | modeling workflow, system composition, and model execution |
+| **Tutorials** | a sequential learning path, model studies, and related papers and workshops |
+| **Guides** | task-oriented workflows, project setup, troubleshooting, and performance advice |
+| **Reference** | full DSL and behavior rules, API arguments, examples, results, and figures |
 
-For the newest material under review, use the development site. For research
+For the newest material merged into `main`, use the development site. For research
 and teaching tied to a released Cropbox version, use the stable site.

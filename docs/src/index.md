@@ -1,85 +1,41 @@
 # Cropbox
 
-Cropbox is a declarative framework for building and running crop models in Julia.
-You describe model components, variables, equations, data sources, and update
-rules. Cropbox orders those calculations, carries configuration and time through
-the model, and collects simulation output into data frames.
+Cropbox is a framework for building and running crop models in Julia. Describe
+the variables and equations; Cropbox connects their dependencies, advances the
+model, and collects its output.
+
+A small growth model can be simulated and plotted in one call:
 
 ```@example home
 using Cropbox
 
-@system Growth(Controller) begin
-    rate: growth_rate => 1.5 ~ preserve(parameter, u"g/hr")
-    mass(rate)               ~ accumulate(u"g")
+@system LogisticGrowth(Controller) begin
+    r: growth_rate       => 0.05                 ~ preserve(parameter, u"d^-1")
+    Wf: final_biomass    => 300                  ~ preserve(parameter, u"g")
+    W0: initial_biomass  => 0.25                 ~ preserve(parameter, u"g")
+
+    W(W, r, Wf): biomass => r * W * (1 - W / Wf) ~ accumulate(init = W0, u"g")
 end
 
-result = simulate(Growth; stop = 3u"hr")
+visualize(LogisticGrowth, :time, :W; stop = 200u"d", xunit = u"d", kind = :line)
 ```
 
-This is a small example, but the same workflow is used in coupled leaf gas
-exchange, garlic growth, SimpleCrop, layered soil, and root architecture models.
+Biomass starts small, grows more quickly, and approaches its final size.
+The same specification → simulation → visualization and evaluation workflow
+also applies to leaf gas exchange, whole-plant growth, soil water, and root
+architecture.
 
-## Choose a path
+## Start here
 
-- New to Cropbox: start with [Quick Start](@ref quick-start).
-- Building a model: read [How Cropbox Works](@ref cropbox-concepts), then
-  [Weather-driven Phenology](@ref phenology-tutorial).
-- Using an existing model: go directly to the
-  [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial),
-  [Garlic](@ref garlic-tutorial), [SimpleCrop](@ref simplecrop-tutorial),
-  [Soil Water Transport](@ref soil-water-transport-tutorial), or
-  [CropRootBox](@ref croprootbox-tutorial) tutorial.
-- Looking up syntax: use [DSL Syntax](@ref dsl-syntax) and
-  [Behaviors and Tags](@ref behaviors-and-tags).
-- Choosing a plotting call: use the argument guide and paired backend examples
-  in the [Visualization API](@ref Visualization1).
-- Maintaining or extending a model package: combine
-  [Systems and Composition](@ref system), [DSL Syntax](@ref dsl-syntax),
-  [Inspection](@ref Inspection1), and
-  [Dynamic Hierarchies](@ref dynamic-hierarchies) as needed.
-- Debugging or optimizing a model: see [Frequently Asked Questions](@ref faq),
-  [Common Mistakes](@ref common-mistakes), and
-  [Performance and Reproducibility](@ref performance-guide).
+[Install Cropbox](@ref Installation), then follow the
+[Quick Start](@ref quick-start) to run this model and compare growth scenarios.
+The [Learning Path](@ref learning-path) continues with weather input and
+interacting populations.
 
-## The normal workflow
-
-Cropbox follows the same three-phase workflow used in Cropbox courses:
-
-| Phase | Goal | Main tools |
-|---|---|---|
-| Specification | Define processes, states, inputs, and dependencies. | `@system`, behaviors, tags, units |
-| Simulation | Apply scenarios, advance state, and collect selected output. | `parameters`, `@config`, `instance`, `simulate` |
-| Visualization and evaluation | Explore predictions and compare them with observations. | `visualize`, `evaluate`, `calibrate` |
-
-Cropbox deliberately separates model equations from scenario configuration.
-One model definition can therefore be reused with different weather data,
-cultivars, management settings, and parameter combinations. See
-[How Cropbox Works](@ref cropbox-concepts) for the complete workflow diagram and
-the role of each phase.
-
-## Model examples
-
-The worked tutorials progress from framework mechanics to coupled applications:
-
-| Tutorial | What it demonstrates |
-|---|---|
-| [Logistic Growth](@ref logistic-growth-tutorial) | translating a differential equation into states, rates, and configuration |
-| [Weather-driven Phenology](@ref phenology-tutorial) | calendar time, tabular weather input, thermal time, and a biological stop condition |
-| [Predator–Prey Model](@ref lotka-volterra-tutorial) | Lotka–Volterra equations, coupled accumulated states, mixin extension, and observation-based fitting |
-| [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial) | inspecting a coupled biochemical model across configured environmental ranges |
-| [Garlic Growth Model](@ref garlic-tutorial) | whole-plant composition, daily output, and dynamic organs |
-| [SimpleCrop](@ref simplecrop-tutorial) | running a compact crop model and reading development, growth, and environmental output |
-| [Soil Water Transport](@ref soil-water-transport-tutorial) | layered storage and fluxes, pedotransfer functions, and a test-suite simulation |
-| [Root System Architecture](@ref croprootbox-tutorial) | stochastic configuration, dynamic systems, geometry, and custom summaries |
-
-These examples are drawn from Cropbox tests, courses, and workshops. The
-[Model Gallery](@ref Gallery) links their package repositories and additional
-workshop material.
-
-After a model can be simulated and visualized, continue with
-[Evaluate and Calibrate Models](@ref evaluation-tutorial). It belongs to the
-workflow that compares predictions with observations, rather than to the
-sequence of model examples.
+Already working on a model? Use the [guides](@ref configuration-workflow) for
+specific tasks, or the [Reference](@ref reference-guide) for full syntax,
+arguments, examples, and results. [Models and Resources](@ref Gallery) links
+the larger applications, papers, and workshop material.
 
 ## Citation
 

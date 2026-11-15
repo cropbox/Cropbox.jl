@@ -115,7 +115,7 @@ changes how the data is parsed.
 
 | Need | API | Worked example |
 |---|---|---|
-| read a model field | `value` or `'` | Quick Start and inspection workflow |
+| read a model field | `value` or `'` | [Systems and Composition](@ref Controller) and [inspection workflow](@ref inspection-workflow) |
 | exchange CSV data with units | `unitfy`, `deunitfy` | configuration workflow and built-in stores |
 | inspect a state-dependent formula | `value(system, :name, ...)` | advanced debugging only |
 

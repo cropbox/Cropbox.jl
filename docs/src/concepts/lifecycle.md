@@ -14,11 +14,13 @@ and saving output once that order is familiar.
 ```@example lifecycle
 using Cropbox
 
-@system Counter(Controller) begin
-    increment             => 1              ~ preserve(parameter)
-    limit                 => 3              ~ preserve(parameter)
-    total(increment)                        ~ accumulate
-    reached(total, limit) => total >= limit ~ flag
+@system LogisticGrowth(Controller) begin
+    r: growth_rate       => 0.05                 ~ preserve(parameter, u"d^-1")
+    Wf: final_biomass    => 300                  ~ preserve(parameter, u"g")
+    W0: initial_biomass  => 0.25                 ~ preserve(parameter, u"g")
+
+    W(W, r, Wf): biomass => r * W * (1 - W / Wf) ~ accumulate(init = W0, u"g")
+    ready(W, Wf)         => W >= 0.9Wf           ~ flag
 end
 ```
 
@@ -35,11 +37,8 @@ available so parameter names and compatible units can be checked early.
 
 ```@example lifecycle
 config = @config (
-    Counter => (
-        increment = 1,
-        limit = 3,
-    ),
-    Clock => :step => 1u"hr",
+    LogisticGrowth => :r => 0.07,
+    Clock => :step => 1u"d",
 )
 ```
 
@@ -81,14 +80,14 @@ calendar_config = @config (
 ```
 
 This separate configuration illustrates a model that includes `Calendar`; it
-does not change the `Counter` configuration above. `ZonedDateTime` and `tz"..."`
+does not change the `LogisticGrowth` configuration above. `ZonedDateTime` and `tz"..."`
 are re-exported by Cropbox. Use the plain clock when elapsed model time is
 sufficient.
 
 ## 3. Construct and initialize
 
 ```@example lifecycle
-s = instance(Counter; config)
+s = instance(LogisticGrowth; config)
 ```
 
 `instance` performs four user-visible actions:
@@ -105,7 +104,7 @@ This is why a freshly constructed instance already has meaningful `track` and
 
 ```@example lifecycle
 update!(s)
-(s.context.clock.time', s.total')
+(s.context.clock.time', s.W')
 ```
 
 `update!` mutates the instance. Repeated calls continue from its current state.
@@ -115,11 +114,12 @@ replicate.
 ## 5. Simulate and collect output
 
 ```@example lifecycle
-result = simulate(Counter;
+result = simulate(LogisticGrowth;
     config,
-    stop = :reached,
-    target = [:total, :reached],
+    stop = :ready,
+    target = [:W, :ready],
 )
+last(result, 3)
 ```
 
 `simulate` constructs a new instance and delegates the update loop to
@@ -129,9 +129,10 @@ and then each updated state until the stop condition is satisfied.
 `simulate!` instead accepts an existing instance:
 
 ```@example lifecycle
-short_config = @config(config, Counter => :limit => 2)
-s2 = instance(Counter; config = short_config)
-result2 = simulate!(s2; stop = :reached, target = :total)
+faster_config = @config(config, LogisticGrowth => :r => 0.1)
+s2 = instance(LogisticGrowth; config = faster_config)
+result2 = simulate!(s2; stop = :ready, target = :W)
+last(result2, 3)
 ```
 
 Afterward, `s2` remains at the final simulated state.
@@ -149,7 +150,7 @@ Afterward, `s2` remains at the final simulated state.
 simulate(Model; stop = 30u"d")
 simulate(Model; stop = :mature)
 simulate(Model; stop = "calendar.count")
-simulate(Model; stop = s -> s.mass' >= 100u"g")
+simulate(Model; stop = s -> s.W' >= 100u"g")
 ```
 
 For an unknown-duration Boolean condition, Cropbox checks the condition before
