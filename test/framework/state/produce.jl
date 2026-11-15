@@ -138,6 +138,13 @@
         @test length(s.p) == 4
         @test s.a' == 4 # (0 + #1 + 2 + #3)
         @test s.b' == 26 # (0 ~ ((#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3) + (#1 ~ ((2 ~ #3) + #3)) + (2 ~ #3) + #3)
+
+        for (ops, n) in (("*", 4), ("*/f", 2))
+            v = collect(s.p[ops])
+            @test length(v) == n
+            empty!(v)
+            @test length(s.p) == 4
+        end
     end
 
     @testset "adjoint" begin
