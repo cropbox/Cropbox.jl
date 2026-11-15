@@ -75,6 +75,8 @@ deunitfy(v::UnitRange) = UnitRange(deunitfy(v.start), deunitfy(v.stop))
 deunitfy(v::StepRange) = StepRange(deunitfy(v.start), deunitfy(step(v)), deunitfy(v.stop))
 deunitfy(v::StepRangeLen) = StepRangeLen(deunitfy(eltype(v)(v.ref)), deunitfy(step(v)), length(v), v.offset)
 deunitfy(v, u) = deunitfy(unitfy(v, u))
+deunitfy(v::AbstractArray, u::Units) = deunitfy.(unitfy.(v, u))
+deunitfy(v::AbstractRange, u::Units) = deunitfy(unitfy(v, u))
 deunitfy(v, ::Missing) = deunitfy(v)
 
 promoteunit(u...) = Unitful.promote_unit(filter(!isnothing, u)...)
