@@ -107,22 +107,15 @@ genpolynomialbody(Q; U, lower, upper, pick) = begin
                $xu = $C.unitfy($C.value($upper), $U)
             clamp(-$b / $a, $xl, $xu)
         end
-    elseif n == 3 # quadratic
-        @gensym a b c X xl xu l
-        @q let $a = $C.deunitfy($(esc(P[3])), $(PU[3])),
-               $b = $C.deunitfy($(esc(P[2])), $(PU[2])),
-               $c = $C.deunitfy($(esc(P[1])), $(PU[1])),
-               $X = $C.unitfy($C.solvequadratic($a, $b, $c), $U),
-               $xl = $C.unitfy($C.value($lower), $U),
-               $xu = $C.unitfy($C.value($upper), $U)
-            #TODO: remove duplication
-            $l = filter(x -> $xl <= x <= $xu, $X)
-            isempty($l) && ($l = clamp.($X, $xl, $xu))
-            $l |> $pick
+    else
+        roots = if n == 3 # quadratic
+            a, b, c = [@q($C.deunitfy($(esc(p)), $u)) for (p, u) in zip(reverse(P), reverse(PU))]
+            @q $C.solvequadratic($a, $b, $c)
+        else # generic polynomials (slow!)
+            @q $C.solvepolynomial([$(esc.(P)...)], [$(PU...)])
         end
-    else # generic polynomials (slow!)
         @gensym X xl xu l
-        @q let $X = $C.unitfy($C.solvepolynomial([$(esc.(P)...)], [$(PU...)]), $U),
+        @q let $X = $C.unitfy($roots, $U),
                $xl = $C.unitfy($C.value($lower), $U),
                $xu = $C.unitfy($C.value($upper), $U)
             $l = filter(x -> $xl <= x <= $xu, $X)

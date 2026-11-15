@@ -70,6 +70,7 @@
         @test s1.x' == 1
         s2 = instance(SSolveQuadraticDouble, config=:SSolveQuadraticDouble => (l=-Inf, u=0))
         @test s2.x' == -3
+        @test instance(SSolveQuadraticDouble; config = :SSolveQuadraticDouble => (l = 2, u = 4)).x' == 2
     end
 
     @testset "cubic" begin
@@ -88,6 +89,11 @@
         @test s3.x' ≈ 25
         s4 = instance(SSolveCubic, config=:SSolveCubic => (l=30, u=Inf))
         @test s4.x' == 30
+
+        @system SSolveCubicMinimum(Controller) begin
+            x => ((x-5)*(x-15)*(x-25)) ~ solve(pick = :minimum)
+        end
+        @test instance(SSolveCubicMinimum).x' ≈ 5
     end
 
     @testset "equal" begin
