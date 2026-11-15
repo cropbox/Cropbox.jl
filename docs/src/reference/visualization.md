@@ -1346,10 +1346,10 @@ notebooks do not share browser state. The `manipulate(...)` call is unchanged.
 The Docker image uses notebook-relative proxy URLs, so forwarding Jupyter to a
 different host port does not require a widget setup cell.
 
-With the default Bonito configuration, Cropbox requests an automatically
-assigned port before displaying the first widget. Separate notebook kernels
+With the default configuration, Bonito starts at port `9384` and tries subsequent
+ports if it is already in use. Separate notebook kernels
 can therefore run widgets at the same time without selecting ports manually.
-An existing Bonito server, a nondefault port, or an explicit proxy is left unchanged.
+Cropbox leaves existing Bonito servers and configured port and proxy settings unchanged.
 
 When updating older workshop or course notebooks, remove this WebIO
 initialization cell:
@@ -1363,7 +1363,7 @@ no longer a Cropbox dependency, so that line now errors. It does not need a
 replacement for an ordinary first run. Archived notebooks using their original
 Cropbox environment should keep their original setup.
 
-!!! warning "Notebook reloads with Bonito 5.2"
+!!! warning "Notebook reloads"
     A normal browser refresh can reconnect while the kernel and widget session
     remain alive. Saved output can show the initial values rather than the last
     live selection; re-run the relevant `manipulate(...)` cell when resuming work.

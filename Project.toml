@@ -42,7 +42,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 BlackBoxOptim = "0.6"
-Bonito = "5.2"
+Bonito = "5.3"
 CSV = "1.1"
 CairoMakie = "0.15.16"
 Crayons = "4"
