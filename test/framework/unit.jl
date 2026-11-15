@@ -165,6 +165,11 @@ using Dates: Date, Time
         @test Cropbox.deunitfy(1u"m", u"cm") == 100
         @test Cropbox.deunitfy([1, 2, 3]u"m", u"cm") == [100, 200, 300]
         @test Cropbox.deunitfy([1u"m", 2u"cm", 3u"mm"], u"mm") == [1000, 20, 3]
+        @test Cropbox.deunitfy([1 2; 3 4]u"m", u"cm") == [100 200; 300 400]
+        @test isequal(Cropbox.deunitfy(view([1u"m", missing, 3u"m"], :), u"cm"), [100, missing, 300])
+        @test Cropbox.deunitfy([0., 100.]u"°C", u"K") ≈ [273.15, 373.15]
+        @test Cropbox.deunitfy(Float64[]u"m", u"cm") isa Vector{Float64}
+        @test_throws Unitful.DimensionError Cropbox.deunitfy([1u"m"], u"s")
         @test Cropbox.deunitfy((1u"m", 2u"cm", 3u"mm"), u"mm") === (1000, 20, 3)
         @test Cropbox.deunitfy(Cropbox.unitfy(1:3, u"m"), u"cm") === 100:100:300
         @test Cropbox.deunitfy(Cropbox.unitfy(1:3, u"°C"), u"°C") === 1:1:3
