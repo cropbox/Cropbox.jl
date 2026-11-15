@@ -139,6 +139,18 @@ for its local upstream neighborhood. The graph is available before supplying
 weather data or running the model; it does not show which dates satisfy the
 maturity condition.
 
+The same selection can be read vertically as one generated update:
+
+```@example phenology
+visualize(PhenologyModel, :T => :mature; kind = :flow)
+```
+
+The flow diagram separates `TT`'s value update from its rate-caching operation.
+Cut side rails indicate continuation across updates without repeating the
+whole diagram. Inputs outside the selected path remain gray boundary lanes.
+These are static potential reads, not a trace of which dates or branches ran;
+see [the flow guide](@ref visualization-flow) for symbols and scope.
+
 ## Configure the scenario
 
 ```@example phenology

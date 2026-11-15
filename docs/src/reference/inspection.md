@@ -8,7 +8,7 @@ Inspection functions answer different questions about one model:
 | `look` | What does this system or variable declare? |
 | `@look` | Can I write the same inspection in convenient property syntax? |
 | `dive` | What is inside this constructed nested instance? |
-| `visualize` | How do variables depend on one another, and how are systems composed? |
+| `visualize` | How are variables/systems related, and in what order are they updated? |
 
 Use the type when studying structure and an instance when current values
 matter.
@@ -118,17 +118,19 @@ scripts, explicit property paths and `look` are easier to reproduce.
 
 ## [Model structure](@id visualization-structure)
 
-With only a system type, `visualize` returns a structural graph instead of
+With only a system type, `visualize` returns a static diagram instead of
 simulating a trajectory. The default `kind = :dependency` shows variables and
 their generated update stages. `kind = :hierarchy` shows system composition and
 mixins, omitting nested `Context` infrastructure. A dependency graph covers the
 composed declarations of one system, including mixins; child systems are not
-recursively expanded into their variables.
+recursively expanded into their variables. `kind = :flow` arranges one
+system's update operations vertically, with a lane for each variable.
 
 | Question | Call |
 |:---|:---|
 | What are the declared dependencies? | `visualize(S)` |
 | Which systems and mixins compose the model? | `visualize(S; kind = :hierarchy)` |
+| What happens during one generated update? | `visualize(S; kind = :flow)` |
 | What directly supplies `x`? | `visualize(S, :x; direction = :up)` |
 | What directly uses `x`? | `visualize(S, :x; direction = :down)` |
 | What connects `a` to `c`? | `visualize(S, :a => :c)` |
@@ -158,9 +160,9 @@ visualize(StructuralGrowth; kind = :hierarchy)
 
 These graphs describe declared relationships, not observed activity in a run.
 `visualize(S, x, y; kind = :line, stop = ...)` still means a simulation plot;
-`visualize(df, x, y)` uses saved data. Variable selectors are supported only for
-`kind = :dependency`. `visualize!` remains a plot-layer operation, not a way to
-modify a structural graph.
+`visualize(df, x, y)` uses saved data. Variable selectors are supported for
+`kind = :dependency` and `kind = :flow`. `visualize!` remains a plot-layer
+operation, not a way to modify these static diagrams.
 
 ### A built-in thermal response
 
@@ -319,9 +321,148 @@ This is a declaration graph, not a count of leaves created during a run.
 `visualize(LeafUnit)` inspects that child's variables. Use the
 [dynamic hierarchy APIs](@ref dynamic-hierarchies) to inspect runtime children.
 
+### [Computation flow diagram](@id visualization-flow)
+
+Dependency graphs emphasize relationships; flow diagrams follow the compiler's
+operation order, with expressions, conditions, and state carried across updates.
+Both are static views, not runtime traces or complete control-flow graphs.
+Here, "flow" means computation, not a stock-and-flow model of physical fluxes.
+
+Use this view to follow selected variables or a local process through an
+update. It is not a compact overview of a large model: every included variable
+has a lane, including fixed inputs, and omitted inputs still appear at the
+boundary. Start with a variable or a `source => target` path, then expand the
+selection as needed. Inspect child systems separately.
+
+```@example structure
+visualize(GrowingDegree; kind = :flow)
+```
+
+Read downward: each numbered row is an operation in the compiler's topological
+order, not elapsed time or an observed runtime event. Lanes represent variables
+and arrows represent reads, not messages between objects in a UML sequence
+diagram. Fixed inputs have lanes but no update row. Numbers refer to positions in
+the complete schedule, so they can have gaps. Every expression names its target,
+so it can be read without tracing a lane back to the top. A row and its expression
+share the same baseline. Curved merges and crossing bridges route declared inputs
+into an operation; they do **not** encode delay or addition of values.
+Bridges cross active vertical guides or carry segments, not unused background
+guides or the gaps between carry segments.
+
+| Mark | Meaning |
+|:---|:---|
+| Filled circle / open circle | Derived value / remembered value |
+| Square / rounded square | State update / opaque child call |
+| Parallelogram | Driver input |
+| Diamond | Condition or post-update rate cache, identified by the operation note |
+| Double rounded square / hexagon | Production / opaque solver operation |
+| Small open circle / small square on an input lane | Local read / boundary read |
+| Blue solid arrow / ochre dotted arrow | Declared input / condition (`when`) |
+| Pale vertical guide | Repeated occurrences of one variable, not an extra dependency |
+| Gray solid cut side rail | Value, counter, or memory retained across updates |
+| Teal dash-dot cut side rail | Cached rate from the previous post-update stage |
+
+Color identifies the role of a connection, not a variable's importance, value,
+or biological process. Arrowheads and junctions match their connections;
+variable symbols and text stay neutral. Thin, pale guides recede behind actual
+reads and cross-update rails. The legend uses the same styles as the diagram,
+and line patterns and cut rails retain their meanings without color.
+
+An accumulating state needs two operations, but not two repeated timesteps:
+
+```@example structure
+@system ThermalFlow(Controller) begin
+    Tb: base_temperature => 5            ~ preserve(parameter, u"°C")
+    T: temperature       => [8, 12, 16]  ~ drive(u"°C")
+    rate(T, Tb) => max(T - Tb, 0u"K")    ~ track(u"K")
+    total(rate): thermal_time            ~ accumulate(u"K*d")
+    mature(total) => total >= 50u"K*d"   ~ flag(once)
+end
+
+visualize(ThermalFlow; kind = :flow)
+```
+
+The main operation, `total ← total + rate(total) * Δt`, consumes the
+**previously cached rate** and the elapsed clock interval; the post operation,
+`rate(total) ← rate`, caches a new rate for a later update.
+`capture` has the same rate cache but replaces, rather than accumulates, its
+value. With `time = elapsed`, either state uses `Δ(elapsed)` instead of `Δt`:
+the difference between that time variable's current and cached readings.
+The solid side rail denotes retained value, counter, or memory.
+For `accumulate(reset = ...)`, the post stage also caches the reset decision;
+the operation note identifies it. `drive` samples an array stored at
+construction, so its source table is not presented as a fresh read each step.
+
+The expression column is derived from declaration bodies, local argument
+aliases, and supported tags. It includes conditions and their fallback, clamps,
+one-shot behavior, and rate caching. It is a compact explanatory rendering,
+not executable Julia: routine unit conversion and generated temporary variables
+are omitted. Tag settings equal to their declaration defaults are omitted too;
+non-default solver bounds, tolerances, and root selection remain visible.
+A single-system `produce` queues a child only while its collection is empty,
+in addition to any `when` condition. It does not use an LLM or infer biological
+labels from names.
+An outer `begin … end` is reduced to its statements; multiple statements are
+parenthesized and separated by semicolons. Private names use `Owner._name`,
+keeping identically named fields from different mixins distinct without exposing
+internal mangled names. Use `look` for complete declarations, aliases,
+units, and documentation.
+
+The same name, vector, and path selectors work here:
+
+```@example structure
+visualize(ThermalFlow, :total; kind = :flow, depth = 0)
+```
+
+This retains `total`'s operations in their original order. Its omitted input
+`rate` remains visible as a gray boundary lane, not as a shortcut through a
+hidden computation. This differs from a dependency graph, whose unselected
+nodes are simply absent. Selecting more variables does not reorder the full
+system's schedule.
+
+Nested systems remain opaque calls. Qualified references preserve the
+connection to their owner, with the prefix drawn lightly:
+
+```@example structure
+diagram = visualize(StructuralGrowth; kind = :flow)
+```
+
+Here `supply` is a call and `supply.rate` is a boundary read. Inspect
+`visualize(Supply; kind = :flow)` for the child's own flow diagram. There is no
+recursive flattening, runtime trace, or configuration-specific active-path
+analysis. Initialization/configuration, context subcycling, solver iterations,
+and production internals are not expanded. In particular, `integrate` is
+quadrature, not a temporal accumulator; its internals stay opaque.
+
+The flow diagram uses the existing Makie/CairoMakie renderer. It displays as SVG in
+notebooks, lists numbered operations in a terminal, and can be saved without
+a display server. The figure is created only for graphical display or export;
+the text output uses the same plan and notes without creating a Makie figure.
+Multiline expressions stay aligned with their numbered row:
+
+```@example structure
+show(stdout, MIME"text/plain"(), diagram)
+```
+
+Its only style option is
+`style = (fontsize = 10,)`, which scales text and spacing together. The monospace
+font is bundled with Makie; no system font installation is needed. The canvas
+grows with variables and rows instead of clipping or shrinking them.
+
+```@example structure
+Cropbox.writeimage("flow.svg", diagram)
+Cropbox.writeimage("flow.pdf", diagram)
+Cropbox.writeimage("flow.png", diagram; px_per_unit = 2)
+nothing # hide
+```
+
+Download the [Flow SVG](flow.svg), [PDF](flow.pdf), or [PNG](flow.png).
+Graphviz-specific `style`, `engine`, and `writedot` options do not apply to
+flow diagrams. `visualize!` does not add layers to this diagram.
+
 ### Display, grouping, and export
 
-Structural graphs use bundled Graphviz, not the Makie/UnicodePlots plotting
+Dependency and hierarchy graphs use bundled Graphviz, not the Makie/UnicodePlots plotting
 backends. Notebooks display SVG; terminals show a compact text summary without
 running Graphviz. A failed automatic SVG render shows a fallback notice and
 logs the underlying exception as a warning; explicit image export reports

@@ -22,6 +22,9 @@ using PrecompileTools: @setup_workload, @compile_workload
         visualize(r, :time, :c; kind = :line, backend = :Makie)'
         visualize(S, :time, :c; backend=:UnicodePlots)
         visualize(S, :time, :c; backend = :Makie)[]
+        f = visualize(S; kind = :flow)
+        show(IOBuffer(), MIME"text/plain"(), f)
+        show(IOBuffer(), MIME"image/svg+xml"(), f)
         #r |> display
         #display(MIME("text/html"), r)
     end
