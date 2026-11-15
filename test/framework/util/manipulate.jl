@@ -10,7 +10,7 @@
         B.force_asset_server!(B.NoServer)
         isolated = B.Session(B.NoConnection(); asset_server = B.NoServer())
         Cropbox.MANIPULATE_SESSIONS[isolated] = nothing
-        for (port, proxy, expected) in ((9384, "", 0), (9390, "", 9390), (9384, "/proxy/9384", 9384))
+        for (port, proxy) in ((9384, ""), (9390, ""), (9384, "/proxy/9384"))
             serverconfig.listen_port[], serverconfig.proxy_url[] = port, proxy
             manipulate(identity; parameters = ())
             session = B.Session(B.NoConnection(); asset_server = B.NoServer())
@@ -18,7 +18,7 @@
             @test isnothing(Cropbox.reset_manipulate())
             @test isnothing(B.CURRENT_SESSION[])
             @test session.status == B.CLOSED
-            @test serverconfig.listen_port[] == expected
+            @test serverconfig.listen_port[] == port
             @test serverconfig.proxy_url[] == proxy
         end
         @test isnothing(Cropbox.reset_manipulate())

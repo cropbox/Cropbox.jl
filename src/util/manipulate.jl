@@ -83,11 +83,6 @@ Notebook outputs are isolated so widgets in different notebooks do not share con
 - `config=()`: a baseline configuration.
 """
 manipulate(f::Function; parameters, config = ()) = begin
-    #TODO: remove when our minimum Bonito version handles HTTP.AddressInUseError.
-    B = Bonito.SERVER_CONFIGURATION
-    if isnothing(Bonito.GLOBAL_SERVER[]) && B.listen_port[] == 9384 && isempty(B.proxy_url[])
-        Bonito.configure_server!(listen_port = 0)
-    end
     P = configure(parameters)
     C = configure(config)
     K = parameterkeys(P)
