@@ -179,6 +179,9 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         end
         p = calibrate(SCalibrateAlignment, obs; target = :b, stop = 1, parameters, metric, optim)
         @test 0 <= p[:SCalibrateAlignment][:a] <= 4
+        v = view(obs, :, :)
+        @test calibrate(SCalibrateAlignment, v; target = :b, stop = 1, parameters, metric, optim) == p
+        @test calibrate(SCalibrateAlignment, v, [()]; target = :b, stop = 1, parameters, metric, optim) == p
         @test isequal(obs, before)
         @test_throws ArgumentError calibrate(SCalibrateAlignment, obs[1:1, :]; target = :b, stop = 1, parameters, optim)
         @test_throws ArgumentError calibrate(SCalibrateAlignment, obs; target = :b, stop = 0, snap = true,

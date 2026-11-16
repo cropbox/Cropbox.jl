@@ -10,7 +10,7 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 
 # Arguments
 - `S::Type{<:System}`: type of system to be calibrated.
-- `obs::DataFrame`: observation data to be used for calibration.
+- `obs::AbstractDataFrame`: observation data to be used for calibration, including a DataFrame view.
 
 # Keyword Arguments
 ## Configuration
@@ -63,7 +63,7 @@ Config for 1 system:
     a = 20.0
 ```
 """
-calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame; config=(), configs=[], kwargs...) = begin
     if isempty(configs)
         calibrate(S, obs, [config]; kwargs...)
     elseif isempty(config)
@@ -72,7 +72,7 @@ calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) =
         @error "redundant configurations" config configs
     end
 end
-calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), warn = true, kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), warn = true, kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     V = parametervalues(P)
