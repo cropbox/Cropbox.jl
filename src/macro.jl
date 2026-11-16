@@ -58,13 +58,21 @@ genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring
     kwargs = parsekwargs(kws)
     body = parsebody(b)
     state = parsestate(s)
+    if !isnothing(state) && !hasmethod(genvartype, Tuple{VarInfo{Symbol}, Val{state}})
+        declarationerror("unknown state: $s for $system => $name", line, linenumber)
+    end
     type = parsetype(st, dt, state, scope, substs)
-    tags = parsetags(tgs; name, alias, args, kwargs, system, state, type)
+    tags = parsetags(tgs; name, alias, args, kwargs, system, state, type, line, linenumber)
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
     catch
         error("unrecognized variable declaration: $line")
     end
+end
+
+declarationerror(message, line, linenumber) = begin
+    line = MacroTools.striplines(line)
+    throw(ArgumentError("$message at $(linenumber.file):$(linenumber.line)\n    $line"))
 end
 
 #HACK: experimental support for scope placeholder `:$`
@@ -204,7 +212,7 @@ end
 getsystem(m::Module, i) = reduce((a, b) -> getfield(a, b), split(String(i), ".") .|> Symbol, init=m)
 
 parsetags(::Nothing; a...) = parsetags([]; a...)
-parsetags(tags::Vector; name, system, state, type, a...) = begin
+parsetags(tags::Vector; name, system, state, type, line, linenumber, a...) = begin
     s = Val(state)
     d = Dict{Symbol,Any}()
     for t in tags
@@ -222,7 +230,7 @@ parsetags(tags::Vector; name, system, state, type, a...) = begin
     updatetags!(d, s; a...)
     for (k, v) in d
         if !isnothing(state) && !(startswith(string(k), "_") || (k ∈ T))
-            error("unsupported tag: $k = $v for $system => $name ~ $state")
+            declarationerror("unsupported tag: $k = $v for $system => $name ~ $state", line, linenumber)
         end
     end
     d
@@ -777,6 +785,7 @@ S
 """
 macro system(head, body=:(begin end))
     scope = __module__
+    body = Expr(:block, __source__, MacroTools.block(body).args...)
     gensystem(body; scope, parsehead(head; scope)...)
 end
 

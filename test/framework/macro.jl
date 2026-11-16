@@ -1,4 +1,23 @@
 @testset "macro" begin
+    @testset "declaration errors" begin
+        for (state, message) in (
+            ("accumlate", "unknown state: accumlate"),
+            ("accumlate(init = 0)", "unknown state: accumlate"),
+            ("preserve(paramter)", "unsupported tag: paramter"),
+        )
+            line = "x => 1 ~ $state"
+            code = """
+            @system SDeclaration begin
+                a => 1 ~ preserve
+                $line
+            end
+            """
+            for (input, n) in ((code, 3), ("@system SDeclaration $line", 1))
+                @test_throws LoadError [message, "SDeclaration", line, "declaration.jl:$n"] Base.include_string(@__MODULE__, input, "declaration.jl")
+            end
+        end
+    end
+
     @testset "private name" begin
         @system SPrivateName(Controller) begin
             _a: _aa => 1 ~ preserve
