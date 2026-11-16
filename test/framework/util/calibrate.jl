@@ -133,6 +133,8 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         @test p1[:SCalibrateConfig][:a] == a/w1
         p2 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
         @test p2[:SCalibrateConfig][:a] == a/w2
+        @test_throws ArgumentError calibrate(SCalibrateConfig, obs;
+            config = p1, configs = [p2], target = :b, stop = n, parameters = params)
     end
 
     @testset "configs as index" begin
