@@ -69,7 +69,7 @@ calibrate(S::Type{<:System}, obs::AbstractDataFrame; config=(), configs=[], kwar
     elseif isempty(config)
         calibrate(S, obs, configs; kwargs...)
     else
-        @error "redundant configurations" config configs
+        throw(ArgumentError("config and configs cannot be used together"))
     end
 end
 calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), warn = true, kwargs...) = begin
