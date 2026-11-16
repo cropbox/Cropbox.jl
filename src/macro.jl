@@ -35,7 +35,7 @@ VarInfo(system::Symbol, line::Expr, linenumber::LineNumberNode, docstring::Strin
     n, a, as, kws, b, s, st, dt, tgs = parseline(line, scope)
     genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs)
 end
-VarInfo(system, line, linenumber, a...) = error("syntax error ($system): \"$line\" ($linenumber)")
+VarInfo(system, line, linenumber, a...) = declarationerror("syntax error for $system", line, linenumber)
 
 parseline(line, scope) = begin
     # name[(args..; kwargs..)][: alias] [=> body] [~ [state][::stype|<:dtype][(tags..)]]
@@ -66,7 +66,7 @@ genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring
     try
         VarInfo{typeof(state)}(system, name, alias, args, kwargs, body, state, type, tags, line, linenumber, docstring)
     catch
-        error("unrecognized variable declaration: $line")
+        declarationerror("unrecognized variable declaration for $system", line, linenumber)
     end
 end
 
