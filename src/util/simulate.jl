@@ -18,18 +18,20 @@ simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, me
     #HACK: ignore unavailable properties (i.e. handle default :time in target)
     I = filtersimulationdict(I, sb)
     T = filtersimulationdict(T, sb)
+    checksimulationkeys(sb, I, index, target)
     IT = merge(I, T)
     M = parsemeta(meta, s.context.config)
     Simulation(base, I, T, IT, M, Vector{OrderedDict{Symbol,Any}}())
 end
 
-parsesimulationkey(p::Pair, s) = [p]
-parsesimulationkey(a::Symbol, s) = [a => a]
-parsesimulationkey(a::String, s) = [Symbol(a) => a]
-parsesimulationkey(a::String, s::System) = begin
+parsesimulationkey(p::Pair, s; wildcard = true) = [p]
+parsesimulationkey(a::Symbol, s; wildcard = true) = [a => a]
+parsesimulationkey(a::String, s; wildcard = true) = [Symbol(a) => a]
+parsesimulationkey(a::String, s::System; wildcard = true) = begin
     A = split(a, '.')
     # support wildcard names (i.e. "s.*" expands to ["s.a", "s.b", ...])
     if A[end] == "*"
+        wildcard || return []
         a0 = join(A[1:end-1], '.')
         ss = s[a0]
         p(n) = let k = join(filter!(!isempty, [a0, string(n)]), '.')
@@ -40,7 +42,7 @@ parsesimulationkey(a::String, s::System) = begin
         [Symbol(a) => a]
     end
 end
-parsesimulationkey(a::Vector, s) = parsesimulationkey.(a, Ref(s)) |> Iterators.flatten |> collect
+parsesimulationkey(a::Vector, s; wildcard = true) = parsesimulationkey.(a, Ref(s); wildcard) |> Iterators.flatten |> collect
 
 parsesimulation(a::Vector, s) = OrderedDict(parsesimulationkey.(a, Ref(s)) |> Iterators.flatten)
 parsesimulation(a::Tuple, s) = parsesimulation(collect(a), s)
@@ -55,6 +57,17 @@ parsetarget(::Nothing, s) = parsesimulation("*", s)
 parsetarget(T, s) = parsesimulation(T, s)
 
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
+
+checksimulationkeys(s::System, I, index, target) = begin
+    for (a, columns) in ((index, nothing), (target, I))
+        (isnothing(a) || ismissing(a) || a === ()) && continue
+        for (k, v) in parsesimulationkey(a isa Tuple ? collect(a) : a, s; wildcard = false)
+            hasproperty(s, v) && continue
+            !isnothing(columns) && string(k) == string(v) && haskey(columns, Symbol(k)) && continue
+            throw(ArgumentError("simulation variable $(repr(v)) not found in $(namefor(s))"))
+        end
+    end
+end
 
 extract(s::System, m::Simulation) = extract(s[m.base], m.mapping)
 extract(s::System, m::OrderedDict{Symbol,Any}) = begin

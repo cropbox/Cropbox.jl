@@ -24,6 +24,13 @@ using Dates
         r = simulate(SSimulate, stop=n, index=:b, target=[:b])
         @test size(r, 2) == 1
         @test propertynames(r) == [:b]
+        for k in (:typo, "typo", :result => :typo)
+            @test_throws ArgumentError ["typo", "SSimulate"] simulate(SSimulate; index = k, target = :a)
+            @test_throws ArgumentError ["typo", "SSimulate"] simulate(SSimulate; target = ["*", k])
+        end
+        @test propertynames(simulate(SSimulate; base = "context.clock", target = :step)) == [:step]
+        @test propertynames(simulate(SSimulate; target = [:time, :a])) == [:time, :a]
+        @test_throws ArgumentError "typo" simulate(SSimulate; index = [:typo, :typo => :a])
     end
 
     @testset "stop number" begin
@@ -327,6 +334,8 @@ using Dates
         r4 = simulate(SSimulateWildcard; target=["A.*", "*"])
         @test names(r4) == ["time", "A.x", "A.y", "a", "b"]
         @test collect(r4[1,:]) == [0u"hr", 1, 2, 3, 4]
+        @test_throws ArgumentError "A.*" simulate(SSimulateWildcard; target = :out => "A.*")
+        @test_throws ArgumentError "A.*" simulate(SSimulateWildcard; index = Symbol("A.*") => "A.*", target = :a)
     end
 
     @testset "options" begin

@@ -149,6 +149,12 @@ The left side of a pair is the output column and the right side is the model
 path. Explicit targets make downstream code stable when a model later gains
 new variables. Wildcards are best reserved for inspection.
 
+An explicitly named variable in `index` or `target` must exist in the selected
+`base` when the output layout is created; otherwise an `ArgumentError` is raised.
+Default selections and wildcard expansion keep omitting unavailable fields.
+A target may also repeat an existing index column, such as the default `:time`.
+Wildcards are standalone selectors and cannot be renamed with a pair.
+
 Only simple scalar output is collected automatically: numbers, symbols,
 strings, and date/time values. Arrays, dictionaries, tuples, DataFrames, and
 nested systems are omitted. Add a scalar summary declaration or use `snatch`
