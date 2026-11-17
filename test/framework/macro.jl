@@ -1,11 +1,12 @@
 @testset "macro" begin
     @testset "declaration errors" begin
-        for (state, message) in (
-            ("accumlate", "unknown state: accumlate"),
-            ("accumlate(init = 0)", "unknown state: accumlate"),
-            ("preserve(paramter)", "unsupported tag: paramter"),
+        for (line, message) in (
+            ("x => 1 ~ accumlate", "unknown state: accumlate"),
+            ("x => 1 ~ accumlate(init = 0)", "unknown state: accumlate"),
+            ("x => 1 ~ preserve(paramter)", "unsupported tag: paramter"),
+            ("x", "syntax error"),
+            ("a.b => 1 ~ preserve", "unrecognized variable declaration"),
         )
-            line = "x => 1 ~ $state"
             code = """
             @system SDeclaration begin
                 a => 1 ~ preserve
