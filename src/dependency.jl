@@ -247,7 +247,12 @@ end
 
 Base.sort(d::Dependency) = begin
     C = Graphs.simplecycles(d.g)
-    !isempty(C) && error("no cyclic dependency allowed: $([[d.N[i].info.name for i in c] for c in C])")
+    if !isempty(C)
+        N = d.N[first(C)]
+        path = join(("$(n.info.system).$(label(n))" for n in [N; first(N)]), " → ")
+        v = first(N).info
+        declarationerror("cyclic dependency: $path", v.line, v.linenumber)
+    end
     J = Graphs.topological_sort_by_dfs(d.g)
     [d.N[i] for i in J]
 end
