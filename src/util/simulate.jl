@@ -59,14 +59,33 @@ parsetarget(T, s) = parsesimulation(T, s)
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
 
 checksimulationkeys(s::System, I, index, target) = begin
+    M = Dict{Symbol,Any}()
     for (a, columns) in ((index, nothing), (target, I))
         (isnothing(a) || ismissing(a) || a === ()) && continue
         for (k, v) in parsesimulationkey(a isa Tuple ? collect(a) : a, s; wildcard = false)
-            hasproperty(s, v) && continue
-            !isnothing(columns) && string(k) == string(v) && haskey(columns, Symbol(k)) && continue
-            throw(ArgumentError("simulation variable $(repr(v)) not found in $(namefor(s))"))
+            k = Symbol(k)
+            if !hasproperty(s, v)
+                !isnothing(columns) && string(k) == string(v) && haskey(columns, k) ||
+                    throw(ArgumentError("simulation variable $(repr(v)) not found in $(namefor(s))"))
+                v = columns[k]
+            end
+            if haskey(M, k) && normalizesimulationkey(s, M[k]) != normalizesimulationkey(s, v)
+                throw(ArgumentError("conflicting simulation output $(repr(k)): $(repr(M[k])) and $(repr(v))"))
+            end
+            M[k] = v
         end
     end
+end
+
+normalizesimulationkey(s::System, k) = begin
+    P = split(string(k), '.')
+    for i in eachindex(P)
+        t = i == 1 ? s : s[join(P[1:i-1], '.')]
+        t isa System || continue
+        A = Dict(a => n for (n, a) in fieldnamesalias(t))
+        P[i] = replace(P[i], r"[^\[\]]+" => p -> string(get(A, Symbol(p), Symbol(p))))
+    end
+    join(P, '.')
 end
 
 extract(s::System, m::Simulation) = extract(s[m.base], m.mapping)
