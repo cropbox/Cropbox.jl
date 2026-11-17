@@ -263,6 +263,8 @@ using Dates
         r = simulate(SSimulateConfigs, configs=C, stop=n)
         @test r[r.time .== n*u"hr", :a] == p
         @test r[r.time .== n*u"hr", :b] == p .* n
+        @test_throws ArgumentError "configs and parameters cannot be used together" simulate(
+            SSimulateConfigs; configs = C, parameters = SSimulateConfigs => :a => p)
     end
 
     @testset "config and configs" begin
