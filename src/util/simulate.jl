@@ -243,7 +243,7 @@ simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], parameters=()
             l = only(layout)
             L = [(; base=l.base, index=l.index, target=l.target, meta=(l.meta, :__manipulate__))]
         else
-            @error "redundant configurations with parameters" configs parameters
+            throw(ArgumentError("configs and parameters cannot be used together"))
         end
         simulate(S, L, c; options, seed, kwargs...)
     end
