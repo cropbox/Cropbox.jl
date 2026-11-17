@@ -19,6 +19,20 @@
         end
     end
 
+    @testset "cyclic dependency" begin
+        code = """
+        @system SCycle begin
+            a(b) ~ track
+            b(a) ~ track
+        end
+        """
+        @test_throws LoadError ["cyclic dependency: SCycle.a → SCycle.b → SCycle.a", "cycle.jl:2", "a(b) ~ track"] Base.include_string(@__MODULE__, code, "cycle.jl")
+
+        Base.include_string(@__MODULE__, "@system SCycleBase a(b) ~ track", "base.jl")
+        code = "@system SCycleMixed(SCycleBase) b(a) ~ track"
+        @test_throws LoadError ["SCycleBase.a → SCycleMixed.b → SCycleBase.a", "base.jl:1", "a(b) ~ track"] Base.include_string(@__MODULE__, code, "cycle.jl")
+    end
+
     @testset "private name" begin
         @system SPrivateName(Controller) begin
             _a: _aa => 1 ~ preserve
