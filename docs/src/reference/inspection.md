@@ -342,12 +342,14 @@ Read downward: each numbered row is an operation in the compiler's topological
 order, not elapsed time or an observed runtime event. Lanes represent variables
 and arrows represent reads, not messages between objects in a UML sequence
 diagram. Fixed inputs have lanes but no update row. Numbers refer to positions in
-the complete schedule, so they can have gaps. Every expression names its target,
-so it can be read without tracing a lane back to the top. A row and its expression
-share the same baseline. Curved merges and crossing bridges route declared inputs
-into an operation; they do **not** encode delay or addition of values.
-Bridges cross active vertical guides or carry segments, not unused background
-guides or the gaps between carry segments.
+the complete schedule, so they can have gaps. Thin horizontal rules separate
+operations. Each entry in the **Computation** column names its target and stays
+in one row, even when it spans several lines.
+
+On each side, follow inputs of the same kind toward the operation. The nearest
+input points to the target; each farther arrow stops just short of the next
+input's curve. All are reads by that operation, not a chain of dependencies
+between inputs. An unmarked crossing is not a read.
 
 | Mark | Meaning |
 |:---|:---|
@@ -363,7 +365,7 @@ guides or the gaps between carry segments.
 | Teal dash-dot cut side rail | Cached rate from the previous post-update stage |
 
 Color identifies the role of a connection, not a variable's importance, value,
-or biological process. Arrowheads and junctions match their connections;
+or biological process. Arrowheads match their connections;
 variable symbols and text stay neutral. Thin, pale guides recede behind actual
 reads and cross-update rails. The legend uses the same styles as the diagram,
 and line patterns and cut rails retain their meanings without color.
@@ -393,7 +395,7 @@ For `accumulate(reset = ...)`, the post stage also caches the reset decision;
 the operation note identifies it. `drive` samples an array stored at
 construction, so its source table is not presented as a fresh read each step.
 
-The expression column is derived from declaration bodies, local argument
+The **Computation** column draws on declaration bodies, local argument
 aliases, and supported tags. It includes conditions and their fallback, clamps,
 one-shot behavior, and rate caching. It is a compact explanatory rendering,
 not executable Julia: routine unit conversion and generated temporary variables

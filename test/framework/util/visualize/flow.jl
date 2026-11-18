@@ -147,14 +147,14 @@ end
             @test union(reads, get(controls, info.state, ()), excluded[info.state]) == supported
         end
     end
-    for p in (plan, slice, special, private)
+    for p in (plan, slice, special, private, details)
         layout = Cropbox.flowlayout(p)
-        @test all(>(0), diff(layout.ys))
-        @test all(y -> layout.top < y < layout.bottom, layout.ys)
+        @test length(layout.bounds) == length(p.events) + 1
+        @test all(i -> layout.bounds[i] < layout.ys[i] < layout.bounds[i+1], eachindex(p.events))
     end
     layout = Cropbox.flowlayout(slice)
     carry = only(filter(c -> c.slot == :rate, layout.carries))
-    covered(y) = any(r -> r.x == carry.x && r.lo <= y <= r.hi, layout.rails)
+    covered(y) = any(s -> first(s) <= y <= last(s), carry.segments)
     @test covered(layout.top)
     @test !covered((layout.ys[carry.to] + layout.ys[carry.from]) / 2)
     @test covered(layout.bottom - 1)

@@ -182,9 +182,9 @@ flowlayout(plan) = begin
         for r in e.reads) for e in plan.events]
     above = Int[18 + 4max(0, length(g)-1) for g in readgroups]
     below = Int[max(16, 14count(==('\n'), n) + 12) for n in notes]
-    heights = above .+ below
-    ys = top .+ cumsum(heights) .- below
-    bottom = top + sum(heights) + 18
+    bounds = top .+ [0; cumsum(above .+ below)]
+    ys = bounds[2:end] .- below
+    bottom = last(bounds) + 18
     code = 80 + spacing * length(plan.lanes)
     width = code + max(350, maximum(textwidth.(split(join(notes, '\n'), '\n')); init=0) * 6) + 24
     height = bottom + 45
@@ -192,8 +192,7 @@ flowlayout(plan) = begin
         if string(e.node.info.name) == name || any(r -> r.name == name, e.reads)]; init=top-6)) for name in plan.lanes]
     carries = [(; c..., x=xs[c.name] + (c.slot == :rate ? -9 : 9),
         segments=((top-5, ys[c.to]), (ys[c.from], bottom))) for c in plan.carries]
-    rails = [active; [(x=c.x, lo=lo, hi=hi) for c in carries for (lo, hi) in c.segments]]
-    (; notes, angled, top, xs, ys, bottom, code, width, height, readgroups, active, carries, rails)
+    (; notes, angled, top, xs, ys, bounds, bottom, code, width, height, readgroups, active, carries)
 end
 
 struct FlowDiagram{P,F<:Real}
@@ -227,7 +226,7 @@ end
 
 flowdraw(r::FlowDiagram) = flowdraw(r.plan, flowlayout(r.plan), r.fontsize)
 flowdraw(plan, layout, fontsize) = begin
-    (; notes, angled, top, xs, ys, bottom, code, width, height, readgroups, active, carries, rails) = layout
+    (; notes, angled, top, xs, ys, bounds, bottom, code, width, height, readgroups, active, carries) = layout
     styles = (
         read=(color="#2D73A1", linewidth=0.8, linestyle=:solid),
         condition=(color="#B27A24", linewidth=0.9, linestyle=:dot),
@@ -242,6 +241,7 @@ flowdraw(plan, layout, fontsize) = begin
     scene = figure.scene
     Makie.campixel!(scene)
     point(x, y) = Makie.Point2f(x * scale, (height - y) * scale)
+    bend(x, y1, y2, d) = Makie.CurveTo(point(x+5d, y1), point(x+5d, y2), point(x+10d, y2))
     font = Makie.assetpath("fonts", "DejaVuSansMono.ttf")
     texts, paths, dots = Dict(), Dict(), Dict()
     text!(x, y, text; size=10, color="#333333", align=(:left, :center), rotation=0) =
@@ -264,7 +264,10 @@ flowdraw(plan, layout, fontsize) = begin
         Makie.CurveTo(-0.5, -0.5, -0.5, -0.5, -0.3, -0.5), Makie.ClosePath()])
     text!(20, 20, plan.model; size=12)
     text!(20, 37, "one update · static order, not elapsed time"; size=8, color="#777777")
-    text!(code, top-16, "operation / declared expression"; size=8, color="#777777")
+    text!(code, top-16, "Computation"; size=8, color="#777777")
+    for y in bounds
+        line!([point(12, y), point(width-16, y)]; layer=-1, color="#E0E0E0", linewidth=0.45)
+    end
     for name in plan.lanes
         x = xs[name]
         label = if occursin('.', plan.labels[name])
@@ -300,8 +303,7 @@ flowdraw(plan, layout, fontsize) = begin
         text!(20, y, string(event.order); size=8, color="#888888")
         text!(code, y-4, notes[i]; size=9, align=(:left, :top))
         groups = readgroups[i]
-        for (j, (side, conditional)) in enumerate(groups)
-            sources = unique(xs[r.name] for r in event.reads if (sign(xs[r.name]-x), r.role == :when) == (side, conditional))
+        for (side, conditional) in groups
             style = conditional ? styles.condition : styles.read
             if side == 0
                 commands = [Makie.MoveTo(point(x, y-4)),
@@ -311,29 +313,19 @@ flowdraw(plan, layout, fontsize) = begin
                 continue
             end
             direction = -side
-            bus = y - (length(groups) > 1 || length(sources) > 1 ? 7 + 4(j-1) : 0)
-            joins = sources .+ 8direction
-            start = side < 0 ? minimum(joins) : maximum(joins)
-            finish = x - 18direction
-            obstacles = sort(unique(a.x for a in rails if min(start, finish)+4 < a.x < max(start, finish)-4 &&
-                a.lo <= bus <= a.hi && all(abs(a.x-z) > 6 for z in joins)); rev=direction < 0)
-            commands = Makie.PathCommand[Makie.MoveTo(point(start, bus))]
-            for obstacle in obstacles
-                push!(commands, Makie.LineTo(point(obstacle-3direction, bus)),
-                    Makie.CurveTo(point(obstacle-3direction, bus-5), point(obstacle+3direction, bus-5), point(obstacle+3direction, bus)))
-            end
-            push!(commands, Makie.LineTo(point(finish, bus)),
-                Makie.CurveTo(point(x-14direction, bus), point(x-14direction, y), point(x-10direction, y)),
-                Makie.LineTo(point(x-5direction, y)))
-            path!(commands; layer=1, color=:white, linewidth=2.6)
-            path!(commands; style...)
-            arrow!(x-5direction, y, direction, style)
-            for (source, join) in zip(sources, joins)
-                branch = [Makie.MoveTo(point(source+2direction, y)),
-                    Makie.CurveTo(point(source+5direction, y), point(source+5direction, bus), point(join, bus))]
-                path!(branch; layer=1, color=:white, linewidth=2.6)
-                path!(branch; style...)
-                length(sources) > 1 && dot!(join, bus; size=2, color=style.color)
+            sources = sort(unique(xs[r.name] for r in event.reads
+                if (sign(xs[r.name]-x), r.role == :when) == (side, conditional)); by=s -> abs(s-x))
+            level = y - (length(groups) > 1 || length(sources) > 1 ? (conditional ? 12 : 8) : 0)
+            landing = x-20direction
+            for (k, source) in enumerate(sources)
+                start = source+2direction
+                tip, tipy = k == 1 ? (x-5direction, y) : (sources[k-1]+6direction, level)
+                descent = k == 1 ? (Makie.LineTo(point(landing, level)), bend(landing, level, y, direction)) : ()
+                commands = [Makie.MoveTo(point(start, y)), bend(start, y, level, direction),
+                    descent..., Makie.LineTo(point(tip, tipy))]
+                path!(commands; layer=1, color=:white, linewidth=2.6)
+                path!(commands; style...)
+                arrow!(tip, tipy, direction, style)
             end
         end
         for r in event.reads
