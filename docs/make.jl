@@ -30,11 +30,11 @@ makedocs(
             ],
             "Model Studies" => [
                 "Models and Resources" => "gallery.md",
-                "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",
                 "Garlic Growth Model" => "tutorials/garlic.md",
+                "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",
+                "Root System Architecture" => "tutorials/croprootbox.md",
                 "SimpleCrop" => "tutorials/simplecrop.md",
                 "Soil Water Transport" => "tutorials/soilwater.md",
-                "Root System Architecture" => "tutorials/croprootbox.md",
             ],
         ],
         "Guides" => [

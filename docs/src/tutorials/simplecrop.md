@@ -13,12 +13,6 @@ Models*](https://dssat.net/wp-content/uploads/2014/03/modular.pdf). It is useful
 for learning how components exchange values and how a complete simulation is
 organized; it is not a fully parameterized production model.
 
-![SimpleCrop model structure](../assets/tutorials/simplecrop-structure.svg)
-
-*Weather and management supply the environment. Crop development, canopy,
-biomass, and below-ground water balance advance together, while diagnostic
-variables expose the resulting state.*
-
 ## Load the example inputs
 
 Add the model and the table-reading packages to your active Julia environment:
@@ -51,39 +45,6 @@ The annotated CSV headers retain dates, units, and column types. Cropbox
 normalizes them when the corresponding `provide` and `drive` variables are
 constructed.
 
-## Inspect the composition and one process
-
-Start with the system hierarchy rather than displaying every variable:
-
-```@example simplecrop
-visualize(SimpleCrop.Model; kind = :hierarchy)
-```
-
-Then inspect the direct inputs to potential growth `Pg`:
-
-```@example simplecrop
-visualize(SimpleCrop.Model, :Pg; direction = :up)
-```
-
-This neighborhood brings together radiation `PAR`, water stress `SWFAC`,
-canopy area `LAI`, and the other declared inputs to `Pg`. It includes the
-generated phases of any selected state, but not all upstream calculations.
-Increase `depth` to follow those calculations, or select a path such as
-`:PAR => :W` to follow radiation through to biomass.
-
-These calls inspect the type, without constructing the model or running a
-scenario. For comparison, export the complete dependency graph separately:
-
-```@example simplecrop
-Cropbox.writeimage("simplecrop-dependency.svg", visualize(SimpleCrop.Model))
-nothing # hide
-```
-
-The [full dependency graph](simplecrop-dependency.svg) is intentionally not
-embedded here: its many variables are useful for detailed inspection, while
-the hierarchy and focused graph answer smaller questions. See
-[Model structure](@ref visualization-structure) for selection and grouping rules.
-
 ## Configure and run the model
 
 ```@example simplecrop
@@ -94,17 +55,13 @@ config = @config (
     SimpleCrop.SoilWater => :irrigation_data => irrigation,
 )
 
-result = simulate(SimpleCrop.Model;
-    config,
-    stop = :endsim,
-)
+result = simulate(SimpleCrop.Model; config, stop = :endsim)
 
 (rows = nrow(result), start = first(result.DATE), finish = last(result.DATE))
 ```
 
-This is the same execution path exercised by the framework test. `:endsim` is a
-flag declared by the model, so the biological state rather than a hard-coded
-number of days determines when the run stops.
+The model sets the `endsim` flag when the run is complete. You don't need to
+know the number of days in advance.
 
 ## Read development and canopy growth
 
@@ -112,15 +69,17 @@ number of days determines when the run stops.
 phenology and canopy development are advancing together.
 
 ```@example simplecrop
-visualize(result,
-    :DATE,
-    [:N, :LAI];
+visualize(result, :DATE, [:N, :LAI];
     kind = :line,
+    names = ["Leaf number", "Leaf area index"],
+    colors = [:blue, :red],
+    xlab = "Date",
 )
 ```
 
-The test suite plots `LAI`; displaying `N` beside it adds the developmental
-context needed to interpret the canopy trajectory.
+In this run, leaf number levels off at about 12, while leaf area index falls
+from a peak of 2.25 to 0.97. Having formed the same number of leaves does not
+mean the canopy still has the same leaf area.
 
 ## Read biomass partitioning
 
@@ -159,6 +118,50 @@ during the crop run. It is not intended as a stand-alone validation of a
 layered soil-water algorithm. For the separate multi-layer implementation in
 Cropbox's own test suite, continue with [Soil Water Transport](@ref
 soil-water-transport-tutorial).
+
+## Optional: inspect how the parts fit together
+
+![SimpleCrop model structure](../assets/tutorials/simplecrop-structure.svg)
+
+*Weather and management supply the environment. Crop development, canopy,
+biomass, and below-ground water balance advance together, while diagnostic
+variables expose the resulting state.*
+
+The structure-plot forms of `visualize` below were added after Cropbox v0.4.2.
+If you are using that release, you can skip them: none of the crop output
+above requires a structure plot. See [Installation](@ref Installation) if
+you want to try the development version.
+
+Start with the system hierarchy:
+
+```@example simplecrop
+visualize(SimpleCrop.Model; kind = :hierarchy)
+```
+
+Then inspect the direct inputs to potential growth `Pg`:
+
+```@example simplecrop
+visualize(SimpleCrop.Model, :Pg; direction = :up)
+```
+
+This neighborhood brings together radiation `PAR`, water stress `SWFAC`,
+canopy area `LAI`, and the other declared inputs to `Pg`. It includes the
+generated phases of any selected state, but not all upstream calculations.
+Increase `depth` to follow those calculations, or select a path such as
+`:PAR => :W` to follow radiation through to biomass.
+
+These calls inspect the type, without constructing the model or running a
+scenario. For comparison, export the complete dependency graph separately:
+
+```@example simplecrop
+Cropbox.writeimage("simplecrop-dependency.svg", visualize(SimpleCrop.Model))
+nothing # hide
+```
+
+The [full dependency graph](simplecrop-dependency.svg) is intentionally not
+embedded here: its many variables are useful for detailed inspection, while
+the hierarchy and focused graph answer smaller questions. See
+[Model structure](@ref visualization-structure) for selection and grouping rules.
 
 ## What this example establishes
 
