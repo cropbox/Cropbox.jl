@@ -124,8 +124,8 @@ analyze(summarize::Union{Function,Nothing}, S::Type{<:System};
         Y = Any[]
         for (i, c) in enumerate(C)
             s = instance(S; config = configure(c, sampled), options, seed)
-            snap = isnothing(summarize) ? false : nothing
-            df = simulate!(s; base, target, stop, snap, verbose = false, kw...)
+            snap = get(kw, :snap, isnothing(summarize) ? false : nothing)
+            df = simulate!(s; base, target = snap === false ? () : target, stop, snap, verbose = false, kw...)
             if isnothing(summarize)
                 append!(Y, [value(s[base][v]) for v in values(T)])
             else
