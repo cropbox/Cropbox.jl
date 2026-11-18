@@ -155,6 +155,11 @@ Default selections and wildcard expansion keep omitting unavailable fields.
 A target may also repeat an existing index column, such as the default `:time`.
 Wildcards are standalone selectors and cannot be renamed with a pair.
 
+Explicit selectors may reuse an output column only for the same variable;
+aliases and equivalent symbol/string paths are allowed. Mapping the same column
+to different variables raises an `ArgumentError`, even if their values match.
+Automatic selections and wildcard expansion retain their existing behavior.
+
 Only simple scalar output is collected automatically: numbers, symbols,
 strings, and date/time values. Arrays, dictionaries, tuples, DataFrames, and
 nested systems are omitted. Add a scalar summary declaration or use `snatch`

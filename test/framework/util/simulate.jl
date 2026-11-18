@@ -291,6 +291,41 @@ using Dates
         @test r[r.time .== n*u"hr", :b] == A .* n
     end
 
+    @testset "output names" begin
+        @system SSimulateOutputLeaf begin
+            x: y => 2 ~ preserve
+            z    => 2 ~ preserve
+        end
+        @system SSimulateOutput(Controller) begin
+            year   => 2020 ~ preserve::int
+            day: d => 2    ~ preserve(u"d")
+
+            i(t = context.clock.tick): j => min(t + 1, 2) ~ track::int
+            v => [10, 20]                                ~ preserve::int[]
+
+            time(context.clock.time) ~ track(u"d")
+
+            leaf(context): l ~ ::SSimulateOutputLeaf
+        end
+        for (index, target) in (
+            (:year, :year => :day),
+            ((), [:x => "leaf.x", :x => "leaf.z"]),
+            ([:x => "leaf.x", :x => "leaf.z"], :year),
+        )
+            @test_throws ArgumentError "conflicting simulation output" simulate(SSimulateOutput; index, target)
+        end
+        r = simulate(SSimulateOutput; index = :day => :d, target = [:day => "day", :year])
+        @test propertynames(r) == [:day, :year]
+        @test only(r.day) == 2u"d"
+        r = simulate(SSimulateOutput; index = :x => "leaf.x", target = :x => "l.y")
+        @test only(r.x) == 2
+        r = simulate(SSimulateOutput; index = :x => "v[i]", target = :x => "v[j]", stop = 1, verbose = false)
+        @test r.x == [10, 20]
+        @test_throws ArgumentError "conflicting simulation output" simulate(SSimulateOutput; index = :x => "v[1]", target = :x => "v[i]")
+        @test only(simulate(SSimulateOutput).time) === 0.0u"d"
+        @test only(simulate(SSimulateOutput; target = ["*", :year => :day]).year) == 2u"d"
+    end
+
     @testset "meta" begin
         @system SSimulateMeta(Controller) begin
             a ~ preserve(parameter)
