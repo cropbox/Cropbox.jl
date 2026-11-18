@@ -65,6 +65,21 @@ simulate(Model;
 
 Without `base`, full string paths can reach the same values.
 
+For a bundle of produced systems, each matching child contributes one row per
+snapshot. Children created during the simulation are included automatically.
+
+```@example simflow
+@system OutputLeaf begin
+    area => 2 ~ preserve(u"cm^2")
+end
+@system OutputPlant(Controller) begin
+    leaves => produce(OutputLeaf) ~ produce::OutputLeaf[]
+    query  => "*"                 ~ preserve::str
+end
+
+simulate(OutputPlant; base = "leaves[query]", target = :area, stop = 2, verbose = false)
+```
+
 ## Add scenario metadata
 
 `meta` copies configuration values into the output.
