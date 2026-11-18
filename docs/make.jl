@@ -28,6 +28,7 @@ makedocs(
                 "Weather-driven Phenology" => "tutorials/phenology.md",
                 "Predator–Prey Model" => "tutorials/lotka-volterra.md",
             ],
+            "Advanced: Chilling and Forcing" => "tutorials/chilling-forcing.md",
             "Model Studies" => [
                 "Models and Resources" => "gallery.md",
                 "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",

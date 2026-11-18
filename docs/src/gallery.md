@@ -4,6 +4,17 @@ These packages demonstrate different Cropbox workflows. Their biological
 parameters and model-specific APIs belong to their own repositories; this manual
 focuses on the Cropbox concepts shared across them.
 
+## Reproducing an example
+
+The SimpleCrop and Soil Water Transport examples run when this manual is
+built. The Leaf Gas Exchange, Garlic, and Root System Architecture pages
+instead show saved figures and give the commands to run in each model's own
+environment; a successful manual build does not rerun those three models.
+To repeat your own run, keep the input data and configuration with the Julia
+version and project's `Manifest.toml`. For a stochastic model, keep the seed
+as well. To reproduce a published result, start with the study's archived
+code and data where available.
+
 ## [LeafGasExchange.jl](https://github.com/cropbox/LeafGasExchange.jl)
 
 Coupled C₃/C₄ photosynthesis, stomatal conductance, and leaf energy balance.

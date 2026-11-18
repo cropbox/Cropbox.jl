@@ -564,13 +564,19 @@ ans[] # hide
 
 ### Saved estimates
 
-A saved simulation table can replace the system argument. No simulation is
-rerun, and neither input table is modified:
+A saved simulation table can replace the system argument. Try this example in
+a fresh session: the two small tables stand in for observations and saved model
+output. There is no model to load or rerun, and neither input table is modified.
 
-```@example visref
-estimates = simulate(Growth; target = :mass, stop = 12u"hr")
+```@example savedcomparison
+using Cropbox, DataFrames
+
+observations = DataFrame(hour = [0, 3, 6, 9]u"hr", measured = [0.2, 2.1, 3.2, 3.5]u"g")
+estimates = DataFrame(time = [0, 180, 360, 540]u"minute", mass = [0.3, 2, 3, 4]u"g")
+
 visualize(observations, estimates, :measured => :mass;
     index = :hour => :time,
+    lim = (0, 5),
     name = "saved model",
 )
 ```
@@ -579,10 +585,11 @@ visualize(observations, estimates, :measured => :mass;
 <details class="terminal-example"><summary>UnicodePlots</summary>
 ```
 
-```@example visref
+```@example savedcomparison
 visualize(observations, estimates, :measured => :mass;
     backend = :UnicodePlots,
     index = :hour => :time,
+    lim = (0, 5),
     name = "saved model",
 )
 ans[] # hide
@@ -593,7 +600,10 @@ ans[] # hide
 ```
 
 Here pairs map observation column names to estimate column names, including
-the `index` columns. Use a single name when the names match, for example
+the `index` columns: the observation at 3 hours matches the estimate at
+180 minutes. A point on the diagonal is an exact match in mass. `lim = (0, 5)`
+sets the same range on both axes (here, 0 to 5 g). Use a single name when
+the names match, for example
 `visualize(obs, est, :mass; index = :time)`. Both tables may contain unrelated
 columns with the same names. Compatible index units such as hours and minutes
 are converted before matching; rows are matched by index, not by their order.

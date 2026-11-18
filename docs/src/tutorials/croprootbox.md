@@ -172,8 +172,9 @@ result[end, :time]
 `simulate!` is appropriate because the final geometric instance is needed for
 export. The `root` object has been mutated to day 15.
 
-Do not call `simulate!(root; stop=15u"d")` again expecting a replicate; it
-continues the existing architecture. Construct a new seeded instance instead.
+To repeat this geometry, start with a fresh `Pot` and `RootArchitecture`,
+apply `root_maize` and seed 0, and advance once to day 15. A second
+`simulate!` on the same instance continues its growth.
 
 ![Rendered CropRootBox maize architecture](../assets/tutorials/croprootbox-maize.svg)
 
@@ -182,6 +183,9 @@ continues the existing architecture. Construct a new seeded instance instead.
 are red, first-order laterals green, and second-order laterals blue. The dashed
 frustum is the pot boundary. The image is projected from the model's actual
 segment coordinates.*
+
+To inspect the coordinates independently of the viewing angle or colors,
+[export the geometry](#Export-geometry) from that final instance.
 
 ## Gather segments and calculate summaries
 
