@@ -151,6 +151,8 @@ new variables. Wildcards are best reserved for inspection.
 
 An explicitly named variable in `index` or `target` must exist in the selected
 `base` when the output layout is created; otherwise an `ArgumentError` is raised.
+For a bundle, the same selectors are resolved and checked for each child at
+each saved snapshot. An empty bundle contributes no rows.
 Default selections and wildcard expansion keep omitting unavailable fields.
 A target may also repeat an existing index column, such as the default `:time`.
 Wildcards are standalone selectors and cannot be renamed with a pair.
@@ -229,6 +231,8 @@ architectures.
 
 `callback(model, simulation_layout)` runs after a saved state has been
 processed. The second argument is Cropbox's internal simulation accumulator.
+Its `layout` holds the original request; `index` and `target` map output column
+names to the model paths resolved so far.
 It is lower level and more sensitive to implementation changes than `snatch`;
 prefer `snatch` unless coordination with the accumulator is necessary. The
 current callback path runs after updated snapshots, not after the initial
