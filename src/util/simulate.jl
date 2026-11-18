@@ -130,7 +130,7 @@ format!(m::Simulation; nounit=false, long=false) = begin
     if nounit
         r = deunitfy.(r)
     end
-    if long
+    if long && !isempty(r)
         i = collect(keys(m.index))
         t = setdiff(propertynames(r), i)
         r = DataFrames.stack(r, t, i)
