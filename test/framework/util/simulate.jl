@@ -172,6 +172,7 @@ using Dates
         @test all(r2.b .% 2 .== 0)
         r3 = simulate(SSimulateSnap, stop=n, snap="f")
         @test all(r3.b .% 2 .== 0)
+        @test isempty(simulate(SSimulateSnap; snap = false, long = true))
     end
 
     @testset "snatch" begin
