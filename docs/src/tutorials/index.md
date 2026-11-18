@@ -2,8 +2,9 @@
 
 Start with the [Quick Start](@ref quick-start). It takes one model from a
 declaration to a simulation, a graph, and a comparison between scenarios.
-The three core-concept pages explain that workflow without requiring you to
-learn every declaration form or function option first.
+Continue with Logistic Growth below. If you'd rather run a published crop model
+before writing equations, start with the [Garlic Growth Model](@ref garlic-tutorial):
+one growing season, from packaged weather to a graph of leaf and bulb dry mass.
 
 ## Build a model, one step at a time
 
@@ -12,7 +13,7 @@ from the top, even if you have already run another tutorial.
 
 | Tutorial | New idea | Result to read |
 |---|---|---|
-| [Logistic Growth](@ref logistic-growth-tutorial) | Turn a growth equation into a rate and an accumulated state. | A biomass trajectory approaching its final size. |
+| [Logistic Growth](@ref logistic-growth-tutorial) | Compare a simulated state with example measurements. | Observation points on the biomass curve and the root mean square error (RMSE). |
 | [Weather-driven Phenology](@ref phenology-tutorial) | Supply dated weather data and accumulate thermal time. | Development under changing temperature. |
 | [Predator–Prey Model](@ref lotka-volterra-tutorial) | Couple two changing states and extend a model with a mixin. | The interaction between prey and predator populations. |
 
@@ -25,16 +26,16 @@ Models](@ref evaluation-tutorial) when observations are available.
 The remaining tutorials are applications, not prerequisites for using Cropbox.
 Choose one that matches your work:
 
-- [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial): environmental responses
-  in a coupled leaf model.
-- [Garlic Growth Model](@ref garlic-tutorial): whole-plant growth and dynamic
-  organs.
-- [SimpleCrop](@ref simplecrop-tutorial): development, canopy growth, and
-  biomass partitioning in a compact crop model.
+- [Garlic Growth Model](@ref garlic-tutorial): run a whole plant, then follow
+  leaf development, compare planting dates, or examine individual organs.
+- [Leaf Gas Exchange](@ref leaf-gas-exchange-tutorial): vary CO₂ or light and
+  read the photosynthetic response of a leaf.
+- [Root System Architecture](@ref croprootbox-tutorial): grow a maize root system,
+  view its branching structure, and summarize root length by depth.
+- [SimpleCrop](@ref simplecrop-tutorial): trace how weather, canopy growth, and
+  biomass are connected in a small teaching model from the DSSAT materials.
 - [Soil Water Transport](@ref soil-water-transport-tutorial): hydraulic
   properties and water movement through a layered profile.
-- [Root System Architecture](@ref croprootbox-tutorial): growing geometry,
-  stochastic parameters, and custom summaries.
 
 [Models and Resources](@ref Gallery) collects the model repositories, talks,
 and workshop notebooks. Each study explains its inputs and links the relevant

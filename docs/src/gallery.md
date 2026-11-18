@@ -25,9 +25,9 @@ demonstrates large-system composition and dynamic leaves. Start with the
 
 ## [SimpleCrop.jl](https://github.com/cropbox/SimpleCrop.jl)
 
-A compact modular crop model with phenology, canopy growth, partitioning,
-weather input, irrigation, and a soil-water balance. It is the executable model
-in the [SimpleCrop tutorial](@ref simplecrop-tutorial).
+A compact crop model based on the DSSAT modular-model teaching material. Use
+the [SimpleCrop tutorial](@ref simplecrop-tutorial) to trace how weather and
+irrigation inputs connect to canopy growth, soil water, and biomass.
 
 ## Cropbox layered-soil test model
 
