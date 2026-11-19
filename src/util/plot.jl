@@ -211,6 +211,7 @@ plot(V::Vector; kw...) = plot!(nothing, V; kw...)
 plot!(p::Union{Plot,Nothing}, X::Vector;
     kind, xlim = nothing, ylim = nothing, xunit = nothing, yunit = nothing, kw...
 ) = begin
+    X = convertcolumn(X)
     xlim = getplotopt(p, :xlim, xlim)
     ylim = getplotopt(p, :ylim, ylim)
     xunit = getplotopt(p, :xunit, xunit)

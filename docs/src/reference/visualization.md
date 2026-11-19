@@ -38,8 +38,7 @@ a scalar or vector of reference values.
 | `visualize(S, x, y, z; xstep, ystep)` | [a two-factor heatmap or contour plot](#Heatmaps-and-contours) | yes |
 | `visualize(df, x, y, z)` | [a heatmap or contours from a saved grid](#Gridded-DataFrames) | no |
 | `visualize(V; kind = :hline)` or `:vline` | [horizontal or vertical reference lines](#Reference-lines) | no |
-| `visualize!(p, X, Y)` | [another data series on an existing plot](#Append-data-and-annotations) | no |
-| `visualize!(p, x, y, text)` | [text at a data coordinate](#Append-data-and-annotations) | no |
+| `visualize!(p, X, Y)` | [another data series on an existing plot](#Append-data-and-reference-lines) | no |
 
 All plotting calls in this table return a Cropbox `Plot`. The argument combination
 determines where the data come from and what is compared; [`kind`](#Plot-kinds-and-layers)
@@ -937,7 +936,7 @@ ans[] # hide
 </details>
 ```
 
-### Append data and annotations
+### Append data and reference lines
 
 ```@example visref
 p = visualize(series, :hour, :observed;
@@ -988,66 +987,38 @@ ans[] # hide
 
 The one-value `:hline` and `:vline` helpers use the y-axis and x-axis units,
 respectively. The `3000u"mg"` reference is converted to `3u"g"` above, even
-though the x-axis uses hours.
-
-`visualize!` changes and returns the same Cropbox `Plot`. Reference lines and
-text annotations can be added through this API without modifying the backend
-object:
-
-```@example visref
-visualize!(p, [3, 9]u"hr", [4, 2]u"g"; kind = :line, color = :gray, linestyle = :dot, name = "")
-visualize!(p, 6u"hr", 3.5u"g", "Reference\nline"; align = :center)
-```
-
-```@raw html
-<details class="terminal-example"><summary>UnicodePlots</summary>
-```
-
-```@example visref
-visualize!(q, [3, 9]u"hr", [4, 2]u"g"; kind = :line, color = :dark_gray, name = "")
-visualize!(q, 6u"hr", 3.5u"g", "Reference\nline"; align = :center)
-ans[] # hide
-```
-
-```@raw html
-</details>
-```
+though the x-axis uses hours. `visualize!` changes and returns the same plot;
+`name = "threshold"` identifies the reference line in its legend.
 
 With Makie, automatic axis limits expand to include appended series. Explicit
 `xlim` or `ylim` stays fixed, and a new explicit limit in `visualize!` replaces
-the previous setting. Automatic margins follow Makie; reference lines and text
-retain the existing limits.
+the previous setting. Automatic margins follow Makie; reference lines retain the existing limits.
 UnicodePlots uses a fixed canvas: grouped plots determine their complete range
 before drawing, but when manually appending to a terminal plot, supply the full
 range when creating it.
 
 `linestyle` accepts `:solid` (the default), `:dash`, `:dot`, `:dashdot`, and
 `:dashdotdot`, or a vector with one style per y series. UnicodePlots draws solid lines and warns when another style is
-requested. Text uses data coordinates and the existing axis units, converting
-compatible unitful values. It does not change the axis limits or add a legend
-entry. `align` accepts `:left` (the default), `:center`, and `:right`.
+requested.
 
-On a calendar axis, pass a `Date` or `DateTime` directly as the horizontal
-annotation coordinate. This works with both backends:
+On a calendar axis, mark an event with a vertical line at its date. Set
+`name` to identify the line in the legend. Zoned reference dates use local wall time,
+just like zoned table columns.
 
-```@example dateannotations
+```@example datelines
 using Cropbox, Dates
 dates = collect(Date(2026, 1, 1):Day(1):Date(2026, 1, 3))
-p = visualize(dates, [1, 3, 2];
-    backend = :Makie,
-    kind = :line, legend = false)
-visualize!(p, Date(2026, 1, 2), 2, "Measurement")
+p = visualize(dates, [1, 3, 2]; backend = :Makie, kind = :line, name = "Model")
+visualize!(p, [Date(2026, 1, 2)]; kind = :vline, name = "Sampling date")
 ```
 
 ```@raw html
 <details class="terminal-example"><summary>UnicodePlots</summary>
 ```
 
-```@example dateannotations
-q = visualize(dates, [1, 3, 2];
-    backend = :UnicodePlots,
-    kind = :line, legend = false)
-visualize!(q, Date(2026, 1, 2), 2, "Measurement")
+```@example datelines
+q = visualize(dates, [1, 3, 2]; backend = :UnicodePlots, kind = :line, name = "Model")
+visualize!(q, [Date(2026, 1, 2)]; kind = :vline, name = "Sampling date")
 ans[] # hide
 ```
 
@@ -1089,7 +1060,7 @@ accept zoned values directly.
 
 Cropbox chooses Makie in Jupyter, Pluto, VS Code, and Documenter, and
 UnicodePlots in a plain terminal. Set `backend` when output must be identical
-across environments. Use `visualize` and `visualize!` for drawing and annotations
+across environments. Use `visualize` and `visualize!` for plotting
 so that notebook code does not depend on a backend's internal plot structure.
 
 Backend behavior is not completely identical:
@@ -1098,7 +1069,6 @@ Backend behavior is not completely identical:
 |---|---|---|
 | line, scatter, and step | supported | supported |
 | `:scatterline` | points plus line | points plus line |
-| text annotations | supported | supported within terminal resolution |
 | non-solid `linestyle` | supported | solid lines with a warning |
 | color names | Makie color names, e.g. `:steelblue` | terminal color names, e.g. `:blue` |
 | heatmap | supported | supported on a regular grid |
@@ -1129,7 +1099,6 @@ p = visualize([0, 1, 2], [0, 1, 4];
     backend = :Makie,
     kind = :line, name = "Model", title = "모형과 관측", legendpos = (0.1, -0.3))
 visualize!(p, [0, 1, 2], [0, 1.1, 3.8]; name = "Observed")
-visualize!(p, 1, 3, "Example")
 ```
 
 ```@setup visref
@@ -1152,7 +1121,7 @@ The CJK font is © 2014-2021 Adobe, licensed under the
 Its original copyright and license metadata is preserved in the unmodified font file.
 
 This adapter supports lines, scatter, scatterlines, categorical steps,
-horizontal/vertical lines, heatmaps, contours (including labels), and text.
+horizontal/vertical lines, heatmaps, and contours (including labels).
 It retains units and explicit limits; in particular `zlim` is the exact color
 range, not Gadfly's sometimes expanded tick range. Grid rows may be unordered;
 missing grid cells remain blank. Dates use Makie's native calendar conversion.
@@ -1166,9 +1135,13 @@ layout, and heatmap color ranges may differ.
 Cropbox no longer installs Gadfly or supports it as a backend. Replace explicit
 `backend = :Gadfly` with `backend = :Makie`. Code that accesses `Gadfly.Plot`
 fields or uses `Cropbox.Gadfly.SVG` or `PDF` must also change: use public
-`visualize!` calls for annotations and layers, and the export examples above
+`visualize!` calls for additional series and reference lines, and the export examples above
 for saving figures. For example, replace `p[] |> Cropbox.Gadfly.PDF("figure.pdf")`
 with `Cropbox.writeimage("figure.pdf", p)`.
+
+The positional `visualize!(p, x, y, "text")` method introduced in Cropbox 0.4.0
+is no longer supported. Use `name` on a series or reference line to identify it
+in the legend; this does not place text at a coordinate.
 
 Archived workshop and course notebooks may continue to use their original
 versioned environments or Docker image digests. Updating those materials is
