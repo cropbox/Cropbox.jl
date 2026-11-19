@@ -146,8 +146,8 @@ visualize(PhenologyModel, :T => :mature; kind = :flow)
 ```
 
 The flow diagram separates `TT`'s value update from its rate-caching operation.
-Cut side rails indicate continuation across updates without repeating the
-whole diagram. Inputs outside the selected path remain gray boundary lanes.
+The fading ends of the side rails show continuation into the next update without
+repeating the whole diagram. Inputs outside the selected path remain gray boundary lanes.
 These are static potential reads, not a trace of which dates or branches ran;
 see [the flow guide](@ref visualization-flow) for symbols and scope.
 

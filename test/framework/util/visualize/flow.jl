@@ -7,12 +7,13 @@ end
     base => 5 ~ preserve(parameter)
     initial => 0 ~ preserve
     rate(T = weather.temperature, base) => max(T - base, 0) ~ track
-    total(rate) ~ accumulate(init=initial)
+    total(rate) ~ accumulate(init = initial)
     ready(total) => total > 10 ~ flag(once)
-    saved(total) ~ remember(when=ready)
-    conditional(rate) ~ track(when=ready, init=base)
-    gated(rate) => rate > 0 ~ flag(when=ready)
-    capture_rate(rate) ~ capture(when=ready)
+    saved(total) ~ remember(when = ready)
+    conditional(rate) ~ track(when = ready, init = base)
+    gated(rate) => rate > 0 ~ flag(when = ready)
+    latched(rate) => rate > 0 ~ flag(once, when = ready)
+    capture_rate(rate) ~ capture(when = ready)
     input => [1, 2, 3] ~ drive
     counter ~ advance
 end
@@ -21,12 +22,22 @@ end
     parameter => 1 ~ preserve(parameter)
 end
 
+@system FlowFeedback(Controller) begin
+    idx => 1 ~ preserve::Int(parameter)
+    mask(idx) => [false, true] ~ preserve::Vector{Bool}
+    pick => true ~ flag(when = mask[idx[]])
+    toggle(toggle) => !toggle ~ flag
+    latched(latched) => !latched ~ flag(once)
+    tracked(tracked) => !tracked ~ track::Bool(init = false)
+end
+
 @system FlowSpecial(Controller) begin
     lower => 0 ~ preserve
     upper => 2 ~ preserve
-    root(root) => root^2 - 2 ~ bisect(lower=lower, upper=upper)
-    solution => solution^2 - 2 ~ solve(lower=lower, upper=upper)
-    area(; x) => x^2 ~ integrate(from=lower, to=upper)
+    root(root) => root^2 - 2 ~ bisect(lower = lower, upper = upper)
+    bounded(bounded) => bounded^2 - 2 ~ bisect(min = lower, max = upper)
+    solution => solution^2 - 2 ~ solve(lower = lower, upper = upper)
+    area(; x) => x^2 ~ integrate(from = lower, to = upper)
     children => produce(FlowFixed) ~ produce::FlowFixed[]
 end
 
@@ -46,12 +57,16 @@ end
 @system FlowDetails(Controller) begin
     elapsed(time = context.clock.time) ~ track(u"hr")
     rate => 2 ~ preserve(u"g/hr")
-    amount(rate) ~ accumulate(time=elapsed, u"g")
-    captured(rate) ~ capture(time=elapsed, u"g")
-    child => produce(FlowFixed) ~ produce::FlowFixed
+    enabled => true ~ flag
+    restart => false ~ flag
+    mask => [true, false] ~ preserve::Vector{Bool}
+    indexed(enabled) ~ flag(once = false, when = mask[1])
+    amount(rate) ~ accumulate(time = elapsed, u"g", when = enabled, reset = restart)
+    captured(rate) ~ capture(time = elapsed, u"g")
+    child => produce(FlowFixed) ~ produce::FlowFixed(when = enabled)
     solution => solution^2 - 2 ~ solve
-    smallest => smallest^2 - 2 ~ solve(pick=:minimum)
-    root(root) => root^2 - 2 ~ bisect(lower=0, upper=2, maxiter=25, tol=0.001)
+    smallest => smallest^2 - 2 ~ solve(pick = :minimum)
+    root(root) => root^2 - 2 ~ bisect(lower = 0, upper = 2, maxiter = 25, tol = 0.001)
     branch(rate) => if rate > 0u"g/hr"
         rate
     else
@@ -67,16 +82,19 @@ end
     @test all(e -> e.node.info.name ∉ (:context, :config, :base), plan.events)
     total = filter(e -> e.node.info.name == :total, plan.events)
     @test getproperty.(total, :operation) == [:state, :rate]
-    @test startswith(total[1].note, "total ← total + rate(total) * Δt")
-    @test startswith(total[2].note, "rate(total) ← rate")
+    @test isempty(total[1].code) && total[1].note == "accumulate"
+    @test total[2].code == "rate" && total[2].note == "accumulate · save rate"
     @test any(c -> c.name == "total" && c.slot == :rate, plan.carries)
     gated = only(filter(e -> e.node.info.name == :gated, plan.events))
-    @test (name="ready", role=:when) in gated.reads
-    @test occursin("otherwise false", gated.note)
+    @test (name = "ready", role = :when) in gated.reads
+    @test gated.code == "rate > 0" && gated.badges == ["when = ready"]
+    latched = only(filter(e -> e.node.info.name == :latched, plan.events))
+    @test isempty(latched.note) && latched.badges == ["once", "when = ready"]
+    @test isempty(only(filter(e -> e.node.info.name == :rate, plan.events)).note)
     driver = only(filter(e -> e.node.info.name == :input, plan.events))
-    @test isempty(driver.reads)
+    @test isempty(driver.reads) && driver.note == "drive · read input"
 
-    selected = Cropbox.selectiondependency(d, [:total]; depth=0)
+    selected = Cropbox.selectiondependency(d, [:total]; depth = 0)
     slice = Cropbox.flowplan(FlowExample, d; selected)
     @test [e.order for e in slice.events] == [e.order for e in total]
     @test slice.ports == ["rate"]
@@ -87,35 +105,62 @@ end
     @test all(c -> c.name != "area", special.carries)
     solution = only(filter(e -> e.node.info.name == :solution, special.events))
     @test Set(r.name for r in solution.reads) == Set(("lower", "upper"))
-    @test occursin("lower = lower", solution.note)
-    @test occursin("upper = upper", solution.note)
-    root = only(filter(e -> e.node.info.name == :root && e.operation == :opaque &&
-        Cropbox.flowphase(e.node) == :main, special.events))
-    @test !occursin("maxiter", root.note) && !occursin("tol", root.note)
+    @test occursin("lower = lower", solution.code) && occursin("upper = upper", solution.code)
+    root = only(filter(e -> e.node.info.name == :root, special.events))
+    @test Cropbox.flowphase(root.node) == :main
+    @test !occursin("maxiter", root.code) && !occursin("tol", root.code)
+    bounded = filter(e -> e.node.info.name == :bounded, special.events)
+    @test Cropbox.flowphase.(getproperty.(bounded, :node)) == [:pre, :main]
+    @test first(bounded).code == "min = lower; max = upper"
+    @test !occursin("lower =", last(bounded).code)
     details = Cropbox.flowplan(FlowDetails, Cropbox.dependency(FlowDetails))
-    event(name, phase=:main) = only(filter(e -> e.node.info.name == name &&
+    event(name, phase = :main) = only(filter(e -> e.node.info.name == name &&
         Cropbox.flowphase(e.node) == phase, details.events))
-    @test event(:solution).note == "solution ← solve(solution ^ 2 - 2)"
-    @test occursin("pick = :minimum", event(:smallest).note)
-    @test occursin("maxiter = 25; tol = 0.001", event(:root).note)
+    @test event(:solution).code == "solution ^ 2 - 2"
+    @test occursin("pick = :minimum", event(:smallest).code)
+    @test occursin("maxiter = 25; tol = 0.001", event(:root).code)
     for name in (:amount, :captured)
-        @test occursin("Δ(elapsed)", event(name).note)
-        @test (name="elapsed", role=:time) in event(name).reads
+        @test event(name).code == "time = elapsed"
+        @test (name = "elapsed", role = :time) in event(name).reads
     end
-    @test occursin("only when child is empty", event(:child, :post).note)
-    @test !occursin("is empty", only(filter(e -> e.node.info.name == :children &&
-        Cropbox.flowphase(e.node) == :post, special.events)).note)
+    @test isempty(event(:amount).badges)
+    rate = event(:amount, :post)
+    @test rate.code == "rate" && rate.badges == ["when = enabled", "reset = restart"]
+    @test (name = "restart", role = :reset) in rate.reads
+    @test isempty(event(:child).code) && isempty(event(:child).badges) && event(:child).note == "produce · update child"
+    queued = event(:child, :post)
+    @test queued.code == "produce(FlowFixed)" && queued.note == "produce · queue child"
+    @test queued.badges == ["when = enabled"] && any(contains("only if empty"), details.hints)
+    @test !any(contains("only if empty"), special.hints)
+    @test isempty(event(:branch).badges)
+    @test event(:indexed).badges == ["when = mask[1]"]
     private = Cropbox.flowplan(FlowPrivate, Cropbox.dependency(FlowPrivate))
     @test "FlowPrivateA._a" in values(private.labels)
     @test "FlowPrivateB._a" in values(private.labels)
-    @test all(e -> !occursin("__Flow", e.note), private.events)
+    @test all(e -> !occursin("__Flow", e.code), private.events)
     block = only(filter(e -> e.node.info.name == :b, private.events))
-    @test occursin("(delta = a + 1; delta ^ 2)", block.note)
-    @test !occursin("begin", block.note)
+    @test occursin("(delta = a + 1; delta ^ 2)", block.code)
+    @test !occursin("begin", block.code)
     @test occursin("  a  b  ", Cropbox.flowtext(:("  a  b  ")))
     @test Cropbox.flowwrap("s ← \"a  b\"") == "s ← \"a  b\""
     @test Cropbox.flowwrap("if ok\n    a\nend") == "if ok\n    a\nend"
     @test_throws ArgumentError Cropbox.flowrule(Val(:Unknown), first(total).node.info, :main)
+
+    @testset "feedback and indexed reads" begin
+        p = visualize(FlowFeedback; kind = :flow).plan
+        @test sort([(c.name, c.slot) for c in p.carries]) ==
+            [("latched", :value), ("toggle", :value), ("tracked", :value)]
+        p = visualize(FlowFeedback, :pick; kind = :flow, depth = 0).plan
+        @test p.ports == ["idx", "mask"]
+        @test all(r -> r.role == :when, only(p.events).reads)
+        @test Cropbox.flowreferences(:(records[1 + i[], j[]].leaf)) == ["records.leaf", "i", "j"]
+
+        s = instance(FlowFeedback)
+        b = s.toggle[]
+        update!(s)
+        @test s.toggle[] == s.tracked[] == !b
+        @test [instance(FlowFeedback; config = :FlowFeedback => :idx => i).pick[] for i in 1:2] == [false, true]
+    end
 
     @testset "state tags" begin
         controls = Dict(:Track => (:override, :skip), :Flag => (:override, :parameter, :once),
@@ -151,8 +196,14 @@ end
         layout = Cropbox.flowlayout(p)
         @test length(layout.bounds) == length(p.events) + 1
         @test all(i -> layout.bounds[i] < layout.ys[i] < layout.bounds[i+1], eachindex(p.events))
+        @test all(c -> last(first(c.segments)) < layout.ys[c.to] &&
+            layout.ys[c.from] < first(last(c.segments)), layout.carries)
     end
+    neighbors = Cropbox.flowlayout(details)
+    rail(name, slot) = only(c.x for c in neighbors.carries if (c.name, c.slot) == (name, slot))
+    @test neighbors.xs["amount"] < rail("amount", :value) < rail("captured", :rate) < neighbors.xs["captured"]
     layout = Cropbox.flowlayout(slice)
+    @test all(b-a > Cropbox.FLOW_RAIL_TAPER for c in layout.carries for (a, b) in c.segments)
     carry = only(filter(c -> c.slot == :rate, layout.carries))
     covered(y) = any(s -> first(s) <= y <= last(s), carry.segments)
     @test covered(layout.top)
@@ -162,33 +213,36 @@ end
         @test_throws ArgumentError visualize(FlowExample; kind)
         @test_throws ArgumentError visualize(FlowExample, :total; kind)
     end
-    @test_throws ArgumentError visualize(FlowExample; kind=:flow, style=(group=:system,))
-    @test_throws ArgumentError visualize(FlowExample; kind=:flow, style=(fontsize=0,))
+    @test_throws ArgumentError visualize(FlowExample; kind = :flow, style = (group = :system,))
+    @test_throws ArgumentError visualize(FlowExample; kind = :flow, style = (fontsize = 0,))
 
     mktempdir() do dir
         for (i, plot) in enumerate((
-            visualize(FlowExample; kind=:flow),
-            visualize(FlowExample, :total; kind=:flow, depth=0),
-            visualize(FlowExample, :base => :ready; kind=:flow),
-            visualize(FlowFixed; kind=:flow),
-            visualize(FlowSpecial; kind=:flow),
-            visualize(FlowPrivate; kind=:flow),
-            visualize(FlowDetails; kind=:flow),
-            visualize(GrowingDegree; kind=:flow, style=(fontsize=9,)),
+            visualize(FlowExample; kind = :flow),
+            visualize(FlowExample, :total; kind = :flow, depth = 0),
+            visualize(FlowExample, :base => :ready; kind = :flow),
+            visualize(FlowFixed; kind = :flow),
+            visualize(FlowSpecial; kind = :flow),
+            visualize(FlowPrivate; kind = :flow),
+            visualize(FlowDetails; kind = :flow),
+            visualize(GrowingDegree; kind = :flow, style = (fontsize = 9,)),
         ))
             @test plot isa Cropbox.FlowDiagram
             @test occursin("update operations", repr(MIME("text/plain"), plot))
             svg = Cropbox.writeimage(joinpath(dir, "$i.svg"), plot)
             @test occursin("<svg", read(svg, String))
         end
-        plot = visualize(FlowExample; kind=:flow)
+        plot = visualize(FlowExample; kind = :flow)
         @test startswith(repr(plot), "Computation flow for ")
         terminal = IOBuffer()
         display(TextDisplay(terminal), plot)
-        @test occursin("total ← total + rate(total)", String(take!(terminal)))
-        multiline = repr(MIME("text/plain"), visualize(FlowDetails; kind=:flow))
+        listing = String(take!(terminal))
+        @test occursin("total  # " * total[1].note, listing)
+        @test occursin("latched  rate > 0  [once]  [when = ready]", listing)
+        multiline = repr(MIME("text/plain"), visualize(FlowDetails; kind = :flow))
         branch = event(:branch)
-        @test occursin(lpad(branch.order, 4) * "  " * replace(branch.note, '\n' => "\n      "), multiline)
+        prefix = lpad(branch.order, 4) * "  branch  "
+        @test occursin(prefix * replace(branch.code, '\n' => "\n" * " "^length(prefix)), multiline)
         @test showable(MIME("text/plain"), plot)
         @test showable(MIME("image/svg+xml"), plot)
         @test !showable(MIME("application/json"), plot)

@@ -361,14 +361,26 @@ between inputs. An unmarked crossing is not a read.
 | Small open circle / small square on an input lane | Local read / boundary read |
 | Blue solid arrow / ochre dotted arrow | Declared input / condition (`when`) |
 | Pale vertical guide | Repeated occurrences of one variable, not an extra dependency |
-| Gray solid cut side rail | Value, counter, or memory retained across updates |
-| Teal dash-dot cut side rail | Cached rate from the previous post-update stage |
+| Gray rail on the right | Value, counter, or memory retained across updates |
+| Teal rail on the left | Rate cached across updates |
+
+Both rails are solid inside the update. At the top and bottom edges, each
+ends in progressively shorter strokes and a dot: it continues beyond the
+update shown. The marks do not represent extra steps or a change in value.
+Follow the upper branch **into** a symbol to read what the previous update
+saved; follow the lower branch **out** to see what is saved for the next one.
+This is how a value crosses time, not a read from the neighboring variable.
+A flag declared with `once` has a right rail because it remembers whether it
+was already true. A `track` or ordinary `flag` also has one if it reads its
+own previous value, as in `toggle(toggle) => !toggle ~ flag`. A flag that
+only reads other variables has no such rail unless it uses `once`.
+The faint guide through the middle of a lane carries no value.
 
 Color identifies the role of a connection, not a variable's importance, value,
 or biological process. Arrowheads match their connections;
 variable symbols and text stay neutral. Thin, pale guides recede behind actual
 reads and cross-update rails. The legend uses the same styles as the diagram,
-and line patterns and cut rails retain their meanings without color.
+and the rail positions and fading ends can be read without color.
 
 An accumulating state needs two operations, but not two repeated timesteps:
 
@@ -384,26 +396,42 @@ end
 visualize(ThermalFlow; kind = :flow)
 ```
 
-The main operation, `total ← total + rate(total) * Δt`, consumes the
-**previously cached rate** and the elapsed clock interval; the post operation,
-`rate(total) ← rate`, caches a new rate for a later update.
-`capture` has the same rate cache but replaces, rather than accumulates, its
-value. With `time = elapsed`, either state uses `Δ(elapsed)` instead of `Δt`:
-the difference between that time variable's current and cached readings.
-The solid side rail denotes retained value, counter, or memory.
-For `accumulate(reset = ...)`, the post stage also caches the reset decision;
-the operation note identifies it. `drive` samples an array stored at
-construction, so its source table is not presented as a fresh read each step.
+Read the two rows named `total` together. The first says *accumulate*: add
+the **previously cached rate** multiplied by elapsed time. The later row shows
+`rate` followed by *accumulate · save rate*: the input from `total(rate)` is
+saved for the next update. A `capture` replaces its value with that same
+increment rather than adding it. A declared `time = elapsed` identifies the
+clock used to measure the interval. The legend gives these meanings once per
+diagram, for the operations shown.
 
-The **Computation** column draws on declaration bodies, local argument
-aliases, and supported tags. It includes conditions and their fallback, clamps,
-one-shot behavior, and rate caching. It is a compact explanatory rendering,
-not executable Julia: routine unit conversion and generated temporary variables
-are omitted. Tag settings equal to their declaration defaults are omitted too;
-non-default solver bounds, tolerances, and root selection remain visible.
-A single-system `produce` queues a child only while its collection is empty,
-in addition to any `when` condition. It does not use an LLM or infer biological
-labels from names.
+The **Computation** column names the target, then distinguishes three things:
+
+| Appearance | What it means | Example |
+|:-----------|:--------------|:--------|
+| Monospace | Declared expression, input, binding, or non-default setting | `rate`, `time = elapsed`, `lower = 0` |
+| Italic | Cropbox state and, where useful, the action in this phase | *drive · read input*, *produce · queue child* |
+| Outlined tag | Explicit update control that applies to **this row** | `when = ready`, `reset = restart`, `once` |
+
+The label follows the state declaration, not the variable's spelling. Plain
+calculations need no action label. An `if` in a body stays model code; it is
+not converted to a tag. In a terminal, `#` introduces an action and square
+brackets mark each tag, e.g. `rate  # accumulate · save rate  [when = ready]`.
+The diagram uses the outline instead of those brackets. For `when = mask[1]`,
+only `mask` is a condition input. For `when = mask[idx[]]`, both `mask` and
+the model variable `idx` are condition inputs, even if they are outside the
+selection. The literal `1` does not get a lane.
+
+A tag describes behavior, not a runtime observation or a universal on/off
+switch. For `accumulate` and `capture`, a false `when` saves a **zero rate**;
+it does not skip the main row. An accumulator samples `reset` alongside that
+rate even if `when` is false. If set, the next main row starts from `init`
+before adding the increment. An ordinary `track` uses `init` or zero when
+its condition is false; a flag clears unless already latched by `once`.
+For `produce`, the existing child is updated independently of `when`. Only
+the later row queues new children for construction next update; a single
+child can be queued only while empty. A driver reads the input stored at
+construction, not the source table anew. With a bisection, only an explicit
+`min` or `max` adds a clipping row; `lower` and `upper` are search bounds.
 An outer `begin … end` is reduced to its statements; multiple statements are
 parenthesized and separated by semicolons. Private names use `Owner._name`,
 keeping identically named fields from different mixins distinct without exposing
@@ -448,7 +476,7 @@ show(stdout, MIME"text/plain"(), diagram)
 
 Its only style option is
 `style = (fontsize = 10,)`, which scales text and spacing together. The monospace
-font is bundled with Makie; no system font installation is needed. The canvas
+and italic fonts are bundled with Makie; no system font installation is needed. The canvas
 grows with variables and rows instead of clipping or shrinking them.
 
 ```@example structure

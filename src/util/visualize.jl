@@ -83,15 +83,19 @@ display, and SVG/PDF/PNG export through `writeimage`. The figure is created only
 for graphical display or export. It does not run a simulation.
 Rows follow the full system's generated order, even in a selection; they are
 not elapsed time or observed activity. Blue solid arrows are declared reads;
-ochre dotted arrows are conditions. Cut side rails show state carried across
-updates, with gray solid rails for retained values and teal dash-dot rails for
-cached rates. Color reinforces line patterns and geometry, not variable importance. Pale
+ochre dotted arrows are conditions. Solid side rails carry state across updates:
+gray on the right for retained values, teal on the left for cached rates. Only
+their outer ends break into shorter strokes and a dot to mark continuation. Pale
 vertical guides link the occurrences of one variable. Member references such
 as `weather.T` and inputs outside a selection appear as gray boundary lanes.
 Child calls, solver iterations, and production internals are not expanded.
 Initialization/configuration and context stages are outside this view.
-Each operation note names its target and uses declaration bodies and tags,
-not generated prose or runtime values. Private names are qualified by their
+Each row names its target. Monospace text shows declaration fragments;
+italic labels name Cropbox actions (e.g. *accumulate · save rate*). Outlined
+tags mark declared update controls (`when`, `reset`, `once`) only on the row
+where they apply. In a terminal, actions start with `#` and tags appear as
+`[when = ready]`. Bounds and clock settings remain model code. A bisection
+with no `min` or `max` has no clipping row. Private names are qualified by their
 declaring system; outer `begin` blocks are reduced to their statements. Use
 `look` for full declarations and units, whose conversion details are
 omitted here. Only `style = (fontsize = 10,)` is supported for flow diagrams; fonts are
@@ -111,21 +115,22 @@ visualize(GrowingDegree; kind = :flow)
 visualize(GrowingDegree, :r; kind = :flow, direction = :up)
 ```
 """
-visualize(S::Type{<:System}; kind=:dependency, style=()) = begin
+visualize(S::Type{<:System}; kind = :dependency, style = ()) = begin
     kind == :flow && return flowdiagram(S, dependency(S); style)
     g = if kind == :dependency
         dependency(S)
     elseif kind == :hierarchy
-        hierarchy(S; skipcontext=true)
+        hierarchy(S; skipcontext = true)
     else
         throw(ArgumentError("structure kind must be :dependency, :hierarchy, or :flow"))
     end
     styledgraph(g, style)
 end
 visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector};
-    kind=:dependency, depth::Integer=1, direction=:both, style=(),
+    kind = :dependency, depth::Integer = 1, direction = :both, style = (),
 ) = begin
-    kind in (:dependency, :flow) || throw(ArgumentError("variable selectors require kind=:dependency or :flow"))
+    kind in (:dependency, :flow) ||
+        throw(ArgumentError("variable selectors require kind = :dependency or kind = :flow"))
     selectors = selector isa AbstractVector ? selector : [selector]
     d = dependency(S)
     selected = selectiondependency(d, selectors; depth, direction)
