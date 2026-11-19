@@ -51,12 +51,11 @@ parseline(line, scope) = begin
     (name, alias, args, kwargs, body, state, stype, dtype, tags)
 end
 
-genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs) = begin
+genvarinfo(system, n, a, as, kws, body, s, st, dt, tgs, line, linenumber, docstring, scope, substs) = begin
     name = parsename(n, system)
     alias = parsealias(a, system)
     args = parseargs(as, system)
     kwargs = parsekwargs(kws)
-    body = parsebody(b)
     state = parsestate(s)
     if !isnothing(state) && !hasmethod(genvartype, Tuple{VarInfo{Symbol}, Val{state}})
         declarationerror("unknown state: $s for $system => $name", line, linenumber)
@@ -114,13 +113,26 @@ parseargs(::Nothing, _) = []
 parsekwargs(kwargs) = kwargs
 parsekwargs(::Nothing) = []
 
-parsebody(body) = begin
-    #HACK: disable return checking for now, too aggressive for local scope return
-    #TODO: translate `return` to a local safe statement
-    #MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
-    body
+parsebody(v, state) = begin
+    isboundary(x) = x.head == :(=) ? MacroTools.isdef(x) : x.head in (:function, :->, :quote, :inert, :macrocall)
+    checkreturn(x, ln) = begin
+        if isexpr(x, :return)
+            declarationerror("`return` in $(v.system).$(uncanonicalname(v.name)) would exit the model constructor or update (use the body's last expression or a helper function)", v.line, ln)
+        elseif isexpr(x) && !isboundary(x)
+            for a in x.args
+                if a isa LineNumberNode
+                    ln = a
+                else
+                    checkreturn(a, ln)
+                end
+            end
+        end
+    end
+    if state ∉ (:Track, :Call, :Integrate)
+        checkreturn(v.body, v.linenumber)
+    end
+    v.body
 end
-parsebody(::Nothing) = nothing
 
 #TODO: make `nothing` an alias of generic state `pass` which may share some logics with `bring`
 parsestate(state) = typestate(Val(state))
@@ -706,18 +718,21 @@ geninfos(body; name, substs, incl, scope, _...) = begin
     end
     add!(d, b, s, sc) = begin
         for (n, v) in con(b, s, sc)
+            decl = v
             if haskey(d, n)
                 v0 = d[n]
                 if v.state == :Hold
                     continue
                 # support simple body replacement (i.e. `a => 1` without `~ ...` part)
                 elseif isnothing(v.state) && isnothing(v.type)
-                    v = @set v0.body = v.body
+                    v = v0
                 elseif v0.alias != v.alias && v0.state != :Hold
                     @warn "variable replaced with inconsistent alias" name=v.name system=(v0.system => v.system) alias=(v0.alias => v.alias)
                 end
             end
-            d[n] = v
+            # use the resolved behavior, but report the declaration as written
+            expr = parsebody(decl, v.state)
+            d[n] = expr === v.body ? v : (@set v.body = expr)
         end
     end
     combine() = begin
@@ -873,10 +888,24 @@ gendefaultvalue(v::VarInfo; parameter=false, init=false, sample=true, unitfy=tru
     end
 end
 
-genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = @q begin
-    $([genupdateinit(n.info; kw...) for n in nodes]...)
-    $([genupdate(n; kw...) for n in nodes]...)
-    self
+genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = begin
+    # bisection jumps from its main step back to its pre-step
+    bisects = 0
+    steps = map(nodes) do n
+        v = n.info
+        if v.state === :Bisect
+            bisects += n.step isa PreStep ? 1 : -1
+        elseif bisects > 0 && v.state === :Track && !isnothing(v.body)
+            v = @set v.body = Expr(:block, Expr(:meta, :inline), v.body)
+            n = VarNode(v, n.step)
+        end
+        genupdate(n; kw...)
+    end
+    @q begin
+        $([genupdateinit(n.info; kw...) for n in nodes]...)
+        $(steps...)
+        self
+    end
 end
 
 genupdate(infos::Vector{VarInfo}, t::UpdateStage; kw...) = @q begin
@@ -1034,6 +1063,12 @@ genbody(v::VarInfo, body=nothing) = begin
     else
         args = @q begin $(emitfuncargpair.(v.args)...) end
         isnothing(body) && (body = esc(v.body))
+        if v.state === :Track && !isnothing(v.body)
+            # repeated names keep their last binding; all-underscore names are write-only
+            keys = unique(first.(extractfuncargpair.(v.args)))
+            params = esc.(filter(k -> !all(==('_'), String(k)), keys))
+            body = @q (($(params...),) -> $body)($(params...))
+        end
     end
     MacroTools.flatten(@q let $args; $body end)
 end

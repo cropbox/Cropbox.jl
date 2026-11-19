@@ -369,11 +369,34 @@
     end
 
     @testset "return" begin
-        #TODO: reimplement more robust return checking
-        @test_skip @test_throws LoadError @eval @system SReturn begin
-            x => begin
-                return 1
-            end ~ track
+        @system SReturnBase(Controller) begin
+            x(t = context.clock.tick) => t   ~ track(u"m", min = 1)
+            y(x)                      => 10x ~ track(u"m")
+            f(; i)                    => i   ~ call
         end
+        @eval @system SLocalReturn(SReturnBase) begin
+            x => begin
+                t < 2 && return 2t
+                sum(0:t) do i
+                    return 2i
+                end
+            end
+            f => (return 2i)
+        end
+        s = instance(SLocalReturn)
+        @test (s.x', s.y', s.f(4)) == (1u"m", 10u"m", 8)
+        update!(s)
+        @test (s.x', s.y') == (2u"m", 20u"m")
+        update!(s)
+        @test (s.x', s.y') == (6u"m", 60u"m")
+
+        @system SBisectReturn(Controller) begin
+            f(x, _ = context.clock.tick) => (x < 1 && return -1; x - 1) ~ track
+            x(f)                                                        ~ bisect(lower = 0, upper = 2)
+        end
+        @test instance(SBisectReturn).x' == 1
+
+        input = "@system SReturn x => (return 1) ~ preserve"
+        @test_throws LoadError ["`return` in SReturn.x", "return.jl:1", "return 1"] Base.include_string(@__MODULE__, input, "return.jl")
     end
 end
