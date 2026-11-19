@@ -245,7 +245,7 @@ See also: [`instance`](@ref), [`@config`](@ref)
 ## Configuration
 - `config=()`: a single configuration for the system, or a base for multiple configurations (when used with `configs`).
 - `configs=[]`: multiple configurations for the system.
-- `seed=nothing`: random seed for resetting each simulation run.
+- `seed=0`: start each fresh simulation with this seed. Pass `nothing` to draw from the current random stream instead.
 
 ## Progress
 - `stop=nothing`: condition checked before calling updates for the instance; default stops with no update.
@@ -277,10 +277,12 @@ simulate(; system, kw...) = simulate(system; kw...)
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate(S, [(; base, index, target, meta)]; kwargs...) |> only
 end
-simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], parameters=(), options=(), seed=nothing, kwargs...) = begin
+simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], parameters=(), options=(), seed = 0, kwargs...) = begin
     if isempty(configs) && isempty(parameters)
-        s = instance(S; config, options, seed)
-        simulate!(s, layout; kwargs...)
+        withseed(seed) do
+            s = instance(S; config, options)
+            simulate!(s, layout; kwargs...)
+        end
     else
         if isempty(parameters)
             c = @config config + configs

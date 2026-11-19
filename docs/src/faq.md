@@ -137,10 +137,10 @@ check upstream variables. Increasing `maxiter` cannot fix an unbracketed root.
 
 ## How do I make a stochastic model reproducible?
 
-Pass `seed` to `instance` or `simulate` and retain it with the configuration.
-Values written with `±` may be sampled during construction. In a batched
-configuration run, the same seed is reset for each scenario; use explicit seed
-loops for independent Monte Carlo replicates.
+`simulate` and `calibrate` default to `seed = 0`, so rerunning the same inputs
+repeats the same draws. `instance` only resets the seed if you pass an integer.
+For independent replicates, vary the seed and keep it with the configuration;
+use `seed = nothing` when you want fresh draws without resetting.
 
 ## Why is the first run much slower?
 

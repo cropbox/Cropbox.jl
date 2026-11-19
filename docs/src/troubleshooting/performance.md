@@ -125,8 +125,7 @@ Calibration multiplies every model cost by many candidates and environments.
 - restrict the fitted parameter set;
 - use explicit targets and observation snapshots;
 - separate training and validation data;
-- record Cropbox's fixed calibration seed behavior and set stochastic model
-  seeds explicitly;
+- record the calibration seed (default `0`) with the fitted parameters;
 - retain optimizer options and package versions.
 
 If each objective evaluation is expensive, optimize the simulation and output

@@ -1,5 +1,6 @@
 using DataFrames
 using Dates
+import Random
 
 @testset "simulate" begin
     @testset "basic" begin
@@ -424,11 +425,13 @@ using Dates
             b(a) ~ accumulate
         end
         n = 10
-        r1 = simulate(SSimulateSeed, seed=0, stop=n)
+        nextdraw = rand(copy(Random.default_rng()))
+        r1 = simulate(SSimulateSeed; stop = n)
         @test r1[end, :a] == 0.8969897902567084
         @test r1[end, :b] == 3.462686872284925
-        r2 = simulate(SSimulateSeed, seed=0, stop=n)
-        @test r1 == r2
+        @test simulate(SSimulateSeed; seed = 0, stop = n) == r1
+        @test simulate(SSimulateSeed; configs = [(), ()], stop = n, verbose = false) == vcat(r1, r1)
+        @test rand() == nextdraw
     end
 
     @testset "no seed" begin
