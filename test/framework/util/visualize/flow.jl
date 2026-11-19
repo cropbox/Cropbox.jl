@@ -3,25 +3,29 @@
 end
 
 @system FlowReadAliases(Controller) begin
-    weather(context): met ~ ::FlowWeather
+    met(context): weather ~ ::FlowWeather
     ready: active => true ~ flag
-    ok(a = active, b = ready, T = met.temperature) => a && b && T > 0 ~ flag(when = active)
+
+    ok(active, ready, T = weather.temperature) => active && ready && T > 0 ~ flag(when = active)
 end
 
 @system FlowExample(Controller) begin
     weather(context) ~ ::FlowWeather
-    base => 5 ~ preserve(parameter)
-    initial => 0 ~ preserve
-    rate(T = weather.temperature, base) => max(T - base, 0) ~ track
-    total(rate) ~ accumulate(init = initial)
-    ready(total) => total > 10 ~ flag(once)
-    saved(total) ~ remember(when = ready)
-    conditional(rate) ~ track(when = ready, init = base)
-    gated(rate) => rate > 0 ~ flag(when = ready)
-    latched(rate) => rate > 0 ~ flag(once, when = ready)
-    capture_rate(rate) ~ capture(when = ready)
+    base    => 5     ~ preserve(parameter)
+    initial => 0     ~ preserve
+
+    rate(T = weather.temperature, Tb = base) => max(T - Tb, 0) ~ track
+
+    total(rate)                 ~ accumulate(init = initial)
+    ready(total)  => total > 10 ~ flag(once)
+    saved(total)                ~ remember(when = ready)
+    conditional(rate)           ~ track(when = ready, init = base)
+    gated(rate)   => rate > 0   ~ flag(when = ready)
+    latched(rate) => rate > 0   ~ flag(once, when = ready)
+    capture_rate(rate)          ~ capture(when = ready)
+
     input => [1, 2, 3] ~ drive
-    counter ~ advance
+    counter            ~ advance
 end
 
 @system FlowFixed begin
@@ -29,26 +33,30 @@ end
 end
 
 @system FlowFeedback(Controller) begin
-    idx => 1 ~ preserve::Int(parameter)
-    mask(idx) => [false, true] ~ preserve::Vector{Bool}
-    pick => true ~ flag(when = mask[idx[]])
-    toggle(toggle) => !toggle ~ flag
+    idx       => 1             ~ preserve::int(parameter)
+    mask(idx) => [false, true] ~ preserve::bool[]
+    pick      => true          ~ flag(when = mask[idx[]])
+
+    toggle(toggle)   => !toggle  ~ flag
     latched(latched) => !latched ~ flag(once)
-    tracked(tracked) => !tracked ~ track::Bool(init = false)
+    tracked(tracked) => !tracked ~ track::bool(init = false)
 end
 
 @system FlowSpecial(Controller) begin
     lower => 0 ~ preserve
     upper => 2 ~ preserve
-    root(root) => root^2 - 2 ~ bisect(lower = lower, upper = upper)
-    bounded(bounded) => bounded^2 - 2 ~ bisect(min = lower, max = upper)
-    solution => solution^2 - 2 ~ solve(lower = lower, upper = upper)
-    area(; x) => x^2 ~ integrate(from = lower, to = upper)
+
+    root(root)           => root^2 - 2     ~ bisect(lower = lower, upper = upper)
+    bounded(x = bounded) => x^2 - 2        ~ bisect(min = lower, max = upper)
+    solution             => solution^2 - 2 ~ solve(lower = lower, upper = upper)
+    area(; x)            => x^2            ~ integrate(from = lower, to = upper)
+
     children => produce(FlowFixed) ~ produce::FlowFixed[]
 end
 
 @system FlowPrivateA begin
     _a => 1 ~ preserve
+
     b(_a) => begin
         delta = a + 1
         delta^2
@@ -56,23 +64,29 @@ end
 end
 @system FlowPrivateB begin
     _a => 2 ~ preserve
-    c(_a) ~ track
+    c(_a)   ~ track
 end
 @system FlowPrivate(FlowPrivateA, FlowPrivateB)
 
 @system FlowDetails(Controller) begin
-    elapsed(time = context.clock.time) ~ track(u"hr")
-    rate => 2 ~ preserve(u"g/hr")
-    enabled => true ~ flag
+    elapsed(context.clock.time) ~ track(u"hr")
+
+    rate    => 2     ~ preserve(u"g/hr")
+    enabled => true  ~ flag
     restart => false ~ flag
-    mask => [true, false] ~ preserve::Vector{Bool}
-    indexed(enabled) ~ flag(once = false, when = mask[1])
-    amount(rate) ~ accumulate(time = elapsed, u"g", when = enabled, reset = restart)
+
+    mask => [true, false] ~ preserve::bool[]
+    indexed(enabled)      ~ flag(once = false, when = mask[1])
+
+    amount(rate)   ~ accumulate(time = elapsed, when = enabled, reset = restart, u"g")
     captured(rate) ~ capture(time = elapsed, u"g")
+
     child => produce(FlowFixed) ~ produce::FlowFixed(when = enabled)
-    solution => solution^2 - 2 ~ solve
-    smallest => smallest^2 - 2 ~ solve(pick = :minimum)
-    root(root) => root^2 - 2 ~ bisect(lower = 0, upper = 2, maxiter = 25, tol = 0.001)
+
+    solution   => solution^2 - 2 ~ solve
+    smallest   => smallest^2 - 2 ~ solve(pick = :minimum)
+    root(root) => root^2 - 2     ~ bisect(lower = 0, upper = 2, maxiter = 25, tol = 0.001)
+
     branch(rate) => if rate > 0u"g/hr"
         rate
     else
@@ -152,7 +166,7 @@ end
     @test_throws ArgumentError Cropbox.flowrule(Val(:Unknown), first(total).node.info, :main)
 
     e = only(visualize(FlowReadAliases, :ok; kind = :flow, depth = 0).plan.events)
-    @test e.reads == [(name = "ready", role = :data), (name = "weather.temperature", role = :data), (name = "ready", role = :when)]
+    @test e.reads == [(name = "ready", role = :data), (name = "met.temperature", role = :data), (name = "ready", role = :when)]
 
     @testset "feedback and indexed reads" begin
         p = visualize(FlowFeedback; kind = :flow).plan
