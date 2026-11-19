@@ -326,7 +326,11 @@ flowdraw(plan, layout, fontsize) = begin
             Makie.MoveTo(at(3.5, -1.5)), Makie.LineTo(at(0)), Makie.LineTo(at(3.5, 1.5)),
         ]; color = style.color, linewidth = style.linewidth)
     end
-    input = Makie.BezierPath([Makie.MoveTo(-0.5, -0.3), Makie.LineTo(0.3, -0.3), Makie.LineTo(0.5, 0.3), Makie.LineTo(-0.3, 0.3), Makie.ClosePath()])
+    input = Makie.BezierPath([
+        Makie.MoveTo(-0.5, -0.3),
+        Makie.LineTo(0.3, -0.3), Makie.LineTo(0.5, 0.3), Makie.LineTo(-0.3, 0.3),
+        Makie.ClosePath(),
+    ])
     rounded = Makie.BezierPath([
         Makie.MoveTo(-0.3, -0.5),
         Makie.LineTo(0.3, -0.5), Makie.CurveTo(0.5, -0.5, 0.5, -0.5, 0.5, -0.3),
@@ -453,15 +457,30 @@ flowdraw(plan, layout, fontsize) = begin
         Makie.lines!(scene, Makie.BezierPath(cmds); color, linewidth = linewidth*scale, linestyle)
     end
     for ((layer, marker, stroke), values) in sort(collect(dots); by = p -> first(p)[1])
-        Makie.scatter!(scene, Makie.Point2f[v[1] for v in values]; marker,
-            markersize = [v[2] for v in values], color = [v[3] for v in values],
-            strokecolor = "#555555", strokewidth = stroke*scale)
+        Makie.scatter!(scene, Makie.Point2f[v[1] for v in values];
+            marker,
+            markersize = [v[2] for v in values],
+            color = [v[3] for v in values],
+            strokecolor = "#555555",
+            strokewidth = stroke*scale,
+        )
     end
     for ((size, color, align, rotation, face, T), values) in texts
         Makie.text!(scene, Makie.Point2f[v[1] for v in values]; text = T[v[2] for v in values], font = face, fontsize = size*scale, color, align, rotation)
     end
-    isempty(badges) || Makie.textlabel!(scene, first.(badges); text = last.(badges), font, fontsize = 8.5scale,
-        text_align = (:left, :top), padding = (4, 4, 1, 1) .* scale, cornerradius = 4scale,
-        text_color = "#41474A", background_color = :white, strokecolor = "#B4BABD", strokewidth = 0.6scale)
+    if !isempty(badges)
+        Makie.textlabel!(scene, first.(badges);
+            text = last.(badges),
+            font,
+            fontsize = 8.5scale,
+            text_align = (:left, :top),
+            padding = (4, 4, 1, 1) .* scale,
+            cornerradius = 4scale,
+            text_color = "#41474A",
+            background_color = :white,
+            strokecolor = "#B4BABD",
+            strokewidth = 0.6scale,
+        )
+    end
     Plot(fig)
 end
