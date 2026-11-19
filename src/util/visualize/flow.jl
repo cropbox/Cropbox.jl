@@ -61,8 +61,7 @@ flowrule(::Val{:Flag}, v, phase) = begin
     end
     flowrule(:guard; equation = true, tags = (:when,), slots = once ? (:value,) : (), hints = hs)
 end
-flowrule(::Val{:Remember}, v, phase) = flowrule(:memory, ""; equation = true, tags = (:when, :unit), slots = (:value,),
-    hints = ("remember: keep the first eligible value",))
+flowrule(::Val{:Remember}, v, phase) = flowrule(:memory, ""; equation = true, tags = (:when, :unit), slots = (:value,), hints = ("remember: keep the first eligible value",))
 flowratehint(v) = hastag(v, :when) ? ("save rate: zero when the condition is false",) : ()
 flowrule(::Val{:Accumulate}, v, phase) = begin
     reset = gettag(v, :reset) !== false
@@ -125,26 +124,29 @@ flowreferences(ex::Expr, tail = "") = begin
 end
 
 flowreads(d::Dependency, v::VarInfo, r) = begin
-    xs = [r.equation ? [(:data, a) for a in v.args] : [];
-        [(k, gettag(v, k)) for k in r.tags]]
-    unique([(; name = replace(p, r"^[^.]+" => string(d.M[k].name)), role)
-        for (role, x) in xs for p in flowreferences(x)
-        for k in (Symbol(first(split(p, '.'))),)
-        if haskey(d.M, k) && k ∉ (:context, :config) && !istag(d.M[k], :context)])
+    xs = vcat([(:data, a) for a in v.args if r.equation], [(k, gettag(v, k)) for k in r.tags])
+    resolve(p, role) = begin
+        k = Symbol(first(eachsplit(p, '.')))
+        src = get(d.M, k, nothing)
+        (isnothing(src) || k in (:context, :config) || istag(src, :context)) && return nothing
+        name = replace(p, r"^[^.]+" => string(src.name))
+        (; name, role)
+    end
+    reads = [resolve(p, role) for (role, x) in xs for p in flowreferences(x)]
+    unique(filter(!isnothing, reads))
 end
 
 flowcode(v::VarInfo, r, scope) = begin
     ex = isnothing(v.body) && length(v.args) == 1 ? last(extractfuncargpair(only(v.args))) : v.body
     body = r.equation && !isnothing(ex) ? [flowtext(ex)] : String[]
-    args = [flowtext(a) for a in v.args
-        if r.equation && !isnothing(v.body) && isexpr(a, :(=), :kw) && first(a.args) != last(a.args)]
+    args = [flowtext(a) for a in v.args if r.equation && !isnothing(v.body) && isexpr(a, :(=), :kw) && first(a.args) != last(a.args)]
     d = flowdefaults(v)
     ks = [k for k in (r.tags..., :once, :pick) if k != :unit && hastag(v, k) &&
         !(k == :once && !istag(v, k)) &&
         (!haskey(d, k) || !isequal(gettag(v, k), d[k]))]
     ts = isempty(ks) ? () : something(last(parseline(v.line, scope)), ())
-    tags = [(k, flowtext(t)) for t in ts
-        for k in (isexpr(t, :(=), :kw) ? first(t.args) : t,) if k in ks]
+    tagkey(t) = isexpr(t, :(=), :kw) ? first(t.args) : t
+    tags = [(tagkey(t), flowtext(t)) for t in ts if tagkey(t) in ks]
     badges = (:when, :once, :reset)
     code = join([body; args; [s for (k, s) in tags if k ∉ badges]], "; ")
     state = isnothing(v.state) ? "" : lowercase(string(v.state))
@@ -154,23 +156,22 @@ end
 
 flowplan(S::Type{<:System}, d::Dependency; selected = d) = begin
     ns = Set(n.info.name for n in selected.N)
-    event(n, order, r) = begin
+    included(v) = v.name in ns && v.name ∉ (:context, :config) && !istag(v, :context)
+    event(n, order) = begin
         v = n.info
+        r = flowrule(Val(v.state), v, flowphase(n))
+        isnothing(r) && return nothing
         reads = flowreads(d, v, r)
         prev = r.operation in (:value, :guard) && any(a -> a.name == string(v.name), reads)
         slots = prev && isempty(r.slots) ? (:value,) : r.slots
         (; node = n, order, operation = r.operation, slots, reads, flowcode(v, r, scopeof(S))..., hints = r.hints)
     end
-    events = [event(n, i, r) for (i, n) in enumerate(sort(d))
-        if n.info.name in ns && n.info.name ∉ (:context, :config) && !istag(n.info, :context)
-        for r in (flowrule(Val(n.info.state), n.info, flowphase(n)),) if !isnothing(r)]
-    names = [string(v.name) for v in geninfos(S) if v.name in ns &&
-        v.name ∉ (:context, :config) && !istag(v, :context)]
+    events = filter(!isnothing, [event(n, i) for (i, n) in enumerate(sort(d)) if included(n.info)])
+    names = [string(v.name) for v in geninfos(S) if included(v)]
     ports = sort(setdiff(unique(r.name for e in events for r in e.reads), names))
     lanes = [names; ports]
     idx = Dict(e.node.info.name => i for (i, e) in enumerate(events) if flowphase(e.node) == :main)
-    carries = [(; name = string(e.node.info.name), slot, from = i, to = idx[e.node.info.name])
-        for (i, e) in enumerate(events) if haskey(idx, e.node.info.name) for slot in e.slots]
+    carries = [(; name = string(e.node.info.name), slot, from = i, to = idx[e.node.info.name]) for (i, e) in enumerate(events) if haskey(idx, e.node.info.name) for slot in e.slots]
     labels = Dict(n => flowlabel(n) for n in lanes)
     hints = unique(String[h for e in events for h in e.hints])
     (; model = string(namefor(S)), lanes, labels, ports, events, carries, hints)
@@ -200,8 +201,7 @@ flowrow(e, mono, italic) = begin
         n = flowlines(label)
         pad = kind == :badge ? 4 : 0
         face = kind == :note ? italic : mono
-        w = maximum(l -> Makie.widths(Makie.text_bb(l, face, kind == :badge ? 8.5f0 : 9f0))[1],
-            split(label, '\n')) + 2pad
+        w = maximum(l -> Makie.widths(Makie.text_bb(l, face, kind == :badge ? 8.5f0 : 9f0))[1], split(label, '\n')) + 2pad
         if x > 0 && (x + w > 400 || n > 1)
             x, y = 0.0, height
         end
@@ -233,8 +233,7 @@ flowlayout(plan) = begin
         end
     end
     xs = Dict(zip(plan.lanes, cumsum(gaps)))
-    readgroups = [unique((sign(xs[r.name]-xs[string(e.node.info.name)]), r.role == :when)
-        for r in e.reads) for e in plan.events]
+    readgroups = [unique((sign(xs[r.name]-xs[string(e.node.info.name)]), r.role == :when) for r in e.reads) for e in plan.events]
     entry = any(c -> c.to == 1, plan.carries) ? 16 + FLOW_RAIL_TAPER : 0
     above = Int[max(i == 1 ? entry : 0, 18 + 4max(0, length(g)-1)) for (i, g) in enumerate(readgroups)]
     below = [max(16, r.height-2) for r in rows]
@@ -248,11 +247,10 @@ flowlayout(plan) = begin
     sep = "   ·   "
     key = flowwrap(join(plan.hints, sep); width = floor(Int, (width-40)/4.85), sep)
     height = bottom + 45 + 12flowlines(key)
-    active = [(x = xs[name], lo = top-6, hi = maximum([ys[i] for (i, e) in enumerate(plan.events)
-        if string(e.node.info.name) == name || any(r -> r.name == name, e.reads)]; init = top-6))
-        for name in plan.lanes]
-    carries = [(; c..., x = xs[c.name] + (c.slot == :rate ? -rail : rail),
-        segments = ((top-5, ys[c.to]-16), (ys[c.from]+16, bottom))) for c in plan.carries]
+    uses(e, n) = string(e.node.info.name) == n || any(r -> r.name == n, e.reads)
+    lastuse(n) = maximum((ys[i] for (i, e) in enumerate(plan.events) if uses(e, n)); init = top-6)
+    active = [(x = xs[n], lo = top-6, hi = lastuse(n)) for n in plan.lanes]
+    carries = [(; c..., x = xs[c.name] + (c.slot == :rate ? -rail : rail), segments = ((top-5, ys[c.to]-16), (ys[c.from]+16, bottom))) for c in plan.carries]
     (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key)
 end
 
@@ -290,8 +288,7 @@ end
 
 flowdraw(r::FlowDiagram) = flowdraw(r.plan, flowlayout(r.plan), r.fontsize)
 flowdraw(plan, layout, fontsize) = begin
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height,
-        readgroups, active, carries, key) = layout
+    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key) = layout
     styles = (
         read = (color = "#2D73A1", linewidth = 0.8, linestyle = :solid),
         condition = (color = "#B27A24", linewidth = 0.9, linestyle = :dot),
@@ -310,13 +307,10 @@ flowdraw(plan, layout, fontsize) = begin
     font = flowfont()
     texts, paths, dots = Dict(), Dict(), Dict()
     badges = Tuple{Makie.Point2f,String}[]
-    text!(x, y, text; size = 10, color = "#333333", align = (:left, :center), rotation = 0, face = font) =
-        push!(get!(texts, (size, color, align, rotation, face, typeof(text)), []), (point(x, y), text))
-    path!(cmds; layer = 2, color = styles.read.color, linewidth = styles.read.linewidth, linestyle = :solid) =
-        append!(get!(paths, (layer, color, linewidth, linestyle), Makie.PathCommand[]), cmds)
+    text!(x, y, text; size = 10, color = "#333333", align = (:left, :center), rotation = 0, face = font) = push!(get!(texts, (size, color, align, rotation, face, typeof(text)), []), (point(x, y), text))
+    path!(cmds; layer = 2, color = styles.read.color, linewidth = styles.read.linewidth, linestyle = :solid) = append!(get!(paths, (layer, color, linewidth, linestyle), Makie.PathCommand[]), cmds)
     line!(points; kw...) = path!([Makie.MoveTo(first(points)); Makie.LineTo.(points[2:end])]; kw...)
-    dot!(x, y; layer = 0, marker = :circle, size = 4, color = :white, stroke = 0.65) =
-        push!(get!(dots, (layer, marker, stroke), []), (point(x, y), size*scale, Makie.to_color(color)))
+    dot!(x, y; layer = 0, marker = :circle, size = 4, color = :white, stroke = 0.65) = push!(get!(dots, (layer, marker, stroke), []), (point(x, y), size*scale, Makie.to_color(color)))
     rail!(x, y, dx, dy, span, style) = begin
         at(d) = point(x+d*dx, y+d*dy)
         for (a, b) in ((3, 5), (7, 11), (FLOW_RAIL_TAPER, span))
@@ -327,17 +321,20 @@ flowdraw(plan, layout, fontsize) = begin
     arrow!(x, y, dx, style = styles.read; dy = 0) = begin
         ux, uy = (dx, dy) ./ hypot(dx, dy)
         at(back, side = 0) = point(x-back*ux-side*uy, y-back*uy+side*ux)
-        path!([Makie.MoveTo(at(5)), Makie.LineTo(at(0)),
-            Makie.MoveTo(at(3.5, -1.5)), Makie.LineTo(at(0)), Makie.LineTo(at(3.5, 1.5))];
-            color = style.color, linewidth = style.linewidth)
+        path!([
+            Makie.MoveTo(at(5)), Makie.LineTo(at(0)),
+            Makie.MoveTo(at(3.5, -1.5)), Makie.LineTo(at(0)), Makie.LineTo(at(3.5, 1.5)),
+        ]; color = style.color, linewidth = style.linewidth)
     end
-    input = Makie.BezierPath([Makie.MoveTo(-0.5, -0.3), Makie.LineTo(0.3, -0.3),
-        Makie.LineTo(0.5, 0.3), Makie.LineTo(-0.3, 0.3), Makie.ClosePath()])
-    rounded = Makie.BezierPath([Makie.MoveTo(-0.3, -0.5), Makie.LineTo(0.3, -0.5),
-        Makie.CurveTo(0.5, -0.5, 0.5, -0.5, 0.5, -0.3), Makie.LineTo(0.5, 0.3),
-        Makie.CurveTo(0.5, 0.5, 0.5, 0.5, 0.3, 0.5), Makie.LineTo(-0.3, 0.5),
-        Makie.CurveTo(-0.5, 0.5, -0.5, 0.5, -0.5, 0.3), Makie.LineTo(-0.5, -0.3),
-        Makie.CurveTo(-0.5, -0.5, -0.5, -0.5, -0.3, -0.5), Makie.ClosePath()])
+    input = Makie.BezierPath([Makie.MoveTo(-0.5, -0.3), Makie.LineTo(0.3, -0.3), Makie.LineTo(0.5, 0.3), Makie.LineTo(-0.3, 0.3), Makie.ClosePath()])
+    rounded = Makie.BezierPath([
+        Makie.MoveTo(-0.3, -0.5),
+        Makie.LineTo(0.3, -0.5), Makie.CurveTo(0.5, -0.5, 0.5, -0.5, 0.5, -0.3),
+        Makie.LineTo(0.5, 0.3), Makie.CurveTo(0.5, 0.5, 0.5, 0.5, 0.3, 0.5),
+        Makie.LineTo(-0.3, 0.5), Makie.CurveTo(-0.5, 0.5, -0.5, 0.5, -0.5, 0.3),
+        Makie.LineTo(-0.5, -0.3), Makie.CurveTo(-0.5, -0.5, -0.5, -0.5, -0.3, -0.5),
+        Makie.ClosePath(),
+    ])
     markers = (; state = :rect, call = rounded, rate = :diamond, guard = :diamond, input, opaque = :hexagon)
     text!(20, 20, plan.model; size = 12)
     text!(20, 37, "one update · static order, not elapsed time"; size = 8, color = "#777777")
@@ -350,13 +347,11 @@ flowdraw(plan, layout, fontsize) = begin
         x = xs[name]
         label = if occursin('.', plan.labels[name])
             prefix, leaf = String.(rsplit(plan.labels[name], '.'; limit = 2))
-            Makie.rich(Makie.rich(prefix; color = "#888888"), Makie.rich("."; color = "#BBBBBB"),
-                Makie.rich(leaf; color = "#333333"))
+            Makie.rich(Makie.rich(prefix; color = "#888888"), Makie.rich("."; color = "#BBBBBB"), Makie.rich(leaf; color = "#333333"))
         else
             plan.labels[name]
         end
-        text!(x, top-18, label; size = 9, color = name in plan.ports ? "#777777" : "#333333",
-            align = angled ? (:left, :center) : (:center, :center), rotation = angled ? deg2rad(72) : 0)
+        text!(x, top-18, label; size = 9, color = name in plan.ports ? "#777777" : "#333333", align = angled ? (:left, :center) : (:center, :center), rotation = angled ? deg2rad(72) : 0)
         line!([point(x, top-7), point(x, bottom)]; layer = 0, color = "#EEEEEE", linewidth = 0.35, linestyle = :dot)
     end
     for a in active
@@ -372,9 +367,11 @@ flowdraw(plan, layout, fontsize) = begin
             rail!(c.x, cap, 0, -v, abs(elbow-cap), style)
             tip = v < 0 ? 4 : 0
             tx, ty = x+tip*side, y+1.5tip*v
-            path!([Makie.MoveTo(point(c.x, elbow)),
+            path!([
+                Makie.MoveTo(point(c.x, elbow)),
                 Makie.CurveTo(point(c.x, y+12v), point(x+9side, y+13.5v), point(x+7side, y+10.5v)),
-                Makie.LineTo(point(tx, ty))]; color = style.color, linewidth = style.linewidth)
+                Makie.LineTo(point(tx, ty)),
+            ]; color = style.color, linewidth = style.linewidth)
             v < 0 && arrow!(tx, ty, -side, style; dy = 1.5)
         end
     end
@@ -389,23 +386,20 @@ flowdraw(plan, layout, fontsize) = begin
                 push!(badges, (point(px, py), label))
             else
                 note = kind == :note
-                text!(px, py, label; size = 9, align = (:left, :top),
-                    color = note ? "#495057" : "#333333", face = note ? flowfont(true) : font)
+                text!(px, py, label; size = 9, align = (:left, :top), color = note ? "#495057" : "#333333", face = note ? flowfont(true) : font)
             end
         end
         groups = readgroups[i]
         for (side, cond) in groups
             style = cond ? styles.condition : styles.read
             if side == 0
-                cmds = [Makie.MoveTo(point(x, y-4)),
-                    Makie.CurveTo(point(x-18, y-18), point(x-20, y), point(x-10, y)), Makie.LineTo(point(x-5, y))]
+                cmds = [Makie.MoveTo(point(x, y-4)), Makie.CurveTo(point(x-18, y-18), point(x-20, y), point(x-10, y)), Makie.LineTo(point(x-5, y))]
                 path!(cmds; style...)
                 arrow!(x-5, y, 1, style)
                 continue
             end
             d = -side
-            src = sort(unique(xs[r.name] for r in e.reads
-                if (sign(xs[r.name]-x), r.role == :when) == (side, cond)); by = s -> abs(s-x))
+            src = sort(unique(xs[r.name] for r in e.reads if (sign(xs[r.name]-x), r.role == :when) == (side, cond)); by = s -> abs(s-x))
             slope, dy = if (side, !cond) in groups
                 cond ? (-0.5, -12) : (0.5, 8)
             else
@@ -418,14 +412,12 @@ flowdraw(plan, layout, fontsize) = begin
                 x0 = sx+2d
                 if k == 1
                     tip, tipy = x-gap*d, y+gap*slope
-                    descent = (Makie.LineTo(point(landing, level)),
-                        bend(landing, level, y+(gap+5)*slope, d, slope))
+                    descent = (Makie.LineTo(point(landing, level)), bend(landing, level, y+(gap+5)*slope, d, slope))
                 else
                     tip, tipy = src[k-1]+6d, level
                     descent = ()
                 end
-                cmds = [Makie.MoveTo(point(x0, y)), bend(x0, y, level, d),
-                    descent..., Makie.LineTo(point(tip, tipy))]
+                cmds = [Makie.MoveTo(point(x0, y)), bend(x0, y, level, d), descent..., Makie.LineTo(point(tip, tipy))]
                 path!(cmds; layer = 1, color = :white, linewidth = 2.6)
                 path!(cmds; style...)
                 arrow!(tip, tipy, d, style; dy = k == 1 ? -slope : 0)
@@ -440,13 +432,11 @@ flowdraw(plan, layout, fontsize) = begin
             dot!(x, y; layer = 2, marker = rounded, size = 8)
         else
             marker = get(markers, op, :circle)
-            dot!(x, y; layer = 1, marker, size = op in (:value, :memory) ? 5 : 9,
-                color = op == :value ? "#555555" : :white)
+            dot!(x, y; layer = 1, marker, size = op in (:value, :memory) ? 5 : 9, color = op == :value ? "#555555" : :white)
         end
     end
     isempty(plan.events) && text!(target, top+6, "No update operations in this selection."; size = 9, face = :italic)
-    labels = (:read => "read", :condition => "condition", :value => "value (right)",
-        :rate => "rate (left)", :guide => "variable guide")
+    labels = (:read => "read", :condition => "condition", :value => "value (right)", :rate => "rate (left)", :guide => "variable guide")
     widths = [32 + 4.8textwidth(label) for (_, label) in labels]
     for (i, (role, label)) in enumerate(labels)
         x = 20 + sum(widths[1:i-1])
@@ -457,8 +447,7 @@ flowdraw(plan, layout, fontsize) = begin
         end
         text!(x+22, bottom+20, label; size = 8, color = "#777777")
     end
-    text!(20, bottom+33, "fading ends: read above from the previous update; save below for the next";
-        size = 8, color = "#777777")
+    text!(20, bottom+33, "fading ends: read above from the previous update; save below for the next"; size = 8, color = "#777777")
     isempty(key) || text!(20, bottom+42, key; size = 8, color = "#666666", align = (:left, :top))
     for ((layer, color, linewidth, linestyle), cmds) in sort(collect(paths); by = p -> first(p)[1])
         Makie.lines!(scene, Makie.BezierPath(cmds); color, linewidth = linewidth*scale, linestyle)
@@ -469,8 +458,7 @@ flowdraw(plan, layout, fontsize) = begin
             strokecolor = "#555555", strokewidth = stroke*scale)
     end
     for ((size, color, align, rotation, face, T), values) in texts
-        Makie.text!(scene, Makie.Point2f[v[1] for v in values]; text = T[v[2] for v in values],
-            font = face, fontsize = size*scale, color, align, rotation)
+        Makie.text!(scene, Makie.Point2f[v[1] for v in values]; text = T[v[2] for v in values], font = face, fontsize = size*scale, color, align, rotation)
     end
     isempty(badges) || Makie.textlabel!(scene, first.(badges); text = last.(badges), font, fontsize = 8.5scale,
         text_align = (:left, :top), padding = (4, 4, 1, 1) .* scale, cornerradius = 4scale,

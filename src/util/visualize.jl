@@ -126,11 +126,8 @@ visualize(S::Type{<:System}; kind = :dependency, style = ()) = begin
     end
     styledgraph(g, style)
 end
-visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector};
-    kind = :dependency, depth::Integer = 1, direction = :both, style = (),
-) = begin
-    kind in (:dependency, :flow) ||
-        throw(ArgumentError("variable selectors require kind = :dependency or kind = :flow"))
+visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector}; kind = :dependency, depth::Integer = 1, direction = :both, style = ()) = begin
+    kind in (:dependency, :flow) || throw(ArgumentError("variable selectors require kind = :dependency or kind = :flow"))
     selectors = selector isa AbstractVector ? selector : [selector]
     d = dependency(S)
     selected = selectiondependency(d, selectors; depth, direction)

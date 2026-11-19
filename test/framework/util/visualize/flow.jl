@@ -2,6 +2,12 @@
     temperature => error("inspection must not run the model") ~ track
 end
 
+@system FlowReadAliases(Controller) begin
+    weather(context): met ~ ::FlowWeather
+    ready: active => true ~ flag
+    ok(a = active, b = ready, T = met.temperature) => a && b && T > 0 ~ flag(when = active)
+end
+
 @system FlowExample(Controller) begin
     weather(context) ~ ::FlowWeather
     base => 5 ~ preserve(parameter)
@@ -114,8 +120,7 @@ end
     @test first(bounded).code == "min = lower; max = upper"
     @test !occursin("lower =", last(bounded).code)
     details = Cropbox.flowplan(FlowDetails, Cropbox.dependency(FlowDetails))
-    event(name, phase = :main) = only(filter(e -> e.node.info.name == name &&
-        Cropbox.flowphase(e.node) == phase, details.events))
+    event(name, phase = :main) = only(filter(e -> e.node.info.name == name && Cropbox.flowphase(e.node) == phase, details.events))
     @test event(:solution).code == "solution ^ 2 - 2"
     @test occursin("pick = :minimum", event(:smallest).code)
     @test occursin("maxiter = 25; tol = 0.001", event(:root).code)
@@ -146,10 +151,12 @@ end
     @test Cropbox.flowwrap("if ok\n    a\nend") == "if ok\n    a\nend"
     @test_throws ArgumentError Cropbox.flowrule(Val(:Unknown), first(total).node.info, :main)
 
+    e = only(visualize(FlowReadAliases, :ok; kind = :flow, depth = 0).plan.events)
+    @test e.reads == [(name = "ready", role = :data), (name = "weather.temperature", role = :data), (name = "ready", role = :when)]
+
     @testset "feedback and indexed reads" begin
         p = visualize(FlowFeedback; kind = :flow).plan
-        @test sort([(c.name, c.slot) for c in p.carries]) ==
-            [("latched", :value), ("toggle", :value), ("tracked", :value)]
+        @test sort([(c.name, c.slot) for c in p.carries]) == [("latched", :value), ("toggle", :value), ("tracked", :value)]
         p = visualize(FlowFeedback, :pick; kind = :flow, depth = 0).plan
         @test p.ports == ["idx", "mask"]
         @test all(r -> r.role == :when, only(p.events).reads)
@@ -163,8 +170,7 @@ end
     end
 
     @testset "state tags" begin
-        controls = Dict(:Track => (:override, :skip), :Flag => (:override, :parameter, :once),
-            :Bring => (:override,), :Produce => (:single,), :Solve => (:pick,))
+        controls = Dict(:Track => (:override, :skip), :Flag => (:override, :parameter, :once), :Bring => (:override,), :Produce => (:single,), :Solve => (:pick,))
         # Construction, declaration metadata, and unit conversions omitted from update notes.
         excluded = Dict(
             :Accumulate => (:timeunit,), :Capture => (:unit, :timeunit),
@@ -196,8 +202,7 @@ end
         layout = Cropbox.flowlayout(p)
         @test length(layout.bounds) == length(p.events) + 1
         @test all(i -> layout.bounds[i] < layout.ys[i] < layout.bounds[i+1], eachindex(p.events))
-        @test all(c -> last(first(c.segments)) < layout.ys[c.to] &&
-            layout.ys[c.from] < first(last(c.segments)), layout.carries)
+        @test all(c -> last(first(c.segments)) < layout.ys[c.to] && layout.ys[c.from] < first(last(c.segments)), layout.carries)
     end
     neighbors = Cropbox.flowlayout(details)
     rail(name, slot) = only(c.x for c in neighbors.carries if (c.name, c.slot) == (name, slot))
