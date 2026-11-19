@@ -34,12 +34,9 @@ only the state. Shared explanations appear once in the legend.
 Keep these adapters in sync with state generators; unknown states are rejected
 rather than assigned guessed semantics.
 """
-flowrule(operation, action = nothing;
-    equation = false, tags = (), slots = (), hints = (),
-) = (; operation, action, equation, tags, slots, hints)
+flowrule(operation, action = nothing; equation = false, tags = (), slots = (), hints = ()) = (; operation, action, equation, tags, slots, hints)
 flowrule(::Val, v, phase) = throw(ArgumentError("no computation flow description for $(v.state)"))
-flowrule(::Union{Val{:Preserve},Val{:Provide},Val{:Interpolate},
-    Val{:Call},Val{:Tabulate},Val{:Hold}}, v, phase) = nothing
+flowrule(::Union{Val{:Preserve},Val{:Provide},Val{:Interpolate},Val{:Call},Val{:Tabulate},Val{:Hold}}, v, phase) = nothing
 flowrule(::Union{Val{nothing},Val{:Bring}}, v, phase) = begin
     phase == :main || return nothing
     istag(v, :override, :skip) && return nothing
@@ -49,8 +46,7 @@ flowrule(::Val{:Track}, v, phase) = begin
     istag(v, :override, :skip) && return nothing
     when = hastag(v, :when)
     alt = hastag(v, :init) ? "init" : "zero"
-    flowrule(:value;
-        equation = true, tags = (:when, :unit, :min, :max, :round, (when ? (:init,) : ())...),
+    flowrule(:value; equation = true, tags = (:when, :unit, :min, :max, :round, (when ? (:init,) : ())...),
         hints = when ? ("track: use $alt when the condition is false",) : ())
 end
 flowrule(::Val{:Flag}, v, phase) = begin
@@ -63,38 +59,29 @@ flowrule(::Val{:Flag}, v, phase) = begin
     else
         ()
     end
-    flowrule(:guard;
-        equation = true, tags = (:when,), slots = once ? (:value,) : (), hints = hs)
+    flowrule(:guard; equation = true, tags = (:when,), slots = once ? (:value,) : (), hints = hs)
 end
-flowrule(::Val{:Remember}, v, phase) =
-    flowrule(:memory, "";
-        equation = true, tags = (:when, :unit), slots = (:value,),
-        hints = ("remember: keep the first eligible value",))
+flowrule(::Val{:Remember}, v, phase) = flowrule(:memory, ""; equation = true, tags = (:when, :unit), slots = (:value,),
+    hints = ("remember: keep the first eligible value",))
 flowratehint(v) = hastag(v, :when) ? ("save rate: zero when the condition is false",) : ()
 flowrule(::Val{:Accumulate}, v, phase) = begin
     reset = gettag(v, :reset) !== false
     if phase == :post
-        flowrule(:rate, "save rate";
-            equation = true, tags = (:when, :reset), slots = (:rate,), hints = flowratehint(v))
+        flowrule(:rate, "save rate"; equation = true, tags = (:when, :reset), slots = (:rate,), hints = flowratehint(v))
     else
-        flowrule(:state, "";
-            tags = (:time, :unit, :min, :max, (reset ? (:init,) : ())...), slots = (:value,),
+        flowrule(:state, ""; tags = (:time, :unit, :min, :max, (reset ? (:init,) : ())...), slots = (:value,),
             hints = ("accumulate: add previous rate × elapsed time",
                 (reset ? ("reset: sampled with rate; if true, use init next update",) : ())...))
     end
 end
 flowrule(::Val{:Capture}, v, phase) = begin
     if phase == :post
-        flowrule(:rate, "save rate & time";
-            equation = true, tags = (:when, :time), slots = (:rate,), hints = flowratehint(v))
+        flowrule(:rate, "save rate & time"; equation = true, tags = (:when, :time), slots = (:rate,), hints = flowratehint(v))
     else
-        flowrule(:state, "";
-            tags = (:time,), hints = ("capture: replace with previous rate × elapsed time",))
+        flowrule(:state, ""; tags = (:time,), hints = ("capture: replace with previous rate × elapsed time",))
     end
 end
-flowrule(::Val{:Advance}, v, phase) =
-    flowrule(:state, "";
-        slots = (:value,), hints = ("advance: read counter, then add stored step",))
+flowrule(::Val{:Advance}, v, phase) = flowrule(:state, ""; slots = (:value,), hints = ("advance: read counter, then add stored step",))
 flowrule(::Val{:Drive}, v, phase) = flowrule(:input, "read input"; tags = (:tick,))
 flowrule(::Val{:Produce}, v, phase) = begin
     phase == :pre && return nothing
@@ -102,23 +89,18 @@ flowrule(::Val{:Produce}, v, phase) = begin
     child = single ? "child" : "children"
     phase == :main && return flowrule(:produce, "update $child")
     hint = single ? "queue child: only if empty; construct next update" : "queue children: construct next update"
-    flowrule(:produce, "queue $child";
-        equation = true, tags = (:when,), hints = (hint,))
+    flowrule(:produce, "queue $child"; equation = true, tags = (:when,), hints = (hint,))
 end
 flowrule(::Val{:Bisect}, v, phase) = begin
     if phase == :pre
         all(k -> isnothing(gettag(v, k)), (:min, :max)) && return nothing
         return flowrule(:opaque, "clamp trial"; tags = (:min, :max))
     end
-    flowrule(:opaque, "";
-        equation = true, tags = (:lower, :upper, :unit, :min, :max, :maxiter, :tol))
+    flowrule(:opaque, ""; equation = true, tags = (:lower, :upper, :unit, :min, :max, :maxiter, :tol))
 end
-flowrule(::Val{:Solve}, v, phase) =
-    flowrule(:opaque, "select root"; equation = true, tags = (:unit, :lower, :upper))
-flowrule(::Val{:Integrate}, v, phase) =
-    flowrule(:opaque, ""; equation = true, tags = (:from, :to))
-flowrule(::Val{:Wrap}, v, phase) =
-    flowrule(:opaque; equation = true)
+flowrule(::Val{:Solve}, v, phase) = flowrule(:opaque, "select root"; equation = true, tags = (:unit, :lower, :upper))
+flowrule(::Val{:Integrate}, v, phase) = flowrule(:opaque, ""; equation = true, tags = (:from, :to))
+flowrule(::Val{:Wrap}, v, phase) = flowrule(:opaque; equation = true)
 
 """Collect declared reads: `rows[i[]].x` reads `rows.x` and `i`, not `i.x`."""
 flowreferences(x, tail = "") = String[]
@@ -292,8 +274,7 @@ Base.show(io::IO, ::MIME"text/plain", r::FlowDiagram) = begin
         print(io, "\n  ", hint)
     end
 end
-Base.show(io::IO, r::FlowDiagram) =
-    print(io, "Computation flow for $(r.plan.model) ($(length(r.plan.events)) operations)")
+Base.show(io::IO, r::FlowDiagram) = print(io, "Computation flow for $(r.plan.model) ($(length(r.plan.events)) operations)")
 Base.showable(m::MIME, ::FlowDiagram) = Makie.backend_showable(CairoMakie.Screen, m)
 Base.showable(::MIME"text/plain", ::FlowDiagram) = true
 Base.show(io::IO, m::MIME, r::FlowDiagram) = show(io, m, flowdraw(r)[]; backend = CairoMakie)
@@ -301,11 +282,9 @@ writeimage(name::AbstractString, r::FlowDiagram; kw...) = writeimage(name, flowd
 
 flowdiagram(S::Type{<:System}, d::Dependency; selected = d, style = ()) = begin
     opt = (; style...)
-    all(k -> k == :fontsize, keys(opt)) ||
-        throw(ArgumentError("flow style supports only fontsize"))
+    all(k -> k == :fontsize, keys(opt)) || throw(ArgumentError("flow style supports only fontsize"))
     fs = get(opt, :fontsize, 10)
-    fs isa Real && isfinite(fs) && fs > 0 ||
-        throw(ArgumentError("fontsize must be a positive finite number"))
+    fs isa Real && isfinite(fs) && fs > 0 || throw(ArgumentError("fontsize must be a positive finite number"))
     FlowDiagram(flowplan(S, d; selected), fs)
 end
 
