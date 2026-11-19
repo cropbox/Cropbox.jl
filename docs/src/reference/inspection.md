@@ -346,6 +346,14 @@ the complete schedule, so they can have gaps. Thin horizontal rules separate
 operations. Each entry in the **Computation** column names its target and stays
 in one row, even when it spans several lines.
 
+A local `call` with model inputs has an **unnumbered binding row** above the
+update. For `f(k; x) => k * x ~ call`, it connects `k → f`; the argument
+`x` is supplied by the caller and does not introduce a lane. A later `out(f) => f(3) ~ track` shows
+`f → out` on its numbered row. Bindings are shown once even if several rows
+use the function or one local call binds another. Passing a function does
+not imply it was invoked. A child member such as `vp.es` stays a boundary
+lane; inspect the child system for its bindings.
+
 On each side, follow inputs of the same kind toward the operation. The nearest
 input points to the target; each farther arrow stops just short of the next
 input's curve. All are reads by that operation, not a chain of dependencies
@@ -356,7 +364,7 @@ between inputs. An unmarked crossing is not a read.
 | Filled circle / open circle | Derived value / remembered value |
 | Square / rounded square | State update / opaque child call |
 | Parallelogram | Driver input |
-| Diamond | Condition or post-update rate cache, identified by the operation note |
+| Diamond / upright triangle | Condition / post-update rate cache |
 | Double rounded square / hexagon | Production / opaque solver operation |
 | Small open circle / small square on an input lane | Local read / boundary read |
 | Blue solid arrow / ochre dotted arrow | Declared input / condition (`when`) |

@@ -22,6 +22,16 @@ end
     root => root^2 - 2 ~ solve(lower = lo, upper = hi)
 end
 
+@system FlowCall(Controller) begin
+    k: gain        => 2        ~ preserve(parameter)
+    f(gain; x)     => gain * x ~ call
+    g(f; x): scale => f(x) + 1 ~ call
+
+    out(h = scale)   => h(3.0)            ~ track
+    available(scale) => !isnothing(scale) ~ flag
+    direct(v = scale(gain[]))             ~ track
+end
+
 @testset "flow" begin
     plot = visualize(FlowGrowth; kind = :flow)
 
@@ -44,6 +54,13 @@ end
 
         p = visualize(FlowRoot, :root; kind = :flow, depth = 0).plan
         @test Set((r.name, r.role) for r in only(p.events).reads) == Set([("lo", :lower), ("hi", :upper)])
+    end
+
+    @testset "bound call inputs" begin
+        p = visualize(FlowCall, [:out, :available, :direct]; kind = :flow, depth = 0).plan
+        @test [(b.node.info.name, only(b.reads).name) for b in p.bindings] == [(:f, "k"), (:g, "f")]
+        @test Dict(e.node.info.name => sort([r.name for r in e.reads]) for e in p.events) == Dict(:out => ["g"], :available => ["g"], :direct => ["g", "k"])
+        @test Set(p.ports) == Set(["f", "g", "k"])
     end
 
     @testset "display and export" begin

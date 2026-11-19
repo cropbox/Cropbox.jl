@@ -81,8 +81,9 @@ A flow diagram is intended for selected variables or a local process, not a comp
 whole-model overview. It has a numbered text display in terminals, SVG notebook
 display, and SVG/PDF/PNG export through `writeimage`. The figure is created only
 for graphical display or export. It does not run a simulation.
-Rows follow the full system's generated order, even in a selection; they are
-not elapsed time or observed activity. Blue solid arrows are declared reads;
+Numbered rows follow the full system's generated order, even in a selection;
+unnumbered rows show the bound inputs of local `call` functions, not invocations.
+Neither shows elapsed time or observed activity. Blue solid arrows are declared reads;
 ochre dotted arrows are conditions. Solid side rails carry state across updates:
 gray on the right for retained values, teal on the left for cached rates. Only
 their outer ends break into shorter strokes and a dot to mark continuation. Pale

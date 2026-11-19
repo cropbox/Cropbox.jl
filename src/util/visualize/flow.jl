@@ -115,16 +115,18 @@ flowreferences(ex::Expr, tail = "") = begin
     elseif isexpr(ex, Symbol("'"))
         flowreferences(first(a), tail)
     elseif isexpr(ex, :ref, :call)
-        xs = isexpr(ex, :ref) ? a : @view(a[2:end])
-        isempty(xs) && return String[]
-        vcat(flowreferences(first(xs), tail), (flowreferences(x) for x in Iterators.drop(xs, 1))...)
+        call = isexpr(ex, :call)
+        f = call ? flowreferences(first(a)) : String[]
+        xs = call ? @view(a[2:end]) : a
+        isempty(xs) && return f
+        vcat(f, flowreferences(first(xs), tail), (flowreferences(x) for x in Iterators.drop(xs, 1))...)
     else
         String[]
     end
 end
 
-flowreads(d::Dependency, v::VarInfo, r) = begin
-    xs = vcat([(:data, a) for a in v.args if r.equation], [(k, gettag(v, k)) for k in r.tags])
+flowreads(d::Dependency, v::VarInfo; equation = true, tags = ()) = begin
+    xs = vcat([(:data, a) for a in v.args if equation], [(k, gettag(v, k)) for k in tags])
     resolve(p, role) = begin
         k = Symbol(first(eachsplit(p, '.')))
         src = get(d.M, k, nothing)
@@ -134,6 +136,23 @@ flowreads(d::Dependency, v::VarInfo, r) = begin
     end
     reads = [resolve(p, role) for (role, x) in xs for p in flowreferences(x)]
     unique(filter(!isnothing, reads))
+end
+
+"""Collect local call bindings once, without treating their use as an invocation."""
+flowbindings(d::Dependency, names) = begin
+    bs, seen = NamedTuple[], Set{Symbol}()
+    function visit(name)
+        v = get(d.M, Symbol(name), nothing)
+        (isnothing(v) || v.state != :Call || v.name in seen) && return
+        push!(seen, v.name)
+        reads = flowreads(d, v; tags = (:unit,))
+        isempty(reads) && return
+        foreach(r -> visit(r.name), reads)
+        code = join(unique(flowlabel(r.name) for r in reads), ", ")
+        push!(bs, (; node = VarNode(v, MainStep()), order = nothing, operation = :binding, reads, code, note = "call · bound inputs", badges = ()))
+    end
+    foreach(visit, names)
+    bs
 end
 
 flowcode(v::VarInfo, r, scope) = begin
@@ -161,20 +180,23 @@ flowplan(S::Type{<:System}, d::Dependency; selected = d) = begin
         v = n.info
         r = flowrule(Val(v.state), v, flowphase(n))
         isnothing(r) && return nothing
-        reads = flowreads(d, v, r)
+        reads = flowreads(d, v; equation = r.equation, tags = r.tags)
         prev = r.operation in (:value, :guard) && any(a -> a.name == string(v.name), reads)
         slots = prev && isempty(r.slots) ? (:value,) : r.slots
         (; node = n, order, operation = r.operation, slots, reads, flowcode(v, r, scopeof(S))..., hints = r.hints)
     end
     events = filter(!isnothing, [event(n, i) for (i, n) in enumerate(sort(d)) if included(n.info)])
     names = [string(v.name) for v in geninfos(S) if included(v)]
-    ports = sort(setdiff(unique(r.name for e in events for r in e.reads), names))
+    inputs(es) = String[r.name for e in es for r in e.reads]
+    used = unique(inputs(events))
+    bindings = flowbindings(d, [names; used])
+    ports = sort(setdiff([used; inputs(bindings)], names))
     lanes = [names; ports]
     idx = Dict(e.node.info.name => i for (i, e) in enumerate(events) if flowphase(e.node) == :main)
     carries = [(; name = string(e.node.info.name), slot, from = i, to = idx[e.node.info.name]) for (i, e) in enumerate(events) if haskey(idx, e.node.info.name) for slot in e.slots]
     labels = Dict(n => flowlabel(n) for n in lanes)
     hints = unique(String[h for e in events for h in e.hints])
-    (; model = string(namefor(S)), lanes, labels, ports, events, carries, hints)
+    (; model = string(namefor(S)), lanes, labels, ports, bindings, events, carries, hints)
 end
 
 flowwrap(text; width = 72, sep = " ") = begin
@@ -216,42 +238,49 @@ const FLOW_RAIL_TAPER = 13
 
 flowlayout(plan) = begin
     mono, italic = Makie.to_font.((flowfont(), flowfont(true)))
-    rows = [flowrow(e, mono, italic) for e in plan.events]
+    entries = isempty(plan.bindings) ? plan.events : [plan.bindings; plan.events]
+    nb = length(plan.bindings)
+    rows = [flowrow(e, mono, italic) for e in entries]
     angled = any(n -> textwidth(n) > 7, values(plan.labels))
     spacing = angled ? 34 : 52
     header = angled ? max(60, maximum(textwidth.(values(plan.labels)); init = 0) * 5.8 + 16) : 34
     top = 48 + header
     rail = 18
     slots = Set((c.name, c.slot) for c in plan.carries)
+    loops = Set(string(e.node.info.name) for e in entries if any(r -> r.name == string(e.node.info.name), e.reads))
     gutter(n, slot) = (n, slot) in slots ? rail : 0
+    left(n) = n in loops ? rail : gutter(n, :rate)
     nd = ndigits(maximum((e.order for e in plan.events); init = 1))
     gaps = map(enumerate(plan.lanes)) do (i, n)
         if i == 1
-            max(52, 27 + 5nd + gutter(n, :rate))
+            max(52, 27 + 5nd + left(n))
         else
-            max(spacing, gutter(plan.lanes[i-1], :value) + 8 + gutter(n, :rate))
+            max(spacing, gutter(plan.lanes[i-1], :value) + 8 + left(n))
         end
     end
     xs = Dict(zip(plan.lanes, cumsum(gaps)))
-    readgroups = [unique((sign(xs[r.name]-xs[string(e.node.info.name)]), r.role == :when) for r in e.reads) for e in plan.events]
+    readgroups = [unique((sign(xs[r.name]-xs[string(e.node.info.name)]), r.role == :when) for r in e.reads) for e in entries]
     entry = any(c -> c.to == 1, plan.carries) ? 16 + FLOW_RAIL_TAPER : 0
-    above = Int[max(i == 1 ? entry : 0, 18 + 4max(0, length(g)-1)) for (i, g) in enumerate(readgroups)]
+    above = Int[max(i == nb+1 ? entry : 0, 18 + 4max(0, length(g)-1)) for (i, g) in enumerate(readgroups)]
     below = [max(16, r.height-2) for r in rows]
     bounds = top .+ [0; cumsum(above .+ below)]
     ys = bounds[2:end] .- below
+    start = bounds[nb+1]
     bottom = last(bounds) + 18
     target = maximum(values(xs); init = 52-spacing) + spacing + 28
-    nw = maximum((textwidth(plan.labels[string(e.node.info.name)]) for e in plan.events); init = 0)
+    nw = maximum((textwidth(plan.labels[string(e.node.info.name)]) for e in entries); init = 0)
     content = target + 6nw + 12
     width = content + maximum((r.width for r in rows); init = 350) + 24
     sep = "   ·   "
     key = flowwrap(join(plan.hints, sep); width = floor(Int, (width-40)/4.85), sep)
     height = bottom + 45 + 12flowlines(key)
     uses(e, n) = string(e.node.info.name) == n || any(r -> r.name == n, e.reads)
-    lastuse(n) = maximum((ys[i] for (i, e) in enumerate(plan.events) if uses(e, n)); init = top-6)
+    lastuse(n) = maximum((ys[i] for (i, e) in enumerate(entries) if uses(e, n)); init = top-6)
     active = [(x = xs[n], lo = top-6, hi = lastuse(n)) for n in plan.lanes]
-    carries = [(; c..., x = xs[c.name] + (c.slot == :rate ? -rail : rail), segments = ((top-5, ys[c.to]-16), (ys[c.from]+16, bottom))) for c in plan.carries]
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key)
+    cap = isempty(plan.bindings) ? top-5 : start
+    carries = [(; c..., from = nb+c.from, to = nb+c.to, x = xs[c.name] + (c.slot == :rate ? -rail : rail),
+        segments = ((cap, ys[nb+c.to]-16), (ys[nb+c.from]+16, bottom))) for c in plan.carries]
+    (; entries, rows, angled, top, start, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key)
 end
 
 struct FlowDiagram{P,F<:Real}
@@ -261,8 +290,8 @@ end
 Base.show(io::IO, ::MIME"text/plain", r::FlowDiagram) = begin
     p = r.plan
     print(io, "$(p.model): $(length(p.events)) update operations, $(length(p.lanes)) lanes")
-    for e in p.events
-        prefix = lpad(e.order, 4) * "  " * p.labels[string(e.node.info.name)] * "  "
+    for e in Iterators.flatten((p.bindings, p.events))
+        prefix = lpad(something(e.order, ""), 4) * "  " * p.labels[string(e.node.info.name)] * "  "
         action = isempty(e.note) ? "" : "# " * e.note
         entry = join(filter(!isempty, (e.code, action, ("[$b]" for b in e.badges)...)), "  ")
         print(io, '\n', prefix, replace(entry, '\n' => "\n" * " "^textwidth(prefix)))
@@ -288,7 +317,7 @@ end
 
 flowdraw(r::FlowDiagram) = flowdraw(r.plan, flowlayout(r.plan), r.fontsize)
 flowdraw(plan, layout, fontsize) = begin
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key) = layout
+    (; entries, rows, angled, top, start, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key) = layout
     styles = (
         read = (color = "#2D73A1", linewidth = 0.8, linestyle = :solid),
         condition = (color = "#B27A24", linewidth = 0.9, linestyle = :dot),
@@ -339,7 +368,7 @@ flowdraw(plan, layout, fontsize) = begin
         Makie.LineTo(-0.5, -0.3), Makie.CurveTo(-0.5, -0.5, -0.5, -0.5, -0.3, -0.5),
         Makie.ClosePath(),
     ])
-    markers = (; state = :rect, call = rounded, rate = :diamond, guard = :diamond, input, opaque = :hexagon)
+    markers = (; state = :rect, call = rounded, rate = :utriangle, guard = :diamond, input, opaque = :hexagon)
     text!(20, 20, plan.model; size = 12)
     text!(20, 37, "one update · static order, not elapsed time"; size = 8, color = "#777777")
     heading = Makie.rich("Computation     model code  /  ", Makie.rich("Cropbox action"; font = :italic), "  /  tags")
@@ -379,10 +408,10 @@ flowdraw(plan, layout, fontsize) = begin
             v < 0 && arrow!(tx, ty, -side, style; dy = 1.5)
         end
     end
-    for (i, e) in enumerate(plan.events)
+    for (i, e) in enumerate(entries)
         n = string(e.node.info.name)
         x, y = xs[n], ys[i]
-        text!(20, y, string(e.order); size = 8, color = "#888888")
+        isnothing(e.order) || text!(20, y, string(e.order); size = 8, color = "#888888")
         text!(target, y-4, plan.labels[n]; size = 9, align = (:left, :top))
         for (kind, label, dx, dy) in rows[i].parts
             px, py = content+dx, y-4+dy
@@ -436,10 +465,10 @@ flowdraw(plan, layout, fontsize) = begin
             dot!(x, y; layer = 2, marker = rounded, size = 8)
         else
             marker = get(markers, op, :circle)
-            dot!(x, y; layer = 1, marker, size = op in (:value, :memory) ? 5 : 9, color = op == :value ? "#555555" : :white)
+            dot!(x, y; layer = 1, marker, size = op in (:value, :memory, :binding) ? 5 : 9, color = op == :value ? "#555555" : :white)
         end
     end
-    isempty(plan.events) && text!(target, top+6, "No update operations in this selection."; size = 9, face = :italic)
+    isempty(plan.events) && text!(target, start+6, "No update operations in this selection."; size = 9, face = :italic)
     labels = (:read => "read", :condition => "condition", :value => "value (right)", :rate => "rate (left)", :guide => "variable guide")
     widths = [32 + 4.8textwidth(label) for (_, label) in labels]
     for (i, (role, label)) in enumerate(labels)
