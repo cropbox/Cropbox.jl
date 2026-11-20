@@ -102,22 +102,20 @@ flowrule(::Val{:Solve}, v, phase) = flowrule(:opaque, "select root"; equation = 
 flowrule(::Val{:Integrate}, v, phase) = flowrule(:opaque, ""; equation = true, tags = (:from, :to))
 flowrule(::Val{:Wrap}, v, phase) = flowrule(:opaque; equation = true)
 
-"""Collect declared reads: `rows[i[]].x` reads `rows.x` and `i`; `f(i[]).x` reads `f` and `i`."""
+"""Collect possible reads: `rows[i[]].x` reads `rows.x` and `i`; `f(i[]).x` and `f.(i[])` read `f` and `i`."""
 flowreferences(x, tail = "") = String[]
 flowreferences(x::Symbol, tail = "") = [string(x, tail)]
 flowreferences(ex::Expr, tail = "") = begin
     a = ex.args
     if isexpr(ex, :(=), :kw)
         flowreferences(last(a), tail)
-    elseif isexpr(ex, :.)
-        k = last(a)
-        k = k isa QuoteNode ? k.value : k
-        flowreferences(first(a), ".$k$tail")
+    elseif Meta.isexpr(ex, :., 2) && last(a) isa QuoteNode
+        flowreferences(first(a), ".$(last(a).value)$tail")
     elseif isexpr(ex, Symbol("'"))
         flowreferences(first(a), tail)
     elseif isexpr(ex, :ref)
         vcat(flowreferences(first(a), tail), (flowreferences(x) for x in Iterators.drop(a, 1))...)
-    elseif isexpr(ex, :call)
+    elseif isexpr(ex, :call, :., :tuple, :parameters, :..., :&&, :||)
         String[p for x in a for p in flowreferences(x)]
     else
         String[]

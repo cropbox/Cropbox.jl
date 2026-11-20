@@ -13,6 +13,7 @@ end
 
     total(Tmean)                           ~ accumulate
     done(done, total) => done || total > 0 ~ flag
+    extreme           => true              ~ flag(when = valid[i[]] && (met.Tmin[i[]] < 0 || met.Tmax[i[]] > 30))
 end
 
 @system FlowRoot(Controller) begin
@@ -30,6 +31,10 @@ end
     out(h = scale)   => h(3.0).scaled     ~ track
     available(scale) => !isnothing(scale) ~ flag
     direct(v = scale(gain[]).scaled)      ~ track
+
+    xs => [1.0, 2.0]              ~ preserve::Float64[]
+    mapped(v = sum(map(f, xs[]))) ~ track(init = 0)
+    dotted(v = sum(f.(xs[])))     ~ track(init = 0)
 end
 
 @testset "flow" begin
@@ -53,6 +58,9 @@ end
         @test sort([r.name for r in reads if r.role == :data]) == ["i", "met.Tmax", "met.Tmin"]
         @test sort([r.name for r in reads if r.role == :when]) == ["i", "valid"]
 
+        p = visualize(FlowGrowth, :extreme; kind = :flow, depth = 0).plan
+        @test Set(r.name for r in only(p.events).reads if r.role == :when) == Set(["valid", "i", "met.Tmin", "met.Tmax"])
+
         p = visualize(FlowRoot, :root; kind = :flow, depth = 0).plan
         @test Set((r.name, r.role) for r in only(p.events).reads) == Set([("lo", :lower), ("hi", :upper)])
     end
@@ -68,6 +76,10 @@ end
             "f" => "⇠ k", "g" => "⇠ f", "out" => "← g", "available" => "← g", "direct" => "← g, k")
         @test Set(d.plan.ports) == Set(["f", "g", "k"])
         @test occursin('╌', term(d, 100))
+        for n in (:mapped, :dotted)
+            p = visualize(FlowCall, n; kind = :flow, depth = 0).plan
+            @test [(e.node.info.name, [r.name for r in e.reads]) for e in p.events] == [(:f, ["k"]), (n, ["f", "xs"])]
+        end
         full = visualize(FlowCall; kind = :flow)
         @test occursin("<svg", repr(MIME"image/svg+xml"(), full))
 
@@ -76,6 +88,7 @@ end
         @test f(3.0).scaled == s.out[] == 1
         update!(s)
         @test f(3.0).scaled == s.out[] == 4
+        @test s.mapped[] == s.dotted[] == 3
         Cropbox.store!(s.k, 2)
         @test f(3.0).scaled == 7 && s.out[] == 4
     end

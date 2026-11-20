@@ -497,8 +497,11 @@ diagram, for the operations shown.
 
 An `if` in a body stays model code, not a control tag. For `when = mask[1]`
 only `mask` is a condition input; `when = mask[idx[]]` also reads `idx`.
+Both sides of `&&` and `||` are possible condition inputs, even when the
+second operand is skipped at runtime.
 In `f(x[]).field`, the field belongs to the result: the row reads `x`, not
-`x.field`. It also reads `f` if `f` is itself a model variable.
+`x.field`. It also reads `f` if `f` is a model variable. The broadcast
+`f.(xs[])` has the same model inputs and call bindings as `map(f, xs[])`.
 
 A variable used both in the calculation and as a control has both arrows.
 A tag describes behavior, not a runtime observation or a universal on/off
