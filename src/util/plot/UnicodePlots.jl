@@ -118,14 +118,3 @@ plot3!(::Val{:UnicodePlots}, X, Y, Z; kind, title, legend, legendpos, xlab, ylab
     end
     Plot(obj; X, Y, Z, kind, title, legend, legendpos, xlab, ylab, zlab, xlim, ylim, zlim, xunit, yunit, zunit, aspect, width, height)
 end
-
-plottext!(::Val{:UnicodePlots}, p, x, y, text; color, align) = begin
-    color = isnothing(color) ? :normal : color
-    lines = split(text, '\n')
-    dy = UnicodePlots.height(p.obj.graphics) / UnicodePlots.nrows(p.obj.graphics)
-    for (i, line) in enumerate(lines)
-        yy = y + ((length(lines) + 1) / 2 - i) * dy
-        UnicodePlots.annotate!(p.obj, plotvalue(x), yy, line; color, halign=align)
-    end
-    p
-end
