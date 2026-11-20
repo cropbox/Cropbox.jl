@@ -128,13 +128,17 @@ behavior.
 x(a, b) => a + b ~ track
 ```
 
-A `begin ... end` block may hold a longer equation. Its last expression becomes
-the result.
+A `begin ... end` block takes the value of its last expression. In a `track`
+body, `return` finishes only that variable's calculation: its tags still apply
+and the model continues updating dependent variables. `call` and `integrate`
+also have their own function bodies. For other behaviors, use the last
+expression or put an early return inside a helper function. A `return` inside
+a nested function or `do` block belongs to that function.
 
 ```julia
 stress(T, lower, upper) => begin
-    raw = (T - lower) / (upper - lower)
-    raw
+    T <= lower && return 0
+    (T - lower) / (upper - lower)
 end ~ track(min = 0, max = 1)
 ```
 
