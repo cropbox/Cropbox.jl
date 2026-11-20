@@ -134,6 +134,38 @@ parsebody(v, state) = begin
     v.body
 end
 
+function checkbodyinputs(v, scope)
+    # a unit literal is an operand; other macros may introduce local bindings
+    simple(x) = if Meta.isexpr(x, :macrocall, 3)
+        m, _, value = x.args
+        value isa String && m isa Symbol && isdefined(scope, m) && getglobal(scope, m) === var"@u_str"
+    else
+        !(x isa Expr) || (x.head in (:call, :., :ref, :parameters, :kw, :tuple, :vect, :string,
+            :comparison, :&&, :||, :if, :elseif, :block, :return) && all(simple, x.args))
+    end
+    v.body isa Union{Symbol,Expr,GlobalRef} && simple(v.body) || return
+    inputs = union([:self], first.(extractfuncargpair.(v.args)), first.(extractfunckwargtuple.(v.kwargs)))
+    istag(v, :option) && push!(inputs, :option)
+    v.state === :Solve && push!(inputs, v.name)
+    binding(m, k) = if k isa Symbol && isdefined(m, k)
+        isconst(m, k) || declarationerror("undeclared non-const global $m.$k in $(v.system).$(uncanonicalname(v.name)); declare it as a model input", v.line, v.linenumber)
+        getglobal(m, k)
+    end
+    visit(x) = if x isa Symbol
+        x ∈ inputs ? nothing : binding(scope, x)
+    elseif x isa GlobalRef
+        binding(x.mod, x.name)
+    elseif Meta.isexpr(x, :., 2) && last(x.args) isa QuoteNode
+        m = visit(first(x.args))
+        m isa Module && binding(m, last(x.args).value)
+    elseif isexpr(x, :kw)
+        visit(last(x.args))
+    elseif x isa Expr && x.head !== :macrocall
+        foreach(visit, x.args)
+    end
+    visit(v.body)
+end
+
 #TODO: make `nothing` an alias of generic state `pass` which may share some logics with `bring`
 parsestate(state) = typestate(Val(state))
 typestate(::Val{S}) where {S} = Symbol(uppercasefirst(string(S)))
@@ -651,8 +683,8 @@ parsepatches(patches::Vector, scope::Module) = begin
 end
 
 using DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, substs, incl, scope)
-geninfos(body; name, substs, incl, scope, _...) = begin
+gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope, checkinputs = true), consts, substs, incl, scope)
+geninfos(body; name, substs, incl, scope, checkinputs = false, _...) = begin
     # update type substitution dict cascaded over all participating mixins
     M = _mixincollect(mixinsof(scope, incl))
     substs = merge(substsof.(M)..., substs)
@@ -716,7 +748,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
         end
         d
     end
-    add!(d, b, s, sc) = begin
+    add!(d, b, s, sc; check = false) = begin
         for (n, v) in con(b, s, sc)
             decl = v
             if haskey(d, n)
@@ -732,6 +764,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
             end
             # use the resolved behavior, but report the declaration as written
             expr = parsebody(decl, v.state)
+            check && decl === v && checkbodyinputs(v, sc)
             d[n] = expr === v.body ? v : (@set v.body = expr)
         end
     end
@@ -743,7 +776,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                 add!(d, source(m), namefor(m), scopeof(m))
             end
         end
-        add!(d, body, name, scope)
+        add!(d, body, name, scope; check = checkinputs)
         d
     end
     combine() |> values |> collect
