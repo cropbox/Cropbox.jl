@@ -299,6 +299,8 @@ evaluate(SystemType, observations;
 ```
 
 For two tables, `target=:observed => :estimated` maps different column names.
+For a score per model, evaluate each estimate group separately:
+`[evaluate(obs, g; index = :year, target = :y) for g in groupby(est, :model)]`.
 For a system, the same name is assumed unless a pair is supplied. Multiple
 targets return a tuple in target order.
 
