@@ -290,6 +290,9 @@ demonstrates a path through an accumulated thermal state.
 
 ### Read the symbols
 
+This key is for dependency and hierarchy graphs. For `kind = :flow`, see the
+[flow diagram legend](@ref visualization-flow-legend).
+
 | Appearance | Meaning |
 |:---|:---|
 | Plain label | Ordinary derived or fixed variable, remembered value, or system reference |
@@ -380,32 +383,70 @@ full update, so a selection can leave gaps. Variables occupy lanes; a fixed
 input can have a lane without an operation. Horizontal arrows on the same
 row lead to one target, not from one input to the next.
 
-For `f(k; x) => k * x ~ call`, the numbered `f` row marks the callable's
-position in the schedule. The dashed `k → f` shows a bound input: its current
-value is read when a caller invokes `f`, not at this row. The caller supplies
-`x`. An arrow from `f` to a consumer can also mean it passes the function
-without invoking it. Each local binding appears once, including nested calls.
+#### [Flow diagram legend](@id visualization-flow-legend)
 
-| Mark | Meaning |
+**Operation symbols.** In the figure, the shape at the arrow tip tells you
+what Cropbox does on that row. In a wide terminal, the target usually shows
+the *phase* instead: `◓` pre, `○` main, `◒` post. Two operations have their own
+terminal targets: `△` saves a rate and `▽` marks a binding.
+
+| Target in the figure | Operation |
 |:---|:---|
-| Filled circle / open circle | Derived value / remembered value |
-| Square / rounded square | State update / opaque child call |
-| Parallelogram | Driver input |
-| Diamond / upright triangle | Condition / post-update rate cache |
-| Downward triangle | Local callable with bound inputs |
-| Double rounded square / hexagon | Production / opaque solver operation |
-| Small open circle / small square on an input lane | Local read / boundary read |
-| Solid blue / dashed blue arrow | Update input / bound input of a local `call` |
-| Dotted ochre arrow | Control input (`when` or `reset`), identified by the row's tag |
-| Pale vertical guide | Repeated occurrences of one variable, not an extra dependency |
-| Gray rail on the right | Value, counter, or memory retained across updates |
-| Teal rail on the left | Rate cached across updates |
+| `●` Filled circle / `○` open circle | Compute a value (`track`) / keep the first eligible value (`remember`). |
+| `□` Square | Update an accumulated value, captured increment, or counter (`accumulate`, `capture`, `advance`). |
+| Rounded square / double rounded square | Update a field or child system / update or queue children with `produce`. |
+| `▱` Parallelogram | Read a stored driver input (`drive`). |
+| `◇` Diamond | Evaluate a flag (`flag`). |
+| `△` Upward triangle / `▽` downward triangle | Save a rate for the next update / show a local callable's bound inputs, without calling it. |
+| `⬡` Hexagon | A `solve`, `bisect`, `integrate`, or `wrap` operation; its internal steps are not expanded. |
 
-Follow the upper rail into a symbol to find a value from the previous update;
-the lower rail carries a value to the next. Their tapered ends mark the
-boundary of the update. For example, a latched `flag(once)` retains its value,
-as does a self-read such as `toggle(toggle) => !toggle ~ flag`. The pale
-central guide carries no value. An unmarked crossing is not a read.
+**Connections and colors.** Follow horizontal arrows *toward* the target.
+A small open circle on a source lane marks a selected input; a small open
+square marks an input outside the selection (for example, `supply.rate`).
+In a wide terminal, `●` marks either kind of **input**, not the result.
+An unmarked crossing is not an input.
+
+```@setup structure
+let shaft = "M2 8H30", tip = "M25 5.5 30 8 25 10.5"
+    for (name, color, dash, path, head) in (
+        ("read",    "#2D73A1", "none", shaft, tip),
+        ("binding", "#2D73A1", "5 3",  shaft, tip),
+        ("control", "#B27A24", "1 3",  shaft, tip),
+        ("value",   "#89949C", "none", "M24 1v0.2m0 1.8v1m0 2v2q0 2-3 3l-4 3", "M17.5 11.5 17 14l3-.3"),
+        ("rate",    "#258D80", "none", "M10 1v0.2m0 1.8v1m0 2v2q0 2 3 3l4 3", "M16.5 11.5 17 14l-3-.3"),
+        ("guide",   "#DEDEDE", "none", "M17 1v8m0 2v.3m0 2v.3", ""),
+    )
+        write("flow-key-$name.svg", """
+            <svg xmlns="http://www.w3.org/2000/svg" width="34" height="16" fill="none"
+                 stroke="$color" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="$path" stroke-dasharray="$dash"/><path d="$head"/>
+            </svg>""")
+    end
+end
+```
+
+| Figure | Terminal | How to read it |
+|:---|:---|:---|
+| ![](flow-key-read.svg) Solid blue arrow | `●──→○`; `x ← a, b` in a list | Read the marked inputs for this target. Several inputs on one row are not a chain. |
+| ![](flow-key-binding.svg) Dashed blue arrow | `●╌╌→▽`; `f ⇠ k` in a list | `f` binds `k`. Its current value is read **when `f` is invoked**, not at the numbered binding row. |
+| ![](flow-key-control.svg) Dotted ochre arrow | `[when ready]` or `[reset restart]` | Read a control. The terminal shows the tag instead of a separate control arrow. `[once]` is a latch, not another input. |
+| Arrow looping back to its own lane | `↺` in wide output | A row reads its own variable. This is distinct from carrying a value across updates. |
+| ![](flow-key-value.svg) Gray rail, right of the lane | `← mass [prev update]` | Carry a value, counter, or memory. A name means the same row retained it. |
+| ![](flow-key-rate.svg) Teal rail, left of the lane | `← #9 [prev update]` / `→ #8 [next update]` | Carry a cached rate between two rows. `#` refers to the other row's number, not a variable or timestep. |
+| ![](flow-key-guide.svg) Pale gray center line | Lane heading only | Follow the same variable to its last use; the dotted background guide and horizontal row dividers carry no value. |
+| — | `┬─`, `├─`, `└─` in a list | More inputs to the **same row** on a narrow terminal. |
+
+The tapered rail **above** a target brings a value or rate in from the previous
+update; the one **below** saves it for the next. If terminal colors are enabled,
+input lines are light blue, controls yellow, row numbers and cross-references
+gray, and rate targets and update labels cyan. The symbols also work without color.
+
+**Computation column.** Read the target name first. Monospace is a declared
+expression or setting (`share(0.3)`, `lower = 0`); italics are a Cropbox action
+(*drive · read input*); an outlined tag such as `when = ready` applies to that
+row. The terminal keeps the names and tags, but omits expressions and action text.
+
+#### Worked examples
 
 An accumulating state needs two operations, but not two repeated timesteps:
 
@@ -425,29 +466,22 @@ tf = visualize(ThermalFlow; kind = :flow)
 <details class="terminal-example"><summary>Terminal output (REPL)</summary>
 ```
 
-**Wide terminal (100 columns).** Read from each input (`●`) toward the target
-(`○`). A self-read uses `↺`; a dashed line ending at `▽` marks a local `call` binding.
-Here `rate` is a model variable, while `△` marks the operation that saves
-the rate for `total`. Other pre- and post-step targets use `◓` and `◒`.
+**Wide terminal (100 columns).** Here `rate` is a model variable, while `△`
+marks the operation that saves the rate for `total`.
 
 ```@example structure
 show(IOContext(stdout, :displaysize => (24, 100)), MIME"text/plain"(), tf) # hide
 ```
 
-**Narrow terminal (40 columns).** When the lanes do not fit, each row lists
-its inputs (`←`) or bindings (`⇠`). A rate-saving row lists its inputs and
-points to the next update. Long lists wrap; controls such as `[once]` stay
-beside their operation.
+**Narrow terminal (40 columns).** When lanes do not fit, the inputs are
+listed by name. The rate-saving row lists its input, then points to the next update.
 
 ```@example structure
 show(IOContext(stdout, :displaysize => (24, 40)), MIME"text/plain"(), tf) # hide
 ```
 
-The two `total` rows are the main and post phases of **one update**. The first
-reads the previous value of `total` and the rate saved on the previous update;
-the second saves a rate for the next update. In either width, follow the
-`#` operation numbers beside `[prev update]` and `[next update]` to find the
-other row. A value retained by the same operation appears by name, as for `mature`.
+Follow the paired `#` numbers between the two `total` rows. In contrast,
+`mature` retains its own flag value, so its previous-update link names `mature`.
 
 ```@raw html
 </details>
@@ -460,14 +494,6 @@ saved for the next update. A `capture` replaces its value with that same
 increment rather than adding it. A declared `time = elapsed` identifies the
 clock used to measure the interval. The legend gives these meanings once per
 diagram, for the operations shown.
-
-The **Computation** column names the target, then distinguishes three things:
-
-| Appearance | What it means | Example |
-|:-----------|:--------------|:--------|
-| Monospace | Declared expression, input, binding, or non-default setting | `rate`, `time = elapsed`, `lower = 0` |
-| Italic | Cropbox state and, where useful, the action in this phase | *drive · read input*, *produce · queue child* |
-| Outlined tag | Explicit update control that applies to **this row** | `when = ready`, `reset = restart`, `once` |
 
 The label follows the state declaration, not the variable's spelling. Plain
 calculations need no action label. An `if` in a body stays model code; it is
@@ -531,8 +557,10 @@ show(stdout, MIME"text/plain"(), diagram) # hide
 
 `supply.rate` is a boundary read; inspect `visualize(Supply; kind = :flow)`
 for the child's update. The dashed arrow into `share` identifies `gain` as a
-bound input. The solid arrow to `root_rate` is where this example invokes
-`share(0.3)`. Initialization, child steps and solver internals are not expanded.
+bound input. Here `root_rate` invokes `share` with the argument `0.3`; another
+consumer could pass the callable without invoking it. Each local binding is
+shown once, including nested calls. Initialization, child steps and solver
+internals are not expanded.
 
 #### Graphical export
 
