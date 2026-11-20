@@ -59,6 +59,14 @@ end
         @test only(last(ax.scene.plots)[1][]) == Cropbox.Makie.convert_dim_value(ax, 2, d)
     end
 
+    @testset "$kind legend redraw" for kind in (:hline, :vline)
+        p = visualize([2]; backend = :Makie, kind, xlim = (0, 4), ylim = (0, 4), name = "Threshold")
+        svg = MIME"image/svg+xml"()
+        show(IOBuffer(), svg, p)
+        visualize!(p, [1, 3], [3, 1]; kind = :line, name = "Series")
+        @test occursin("<svg", repr(svg, p))
+    end
+
     @testset "line style and legend position" begin
         pos = (0.1, -0.3)
         p = visualize([0, 4], [0, 4]; backend = :Makie, kind = :line, name = "model", legendpos = pos)

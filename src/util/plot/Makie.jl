@@ -150,11 +150,13 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
                 X
             end
             obj = draw!(ax, positions; color, linestyle = style, xautolimits = false, yautolimits = false)
+            # the legend draws a line even when its source segments have no join style
+            entry = obj => (; joinstyle = :miter)
         else
             y = isnothing(cats) ? coalesce.(Y, NaN) : Int.(indexin(Y, cats))
             order = kind == :scatter ? eachindex(X) : sortperm(X)
             x, y = X[order], y[order]
-            obj = if kind == :scatter
+            entry = if kind == :scatter
                 Makie.scatter!(ax, x, y; color)
             elseif kind == :step
                 Makie.stairs!(ax, x, y; color, linestyle = style, step = :post)
@@ -165,7 +167,7 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
             end
         end
         if !isempty(name)
-            push!(p.opt[:entries], obj)
+            push!(p.opt[:entries], entry)
             push!(p.opt[:labels], name)
         end
         update!(p; Xs = [X], Ys = [Y], kinds = [kind], colors = [color], names = [name])
