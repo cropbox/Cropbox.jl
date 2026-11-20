@@ -62,7 +62,7 @@ end
     @testset "$kind legend redraw" for kind in (:hline, :vline)
         p = visualize([2]; backend = :Makie, kind, xlim = (0, 4), ylim = (0, 4), name = "Threshold")
         svg = MIME"image/svg+xml"()
-        show(devnull, svg, p)
+        show(IOBuffer(), svg, p)
         visualize!(p, [1, 3], [3, 1]; kind = :line, name = "Series")
         @test occursin("<svg", repr(svg, p))
     end
