@@ -21,6 +21,9 @@ end
     hi => 2 ~ preserve
 
     root => root^2 - 2 ~ solve(lower = lo, upper = hi)
+
+    inside => true                    ~ flag(when = lo[] < root[] <= hi[])
+    limit(v = inside[] ? hi[] : lo[]) ~ track(init = 0)
 end
 
 @system FlowCall(Controller) begin
@@ -61,8 +64,10 @@ end
         p = visualize(FlowGrowth, :extreme; kind = :flow, depth = 0).plan
         @test Set(r.name for r in only(p.events).reads if r.role == :when) == Set(["valid", "i", "met.Tmin", "met.Tmax"])
 
-        p = visualize(FlowRoot, :root; kind = :flow, depth = 0).plan
-        @test Set((r.name, r.role) for r in only(p.events).reads) == Set([("lo", :lower), ("hi", :upper)])
+        inputs(n) = Set((r.name, r.role) for r in only(visualize(FlowRoot, n; kind = :flow, depth = 0).plan.events).reads)
+        @test inputs(:root) == Set([("lo", :lower), ("hi", :upper)])
+        @test inputs(:inside) == Set([("lo", :when), ("root", :when), ("hi", :when)])
+        @test inputs(:limit) == Set([("inside", :data), ("hi", :data), ("lo", :data)])
     end
 
     @testset "bound call inputs" begin

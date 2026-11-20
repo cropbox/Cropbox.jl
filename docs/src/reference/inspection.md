@@ -497,8 +497,9 @@ diagram, for the operations shown.
 
 An `if` in a body stays model code, not a control tag. For `when = mask[1]`
 only `mask` is a condition input; `when = mask[idx[]]` also reads `idx`.
-Both sides of `&&` and `||` are possible condition inputs, even when the
-second operand is skipped at runtime.
+In a declaration argument or tag, the diagram shows possible reads: both sides
+of `&&` or `||`, each operand of `lo[] < T[] <= hi[]`, and the condition and
+both alternatives of `on[] ? lo[] : hi[]`. Only the chosen alternative runs.
 In `f(x[]).field`, the field belongs to the result: the row reads `x`, not
 `x.field`. It also reads `f` if `f` is a model variable. The broadcast
 `f.(xs[])` has the same model inputs and call bindings as `map(f, xs[])`.
@@ -521,7 +522,12 @@ keeping identically named fields from different mixins distinct without exposing
 internal mangled names. Use `look` for complete declarations, aliases,
 units, and documentation.
 
-The same name, vector, and path selectors work here:
+Name, vector, and path selectors use the compiler's dependency graph. A flow
+arrow can show a read that is not an edge in that graph: for example, with
+`dotted(v = sum(f.(xs[])))`, the diagram shows `xs` as an input, but
+`:xs => :dotted` can raise an `ArgumentError` because there is no compiler path.
+Select the target with `depth = 0` to see its declared reads instead:
+`visualize(S, :dotted; kind = :flow, depth = 0)`. For the accumulator above:
 
 ```@example structure
 visualize(ThermalFlow, :total; kind = :flow, depth = 0)

@@ -51,8 +51,8 @@ for system composition and mixins, or `:flow` for the static order of
 operations in one update. The hierarchy omits nested `Context`
 infrastructure. Simulation plots still use `visualize(S, x, y; ...)`.
 
-For dependency graphs and flow diagrams, a selector may be a variable name,
-a `source => target` pair, or a vector combining names and pairs. Names select neighborhoods:
+Dependency and flow selectors both follow the compiler's dependency graph. Use a
+variable name, a `source => target` pair, or a vector combining them. Names select neighborhoods:
 `depth = 0` keeps only the named variables, and each additional level crosses one
 variable boundary. `direction` is `:up` for inputs, `:down` for affected variables,
 or `:both`. Pairs select directed variable paths between their endpoints, independent

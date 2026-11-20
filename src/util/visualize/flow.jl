@@ -115,6 +115,10 @@ flowreferences(ex::Expr, tail = "") = begin
         flowreferences(first(a), tail)
     elseif isexpr(ex, :ref)
         vcat(flowreferences(first(a), tail), (flowreferences(x) for x in Iterators.drop(a, 1))...)
+    elseif isexpr(ex, :comparison)
+        String[p for i in 1:2:length(a) for p in flowreferences(a[i])]
+    elseif isexpr(ex, :if)
+        vcat(flowreferences(first(a)), (flowreferences(MacroTools.unblock(x), tail) for x in Iterators.drop(a, 1))...)
     elseif isexpr(ex, :call, :., :tuple, :parameters, :..., :&&, :||)
         String[p for x in a for p in flowreferences(x)]
     else
