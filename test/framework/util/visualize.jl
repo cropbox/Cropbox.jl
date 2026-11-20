@@ -35,12 +35,6 @@ end
         @test visualize!(p, [0, 4]u"hr", [4, 0]u"g"; kind = :line, name = "reference") === p
         bounds = plotbounds(p)
         @test Cropbox.detectbackend(p) == backend
-        @test visualize!(p, 120u"minute", 2000u"mg", "An = 10\ngs = 0.2"; color = :red) === p
-        @test plotbounds(p) == bounds
-
-        output = backend == :Makie ? only(p.opt[:axis].scene.plots[end].text[]) : repr(MIME"text/plain"(), p[])
-        @test occursin("An = 10", output)
-        @test occursin("gs = 0.2", output)
         for (kind, value) in ((:hline, 2000u"mg"), (:vline, 120u"minute"))
             @test visualize!(p, value; kind) === p
             @test p.opt[:Xs][end] == [2]
@@ -49,17 +43,20 @@ end
         end
         @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; backend = backend == :Makie ? :UnicodePlots : :Makie)
         @test_throws ArgumentError visualize!(p, [0, 4], [1, 3]; linestyle = :unknown)
-        @test_throws ArgumentError visualize!(p, 2, 2, "text"; align = :unknown)
     end
 
-    @testset "date annotations" for backend in (:Makie, :UnicodePlots)
-        for t in (Cropbox.Dates.Date(2026, 1, 1), Cropbox.Dates.DateTime(2026, 1, 1))
-            p = visualize([t, t + Cropbox.Dates.Day(2)], [1, 3]; backend, kind = :line)
-            @test visualize!(p, t + Cropbox.Dates.Day(1), 2, "event") === p
-            output = backend == :Makie ? only(p.opt[:axis].scene.plots[end].text[]) : repr(MIME"text/plain"(), p[])
-            @test occursin("event", output)
-            backend == :Makie && show(IOBuffer(), MIME"image/png"(), p)
+    @testset "calendar reference lines" begin
+        d = Cropbox.Dates.Date(2020, 4, 1)
+        noon = Cropbox.Dates.DateTime(d) + Cropbox.Dates.Hour(12)
+        z = Cropbox.TimeZones.ZonedDateTime(noon, tz"Asia/Seoul")
+        p = visualize(DataFrame(date = [d, d + Cropbox.Dates.Day(2)], val = [1, 3]), :date, :val; backend = :Makie)
+        ax = p.opt[:axis]
+        for (t, expected) in ((d, d), (z, noon))
+            visualize!(p, [t]; kind = :vline)
+            @test only(last(ax.scene.plots)[1][]) == Cropbox.Makie.convert_dim_value(ax, 1, expected)
         end
+        ax = visualize([d]; kind = :hline, xlim = (0, 1), backend = :Makie).opt[:axis]
+        @test only(last(ax.scene.plots)[1][]) == Cropbox.Makie.convert_dim_value(ax, 2, d)
     end
 
     @testset "line style and legend position" begin
@@ -267,7 +264,6 @@ end
         p = visualize([0, 1]u"hr", [0, 1]u"g"; backend = :Makie)
         bounds = plotbounds(p)
         visualize!(p, 100u"g"; kind = :hline)
-        visualize!(p, 100u"hr", 100u"g", "outside")
         @test plotbounds(p) == bounds
         @test visualize!(p, [0, 120]u"minute", [-1000, 5000]u"mg") === p
         xlim, ylim = plotbounds(p)

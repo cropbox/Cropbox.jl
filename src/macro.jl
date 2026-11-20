@@ -51,12 +51,11 @@ parseline(line, scope) = begin
     (name, alias, args, kwargs, body, state, stype, dtype, tags)
 end
 
-genvarinfo(system, n, a, as, kws, b, s, st, dt, tgs, line, linenumber, docstring, scope, substs) = begin
+genvarinfo(system, n, a, as, kws, body, s, st, dt, tgs, line, linenumber, docstring, scope, substs) = begin
     name = parsename(n, system)
     alias = parsealias(a, system)
     args = parseargs(as, system)
     kwargs = parsekwargs(kws)
-    body = parsebody(b)
     state = parsestate(s)
     if !isnothing(state) && !hasmethod(genvartype, Tuple{VarInfo{Symbol}, Val{state}})
         declarationerror("unknown state: $s for $system => $name", line, linenumber)
@@ -114,13 +113,58 @@ parseargs(::Nothing, _) = []
 parsekwargs(kwargs) = kwargs
 parsekwargs(::Nothing) = []
 
-parsebody(body) = begin
-    #HACK: disable return checking for now, too aggressive for local scope return
-    #TODO: translate `return` to a local safe statement
-    #MacroTools.postwalk(x -> @capture(x, return(_)) ? error("`return` is not allowed: $body") : x, body)
-    body
+parsebody(v, state) = begin
+    isboundary(x) = x.head == :(=) ? MacroTools.isdef(x) : x.head in (:function, :->, :quote, :inert, :macrocall)
+    checkreturn(x, ln) = begin
+        if isexpr(x, :return)
+            declarationerror("`return` in $(v.system).$(uncanonicalname(v.name)) would exit the model constructor or update (use the body's last expression or a helper function)", v.line, ln)
+        elseif isexpr(x) && !isboundary(x)
+            for a in x.args
+                if a isa LineNumberNode
+                    ln = a
+                else
+                    checkreturn(a, ln)
+                end
+            end
+        end
+    end
+    if state ∉ (:Track, :Call, :Integrate)
+        checkreturn(v.body, v.linenumber)
+    end
+    v.body
 end
-parsebody(::Nothing) = nothing
+
+function checkbodyinputs(v, scope)
+    # a unit literal is an operand; other macros may introduce local bindings
+    simple(x) = if Meta.isexpr(x, :macrocall, 3)
+        m, _, value = x.args
+        value isa String && m isa Symbol && isdefined(scope, m) && getglobal(scope, m) === var"@u_str"
+    else
+        !(x isa Expr) || (x.head in (:call, :., :ref, :parameters, :kw, :tuple, :vect, :string,
+            :comparison, :&&, :||, :if, :elseif, :block, :return) && all(simple, x.args))
+    end
+    v.body isa Union{Symbol,Expr,GlobalRef} && simple(v.body) || return
+    inputs = union([:self], first.(extractfuncargpair.(v.args)), first.(extractfunckwargtuple.(v.kwargs)))
+    istag(v, :option) && push!(inputs, :option)
+    v.state === :Solve && push!(inputs, v.name)
+    binding(m, k) = if k isa Symbol && isdefined(m, k)
+        isconst(m, k) || declarationerror("undeclared non-const global $m.$k in $(v.system).$(uncanonicalname(v.name)); declare it as a model input", v.line, v.linenumber)
+        getglobal(m, k)
+    end
+    visit(x) = if x isa Symbol
+        x ∈ inputs ? nothing : binding(scope, x)
+    elseif x isa GlobalRef
+        binding(x.mod, x.name)
+    elseif Meta.isexpr(x, :., 2) && last(x.args) isa QuoteNode
+        m = visit(first(x.args))
+        m isa Module && binding(m, last(x.args).value)
+    elseif isexpr(x, :kw)
+        visit(last(x.args))
+    elseif x isa Expr && x.head !== :macrocall
+        foreach(visit, x.args)
+    end
+    visit(v.body)
+end
 
 #TODO: make `nothing` an alias of generic state `pass` which may share some logics with `bring`
 parsestate(state) = typestate(Val(state))
@@ -639,8 +683,8 @@ parsepatches(patches::Vector, scope::Module) = begin
 end
 
 using DataStructures: OrderedDict, OrderedSet
-gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope), consts, substs, incl, scope)
-geninfos(body; name, substs, incl, scope, _...) = begin
+gensystem(body; name, consts, substs, incl, type, scope, _...) = genstruct(name, type, geninfos(body; name, substs, incl, scope, checkinputs = true), consts, substs, incl, scope)
+geninfos(body; name, substs, incl, scope, checkinputs = false, _...) = begin
     # update type substitution dict cascaded over all participating mixins
     M = _mixincollect(mixinsof(scope, incl))
     substs = merge(substsof.(M)..., substs)
@@ -704,20 +748,24 @@ geninfos(body; name, substs, incl, scope, _...) = begin
         end
         d
     end
-    add!(d, b, s, sc) = begin
+    add!(d, b, s, sc; check = false) = begin
         for (n, v) in con(b, s, sc)
+            decl = v
             if haskey(d, n)
                 v0 = d[n]
                 if v.state == :Hold
                     continue
                 # support simple body replacement (i.e. `a => 1` without `~ ...` part)
                 elseif isnothing(v.state) && isnothing(v.type)
-                    v = @set v0.body = v.body
+                    v = v0
                 elseif v0.alias != v.alias && v0.state != :Hold
                     @warn "variable replaced with inconsistent alias" name=v.name system=(v0.system => v.system) alias=(v0.alias => v.alias)
                 end
             end
-            d[n] = v
+            # use the resolved behavior, but report the declaration as written
+            expr = parsebody(decl, v.state)
+            check && decl === v && checkbodyinputs(v, sc)
+            d[n] = expr === v.body ? v : (@set v.body = expr)
         end
     end
     combine() = begin
@@ -728,7 +776,7 @@ geninfos(body; name, substs, incl, scope, _...) = begin
                 add!(d, source(m), namefor(m), scopeof(m))
             end
         end
-        add!(d, body, name, scope)
+        add!(d, body, name, scope; check = checkinputs)
         d
     end
     combine() |> values |> collect
@@ -873,10 +921,24 @@ gendefaultvalue(v::VarInfo; parameter=false, init=false, sample=true, unitfy=tru
     end
 end
 
-genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = @q begin
-    $([genupdateinit(n.info; kw...) for n in nodes]...)
-    $([genupdate(n; kw...) for n in nodes]...)
-    self
+genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = begin
+    # bisection jumps from its main step back to its pre-step
+    bisects = 0
+    steps = map(nodes) do n
+        v = n.info
+        if v.state === :Bisect
+            bisects += n.step isa PreStep ? 1 : -1
+        elseif bisects > 0 && v.state === :Track && !isnothing(v.body)
+            v = @set v.body = Expr(:block, Expr(:meta, :inline), v.body)
+            n = VarNode(v, n.step)
+        end
+        genupdate(n; kw...)
+    end
+    @q begin
+        $([genupdateinit(n.info; kw...) for n in nodes]...)
+        $(steps...)
+        self
+    end
 end
 
 genupdate(infos::Vector{VarInfo}, t::UpdateStage; kw...) = @q begin
@@ -1034,6 +1096,12 @@ genbody(v::VarInfo, body=nothing) = begin
     else
         args = @q begin $(emitfuncargpair.(v.args)...) end
         isnothing(body) && (body = esc(v.body))
+        if v.state === :Track && !isnothing(v.body)
+            # repeated names keep their last binding; all-underscore names are write-only
+            keys = unique(first.(extractfuncargpair.(v.args)))
+            params = esc.(filter(k -> !all(==('_'), String(k)), keys))
+            body = @q (($(params...),) -> $body)($(params...))
+        end
     end
     MacroTools.flatten(@q let $args; $body end)
 end

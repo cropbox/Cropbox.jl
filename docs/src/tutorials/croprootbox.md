@@ -136,11 +136,10 @@ root_maize = @config (
 )
 ```
 
-`mean ± standard_deviation` creates a distribution sampled during instance
-construction. It is configuration data, not an error bar attached to one fixed
-value. The samples are also constrained by declaration bounds where those
-bounds exist; inspect a constructed instance when a distribution is close to a
-physical limit.
+`r = 6.0 ± 0.6` gives each new primary root a Normal draw (mean 6.0,
+standard deviation 0.6, both in cm/d). No value is drawn when `root_maize`
+is defined, and new segments of the same root inherit its sampled rate.
+Where a declaration has bounds, those bounds also constrain the sampled value.
 
 ## Construct the container and architecture
 
@@ -158,9 +157,9 @@ The container is passed through `options` because it is an external geometric
 resource required by construction, not a scalar parameter stored in the normal
 configuration tree.
 
-`seed=0` makes stochastic draws and production choices reproducible. Use the
-same seed for controlled treatment comparisons and different explicit seeds for
-independent replicates.
+`seed = 0` repeats a whole plant, not a single root: roots within one plant
+still draw different rates and branching angles. Use the same seed for
+controlled treatment comparisons and different seeds for independent replicates.
 
 ## Simulate growth
 
@@ -373,6 +372,13 @@ treatment and seed. Compare total length and axis count before collecting full
 geometry. These four short runs check the analysis code, not the stability of
 a treatment effect; increase the duration and number of independent seeds for
 scientific interpretation.
+
+After calibration, the same loop can check a fitted configuration: use
+`@config(root_maize + fitted)` as the baseline and vary only the simulation
+seed. If you fitted `PrimaryRoot.r` itself, its fitted number replaces that
+`±` entry; to fit a mean and retain variation in the rate, declare the mean
+as a separate parameter. Changing the [calibration seed](@ref calibration-seeds)
+instead would also change the optimizer's search.
 
 Do not share one mutable container or output accumulator across threaded
 scenario simulations unless the model explicitly guarantees thread safety.

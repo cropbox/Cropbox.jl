@@ -3,7 +3,7 @@ using DataFrames: DataFrame
 using Dates: AbstractTime
 
 struct Simulation
-    base::Union{String,Symbol,Nothing}
+    layout::NamedTuple
     index::OrderedDict{Symbol,Any}
     target::OrderedDict{Symbol,Any}
     mapping::OrderedDict{Symbol,Any}
@@ -12,16 +12,10 @@ struct Simulation
 end
 
 simulation(s::System; config=(), base=nothing, index=nothing, target=nothing, meta=nothing) = begin
-    sb = s[base]
-    I = parseindex(index, sb)
-    T = parsetarget(target, sb)
-    #HACK: ignore unavailable properties (i.e. handle default :time in target)
-    I = filtersimulationdict(I, sb)
-    T = filtersimulationdict(T, sb)
-    checksimulationkeys(sb, I, index, target)
-    IT = merge(I, T)
+    layout = (; base, index, target, meta)
+    I, T = simulationcolumns(s[base], layout)
     M = parsemeta(meta, s.context.config)
-    Simulation(base, I, T, IT, M, Vector{OrderedDict{Symbol,Any}}())
+    Simulation(layout, I, T, merge(I, T), M, Vector{OrderedDict{Symbol,Any}}())
 end
 
 parsesimulationkey(p::Pair, s; wildcard = true) = [p]
@@ -58,6 +52,26 @@ parsetarget(T, s) = parsesimulation(T, s)
 
 filtersimulationdict(m::OrderedDict, s::System) = filter(m) do (k, v); hasproperty(s, v) end
 
+simulationcolumns(s::System, layout) = begin
+    (; index, target) = layout
+    #HACK: ignore unavailable properties (i.e. handle default :time in target)
+    I = filtersimulationdict(parseindex(index, s), s)
+    T = filtersimulationdict(parsetarget(target, s), s)
+    checksimulationkeys(s, I, index, target)
+    I, T
+end
+simulationcolumns(::Bundle, layout) = ntuple(_ -> OrderedDict{Symbol,Any}(), 2)
+
+childmapping!(m::Simulation, child::System) = begin
+    I, T = simulationcolumns(child, m.layout)
+    mapping = merge(I, T)
+    merge!(m.index, I)
+    merge!(m.target, T)
+    merge!(m.mapping, mapping)
+    # siblings may have different columns; read only this child's mapping
+    mapping
+end
+
 checksimulationkeys(s::System, I, index, target) = begin
     M = Dict{Symbol,Any}()
     for (a, columns) in ((index, nothing), (target, I))
@@ -88,8 +102,11 @@ normalizesimulationkey(s::System, k) = begin
     join(P, '.')
 end
 
-extract(s::System, m::Simulation) = extract(s[m.base], m.mapping)
-extract(s::System, m::OrderedDict{Symbol,Any}) = begin
+extract(s::System, m::Simulation) = begin
+    sb = s[m.layout.base]
+    sb isa Bundle ? extract(sb, m) : extract(sb, m.mapping)
+end
+extract(s::System, m::OrderedDict) = begin
     K = keys(m)
     V = (value(s[k]) for k in values(m))
     #HACK: Any -- prevent type promotion with NoUnits
@@ -97,8 +114,9 @@ extract(s::System, m::OrderedDict{Symbol,Any}) = begin
     filter!(p -> extractable(s, p), d)
     [d]
 end
-extract(b::Bundle{S}, m::OrderedDict{Symbol,Any}) where {S<:System} = begin
-    [extract(s, m) for s in collect(b)]
+extract(b::Bundle, m::Simulation) = begin
+    rows = (extract(child, childmapping!(m, child)) for child in collect(b))
+    collect(Iterators.flatten(rows))
 end
 extractable(s::System, p) = begin
     # only pick up variables of simple types by default
@@ -227,7 +245,7 @@ See also: [`instance`](@ref), [`@config`](@ref)
 ## Configuration
 - `config=()`: a single configuration for the system, or a base for multiple configurations (when used with `configs`).
 - `configs=[]`: multiple configurations for the system.
-- `seed=nothing`: random seed for resetting each simulation run.
+- `seed=0`: start each fresh simulation with this seed. Pass `nothing` to draw from the current random stream instead.
 
 ## Progress
 - `stop=nothing`: condition checked before calling updates for the instance; default stops with no update.
@@ -259,10 +277,12 @@ simulate(; system, kw...) = simulate(system; kw...)
 simulate(S::Type{<:System}; base=nothing, index=nothing, target=nothing, meta=nothing, kwargs...) = begin
     simulate(S, [(; base, index, target, meta)]; kwargs...) |> only
 end
-simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], parameters=(), options=(), seed=nothing, kwargs...) = begin
+simulate(S::Type{<:System}, layout::Vector; config=(), configs=[], parameters=(), options=(), seed = 0, kwargs...) = begin
     if isempty(configs) && isempty(parameters)
-        s = instance(S; config, options, seed)
-        simulate!(s, layout; kwargs...)
+        withseed(seed) do
+            s = instance(S; config, options)
+            simulate!(s, layout; kwargs...)
+        end
     else
         if isempty(parameters)
             c = @config config + configs

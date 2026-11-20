@@ -65,6 +65,21 @@ simulate(Model;
 
 Without `base`, full string paths can reach the same values.
 
+For a bundle of produced systems, each matching child contributes one row per
+snapshot. Children created during the simulation are included automatically.
+
+```@example simflow
+@system OutputLeaf begin
+    area => 2 ~ preserve(u"cm^2")
+end
+@system OutputPlant(Controller) begin
+    leaves => produce(OutputLeaf) ~ produce::OutputLeaf[]
+    query  => "*"                 ~ preserve::str
+end
+
+simulate(OutputPlant; base = "leaves[query]", target = :area, stop = 2, verbose = false)
+```
+
 ## Add scenario metadata
 
 `meta` copies configuration values into the output.
@@ -202,7 +217,6 @@ with `simulate!` can avoid rebuilding an expensive model.
 
 ## Randomness and batches
 
-`seed` is applied before configuration parsing and instance construction. This
-also controls distributions written with `±`. In a batch of configurations, the
-same seed is reset for each scenario. Use separate calls or explicit seed loops
-when every replicate must receive an independent random stream.
+`simulate` starts each run at `seed = 0` by default, including each scenario in
+a batch. This also controls parameters sampled with `±`. Use different integer
+seeds for distinct, reproducible replicates, or `seed = nothing` for fresh draws.

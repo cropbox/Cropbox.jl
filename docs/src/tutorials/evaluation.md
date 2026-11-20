@@ -152,6 +152,7 @@ fitted = calibrate(LinearGrowth, calibration_data;
     parameters = LinearGrowth => :rate => (0, 20),
     stop = 3u"d",
     metric = :rmse,
+    seed = 42,
     optim = (MaxSteps = 100, PopulationSize = 20, TraceMode = :silent),
 )
 ```
@@ -159,6 +160,8 @@ fitted = calibrate(LinearGrowth, calibration_data;
 The bounds inherit `rate`'s declared unit `u"g/d"`. The result is a `Config`
 that can be merged with the base scenario. The fitted rate should be close to
 `9.9u"g/d"`; exact optimizer results can vary between package versions.
+`LinearGrowth` is deterministic, so only the search uses randomness here.
+For a model with `±` parameters, see [model sampling and the calibration seed](@ref calibration-seeds).
 
 ## Evaluate validation data
 
@@ -294,12 +297,8 @@ have different metrics or scales. Normalize deliberately and report the choice.
 6. Inspect convergence and residual structure.
 7. Increase the budget only after the pipeline is correct.
 8. Evaluate the fitted configuration on the validation data.
-9. Report bounds, metric, weights, optimizer options, package versions, and any
-   stochastic model seeds.
-
-`calibrate` currently calls `Random.seed!(0)` immediately before BlackBoxOptim.
-Record the Cropbox version because this fixed optimizer initialization is
-framework behavior rather than a configurable optimizer option.
+9. Report bounds, metric, weights, optimizer options, and package versions.
+   Record the seed (default `0`) to reproduce both the parameter search and its model runs.
 
 Calibration cannot repair a structural error, an incorrect unit, or a mismatched
 observation index. Diagnose those before expanding the search.

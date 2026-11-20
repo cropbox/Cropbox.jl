@@ -14,6 +14,7 @@ using DataFrames
         end
         @test evaluate(obs, est; index=:time, target=:mass, metric) == 4.0
         @test evaluate(obs, est; target = :mass, metric) == 4.0
+        @test_throws MethodError evaluate(obs, est; target = :mass, group = :model)
 
         # Symmetric errors do not reveal a reversal; these denominators do.
         expected = (

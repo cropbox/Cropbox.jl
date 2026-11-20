@@ -141,7 +141,15 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
         Y = kind in (:hline, :vline) ? [] : Ys[i]
         if kind in (:hline, :vline)
             draw! = kind == :hline ? Makie.hlines! : Makie.vlines!
-            obj = draw!(ax, X; color, linestyle = style, xautolimits = false, yautolimits = false)
+            positions = if eltype(X) <: Union{Date,DateTime}
+                dim = kind == :hline ? 2 : 1
+                conversion = dim == 1 ? ax.dim1_conversion : ax.dim2_conversion
+                isnothing(conversion[]) && (conversion[] = Makie.DateTimeConversion(DateTime))
+                Makie.convert_dim_value(ax, dim, X)
+            else
+                X
+            end
+            obj = draw!(ax, positions; color, linestyle = style, xautolimits = false, yautolimits = false)
         else
             y = isnothing(cats) ? coalesce.(Y, NaN) : Int.(indexin(Y, cats))
             order = kind == :scatter ? eachindex(X) : sortperm(X)
@@ -209,14 +217,4 @@ plot3!(::Val{:Makie}, X, Y, Z;
         axis, X, Y, Z, kind,
         title, legend, legendpos, xlab, ylab, zlab,
         xlim, ylim, zlim, xunit, yunit, zunit, aspect)
-end
-
-plottext!(::Val{:Makie}, p, x, y, text; color, align) = begin
-    ax = p.opt[:axis]
-    color = isnothing(color) ? ax.xticklabelcolor[] : color
-    Makie.text!(ax, x, y;
-        text, align = (align, :center),
-        xautolimits = false, yautolimits = false,
-        color, fontsize = ax.xticklabelsize[], font = ax.xticklabelfont[])
-    p
 end

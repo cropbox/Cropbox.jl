@@ -66,9 +66,9 @@ output is named `:summary`. It receives a fresh DataFrame on every model run,
 not a previously stored trajectory. `stop` is required (`stop = 0` for static
 models). Endpoint analysis reads the final model state even if `snap` omits it.
 
-`base`, `options`, and `seed` follow `simulate`; other keywords are forwarded to
-`simulate!`. Endpoint analysis disables snapshots by default; callbacks retain
-the normal snapshot behavior. `raw` preserves the original GlobalSensitivity
+`base` and `options` follow `simulate`; `seed` follows `instance` (default `nothing`).
+Other keywords are forwarded to `simulate!`. Endpoint analysis disables snapshots
+by default; callbacks retain the normal snapshot behavior. `raw` preserves the original GlobalSensitivity
 result, including interactions and confidence information not shown in `table`.
 
 See also: [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref)

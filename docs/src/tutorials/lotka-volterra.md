@@ -75,17 +75,7 @@ Use a daily update even though rates and plotted time are expressed per year.
 Cropbox converts compatible units during accumulation.
 
 ```@example lotka
-config = @config (
-    PredatorPrey => (
-        b = 0.6,
-        a = 0.02,
-        c = 0.5,
-        m = 0.5,
-        N0 = 20,
-        P0 = 30,
-    ),
-    Clock => :step => 1u"d",
-)
+config = @config Clock => :step => 1u"d"
 
 classic = simulate(LotkaVolterra;
     config,
@@ -125,12 +115,8 @@ Reuse the original process and replace only `N`:
         b * N * (1 - N / K) - a * N * P ~ accumulate(init = N0)
 end
 
-density_config = @config config + (
-    DensityDependent => :K => 1000,
-)
-
 bounded = simulate(DensityDependent;
-    config = density_config,
+    config,
     stop = 30u"yr",
     snap = 30u"d",
     index = :t,
@@ -142,7 +128,7 @@ last(bounded, 3)
 
 Because later declarations take precedence, the new `N` replaces the one from
 `PredatorPrey`; the remaining parameters and predator equation are reused.
-Compare the two configurations with the same time step, stop rule, initial
+Compare the two models with the same time step, stop rule, initial
 values, and output layout.
 
 ## Connect observations
@@ -173,44 +159,57 @@ Pelt counts are an observation proxy rather than direct population censuses.
 That distinction, the unknown scaling between series, and the time interval
 chosen for fitting must be part of the model interpretation.
 
-## Calibrate and evaluate responsibly
+## Fit one interval and evaluate another
 
-Normalize the observation index to elapsed time, choose defensible bounds, and
-fit only a training interval. A calibration template is:
+Use the annual counts from 1845–1904 for calibration and reserve 1905–1935 for
+validation. Compute elapsed time **before** splitting the table: 1905 must be
+year 60 of the same trajectory, not year zero of a new simulation.
 
-```julia
-observations = transform(
-    pelts,
-    :Year => (year -> year .- first(year)) => :t,
-)
+```@example lotka
+observations = transform(pelts, :Year => (y -> y .- first(y)) => :t)
+calibration = observations[observations.Year .< 1905u"yr", :]
+validation = observations[observations.Year .>= 1905u"yr", :]
+(nrow(calibration), nrow(validation), first(validation.t))
+```
 
-fitted = calibrate(LotkaVolterra, observations;
-    config,
+Fit the prey birth rate `b` and predator mortality rate `m`; leave the other
+four parameters unchanged. For these annual observations, use 52 equal steps
+per year. Every whole-year observation then coincides with a clock tick.
+The bounds use the rates' declared unit, `u"yr^-1"`.
+
+```@example lotka
+annual = @config config + (Clock => :step => (1//52)u"yr")
+populations = [:Hare => :N, :Lynx => :P]
+
+fitted = calibrate(LotkaVolterra, calibration;
+    config = annual,
     index = :t,
-    target = [:Hare => :N, :Lynx => :P],
-    parameters = PredatorPrey => (
-        b = (0, 2),
-        a = (0, 2),
-        c = (0, 2),
-        m = (0, 2),
-        N0 = (0, 200),
-        P0 = (0, 200),
-    ),
-    stop = last(observations.t),
+    target = populations,
+    parameters = PredatorPrey => (b = (0.35, 0.8), m = (0.35, 0.8)),
+    stop = last(calibration.t),
     metric = :rmse,
-    optim = (MaxSteps = 1000,),
+    optim = (MaxSteps = 100, PopulationSize = 20, TraceMode = :silent),
 )
 ```
 
-`calibrate` reads the declared unit of each parameter. The plain bound
-`b = (0, 2)` is therefore interpreted in `u"yr^-1"` because `b` was declared
-with that unit. If an explicit quantity is useful, `[0, 2]u"yr^-1"` is a valid
-equivalent range container; multiplying a tuple as `(0, 2)u"yr^-1"` is not
-valid Julia syntax. Explicit compatible units are most useful when the search
-interval is naturally expressed on a different time scale.
+Keep the fitted rates, initial populations, and clock unchanged. Run from 1845
+through the last validation year; only the 31 later observations enter these
+two RMSEs, one per species in the order given by `populations`:
 
-For the density-dependent model, add a bounded `K` parameter and compare both
-models on validation years that were not used for calibration.
-Retain the time step, bounds, metric, optimizer options, and package versions.
-See [Evaluate and Calibrate Models](@ref evaluation-tutorial) for multi-target and
-multi-environment workflows.
+```@example lotka
+fitted_config = @config(annual + fitted)
+scores = evaluate(LotkaVolterra, validation;
+    config = fitted_config,
+    index = :t,
+    target = populations,
+    stop = last(validation.t),
+    metric = :rmse,
+)
+DataFrame(series = ["Hare", "Lynx"], validation_rmse = collect(scores))
+```
+
+These scores describe agreement with pelt counts, not accuracy against a
+population census. To compare the density-dependent model, fit its rates (and
+optionally `K`) on the same calibration years and score the same validation
+years. See [Evaluate and Calibrate Models](@ref evaluation-tutorial) for
+choosing bounds, comparing targets, and working with several environments.

@@ -1,5 +1,6 @@
 using DataFrames
 using Dates
+import Random
 
 @testset "simulate" begin
     @testset "basic" begin
@@ -234,6 +235,37 @@ using Dates
         @test all(r[4][!, :c] .== 0) && all(r[4][!, :d] .== :D)
     end
 
+    @testset "bundle base" begin
+        @system SSimulateBundleLeaf begin
+            i(context.clock.tick): id ~ preserve::int
+            x: area => 2              ~ preserve
+        end
+        @system SSimulateBundle(Controller) begin
+            leaves => produce(SSimulateBundleLeaf) ~ produce::SSimulateBundleLeaf[]
+            query  => "*"                          ~ preserve::str
+
+            pick(t=context.clock.tick) => (t < 2 ? "*" : 1) ~ track::Any
+        end
+        kw = (; base = "leaves[query]", verbose = false)
+        @test isempty(simulate(SSimulateBundle; kw...))
+        r = simulate(SSimulateBundle; stop = 2, kw...)
+        @test r == DataFrame(time = [1, 2, 2]u"hr", i = [0, 0, 1], x = fill(2, 3))
+        @test simulate(SSimulateBundle; base = "leaves[pick]", target = :x, stop = 2, verbose = false).x == [2, 2]
+        t = :time => "context.clock.time"
+        layout = (; base = kw.base, index = t, target = [:i => :id, t, :x => :area], meta = :run => 1)
+        m = nothing
+        callback = (_, acc) -> (m = acc)
+        @test simulate(SSimulateBundle; layout..., stop = 2, verbose = false, callback) == insertcols(r, :run => 1)
+        @test m.layout == layout
+        @test collect(m.index) == [t] && collect(m.target) == layout.target
+        @test m.mapping == merge(m.index, m.target)
+        r = simulate(SSimulateBundle; target = :x, stop = 2, long = true, nounit = true, kw...)
+        @test r == DataFrame(time = [1, 2, 2], variable = fill("x", 3), value = fill(2, 3))
+        @test_throws ArgumentError "typo" simulate(SSimulateBundle; target = :typo, stop = 1, kw...)
+        @test_throws ArgumentError "conflicting simulation output" simulate(
+            SSimulateBundle; index = :out => :i, target = :out => :x, stop = 1, kw...)
+    end
+
     @testset "layout and configs" begin
         @system SSimulateLayoutConfigs(Controller) begin
             p ~ preserve(parameter)
@@ -393,11 +425,13 @@ using Dates
             b(a) ~ accumulate
         end
         n = 10
-        r1 = simulate(SSimulateSeed, seed=0, stop=n)
+        nextdraw = rand(copy(Random.default_rng()))
+        r1 = simulate(SSimulateSeed; stop = n)
         @test r1[end, :a] == 0.8969897902567084
         @test r1[end, :b] == 3.462686872284925
-        r2 = simulate(SSimulateSeed, seed=0, stop=n)
-        @test r1 == r2
+        @test simulate(SSimulateSeed; seed = 0, stop = n) == r1
+        @test simulate(SSimulateSeed; configs = [(), ()], stop = n, verbose = false) == vcat(r1, r1)
+        @test rand() == nextdraw
     end
 
     @testset "no seed" begin

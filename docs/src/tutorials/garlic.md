@@ -1,38 +1,75 @@
 # [Garlic Growth Model](@id garlic-tutorial)
 
-[Garlic.jl](https://github.com/cropbox/Garlic.jl) is a process-based hardneck
-garlic model implemented as a set of Cropbox systems. It is a useful example of
-composition across phenology, weather, radiation, gas exchange, morphology,
-carbon balance, and organ growth.
+How does a garlic plant's dry mass change in the leaves and the bulb over a season?
+Run a season of [Garlic.jl](https://github.com/cropbox/Garlic.jl) with its
+packaged weather and cultivar settings, then read the two curves. No model
+declarations or separate weather file are needed.
 
-The model was developed in two stages: leaf development and expansion in
-[*A process-based model for leaf development and growth in hardneck garlic*](https://doi.org/10.1093/aob/mcz060)
-(*Annals of Botany*, 2019), followed by whole-plant carbon balance, biomass, and
-yield in [*An Integrative Process-Based Model for Biomass and Yield Estimation
-of Hardneck Garlic*](https://doi.org/10.3389/fpls.2022.783810) (*Frontiers in
-Plant Science*, 2022). The process chain below connects those two scopes.
+The model combines the [leaf development and expansion study (*Annals of
+Botany*, 2019)](https://doi.org/10.1093/aob/mcz060) with the
+[whole-plant biomass and yield study (*Frontiers in Plant Science*,
+2022)](https://doi.org/10.3389/fpls.2022.783810).
 
-!!! note "Separate model package"
-    Garlic is not a dependency of the Cropbox documentation project. Run this
-    tutorial in an environment where `Garlic` is installed. The basic workflow
-    follows the model package tests and the 2025 Cropbox workshop.
+## Run a garlic season
 
-## Install and load
-
-Install into your active Julia environment. `CSV` and `DataFrames` are used
-later to read the observations; `Dates` is part of Julia. Run the tutorial
-blocks in order in the same session.
+Install the two packages in your Julia environment:
 
 ```julia
 using Pkg
-Pkg.add(["Cropbox", "Garlic", "CSV", "DataFrames"])
-
-using Cropbox
-using Garlic
-import Dates
+Pkg.add(["Cropbox", "Garlic"])
 ```
 
-## Inspect the model before running it
+The example below is a **Korean Mountain** hardneck garlic planting in Seattle.
+The configuration supplied by Garlic already contains the cultivar, weather,
+and calendar. Run the following blocks in order in one session:
+
+```julia
+using Cropbox, Garlic
+import Dates
+
+config = Garlic.Examples.AoB.KM_2014_P2_SR0
+result = simulate(Garlic.Model;
+    config,
+    stop = "calendar.count",
+    snap = s -> Dates.hour(s.calendar.time') == 12,
+);
+```
+
+The model updates hourly through the end of its calendar. The `snap` function
+reads the local time with `s.calendar.time'` and saves a row at noon each day;
+it does not change the model's time step.
+The semicolon keeps Julia from printing the whole table.
+
+## Read leaf and bulb mass
+
+Plot three columns of the saved result against `DAP` (days after planting):
+
+```julia
+visualize(result, :DAP, [:leaf_mass, :bulb_mass, :total_mass];
+    kind = :line,
+    names = ["Leaf", "Bulb", "Total"],
+    colors = [:green, :magenta, :blue],
+    xlab = "Days after planting",
+    ylab = "Dry mass per plant",
+)
+```
+
+![Simulated leaf, bulb, and whole-plant dry mass over a garlic season](../assets/tutorials/garlic-biomass.svg)
+
+Around day 125 the leaves are heavier than the bulb. By the last day (228
+days after planting), the bulb has about 17.6 g of dry mass per plant and
+the leaves 6.3 g. The total includes other organs too. These are simulated
+masses from the packaged scenario, not harvest measurements.
+
+To read the last saved day as numbers, use
+`result[end, [:DAP, :leaf_mass, :bulb_mass, :total_mass]]`. You can stop here
+after your first run. If you inspect the first rows instead, you will see
+`DAP = 0` more than once: the weather calendar begins before planting.
+
+## What drives the curves?
+
+The leaf and carbon plots below reuse the same `result`. To see which systems
+and parameters produced it, inspect the model type:
 
 ```julia
 look(Garlic.Model)
@@ -62,7 +99,7 @@ Keep this process chain in mind while reading the output:
 *The model proceeds from environment and phenology to canopy gas exchange and
 carbon allocation and organ growth.*
 
-The final mass curve is an outcome of this chain, not a growth curve fitted
+The dry-mass curves above emerge from these processes; they are not fitted
 directly to time.
 
 In the current implementation, leaf phenology and expansion determine
@@ -73,47 +110,6 @@ specific-leaf-area equation: the leaf-level `carbon_effect` is fixed at `1.0`.
 estimating potential leaf carbon demand. The process diagram therefore shows
 the implemented forward path rather than a general SLA-based crop-model
 feedback.
-
-## Use a packaged configuration
-
-Garlic includes complete parameter and environment sets under `Garlic.Examples`.
-The following set represents the Korean Mountain cultivar grown in Seattle for
-an experiment used by the model.
-
-```julia
-config = @config Garlic.Examples.AoB.KM_2014_P2_SR0
-```
-
-Keep the example configuration intact as a reproducible base. Apply small
-scenario patches after it rather than copying hundreds of values into a new
-tuple.
-
-## Run one daily-output simulation
-
-The model updates hourly. Its `calendar.count` value gives the number of updates
-between configured start and end dates. Save one row at noon each day:
-
-```julia
-result = simulate(Garlic.Model;
-    config,
-    stop = "calendar.count",
-    snap = s -> Dates.hour(s.calendar.time') == 12,
-)
-```
-
-`stop` and output paths may be strings when they refer to nested systems. The
-snapshot function receives the root instance and uses `'` to retrieve the
-calendar value.
-
-Check completion before plotting:
-
-```julia
-result[end, [:DAP, :leaves_initiated, :total_mass]]
-```
-
-Also inspect the first and last `time` values and the number of saved rows. If
-the last date is unexpectedly early, check the packaged calendar, weather
-coverage, and the `snap` predicate before interpreting plant output.
 
 ## Follow leaf development
 
@@ -156,23 +152,12 @@ a quick consistency check even before leaf area is plotted.
 
 ```julia
 visualize(result, :DAP, :green_leaf_area; kind = :line)
-
-visualize(result,
-    :DAP,
-    [:leaf_mass, :bulb_mass, :total_mass];
-    names = ["Leaf", "Bulb", "Total"],
-    kind = :line,
-)
 ```
 
-![Simulated garlic biomass](../assets/tutorials/garlic-biomass.svg)
-
-*Leaf, bulb, and total dry mass from the packaged Korean Mountain cultivar
-configuration.*
-
-Interpret these outputs together. Biomass partitioning depends on phenological
-stage, while phenology-driven green leaf area controls radiation interception
-and carbon supply.
+Compare green leaf area with the [leaf and bulb dry masses](#Read-leaf-and-bulb-mass)
+from the same run. Green leaf area determines how much radiation the plant
+can intercept. Biomass partitioning depends on developmental stage; more leaf
+mass does not directly produce more area through a fixed specific leaf area.
 
 ## Trace the carbon path
 
@@ -215,6 +200,12 @@ allocation parameter.
 The workshop overlays measured leaf area with several values of `LM_min`, the
 minimum length of the model's longest leaf. This combines an observation plot
 and grouped model runs without changing the packaged base configuration.
+Only this comparison needs the additional table-reading packages:
+
+```julia
+using Pkg
+Pkg.add(["CSV", "DataFrames"])
+```
 
 ```julia
 using CSV

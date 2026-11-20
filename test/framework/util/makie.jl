@@ -12,7 +12,6 @@
     @test p.opt[:labels] == ["model", "reference"]
     @test p.opt[:legendpos] == (0.1, -0.3)
     @test count(x -> x isa M.Legend, p[].content) == 1
-    @test visualize!(p, 120u"minute", 2000u"mg", "An = 10\ngs = 0.2") === p
     @test ax.limits[] == (nothing, nothing)
     @test ax.xlabel[] == " (hr)"
 
