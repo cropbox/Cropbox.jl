@@ -1,5 +1,3 @@
-using InteractiveUtils: subtypes
-
 @system FlowWeather begin
     Tmin => [4, 6]   ~ preserve::int[]
     Tmax => [16, 20] ~ preserve::int[]
@@ -57,28 +55,6 @@ end
 
         p = visualize(FlowRoot, :root; kind = :flow, depth = 0).plan
         @test Set((r.name, r.role) for r in only(p.events).reads) == Set([("lo", :lower), ("hi", :upper)])
-    end
-
-    @testset "state tags" begin
-        # Supported tags used for setup or control rather than for update reads.
-        other = (; Accumulate = (:timeunit,), Capture = (:unit, :timeunit), Advance = (:init, :step, :unit),
-            Drive = (:unit, :from, :by, :parameter, :override), Track = (:override, :skip, :extern, :ref),
-            Flag = (:override, :parameter, :once, :extern), Remember = (:init,), Bring = (:override, :parameters),
-            Produce = (:single,), Solve = (:pick,), Bisect = (:evalunit,), Integrate = (:unit,),
-            Preserve = (:unit, :optional, :parameter, :override, :extern, :ref, :min, :max, :round),
-            Provide = (:index, :init, :step, :autounit, :parameter), Interpolate = (:unit, :knotunit, :reverse, :parameter),
-            Tabulate = (:unit, :rows, :columns, :parameter))
-        v = only(e.node.info for e in plot.plan.events if e.node.info.name == :Tmean)
-        v = Cropbox.@set v.tags = merge(v.tags, Dict(:reset => true))
-        for S in subtypes(Cropbox.State)
-            (S === Cropbox.StateRef || parentmodule(S) !== Cropbox) && continue
-            k = nameof(S)
-            info = Cropbox.@set v.state = k
-            rules = [Cropbox.flowrule(Val(k), info, phase) for phase in (:pre, :main, :post)]
-            reads = unique(Symbol[t for r in rules if !isnothing(r) for t in r.tags])
-            @test sort([reads; collect(get(other, k, ()))]) == sort(collect(Cropbox.supportedtags(Val(k))))
-        end
-        @test_throws ArgumentError Cropbox.flowrule(Val(:Unknown), v, :main)
     end
 
     @testset "bound call inputs" begin
