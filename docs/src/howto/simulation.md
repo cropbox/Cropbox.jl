@@ -217,7 +217,6 @@ with `simulate!` can avoid rebuilding an expensive model.
 
 ## Randomness and batches
 
-`seed` is applied before configuration parsing and instance construction. This
-also controls distributions written with `±`. In a batch of configurations, the
-same seed is reset for each scenario. Use separate calls or explicit seed loops
-when every replicate must receive an independent random stream.
+`simulate` starts each run at `seed = 0` by default, including each scenario in
+a batch. This also controls parameters sampled with `±`. Use different integer
+seeds for distinct, reproducible replicates, or `seed = nothing` for fresh draws.

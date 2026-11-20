@@ -94,7 +94,7 @@ is useful for static response models and parameter grids.
 | `configs` | `[]` | scenario patches or complete configurations |
 | `parameters` | `()` | a compact parameter sweep with automatic metadata |
 | `options` | `()` | named constructor resources passed to every instance |
-| `seed` | `nothing` | random seed reset before each fresh instance |
+| `seed` | `0` | start each fresh simulation at this seed; `nothing` uses the current random stream |
 
 When both `config` and `configs` are present, Cropbox merges the shared
 `config` into every entry of `configs`, with the scenario entry taking
@@ -112,9 +112,9 @@ simulate(ResponseModel;
 ```
 
 Batch runs may use Julia threads. Keep callbacks free of unsynchronized writes
-to shared state. A `seed` makes each scenario reproducible, but it is reset to
-the same value for every scenario; run an explicit seed loop when replicates
-must use distinct random streams.
+to shared state. By default all scenarios start at the same seed. For distinct,
+repeatable replicates, use a different seed per run, such as
+`[simulate(Model; seed = i, stop = 10u"d") for i in 1:4]`.
 
 ## Output layout
 
@@ -349,6 +349,7 @@ calibrate(SystemType, observations;
     weight = nothing,
     pareto = false,
     optim = (),
+    seed = 0,
     warn = true,
     simulation_keywords...,
 )
@@ -383,10 +384,6 @@ Cropbox uses
 [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl)
 differential-evolution methods. `optim` is a named tuple forwarded to
 `bboptimize`; Cropbox defaults are `MaxSteps=5000` and `TraceInterval=10`.
-Immediately before calling `bboptimize`, Cropbox calls `Random.seed!(0)`, so
-optimizer initialization is deterministic. This is framework behavior rather
-than a BlackBoxOptim option. Set an explicit search budget in scripts so runtime
-does not depend on defaults.
 
 Calibration always minimizes the supplied objective. Error metrics such as
 `:rmse` and `:mae` can be used directly. Do not pass the higher-is-better `:ef`
@@ -428,6 +425,37 @@ Do not pass nonempty `config` and `configs` together to `evaluate` or
 and include environment-identifying columns in `index`. See [Evaluate and
 Calibrate Models](@ref evaluation-tutorial) for validation splits, residual
 checks, and reporting practice.
+
+### [Model sampling and the calibration seed](@id calibration-seeds)
+
+The optimizer tries candidate parameter values and compares their predictions
+with observations. This is separate from randomness inside the model: for
+example, each new root samples its own elongation rate from `(6.0 ± 0.6)u"cm/d"`.
+
+| `seed` | `simulate` | `calibrate` |
+|:-----|:----------|:------|
+| Omitted or `0` | Start each run at 0. | Start the search once at 0 and each candidate's simulation at 0. |
+| Another integer | Start each run at that seed. | Use that seed for the search and for each candidate and configuration. |
+| `nothing` | Continue drawing from the current random stream. | Use the caller's random stream for the search and draw fresh model seeds in configuration order. |
+
+An integer seed reproduces the sequence of candidate evaluations for the same
+inputs, package versions and evaluation budget. Roots within one plant still
+draw different traits: the seed restarts the whole simulation, not each root.
+Changing a model parameter can still change the architecture. Previously, omitting
+`seed` left simulation draws unfixed and set only the optimizer to zero. To keep
+the old unseeded simulation behavior, pass `seed = nothing`. A stochastic fit can
+also change under the new default.
+
+With either function, an integer seed leaves the caller's random stream unchanged.
+To replay a sequence of runs with fresh draws, call `Random.seed!(42)` once and
+pass `seed = nothing` to each call. Lower-level `instance` still defaults to
+`seed = nothing`; `simulate!` continues an existing instance without reseeding.
+
+There is no separate optimizer seed: changing `seed` on a stochastic model
+changes both sources of variation. A fit does not average each candidate's
+score over replicate seeds. To check biological variation **after fitting**,
+keep the fitted configuration fixed and vary only `simulate`'s seed, as in
+the [CropRootBox replicate example](@ref croprootbox-tutorial).
 
 ## API docstrings
 
