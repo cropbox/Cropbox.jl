@@ -400,26 +400,26 @@ terminal targets: `△` saves a rate and `▽` marks a binding.
 | `△` Upward triangle / `▽` downward triangle | Save a rate for the next update / show a local callable's bound inputs, without calling it. |
 | `⬡` Hexagon | A `solve`, `bisect`, `integrate`, or `wrap` operation; its internal steps are not expanded. |
 
-**Connections and colors.** Follow horizontal arrows *toward* the target.
+**Connections and colors.** The table gives the full key; each figure's legend
+shows only the marks used there. Follow horizontal arrows *toward* the target.
 A small open circle on a source lane marks a selected input; a small open
 square marks an input outside the selection (for example, `supply.rate`).
 In a wide terminal, `●` marks either kind of **input**, not the result.
 An unmarked crossing is not an input.
 
 ```@setup structure
-let shaft = "M2 8H30", tip = "M25 5.5 30 8 25 10.5"
-    for (name, color, dash, path, head) in (
-        ("read",    "#2D73A1", "none", shaft, tip),
-        ("binding", "#2D73A1", "5 3",  shaft, tip),
-        ("control", "#B27A24", "1 3",  shaft, tip),
-        ("value",   "#89949C", "none", "M24 1v0.2m0 1.8v1m0 2v2q0 2-3 3l-4 3", "M17.5 11.5 17 14l3-.3"),
-        ("rate",    "#258D80", "none", "M10 1v0.2m0 1.8v1m0 2v2q0 2 3 3l4 3", "M16.5 11.5 17 14l-3-.3"),
-        ("guide",   "#DEDEDE", "none", "M17 1v8m0 2v.3m0 2v.3", ""),
+let shaft = "M2 8H30", tip = "M25 5.5 30 8 25 10.5", dash = (solid = "none", dash = "5 3", dot = "1 3")
+    for (name, path, head) in (
+        (:read, shaft, tip), (:binding, shaft, tip), (:control, shaft, tip),
+        (:value, "M24 1v0.2m0 1.8v1m0 2v2q0 2-3 3l-4 3", "M17.5 11.5 17 14l3-.3"),
+        (:rate,  "M10 1v0.2m0 1.8v1m0 2v2q0 2 3 3l4 3", "M16.5 11.5 17 14l-3-.3"),
+        (:guide, "M17 1v8m0 2v.3m0 2v.3", ""),
     )
+        (; color, linestyle) = Cropbox.FLOW_STYLES[name]
         write("flow-key-$name.svg", """
             <svg xmlns="http://www.w3.org/2000/svg" width="34" height="16" fill="none"
                  stroke="$color" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="$path" stroke-dasharray="$dash"/><path d="$head"/>
+              <path d="$path" stroke-dasharray="$(dash[linestyle])"/><path d="$head"/>
             </svg>""")
     end
 end
@@ -495,12 +495,10 @@ increment rather than adding it. A declared `time = elapsed` identifies the
 clock used to measure the interval. The legend gives these meanings once per
 diagram, for the operations shown.
 
-The label follows the state declaration, not the variable's spelling. Plain
-calculations need no action label. An `if` in a body stays model code; it is
-not converted to a tag. For `when = mask[1]`,
-only `mask` is a condition input. For `when = mask[idx[]]`, both `mask` and
-the model variable `idx` are condition inputs, even if they are outside the
-selection. The literal `1` does not get a lane.
+An `if` in a body stays model code, not a control tag. For `when = mask[1]`
+only `mask` is a condition input; `when = mask[idx[]]` also reads `idx`.
+In `f(x[]).field`, the field belongs to the result: the row reads `x`, not
+`x.field`. It also reads `f` if `f` is itself a model variable.
 
 A variable used both in the calculation and as a control has both arrows.
 A tag describes behavior, not a runtime observation or a universal on/off

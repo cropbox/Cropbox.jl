@@ -23,13 +23,13 @@ end
 end
 
 @system FlowCall(Controller) begin
-    k: gain        => 1        ~ accumulate
-    f(gain; x)     => gain * x ~ call
-    g(f; x): scale => f(x) + 1 ~ call
+    k: gain        => 1                    ~ accumulate
+    f(gain; x)     => gain * x             ~ call
+    g(f; x): scale => (scaled = f(x) + 1,) ~ call::NamedTuple
 
-    out(h = scale)   => h(3.0)            ~ track
+    out(h = scale)   => h(3.0).scaled     ~ track
     available(scale) => !isnothing(scale) ~ flag
-    direct(v = scale(gain[]))             ~ track
+    direct(v = scale(gain[]).scaled)      ~ track
 end
 
 @testset "flow" begin
@@ -73,11 +73,11 @@ end
 
         s = instance(FlowCall)
         f = s.g
-        @test f(3.0) == s.out[] == 1
+        @test f(3.0).scaled == s.out[] == 1
         update!(s)
-        @test f(3.0) == s.out[] == 4
+        @test f(3.0).scaled == s.out[] == 4
         Cropbox.store!(s.k, 2)
-        @test f(3.0) == 7 && s.out[] == 4
+        @test f(3.0).scaled == 7 && s.out[] == 4
     end
 
     @testset "display and export" begin

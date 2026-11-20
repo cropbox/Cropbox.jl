@@ -102,7 +102,7 @@ flowrule(::Val{:Solve}, v, phase) = flowrule(:opaque, "select root"; equation = 
 flowrule(::Val{:Integrate}, v, phase) = flowrule(:opaque, ""; equation = true, tags = (:from, :to))
 flowrule(::Val{:Wrap}, v, phase) = flowrule(:opaque; equation = true)
 
-"""Collect declared reads: `rows[i[]].x` reads `rows.x` and `i`, not `i.x`."""
+"""Collect declared reads: `rows[i[]].x` reads `rows.x` and `i`; `f(i[]).x` reads `f` and `i`."""
 flowreferences(x, tail = "") = String[]
 flowreferences(x::Symbol, tail = "") = [string(x, tail)]
 flowreferences(ex::Expr, tail = "") = begin
@@ -115,12 +115,10 @@ flowreferences(ex::Expr, tail = "") = begin
         flowreferences(first(a), ".$k$tail")
     elseif isexpr(ex, Symbol("'"))
         flowreferences(first(a), tail)
-    elseif isexpr(ex, :ref, :call)
-        call = isexpr(ex, :call)
-        f = call ? flowreferences(first(a)) : String[]
-        xs = call ? @view(a[2:end]) : a
-        isempty(xs) && return f
-        vcat(f, flowreferences(first(xs), tail), (flowreferences(x) for x in Iterators.drop(xs, 1))...)
+    elseif isexpr(ex, :ref)
+        vcat(flowreferences(first(a), tail), (flowreferences(x) for x in Iterators.drop(a, 1))...)
+    elseif isexpr(ex, :call)
+        String[p for x in a for p in flowreferences(x)]
     else
         String[]
     end
@@ -225,6 +223,15 @@ flowrow(e, mono, italic) = begin
 end
 
 const FLOW_RAIL_TAPER = 13
+const FLOW_STYLES = let read = (color = "#2D73A1", linewidth = 0.8, linestyle = :solid)
+    (;
+        read, binding = (; read..., linestyle = :dash),
+        control = (color = "#B27A24", linewidth = 0.9, linestyle = :dot),
+        value = (color = "#89949C", linewidth = 0.65, linestyle = :solid),
+        rate = (color = "#258D80", linewidth = 0.75, linestyle = :solid),
+        guide = (color = "#DEDEDE", linewidth = 0.4, linestyle = :solid),
+    )
+end
 
 flowreadkind(e, r) = begin
     e.operation == :binding && return :binding
@@ -266,13 +273,14 @@ flowlayout(plan) = begin
     width = content + maximum((r.width for r in rows); init = 350) + 24
     sep = "   ·   "
     key = flowwrap(join(plan.hints, sep); width = floor(Int, (width-40)/4.85), sep)
-    height = bottom + 45 + 12flowlines(key)
+    hinty = bottom + (isempty(plan.carries) ? 30 : 42)
+    height = (isempty(rows) ? bottom+6 : hinty) + 3 + 12flowlines(key)
     uses(e, n) = string(e.node.info.name) == n || any(r -> r.name == n, e.reads)
     lastuse(n) = maximum((ys[i] for (i, e) in enumerate(entries) if uses(e, n)); init = top-6)
     active = [(x = xs[n], lo = top-6, hi = lastuse(n)) for n in plan.lanes]
     carries = [(; c..., x = xs[c.name] + (c.slot == :rate ? -rail : rail),
         segments = ((top-5, ys[c.to]-16), (ys[c.from]+16, bottom))) for c in plan.carries]
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key)
+    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, hinty, key)
 end
 
 struct FlowDiagram{P,F<:Real}
@@ -296,16 +304,8 @@ end
 
 flowdraw(r::FlowDiagram) = flowdraw(r.plan, flowlayout(r.plan), r.fontsize)
 flowdraw(plan, layout, fontsize) = begin
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, key) = layout
-    # Horizontal arrows: solid blue for reads, dashed blue for bindings, dotted ochre for controls.
-    read = (color = "#2D73A1", linewidth = 0.8, linestyle = :solid)
-    styles = (;
-        read, binding = (; read..., linestyle = :dash),
-        control = (color = "#B27A24", linewidth = 0.9, linestyle = :dot),
-        value = (color = "#89949C", linewidth = 0.65, linestyle = :solid),
-        rate = (color = "#258D80", linewidth = 0.75, linestyle = :solid),
-        guide = (color = "#DEDEDE", linewidth = 0.4, linestyle = :solid),
-    )
+    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, hinty, key) = layout
+    styles = FLOW_STYLES
     scale = fontsize / 10
     fig = Makie.with_theme(theme_classic()) do
         Makie.Figure(size = ceil.(Int, (width, height) .* scale), figure_padding = 0, backgroundcolor = :white)
@@ -455,7 +455,8 @@ flowdraw(plan, layout, fontsize) = begin
     end
     isempty(plan.events) && text!(target, top+6, "No update operations in this selection."; size = 9, face = :italic)
     labels = (:read => "read", :binding => "bound input", :control => "control", :value => "value (right)", :rate => "rate (left)", :guide => "variable guide")
-    labels = filter(p -> first(p) != :binding || any(e -> e.operation == :binding, plan.events), labels)
+    used = union(Symbol[k for g in readgroups for (_, k) in g], (c.slot for c in carries))
+    labels = filter(p -> first(p) in used || (first(p) == :guide && !isempty(rows)), labels)
     widths = [32 + 4.8textwidth(label) for (_, label) in labels]
     for (i, (role, label)) in enumerate(labels)
         x = 20 + sum(widths[1:i-1])
@@ -466,8 +467,8 @@ flowdraw(plan, layout, fontsize) = begin
         end
         text!(x+22, bottom+20, label; size = 8, color = "#777777")
     end
-    text!(20, bottom+33, "fading ends: read above from the previous update; save below for the next"; size = 8, color = "#777777")
-    isempty(key) || text!(20, bottom+42, key; size = 8, color = "#666666", align = (:left, :top))
+    isempty(carries) || text!(20, bottom+33, "fading ends: read above from the previous update; save below for the next"; size = 8, color = "#777777")
+    isempty(key) || text!(20, hinty, key; size = 8, color = "#666666", align = (:left, :top))
     for ((layer, color, linewidth, linestyle), cmds) in sort(collect(paths); by = p -> first(p)[1])
         Makie.lines!(scene, Makie.BezierPath(cmds); color, linewidth = linewidth*scale, linestyle)
     end

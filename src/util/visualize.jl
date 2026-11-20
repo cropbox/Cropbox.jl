@@ -1,7 +1,7 @@
 include("visualize/flow.jl")
 
 """
-    visualize(<arguments>; <keyword arguments>) -> Plot
+    visualize(<arguments>; <keyword arguments>)
 
 Visualize existing arrays or a DataFrame, or run the necessary simulations and visualize their output.
 With only a system type, `visualize(S; kind = :dependency)` instead returns a
@@ -77,16 +77,11 @@ display a grouped graph directly. Use [`Cropbox.writeimage`](@ref) to save an
 image, or [`Cropbox.writedot`](@ref) for renderer-independent Graphviz source.
 Exports inherit these options and can override them with their own `style`.
 
-Flow rows retain their target and position in the full system's update order.
-Dashed arrows at a local `call`'s row show inputs read on invocation, not at that row.
-The terminal shows arrows when the lanes fit, otherwise an input list.
-`[prev update]` and `[next update]` link retained values across updates;
-`#` refers to a numbered operation in the same diagram.
-Notebooks and SVG/PDF/PNG exports also show expressions and state actions.
-The figure is built only for graphical output. Use `look` for full declarations.
-Child operations and initialization are not expanded. The only flow style is
-`style = (fontsize = 10,)` for graphical output; `writedot` and `visualize!`
-do not apply. See the [flow diagram guide](@ref visualization-flow).
+Flow rows keep their positions in the full update; inputs outside the selection
+remain visible. Terminals show variable lanes when they fit, otherwise an input
+list. Notebooks and SVG/PDF/PNG exports also show expressions and state actions.
+Use `style = (fontsize = 10,)` to scale the figure. See the
+[flow diagram guide](@ref visualization-flow) and its [legend](@ref visualization-flow-legend).
 
 # Examples
 ```julia
