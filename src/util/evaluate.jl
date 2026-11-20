@@ -129,7 +129,7 @@ evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
     elseif isempty(config)
         evaluate(S, obs, configs; kwargs...)
     else
-        @error "redundant configurations" config configs
+        throw(ArgumentError("config and configs cannot be used together"))
     end
 end
 evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, warn = true, kwargs...) = begin
@@ -200,7 +200,7 @@ julia> evaluate(obs, est; index = :time, target = :b => :c)
 1.0 g
 ```
 """
-evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index = nothing, target, metric = nothing, warn = true, kwargs...) = begin
+evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index = nothing, target, metric = nothing, warn = true) = begin
     isnothing(index) && (index = :time)
     obs = filterobservations(obs, collect(keys(parsetarget(target, obs))))
     rows = warn ? Int[] : nothing

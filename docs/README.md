@@ -16,37 +16,34 @@ have an older layout. Both sites are published automatically through GitHub Page
 
 ## Where to begin
 
-- New to Cropbox? Start with the [overview](https://cropbox.github.io/Cropbox.jl/dev/),
-  [installation](https://cropbox.github.io/Cropbox.jl/dev/installation/), and
-  [quick start](https://cropbox.github.io/Cropbox.jl/dev/tutorials/quickstart/).
-- Want to understand the framework? Read
-  [How Cropbox Works](https://cropbox.github.io/Cropbox.jl/dev/concepts/overview/)
-  and [systems and composition](https://cropbox.github.io/Cropbox.jl/dev/guide/system/),
-  then follow the
-  [model execution flow](https://cropbox.github.io/Cropbox.jl/dev/concepts/lifecycle/).
-- Want to build a model step by step? Follow the
-  [Learning Path](https://cropbox.github.io/Cropbox.jl/dev/tutorials/) through
-  logistic growth, weather-driven phenology, and predator–prey models.
-- Already have a model? Use the task-oriented guides for configuration,
-  simulation, inspection, visualization, evaluation, and calibration.
-- Looking for exact syntax or options? Go directly to the DSL and public API
-  reference.
+After [installation](https://cropbox.github.io/Cropbox.jl/dev/installation/),
+choose one starting point:
+
+- **[Build a logistic growth model](https://cropbox.github.io/Cropbox.jl/dev/tutorials/quickstart/).**
+  Compare growth rates, then continue along the [Learning Path](https://cropbox.github.io/Cropbox.jl/dev/tutorials/).
+- **[Run the garlic model](https://cropbox.github.io/Cropbox.jl/dev/tutorials/garlic/).**
+  Use its packaged cultivar and weather to compare leaf and bulb dry mass.
+
+For the reasoning behind the examples, see
+[How Cropbox Works](https://cropbox.github.io/Cropbox.jl/dev/concepts/overview/).
+For exact syntax and options, use the
+[Reference](https://cropbox.github.io/Cropbox.jl/dev/reference/overview/).
 
 ## Model tutorials
 
 The documentation includes worked examples that connect model specification,
 simulation, visualization, and interpretation:
 
-- leaf gas exchange across CO₂, light, temperature, nitrogen, and water
-  conditions;
 - garlic phenology, leaf development, biomass, carbon flow, and planting-date
   scenarios;
-- SimpleCrop phenology, canopy growth, biomass partitioning, and coupled
-  environment;
-- the layered soil-water example and pedotransfer functions from the Cropbox
-  test suite;
+- leaf gas exchange across CO₂, light, temperature, nitrogen, and water
+  conditions;
 - CropRootBox root-system architecture, hierarchy traversal, rendering, and
-  geometry export.
+  geometry export;
+- SimpleCrop, a small model adapted from DSSAT teaching material that shows
+  how phenology, canopy growth, and biomass partitioning fit together;
+- the layered soil-water example and pedotransfer functions from the Cropbox
+  test suite.
 
 Each tutorial introduces the scientific source, shows the main configuration
 and simulation workflow, and includes figures generated from the model output.

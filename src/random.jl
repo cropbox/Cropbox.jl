@@ -1,3 +1,4 @@
+import Random
 using Distributions: Distribution, Normal
 #HACK: Measurements.jl causes weird StackOverFlow error when used with other packages (i.e. Plots, UnicodePlots)
 #HACK: not exactly same, but maybe related with https://github.com/PumasAI/Pumas.jl/issues/609
@@ -26,3 +27,15 @@ sample(v::Distribution) = rand(v)
 sample(v::Measurement) = rand(Normal(v.val, v.err))
 sample(v::Quantity{<:Measurement}) = unitfy(sample(deunitfy(v)), unittype(v))
 sample(v) = v
+
+withseed(f, ::Nothing) = f()
+withseed(f, seed) = begin
+    rng = Random.default_rng()
+    saved = copy(rng)
+    try
+        Random.seed!(rng, seed)
+        f()
+    finally
+        copy!(rng, saved)
+    end
+end

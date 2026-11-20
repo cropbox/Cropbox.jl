@@ -1,6 +1,5 @@
 using DataStructures: OrderedDict
 import DataFrames
-import Random
 import BlackBoxOptim
 
 """
@@ -10,7 +9,7 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 
 # Arguments
 - `S::Type{<:System}`: type of system to be calibrated.
-- `obs::DataFrame`: observation data to be used for calibration.
+- `obs::AbstractDataFrame`: observation data to be used for calibration, including a DataFrame view.
 
 # Keyword Arguments
 ## Configuration
@@ -23,6 +22,7 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 
 ## Calibration
 - `parameters`: parameters with a range of boundary values to be calibrated within.
+- `seed=0`: start the optimizer once and each candidate's simulation with this seed. Use `nothing` to draw fresh model seeds from the caller's random stream.
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
 - `warn=true`: warn once per search about partial observation matching.
 
@@ -63,16 +63,16 @@ Config for 1 system:
     a = 20.0
 ```
 """
-calibrate(S::Type{<:System}, obs::DataFrame; config=(), configs=[], kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame; config=(), configs=[], kwargs...) = begin
     if isempty(configs)
         calibrate(S, obs, [config]; kwargs...)
     elseif isempty(config)
         calibrate(S, obs, configs; kwargs...)
     else
-        @error "redundant configurations" config configs
+        throw(ArgumentError("config and configs cannot be used together"))
     end
 end
-calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), warn = true, kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), seed = 0, warn = true, kwargs...) = begin
     P = configure(parameters)
     K = parameterkeys(P)
     V = parametervalues(P)
@@ -87,8 +87,8 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
     IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
     IV = parseindex(index, S) |> values |> Tuple
     snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-    residual(c, rows) = begin
-        est = simulate(S; config=c, index, target, snap, verbose=false, kwargs...)
+    residual(c, rows, modelseed) = begin
+        est = simulate(S; config=c, index, target, snap, seed = modelseed, verbose=false, kwargs...)
         isempty(est) && return repeat([Inf], n)
         O, E = aligndata(obs, est, T; index = I, allowempty = true, rows)
         isempty(first(O)) && return repeat([Inf], n)
@@ -100,8 +100,10 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         l = length(configs)
         R = Vector(undef, l)
         rows = warn ? [Int[] for _ in 1:l] : fill(nothing, l)
+        # draw in configuration order, independent of worker scheduling
+        seeds = isnothing(seed) ? rand(UInt64, l) : nothing
         Threads.@threads for i in 1:l
-            R[i] = residual(configure(configs[i], c), rows[i])
+            R[i] = residual(configure(configs[i], c), rows[i], isnothing(seeds) ? seed : seeds[i])
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
         e = eachrow(hcat(A...)) |> sum
@@ -125,15 +127,10 @@ calibrate(S::Type{<:System}, obs::DataFrame, configs::Vector; index=nothing, tar
         MaxSteps=5000,
         TraceInterval=10,
     )
-    #HACK: initialize random seed before calling BlackBoxOptim
-    # https://github.com/robertfeldt/BlackBoxOptim.jl/issues/158
-    Random.seed!(0)
-    r = BlackBoxOptim.bboptimize(cost;
-        SearchRange=range,
-        method...,
-        optim_default...,
-        optim...
-    )
+    # BlackBoxOptim draws from the current task's RNG.
+    r = withseed(seed) do
+        BlackBoxOptim.bboptimize(cost; SearchRange = range, method..., optim_default..., optim...)
+    end
     all(isfinite, BlackBoxOptim.best_fitness(r)) ||
         throw(ArgumentError("no finite calibration result; check observation indices, stop, snap, and the metric"))
     if multi && pareto

@@ -4,6 +4,17 @@ These packages demonstrate different Cropbox workflows. Their biological
 parameters and model-specific APIs belong to their own repositories; this manual
 focuses on the Cropbox concepts shared across them.
 
+## Reproducing an example
+
+The SimpleCrop and Soil Water Transport examples run when this manual is
+built. The Leaf Gas Exchange, Garlic, and Root System Architecture pages
+instead show saved figures and give the commands to run in each model's own
+environment; a successful manual build does not rerun those three models.
+To repeat your own run, keep the input data and configuration with the Julia
+version and project's `Manifest.toml`. For a stochastic model, keep the seed
+as well. To reproduce a published result, start with the study's archived
+code and data where available.
+
 ## [LeafGasExchange.jl](https://github.com/cropbox/LeafGasExchange.jl)
 
 Coupled C₃/C₄ photosynthesis, stomatal conductance, and leaf energy balance.
@@ -25,9 +36,9 @@ demonstrates large-system composition and dynamic leaves. Start with the
 
 ## [SimpleCrop.jl](https://github.com/cropbox/SimpleCrop.jl)
 
-A compact modular crop model with phenology, canopy growth, partitioning,
-weather input, irrigation, and a soil-water balance. It is the executable model
-in the [SimpleCrop tutorial](@ref simplecrop-tutorial).
+A compact crop model based on the DSSAT modular-model teaching material. Use
+the [SimpleCrop tutorial](@ref simplecrop-tutorial) to trace how weather and
+irrigation inputs connect to canopy growth, soil water, and biomass.
 
 ## Cropbox layered-soil test model
 

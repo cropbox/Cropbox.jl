@@ -93,11 +93,12 @@ scenario results in a table for later analysis.
 
 ## Continue learning
 
-Next, read [How Cropbox Works](@ref cropbox-concepts), followed by
-[Systems and Composition](@ref system) and [Model Execution](@ref
-model-execution). Then follow the [Learning Path](@ref learning-path).
+Next: [Logistic Growth](@ref logistic-growth-tutorial). Use the same equation
+to ask a new question: how closely does the simulated curve follow a few
+example measurements? You will overlay points on the curve and calculate the
+size of the errors.
 
-For details you need along the way, use [DSL Syntax](@ref dsl-syntax),
-[`accumulate`](@ref behavior-accumulate), and the
-[Visualization API](@ref Visualization1). These are lookup pages, not
-prerequisites for the next lesson.
+If you want to understand how Cropbox reads a declaration, see
+[How Cropbox Works](@ref cropbox-concepts). For an exact tag or plotting
+argument, use the [Reference](@ref reference-guide). Neither is required for
+the next tutorial.

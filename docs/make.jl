@@ -28,13 +28,14 @@ makedocs(
                 "Weather-driven Phenology" => "tutorials/phenology.md",
                 "Predator–Prey Model" => "tutorials/lotka-volterra.md",
             ],
+            "Advanced: Chilling and Forcing" => "tutorials/chilling-forcing.md",
             "Model Studies" => [
                 "Models and Resources" => "gallery.md",
-                "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",
                 "Garlic Growth Model" => "tutorials/garlic.md",
+                "Leaf Gas Exchange" => "tutorials/leafgasexchange.md",
+                "Root System Architecture" => "tutorials/croprootbox.md",
                 "SimpleCrop" => "tutorials/simplecrop.md",
                 "Soil Water Transport" => "tutorials/soilwater.md",
-                "Root System Architecture" => "tutorials/croprootbox.md",
             ],
         ],
         "Guides" => [

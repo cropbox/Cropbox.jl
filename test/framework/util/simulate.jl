@@ -1,5 +1,6 @@
 using DataFrames
 using Dates
+import Random
 
 @testset "simulate" begin
     @testset "basic" begin
@@ -24,6 +25,13 @@ using Dates
         r = simulate(SSimulate, stop=n, index=:b, target=[:b])
         @test size(r, 2) == 1
         @test propertynames(r) == [:b]
+        for k in (:typo, "typo", :result => :typo)
+            @test_throws ArgumentError ["typo", "SSimulate"] simulate(SSimulate; index = k, target = :a)
+            @test_throws ArgumentError ["typo", "SSimulate"] simulate(SSimulate; target = ["*", k])
+        end
+        @test propertynames(simulate(SSimulate; base = "context.clock", target = :step)) == [:step]
+        @test propertynames(simulate(SSimulate; target = [:time, :a])) == [:time, :a]
+        @test_throws ArgumentError "typo" simulate(SSimulate; index = [:typo, :typo => :a])
     end
 
     @testset "stop number" begin
@@ -165,6 +173,7 @@ using Dates
         @test all(r2.b .% 2 .== 0)
         r3 = simulate(SSimulateSnap, stop=n, snap="f")
         @test all(r3.b .% 2 .== 0)
+        @test isempty(simulate(SSimulateSnap; snap = false, long = true))
     end
 
     @testset "snatch" begin
@@ -226,6 +235,37 @@ using Dates
         @test all(r[4][!, :c] .== 0) && all(r[4][!, :d] .== :D)
     end
 
+    @testset "bundle base" begin
+        @system SSimulateBundleLeaf begin
+            i(context.clock.tick): id ~ preserve::int
+            x: area => 2              ~ preserve
+        end
+        @system SSimulateBundle(Controller) begin
+            leaves => produce(SSimulateBundleLeaf) ~ produce::SSimulateBundleLeaf[]
+            query  => "*"                          ~ preserve::str
+
+            pick(t=context.clock.tick) => (t < 2 ? "*" : 1) ~ track::Any
+        end
+        kw = (; base = "leaves[query]", verbose = false)
+        @test isempty(simulate(SSimulateBundle; kw...))
+        r = simulate(SSimulateBundle; stop = 2, kw...)
+        @test r == DataFrame(time = [1, 2, 2]u"hr", i = [0, 0, 1], x = fill(2, 3))
+        @test simulate(SSimulateBundle; base = "leaves[pick]", target = :x, stop = 2, verbose = false).x == [2, 2]
+        t = :time => "context.clock.time"
+        layout = (; base = kw.base, index = t, target = [:i => :id, t, :x => :area], meta = :run => 1)
+        m = nothing
+        callback = (_, acc) -> (m = acc)
+        @test simulate(SSimulateBundle; layout..., stop = 2, verbose = false, callback) == insertcols(r, :run => 1)
+        @test m.layout == layout
+        @test collect(m.index) == [t] && collect(m.target) == layout.target
+        @test m.mapping == merge(m.index, m.target)
+        r = simulate(SSimulateBundle; target = :x, stop = 2, long = true, nounit = true, kw...)
+        @test r == DataFrame(time = [1, 2, 2], variable = fill("x", 3), value = fill(2, 3))
+        @test_throws ArgumentError "typo" simulate(SSimulateBundle; target = :typo, stop = 1, kw...)
+        @test_throws ArgumentError "conflicting simulation output" simulate(
+            SSimulateBundle; index = :out => :i, target = :out => :x, stop = 1, kw...)
+    end
+
     @testset "layout and configs" begin
         @system SSimulateLayoutConfigs(Controller) begin
             p ~ preserve(parameter)
@@ -263,6 +303,8 @@ using Dates
         r = simulate(SSimulateConfigs, configs=C, stop=n)
         @test r[r.time .== n*u"hr", :a] == p
         @test r[r.time .== n*u"hr", :b] == p .* n
+        @test_throws ArgumentError "configs and parameters cannot be used together" simulate(
+            SSimulateConfigs; configs = C, parameters = SSimulateConfigs => :a => p)
     end
 
     @testset "config and configs" begin
@@ -280,6 +322,41 @@ using Dates
         @test all(r[r.time .== n*u"hr", :x] .== x)
         @test r[r.time .== n*u"hr", :a] == A
         @test r[r.time .== n*u"hr", :b] == A .* n
+    end
+
+    @testset "output names" begin
+        @system SSimulateOutputLeaf begin
+            x: y => 2 ~ preserve
+            z    => 2 ~ preserve
+        end
+        @system SSimulateOutput(Controller) begin
+            year   => 2020 ~ preserve::int
+            day: d => 2    ~ preserve(u"d")
+
+            i(t = context.clock.tick): j => min(t + 1, 2) ~ track::int
+            v => [10, 20]                                ~ preserve::int[]
+
+            time(context.clock.time) ~ track(u"d")
+
+            leaf(context): l ~ ::SSimulateOutputLeaf
+        end
+        for (index, target) in (
+            (:year, :year => :day),
+            ((), [:x => "leaf.x", :x => "leaf.z"]),
+            ([:x => "leaf.x", :x => "leaf.z"], :year),
+        )
+            @test_throws ArgumentError "conflicting simulation output" simulate(SSimulateOutput; index, target)
+        end
+        r = simulate(SSimulateOutput; index = :day => :d, target = [:day => "day", :year])
+        @test propertynames(r) == [:day, :year]
+        @test only(r.day) == 2u"d"
+        r = simulate(SSimulateOutput; index = :x => "leaf.x", target = :x => "l.y")
+        @test only(r.x) == 2
+        r = simulate(SSimulateOutput; index = :x => "v[i]", target = :x => "v[j]", stop = 1, verbose = false)
+        @test r.x == [10, 20]
+        @test_throws ArgumentError "conflicting simulation output" simulate(SSimulateOutput; index = :x => "v[1]", target = :x => "v[i]")
+        @test only(simulate(SSimulateOutput).time) === 0.0u"d"
+        @test only(simulate(SSimulateOutput; target = ["*", :year => :day]).year) == 2u"d"
     end
 
     @testset "meta" begin
@@ -325,6 +402,8 @@ using Dates
         r4 = simulate(SSimulateWildcard; target=["A.*", "*"])
         @test names(r4) == ["time", "A.x", "A.y", "a", "b"]
         @test collect(r4[1,:]) == [0u"hr", 1, 2, 3, 4]
+        @test_throws ArgumentError "A.*" simulate(SSimulateWildcard; target = :out => "A.*")
+        @test_throws ArgumentError "A.*" simulate(SSimulateWildcard; index = Symbol("A.*") => "A.*", target = :a)
     end
 
     @testset "options" begin
@@ -346,11 +425,13 @@ using Dates
             b(a) ~ accumulate
         end
         n = 10
-        r1 = simulate(SSimulateSeed, seed=0, stop=n)
+        nextdraw = rand(copy(Random.default_rng()))
+        r1 = simulate(SSimulateSeed; stop = n)
         @test r1[end, :a] == 0.8969897902567084
         @test r1[end, :b] == 3.462686872284925
-        r2 = simulate(SSimulateSeed, seed=0, stop=n)
-        @test r1 == r2
+        @test simulate(SSimulateSeed; seed = 0, stop = n) == r1
+        @test simulate(SSimulateSeed; configs = [(), ()], stop = n, verbose = false) == vcat(r1, r1)
+        @test rand() == nextdraw
     end
 
     @testset "no seed" begin

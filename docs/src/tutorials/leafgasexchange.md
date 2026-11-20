@@ -154,12 +154,12 @@ visualize(LeafGasExchange.ModelC4MD,
 ![Simulated A-Ci response](../assets/tutorials/leafgasexchange-aci.svg)
 
 *C₄ assimilation and its biochemical limitation rates across the configured
-CO₂ range. The horizontal axis is solved `Ci`, not configured atmospheric
-`CO2`.*
+CO₂ range. The horizontal coordinate is the solved intercellular concentration
+`Ci`, not the atmospheric input.*
 
-`xstep` changes configured atmospheric CO₂ while `Ci` is plotted from the model
-solution. This distinction matters: the configured input and displayed x-axis
-need not be the same variable.
+To repeat this example, keep `base` fixed and vary atmospheric `CO2` from 10
+to 1500 in steps of 10. To reproduce the figures in the 2020 paper instead,
+use the [publication's companion notebook and data](https://github.com/cropbox/plants2020).
 
 Read the curve from the limitation rates toward `A_net`. In the C₃ model, net
 assimilation ``A_{net}`` follows the lowest active rate among ``A_c``, ``A_j``,

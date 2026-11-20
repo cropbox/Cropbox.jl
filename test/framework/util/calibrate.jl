@@ -1,4 +1,5 @@
 using DataFrames
+import Random
 isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
 
 @testset "calibrate" begin
@@ -133,6 +134,8 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         @test p1[:SCalibrateConfig][:a] == a/w1
         p2 = calibrate(SCalibrateConfig, obs, stop=n, target=:b, config=(:SCalibrateConfig => :w => w2), parameters=params)
         @test p2[:SCalibrateConfig][:a] == a/w2
+        @test_throws ArgumentError calibrate(SCalibrateConfig, obs;
+            config = p1, configs = [p2], target = :b, stop = n, parameters = params)
     end
 
     @testset "configs as index" begin
@@ -179,10 +182,45 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         end
         p = calibrate(SCalibrateAlignment, obs; target = :b, stop = 1, parameters, metric, optim)
         @test 0 <= p[:SCalibrateAlignment][:a] <= 4
+        v = view(obs, :, :)
+        @test calibrate(SCalibrateAlignment, v; target = :b, stop = 1, parameters, metric, optim) == p
+        @test calibrate(SCalibrateAlignment, v, [()]; target = :b, stop = 1, parameters, metric, optim) == p
         @test isequal(obs, before)
         @test_throws ArgumentError calibrate(SCalibrateAlignment, obs[1:1, :]; target = :b, stop = 1, parameters, optim)
         @test_throws ArgumentError calibrate(SCalibrateAlignment, obs; target = :b, stop = 0, snap = true,
             parameters, optim, metric = (E, O) -> 0.0)
         @test_throws ArgumentError calibrate(SCalibrateAlignment, obs; target = :b, stop = 1, snap = false, parameters, optim)
+    end
+
+    @testset "seed" begin
+        @system SCalibrateSeed(Controller) begin
+            a     => 0      ~ preserve(parameter)
+            noise => rand() ~ preserve
+
+            y(a, noise) => a + noise ~ track
+        end
+        S = SCalibrateSeed
+        obs = DataFrame(time = [0]u"hr", y = [1.0])
+        kw = (; target = :y, stop = 0, parameters = S => :a => (0.0, 2.0),
+            optim = (; MaxSteps = 3, PopulationSize = 8, TraceMode = :silent))
+        trial(; opts...) = begin
+            draws = Tuple{Float64,Float64}[]
+            calibrate(S, obs; kw..., opts..., snatch = (_, s) -> push!(draws, (s.a', s.noise')))
+            draws
+        end
+        expected = instance(S; seed = 0).noise'
+        nextdraw = rand(copy(Random.default_rng()))
+        baseline = trial()
+        @test !isempty(baseline) && all(==(expected), last.(baseline))
+        @test trial(; seed = 0) == baseline
+        @test first.(trial(; seed = 42)) != first.(baseline)
+        @test_throws "invalid test metric" calibrate(S, obs; kw..., metric = (E, O) -> error("invalid test metric"))
+        @test rand() == nextdraw
+
+        Random.seed!(42)
+        fresh = trial(; seed = nothing)
+        @test !allequal(last.(fresh))
+        Random.seed!(42)
+        @test trial(; seed = nothing) == fresh
     end
 end

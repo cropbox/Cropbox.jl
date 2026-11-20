@@ -103,6 +103,21 @@ date(t = calendar.time)                            => Dates.Date(t) ~ track::dat
 response(T = weather.temperature, k = coefficient) => T * k         ~ track
 ```
 
+A bare name in the dependency list does not import a variable from the
+surrounding module. Declare adjustable values in the model:
+
+```julia
+factor           => 2                ~ preserve(parameter)
+decay(x, factor) => factor * exp(-x) ~ track
+```
+
+In a directly written, simple equation, an already-defined non-`const` global
+such as `factor` or `Settings.factor` is an error at declaration. Julia
+functions and constants (including enum values) are fine; a Unitful literal
+like `u"m"` does not hide other inputs. Inherited equations and body-only
+overrides are not rechecked. Local assignments, other macros, and helper
+implementations are outside the scope of this check.
+
 Boolean expressions can be dependencies. Cropbox extracts the referenced
 variables and preserves the expression.
 
@@ -128,13 +143,17 @@ behavior.
 x(a, b) => a + b ~ track
 ```
 
-A `begin ... end` block may hold a longer equation. Its last expression becomes
-the result.
+A `begin ... end` block takes the value of its last expression. In a `track`
+body, `return` finishes only that variable's calculation: its tags still apply
+and the model continues updating dependent variables. `call` and `integrate`
+also have their own function bodies. For other behaviors, use the last
+expression or put an early return inside a helper function. A `return` inside
+a nested function or `do` block belongs to that function.
 
 ```julia
 stress(T, lower, upper) => begin
-    raw = (T - lower) / (upper - lower)
-    raw
+    T <= lower && return 0
+    (T - lower) / (upper - lower)
 end ~ track(min = 0, max = 1)
 ```
 
@@ -257,15 +276,16 @@ Header braces support type substitution and system constants.
 
 ```julia
 @system DailyContext{Clock => DailyClock}(Context) <: Context
-@system S{coefficient = 2}(Controller) begin
-    y => coefficient * 3 ~ preserve
+@system S{coeff = 2}(Controller) begin
+    y(coeff) => 3coeff ~ preserve
 end
 ```
 
 Type substitution rewrites declarations that refer to the old type so they use
-the replacement type. Constants are resolved while Cropbox constructs the
-generated code. Keep patches close to the system that needs them and explain
-them in the system docstring.
+the replacement type. The header constant `coeff` is available to `preserve`
+at construction. For use during updates, depend on a preserved variable
+instead. Keep patches close to the system that needs them and explain them in
+the system docstring.
 
 ## Documentation strings
 

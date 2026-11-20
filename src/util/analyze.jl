@@ -66,9 +66,9 @@ output is named `:summary`. It receives a fresh DataFrame on every model run,
 not a previously stored trajectory. `stop` is required (`stop = 0` for static
 models). Endpoint analysis reads the final model state even if `snap` omits it.
 
-`base`, `options`, and `seed` follow `simulate`; other keywords are forwarded to
-`simulate!`. Endpoint analysis disables snapshots by default; callbacks retain
-the normal snapshot behavior. `raw` preserves the original GlobalSensitivity
+`base` and `options` follow `simulate`; `seed` follows `instance` (default `nothing`).
+Other keywords are forwarded to `simulate!`. Endpoint analysis disables snapshots
+by default; callbacks retain the normal snapshot behavior. `raw` preserves the original GlobalSensitivity
 result, including interactions and confidence information not shown in `table`.
 
 See also: [`simulate`](@ref), [`evaluate`](@ref), [`calibrate`](@ref)
@@ -124,8 +124,8 @@ analyze(summarize::Union{Function,Nothing}, S::Type{<:System};
         Y = Any[]
         for (i, c) in enumerate(C)
             s = instance(S; config = configure(c, sampled), options, seed)
-            snap = isnothing(summarize) ? false : nothing
-            df = simulate!(s; base, target, stop, snap, verbose = false, kw...)
+            snap = get(kw, :snap, isnothing(summarize) ? false : nothing)
+            df = simulate!(s; base, target = snap === false ? () : target, stop, snap, verbose = false, kw...)
             if isnothing(summarize)
                 append!(Y, [value(s[base][v]) for v in values(T)])
             else

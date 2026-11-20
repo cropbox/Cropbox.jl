@@ -4,6 +4,18 @@ Cropbox is a framework for building and running crop models in Julia. Describe
 the variables and equations; Cropbox connects their dependencies, advances the
 model, and collects its output.
 
+## Start here
+
+After [installing Cropbox](@ref Installation), choose a starting point:
+
+- **[Build a logistic growth model](@ref quick-start).** Write the growth
+  equation, run it, and compare three growth rates in one figure.
+- **[Run the garlic model](@ref garlic-tutorial).** Start with a packaged
+  cultivar and weather record. Run one growing season and see how dry mass
+  changes in the leaves and bulb without writing any model equations.
+
+## A model in a few lines
+
 A small growth model can be simulated and plotted in one call:
 
 ```@example home
@@ -25,17 +37,9 @@ The same specification → simulation → visualization and evaluation workflow
 also applies to leaf gas exchange, whole-plant growth, soil water, and root
 architecture.
 
-## Start here
-
-[Install Cropbox](@ref Installation), then follow the
-[Quick Start](@ref quick-start) to run this model and compare growth scenarios.
-The [Learning Path](@ref learning-path) continues with weather input and
-interacting populations.
-
-Already working on a model? Use the [guides](@ref configuration-workflow) for
-specific tasks, or the [Reference](@ref reference-guide) for full syntax,
+Here to look something up? The [Reference](@ref reference-guide) covers syntax,
 arguments, examples, and results. [Models and Resources](@ref Gallery) links
-the larger applications, papers, and workshop material.
+to published models, papers, and workshops.
 
 ## Citation
 

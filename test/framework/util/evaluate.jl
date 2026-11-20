@@ -14,6 +14,7 @@ using DataFrames
         end
         @test evaluate(obs, est; index=:time, target=:mass, metric) == 4.0
         @test evaluate(obs, est; target = :mass, metric) == 4.0
+        @test_throws MethodError evaluate(obs, est; target = :mass, group = :model)
 
         # Symmetric errors do not reveal a reversal; these denominators do.
         expected = (
@@ -106,6 +107,8 @@ using DataFrames
         @test_logs (:warn, r"1 of 2 complete observations matched") @test evaluate(SEvaluateMatching, obs;
             index, target = :b, stop = 1) == 0
         @test_logs @test evaluate(SEvaluateMatching, obs; index, target = :b, stop = 1, warn = false) == 0
+        @test_throws ArgumentError evaluate(SEvaluateMatching, obs;
+            config = first(configs), configs, index, target = :b, stop = 1)
     end
 
     @testset "target types" begin
