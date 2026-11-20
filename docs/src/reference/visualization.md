@@ -2,9 +2,9 @@
 
 Cropbox provides one main visualization family and an optional interactive
 wrapper. The same calls work with existing data or with a model that still
-needs to be simulated. To inspect declarations without running the model, use
-`visualize(S)` or `visualize(S; kind = :hierarchy)`; see
-[Model structure](@ref visualization-structure).
+needs to be simulated. Without running the model, use `visualize(S)` or
+`visualize(S; kind = :hierarchy)` for [model structure](@ref visualization-structure),
+or `visualize(S; kind = :flow)` for [the computation order within one update](@ref visualization-flow).
 
 Choose a call by its inputs and the comparison you want to draw. The table
 below links to examples in the same order. Each main example has a Makie figure

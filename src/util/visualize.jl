@@ -1,9 +1,12 @@
+include("visualize/flow.jl")
+
 """
-    visualize(<arguments>; <keyword arguments>) -> Plot
+    visualize(<arguments>; <keyword arguments>)
 
 Visualize existing arrays or a DataFrame, or run the necessary simulations and visualize their output.
 With only a system type, `visualize(S; kind = :dependency)` instead returns a
 static structural graph; use `kind = :hierarchy` for system composition.
+Use `kind = :flow` for a static, row-by-row view of one generated update.
 
 See also: [`visualize!`](@ref), [`simulate`](@ref), [`manipulate`](@ref)
 
@@ -38,17 +41,18 @@ julia> visualize(S, :time, :a; stop = 5, kind = :line)
 visualize(a...; kw...) = plot(a...; kw...)
 
 """
-    visualize(S::Type{<:System}; kind = :dependency, style = ()) -> Graph
+    visualize(S::Type{<:System}; kind = :dependency, style = ())
     visualize(S::Type{<:System}, selector;
-        kind = :dependency, depth = 1, direction = :both, style = ()) -> Graph
+        kind = :dependency, depth = 1, direction = :both, style = ())
 
 Show a system's declared structure without running a simulation. `kind` is
-`:dependency` for variables and their generated update stages, or `:hierarchy`
-for system composition and mixins. The hierarchy omits nested `Context`
+`:dependency` for variables and their generated update stages, `:hierarchy`
+for system composition and mixins, or `:flow` for the static order of
+operations in one update. The hierarchy omits nested `Context`
 infrastructure. Simulation plots still use `visualize(S, x, y; ...)`.
 
-For dependency graphs, a selector may be a variable name, a `source => target`
-pair, or a vector combining names and pairs. Names select neighborhoods:
+Dependency and flow selectors both follow the compiler's dependency graph. Use a
+variable name, a `source => target` pair, or a vector combining them. Names select neighborhoods:
 `depth = 0` keeps only the named variables, and each additional level crosses one
 variable boundary. `direction` is `:up` for inputs, `:down` for affected variables,
 or `:both`. Pairs select directed variable paths between their endpoints, independent
@@ -63,15 +67,21 @@ same-timestep execution chain.
 
 `[:a, :c]` selects the union of two neighborhoods, which may be disconnected or
 include side branches. `:a => :c` selects the connecting paths regardless of
-their length, without off-path neighbors. Both retain all generated phases of
-included variables and configuration sources for included parameters. Selected
-names and path endpoints are emphasized in bold.
+their length, without off-path neighbors. Dependency graphs retain all generated
+phases of included variables and configuration sources for included parameters.
+They emphasize selected names and path endpoints in bold.
 
-The returned graph has a text representation in a terminal and an SVG display
-in notebooks. Pass rendering options such as `style = (group = :system,)` to
+Dependency/hierarchy graphs have a text representation in a terminal and an
+SVG display in notebooks. Pass options such as `style = (group = :system,)` to
 display a grouped graph directly. Use [`Cropbox.writeimage`](@ref) to save an
 image, or [`Cropbox.writedot`](@ref) for renderer-independent Graphviz source.
 Exports inherit these options and can override them with their own `style`.
+
+Flow rows keep their positions in the full update; inputs outside the selection
+remain visible. Terminals show variable lanes when they fit, otherwise an input
+list. Notebooks and SVG/PDF/PNG exports also show expressions and state actions.
+Use `style = (fontsize = 10,)` to scale the figure. See the
+[flow diagram guide](@ref visualization-flow) and its [legend](@ref visualization-flow-legend).
 
 # Examples
 ```julia
@@ -82,24 +92,27 @@ visualize(GrowingDegree, [:T, :r])
 visualize(GrowingDegree, :T => :r)
 visualize(GrowingDegree, [:Tb, :T => :r])
 visualize(GrowingDegree; style = (group = :system,))
+visualize(GrowingDegree; kind = :flow)
+visualize(GrowingDegree, :r; kind = :flow, direction = :up)
 ```
 """
-visualize(S::Type{<:System}; kind=:dependency, style=()) = begin
+visualize(S::Type{<:System}; kind = :dependency, style = ()) = begin
+    kind == :flow && return flowdiagram(S, dependency(S); style)
     g = if kind == :dependency
         dependency(S)
     elseif kind == :hierarchy
-        hierarchy(S; skipcontext=true)
+        hierarchy(S; skipcontext = true)
     else
-        throw(ArgumentError("structure kind must be :dependency or :hierarchy"))
+        throw(ArgumentError("structure kind must be :dependency, :hierarchy, or :flow"))
     end
     styledgraph(g, style)
 end
-visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector};
-    kind=:dependency, depth::Integer=1, direction=:both, style=(),
-) = begin
-    kind == :dependency || throw(ArgumentError("variable selectors require kind=:dependency"))
+visualize(S::Type{<:System}, selector::Union{Symbol,Pair,AbstractVector}; kind = :dependency, depth::Integer = 1, direction = :both, style = ()) = begin
+    kind in (:dependency, :flow) || throw(ArgumentError("variable selectors require kind = :dependency or kind = :flow"))
     selectors = selector isa AbstractVector ? selector : [selector]
-    styledgraph(selectiondependency(dependency(S), selectors; depth, direction), style)
+    d = dependency(S)
+    selected = selectiondependency(d, selectors; depth, direction)
+    kind == :flow ? flowdiagram(S, d; selected, style) : styledgraph(selected, style)
 end
 
 """

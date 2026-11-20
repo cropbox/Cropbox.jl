@@ -433,4 +433,6 @@ end
         output(df) = repr(MIME"text/plain"(), visualize(df, :x, :y, :z; backend = :UnicodePlots)[]; context = :color => true)
         @test output(df) == output(df[[4, 1, 3, 2], :])
     end
+
+    include("visualize/flow.jl")
 end

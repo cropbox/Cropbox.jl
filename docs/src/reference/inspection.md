@@ -8,7 +8,7 @@ Inspection functions answer different questions about one model:
 | `look` | What does this system or variable declare? |
 | `@look` | Can I write the same inspection in convenient property syntax? |
 | `dive` | What is inside this constructed nested instance? |
-| `visualize` | How do variables depend on one another, and how are systems composed? |
+| `visualize` | How are variables/systems related, and in what order are they updated? |
 
 Use the type when studying structure and an instance when current values
 matter.
@@ -118,23 +118,28 @@ scripts, explicit property paths and `look` are easier to reproduce.
 
 ## [Model structure](@id visualization-structure)
 
-With only a system type, `visualize` returns a structural graph instead of
+With only a system type, `visualize` returns a static diagram instead of
 simulating a trajectory. The default `kind = :dependency` shows variables and
 their generated update stages. `kind = :hierarchy` shows system composition and
 mixins, omitting nested `Context` infrastructure. A dependency graph covers the
 composed declarations of one system, including mixins; child systems are not
-recursively expanded into their variables.
+recursively expanded into their variables. `kind = :flow` arranges one
+system's update operations vertically, with a lane for each variable.
 
 | Question | Call |
 |:---|:---|
 | What are the declared dependencies? | `visualize(S)` |
 | Which systems and mixins compose the model? | `visualize(S; kind = :hierarchy)` |
+| What happens during one generated update? | `visualize(S; kind = :flow)` |
 | What directly supplies `x`? | `visualize(S, :x; direction = :up)` |
 | What directly uses `x`? | `visualize(S, :x; direction = :down)` |
 | What connects `a` to `c`? | `visualize(S, :a => :c)` |
 
 For name selectors, the defaults are `depth = 1` and `direction = :both`.
 `depth` counts variable boundaries, not the generated phases of one variable.
+The diagrams display graphically in notebooks. Expand **Terminal output (REPL)**
+below an example to see the same result as text. Structural diagrams do not
+take a plotting `backend` option.
 
 ```@example structure
 using Cropbox
@@ -149,18 +154,46 @@ end
     mass(gain)                 ~ accumulate(u"g")
 end
 
-visualize(StructuralGrowth)
+g = visualize(StructuralGrowth)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+The text lists variables and their generated phases in update order.
+
+```@example structure
+show(stdout, MIME"text/plain"(), g) # hide
+```
+
+```@raw html
+</details>
 ```
 
 ```@example structure
-visualize(StructuralGrowth; kind = :hierarchy)
+g = visualize(StructuralGrowth; kind = :hierarchy)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+The text lists the systems in the hierarchy. The diagram shows how they are related.
+
+```@example structure
+show(stdout, MIME"text/plain"(), g) # hide
+```
+
+```@raw html
+</details>
 ```
 
 These graphs describe declared relationships, not observed activity in a run.
 `visualize(S, x, y; kind = :line, stop = ...)` still means a simulation plot;
-`visualize(df, x, y)` uses saved data. Variable selectors are supported only for
-`kind = :dependency`. `visualize!` remains a plot-layer operation, not a way to
-modify a structural graph.
+`visualize(df, x, y)` uses saved data. Variable selectors are supported for
+`kind = :dependency` and `kind = :flow`. `visualize!` remains a plot-layer
+operation, not a way to modify these static diagrams.
 
 ### A built-in thermal response
 
@@ -257,6 +290,9 @@ demonstrates a path through an accumulated thermal state.
 
 ### Read the symbols
 
+This key is for dependency and hierarchy graphs. For `kind = :flow`, see the
+[flow diagram legend](@ref visualization-flow-legend).
+
 | Appearance | Meaning |
 |:---|:---|
 | Plain label | Ordinary derived or fixed variable, remembered value, or system reference |
@@ -319,9 +355,242 @@ This is a declaration graph, not a count of leaves created during a run.
 `visualize(LeafUnit)` inspects that child's variables. Use the
 [dynamic hierarchy APIs](@ref dynamic-hierarchies) to inspect runtime children.
 
+### [Computation flow diagram](@id visualization-flow)
+
+A flow diagram follows one update in compiler order, showing expressions,
+conditions, and retained state. It describes potential reads, not an observed
+run or a stock-and-flow model. For a large model, start with one variable or
+a `source => target` path; inputs outside the selection remain visible.
+
+```@example structure
+g = visualize(GrowingDegree; kind = :flow)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+```@example structure
+show(stdout, MIME"text/plain"(), g) # hide
+```
+
+```@raw html
+</details>
+```
+
+Read downward through the numbered rows. Each number is a position in the
+full update, so a selection can leave gaps. Variables occupy lanes; a fixed
+input can have a lane without an operation. Horizontal arrows on the same
+row lead to one target, not from one input to the next.
+
+#### [Flow diagram legend](@id visualization-flow-legend)
+
+**Operation symbols.** In the figure, the shape at the arrow tip tells you
+what Cropbox does on that row. In a wide terminal, the target usually shows
+the *phase* instead: `◓` pre, `○` main, `◒` post. Two operations have their own
+terminal targets: `△` saves a rate and `▽` marks a binding.
+
+| Target in the figure | Operation |
+|:---|:---|
+| `●` Filled circle / `○` open circle | Compute a value (`track`) / keep the first eligible value (`remember`). |
+| `□` Square | Update an accumulated value, captured increment, or counter (`accumulate`, `capture`, `advance`). |
+| Rounded square / double rounded square | Update a field or child system / update or queue children with `produce`. |
+| `▱` Parallelogram | Read a stored driver input (`drive`). |
+| `◇` Diamond | Evaluate a flag (`flag`). |
+| `△` Upward triangle / `▽` downward triangle | Save a rate for the next update / show a local callable's bound inputs, without calling it. |
+| `⬡` Hexagon | A `solve`, `bisect`, `integrate`, or `wrap` operation; its internal steps are not expanded. |
+
+**Connections and colors.** The table gives the full key; each figure's legend
+shows only the marks used there. Follow horizontal arrows *toward* the target.
+A small open circle on a source lane marks a selected input; a small open
+square marks an input outside the selection (for example, `supply.rate`).
+In a wide terminal, `●` marks either kind of **input**, not the result.
+An unmarked crossing is not an input.
+
+```@setup structure
+let shaft = "M2 8H30", tip = "M25 5.5 30 8 25 10.5", dash = (solid = "none", dash = "5 3", dot = "1 3")
+    for (name, path, head) in (
+        (:read, shaft, tip), (:binding, shaft, tip), (:control, shaft, tip),
+        (:value, "M24 1v0.2m0 1.8v1m0 2v2q0 2-3 3l-4 3", "M17.5 11.5 17 14l3-.3"),
+        (:rate,  "M10 1v0.2m0 1.8v1m0 2v2q0 2 3 3l4 3", "M16.5 11.5 17 14l-3-.3"),
+        (:guide, "M17 1v8m0 2v.3m0 2v.3", ""),
+    )
+        (; color, linestyle) = Cropbox.FLOW_STYLES[name]
+        write("flow-key-$name.svg", """
+            <svg xmlns="http://www.w3.org/2000/svg" width="34" height="16" fill="none"
+                 stroke="$color" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="$path" stroke-dasharray="$(dash[linestyle])"/><path d="$head"/>
+            </svg>""")
+    end
+end
+```
+
+| Figure | Terminal | How to read it |
+|:---|:---|:---|
+| ![](flow-key-read.svg) Solid blue arrow | `●──→○`; `x ← a, b` in a list | Read the marked inputs for this target. Several inputs on one row are not a chain. |
+| ![](flow-key-binding.svg) Dashed blue arrow | `●╌╌→▽`; `f ⇠ k` in a list | `f` binds `k`. Its current value is read **when `f` is invoked**, not at the numbered binding row. |
+| ![](flow-key-control.svg) Dotted ochre arrow | `[when ready]` or `[reset restart]` | Read a control. The terminal shows the tag instead of a separate control arrow. `[once]` is a latch, not another input. |
+| Arrow looping back to its own lane | `↺` in wide output | A row reads its own variable. This is distinct from carrying a value across updates. |
+| ![](flow-key-value.svg) Gray rail, right of the lane | `← mass [prev update]` | Carry a value, counter, or memory. A name means the same row retained it. |
+| ![](flow-key-rate.svg) Teal rail, left of the lane | `← #9 [prev update]` / `→ #8 [next update]` | Carry a cached rate between two rows. `#` refers to the other row's number, not a variable or timestep. |
+| ![](flow-key-guide.svg) Pale gray center line | Lane heading only | Follow the same variable to its last use; the dotted background guide and horizontal row dividers carry no value. |
+| — | `┬─`, `├─`, `└─` in a list | More inputs to the **same row** on a narrow terminal. |
+
+The tapered rail **above** a target brings a value or rate in from the previous
+update; the one **below** saves it for the next. If terminal colors are enabled,
+input lines are light blue, controls yellow, row numbers and cross-references
+gray, and rate targets and update labels cyan. The symbols also work without color.
+
+**Computation column.** Read the target name first. Monospace is a declared
+expression or setting (`share(0.3)`, `lower = 0`); italics are a Cropbox action
+(*drive · read input*); an outlined tag such as `when = ready` applies to that
+row. The terminal keeps the names and tags, but omits expressions and action text.
+
+#### Worked examples
+
+An accumulating state needs two operations, but not two repeated timesteps:
+
+```@example structure
+@system ThermalFlow(Controller) begin
+    Tb: base_temperature => 5            ~ preserve(parameter, u"°C")
+    T: temperature       => [8, 12, 16]  ~ drive(u"°C")
+    rate(T, Tb) => max(T - Tb, 0u"K")    ~ track(u"K")
+    total(rate): thermal_time            ~ accumulate(u"K*d")
+    mature(total) => total >= 50u"K*d"   ~ flag(once)
+end
+
+tf = visualize(ThermalFlow; kind = :flow)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+**Wide terminal (100 columns).** Here `rate` is a model variable, while `△`
+marks the operation that saves the rate for `total`.
+
+```@example structure
+show(IOContext(stdout, :displaysize => (24, 100)), MIME"text/plain"(), tf) # hide
+```
+
+**Narrow terminal (40 columns).** When lanes do not fit, the inputs are
+listed by name. The rate-saving row lists its input, then points to the next update.
+
+```@example structure
+show(IOContext(stdout, :displaysize => (24, 40)), MIME"text/plain"(), tf) # hide
+```
+
+Follow the paired `#` numbers between the two `total` rows. In contrast,
+`mature` retains its own flag value, so its previous-update link names `mature`.
+
+```@raw html
+</details>
+```
+
+Read the two rows named `total` together. The first says *accumulate*: add
+the **previously cached rate** multiplied by elapsed time. The later row shows
+`rate` followed by *accumulate · save rate*: the input from `total(rate)` is
+saved for the next update. A `capture` replaces its value with that same
+increment rather than adding it. A declared `time = elapsed` identifies the
+clock used to measure the interval. The legend gives these meanings once per
+diagram, for the operations shown.
+
+An `if` in a body stays model code, not a control tag. For `when = mask[1]`
+only `mask` is a condition input; `when = mask[idx[]]` also reads `idx`.
+In a declaration argument or tag, the diagram shows possible reads: both sides
+of `&&` or `||`, each operand of `lo[] < T[] <= hi[]`, and the condition and
+both alternatives of `on[] ? lo[] : hi[]`. Only the chosen alternative runs.
+In `f(x[]).field`, the field belongs to the result: the row reads `x`, not
+`x.field`. It also reads `f` if `f` is a model variable. The broadcast
+`f.(xs[])` has the same model inputs and call bindings as `map(f, xs[])`.
+
+A variable used both in the calculation and as a control has both arrows.
+A tag describes behavior, not a runtime observation or a universal on/off
+switch. For `accumulate` and `capture`, a false `when` saves a **zero rate**;
+it does not skip the main row. An accumulator samples `reset` alongside that
+rate even if `when` is false. If set, the next main row starts from `init`
+before adding the increment. An ordinary `track` uses `init` or zero when
+its condition is false; a flag clears unless already latched by `once`.
+For `produce`, the existing child is updated independently of `when`. Only
+the later row queues new children for construction next update; a single
+child can be queued only while empty. A driver reads the input stored at
+construction, not the source table anew. With a bisection, only an explicit
+`min` or `max` adds a clipping row; `lower` and `upper` are search bounds.
+An outer `begin … end` is reduced to its statements; multiple statements are
+parenthesized and separated by semicolons. Private names use `Owner._name`,
+keeping identically named fields from different mixins distinct without exposing
+internal mangled names. Use `look` for complete declarations, aliases,
+units, and documentation.
+
+Name, vector, and path selectors use the compiler's dependency graph. A flow
+arrow can show a read that is not an edge in that graph: for example, with
+`dotted(v = sum(f.(xs[])))`, the diagram shows `xs` as an input, but
+`:xs => :dotted` can raise an `ArgumentError` because there is no compiler path.
+Select the target with `depth = 0` to see its declared reads instead:
+`visualize(S, :dotted; kind = :flow, depth = 0)`. For the accumulator above:
+
+```@example structure
+visualize(ThermalFlow, :total; kind = :flow, depth = 0)
+```
+
+This retains `total`'s operations in their original order. Its omitted input
+`rate` remains visible as a gray boundary lane, not as a shortcut through a
+hidden computation. This differs from a dependency graph, whose unselected
+nodes are simply absent. Selecting more variables does not reorder the full
+system's schedule.
+
+This model both updates a child system and calls a local function:
+
+```@example structure
+@system GrowthAllocation(StructuralGrowth) begin
+    share(gain; f)   => f * gain   ~ call(u"g/hr")
+    root_rate(share) => share(0.3) ~ track(u"g/hr")
+end
+
+diagram = visualize(GrowthAllocation; kind = :flow)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+```@example structure
+show(stdout, MIME"text/plain"(), diagram) # hide
+```
+
+```@raw html
+</details>
+```
+
+`supply.rate` is a boundary read; inspect `visualize(Supply; kind = :flow)`
+for the child's update. The dashed arrow into `share` identifies `gain` as a
+bound input. Here `root_rate` invokes `share` with the argument `0.3`; another
+consumer could pass the callable without invoking it. Each local binding is
+shown once, including nested calls. Initialization, child steps and solver
+internals are not expanded.
+
+#### Graphical export
+
+The Makie/CairoMakie figure is created only for notebook display or export.
+Its only style option is
+`style = (fontsize = 10,)`, which scales text and spacing together. The monospace
+and italic fonts are bundled with Makie; no system font installation is needed. The canvas
+grows with variables and rows instead of clipping or shrinking them.
+
+```@example structure
+Cropbox.writeimage("flow.svg", diagram)
+Cropbox.writeimage("flow.pdf", diagram)
+Cropbox.writeimage("flow.png", diagram; px_per_unit = 2)
+nothing # hide
+```
+
+Download the [Flow SVG](flow.svg), [PDF](flow.pdf), or [PNG](flow.png).
+Graphviz-specific `style`, `engine`, and `writedot` options do not apply to
+flow diagrams. `visualize!` does not add layers to this diagram.
+
 ### Display, grouping, and export
 
-Structural graphs use bundled Graphviz, not the Makie/UnicodePlots plotting
+Dependency and hierarchy graphs use bundled Graphviz, not the Makie/UnicodePlots plotting
 backends. Notebooks display SVG; terminals show a compact text summary without
 running Graphviz. A failed automatic SVG render shows a fallback notice and
 logs the underlying exception as a warning; explicit image export reports
