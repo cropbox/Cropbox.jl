@@ -124,11 +124,16 @@ visualize(result,
 
 ![Simulated garlic leaf development](../assets/tutorials/garlic-leaf-development.svg)
 
-*Initiated leaves appear, mature, and eventually drop in a biologically ordered
-sequence. Step geometry preserves the count-variable interpretation.*
+*Initiated leaves appear, mature, and eventually drop. The steps represent
+changes in leaf count, not fractions of a leaf.*
 
-A step plot matches count variables better than an interpolated line. Plot
-initiated and appeared leaves together when diagnosing phenology.
+To repeat these curves, use the packaged Seattle scenario
+`Garlic.Examples.AoB.KM_2014_P2_SR0` and the noon snapshots above. The
+[field observation comparison](#Compare-observations-across-parameter-values)
+uses a different scenario and a Korean field data file; those observations
+are not measurements from this Seattle run.
+
+Plot initiated and appeared leaves together when diagnosing phenology:
 
 ```julia
 visualize(result,
