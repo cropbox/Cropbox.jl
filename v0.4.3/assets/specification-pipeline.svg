@@ -1,0 +1,31 @@
+<!-- Adapted from the Cropbox course code-generation diagram, 2026-03-10. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 230" role="img" aria-labelledby="title desc">
+  <title id="title">From Cropbox specification to generated Julia model code</title>
+  <desc id="desc">Cropbox parses a domain-specific model specification, analyzes its dependency graph, and generates Julia model code.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667085"/>
+    </marker>
+  </defs>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="20" y="35" width="270" height="150" rx="16" fill="#eef2ff" stroke="#4063d8" stroke-width="3"/>
+    <text x="155" y="82" fill="#243b8f" font-size="23" font-weight="700">Model specification</text>
+    <text x="155" y="120" fill="#17212b" font-size="18">@system DSL</text>
+    <text x="155" y="150" fill="#475467" font-size="15">meaning and behavior</text>
+
+    <path d="M 302 110 H 333" fill="none" stroke="#667085" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="345" y="35" width="270" height="150" rx="16" fill="#fff7df" stroke="#d69e2e" stroke-width="3"/>
+    <text x="480" y="82" fill="#8a5b08" font-size="23" font-weight="700">Model analysis</text>
+    <text x="480" y="120" fill="#17212b" font-size="18">dependency graph</text>
+    <text x="480" y="150" fill="#475467" font-size="15">validation and update order</text>
+
+    <path d="M 627 110 H 658" fill="none" stroke="#667085" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="670" y="35" width="270" height="150" rx="16" fill="#edf6f7" stroke="#3b8792" stroke-width="3"/>
+    <text x="805" y="82" fill="#286570" font-size="23" font-weight="700">Model code</text>
+    <text x="805" y="120" fill="#17212b" font-size="18">generated Julia</text>
+    <text x="805" y="150" fill="#475467" font-size="15">types and update routines</text>
+  </g>
+</svg>

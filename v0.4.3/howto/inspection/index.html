@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="referrer" content="no-referrer"/><title>Inspect and Visualize Models · Cropbox.jl</title><meta name="title" content="Inspect and Visualize Models · Cropbox.jl"/><meta property="og:title" content="Inspect and Visualize Models · Cropbox.jl"/><meta property="twitter:title" content="Inspect and Visualize Models · Cropbox.jl"/><meta name="description" content="Documentation for Cropbox.jl."/><meta property="og:description" content="Documentation for Cropbox.jl."/><meta property="twitter:description" content="Documentation for Cropbox.jl."/><meta property="og:url" content="https://cropbox.github.io/Cropbox.jl/stable/howto/inspection/"/><meta property="twitter:url" content="https://cropbox.github.io/Cropbox.jl/stable/howto/inspection/"/><link rel="canonical" href="https://cropbox.github.io/Cropbox.jl/stable/howto/inspection/"/><script async src="https://www.googletagmanager.com/gtag/js?id=UA-192782823-1"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-192782823-1', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Cropbox.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Cropbox.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Start Here</span><ul><li><a class="tocitem" href="../../">Overview</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../tutorials/quickstart/">Quick Start</a></li></ul></li><li><span class="tocitem">Core Concepts</span><ul><li><a class="tocitem" href="../../concepts/overview/">How Cropbox Works</a></li><li><a class="tocitem" href="../../guide/system/">Systems and Composition</a></li><li><a class="tocitem" href="../../concepts/lifecycle/">Model Execution</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorials/">Learning Path</a></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Build a Model</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../tutorials/growth/">Logistic Growth</a></li><li><a class="tocitem" href="../../tutorials/phenology/">Weather-driven Phenology</a></li><li><a class="tocitem" href="../../tutorials/lotka-volterra/">Predator–Prey Model</a></li></ul></li><li><a class="tocitem" href="../../tutorials/chilling-forcing/">Advanced: Chilling and Forcing</a></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">Model Studies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../gallery/">Models and Resources</a></li><li><a class="tocitem" href="../../tutorials/garlic/">Garlic Growth Model</a></li><li><a class="tocitem" href="../../tutorials/leafgasexchange/">Leaf Gas Exchange</a></li><li><a class="tocitem" href="../../tutorials/croprootbox/">Root System Architecture</a></li><li><a class="tocitem" href="../../tutorials/simplecrop/">SimpleCrop</a></li><li><a class="tocitem" href="../../tutorials/soilwater/">Soil Water Transport</a></li></ul></li></ul></li><li><span class="tocitem">Guides</span><ul><li><a class="tocitem" href="../configuration/">Configure Models and Scenarios</a></li><li><a class="tocitem" href="../simulation/">Run Simulations and Shape Output</a></li><li class="is-active"><a class="tocitem" href>Inspect and Visualize Models</a><ul class="internal"><li><a class="tocitem" href="#List-parameters"><span>List parameters</span></a></li><li><a class="tocitem" href="#Inspect-declarations-and-values"><span>Inspect declarations and values</span></a></li><li><a class="tocitem" href="#Inspect-dependency-relationships"><span>Inspect dependency relationships</span></a></li><li><a class="tocitem" href="#Navigate-an-instance"><span>Navigate an instance</span></a></li><li><a class="tocitem" href="#Read-values-in-Julia-code"><span>Read values in Julia code</span></a></li><li><a class="tocitem" href="#Visualize-an-existing-result"><span>Visualize an existing result</span></a></li><li><a class="tocitem" href="#Interactively-explore-parameters"><span>Interactively explore parameters</span></a></li><li><a class="tocitem" href="#Plot-a-parameter-response"><span>Plot a parameter response</span></a></li><li><a class="tocitem" href="#Compare-observations-and-estimates"><span>Compare observations and estimates</span></a></li></ul></li><li><a class="tocitem" href="../../tutorials/evaluation/">Evaluate and Calibrate Models</a></li><li><a class="tocitem" href="../sensitivity/">Sensitivity Analysis</a></li><li><a class="tocitem" href="../../guide/projects/">Projects and Model Packages</a></li><li><a class="tocitem" href="../../guide/webservice/">Web Services and Dashboards</a></li><li><input class="collapse-toggle" id="menuitem-4-8" type="checkbox"/><label class="tocitem" for="menuitem-4-8"><span class="docs-label">Troubleshooting</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../faq/">Frequently Asked Questions</a></li><li><a class="tocitem" href="../../troubleshooting/common-mistakes/">Common Mistakes</a></li><li><a class="tocitem" href="../../troubleshooting/performance/">Performance and Reproducibility</a></li></ul></li></ul></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../../reference/overview/">How to Use the Reference</a></li><li><a class="tocitem" href="../../reference/dsl/">DSL Syntax</a></li><li><a class="tocitem" href="../../reference/behaviors/">Behaviors and Tags</a></li><li><a class="tocitem" href="../../reference/declaration/">Declarations</a></li><li><a class="tocitem" href="../../reference/simulation/">Simulation API</a></li><li><a class="tocitem" href="../../reference/sensitivity/">Sensitivity Analysis API</a></li><li><a class="tocitem" href="../../reference/visualization/">Visualization API</a></li><li><a class="tocitem" href="../../reference/inspection/">Inspection API</a></li><li><a class="tocitem" href="../../reference/webapi/">Web API</a></li><li><a class="tocitem" href="../../reference/utilities/">Values and Units</a></li><li><a class="tocitem" href="../../reference/hierarchy/">Dynamic Hierarchies</a></li><li><a class="tocitem" href="../../reference/components/">Built-in Model Components</a></li><li><a class="tocitem" href="../../reference/">API Index</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Guides</a></li><li class="is-active"><a href>Inspect and Visualize Models</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Inspect and Visualize Models</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/cropbox/Cropbox.jl/blob/main/docs/src/howto/inspection.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="inspection-workflow"><a class="docs-heading-anchor" href="#inspection-workflow">Inspect and Visualize Models</a><a id="inspection-workflow-1"></a><a class="docs-heading-anchor-permalink" href="#inspection-workflow" title="Permalink"></a></h1><p>Inspection should come before editing configuration or selecting output. Cropbox provides complementary views of a model type, an instance, and simulation data.</p><h2 id="List-parameters"><a class="docs-heading-anchor" href="#List-parameters">List parameters</a><a id="List-parameters-1"></a><a class="docs-heading-anchor-permalink" href="#List-parameters" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Cropbox
+
+@system InspectDemo(Controller) begin
+    rate: growth_rate =&gt; 2 ~ preserve(parameter, u&quot;g/hr&quot;)
+    mass(rate)             ~ accumulate(u&quot;g&quot;)
+end
+
+parameters(InspectDemo)</code></pre><p style="font-family: monospace">Config for 1 system:</p>
+<table style="font-family: monospace">
+<tr style="background-color: transparent">
+<td colspan="3" style="text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple">InspectDemo</th>
+</tr>
+<tr style="background-color: transparent"><td style="text-align: left; padding: 2px; padding-left: 40px; color: royalblue">rate</td><td style="text-align: center; padding: 2px 10px 2px 10px; color: gray">=</td><td style="text-align: left; padding: 2px;">2 g hr^-1</td></tr>
+</table>
+<p>Useful options are:</p><ul><li><code>alias = true</code>: show aliases rather than short names;</li><li><code>recursive = true</code>: include parameters in nested systems;</li><li><code>exclude = (...)</code>: omit infrastructure or already visited systems;</li><li><code>scope = module</code>: choose where defaults are evaluated when inspecting a type.</li></ul><p>For an instance, <code>parameters(s)</code> reports current values rather than declaration defaults.</p><h2 id="Inspect-declarations-and-values"><a class="docs-heading-anchor" href="#Inspect-declarations-and-values">Inspect declarations and values</a><a id="Inspect-declarations-and-values-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-declarations-and-values" title="Permalink"></a></h2><pre><code class="language-julia hljs">look(InspectDemo)
+look(InspectDemo, :mass)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[system]</span>
+<span class="sgr95">InspectDemo</span>
+  <span class="sgr94">context</span>
+  <span class="sgr94">config</span>
+  <span class="sgr94">rate</span><span class="sgr90"> (growth_rate)</span>
+  <span class="sgr94">mass</span><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[code]</span>
+  mass(rate) ~ accumulate(u<span class="sgr32">&quot;g&quot;</span>)</code></pre><p>On an instance, <code>look</code> also displays the current value.</p><pre><code class="language-julia hljs">s = instance(InspectDemo)
+look(s, :mass)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[code]</span>
+  mass(rate) ~ accumulate(u<span class="sgr32">&quot;g&quot;</span>)
+
+<span class="sgr90">[value]</span>
+0.0 g</code></pre><p>The macro form avoids quoting a variable name:</p><pre><code class="language-julia hljs">@look InspectDemo.mass</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr90">[doc]</span>
+
+<span class="sgr90">[code]</span>
+  mass(rate) ~ accumulate(u<span class="sgr32">&quot;g&quot;</span>)</code></pre><p><code>@look s.f(x)</code> has another meaning: it evaluates a function-like Cropbox variable. Use the function form <code>look(s, :f)</code> when the goal is declaration inspection.</p><h2 id="Inspect-dependency-relationships"><a class="docs-heading-anchor" href="#Inspect-dependency-relationships">Inspect dependency relationships</a><a id="Inspect-dependency-relationships-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-dependency-relationships" title="Permalink"></a></h2><p><code>look</code> shows declarations; <code>visualize</code> shows their relationships without running a simulation:</p><pre><code class="language-julia hljs">d = visualize(InspectDemo)</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 15.1.0 (20260618.0150)
+ -->
+<!-- Pages: 1 -->
+<svg width="355pt" height="180pt"
+ viewBox="0.00 0.00 355.00 180.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 175.88)">
+<polygon fill="white" stroke="none" points="-4,4 -4,-175.88 351.08,-175.88 351.08,4 -4,4"/>
+<!-- 1&%2345;&gt;2 -->
+<g id="edge1" class="edge">
+<title>1&%2345;&gt;2</title>
+<path fill="none" stroke="black" stroke-width="0.3" d="M40.08,-127.22C40.08,-123.51 40.08,-118.86 40.08,-114.86"/>
+<polygon fill="black" stroke="black" stroke-width="0.3" points="40.08,-113.08 40.98,-115.08 40.08,-113.72 40.08,-115.08 40.08,-115.08 40.08,-115.08 40.08,-113.72 39.18,-115.08 40.08,-113.08"/>
+</g>
+<!-- 2&%2345;&gt;3 -->
+<g id="edge2" class="edge">
+<title>2&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.3" d="M42.34,-97.47C48.14,-80.79 63.48,-36.62 70.04,-17.75"/>
+<polygon fill="black" stroke="black" stroke-width="0.3" points="70.67,-15.92 70.87,-18.11 70.46,-16.52 70.02,-17.81 70.02,-17.81 70.02,-17.81 70.46,-16.52 69.17,-17.51 70.67,-15.92"/>
+</g>
+<!-- 2&%2345;&gt;6 -->
+<g id="edge3" class="edge">
+<title>2&%2345;&gt;6</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M58.5,-97.34C71.06,-92.8 87.76,-86.76 101.03,-81.97"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="101.04,-82.71 102.68,-81.37 100.56,-81.39 101.04,-82.71"/>
+</g>
+<!-- 2&%2345;&gt;7 -->
+<g id="edge4" class="edge">
+<title>2&%2345;&gt;7</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M60.51,-104.19C84.12,-103.53 123.39,-99.69 152.08,-82.9 165.29,-75.17 175.87,-60.71 182.06,-50.73"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="182.64,-51.13 183.08,-49.06 181.44,-50.4 182.64,-51.13"/>
+</g>
+<!-- 4&%2345;&gt;1 -->
+<g id="edge5" class="edge">
+<title>4&%2345;&gt;1</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M295.58,-161.27C248.69,-156.63 120.02,-143.91 65.27,-138.49"/>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="65.4,-137.8 63.34,-138.3 65.26,-139.19 65.4,-137.8"/>
+</g>
+<!-- 4&%2345;&gt;3 -->
+<g id="edge6" class="edge">
+<title>4&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M320.29,-156.4C330.27,-146.49 347.08,-126.74 347.08,-106 347.08,-106 347.08,-106 347.08,-72 347.08,-21.13 165.42,-11.33 97.93,-9.45"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="98.29,-8.76 96.27,-9.4 98.25,-10.16 98.29,-8.76"/>
+</g>
+<!-- 4&%2345;&gt;5 -->
+<g id="edge7" class="edge">
+<title>4&%2345;&gt;5</title>
+<path fill="none" stroke="black" stroke-width="0.2" stroke-dasharray="1,5" d="M310.3,-156.31C303.65,-140.33 286.87,-99.97 279.57,-82.4"/>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="278.19,-81.17 279.67,-80.55 280.28,-82.03 278.8,-82.64 278.19,-81.17"/>
+<polyline fill="none" stroke="black" stroke-width="0.2" points="279.54,-82.34 279.7,-82.71"/>
+</g>
+<!-- 5&%2345;&gt;7 -->
+<g id="edge8" class="edge">
+<title>5&%2345;&gt;7</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M263.47,-67.42C249.58,-62.37 227,-54.15 210.16,-48.03"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="210.54,-47.43 208.43,-47.4 210.07,-48.74 210.54,-47.43"/>
+</g>
+<!-- 6&%2345;&gt;3 -->
+<g id="edge9" class="edge">
+<title>6&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M115.91,-62.97C106.24,-50.78 89.12,-29.21 79.72,-17.37"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="80.37,-17.06 78.58,-15.93 79.27,-17.93 80.37,-17.06"/>
+</g>
+<!-- 6&%2345;&gt;7 -->
+<g id="edge10" class="edge">
+<title>6&%2345;&gt;7</title>
+<path fill="none" stroke="black" stroke-width="0.3" d="M141.53,-62.92C149.69,-58.9 159.33,-54.15 167.7,-50.03"/>
+<polygon fill="black" stroke="black" stroke-width="0.3" points="169.47,-49.16 168.08,-50.85 168.91,-49.44 167.68,-50.04 167.68,-50.04 167.68,-50.04 168.91,-49.44 167.28,-49.23 169.47,-49.16"/>
+</g>
+<!-- 7&%2345;&gt;3 -->
+<g id="edge11" class="edge">
+<title>7&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M168.04,-32.95C148.59,-28.04 119.01,-20.58 98.04,-15.3"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="98.44,-14.67 96.33,-14.86 98.1,-16.03 98.44,-14.67"/>
+</g>
+<!-- 1 -->
+<g id="node1" class="node">
+<title>1</title>
+<text xml:space="preserve" text-anchor="middle" x="40.08" y="-132.07" font-family="Courier,monospace" font-size="9.00">∘context</text>
+</g>
+<!-- 2 -->
+<g id="node2" class="node">
+<title>2</title>
+<text xml:space="preserve" text-anchor="middle" x="40.08" y="-102.08" font-family="Courier,monospace" font-size="9.00">context</text>
+</g>
+<!-- 3 -->
+<g id="node3" class="node">
+<title>3</title>
+<text xml:space="preserve" text-anchor="middle" x="73.08" y="-5.08" font-family="Courier,monospace" font-size="9.00">⋆context</text>
+</g>
+<!-- 4 -->
+<g id="node4" class="node">
+<title>4</title>
+<text xml:space="preserve" text-anchor="middle" x="313.08" y="-161.07" font-family="Courier,monospace" font-size="9.00">config</text>
+</g>
+<!-- 5 -->
+<g id="node5" class="node">
+<title>5</title>
+<text xml:space="preserve" text-anchor="middle" x="276.08" y="-70.08" font-family="Courier,monospace" font-size="9.00">rate</text>
+</g>
+<!-- 6 -->
+<g id="node6" class="node">
+<title>6</title>
+<polygon fill="none" stroke="black" stroke-width="0.5" points="143.06,-82.9 103.1,-82.9 103.1,-63.1 143.06,-63.1 143.06,-82.9"/>
+<text xml:space="preserve" text-anchor="middle" x="123.08" y="-70.08" font-family="Courier,monospace" font-size="9.00">mass</text>
+</g>
+<!-- 7 -->
+<g id="node7" class="node">
+<title>7</title>
+<polygon fill="none" stroke="black" stroke-width="0.5" points="208.06,-48.9 168.1,-48.9 168.1,-29.1 208.06,-29.1 208.06,-48.9"/>
+<text xml:space="preserve" text-anchor="middle" x="188.08" y="-36.08" font-family="Courier,monospace" font-size="9.00">⋆mass</text>
+</g>
+</g>
+</svg>
+'/><pre><code class="language-julia hljs">h = visualize(InspectDemo; kind = :hierarchy)</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 15.1.0 (20260618.0150)
+ -->
+<!-- Pages: 1 -->
+<svg width="92pt" height="50pt"
+ viewBox="0.00 0.00 92.00 50.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 46.14)">
+<polygon fill="white" stroke="none" points="-4,4 -4,-46.14 88.28,-46.14 88.28,4 -4,4"/>
+<!-- 2&%2345;&gt;1 -->
+<g id="edge1" class="edge">
+<title>2&%2345;&gt;1</title>
+<path fill="none" stroke="black" stroke-width="0.2" stroke-dasharray="5,2" d="M42.14,-15.7C42.14,-18.3 42.14,-21.34 42.14,-24.14"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="41.44,-24.12 42.14,-26.12 42.84,-24.12 41.44,-24.12"/>
+</g>
+<!-- 1 -->
+<g id="node1" class="node">
+<title>1</title>
+<text xml:space="preserve" text-anchor="start" x="13.27" y="-32.22" font-family="Courier,monospace" font-weight="bold" font-size="9.00">InspectDemo</text>
+</g>
+<!-- 2 -->
+<g id="node2" class="node">
+<title>2</title>
+<text xml:space="preserve" text-anchor="start" x="15.89" y="-6.21" font-family="Courier,monospace" font-weight="bold" font-size="9.00">Controller</text>
+</g>
+</g>
+</svg>
+'/><p>The default <code>kind = :dependency</code> follows variables and generated update stages; <code>kind = :hierarchy</code> follows mixins and child systems, omitting nested <code>Context</code> infrastructure. Dashed hierarchy edges denote mixins. Cropbox uses its bundled Graphviz executable to render either graph as SVG on supported platforms. A static copy can be written for documentation:</p><pre><code class="language-julia hljs">Cropbox.writeimage(&quot;dependency&quot;, d; format = :svg)
+Cropbox.writeimage(&quot;hierarchy&quot;, h; format = :svg)</code></pre><p>Download the generated <a href="../dependency.svg">dependency graph</a> or <a href="../hierarchy.svg">hierarchy graph</a>.</p><p>The text representation remains available without invoking Graphviz.</p><p>To inspect just the inputs to <code>mass</code>, select its upstream neighborhood:</p><pre><code class="language-julia hljs">visualize(InspectDemo, :mass; direction = :up)</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 15.1.0 (20260618.0150)
+ -->
+<!-- Pages: 1 -->
+<svg width="355pt" height="180pt"
+ viewBox="0.00 0.00 355.00 180.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 175.88)">
+<polygon fill="white" stroke="none" points="-4,4 -4,-175.88 351.08,-175.88 351.08,4 -4,4"/>
+<!-- 1&%2345;&gt;2 -->
+<g id="edge1" class="edge">
+<title>1&%2345;&gt;2</title>
+<path fill="none" stroke="black" stroke-width="0.3" d="M40.08,-127.22C40.08,-123.51 40.08,-118.86 40.08,-114.86"/>
+<polygon fill="black" stroke="black" stroke-width="0.3" points="40.08,-113.08 40.98,-115.08 40.08,-113.72 40.08,-115.08 40.08,-115.08 40.08,-115.08 40.08,-113.72 39.18,-115.08 40.08,-113.08"/>
+</g>
+<!-- 2&%2345;&gt;3 -->
+<g id="edge2" class="edge">
+<title>2&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.3" d="M42.34,-97.47C48.14,-80.79 63.48,-36.62 70.04,-17.75"/>
+<polygon fill="black" stroke="black" stroke-width="0.3" points="70.67,-15.92 70.87,-18.11 70.46,-16.52 70.02,-17.81 70.02,-17.81 70.02,-17.81 70.46,-16.52 69.17,-17.51 70.67,-15.92"/>
+</g>
+<!-- 2&%2345;&gt;6 -->
+<g id="edge3" class="edge">
+<title>2&%2345;&gt;6</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M58.5,-97.34C71.06,-92.8 87.76,-86.76 101.03,-81.97"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="101.04,-82.71 102.68,-81.37 100.56,-81.39 101.04,-82.71"/>
+</g>
+<!-- 2&%2345;&gt;7 -->
+<g id="edge4" class="edge">
+<title>2&%2345;&gt;7</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M60.51,-104.19C84.12,-103.53 123.39,-99.69 152.08,-82.9 165.29,-75.17 175.87,-60.71 182.06,-50.73"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="182.64,-51.13 183.08,-49.06 181.44,-50.4 182.64,-51.13"/>
+</g>
+<!-- 4&%2345;&gt;1 -->
+<g id="edge5" class="edge">
+<title>4&%2345;&gt;1</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M295.58,-161.27C248.69,-156.63 120.02,-143.91 65.27,-138.49"/>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="65.4,-137.8 63.34,-138.3 65.26,-139.19 65.4,-137.8"/>
+</g>
+<!-- 4&%2345;&gt;3 -->
+<g id="edge6" class="edge">
+<title>4&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M320.29,-156.4C330.27,-146.49 347.08,-126.74 347.08,-106 347.08,-106 347.08,-106 347.08,-72 347.08,-21.13 165.42,-11.33 97.93,-9.45"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="98.29,-8.76 96.27,-9.4 98.25,-10.16 98.29,-8.76"/>
+</g>
+<!-- 4&%2345;&gt;5 -->
+<g id="edge7" class="edge">
+<title>4&%2345;&gt;5</title>
+<path fill="none" stroke="black" stroke-width="0.2" stroke-dasharray="1,5" d="M310.3,-156.31C303.65,-140.33 286.87,-99.97 279.57,-82.4"/>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="278.19,-81.17 279.67,-80.55 280.28,-82.03 278.8,-82.64 278.19,-81.17"/>
+<polyline fill="none" stroke="black" stroke-width="0.2" points="279.54,-82.34 279.7,-82.71"/>
+</g>
+<!-- 5&%2345;&gt;7 -->
+<g id="edge8" class="edge">
+<title>5&%2345;&gt;7</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M263.47,-67.42C249.58,-62.37 227,-54.15 210.16,-48.03"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="210.54,-47.43 208.43,-47.4 210.07,-48.74 210.54,-47.43"/>
+</g>
+<!-- 6&%2345;&gt;3 -->
+<g id="edge9" class="edge">
+<title>6&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M115.91,-62.97C106.24,-50.78 89.12,-29.21 79.72,-17.37"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="80.37,-17.06 78.58,-15.93 79.27,-17.93 80.37,-17.06"/>
+</g>
+<!-- 6&%2345;&gt;7 -->
+<g id="edge10" class="edge">
+<title>6&%2345;&gt;7</title>
+<path fill="none" stroke="black" stroke-width="0.3" d="M141.53,-62.92C149.69,-58.9 159.33,-54.15 167.7,-50.03"/>
+<polygon fill="black" stroke="black" stroke-width="0.3" points="169.47,-49.16 168.08,-50.85 168.91,-49.44 167.68,-50.04 167.68,-50.04 167.68,-50.04 168.91,-49.44 167.28,-49.23 169.47,-49.16"/>
+</g>
+<!-- 7&%2345;&gt;3 -->
+<g id="edge11" class="edge">
+<title>7&%2345;&gt;3</title>
+<path fill="none" stroke="black" stroke-width="0.2" d="M168.04,-32.95C148.59,-28.04 119.01,-20.58 98.04,-15.3"/>
+<polygon fill="black" stroke="black" stroke-width="0.2" points="98.44,-14.67 96.33,-14.86 98.1,-16.03 98.44,-14.67"/>
+</g>
+<!-- 1 -->
+<g id="node1" class="node">
+<title>1</title>
+<text xml:space="preserve" text-anchor="middle" x="40.08" y="-132.07" font-family="Courier,monospace" font-size="9.00">∘context</text>
+</g>
+<!-- 2 -->
+<g id="node2" class="node">
+<title>2</title>
+<text xml:space="preserve" text-anchor="middle" x="40.08" y="-102.08" font-family="Courier,monospace" font-size="9.00">context</text>
+</g>
+<!-- 3 -->
+<g id="node3" class="node">
+<title>3</title>
+<text xml:space="preserve" text-anchor="middle" x="73.08" y="-5.08" font-family="Courier,monospace" font-size="9.00">⋆context</text>
+</g>
+<!-- 4 -->
+<g id="node4" class="node">
+<title>4</title>
+<text xml:space="preserve" text-anchor="middle" x="313.08" y="-161.07" font-family="Courier,monospace" font-size="9.00">config</text>
+</g>
+<!-- 5 -->
+<g id="node5" class="node">
+<title>5</title>
+<text xml:space="preserve" text-anchor="middle" x="276.08" y="-70.08" font-family="Courier,monospace" font-size="9.00">rate</text>
+</g>
+<!-- 6 -->
+<g id="node6" class="node">
+<title>6</title>
+<polygon fill="none" stroke="black" stroke-width="0.5" points="143.06,-82.9 103.1,-82.9 103.1,-63.1 143.06,-63.1 143.06,-82.9"/>
+<text xml:space="preserve" text-anchor="start" x="112.58" y="-71.08" font-family="Courier,monospace" font-weight="bold" font-size="9.00">mass</text>
+</g>
+<!-- 7 -->
+<g id="node7" class="node">
+<title>7</title>
+<polygon fill="none" stroke="black" stroke-width="0.5" points="208.06,-48.9 168.1,-48.9 168.1,-29.1 208.06,-29.1 208.06,-48.9"/>
+<text xml:space="preserve" text-anchor="start" x="174.95" y="-37.08" font-family="Courier,monospace" font-weight="bold" font-size="9.00">⋆mass</text>
+</g>
+</g>
+</svg>
+'/><p>See <a href="../../reference/inspection/#visualization-structure">Model structure</a> for shape and arrow meanings, system grouping, and the difference between selecting neighborhoods and paths. These are static declaration graphs, not runtime traces. Explain the scientific relationships alongside the graph rather than inferring them from node shape.</p><p>To follow a local process from top to bottom, use the computation flow diagram:</p><pre><code class="language-julia hljs">visualize(InspectDemo, :rate =&gt; :mass; kind = :flow)</code></pre><img src="1b0580a3.svg" alt="Example block output"/><p>It separates the accumulated value update from rate caching for a later update, with expressions alongside the rows. The same variable selectors work here. Prefer a selection for larger models: the full view keeps a lane for every variable, so it is not a compact overview. In a terminal the same result shows variable lanes when they fit, otherwise each numbered row lists its inputs. <a href="../../reference/inspection/#visualization-flow">Read the flow guide</a> for boundary inputs, cross-update rails, and SVG/PDF/PNG export.</p><p>For worked model examples, compare the accumulating state in <a href="../../tutorials/growth/#logistic-growth-tutorial">Logistic Growth</a>, the grouped input-to-state path in <a href="../../tutorials/phenology/#phenology-tutorial">Weather-driven Phenology</a>, and a local process in <a href="../../tutorials/simplecrop/#simplecrop-tutorial">SimpleCrop</a>.</p><h2 id="Navigate-an-instance"><a class="docs-heading-anchor" href="#Navigate-an-instance">Navigate an instance</a><a id="Navigate-an-instance-1"></a><a class="docs-heading-anchor-permalink" href="#Navigate-an-instance" title="Permalink"></a></h2><p><code>dive(s)</code> opens a terminal menu for walking through nested systems and values. It is not interactive in Jupyter; there it falls back to a simpler display. Use <code>look</code>, property access, or explicit output paths in notebooks.</p><h2 id="Read-values-in-Julia-code"><a class="docs-heading-anchor" href="#Read-values-in-Julia-code">Read values in Julia code</a><a id="Read-values-in-Julia-code-1"></a><a class="docs-heading-anchor-permalink" href="#Read-values-in-Julia-code" title="Permalink"></a></h2><pre><code class="language-julia hljs">s.rate&#39;
+value(s.mass)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.0 g</code></pre><p>Postfix <code>&#39;</code> is concise for interactive work. <code>value(...)</code> is clearer in helper functions. Do not assume a system field is a bare number.</p><h2 id="Visualize-an-existing-result"><a class="docs-heading-anchor" href="#Visualize-an-existing-result">Visualize an existing result</a><a id="Visualize-an-existing-result-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-an-existing-result" title="Permalink"></a></h2><p>For a side-by-side guide to argument combinations and their resulting plots, see <a href="../../reference/visualization/#visualization-calls">Choose a plotting call</a>. That reference contains the full examples for both Makie and UnicodePlots.</p><p><code>visualize</code> works directly with vectors, and <code>visualize!</code> adds another series to the same result:</p><pre><code class="language-julia hljs">x = collect(1:5)
+p = visualize(x, 2 .* x; kind = :line, name = &quot;2x&quot;, ylim = (0, 15))
+visualize!(p, x, 3 .* x; kind = :line, name = &quot;3x&quot;)</code></pre><img src="44a126e2.svg" alt="Example block output"/><p>The explicit range reserves space for both curves, including on a fixed-size terminal canvas.</p><p>This form is useful for calculated curves that do not require a simulation. For model output, retain the DataFrame and name its columns explicitly.</p><pre><code class="language-julia hljs">r = simulate(InspectDemo; stop = 4u&quot;hr&quot;, target = :mass)
+visualize(r, :time, :mass; kind = :line)</code></pre><img src="1ff7810f.svg" alt="Example block output"/><p>To simulate and plot in one call, pass the system type instead of a DataFrame, as in the <a href="../../tutorials/quickstart/#quick-start">Quick Start</a>. The <a href="../../reference/visualization/#visualization-calls">Visualization API</a> compares both call forms.</p><h2 id="Interactively-explore-parameters"><a class="docs-heading-anchor" href="#Interactively-explore-parameters">Interactively explore parameters</a><a id="Interactively-explore-parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Interactively-explore-parameters" title="Permalink"></a></h2><p>In JupyterLab or Notebook with <code>jupyter-server-proxy</code>, <code>manipulate</code> adds widgets that update a visualization as parameter values change.</p><pre><code class="language-julia hljs">manipulate(InspectDemo, :time, :mass;
+    parameters = InspectDemo =&gt; (
+        rate = 0:0.5:3,
+    ),
+    stop = 4u&quot;hr&quot;,
+    kind = :line,
+)</code></pre><p>Use interaction to explore sensitivity and plausible ranges. For reproducible analysis, record explicit configurations and run them with <code>simulate</code>; an interactive widget is not a substitute for a saved experiment design.</p><h2 id="Plot-a-parameter-response"><a class="docs-heading-anchor" href="#Plot-a-parameter-response">Plot a parameter response</a><a id="Plot-a-parameter-response-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-a-parameter-response" title="Permalink"></a></h2><p>For a model with a configurable input, create one configuration per input value and compare one time point from each run. Here <code>snap</code> keeps only the state at two hours.</p><pre><code class="language-julia hljs">configs = @config !(InspectDemo =&gt; :rate =&gt; 0:0.5:3)
+responses = simulate(InspectDemo;
+    configs,
+    stop = 2u&quot;hr&quot;,
+    snap = s -&gt; s.context.clock.time&#39; == 2u&quot;hr&quot;,
+    target = [:rate, :mass],
+)
+
+visualize(responses, :rate, :mass;
+    kind = :line,
+    xlab = &quot;Growth rate&quot;,
+    ylab = &quot;Biomass after two hours&quot;,
+    legend = false,
+)</code></pre><img src="f9bc17d3.svg" alt="Example block output"/><p>There is one point per growth rate, with biomass equal to the rate multiplied by two hours. Without selecting a time point, this dynamic model contributes every saved snapshot at each rate; joining those rows creates a sawtooth rather than the intended response curve.</p><p>Keep <code>responses</code> for later analysis. The <a href="../../reference/visualization/#Visualization1">Visualization API</a> also shows the <code>xstep</code> shorthand for direct response plots, <code>group</code> for separate series, and two input ranges for a heatmap.</p><h2 id="Compare-observations-and-estimates"><a class="docs-heading-anchor" href="#Compare-observations-and-estimates">Compare observations and estimates</a><a id="Compare-observations-and-estimates-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-observations-and-estimates" title="Permalink"></a></h2><p><code>visualize(obs, Model, ...)</code> overlays observations and model output, while <code>visualize(obs, Model, target; index = ...)</code> can produce an observation-versus- estimate plot. See <a href="../../tutorials/evaluation/#evaluation-tutorial">Evaluate and Calibrate Models</a> for a complete workflow.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../simulation/">« Run Simulations and Shape Output</a><a class="docs-footer-nextpage" href="../../tutorials/evaluation/">Evaluate and Calibrate Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.20.0 on <span class="colophon-date" title="Friday 20 November 2026 17:13">Friday 20 November 2026</span>. Using Julia version 1.13.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
