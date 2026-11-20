@@ -77,31 +77,16 @@ display a grouped graph directly. Use [`Cropbox.writeimage`](@ref) to save an
 image, or [`Cropbox.writedot`](@ref) for renderer-independent Graphviz source.
 Exports inherit these options and can override them with their own `style`.
 
-A flow diagram is intended for selected variables or a local process, not a compact
-whole-model overview. It has a numbered text display in terminals, SVG notebook
-display, and SVG/PDF/PNG export through `writeimage`. The figure is created only
-for graphical display or export. It does not run a simulation.
-Numbered rows follow the full system's generated order, even in a selection;
-unnumbered rows show the bound inputs of local `call` functions, not invocations.
-Neither shows elapsed time or observed activity. Blue solid arrows are declared reads;
-ochre dotted arrows are conditions. Solid side rails carry state across updates:
-gray on the right for retained values, teal on the left for cached rates. Only
-their outer ends break into shorter strokes and a dot to mark continuation. Pale
-vertical guides link the occurrences of one variable. Member references such
-as `weather.T` and inputs outside a selection appear as gray boundary lanes.
-Child calls, solver iterations, and production internals are not expanded.
-Initialization/configuration and context stages are outside this view.
-Each row names its target. Monospace text shows declaration fragments;
-italic labels name Cropbox actions (e.g. *accumulate · save rate*). Outlined
-tags mark declared update controls (`when`, `reset`, `once`) only on the row
-where they apply. In a terminal, actions start with `#` and tags appear as
-`[when = ready]`. Bounds and clock settings remain model code. A bisection
-with no `min` or `max` has no clipping row. Private names are qualified by their
-declaring system; outer `begin` blocks are reduced to their statements. Use
-`look` for full declarations and units, whose conversion details are
-omitted here. Only `style = (fontsize = 10,)` is supported for flow diagrams; fonts are
-bundled with Makie. Graphviz styles and `writedot` do not apply.
-`visualize!` is not supported for this diagram.
+Flow rows retain their target and position in the full system's update order.
+Dashed arrows at a local `call`'s row show inputs read on invocation, not at that row.
+The terminal shows arrows when the lanes fit, otherwise an input list.
+`[prev update]` and `[next update]` link retained values across updates;
+`#` refers to a numbered operation in the same diagram.
+Notebooks and SVG/PDF/PNG exports also show expressions and state actions.
+The figure is built only for graphical output. Use `look` for full declarations.
+Child operations and initialization are not expanded. The only flow style is
+`style = (fontsize = 10,)` for graphical output; `writedot` and `visualize!`
+do not apply. See the [flow diagram guide](@ref visualization-flow).
 
 # Examples
 ```julia

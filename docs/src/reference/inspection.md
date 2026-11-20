@@ -137,6 +137,9 @@ system's update operations vertically, with a lane for each variable.
 
 For name selectors, the defaults are `depth = 1` and `direction = :both`.
 `depth` counts variable boundaries, not the generated phases of one variable.
+The diagrams display graphically in notebooks. Expand **Terminal output (REPL)**
+below an example to see the same result as text. Structural diagrams do not
+take a plotting `backend` option.
 
 ```@example structure
 using Cropbox
@@ -151,11 +154,39 @@ end
     mass(gain)                 ~ accumulate(u"g")
 end
 
-visualize(StructuralGrowth)
+g = visualize(StructuralGrowth)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+The text lists variables and their generated phases in update order.
+
+```@example structure
+show(stdout, MIME"text/plain"(), g) # hide
+```
+
+```@raw html
+</details>
 ```
 
 ```@example structure
-visualize(StructuralGrowth; kind = :hierarchy)
+g = visualize(StructuralGrowth; kind = :hierarchy)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+The text lists the systems in the hierarchy. The diagram shows how they are related.
+
+```@example structure
+show(stdout, MIME"text/plain"(), g) # hide
+```
+
+```@raw html
+</details>
 ```
 
 These graphs describe declared relationships, not observed activity in a run.
@@ -323,41 +354,37 @@ This is a declaration graph, not a count of leaves created during a run.
 
 ### [Computation flow diagram](@id visualization-flow)
 
-Dependency graphs emphasize relationships; flow diagrams follow the compiler's
-operation order, with expressions, conditions, and state carried across updates.
-Both are static views, not runtime traces or complete control-flow graphs.
-Here, "flow" means computation, not a stock-and-flow model of physical fluxes.
-
-Use this view to follow selected variables or a local process through an
-update. It is not a compact overview of a large model: every included variable
-has a lane, including fixed inputs, and omitted inputs still appear at the
-boundary. Start with a variable or a `source => target` path, then expand the
-selection as needed. Inspect child systems separately.
+A flow diagram follows one update in compiler order, showing expressions,
+conditions, and retained state. It describes potential reads, not an observed
+run or a stock-and-flow model. For a large model, start with one variable or
+a `source => target` path; inputs outside the selection remain visible.
 
 ```@example structure
-visualize(GrowingDegree; kind = :flow)
+g = visualize(GrowingDegree; kind = :flow)
 ```
 
-Read downward: each numbered row is an operation in the compiler's topological
-order, not elapsed time or an observed runtime event. Lanes represent variables
-and arrows represent reads, not messages between objects in a UML sequence
-diagram. Fixed inputs have lanes but no update row. Numbers refer to positions in
-the complete schedule, so they can have gaps. Thin horizontal rules separate
-operations. Each entry in the **Computation** column names its target and stays
-in one row, even when it spans several lines.
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
 
-A local `call` with model inputs has an **unnumbered binding row** above the
-update. For `f(k; x) => k * x ~ call`, it connects `k → f`; the argument
-`x` is supplied by the caller and does not introduce a lane. A later `out(f) => f(3) ~ track` shows
-`f → out` on its numbered row. Bindings are shown once even if several rows
-use the function or one local call binds another. Passing a function does
-not imply it was invoked. A child member such as `vp.es` stays a boundary
-lane; inspect the child system for its bindings.
+```@example structure
+show(stdout, MIME"text/plain"(), g) # hide
+```
 
-On each side, follow inputs of the same kind toward the operation. The nearest
-input points to the target; each farther arrow stops just short of the next
-input's curve. All are reads by that operation, not a chain of dependencies
-between inputs. An unmarked crossing is not a read.
+```@raw html
+</details>
+```
+
+Read downward through the numbered rows. Each number is a position in the
+full update, so a selection can leave gaps. Variables occupy lanes; a fixed
+input can have a lane without an operation. Horizontal arrows on the same
+row lead to one target, not from one input to the next.
+
+For `f(k; x) => k * x ~ call`, the numbered `f` row marks the callable's
+position in the schedule. The dashed `k → f` shows a bound input: its current
+value is read when a caller invokes `f`, not at this row. The caller supplies
+`x`. An arrow from `f` to a consumer can also mean it passes the function
+without invoking it. Each local binding appears once, including nested calls.
 
 | Mark | Meaning |
 |:---|:---|
@@ -365,30 +392,20 @@ between inputs. An unmarked crossing is not a read.
 | Square / rounded square | State update / opaque child call |
 | Parallelogram | Driver input |
 | Diamond / upright triangle | Condition / post-update rate cache |
+| Downward triangle | Local callable with bound inputs |
 | Double rounded square / hexagon | Production / opaque solver operation |
 | Small open circle / small square on an input lane | Local read / boundary read |
-| Blue solid arrow / ochre dotted arrow | Declared input / condition (`when`) |
+| Solid blue / dashed blue arrow | Update input / bound input of a local `call` |
+| Dotted ochre arrow | Control input (`when` or `reset`), identified by the row's tag |
 | Pale vertical guide | Repeated occurrences of one variable, not an extra dependency |
 | Gray rail on the right | Value, counter, or memory retained across updates |
 | Teal rail on the left | Rate cached across updates |
 
-Both rails are solid inside the update. At the top and bottom edges, each
-ends in progressively shorter strokes and a dot: it continues beyond the
-update shown. The marks do not represent extra steps or a change in value.
-Follow the upper branch **into** a symbol to read what the previous update
-saved; follow the lower branch **out** to see what is saved for the next one.
-This is how a value crosses time, not a read from the neighboring variable.
-A flag declared with `once` has a right rail because it remembers whether it
-was already true. A `track` or ordinary `flag` also has one if it reads its
-own previous value, as in `toggle(toggle) => !toggle ~ flag`. A flag that
-only reads other variables has no such rail unless it uses `once`.
-The faint guide through the middle of a lane carries no value.
-
-Color identifies the role of a connection, not a variable's importance, value,
-or biological process. Arrowheads match their connections;
-variable symbols and text stay neutral. Thin, pale guides recede behind actual
-reads and cross-update rails. The legend uses the same styles as the diagram,
-and the rail positions and fading ends can be read without color.
+Follow the upper rail into a symbol to find a value from the previous update;
+the lower rail carries a value to the next. Their tapered ends mark the
+boundary of the update. For example, a latched `flag(once)` retains its value,
+as does a self-read such as `toggle(toggle) => !toggle ~ flag`. The pale
+central guide carries no value. An unmarked crossing is not a read.
 
 An accumulating state needs two operations, but not two repeated timesteps:
 
@@ -401,7 +418,39 @@ An accumulating state needs two operations, but not two repeated timesteps:
     mature(total) => total >= 50u"K*d"   ~ flag(once)
 end
 
-visualize(ThermalFlow; kind = :flow)
+tf = visualize(ThermalFlow; kind = :flow)
+```
+
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
+
+**Wide terminal (100 columns).** Read from each input (`●`) toward the target
+(`○`). A self-read uses `↺`; a dashed line ending at `▽` marks a local `call` binding.
+Here `rate` is a model variable, while `△` marks the operation that saves
+the rate for `total`. Other pre- and post-step targets use `◓` and `◒`.
+
+```@example structure
+show(IOContext(stdout, :displaysize => (24, 100)), MIME"text/plain"(), tf) # hide
+```
+
+**Narrow terminal (40 columns).** When the lanes do not fit, each row lists
+its inputs (`←`) or bindings (`⇠`). A rate-saving row lists its inputs and
+points to the next update. Long lists wrap; controls such as `[once]` stay
+beside their operation.
+
+```@example structure
+show(IOContext(stdout, :displaysize => (24, 40)), MIME"text/plain"(), tf) # hide
+```
+
+The two `total` rows are the main and post phases of **one update**. The first
+reads the previous value of `total` and the rate saved on the previous update;
+the second saves a rate for the next update. In either width, follow the
+`#` operation numbers beside `[prev update]` and `[next update]` to find the
+other row. A value retained by the same operation appears by name, as for `mature`.
+
+```@raw html
+</details>
 ```
 
 Read the two rows named `total` together. The first says *accumulate*: add
@@ -422,13 +471,12 @@ The **Computation** column names the target, then distinguishes three things:
 
 The label follows the state declaration, not the variable's spelling. Plain
 calculations need no action label. An `if` in a body stays model code; it is
-not converted to a tag. In a terminal, `#` introduces an action and square
-brackets mark each tag, e.g. `rate  # accumulate · save rate  [when = ready]`.
-The diagram uses the outline instead of those brackets. For `when = mask[1]`,
+not converted to a tag. For `when = mask[1]`,
 only `mask` is a condition input. For `when = mask[idx[]]`, both `mask` and
 the model variable `idx` are condition inputs, even if they are outside the
 selection. The literal `1` does not get a lane.
 
+A variable used both in the calculation and as a control has both arrows.
 A tag describes behavior, not a runtime observation or a universal on/off
 switch. For `accumulate` and `capture`, a false `when` saves a **zero rate**;
 it does not skip the main row. An accumulator samples `reset` alongside that
@@ -458,30 +506,37 @@ hidden computation. This differs from a dependency graph, whose unselected
 nodes are simply absent. Selecting more variables does not reorder the full
 system's schedule.
 
-Nested systems remain opaque calls. Qualified references preserve the
-connection to their owner, with the prefix drawn lightly:
+This model both updates a child system and calls a local function:
 
 ```@example structure
-diagram = visualize(StructuralGrowth; kind = :flow)
+@system GrowthAllocation(StructuralGrowth) begin
+    share(gain; f)   => f * gain   ~ call(u"g/hr")
+    root_rate(share) => share(0.3) ~ track(u"g/hr")
+end
+
+diagram = visualize(GrowthAllocation; kind = :flow)
 ```
 
-Here `supply` is a call and `supply.rate` is a boundary read. Inspect
-`visualize(Supply; kind = :flow)` for the child's own flow diagram. There is no
-recursive flattening, runtime trace, or configuration-specific active-path
-analysis. Initialization/configuration, context subcycling, solver iterations,
-and production internals are not expanded. In particular, `integrate` is
-quadrature, not a temporal accumulator; its internals stay opaque.
-
-The flow diagram uses the existing Makie/CairoMakie renderer. It displays as SVG in
-notebooks, lists numbered operations in a terminal, and can be saved without
-a display server. The figure is created only for graphical display or export;
-the text output uses the same plan and notes without creating a Makie figure.
-Multiline expressions stay aligned with their numbered row:
+```@raw html
+<details class="terminal-example"><summary>Terminal output (REPL)</summary>
+```
 
 ```@example structure
-show(stdout, MIME"text/plain"(), diagram)
+show(stdout, MIME"text/plain"(), diagram) # hide
 ```
 
+```@raw html
+</details>
+```
+
+`supply.rate` is a boundary read; inspect `visualize(Supply; kind = :flow)`
+for the child's update. The dashed arrow into `share` identifies `gain` as a
+bound input. The solid arrow to `root_rate` is where this example invokes
+`share(0.3)`. Initialization, child steps and solver internals are not expanded.
+
+#### Graphical export
+
+The Makie/CairoMakie figure is created only for notebook display or export.
 Its only style option is
 `style = (fontsize = 10,)`, which scales text and spacing together. The monospace
 and italic fonts are bundled with Makie; no system font installation is needed. The canvas

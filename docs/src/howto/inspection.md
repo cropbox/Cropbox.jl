@@ -100,8 +100,8 @@ visualize(InspectDemo, :rate => :mass; kind = :flow)
 It separates the accumulated value update from rate caching for a later
 update, with expressions alongside the rows. The same variable selectors work
 here. Prefer a selection for larger models: the full view keeps a lane for every
-variable, so it is not a compact overview. Terminals list the numbered operations
-without constructing a figure.
+variable, so it is not a compact overview. In a terminal the same result shows
+variable lanes when they fit, otherwise each numbered row lists its inputs.
 [Read the flow guide](@ref visualization-flow) for boundary inputs,
 cross-update rails, and SVG/PDF/PNG export.
 

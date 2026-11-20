@@ -1,3 +1,5 @@
+using InteractiveUtils: subtypes
+
 @system FlowWeather begin
     Tmin => [4, 6]   ~ preserve::int[]
     Tmax => [16, 20] ~ preserve::int[]
@@ -23,7 +25,7 @@ end
 end
 
 @system FlowCall(Controller) begin
-    k: gain        => 2        ~ preserve(parameter)
+    k: gain        => 1        ~ accumulate
     f(gain; x)     => gain * x ~ call
     g(f; x): scale => f(x) + 1 ~ call
 
@@ -34,6 +36,7 @@ end
 
 @testset "flow" begin
     plot = visualize(FlowGrowth; kind = :flow)
+    term(d, w; color = false) = sprint(show, MIME"text/plain"(), d; context = IOContext(IOBuffer(), :displaysize => (24, w), :color => color))
 
     @testset "update order and feedback" begin
         p = visualize(FlowGrowth, :total; kind = :flow, depth = 0).plan
@@ -56,15 +59,62 @@ end
         @test Set((r.name, r.role) for r in only(p.events).reads) == Set([("lo", :lower), ("hi", :upper)])
     end
 
+    @testset "state tags" begin
+        # Supported tags used for setup or control rather than for update reads.
+        other = (; Accumulate = (:timeunit,), Capture = (:unit, :timeunit), Advance = (:init, :step, :unit),
+            Drive = (:unit, :from, :by, :parameter, :override), Track = (:override, :skip, :extern, :ref),
+            Flag = (:override, :parameter, :once, :extern), Remember = (:init,), Bring = (:override, :parameters),
+            Produce = (:single,), Solve = (:pick,), Bisect = (:evalunit,), Integrate = (:unit,),
+            Preserve = (:unit, :optional, :parameter, :override, :extern, :ref, :min, :max, :round),
+            Provide = (:index, :init, :step, :autounit, :parameter), Interpolate = (:unit, :knotunit, :reverse, :parameter),
+            Tabulate = (:unit, :rows, :columns, :parameter))
+        v = only(e.node.info for e in plot.plan.events if e.node.info.name == :Tmean)
+        v = Cropbox.@set v.tags = merge(v.tags, Dict(:reset => true))
+        for S in subtypes(Cropbox.State)
+            (S === Cropbox.StateRef || parentmodule(S) !== Cropbox) && continue
+            k = nameof(S)
+            info = Cropbox.@set v.state = k
+            rules = [Cropbox.flowrule(Val(k), info, phase) for phase in (:pre, :main, :post)]
+            reads = unique(Symbol[t for r in rules if !isnothing(r) for t in r.tags])
+            @test sort([reads; collect(get(other, k, ()))]) == sort(collect(Cropbox.supportedtags(Val(k))))
+        end
+        @test_throws ArgumentError Cropbox.flowrule(Val(:Unknown), v, :main)
+    end
+
     @testset "bound call inputs" begin
-        p = visualize(FlowCall, [:out, :available, :direct]; kind = :flow, depth = 0).plan
-        @test [(b.node.info.name, only(b.reads).name) for b in p.bindings] == [(:f, "k"), (:g, "f")]
-        @test Dict(e.node.info.name => sort([r.name for r in e.reads]) for e in p.events) == Dict(:out => ["g"], :available => ["g"], :direct => ["g", "k"])
-        @test Set(p.ports) == Set(["f", "g", "k"])
+        targets = [:out, :available, :direct]
+        d = visualize(FlowCall, targets; kind = :flow, depth = 0)
+        steps = sort(Cropbox.dependency(FlowCall))
+        rows = split.(split(term(d, 32), '\n'))
+        order = [(i, n.info.name) for (i, n) in enumerate(steps) if n.info.name in (:f, :g, targets...)]
+        @test [(parse(Int, r[1]), Symbol(r[2])) for r in rows] == order
+        @test Dict(r[2] => join(r[3:end], " ") for r in rows) == Dict(
+            "f" => "⇠ k", "g" => "⇠ f", "out" => "← g", "available" => "← g", "direct" => "← g, k")
+        @test Set(d.plan.ports) == Set(["f", "g", "k"])
+        @test occursin('╌', term(d, 100))
+        full = visualize(FlowCall; kind = :flow)
+        @test occursin("<svg", repr(MIME"image/svg+xml"(), full))
+
+        s = instance(FlowCall)
+        f = s.g
+        @test f(3.0) == s.out[] == 1
+        update!(s)
+        @test f(3.0) == s.out[] == 4
+        Cropbox.store!(s.k, 2)
+        @test f(3.0) == 7 && s.out[] == 4
     end
 
     @testset "display and export" begin
-        @test occursin("Tmean", repr(MIME"text/plain"(), plot))
+        s = term(plot, 32)
+        main, post = [e.order for e in plot.plan.events if e.node.info.name == :total]
+        @test all(n -> occursin(n, s), ("met.Tmin", "met.Tmax", "← (total, #$post)", "→ #$main"))
+        for d in (plot, visualize(FlowGrowth, :total; kind = :flow, depth = 0))
+            out = term(d, 120)
+            @test occursin("← (total, #$post) [prev update]", out) && occursin("→ #$main [next update]", out)
+        end
+        @test maximum(textwidth, split(s, '\n')) <= 32
+        colored = term(plot, 32; color = true)
+        @test occursin('\e', colored) && replace(colored, r"\e\[[\d;]*m" => "") == s
         svg = MIME"image/svg+xml"()
         @test showable(svg, plot)
         @test occursin("<svg", repr(svg, plot))
