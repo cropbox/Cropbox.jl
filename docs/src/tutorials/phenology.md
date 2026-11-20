@@ -96,7 +96,7 @@ without renaming the model variable.
 ```
 
 To run the model now, jump to [Configure the scenario](#Configure-the-scenario).
-The two structure plots are optional and were added after Cropbox v0.4.2.
+The following structure plots are optional and were added after Cropbox v0.4.2.
 
 `visualize` with `kind = :hierarchy` shows how the reusable process,
 environment, controller, and child systems are assembled:

@@ -141,16 +141,22 @@ visualize(cf, :date, [:c, :f];
 
 Plot both accumulated amounts and their requirements on one axis because they
 share the same units. In the graphical plot the states are solid and the
-requirements are dashed. In a text terminal the lines are all solid; use the
-series names and the table below.
+requirements are dashed. Vertical lines mark the first date each stage is
+reached; an unfinished stage has no marker. In a text terminal the lines are
+all solid; use the series names and the table below.
 
 ```@example chillingforcing
-visualize(cf, :date, [:C, :F, :Rc, :Rf];
+p = visualize(cf, :date, [:C, :F, :Rc, :Rf];
     kind = :line,
     linestyle = [:solid, :solid, :dash, :dash],
     names = ["Chilling", "Forcing", "Chilling requirement", "Forcing requirement"],
     ylab = "Accumulation",
 )
+chill_day, bloom_day = findfirst(cf.d), findfirst(cf.bloom)
+for (i, name) in ((chill_day, "Chilling complete"), (bloom_day, "Bloom"))
+    isnothing(i) || visualize!(p, [cf.date[i]]; kind = :vline, name)
+end
+p # hide
 ```
 
 The daily step can carry an accumulated amount beyond its requirement. Inspect
@@ -158,7 +164,6 @@ the first row with completed chilling and the final row, including the bloom
 flag, rather than treating a threshold as an exact final value:
 
 ```@example chillingforcing
-chill_day = findfirst(cf.d)
 rows = isnothing(chill_day) ? [nrow(cf)] : unique([chill_day, nrow(cf)])
 cf[rows, [:date, :C, :F, :d, :bloom]]
 ```
