@@ -10,6 +10,20 @@
     max-width: 100%;
 }
 
+.content p.cropbox-config {
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.content table.cropbox-config {
+    font-size: 0.8125rem;
+    line-height: normal;
+}
+
+.content .cropbox-config td {
+    border: 0;
+}
+
 .terminal-example {
     margin: 1rem 0 2rem;
 }

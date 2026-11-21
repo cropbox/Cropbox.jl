@@ -35,7 +35,7 @@ theme_classic() = begin
     major, minor = "#564A55", "#6C606B"
     fonts = (; regular = Makie.assetpath("fonts", "NotoSans-Regular.ttf"), bold = Makie.assetpath("fonts", "NotoSans-Bold.ttf"))
     Makie.Theme(;
-        size = (480, 320), figure_padding = (14, 32, 7, 14),
+        size = (560, 350), figure_padding = (14, 32, 7, 14), colgap = 10,
         fontsize = 12, fonts, textcolor = major,
         palette = (; color = CLASSIC_COLORS), colormap = CLASSIC_COLORMAP,
         linewidth = 0.85, markersize = 4,
@@ -60,8 +60,8 @@ theme_classic() = begin
             padding = (0, 0, 0, 0),
             titlefont = :regular, titlesize = 11, titlecolor = "#362A35",
             titlehalign = :left, titlegap = 4,
-            labelsize = 10, labelcolor = "#4C404B",
-            patchsize = (12, 8), patchlabelgap = 4, rowgap = 1),
+            labelsize = 9.5, labelcolor = "#4C404B",
+            patchsize = (10, 7), rowgap = 1),
         Colorbar = (;
             width = 7, height = 90, tellheight = false,
             labelsize = 11, labelcolor = major,
@@ -78,10 +78,11 @@ writeimage(name::AbstractString, p::Plot{<:Makie.Figure}; format = nothing, kw..
     name
 end
 
-figure(; title, xlab, ylab, aspect) = Makie.with_theme(theme_classic()) do
+figure(X; title, xlab, ylab, aspect) = Makie.with_theme(theme_classic()) do
     f = Makie.Figure()
     aspect = isnothing(aspect) ? nothing : Makie.AxisAspect(aspect)
-    ax = Makie.Axis(f[1, 1]; title, xlabel = xlab, ylabel = ylab, aspect)
+    xticks = Base.nonmissingtype(eltype(X)) <: Real ? Makie.WilkinsonTicks(8; k_min = 4) : Makie.automatic
+    ax = Makie.Axis(f[1, 1]; title, xlabel = xlab, ylabel = ylab, aspect, xticks)
     f, ax
 end
 
@@ -114,7 +115,7 @@ plot2!(::Val{:Makie}, p::Union{Plot,Nothing}, X, Ys;
     kind in (:line, :scatter, :scatterline, :step, :hline, :vline) ||
         throw(ArgumentError("unrecognized plot kind = $kind"))
     if isnothing(p)
-        obj, axis = figure(; title, xlab, ylab, aspect)
+        obj, axis = figure(kind == :hline ? xlim : X; title, xlab, ylab, aspect)
         p = Plot(obj;
             axis, Xs = [], Ys = [], kinds = [], colors = [], names = [], entries = [], labels = [],
             title, xlab, ylab, legend, legendpos,
@@ -186,7 +187,7 @@ plot3!(::Val{:Makie}, X, Y, Z;
 ) = begin
     kind in (:heatmap, :contour) || throw(ArgumentError("unrecognized plot kind = $kind"))
     x, y, M = makegrid(X, Y, Z)
-    obj, axis = figure(; title, xlab, ylab, aspect)
+    obj, axis = figure(X; title, xlab, ylab, aspect)
     layer = if kind == :heatmap
         Makie.heatmap!(axis, x, y, M; colorrange = zlim)
     else

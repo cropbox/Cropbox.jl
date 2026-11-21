@@ -69,7 +69,7 @@ end
 import Markdown
 Base.show(io::IO, ::MIME"text/html", c::Config) = begin
     n = length(c)
-    print(io, "<p style=\"font-family: monospace\">")
+    print(io, "<p class=\"cropbox-config\" style=\"font-family: monospace\">")
     if n == 0
         print(io, "Config empty")
     elseif n == 1
@@ -80,9 +80,9 @@ Base.show(io::IO, ::MIME"text/html", c::Config) = begin
     println(io, "</p>")
     f((s, C)) = begin
         b = IOBuffer()
-        println(b, "<table style=\"font-family: monospace\">")
+        println(b, "<table class=\"cropbox-config\" style=\"font-family: monospace\">")
         println(b, "<tr style=\"background-color: transparent\">")
-        println(b, "<td colspan=\"3\" style=\"text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple\">$s</th>")
+        println(b, "<td colspan=\"3\" style=\"text-align: left; padding: 2px; padding-left: 20px; color: rebeccapurple\">$s</td>")
         println(b, "</tr>")
         K = keys(C)
         l = isempty(K) ? 0 : maximum(length.(string.(K)))
