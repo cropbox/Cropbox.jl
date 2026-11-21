@@ -71,10 +71,12 @@
     io = IOBuffer()
     show(io, MIME"image/png"(), p)
     @test take!(io)[1:8] == signature
-    for x in ([0, 1000, 2000], [Date(2026, 1, 1), Date(2026, 7, 1), Date(2027, 1, 1)])
+    for x in ([0, 800, 1600], [Date(2026, 1, 1), Date(2026, 7, 1), Date(2027, 1, 1)])
         q = visualize(x, [0, 1, 2]; backend = :Makie, kind = :line, legend = false)
         show(IOBuffer(), MIME"image/png"(), q)
-        bounds = M.Makie.boundingbox(q.opt[:axis].xaxis.elements[:ticklabels])
+        xaxis = q.opt[:axis].xaxis
+        eltype(x) <: Real && @test last(x) in xaxis.tickvalues[]
+        bounds = M.Makie.boundingbox(xaxis.elements[:ticklabels])
         @test 0 <= minimum(bounds)[1] <= maximum(bounds)[1] <= size(q[].scene)[1]
     end
     q = visualize([0, 1], [0, 1]; backend = :Makie, name = "군락",
