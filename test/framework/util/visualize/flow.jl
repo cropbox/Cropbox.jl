@@ -48,7 +48,8 @@ end
         p = visualize(FlowGrowth, :total; kind = :flow, depth = 0).plan
         steps = sort(Cropbox.dependency(FlowGrowth))
         @test [e.order for e in p.events] == findall(n -> n.info.name == :total, steps)
-        @test [(e.operation, e.code) for e in p.events] == [(:state, ""), (:rate, "Tmean")]
+        @test [e.operation for e in p.events] == [:state, :rate]
+        @test [(e.behavior, e.code, e.note) for e in p.events] == [("accumulate", "", ""), ("accumulate", "Tmean", "save rate")]
         @test p.ports == ["Tmean"]
 
         c = only(c for c in p.carries if c.slot == :rate)
@@ -75,8 +76,8 @@ end
         d = visualize(FlowCall, targets; kind = :flow, depth = 0)
         steps = sort(Cropbox.dependency(FlowCall))
         rows = split.(split(term(d, 32), '\n'))
-        order = [(i, n.info.name) for (i, n) in enumerate(steps) if n.info.name in (:f, :g, targets...)]
-        @test [(parse(Int, r[1]), Symbol(r[2])) for r in rows] == order
+        order = [n.info.name for n in steps if n.info.name in (:f, :g, targets...)]
+        @test [(parse(Int, r[1]), Symbol(r[2])) for r in rows] == collect(enumerate(order))
         @test Dict(r[2] => join(r[3:end], " ") for r in rows) == Dict(
             "f" => "⇠ k", "g" => "⇠ f", "out" => "← g", "available" => "← g", "direct" => "← g, k")
         @test Set(d.plan.ports) == Set(["f", "g", "k"])
@@ -100,9 +101,9 @@ end
 
     @testset "display and export" begin
         s = term(plot, 32)
-        main, post = [e.order for e in plot.plan.events if e.node.info.name == :total]
-        @test all(n -> occursin(n, s), ("met.Tmin", "met.Tmax", "← (total, #$post)", "→ #$main"))
+        @test all(n -> occursin(n, s), ("met.Tmin", "met.Tmax", "[prev update]", "[next update]"))
         for d in (plot, visualize(FlowGrowth, :total; kind = :flow, depth = 0))
+            main, post = findall(e -> e.node.info.name == :total, d.plan.events)
             out = term(d, 120)
             @test occursin("← (total, #$post) [prev update]", out) && occursin("→ #$main [next update]", out)
         end
@@ -110,8 +111,12 @@ end
         colored = term(plot, 32; color = true)
         @test occursin('\e', colored) && replace(colored, r"\e\[[\d;]*m" => "") == s
         svg = MIME"image/svg+xml"()
+        expr = "if β[i[]] ≥ 0\n    β[i[]] + 1.5\nend"
+        @test join(String.(Cropbox.flowsyntax(expr)), '\n') == expr
         @test showable(svg, plot)
         @test occursin("<svg", repr(svg, plot))
+        emptyflow = visualize(FlowWeather; kind = :flow)
+        @test isempty(emptyflow.plan.events) && occursin("<svg", repr(svg, emptyflow))
         mktempdir() do dir
             pdf = Cropbox.writeimage(joinpath(dir, "flow.pdf"), plot)
             @test read(pdf, 5) == b"%PDF-"

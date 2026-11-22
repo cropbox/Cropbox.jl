@@ -5,8 +5,8 @@ flowtextrows(p) = begin
         if i == j
             push!(links[j].prev, p.labels[c.name])
         else
-            push!(links[j].prev, "#$(p.events[i].order)")
-            push!(links[i].next, "#$(p.events[j].order)")
+            push!(links[j].prev, "#$i")
+            push!(links[i].next, "#$j")
         end
     end
     map(enumerate(p.events)) do (i, e)
@@ -14,7 +14,7 @@ flowtextrows(p) = begin
         mark = get((rate = "△", binding = "▽"), e.operation, (pre = "◓", main = "○", post = "◒")[flowphase(e.node)])
         inputs = unique(r.name for r in e.reads if flowreadkind(e, r) != :control)
         tags = ["[" * replace(b, " = " => " "; count = 1) * "]" for b in e.badges]
-        (; key, target = p.labels[key], mark, inputs, links[i]..., tags, e.operation, num = string(e.order))
+        (; key, target = p.labels[key], mark, inputs, links[i]..., tags, e.operation, num = string(i))
     end
 end
 
