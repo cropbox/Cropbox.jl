@@ -4,6 +4,7 @@ import BlackBoxOptim
 
 """
     calibrate(S, obs; <keyword arguments>) -> Config | OrderedDict
+    calibrate(S, [obs1, obs2, …]; <keyword arguments>) -> Config | OrderedDict
 
 Obtain a set of parameters for the given system `S` that simulates provided observation `obs` closely as possible. A multitude of simulations are conducted with a differing combination of parameter sets specified by the range of possible values and the optimum is selected based on a choice of evaluation metric. Internally, differential evolution algorithm from BlackboxOptim.jl is used.
 
@@ -63,19 +64,27 @@ Config for 1 system:
     a = 20.0
 ```
 """
-calibrate(S::Type{<:System}, obs::Union{AbstractDataFrame,AbstractVector{<:AbstractDataFrame}}; config = (), configs = nothing, kwargs...) = begin
-    if isnothing(configs) || (obs isa AbstractDataFrame && isempty(configs))
-        configs = fill(config, obs isa AbstractDataFrame ? 1 : length(obs))
-    elseif !isempty(config)
-        throw(ArgumentError("config and configs cannot be used together"))
-    end
-    calibrate(S, obs, configs; kwargs...)
+calibrate(S::Type{<:System}, obs::AbstractDataFrame; config = (), configs = nothing, kw...) = begin
+    cs = isnothing(configs) || isempty(configs) ? [config] : checkconfigs(config, configs)
+    calibrate(S, obs, cs; kw...)
 end
-calibrate(S::Type{<:System}, obs::Union{AbstractDataFrame,AbstractVector{<:AbstractDataFrame}}, configs::Vector;
+calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; kw...) =
+    _calibrate(S, (obs,), configs, fill(1, length(configs)); kw...)
+
+calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}; config = (), configs = nothing, kw...) = begin
+    cs = isnothing(configs) ? fill(config, length(obss)) : checkconfigs(config, configs)
+    calibrate(S, obss, cs; kw...)
+end
+calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}, configs::Vector; kw...) = begin
+    length(obss) == length(configs) || throw(ArgumentError("expected one configuration per observation table, got $(length(configs)) for $(length(obss)) tables"))
+    _calibrate(S, obss, configs, eachindex(configs); kw...)
+end
+
+checkconfigs(config, configs) = isempty(config) ? configs : throw(ArgumentError("config and configs cannot be used together"))
+
+_calibrate(S, obss, configs, tableids;
     index = nothing, target, parameters, metric = nothing, weight = nothing, pareto = false, optim = (), seed = 0, warn = true, kwargs...
 ) = begin
-    shared = obs isa AbstractDataFrame
-    shared || length(obs) == length(configs) || throw(ArgumentError("expected one configuration per observation table, got $(length(configs)) for $(length(obs)) tables"))
     isempty(configs) && throw(ArgumentError("at least one calibration experiment is required"))
     P = configure(parameters)
     K = parameterkeys(P)
@@ -84,13 +93,13 @@ calibrate(S::Type{<:System}, obs::Union{AbstractDataFrame,AbstractVector{<:Abstr
     idx = parseindex(index, S)
     I, IV = collect(keys(idx)), Tuple(values(idx))
     T = parsetarget(target, S) |> keys |> collect
-    tables = map(shared ? [obs] : obs) do table
-        data = filterobservations(table, T)
-        IC = collect(zip(getproperty.(Ref(data), I)...))
+    tables = map(obss) do obs
+        obs = filterobservations(obs, T)
+        IC = collect(zip(getproperty.(Ref(obs), I)...))
         snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-        (; data, snap)
+        (; obs, snap)
     end
-    total = sum(t -> nrow(t.data), tables)
+    total = sum(t -> nrow(t.obs), tables)
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
@@ -98,7 +107,7 @@ calibrate(S::Type{<:System}, obs::Union{AbstractDataFrame,AbstractVector{<:Abstr
     residual(c, table, rows, modelseed) = begin
         est = simulate(S; config = c, index, target, snap = table.snap, seed = modelseed, verbose = false, kwargs...)
         isempty(est) && return repeat([Inf], n)
-        O, E = aligndata(table.data, est, T; index = I, allowempty = true, rows)
+        O, E = aligndata(table.obs, est, T; index = I, allowempty = true, rows)
         isempty(first(O)) && return repeat([Inf], n)
         [metric(e, o) for (o, e) in zip(O, E)]
     end
@@ -111,14 +120,14 @@ calibrate(S::Type{<:System}, obs::Union{AbstractDataFrame,AbstractVector{<:Abstr
         # draw in configuration order, independent of worker scheduling
         seeds = isnothing(seed) ? rand(UInt64, l) : nothing
         Threads.@threads for i in 1:l
-            R[i] = residual(configure(configs[i], c), tables[shared ? 1 : i], rows[i], isnothing(seeds) ? seed : seeds[i])
+            R[i] = residual(configure(configs[i], c), tables[tableids[i]], rows[i], isnothing(seeds) ? seed : seeds[i])
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
         e = eachrow(hcat(A...)) |> sum
         # BlackBoxOptim expects Float64, not even Int
         e = Float64.(e)
         if warn && all(isfinite, e)
-            matched = shared ? length(unique(Iterators.flatten(rows))) : sum(r -> length(unique(r)), rows)
+            matched = length(Set((id, row) for (id, rs) in zip(tableids, rows) for row in rs))
             if warnmatching(matched, total; context = "calibration candidate (shown once per search)")
                 warn = false
             end
