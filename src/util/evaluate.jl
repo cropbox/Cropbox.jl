@@ -67,8 +67,8 @@ filterobservations(obs, target) = begin
     obs
 end
 
-warnmatching(obs, rows; context = "evaluation") = begin
-    matched, total = length(unique(rows)), nrow(obs)
+warnmatching(obs, rows; kw...) = warnmatching(length(unique(rows)), nrow(obs); kw...)
+warnmatching(matched::Int, total::Int; context = "evaluation") = begin
     0 < matched < total || return false
     @warn "partial observation matching in $context: $matched of $total complete observations matched; check index, stop, and snap"
     true
