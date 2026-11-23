@@ -302,7 +302,10 @@ visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
     _visualize_obs_vs_est!(p, Xs, Ys; names, plotopts...)
 end
 
-_visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, colors=nothing, lim=nothing, plotopts...) = begin
+_visualize_obs_vs_est!(p, Xs, Ys;
+    xlab = nothing, ylab = nothing, names = nothing, colors = nothing,
+    lim = nothing, xunit = nothing, yunit = nothing, plotopts...,
+) = begin
     Xs, Ys = convertcolumn.(Xs), convertcolumn.(Ys)
     isnothing(xlab) && (xlab = "Observation")
     isnothing(ylab) && (ylab = "Model")
@@ -312,13 +315,27 @@ _visualize_obs_vs_est!(p, Xs, Ys; xlab=nothing, ylab=nothing, names=nothing, col
     isnothing(names) && (names = repeat([""], n))
     isnothing(colors) && (colors = repeat([nothing], n))
 
-    if isnothing(lim)
-        lim = findlim(vcat(deunitfy.([Xs..., Ys...])...))
+    xunit = getplotopt(p, :xunit, xunit)
+    yunit = getplotopt(p, :yunit, yunit)
+    if isnothing(xunit) && isnothing(yunit)
+        xunit = extractunit(first(Xs))
+        hasunit(xunit) || (xunit = extractunit(first(Ys)))
     end
-    L = [lim[1], lim[2]]
+    isnothing(xunit) && (xunit = yunit)
+    isnothing(yunit) && (yunit = xunit)
+    # Determine one physical interval, even when the two axes use different scales.
+    if isnothing(lim)
+        xs = deunitfy.(Xs, Ref(xunit))
+        ys = [deunitfy(unitfy(y, yunit), xunit) for y in Ys]
+        lim = findlim(vcat(xs..., ys...))
+    else
+        lim = map(v -> deunitfy(v, xunit), lim)
+    end
+    L = unitfy(collect(lim), xunit)
+    ylim = Tuple(deunitfy(L, yunit))
 
     for (X, Y, name, color) in zip(Xs, Ys, names, colors)
-        p = plot!(p, X, Y; kind = :scatter, name, color, xlab, ylab, xlim = lim, ylim = lim, aspect = 1, plotopts...)
+        p = plot!(p, X, Y; kind = :scatter, name, color, xlab, ylab, xunit, yunit, xlim = lim, ylim, aspect = 1, plotopts...)
     end
     color = detectbackend(p) == :UnicodePlots ? :light_gray : :lightgray
     plot!(p, L, L; kind = :line, color, name = "")

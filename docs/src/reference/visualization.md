@@ -610,6 +610,13 @@ Multiple index columns are supported, for example `index = [:site, :time]`.
 Only matched rows are plotted, and an empty match is an error. Duplicate keys
 follow DataFrames' inner-join semantics: every matching pair is included.
 
+Compatible targets use the first observation target's unit on both axes,
+or the estimate's unit if the observations are bare numbers. For example,
+2 days observed and 48 hours estimated plot at (2, 2) in days. Set either
+`xunit` or `yunit` to change both. If you explicitly choose different display
+units, the axis ranges and reference line still represent equal physical values.
+Numeric `lim` bounds are in the x-axis unit; bounds may also carry units.
+
 Use `visualize!(p, obs, est, y; index, options...)` to append to an existing
 plot. A scalar target uses `name`; a vector of targets uses `names` and
 `colors`, just like the system-based comparison.
