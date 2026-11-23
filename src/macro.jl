@@ -834,7 +834,8 @@ S
 """
 macro system(head, body=:(begin end))
     scope = __module__
-    body = Expr(:block, __source__, MacroTools.block(body).args...)
+    #HACK: wrapping a single declaration with MacroTools.block can mask the caller's source location
+    body = Expr(:block, __source__, (isexpr(body, :block) ? body.args : (body,))...)
     gensystem(body; scope, parsehead(head; scope)...)
 end
 
