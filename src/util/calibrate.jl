@@ -90,8 +90,8 @@ _calibrate(S, obss, configs, tableids;
     K = parameterkeys(P)
     V = parametervalues(P)
     U = parameterunits(resolveparameters(parameters, S))
-    idx = parseindex(index, S)
-    I, IV = collect(keys(idx)), Tuple(values(idx))
+    IKV = parseindex(index, S)
+    I, IV = collect(keys(IKV)), Tuple(values(IKV))
     T = parsetarget(target, S) |> keys |> collect
     tables = map(obss) do obs
         obs = filterobservations(obs, T)
