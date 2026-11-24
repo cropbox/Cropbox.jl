@@ -1116,7 +1116,8 @@ Cropbox.writeimage("figure.pdf", p)
 The [PDF export](figure.pdf) contains the same plotted result.
 
 The built-in Classic style follows Cropbox's Gadfly colors, lighter text,
-compact legends, and calendar labels. It uses Makie's bundled Noto Sans,
+compact legends, and calendar labels. The 560 × 350 figure leaves room for
+more ticks on numeric x axes. It uses Makie's bundled Noto Sans,
 with tick-label size 10 and axis-label/title size 12. Cropbox bundles
 [Noto Sans CJK KR Regular](https://github.com/notofonts/noto-cjk/blob/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf)
 as a fallback for Korean, Chinese, and Japanese,
