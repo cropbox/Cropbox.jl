@@ -4,17 +4,18 @@ import BlackBoxOptim
 
 """
     calibrate(S, obs; <keyword arguments>) -> Config | OrderedDict
+    calibrate(S, [obs1, obs2, …]; <keyword arguments>) -> Config | OrderedDict
 
 Obtain a set of parameters for the given system `S` that simulates provided observation `obs` closely as possible. A multitude of simulations are conducted with a differing combination of parameter sets specified by the range of possible values and the optimum is selected based on a choice of evaluation metric. Internally, differential evolution algorithm from BlackboxOptim.jl is used.
 
 # Arguments
 - `S::Type{<:System}`: type of system to be calibrated.
-- `obs::AbstractDataFrame`: observation data to be used for calibration, including a DataFrame view.
+- `obs`: one observation table (or view), or a vector of tables for experiments sharing the parameters being fitted.
 
 # Keyword Arguments
 ## Configuration
-- `config=()`: a single base configuration for the system (can't be used with `configs`).
-- `configs=[]`: multiple base configurations for the system (can't be used with `config`).
+- `config=()`: one base configuration for all observation tables (can't be used with `configs`).
+- `configs=nothing`: multiple base configurations. A single observation table is shared; a vector of tables is paired with the configurations in order.
 
 ## Layout
 - `index=nothing`: variables to construct index columns of the output; default falls back to `context.clock.time`.
@@ -63,34 +64,50 @@ Config for 1 system:
     a = 20.0
 ```
 """
-calibrate(S::Type{<:System}, obs::AbstractDataFrame; config=(), configs=[], kwargs...) = begin
-    if isempty(configs)
-        calibrate(S, obs, [config]; kwargs...)
-    elseif isempty(config)
-        calibrate(S, obs, configs; kwargs...)
-    else
-        throw(ArgumentError("config and configs cannot be used together"))
-    end
+calibrate(S::Type{<:System}, obs::AbstractDataFrame; config = (), configs = nothing, kw...) = begin
+    cs = isnothing(configs) || isempty(configs) ? [config] : checkconfigs(config, configs)
+    calibrate(S, obs, cs; kw...)
 end
-calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=nothing, target, parameters, metric=nothing, weight=nothing, pareto=false, optim=(), seed = 0, warn = true, kwargs...) = begin
+calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; kw...) =
+    _calibrate(S, (obs,), configs, fill(1, length(configs)); kw...)
+
+calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}; config = (), configs = nothing, kw...) = begin
+    cs = isnothing(configs) ? fill(config, length(obss)) : checkconfigs(config, configs)
+    calibrate(S, obss, cs; kw...)
+end
+calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}, configs::Vector; kw...) = begin
+    length(obss) == length(configs) || throw(ArgumentError("expected one configuration per observation table, got $(length(configs)) for $(length(obss)) tables"))
+    _calibrate(S, obss, configs, eachindex(configs); kw...)
+end
+
+checkconfigs(config, configs) = isempty(config) ? configs : throw(ArgumentError("config and configs cannot be used together"))
+
+_calibrate(S, obss, configs, tableids;
+    index = nothing, target, parameters, metric = nothing, weight = nothing, pareto = false, optim = (), seed = 0, warn = true, kwargs...
+) = begin
+    isempty(configs) && throw(ArgumentError("at least one calibration experiment is required"))
     P = configure(parameters)
     K = parameterkeys(P)
     V = parametervalues(P)
     U = parameterunits(resolveparameters(parameters, S))
-    I = parseindex(index, S) |> keys |> collect
+    IKV = parseindex(index, S)
+    I, IV = collect(keys(IKV)), Tuple(values(IKV))
     T = parsetarget(target, S) |> keys |> collect
-    obs = filterobservations(obs, T)
+    tables = map(obss) do obs
+        obs = filterobservations(obs, T)
+        IC = collect(zip(getproperty.(Ref(obs), I)...))
+        snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
+        (; obs, snap)
+    end
+    total = sum(t -> nrow(t.obs), tables)
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
     metric = metricfunc(metric)
-    IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
-    IV = parseindex(index, S) |> values |> Tuple
-    snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-    residual(c, rows, modelseed) = begin
-        est = simulate(S; config=c, index, target, snap, seed = modelseed, verbose=false, kwargs...)
+    residual(c, table, rows, modelseed) = begin
+        est = simulate(S; config = c, index, target, snap = table.snap, seed = modelseed, verbose = false, kwargs...)
         isempty(est) && return repeat([Inf], n)
-        O, E = aligndata(obs, est, T; index = I, allowempty = true, rows)
+        O, E = aligndata(table.obs, est, T; index = I, allowempty = true, rows)
         isempty(first(O)) && return repeat([Inf], n)
         [metric(e, o) for (o, e) in zip(O, E)]
     end
@@ -103,14 +120,15 @@ calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=noth
         # draw in configuration order, independent of worker scheduling
         seeds = isnothing(seed) ? rand(UInt64, l) : nothing
         Threads.@threads for i in 1:l
-            R[i] = residual(configure(configs[i], c), rows[i], isnothing(seeds) ? seed : seeds[i])
+            R[i] = residual(configure(configs[i], c), tables[tableids[i]], rows[i], isnothing(seeds) ? seed : seeds[i])
         end
         A = eachrow(hcat(R...)) .|> Iterators.flatten .|> collect |> deunitfy
         e = eachrow(hcat(A...)) |> sum
         # BlackBoxOptim expects Float64, not even Int
         e = Float64.(e)
         if warn && all(isfinite, e)
-            if warnmatching(obs, Iterators.flatten(rows); context = "calibration candidate (shown once per search)")
+            matched = length(Set((id, row) for (id, rs) in zip(tableids, rows) for row in rs))
+            if warnmatching(matched, total; context = "calibration candidate (shown once per search)")
                 warn = false
             end
         end

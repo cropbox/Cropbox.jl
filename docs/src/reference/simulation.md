@@ -341,7 +341,7 @@ distinct.
 
 ```julia
 calibrate(SystemType, observations;
-    config = (), configs = [],
+    config = (), configs = nothing,
     index = nothing,
     target,
     parameters,
@@ -399,13 +399,27 @@ metric. A sum of site-year RMSE values is not a pooled RMSE, especially when
 site-years have different numbers of observations. Check which objective fits
 the study before calibrating.
 
+To fit one parameter set across experiments, pass their observation tables
+in the same order as their base configurations:
+
+```julia
+p = calibrate(Model, [obs1, obs2]; configs = [c1, c2], target = :height, stop = 60, parameters)
+```
+
+Each run matches only its own table: sampling times may overlap or differ,
+and no experiment ID is needed in the model or in `index`. Use `config = c`
+instead of `configs` for repeated experiments with the same setup, or omit it
+to use model defaults. A single table with `configs` still shares that table
+across runs.
+
 Rows missing any requested observation target are omitted before the search.
 Candidates with no matching output receive an infinite penalty. If no finite
 result is found, calibration raises an `ArgumentError` instead of returning
 an unvalidated configuration. This does not change an explicit `snap` condition.
 Partial matching warns once per search, reporting coverage for the first finite
 candidate with incomplete coverage, not necessarily the final solution.
-Run `evaluate` with the fitted configuration to check its coverage.
+Check coverage for each experiment with `evaluate` using its table and the
+fitted parameters overlaid on its base configuration.
 Use `warn = false` to suppress this warning across repeated calibration calls;
 this is independent of simulation `verbose` and optimizer `TraceMode`.
 

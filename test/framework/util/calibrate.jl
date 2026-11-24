@@ -147,7 +147,7 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
             config = p1, configs = [p2], target = :b, stop = n, parameters = params)
     end
 
-    @testset "configs as index" begin
+    @testset "multiple configurations" begin
         @system SCalibrateConfigsIndex(Controller) begin
             a => 0 ~ preserve(parameter)
             w => 1 ~ preserve(parameter)
@@ -174,6 +174,24 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         q = @test_logs calibrate(SCalibrateConfigsIndex, obs;
             stop = n, index, target, parameters = params, optim, warn = false)
         @test p[:SCalibrateConfigsIndex][:a] == q[:SCalibrateConfigsIndex][:a]
+
+        @testset "paired observation tables" begin
+            S = SCalibrateConfigsIndex
+            tables = [DataFrame(time = [1, 2]u"hr", b = [10.0, 20.0]),
+                      DataFrame(time = [1, 3]u"hr", b = [20.0, 60.0])]
+            disjoint = [view(t, 2:2, :) for t in tables]
+            kw = (; target, stop = 3, parameters = params, optim)
+            for obs in (tables, disjoint)
+                fit = @test_logs calibrate(S, obs; configs, kw..., optim = (; optim..., MaxSteps = 600))
+                @test fit[:SCalibrateConfigsIndex][:a] ≈ 10 atol = 0.02
+            end
+
+            @test calibrate(S, disjoint; config = configs[2], kw...) == calibrate(S, disjoint, fill(configs[2], 2); kw...)
+            @test_logs (:warn, r"3 of 4 complete observations matched") calibrate(S, tables; configs, kw..., stop = 2)
+            @test_throws "no finite calibration result" calibrate(S, disjoint; configs, kw..., stop = 2)
+            @test_throws "one configuration per observation table" calibrate(S, tables; configs = configs[1:1], kw...)
+            @test_throws "at least one calibration experiment" calibrate(S, DataFrame[]; kw...)
+        end
     end
 
     @testset "missing observations and empty matches" begin
