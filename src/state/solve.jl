@@ -57,8 +57,10 @@ solvequadratic(a, b, c) = begin
     (a == 0) && return (-c/b,)
     Δ = b^2 - 4a*c
     if Δ > 0
-        s = √Δ
-        ((-b - s) / 2a, (-b + s) / 2a)
+        # use the product of the roots to avoid cancellation in the smaller root
+        q = -(b + copysign(√Δ, b)) / 2
+        x, y = q/a, iszero(c) ? zero(q)/a : c/q
+        signbit(b) ? (y, x) : (x, y)
     elseif Δ == 0
         (-b/2a,)
     else
