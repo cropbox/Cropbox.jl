@@ -10,17 +10,19 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 
 # Arguments
 - `S::Type{<:System}`: type of system to be calibrated.
-- `obs`: one observation table (or view), or a vector of tables for experiments sharing the parameters being fitted.
+- `obs`: one observation table (or view), a grouped data frame, or a vector of tables for experiments sharing the parameters being fitted.
 
 # Keyword Arguments
 ## Configuration
 - `config=()`: one base configuration for all observation tables (can't be used with `configs`).
-- `configs=nothing`: multiple base configurations. A single observation table is shared; a vector of tables is paired with the configurations in order.
+- `configs=nothing`: a vector of base configurations. One observation table is shared unless `match` is given; a vector of tables is paired in order.
+- `match=nothing`: pair experiments by label, e.g. `:Trial => :site` or `:Trial => [:site, :year]`. The section is read from each config and the columns from the observation table. For a grouped data frame, just name the section.
 
 ## Layout
 - `base=nothing`: subsystem from which both the index and target are read.
 - `index=nothing`: variables to construct index columns of the output; default falls back to `context.clock.time`.
 - `target`: variables to construct non-index columns of the output.
+- `meta=nothing`: additional columns in simulated output, as in `simulate`; not used to pair experiments.
 
 ## Calibration
 - `parameters`: parameters with a range of boundary values to be calibrated within.
@@ -67,23 +69,69 @@ Config for 1 system:
     a = 20.0
 ```
 """
-calibrate(S::Type{<:System}, obs::AbstractDataFrame; config = (), configs = nothing, kw...) = begin
-    cs = isnothing(configs) || isempty(configs) ? [config] : checkconfigs(config, configs)
-    calibrate(S, obs, cs; kw...)
+calibrate(S::Type{<:System}, obs::AbstractDataFrame; config = (), configs = nothing, match = nothing, kw...) = begin
+    cs = isnothing(match) && (isnothing(configs) || isempty(configs)) ? [config] : checkconfigs(config, configs)
+    calibrate(S, obs, cs; match, kw...)
 end
-calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; kw...) =
-    _calibrate(S, (obs,), configs, fill(1, length(configs)); kw...)
+calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; match = nothing, kw...) = begin
+    if isnothing(match)
+        _calibrate(S, (obs,), configs, fill(1, length(configs)); kw...)
+    else
+        match isa Pair || throw(ArgumentError("match must specify a configuration section => observation column(s), e.g. :Trial => :site"))
+        section, cols = match
+        groups = DataFrames.groupby(obs, cols; sort = false)
+        calibrate(S, groups, configs; match = section, kw...)
+    end
+end
+
+calibrate(S::Type{<:System}, groups::DataFrames.GroupedDataFrame; config = (), configs = nothing, match = nothing, kw...) = begin
+    if isnothing(configs) && isnothing(match)
+        calibrate(S, collect(AbstractDataFrame, groups); config, kw...)
+    else
+        calibrate(S, groups, checkconfigs(config, configs); match, kw...)
+    end
+end
+calibrate(S::Type{<:System}, groups::DataFrames.GroupedDataFrame, configs::Vector; match = nothing, kw...) =
+    calibrate(S, matchgroups(groups, configs, match), configs; kw...)
 
 calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}; config = (), configs = nothing, kw...) = begin
     cs = isnothing(configs) ? fill(config, length(obss)) : checkconfigs(config, configs)
     calibrate(S, obss, cs; kw...)
 end
-calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}, configs::Vector; kw...) = begin
+calibrate(S::Type{<:System}, obss::AbstractVector{<:AbstractDataFrame}, configs::Vector; match = nothing, kw...) = begin
+    isnothing(match) || throw(ArgumentError("a vector of observation tables is already paired with configs in order; omit match"))
     length(obss) == length(configs) || throw(ArgumentError("expected one configuration per observation table, got $(length(configs)) for $(length(obss)) tables"))
     _calibrate(S, obss, configs, eachindex(configs); kw...)
 end
 
-checkconfigs(config, configs) = isempty(config) ? configs : throw(ArgumentError("config and configs cannot be used together"))
+checkconfigs(config, configs) = begin
+    configs isa Vector || throw(ArgumentError("configs must be a vector of configurations"))
+    isempty(config) || throw(ArgumentError("config and configs cannot be used together"))
+    configs
+end
+
+matchgroups(groups, configs, section) = begin
+    section isa Union{Symbol,AbstractString} || throw(ArgumentError("for grouped observations, name the configuration section with match (e.g. match = :Trial)"))
+    cols = Tuple(DataFrames.groupcols(groups))
+    isempty(cols) && throw(ArgumentError("match needs at least one observation column"))
+    seen, tables = Set{Tuple}(), AbstractDataFrame[]
+    for c in configs
+        labels = get(configure(c), Symbol(section), (;))
+        key = map(cols) do k
+            v = get(labels, k, missing)
+            ismissing(v) && throw(ArgumentError("missing configuration label $section.$k"))
+            v
+        end
+        key in seen && throw(ArgumentError("duplicate configuration for observation group $key"))
+        haskey(groups, key) || throw(ArgumentError("no observations for configuration group $key"))
+        push!(seen, key)
+        push!(tables, groups[key])
+    end
+    for key in keys(groups)
+        Tuple(key) in seen || throw(ArgumentError("no configuration for observation group $(NamedTuple(key))"))
+    end
+    tables
+end
 
 _calibrate(S, obss, configs, tableids;
     base = nothing, index = nothing, target, parameters, metric = nothing, weight = nothing, pareto = false, optim = (), seed = 0, warn = true, kwargs...

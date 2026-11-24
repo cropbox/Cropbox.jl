@@ -201,6 +201,39 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
             @test_throws "no finite calibration result" calibrate(S, disjoint; configs, kw..., stop = 2)
             @test_throws "one configuration per observation table" calibrate(S, tables; configs = configs[1:1], kw...)
             @test_throws "at least one calibration experiment" calibrate(S, DataFrame[]; kw...)
+
+            @testset "matching experiments" begin
+                data = vcat(tables...; source = :site => [:A, :B])
+                cs = [@config(c, :Trial => (; site)) for (c, site) in zip(configs, (:A, :B))]
+                fitgroup(d, args...; opts...) = calibrate(S, d, args...; kw..., optim = (; optim..., MaxSteps = 150), opts...)
+                sitekey = :Trial => :site
+                groups = groupby(data, :site; sort = false)
+                p = fitgroup(reverse(data); configs = cs, match = sitekey)
+                @test p[:SCalibrateConfigsIndex][:a] ≈ 10 atol = 0.02
+                @test fitgroup(groups, reverse(cs); match = :Trial) == p
+                @test fitgroup(view(data, data.time .> 1u"hr", :), cs; match = sitekey)[:SCalibrateConfigsIndex][:a] ≈ 10 atol = 0.02
+                @test fitgroup(groups; config = configs[2]) == fitgroup(tables; config = configs[2])
+                @test_throws "name the configuration section" fitgroup(groups, cs; meta = :Trial)
+                @test_throws "section => observation column(s)" fitgroup(data, cs; match = :site)
+                @test_throws "must be a vector" fitgroup(data; match = sitekey)
+                @test_throws "already paired" fitgroup(tables, cs; match = sitekey)
+
+                data.year = ifelse.(data.site .== :A, 2024, 2025)
+                data.site .= :A
+                ts = [@config(c, :Trial => (; site = :A, year, b = 999)) for (c, year) in zip(configs, 2024:2025)]
+                match = :Trial => [:site, :year]
+                @test fitgroup(reverse(data), ts; match) == p
+                # only explicit output metadata replaces the simulated b column
+                metric(E, O) = all(==(999), E) ? 0.0 : Inf
+                @test fitgroup(data, ts; match, meta = :Trial, metric) isa Cropbox.Config
+                @test_throws "duplicate configuration" fitgroup(data, ts; match = sitekey)
+                @test_throws "no configuration for observation group" fitgroup(data, ts[1:1]; match)
+                @test_throws "no observations for configuration" fitgroup(data, cs; match = sitekey)
+                @test_throws "missing configuration label Trial.year" fitgroup(data, cs; match)
+                @test_throws "missing configuration label Trial.site" fitgroup(data, configs; match = sitekey)
+                @test_throws "at least one observation column" fitgroup(data, ts; match = :Trial => Symbol[])
+                @test_throws "must be a vector" fitgroup(data; configs = Dict(:A => configs[1]), match = sitekey)
+            end
         end
     end
 
