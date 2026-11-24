@@ -61,6 +61,10 @@
     end
 
     @testset "quadratic double" begin
+        @test first(Cropbox.solvequadratic(1, -1e9, 1)) ≈ 1e-9
+        @test last(Cropbox.solvequadratic(1, 1e9, 1)) ≈ -1e-9
+        @test isequal(last(Cropbox.solvequadratic(1, 2, 0)), 0.0)
+
         @system SSolveQuadraticDouble(Controller) begin
             l ~ preserve(parameter)
             u ~ preserve(parameter)

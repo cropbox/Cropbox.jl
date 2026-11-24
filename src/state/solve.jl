@@ -57,8 +57,17 @@ solvequadratic(a, b, c) = begin
     (a == 0) && return (-c/b,)
     Δ = b^2 - 4a*c
     if Δ > 0
-        s = √Δ
-        ((-b - s) / 2a, (-b + s) / 2a)
+        # choose the sign that avoids cancellation in q/a and use the root product c/a to get c/q
+        if iszero(c) # x(ax + b) = 0
+            lo, hi = minmax(-b, zero(b))
+            (lo/a, hi/a)
+        elseif b < 0
+            q = (-b + √Δ) / 2
+            (c/q, q/a)
+        else
+            q = (-b - √Δ) / 2
+            (q/a, c/q)
+        end
     elseif Δ == 0
         (-b/2a,)
     else
