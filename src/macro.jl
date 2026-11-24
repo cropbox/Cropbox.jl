@@ -345,6 +345,7 @@ end
 ####
 
 const C = :Cropbox
+const SELF = esc(:self) # the update argument is also visible to model equations
 const ϵ = @q begin end
 
 genvartype(v::VarInfo{Nothing}) = gettag(v, :_type)
@@ -462,7 +463,7 @@ isdoc(ex) = isexpr(ex, :macrocall) && ex.args[1] == DOCREF
 gensource(v::VarInfo, name) = begin
     v.system != name && return ϵ
     if isempty(v.docstring)
-        @q begin $(v.linenumber); $(v.line) end
+        Expr(:block, v.linenumber, v.line)
     else
         Expr(:macrocall, DOCREF, v.linenumber, v.docstring, v.line)
     end
@@ -536,9 +537,9 @@ genstruct(name, type, infos, consts, substs, incl, scope) = begin
         $C.fieldnamesalias(::Type{$_S}) = $(genfieldnamesalias(infos))
         $C.fieldunits(::Type{$_S}) = let $(constpatches...); $(genfieldunits(infos)) end
         $C.scopeof(::Type{$_S}) = $scope
-        $C._update!($(esc(:self))::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage(); scope))
-        $C._update!($(esc(:self))::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage(); scope))
-        $C._update!($(esc(:self))::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage(); scope))
+        $C._update!($SELF::$_S, ::$C.MainStage) = $(genupdate(nodes, MainStage(); scope))
+        $C._update!($SELF::$_S, ::$C.PreStage) = $(genupdate(infos, PreStage(); scope))
+        $C._update!($SELF::$_S, ::$C.PostStage) = $(genupdate(infos, PostStage(); scope))
         Base.Docs.getdoc(::Type{$S}) = $C.getdoc($_S)
         Base.Docs.getdoc(::Type{$_S}) = $C.getdoc($_S)
         $S
@@ -939,14 +940,14 @@ genupdate(nodes::Vector{VarNode}, ::MainStage; kw...) = begin
     @q begin
         $([genupdateinit(n.info; kw...) for n in nodes]...)
         $(steps...)
-        self
+        $SELF
     end
 end
 
 genupdate(infos::Vector{VarInfo}, t::UpdateStage; kw...) = @q begin
     $([genupdateinit(v; kw...) for v in infos]...)
     $([genupdate(v, t; kw...) for v in infos]...)
-    self
+    $SELF
 end
 
 symname(v::VarInfo) = symname(v.system, v.name)
@@ -959,7 +960,7 @@ symcall(v::VarInfo) = Symbol(v.name, :__call)
 genupdateinit(v::VarInfo; kw...) = begin
     # implicit :expose
     @q begin
-        $(v.name) = self.$(v.name)
+        $(v.name) = $SELF.$(v.name)
         $(isnothing(v.alias) ? ϵ : :($(v.alias) = $(v.name)))
     end
 end
@@ -989,7 +990,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PreStep; kw...) = begin
     if istag(v, :context)
         @gensym c
         @q let $c = $(v.name)
-            $C.update!(self, $C.PreStage())
+            $C.update!($SELF, $C.PreStage())
             $c
         end
     end
@@ -1007,7 +1008,7 @@ genupdate(v::VarInfo, ::Val{nothing}, ::PostStep; kw...) = begin
         @gensym c cc
         @q let $c = $(v.name),
                $cc = $c.context
-            $C.update!(self, $C.PostStage())
+            $C.update!($SELF, $C.PostStage())
             if !isnothing($cc) && $C.value($c.clock.time) < $C.value($cc.clock.time)
                 @goto $l
             end
@@ -1096,7 +1097,7 @@ genbody(v::VarInfo, body=nothing) = begin
         end
         body = esc(k)
     else
-        args = @q begin $(emitfuncargpair.(v.args)...) end
+        args = Expr(:block, emitfuncargpair.(v.args)...)
         isnothing(body) && (body = esc(v.body))
         if v.state === :Track && !isnothing(v.body)
             # repeated names keep their last binding; all-underscore names are write-only
@@ -1124,7 +1125,7 @@ emitfunckwargpair(a) = begin
 end
 
 genfunc(v::VarInfo; unitfy=true) = begin
-    innerargs = @q begin $(emitfuncargpair.(v.args)...) end
+    innerargs = Expr(:block, emitfuncargpair.(v.args)...)
     innerbody = MacroTools.flatten(@q let $innerargs; $(esc(v.body)) end)
     unitfy && (innerbody = @q $C.unitfy($innerbody, $C.value($(gettag(v, :unit)))))
 

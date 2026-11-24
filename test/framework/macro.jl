@@ -15,6 +15,7 @@ end
 
     y(factor) => factor * exp(0)      ~ track
     localval  => (factor = 5; factor) ~ track
+    id        => objectid(self)       ~ track::UInt(init = 0)
 
     f(; factor) => factor * u"m" ~ call(u"m")
 end
@@ -26,6 +27,7 @@ end
         m = MEquationInputs
         s = instance(m.Patched)
         @test (s.y', s.localval', s.shape') == (3, 5, m.Flat)
+        @test s.id' === objectid(s)
         @test s.f(4) == 4u"m"
         for rhs in ("factor * x", "MEquationInputs.factor * x", "factor * x * u\"m\"")
             code = "@system Bad(Controller) begin\n    x => 1 ~ preserve\n    y(x) => $rhs ~ track\nend"
