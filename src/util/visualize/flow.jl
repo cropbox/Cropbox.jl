@@ -30,11 +30,11 @@ Describe an update phase without evaluating model expressions. State adapters
 mirror `genupdate`: `equation` reads declaration arguments, `tags` lists other
 direct reads, and `slots` identifies values carried to the next update.
 An absent action leaves the expression unlabelled; an empty action names
-only the state. Shared explanations appear once in the legend.
+only the state.
 Keep these adapters in sync with state generators; unknown states are rejected
 rather than assigned guessed semantics.
 """
-flowrule(operation, action = nothing; equation = false, tags = (), slots = (), hints = ()) = (; operation, action, equation, tags, slots, hints)
+flowrule(operation, action = nothing; equation = false, tags = (), slots = ()) = (; operation, action, equation, tags, slots)
 flowrule(::Val, v, phase) = throw(ArgumentError("no computation flow description for $(v.state)"))
 flowrule(::Union{Val{:Preserve},Val{:Provide},Val{:Interpolate},Val{:Tabulate},Val{:Hold}}, v, phase) = nothing
 flowrule(::Val{:Call}, v, phase) = phase == :main ? flowrule(:binding, "bound inputs"; tags = (:unit,)) : nothing
@@ -45,51 +45,35 @@ flowrule(::Union{Val{nothing},Val{:Bring}}, v, phase) = begin
 end
 flowrule(::Val{:Track}, v, phase) = begin
     istag(v, :override, :skip) && return nothing
-    when = hastag(v, :when)
-    alt = hastag(v, :init) ? "init" : "zero"
-    flowrule(:value; equation = true, tags = (:when, :unit, :min, :max, :round, (when ? (:init,) : ())...),
-        hints = when ? ("track: use $alt when the condition is false",) : ())
+    flowrule(:value; equation = true, tags = (:when, :unit, :min, :max, :round, (hastag(v, :when) ? (:init,) : ())...))
 end
 flowrule(::Val{:Flag}, v, phase) = begin
     istag(v, :override, :parameter) && return nothing
-    once = istag(v, :once)
-    hs = if once
-        ("once: a true flag stays true",)
-    elseif hastag(v, :when)
-        ("flag: clear when the condition is false",)
-    else
-        ()
-    end
-    flowrule(:guard; equation = true, tags = (:when,), slots = once ? (:value,) : (), hints = hs)
+    flowrule(:guard; equation = true, tags = (:when,), slots = istag(v, :once) ? (:value,) : ())
 end
-flowrule(::Val{:Remember}, v, phase) = flowrule(:memory, ""; equation = true, tags = (:when, :unit), slots = (:value,), hints = ("remember: keep the first eligible value",))
-flowratehint(v) = hastag(v, :when) ? ("save rate: zero when the condition is false",) : ()
+flowrule(::Val{:Remember}, v, phase) = flowrule(:memory, ""; equation = true, tags = (:when, :unit), slots = (:value,))
 flowrule(::Val{:Accumulate}, v, phase) = begin
     reset = gettag(v, :reset) !== false
     if phase == :post
-        flowrule(:rate, "save rate"; equation = true, tags = (:when, :reset), slots = (:rate,), hints = flowratehint(v))
+        flowrule(:rate, "save rate"; equation = true, tags = (:when, :reset), slots = (:rate,))
     else
-        flowrule(:state, ""; tags = (:time, :unit, :min, :max, (reset ? (:init,) : ())...), slots = (:value,),
-            hints = ("accumulate: add previous rate × elapsed time",
-                (reset ? ("reset: sampled with rate; if true, use init next update",) : ())...))
+        flowrule(:state, ""; tags = (:time, :unit, :min, :max, (reset ? (:init,) : ())...), slots = (:value,))
     end
 end
 flowrule(::Val{:Capture}, v, phase) = begin
     if phase == :post
-        flowrule(:rate, "save rate & time"; equation = true, tags = (:when, :time), slots = (:rate,), hints = flowratehint(v))
+        flowrule(:rate, "save rate & time"; equation = true, tags = (:when, :time), slots = (:rate,))
     else
-        flowrule(:state, ""; tags = (:time,), hints = ("capture: replace with previous rate × elapsed time",))
+        flowrule(:state, ""; tags = (:time,))
     end
 end
-flowrule(::Val{:Advance}, v, phase) = flowrule(:state, ""; slots = (:value,), hints = ("advance: read counter, then add stored step",))
+flowrule(::Val{:Advance}, v, phase) = flowrule(:state, ""; slots = (:value,))
 flowrule(::Val{:Drive}, v, phase) = flowrule(:input, "read input"; tags = (:tick,))
 flowrule(::Val{:Produce}, v, phase) = begin
     phase == :pre && return nothing
-    single = istag(v, :single)
-    child = single ? "child" : "children"
+    child = istag(v, :single) ? "child" : "children"
     phase == :main && return flowrule(:produce, "update $child")
-    hint = single ? "queue child: only if empty; construct next update" : "queue children: construct next update"
-    flowrule(:produce, "queue $child"; equation = true, tags = (:when,), hints = (hint,))
+    flowrule(:produce, "queue $child"; equation = true, tags = (:when,))
 end
 flowrule(::Val{:Bisect}, v, phase) = begin
     if phase == :pre
@@ -152,9 +136,8 @@ flowcode(v::VarInfo, r, scope) = begin
     tags = [(tagkey(t), flowexpr(t)) for t in ts if tagkey(t) in ks]
     badges = (:when, :once, :reset)
     code = join([body; args; [s for (k, s) in tags if k ∉ badges]], "; ")
-    state = isnothing(v.state) ? "" : lowercase(string(v.state))
-    note = isnothing(r.action) ? "" : join(filter(!isempty, (state, r.action)), " · ")
-    (; code, note, badges = [s for (k, s) in tags if k in badges])
+    behavior = isnothing(r.action) || isnothing(v.state) ? "" : lowercase(string(v.state))
+    (; code, behavior, note = something(r.action, ""), badges = [s for (k, s) in tags if k in badges])
 end
 
 flowplan(S::Type{<:System}, d::Dependency; selected = d) = begin
@@ -174,7 +157,7 @@ flowplan(S::Type{<:System}, d::Dependency; selected = d) = begin
         r.operation == :binding && isempty(reads) && return
         prev = r.operation in (:value, :guard) && any(a -> a.name == string(v.name), reads)
         slots = prev && isempty(r.slots) ? (:value,) : r.slots
-        rows[i] = (; node = n, order = i, operation = r.operation, slots, reads, flowcode(v, r, scopeof(S))..., hints = r.hints)
+        rows[i] = (; node = n, order = i, operation = r.operation, slots, reads, flowcode(v, r, scopeof(S))...)
         foreach(a -> haskey(calls, a.name) && visit(calls[a.name]), reads)
     end
     foreach(visit, findall(n -> included(n.info), steps))
@@ -185,8 +168,7 @@ flowplan(S::Type{<:System}, d::Dependency; selected = d) = begin
     idx = Dict(e.node.info.name => i for (i, e) in enumerate(events) if flowphase(e.node) == :main)
     carries = [(; name = string(e.node.info.name), slot, from = i, to = idx[e.node.info.name]) for (i, e) in enumerate(events) if haskey(idx, e.node.info.name) for slot in e.slots]
     labels = Dict(n => flowlabel(n) for n in lanes)
-    hints = unique(String[h for e in events for h in e.hints])
-    (; model = string(namefor(S)), lanes, labels, ports, events, carries, hints)
+    (; model = string(namefor(S)), lanes, labels, ports, events, carries)
 end
 
 flowwrap(text; width = 72, sep = " ") = begin
@@ -201,36 +183,77 @@ flowwrap(text; width = 72, sep = " ") = begin
     end
     join(lines, '\n')
 end
-flowlines(s) = isempty(s) ? 0 : count(==('\n'), s) + 1
 flowfont(italic = false) = Makie.assetpath("fonts", italic ? "TeXGyreHerosMakie-Italic.otf" : "DejaVuSansMono.ttf")
+flowbold() = Makie.assetpath("fonts", "NotoSans-Bold.ttf")
+flowwidth(s, face, size) = Makie.widths(Makie.text_bb(s, face, Float32(size)))[1]
+flowleading(size) = ceil(Int, 1.4size)
+const FLOW_EMPTY = "No update operations in this selection."
 
-flowrow(e, mono, italic) = begin
-    parts = Tuple{Symbol,String,Float64,Int}[]
-    x, y, width, height = 0.0, 0, 0.0, 0
-    for (kind, s) in [(:code, e.code); (:note, e.note); [(:badge, b) for b in e.badges]]
-        isempty(s) && continue
-        label = flowwrap(s)
-        n = flowlines(label)
-        pad = kind == :badge ? 4 : 0
-        face = kind == :note ? italic : mono
-        w = maximum(l -> Makie.widths(Makie.text_bb(l, face, kind == :badge ? 8.5f0 : 9f0))[1], split(label, '\n')) + 2pad
-        if x > 0 && (x + w > 400 || n > 1)
-            x, y = 0.0, height
-        end
-        push!(parts, (kind, label, x+pad, y))
-        width, height = max(width, x+w), max(height, y+14n)
-        x, y = n > 1 ? (0.0, height) : (x+w+8, y)
+flowtoken(k) = begin
+    k in (:julia_operator, :julia_comparator, :julia_assignment, :julia_opassignment, :julia_typedec, :julia_broadcast, :julia_builtin) && return "#395F8A"
+    k in (:julia_number, :julia_bool, :julia_singleton_identifier) && return "#924B20"
+    k == :julia_keyword && return "#765283"
+    k in (:julia_string, :julia_string_delim, :julia_char, :julia_char_delim) && return "#42634D"
+    (k == :julia_parentheses || startswith(String(k), "julia_rainbow_")) && return "#636D73"
+    nothing
+end
+flowsyntax(s) = map(split(JuliaSyntaxHighlighting.highlight(s), '\n'; keepempty = true)) do line
+    isempty(line) && return ""
+    parts = map(collect(Base.eachregion(line))) do (part, as)
+        i = findlast(a -> a.label == :face && !isnothing(flowtoken(a.value)), as)
+        isnothing(i) ? String(part) : Makie.rich(String(part); color = flowtoken(as[i].value))
     end
-    (; parts, width, height)
+    all(p -> p isa String, parts) ? String(line) : Makie.rich(parts...)
+end
+
+flowrow(e, mono, italic, bold, fs) = begin
+    parts = Tuple{Symbol,String,Float64,Int}[]
+    chips = NamedTuple[]
+    x, y, width, height, indent = 0.0, 0, 0.0, 0, 0.0
+    for (kind, s) in [(:behavior, e.behavior); (:code, e.code); (:note, e.note); [(:badge, b) for b in e.badges]]
+        isempty(s) && continue
+        tag = kind == :badge ? split(s, " = "; limit = 2) : ()
+        pair = length(tag) == 2
+        label = flowwrap(pair ? last(tag) : s)
+        lines = split(label, '\n')
+        n = length(lines)
+        chip = kind in (:behavior, :badge)
+        pad = chip ? 4 : 0
+        face = kind == :behavior ? bold : kind == :note ? italic : mono
+        prefix = pair ? flowwidth(first(tag), mono, fs.small) + 2pad : 0.0
+        w = prefix + maximum(l -> flowwidth(l, face, chip ? fs.small : fs.body), lines) + 2pad
+        if x > indent && (x + w > 400 || n > 1)
+            x, y = indent, height
+        end
+        if pair
+            h = Makie.widths(Makie.text_bb(first(tag), mono, Float32(fs.small)))[2] + 2 + (n-1)*flowleading(fs.small)
+            push!(chips, (; x, y, w, h, prefix))
+            push!(parts, (:key, first(tag), x+pad, y))
+        end
+        push!(parts, (pair ? :qualifier : kind, label, x+prefix+pad, y))
+        width, height = max(width, x+w), max(height, y+flowleading(fs.body)*n)
+        kind == :behavior && (indent = x+w+8)
+        x, y = n > 1 ? (indent, height) : (x+w+8, y)
+    end
+    (; parts, chips, width, height)
 end
 
 const FLOW_RAIL_TAPER = 13
-const FLOW_STYLES = let read = (color = "#2D73A1", linewidth = 0.8, linestyle = :solid)
+flowradius(op) = op == :input ? 7 : 6
+flowport(x, y, r, dx, dy) = (x, y) .+ (dx, dy) .* (r / hypot(dx, dy))
+const FLOW_INK = (calculation = "#464B50", read = "#21669A", binding = "#803E96", control = "#83610F", value = "#536777", rate = "#006E53", system = "#994A36")
+const FLOW_GROUP = (value = :calculation, opaque = :calculation, memory = :value, state = :rate, rate = :rate, input = :read, binding = :binding, guard = :control, call = :system, produce = :system)
+flowink(op) = FLOW_INK[FLOW_GROUP[op]]
+flowtint(ink, strength = 0.18) = let c = Makie.to_color(ink)
+    Makie.RGBf(map(x -> 1 - strength*(1-x), (c.r, c.g, c.b))...)
+end
+const FLOW_STYLES = let c = FLOW_INK
     (;
-        read, binding = (; read..., linestyle = :dash),
-        control = (color = "#B27A24", linewidth = 0.9, linestyle = :dot),
-        value = (color = "#89949C", linewidth = 0.65, linestyle = :solid),
-        rate = (color = "#258D80", linewidth = 0.75, linestyle = :solid),
+        read = (color = c.read, linewidth = 0.8, linestyle = :solid),
+        binding = (color = c.binding, linewidth = 0.85, linestyle = :dash),
+        control = (color = c.control, linewidth = 0.9, linestyle = :dot),
+        value = (color = c.value, linewidth = 0.6, linestyle = :solid),
+        rate = (color = c.rate, linewidth = 0.75, linestyle = :solid),
         guide = (color = "#DEDEDE", linewidth = 0.4, linestyle = :solid),
     )
 end
@@ -240,23 +263,28 @@ flowreadkind(e, r) = begin
     r.role in (:when, :reset) ? :control : :read
 end
 
-flowlayout(plan) = begin
-    mono, italic = Makie.to_font.((flowfont(), flowfont(true)))
+flowlayout(plan, theme = theme_classic()) = begin
+    mono, italic, bold = Makie.to_font.((flowfont(), flowfont(true), flowbold()))
+    body = theme.Axis.xticklabelsize[]
+    fs = (; body, small = body - 1, title = theme.Axis.titlesize[])
     entries = plan.events
-    rows = [flowrow(e, mono, italic) for e in entries]
-    angled = any(n -> textwidth(n) > 7, values(plan.labels))
-    spacing = angled ? 34 : 52
-    header = angled ? max(60, maximum(textwidth.(values(plan.labels)); init = 0) * 5.8 + 16) : 34
-    top = 48 + header
+    rows = [flowrow(e, mono, italic, bold, fs) for e in entries]
+    widths = Dict(n => flowwidth(plan.labels[n], mono, body) for n in plan.lanes)
+    step = 52
+    neighbors = zip(plan.lanes, Iterators.drop(plan.lanes, 1))
+    angled = any((widths[a] + widths[b])/2 + 6 > step for (a, b) in neighbors)
+    spacing = angled ? 34 : step
+    heading = angled ? 32 + ceil(Int, maximum(values(widths))*sind(72)) : 40
+    top = heading + 16
     rail = 18
     slots = Set((c.name, c.slot) for c in plan.carries)
     loops = Set(string(e.node.info.name) for e in entries if any(r -> r.name == string(e.node.info.name), e.reads))
     gutter(n, slot) = (n, slot) in slots ? rail : 0
     left(n) = n in loops ? rail : gutter(n, :rate)
-    nd = ndigits(maximum((e.order for e in plan.events); init = 1))
+    numx = 12 + flowwidth(string(length(entries)), mono, fs.small)
     gaps = map(enumerate(plan.lanes)) do (i, n)
         if i == 1
-            max(52, 27 + 5nd + left(n))
+            max(52, numx + 10 + max(left(n), angled ? 0 : widths[n]/2))
         else
             max(spacing, gutter(plan.lanes[i-1], :value) + 8 + left(n))
         end
@@ -265,24 +293,21 @@ flowlayout(plan) = begin
     readgroups = [unique((sign(xs[r.name]-xs[string(e.node.info.name)]), flowreadkind(e, r)) for r in e.reads) for e in entries]
     entry = any(c -> c.to == 1, plan.carries) ? 16 + FLOW_RAIL_TAPER : 0
     above = Int[max(i == 1 ? entry : 0, 18 + 4max(0, length(g)-1)) for (i, g) in enumerate(readgroups)]
-    below = [max(16, r.height-2) for r in rows]
+    below = [max(r.height-2, (0, :control) in g && (0, :read) in g ? 21 : 16) for (r,g) in zip(rows, readgroups)]
     bounds = top .+ [0; cumsum(above .+ below)]
     ys = bounds[2:end] .- below
-    bottom = last(bounds) + 18
-    target = maximum(values(xs); init = 52-spacing) + spacing + 28
-    nw = maximum((textwidth(plan.labels[string(e.node.info.name)]) for e in entries); init = 0)
-    content = target + 6nw + 12
-    width = content + maximum((r.width for r in rows); init = 350) + 24
-    sep = "   ·   "
-    key = flowwrap(join(plan.hints, sep); width = floor(Int, (width-40)/4.85), sep)
-    hinty = bottom + (isempty(plan.carries) ? 30 : 42)
-    height = (isempty(rows) ? bottom+6 : hinty) + 3 + 12flowlines(key)
+    bottom = last(bounds) + (isempty(plan.carries) ? 0 : 18)
+    edge = maximum((xs[n] + widths[n]*(angled ? cosd(72) : 0.5) for n in plan.lanes); init = 40)
+    target = max(edge + 16, maximum(values(xs); init = 40) + 28)
+    right = target + (isempty(rows) ? flowwidth(FLOW_EMPTY, italic, body) : maximum(r.width for r in rows))
+    width = max(12 + flowwidth(plan.model, mono, fs.title), right) + 16
+    height = bottom + (isempty(rows) ? 28 : 8)
     uses(e, n) = string(e.node.info.name) == n || any(r -> r.name == n, e.reads)
     lastuse(n) = maximum((ys[i] for (i, e) in enumerate(entries) if uses(e, n)); init = top-6)
     active = [(x = xs[n], lo = top-6, hi = lastuse(n)) for n in plan.lanes]
     carries = [(; c..., x = xs[c.name] + (c.slot == :rate ? -rail : rail),
         segments = ((top-5, ys[c.to]-16), (ys[c.from]+16, bottom))) for c in plan.carries]
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, hinty, key)
+    (; rows, fs, angled, heading, top, xs, ys, bounds, bottom, numx, target, width, height, readgroups, active, carries)
 end
 
 struct FlowDiagram{P,F<:Real}
@@ -299,17 +324,17 @@ writeimage(name::AbstractString, r::FlowDiagram; kw...) = writeimage(name, flowd
 flowdiagram(S::Type{<:System}, d::Dependency; selected = d, style = ()) = begin
     opt = (; style...)
     all(k -> k == :fontsize, keys(opt)) || throw(ArgumentError("flow style supports only fontsize"))
-    fs = get(opt, :fontsize, 10)
+    fs = get(opt, :fontsize, 11)
     fs isa Real && isfinite(fs) && fs > 0 || throw(ArgumentError("fontsize must be a positive finite number"))
     FlowDiagram(flowplan(S, d; selected), fs)
 end
 
-flowdraw(r::FlowDiagram) = flowdraw(r.plan, flowlayout(r.plan), r.fontsize)
-flowdraw(plan, layout, fontsize) = begin
-    (; rows, angled, top, xs, ys, bounds, bottom, target, content, width, height, readgroups, active, carries, hinty, key) = layout
+flowdraw(r::FlowDiagram) = begin
+    plan, theme = r.plan, theme_classic()
+    (; rows, fs, angled, heading, top, xs, ys, bounds, bottom, numx, target, width, height, readgroups, active, carries) = flowlayout(plan, theme)
     styles = FLOW_STYLES
-    scale = fontsize / 10
-    fig = Makie.with_theme(theme_classic()) do
+    scale = r.fontsize / 10
+    fig = Makie.with_theme(theme) do
         Makie.Figure(size = ceil.(Int, (width, height) .* scale), figure_padding = 0, backgroundcolor = :white)
     end
     scene = fig.scene
@@ -318,11 +343,15 @@ flowdraw(plan, layout, fontsize) = begin
     bend(x, y1, y2, d, slope = 0) = Makie.CurveTo(point(x+5d, y1), point(x+5d, y2+5slope), point(x+10d, y2))
     font = flowfont()
     texts, paths, dots = Dict(), Dict(), Dict()
-    badges = Tuple{Makie.Point2f,String}[]
-    text!(x, y, text; size = 10, color = "#333333", align = (:left, :center), rotation = 0, face = font) = push!(get!(texts, (size, color, align, rotation, face, typeof(text)), []), (point(x, y), text))
+    badges = Dict{Tuple{Symbol,String},Vector{Tuple{Makie.Point2f,String}}}()
+    caps, keys = Vector{Makie.Point2f}[], Vector{Makie.Point2f}[]
+    text!(x, y, text; size = fs.body, color = "#333333", align = (:left, :center), rotation = 0, face = font) = push!(get!(texts, (size, color, align, rotation, face, typeof(text)), []), (point(x, y), text))
+    syntax!(x, y, s, size) = foreach(enumerate(flowsyntax(s))) do (i, line)
+        line == "" || text!(x, y+(i-1)*flowleading(size), line; size, align = (:left, :top))
+    end
     path!(cmds; layer = 2, color = styles.read.color, linewidth = styles.read.linewidth, linestyle = :solid) = append!(get!(paths, (layer, color, linewidth, linestyle), Makie.PathCommand[]), cmds)
     line!(points; kw...) = path!([Makie.MoveTo(first(points)); Makie.LineTo.(points[2:end])]; kw...)
-    dot!(x, y; layer = 0, marker = :circle, size = 4, color = :white, stroke = 0.65) = push!(get!(dots, (layer, marker, stroke), []), (point(x, y), size*scale, Makie.to_color(color)))
+    dot!(x, y; layer = 0, marker = :circle, size = 4, color = :white, ink = "#555555", stroke = 0.65) = push!(get!(dots, (layer, marker, stroke), []), (point(x, y), size*scale, Makie.to_color(color), Makie.to_color(ink)))
     rail!(x, y, dx, dy, span, style) = begin
         at(d) = point(x+d*dx, y+d*dy)
         for (a, b) in ((3, 5), (7, 11), (FLOW_RAIL_TAPER, span))
@@ -352,10 +381,7 @@ flowdraw(plan, layout, fontsize) = begin
         Makie.ClosePath(),
     ])
     markers = (; state = :rect, call = rounded, binding = :dtriangle, rate = :utriangle, guard = :diamond, input, opaque = :hexagon)
-    text!(20, 20, plan.model; size = 12)
-    text!(20, 37, "one update · static order, not elapsed time"; size = 8, color = "#777777")
-    heading = Makie.rich("Computation     model code  /  ", Makie.rich("Cropbox action"; font = :italic), "  /  tags")
-    text!(target, top-16, heading; size = 8, color = "#666666")
+    text!(12, 16, plan.model; size = fs.title)
     for y in bounds
         line!([point(12, y), point(width-16, y)]; layer = -1, color = "#E0E0E0", linewidth = 0.45)
     end
@@ -367,7 +393,7 @@ flowdraw(plan, layout, fontsize) = begin
         else
             plan.labels[name]
         end
-        text!(x, top-18, label; size = 9, color = name in plan.ports ? "#777777" : "#333333", align = angled ? (:left, :center) : (:center, :center), rotation = angled ? deg2rad(72) : 0)
+        text!(x, heading, label; color = name in plan.ports ? "#777777" : "#333333", align = angled ? (:left, :center) : (:center, :center), rotation = angled ? deg2rad(72) : 0)
         line!([point(x, top-7), point(x, bottom)]; layer = 0, color = "#EEEEEE", linewidth = 0.35, linestyle = :dot)
     end
     for a in active
@@ -381,8 +407,7 @@ flowdraw(plan, layout, fontsize) = begin
         for (i, v, (cap, elbow)) in ((c.to, -1, upper), (c.from, 1, reverse(lower)))
             y = ys[i]
             rail!(c.x, cap, 0, -v, abs(elbow-cap), style)
-            tip = v < 0 ? 4 : 0
-            tx, ty = x+tip*side, y+1.5tip*v
+            tx, ty = flowport(x, y, flowradius(plan.events[i].operation), side, 1.5v)
             path!([
                 Makie.MoveTo(point(c.x, elbow)),
                 Makie.CurveTo(point(c.x, y+12v), point(x+9side, y+13.5v), point(x+7side, y+10.5v)),
@@ -394,15 +419,30 @@ flowdraw(plan, layout, fontsize) = begin
     for (i, e) in enumerate(plan.events)
         n = string(e.node.info.name)
         x, y = xs[n], ys[i]
-        text!(20, y, string(e.order); size = 8, color = "#888888")
-        text!(target, y-4, plan.labels[n]; size = 9, align = (:left, :top))
+        text!(numx, y, string(i); size = fs.small, color = "#777777", align = (:right, :center))
+        op = e.operation
+        ink = flowink(op)
+        rad = flowradius(op)
+        for c in rows[i].chips
+            px, py = target+c.x, y-4+c.y
+            box = Makie.Rect2f(point(px, py+c.h-1), Makie.Vec2f(c.w, c.h)*scale)
+            rim = Makie.Point2f.(Makie.roundedrectvertices(box, 4scale, 8))
+            push!(caps, rim)
+            # Keep the outer capsule continuous under the straight two-tone seam.
+            seam = (px+c.prefix)*scale
+            push!(keys, [Makie.Point2f(min(p[1], seam), p[2]) for p in rim])
+        end
         for (kind, label, dx, dy) in rows[i].parts
-            px, py = content+dx, y-4+dy
-            if kind == :badge
-                push!(badges, (point(px, py), label))
+            px, py = target+dx, y-4+dy
+            if kind in (:behavior, :badge)
+                key = (kind, kind == :behavior ? ink : "#63686E")
+                push!(get!(() -> Tuple{Makie.Point2f,String}[], badges, key), (point(px, py), label))
+            elseif kind == :key
+                text!(px, py, label; size = fs.small, align = (:left, :top), color = "#FAFAFA")
+            elseif kind == :note
+                text!(px, py, label; align = (:left, :top), color = "#495057", face = flowfont(true))
             else
-                note = kind == :note
-                text!(px, py, label; size = 9, align = (:left, :top), color = note ? "#495057" : "#333333", face = note ? flowfont(true) : font)
+                syntax!(px, py, label, kind == :qualifier ? fs.small : fs.body)
             end
         end
         groups = readgroups[i]
@@ -412,10 +452,16 @@ flowdraw(plan, layout, fontsize) = begin
             paired = (side, control ? :read : :control) in groups
             if side == 0
                 v = paired && control ? 1 : -1
-                ty = paired ? y+2v : y
-                cmds = [Makie.MoveTo(point(x, y+4v)), Makie.CurveTo(point(x-18, y+18v), point(x-20, ty), point(x-10, ty)), Makie.LineTo(point(x-5, ty))]
+                slope = paired ? sqrt(3) : 1
+                sx, sy = flowport(x, y, rad, 0, v)
+                tx, ty = flowport(x, y, rad, -1, slope*v)
+                cmds = [
+                    Makie.MoveTo(point(sx, sy)),
+                    Makie.CurveTo(point(sx, sy+14v), point(x-13, sy+14v), point(x-13, sy+5v)),
+                    Makie.CurveTo(point(x-13, sy+2v), point(tx-4, ty+4slope*v), point(tx, ty)),
+                ]
                 path!(cmds; style...)
-                arrow!(x-5, ty, 1, style)
+                arrow!(tx, ty, 1, style; dy = -slope*v)
                 continue
             end
             d = -side
@@ -426,13 +472,13 @@ flowdraw(plan, layout, fontsize) = begin
                 (0.0, control ? -12 : -8)
             end
             level = length(groups) > 1 || length(src) > 1 ? y+dy : y
-            gap = iszero(slope) ? 5 : 7
-            landing = x-(gap+15)*d
+            tx, ty = flowport(x, y, rad, -d, slope)
+            landing = tx-15d
             for (k, sx) in enumerate(src)
                 x0 = sx+2d
                 if k == 1
-                    tip, tipy = x-gap*d, y+gap*slope
-                    descent = (Makie.LineTo(point(landing, level)), bend(landing, level, y+(gap+5)*slope, d, slope))
+                    tip, tipy = tx, ty
+                    descent = (Makie.LineTo(point(landing, level)), bend(landing, level, ty+5slope, d, slope))
                 else
                     tip, tipy = src[k-1]+6d, level
                     descent = ()
@@ -443,61 +489,56 @@ flowdraw(plan, layout, fontsize) = begin
                 arrow!(tip, tipy, d, style; dy = k == 1 ? -slope : 0)
             end
         end
-        for r in e.reads
-            dot!(xs[r.name], y; marker = r.name in plan.ports ? :rect : :circle)
+        for a in e.reads
+            a.name == n || dot!(xs[a.name], y; marker = a.name in plan.ports ? :rect : :circle)
         end
-        op = e.operation
-        if op == :produce
-            dot!(x, y; layer = 1, marker = rounded, size = 12)
-            dot!(x, y; layer = 2, marker = rounded, size = 8)
+        if op in (:call, :produce)
+            dot!(x, y; layer = 1, marker = rounded, size = 6.5, ink)
+            op == :produce && dot!(x, y; layer = 2, marker = rounded, size = 3.15, ink)
         else
             marker = get(markers, op, :circle)
-            dot!(x, y; layer = 1, marker, size = op in (:value, :memory) ? 5 : 9, color = op == :value ? "#555555" : :white)
+            size = op in (:value, :memory) ? 5 : op in (:rate, :binding) ? 8 : op == :state ? 8.5 : 9
+            dot!(x, y; layer = 1, marker, size, color = op == :value ? ink : :white, ink)
         end
     end
-    isempty(plan.events) && text!(target, top+6, "No update operations in this selection."; size = 9, face = :italic)
-    labels = (:read => "read", :binding => "bound input", :control => "control", :value => "value (right)", :rate => "rate (left)", :guide => "variable guide")
-    used = union(Symbol[k for g in readgroups for (_, k) in g], (c.slot for c in carries))
-    labels = filter(p -> first(p) in used || (first(p) == :guide && !isempty(rows)), labels)
-    widths = [32 + 4.8textwidth(label) for (_, label) in labels]
-    for (i, (role, label)) in enumerate(labels)
-        x = 20 + sum(widths[1:i-1])
-        if role in (:value, :rate)
-            rail!(x+18, bottom+20, -1, 0, 18, styles[role])
-        else
-            line!([point(x, bottom+20), point(x+16, bottom+20)]; styles[role]...)
-        end
-        text!(x+22, bottom+20, label; size = 8, color = "#777777")
-    end
-    isempty(carries) || text!(20, bottom+33, "fading ends: read above from the previous update; save below for the next"; size = 8, color = "#777777")
-    isempty(key) || text!(20, hinty, key; size = 8, color = "#666666", align = (:left, :top))
+    isempty(rows) && text!(target, top+6, FLOW_EMPTY; align = (:left, :top), face = flowfont(true))
     for ((layer, color, linewidth, linestyle), cmds) in sort(collect(paths); by = p -> first(p)[1])
         Makie.lines!(scene, Makie.BezierPath(cmds); color, linewidth = linewidth*scale, linestyle)
+    end
+    if !isempty(rows)
+        ps = Makie.Point2f[point(xs[string(e.node.info.name)], y) for (e, y) in zip(plan.events, ys)]
+        disk = Makie.BezierPath([Makie.MoveTo(1, 0), Makie.EllipticalArc(Makie.Point2d(0), 1, 1, 0, 0, 2pi), Makie.ClosePath()])
+        Makie.scatter!(scene, ps; marker = disk, markersize = [flowradius(e.operation)*scale for e in plan.events],
+            color = [flowtint(flowink(e.operation)) for e in plan.events], strokewidth = 0)
     end
     for ((layer, marker, stroke), values) in sort(collect(dots); by = p -> first(p)[1])
         Makie.scatter!(scene, Makie.Point2f[v[1] for v in values];
             marker,
             markersize = [v[2] for v in values],
             color = [v[3] for v in values],
-            strokecolor = "#555555",
+            strokecolor = [v[4] for v in values],
             strokewidth = stroke*scale,
         )
+    end
+    if !isempty(caps)
+        Makie.poly!(scene, caps; color = "#EEF0F1", strokewidth = 0)
+        Makie.poly!(scene, keys; color = "#63686E", strokewidth = 0)
     end
     for ((size, color, align, rotation, face, T), values) in texts
         Makie.text!(scene, Makie.Point2f[v[1] for v in values]; text = T[v[2] for v in values], font = face, fontsize = size*scale, color, align, rotation)
     end
-    if !isempty(badges)
-        Makie.textlabel!(scene, first.(badges);
-            text = last.(badges),
-            font,
-            fontsize = 8.5scale,
+    for ((kind, ink), bs) in badges
+        behavior = kind == :behavior
+        Makie.textlabel!(scene, first.(bs);
+            text = last.(bs),
+            font = behavior ? flowbold() : font,
+            fontsize = fs.small*scale,
             text_align = (:left, :top),
             padding = (4, 4, 1, 1) .* scale,
-            cornerradius = 4scale,
-            text_color = "#41474A",
-            background_color = :white,
-            strokecolor = "#B4BABD",
-            strokewidth = 0.6scale,
+            cornerradius = (behavior ? 2.5 : 4)*scale,
+            text_color = behavior ? ink : "#FAFAFA",
+            background_color = behavior ? flowtint(ink) : ink,
+            strokewidth = 0,
         )
     end
     Plot(fig)

@@ -77,10 +77,10 @@ display a grouped graph directly. Use [`Cropbox.writeimage`](@ref) to save an
 image, or [`Cropbox.writedot`](@ref) for renderer-independent Graphviz source.
 Exports inherit these options and can override them with their own `style`.
 
-Flow rows keep their positions in the full update; inputs outside the selection
-remain visible. Terminals show variable lanes when they fit, otherwise an input
+Flow rows are numbered from 1 within each selection, in compiler order.
+Inputs outside the selection remain visible. Terminals show lanes when they fit, otherwise an input
 list. Notebooks and SVG/PDF/PNG exports also show expressions and state actions.
-Use `style = (fontsize = 10,)` to scale the figure. See the
+Use `style = (fontsize = 12,)` to enlarge the figure from its default of 11. See the
 [flow diagram guide](@ref visualization-flow) and its [legend](@ref visualization-flow-legend).
 
 # Examples

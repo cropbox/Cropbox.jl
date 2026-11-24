@@ -378,15 +378,21 @@ show(stdout, MIME"text/plain"(), g) # hide
 </details>
 ```
 
-Read downward through the numbered rows. Each number is a position in the
-full update, so a selection can leave gaps. Variables occupy lanes; a fixed
+Read the numbered rows from top to bottom. Each selection starts at 1 and
+numbers only the visible operations, in compiler order. Variables occupy lanes; a fixed
 input can have a lane without an operation. Horizontal arrows on the same
-row lead to one target, not from one input to the next.
+row lead to one target, not from one input to the next. Lane headings stay
+horizontal unless adjacent labels would crowd each other; then all headings
+rotate together by 72 degrees.
 
 #### [Flow diagram legend](@id visualization-flow-legend)
 
 **Operation symbols.** In the figure, the shape at the arrow tip tells you
-what Cropbox does on that row. In a wide terminal, the target usually shows
+what Cropbox does on that row. Its outline and pale backdrop share a role color:
+blue for a driver input, violet for a binding, green for accumulation, counters and
+cached rates, ochre for flag tests, and terracotta for field and child-system updates.
+Computed values and opaque operations are charcoal; remembered values are slate.
+In a wide terminal, the target usually shows
 the *phase* instead: `◓` pre, `○` main, `◒` post. Two operations have their own
 terminal targets: `△` saves a rate and `▽` marks a binding.
 
@@ -400,8 +406,10 @@ terminal targets: `△` saves a rate and `▽` marks a binding.
 | `△` Upward triangle / `▽` downward triangle | Save a rate for the next update / show a local callable's bound inputs, without calling it. |
 | `⬡` Hexagon | A `solve`, `bisect`, `integrate`, or `wrap` operation; its internal steps are not expanded. |
 
-**Connections and colors.** The table gives the full key; each figure's legend
-shows only the marks used there. Follow horizontal arrows *toward* the target.
+**Connections and colors.** Follow horizontal arrows *toward* the target.
+Reads, self-loops, and carried values meet the rim of the target's pale disc,
+not the inner glyph. A self-read normally leaves the top and returns from the
+upper left; a second self-read for a condition uses the lower half.
 A small open circle on a source lane marks a selected input; a small open
 square marks an input outside the selection (for example, `supply.rate`).
 In a wide terminal, `●` marks either kind of **input**, not the result.
@@ -428,23 +436,28 @@ end
 | Figure | Terminal | How to read it |
 |:---|:---|:---|
 | ![](flow-key-read.svg) Solid blue arrow | `●──→○`; `x ← a, b` in a list | Read the marked inputs for this target. Several inputs on one row are not a chain. |
-| ![](flow-key-binding.svg) Dashed blue arrow | `●╌╌→▽`; `f ⇠ k` in a list | `f` binds `k`. Its current value is read **when `f` is invoked**, not at the numbered binding row. |
+| ![](flow-key-binding.svg) Dashed violet arrow | `●╌╌→▽`; `f ⇠ k` in a list | `f` binds `k`. Its current value is read **when `f` is invoked**, not at the numbered binding row. |
 | ![](flow-key-control.svg) Dotted ochre arrow | `[when ready]` or `[reset restart]` | Read a control. The terminal shows the tag instead of a separate control arrow. `[once]` is a latch, not another input. |
 | Arrow looping back to its own lane | `↺` in wide output | A row reads its own variable. This is distinct from carrying a value across updates. |
-| ![](flow-key-value.svg) Gray rail, right of the lane | `← mass [prev update]` | Carry a value, counter, or memory. A name means the same row retained it. |
-| ![](flow-key-rate.svg) Teal rail, left of the lane | `← #9 [prev update]` / `→ #8 [next update]` | Carry a cached rate between two rows. `#` refers to the other row's number, not a variable or timestep. |
+| ![](flow-key-value.svg) Slate rail, right of the lane | `← mass [prev update]` | Carry a value, counter, or memory. A name means the same row retained it. |
+| ![](flow-key-rate.svg) Green rail, left of the lane | `← #2 [prev update]` / `→ #1 [next update]` | Carry a cached rate between two rows. `#` refers to the other row in this selection, not a variable or timestep. |
 | ![](flow-key-guide.svg) Pale gray center line | Lane heading only | Follow the same variable to its last use; the dotted background guide and horizontal row dividers carry no value. |
 | — | `┬─`, `├─`, `└─` in a list | More inputs to the **same row** on a narrow terminal. |
 
-The tapered rail **above** a target brings a value or rate in from the previous
-update; the one **below** saves it for the next. If terminal colors are enabled,
+Fading rail ends at the top bring state in from the previous update; fading ends
+at the bottom carry it into the next. If terminal colors are enabled,
 input lines are light blue, controls yellow, row numbers and cross-references
 gray, and rate targets and update labels cyan. The symbols also work without color.
 
-**Computation column.** Read the target name first. Monospace is a declared
-expression or setting (`share(0.3)`, `lower = 0`); italics are a Cropbox action
-(*drive · read input*); an outlined tag such as `when = ready` applies to that
-row. The terminal keeps the names and tags, but omits expressions and action text.
+**Reading a row.** Find the target from its mark and lane heading. On the
+right, a tinted bold label names the behavior when needed; monospace shows
+the model expression or setting with Julia syntax highlighting, and italics
+describe the operation. Paired delimiters use a muted gray so names stand out
+in expressions such as `valid[i[]]`. Conditions come last. One split badge pairs
+the dark key with its expression on a pale background (e.g. `when = ready`); a bare
+`once` needs only the dark segment. A badge is a declaration, not a runtime result.
+Expression-only rows do not gain a label. The terminal keeps the target
+names and tags, but omits expressions and action text.
 
 #### Worked examples
 
@@ -487,13 +500,12 @@ Follow the paired `#` numbers between the two `total` rows. In contrast,
 </details>
 ```
 
-Read the two rows named `total` together. The first says *accumulate*: add
+Read the two rows on the `total` lane together. The first says **accumulate**: add
 the **previously cached rate** multiplied by elapsed time. The later row shows
-`rate` followed by *accumulate · save rate*: the input from `total(rate)` is
+**accumulate**, then `rate` and *save rate*: the input from `total(rate)` is
 saved for the next update. A `capture` replaces its value with that same
 increment rather than adding it. A declared `time = elapsed` identifies the
-clock used to measure the interval. The legend gives these meanings once per
-diagram, for the operations shown.
+clock used to measure the interval.
 
 An `if` in a body stays model code, not a control tag. For `when = mask[1]`
 only `mask` is a condition input; `when = mask[idx[]]` also reads `idx`.
@@ -572,10 +584,11 @@ internals are not expanded.
 #### Graphical export
 
 The Makie/CairoMakie figure is created only for notebook display or export.
-Its only style option is
-`style = (fontsize = 10,)`, which scales text and spacing together. The monospace
-and italic fonts are bundled with Makie; no system font installation is needed. The canvas
-grows with variables and rows instead of clipping or shrinking them.
+Flow diagrams default to `fontsize = 11`, slightly larger than the tick labels
+on Classic plots. Use `style = (fontsize = 10,)` for the Classic tick-label
+size, or `style = (fontsize = 12,)` for a larger diagram. Text, symbols, and
+spacing scale together. The canvas grows to fit its contents; the monospace
+and italic fonts are bundled with Makie.
 
 ```@example structure
 Cropbox.writeimage("flow.svg", diagram)
