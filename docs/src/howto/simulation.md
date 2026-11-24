@@ -51,22 +51,27 @@ when named explicitly in `target`. Summarize it in a scalar declaration or use
 
 ## Choose a base system
 
-`base` makes `index` and `target` relative to a nested system or bundle. This is
-useful when a root controller mainly coordinates another component.
+By default (`base = nothing`), Cropbox reads `index` and `target` from the
+root model. Choose a `base` when the values you want belong to a component:
 
 ```julia
 simulate(Model;
     base = :plant,
-    index = "calendar.date",
+    index = :date => "calendar.date",
     target = [:LAI, :biomass],
     stop = :mature,
 )
 ```
 
-Without `base`, full string paths can reach the same values.
+Here the output column `date` comes from `plant.calendar.date` and `biomass`
+from `plant.biomass`. The whole model still runs: `stop = :mature` is checked on
+the root, as is any explicit `snap`. The [subsystem observation example](@ref
+subsystem-observations) uses the same layout to simulate, evaluate, and fit a plant.
 
 For a bundle of produced systems, each matching child contributes one row per
 snapshot. Children created during the simulation are included automatically.
+If several leaves are measured at the same time, include their ID as well as
+time in `index` so each observation matches its own leaf.
 
 ```@example simflow
 @system OutputLeaf begin

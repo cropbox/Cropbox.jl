@@ -227,6 +227,45 @@ Also examine residuals against temperature, development stage, and fitted
 values. Patterns in these plots can reveal timing errors or changing error
 spread that a single score hides.
 
+## [Match observations from a subsystem](@id subsystem-observations)
+
+Suppose you measured plant mass, but the model you run is a field containing
+that plant. An output layout says **where to read** (`base`), **how to identify a
+measurement** (`index`), and **what to measure** (`target`). These two calls
+produce the same table: the first spells out both paths from the field, while
+the second starts at its `plant` component.
+
+```@example evaluation
+@system Field(Controller) begin
+    plant(context, config) ~ ::LinearGrowth
+end
+
+root = simulate(Field; config, stop = 3u"d",
+    index = :time => "plant.time", target = :mass => "plant.mass")
+layout = (; base = :plant, index = :time, target = :mass)
+plant = simulate(Field; config, stop = 3u"d", layout...)
+@assert plant == root # hide
+plant # hide
+```
+
+Reuse that layout with the three measurements in `obs2`. Cropbox matches each
+observed `time` against `plant.time` and compares `mass` with `plant.mass`.
+Day zero is simulated but has no observation. On days 1–3 the model gives
+10, 20, and 30 g against the observed 9, 21, and 29 g, so the MAE is 1 g.
+
+```@example evaluation
+evaluate(Field, obs2; config, stop = 3u"d", layout..., metric = :mae)
+```
+
+For a fit, only the parameter search is new. `base` selects the output;
+`parameters` still names the system that declares the growth rate.
+
+```@example evaluation
+calibrate(Field, obs2; config, stop = 3u"d", layout..., seed = 42,
+    parameters = LinearGrowth => :rate => (0, 20),
+    optim = (; MaxSteps = 100, PopulationSize = 20, TraceMode = :silent))
+```
+
 ## Calibrate across environments
 
 Pass `configs` when one biological parameter set should fit several site-years.
