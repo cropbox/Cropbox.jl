@@ -344,6 +344,38 @@ end
             @test_throws ArgumentError visualize(obs, est[1:0, :], :a; index = :time, backend)
             @test isequal((obs, est), before)
 
+            @testset "1:1 target units" begin
+                o = DataFrame(year = [2020, 2021], t = [2., 3.]u"d")
+                e = DataFrame(year = [2021, 2020], t = [72., 48.]u"hr")
+                p = visualize(o, e, :t; index = :year, backend)
+                @test (p.opt[:xunit], p.opt[:yunit]) == (u"d", u"d")
+                @test points(p) == points(p, 2) == [(2, 2), (3, 3)]
+                @test plotbounds(p) == ((2, 3), (2, 3))
+
+                bare = DataFrame(year = o.year, t = [48., 72.])
+                p = visualize(bare, e, :t; index = :year, backend)
+                @test (p.opt[:xunit], p.opt[:yunit]) == (u"hr", u"hr")
+                @test points(p) == [(48, 48), (72, 72)]
+
+                p = visualize(o, e, :t; index = :year, yunit = u"hr", backend)
+                @test (p.opt[:xunit], p.opt[:yunit]) == (u"hr", u"hr")
+                @test plotbounds(p) == ((48, 72), (48, 72))
+                visualize!(p, o, e, :t; index = :year)
+                @test points(p, 3) == points(p, 4) == [(48, 48), (72, 72)]
+
+                p = visualize(o, e, :t; index = :year, xunit = u"d", yunit = u"hr",
+                    lim = (24u"hr", 4u"d"), backend)
+                @test points(p) == [(2, 48), (3, 72)]
+                @test points(p, 2) == [(1, 24), (4, 96)]
+                @test plotbounds(p) == ((1, 4), (24, 96))
+                e.t = [96, 24]u"hr"
+                p = visualize(o, e, :t; index = :year, xunit = u"d", backend)
+                @test points(p) == [(2, 1), (3, 4)]
+                @test plotbounds(p) == ((1, 4), (1, 4))
+                e.t = [72, 48]u"g"
+                @test_throws Cropbox.Unitful.DimensionError visualize(o, e, :t; index = :year, backend)
+            end
+
             @testset "grouped estimates" begin
                 o = DataFrame(year = [2021, 2020, 2020], doy = [22., 20., 20.]u"d", flower = [44., 40., 40.]u"d")
                 e = DataFrame(year = [2020, 2021, 2021, 2020], model = ["A", "B", "A", "B"],

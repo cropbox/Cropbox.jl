@@ -571,13 +571,9 @@ output. There is no model to load or rerun, and neither input table is modified.
 using Cropbox, DataFrames
 
 observations = DataFrame(hour = [0, 3, 6, 9]u"hr", measured = [0.2, 2.1, 3.2, 3.5]u"g")
-estimates = DataFrame(time = [0, 180, 360, 540]u"minute", mass = [0.3, 2, 3, 4]u"g")
+estimates = DataFrame(time = [0, 180, 360, 540]u"minute", mass = [300, 2000, 3000, 4000]u"mg")
 
-visualize(observations, estimates, :measured => :mass;
-    index = :hour => :time,
-    lim = (0, 5),
-    name = "saved model",
-)
+visualize(observations, estimates, :measured => :mass; index = :hour => :time)
 ```
 
 ```@raw html
@@ -585,12 +581,7 @@ visualize(observations, estimates, :measured => :mass;
 ```
 
 ```@example savedcomparison
-visualize(observations, estimates, :measured => :mass;
-    backend = :UnicodePlots,
-    index = :hour => :time,
-    lim = (0, 5),
-    name = "saved model",
-)
+visualize(observations, estimates, :measured => :mass; index = :hour => :time, backend = :UnicodePlots)
 ans[] # hide
 ```
 
@@ -600,8 +591,8 @@ ans[] # hide
 
 Here pairs map observation column names to estimate column names, including
 the `index` columns: the observation at 3 hours matches the estimate at
-180 minutes. A point on the diagonal is an exact match in mass. `lim = (0, 5)`
-sets the same range on both axes (here, 0 to 5 g). Use a single name when
+180 minutes. Both axes use grams, so the 2000 mg estimate appears at 2 g.
+A point on the diagonal is an exact match in mass. Use a single name when
 the names match, for example
 `visualize(obs, est, :mass; index = :time)`. Both tables may contain unrelated
 columns with the same names. Compatible index units such as hours and minutes
@@ -609,6 +600,13 @@ are converted before matching; rows are matched by index, not by their order.
 Multiple index columns are supported, for example `index = [:site, :time]`.
 Only matched rows are plotted, and an empty match is an error. Duplicate keys
 follow DataFrames' inner-join semantics: every matching pair is included.
+
+Compatible targets use the first observation target's unit on both axes,
+or the estimate's unit if the observations are bare numbers. For example,
+2 days observed and 48 hours estimated plot at (2, 2) in days. Set either
+`xunit` or `yunit` to change both. If you explicitly choose different display
+units, the axis ranges and reference line still represent equal physical values.
+Numeric `lim` bounds are in the x-axis unit; bounds may also carry units.
 
 Use `visualize!(p, obs, est, y; index, options...)` to append to an existing
 plot. A scalar target uses `name`; a vector of targets uses `names` and
