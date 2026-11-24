@@ -18,6 +18,7 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 - `configs=nothing`: multiple base configurations. A single observation table is shared; a vector of tables is paired with the configurations in order.
 
 ## Layout
+- `base=nothing`: subsystem from which both the index and target are read.
 - `index=nothing`: variables to construct index columns of the output; default falls back to `context.clock.time`.
 - `target`: variables to construct non-index columns of the output.
 
@@ -83,7 +84,7 @@ end
 checkconfigs(config, configs) = isempty(config) ? configs : throw(ArgumentError("config and configs cannot be used together"))
 
 _calibrate(S, obss, configs, tableids;
-    index = nothing, target, parameters, metric = nothing, weight = nothing, pareto = false, optim = (), seed = 0, warn = true, kwargs...
+    base = nothing, index = nothing, target, parameters, metric = nothing, weight = nothing, pareto = false, optim = (), seed = 0, warn = true, kwargs...
 ) = begin
     isempty(configs) && throw(ArgumentError("at least one calibration experiment is required"))
     P = configure(parameters)
@@ -91,13 +92,11 @@ _calibrate(S, obss, configs, tableids;
     V = parametervalues(P)
     U = parameterunits(resolveparameters(parameters, S))
     IKV = parseindex(index, S)
-    I, IV = collect(keys(IKV)), Tuple(values(IKV))
+    I = collect(keys(IKV))
     T = parsetarget(target, S) |> keys |> collect
     tables = map(obss) do obs
         obs = filterobservations(obs, T)
-        IC = collect(zip(getproperty.(Ref(obs), I)...))
-        snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
-        (; obs, snap)
+        (; obs, snap = observationsnap(obs, IKV, base))
     end
     total = sum(t -> nrow(t.obs), tables)
     n = length(T)
@@ -105,7 +104,7 @@ _calibrate(S, obss, configs, tableids;
     isnothing(metric) && (metric = :rmse)
     metric = metricfunc(metric)
     residual(c, table, rows, modelseed) = begin
-        est = simulate(S; config = c, index, target, snap = table.snap, seed = modelseed, verbose = false, kwargs...)
+        est = simulate(S; config = c, base, index, target, snap = table.snap, seed = modelseed, verbose = false, kwargs...)
         isempty(est) && return repeat([Inf], n)
         O, E = aligndata(table.obs, est, T; index = I, allowempty = true, rows)
         isempty(first(O)) && return repeat([Inf], n)

@@ -54,6 +54,16 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         end
     end
 
+    @testset "subsystem observation index" begin
+        S = MCalibrateOuter.Model
+        obs = DataFrame(mass = [0.0]u"m", rate = [20.0]u"cm/hr")
+        kw = (; base = :g, index = :mass => :b, target = :rate => :a, stop = 0)
+        @test iszero(evaluate(S, obs; kw..., config = :Growth => :rate => 20))
+        optim = (; MaxSteps = 2, PopulationSize = 6, TraceMode = :silent)
+        fit(; opts...) = calibrate(S, obs; kw..., parameters = :Growth => :rate => (0, 100), optim, opts...)
+        @test fit() == fit(snap = true)
+    end
+
     @testset "parameter matching" begin
         S = MCalibrateOuter.Model
         units(S, p) = Cropbox.parameterunits(Cropbox.resolveparameters(Cropbox.configure(p), S))

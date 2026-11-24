@@ -250,6 +250,7 @@ import Random
         @test isempty(simulate(SSimulateBundle; kw...))
         r = simulate(SSimulateBundle; stop = 2, kw...)
         @test r == DataFrame(time = [1, 2, 2]u"hr", i = [0, 0, 1], x = fill(2, 3))
+        @test iszero(evaluate(SSimulateBundle, r[end:end, :]; kw..., index = [:time => "context.clock.time", :i], target = :x, stop = 2))
         @test simulate(SSimulateBundle; base = "leaves[pick]", target = :x, stop = 2, verbose = false).x == [2, 2]
         t = :time => "context.clock.time"
         layout = (; base = kw.base, index = t, target = [:i => :id, t, :x => :area], meta = :run => 1)
