@@ -104,9 +104,10 @@ that every observation was compared. A warning reports how many complete
 observations matched, for example `2 of 3 complete observations matched`.
 Rows missing any requested observation target are excluded from this total;
 for two tables, a match must also have complete estimates. Each observation row
-is counted once, even if multiple estimates match it. With `configs`, coverage
-is combined across configurations, so a site-specific run need not match other
-sites. This count does not change how duplicate matches contribute to the score.
+is counted once for the warning, even if several estimates match it. All
+matching pairs still contribute to the score. With `configs`, matches are
+pooled: if only site B has observations, evaluating sites A and B gives the
+same score as B alone. If neither site matches, evaluation raises an `ArgumentError`.
 Use `warn = false` to suppress only this matching warning; it does not change
 the selected rows, metric, or errors for unusable observations.
 An explicit `snap` is preserved and may intentionally select only some indices.

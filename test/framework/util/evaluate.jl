@@ -109,6 +109,17 @@ using DataFrames
         @test_logs @test evaluate(SEvaluateMatching, obs; index, target = :b, stop = 1, warn = false) == 0
         @test_throws ArgumentError evaluate(SEvaluateMatching, obs;
             config = first(configs), configs, index, target = :b, stop = 1)
+
+        obs = DataFrame(a = [2], b = [5])
+        layout = (; index = :a, target = :b)
+        est = simulate(SEvaluateMatching; configs, layout..., verbose = false)
+        score = evaluate(obs, est; layout...)
+        for cs in (configs, reverse(configs))
+            @test_logs @test evaluate(SEvaluateMatching, obs; configs = cs, layout...) == score == 5
+        end
+        @test evaluate(SEvaluateMatching, obs; configs, layout..., snap = true, warn = false) == score
+        @test_throws ArgumentError evaluate(SEvaluateMatching, DataFrame(a = [3], b = [5]);
+            configs, layout..., snap = true, warn = false, metric = (E, O) -> 0)
     end
 
     @testset "target types" begin

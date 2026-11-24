@@ -159,12 +159,15 @@ evaluate(S::Type{<:System}, obs, configs; base = nothing, index = nothing, targe
         Threads.@threads for i in 1:l
             R[i] = simulate(S; config = configs[i], base, index, target, snap, verbose = false, kwargs...)
         end
+        filter!(!isempty, R)
         R = map(R) do est
-            O, E = aligndata(obs, est, T; index = I, rows)
+            O, E = aligndata(obs, est, T; index = I, allowempty = true, rows)
             collect(zip(E, O))
         end
         e = map(getindex.(R, i) for i in 1:n) do r
-            metric(vcat(first.(r)...), vcat(last.(r)...))
+            E, O = vcat(first.(r)...), vcat(last.(r)...)
+            isempty(E) && throw(ArgumentError("no matching indices between observations and estimates"))
+            metric(E, O)
         end
         warn && warnmatching(obs, rows)
         multi ? Tuple(e) : only(e)
