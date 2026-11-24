@@ -132,9 +132,9 @@ simulate(Model;
 
 | Keyword | Default | Meaning |
 |---|---:|---|
-| `base` | `nothing` | system or bundle relative to which selectors are resolved |
+| `base` | `nothing` (root) | where to start reading `index` and `target`: the root, a subsystem, or each child of a bundle |
 | `index` | clock time | columns that identify output rows |
-| `target` | simple root values | model values to collect |
+| `target` | simple values at the selected base | model values to collect |
 | `meta` | none | configuration values or constants copied to every row |
 
 Selectors accept:
@@ -290,7 +290,7 @@ evaluate(observations, estimates;
 
 evaluate(SystemType, observations;
     config = (), configs = [],
-    index = nothing,
+    base = nothing, index = nothing,
     target,
     metric = :rmse,
     warn = true,
@@ -302,7 +302,9 @@ For two tables, `target=:observed => :estimated` maps different column names.
 For a score per model, evaluate each estimate group separately:
 `[evaluate(obs, g; index = :year, target = :y) for g in groupby(est, :model)]`.
 For a system, the same name is assumed unless a pair is supplied. Multiple
-targets return a tuple in target order.
+targets return a tuple in target order. For observations of a subsystem,
+`evaluate` and `calibrate` match its index and read its targets using the
+[same layout as `simulate`](@ref subsystem-observations).
 
 Cropbox normalizes compatible index units and inner-joins rows on the index.
 Rows missing any requested observation target are omitted; the two-table form
@@ -342,7 +344,7 @@ distinct.
 ```julia
 calibrate(SystemType, observations;
     config = (), configs = nothing,
-    index = nothing,
+    base = nothing, index = nothing,
     target,
     parameters,
     metric = :rmse,

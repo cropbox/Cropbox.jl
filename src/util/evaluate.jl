@@ -79,6 +79,15 @@ indexequal(a::Number, b::Number) = isequal(promote(a, b)...)
 indexequal(a::Tuple, b::Tuple) = length(a) == length(b) && all(indexequal(x, y) for (x, y) in zip(a, b))
 indexcontains(x, xs) = any(y -> indexequal(x, y), xs)
 
+observationsnap(obs, index, base) = begin
+    IV = Tuple(values(index))
+    IC = collect(zip((obs[!, k] for k in keys(index))...))
+    matches(s) = indexcontains(map(k -> value(s[k]), IV), IC)
+    s -> let b = s[base]
+        b isa Bundle ? any(matches, collect(b)) : matches(b)
+    end
+end
+
 """
     evaluate(S, obs; <keyword arguments>) -> Number | Tuple
 
@@ -94,6 +103,7 @@ Compare output of simulation results for the given system `S` and observation da
 - `configs=[]`: multiple configurations for the system (can't be used with `config`).
 
 ## Layout
+- `base=nothing`: subsystem from which both the index and target are read.
 - `index=nothing`: variables to construct index columns of the output; default falls back to `context.clock.time`.
 - `target`: variables to construct non-index columns of the output.
 
@@ -132,23 +142,22 @@ evaluate(S::Type{<:System}, obs; config=(), configs=[], kwargs...) = begin
         throw(ArgumentError("config and configs cannot be used together"))
     end
 end
-evaluate(S::Type{<:System}, obs, configs; index=nothing, target, metric=nothing, warn = true, kwargs...) = begin
-    I = parseindex(index, S) |> keys |> collect
+evaluate(S::Type{<:System}, obs, configs; base = nothing, index = nothing, target, metric = nothing, warn = true, kwargs...) = begin
+    IKV = parseindex(index, S)
+    I = collect(keys(IKV))
     T = parsetarget(target, S) |> keys |> collect
     obs = filterobservations(obs, T)
     n = length(T)
     multi = n > 1
     isnothing(metric) && (metric = :rmse)
     metric = metricfunc(metric)
-    IC = [t for t in zip(getproperty.(Ref(obs), I)...)]
-    IV = parseindex(index, S) |> values |> Tuple
-    snap(s) = indexcontains(getproperty.(s, IV) .|> value, IC)
+    snap = observationsnap(obs, IKV, base)
     cost() = begin
         l = length(configs)
         R = Vector(undef, l)
         rows = warn ? Int[] : nothing
         Threads.@threads for i in 1:l
-            R[i] = simulate(S; config = configs[i], index, target, snap, verbose = false, kwargs...)
+            R[i] = simulate(S; config = configs[i], base, index, target, snap, verbose = false, kwargs...)
         end
         R = map(R) do est
             O, E = aligndata(obs, est, T; index = I, rows)
