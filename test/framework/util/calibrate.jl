@@ -16,6 +16,15 @@ isdefined(@__MODULE__, :MCalibrateUnit) || include("parameters.jl")
         @test p[:SCalibrate][:a] == a
         r = simulate(SCalibrate, stop=n, config=p)
         @test r[r.time .== t, :][1, :b] == b
+
+        @testset "target weights" begin
+            # at one hour both outputs equal a, but their observations favor opposite ends
+            data = DataFrame(time = [1]u"hr", a = [0.0], b = [10.0])
+            opts = (; target = [:a, :b], parameters = SCalibrate => :a => (0, 10), stop = 1,
+                optim = (; MaxSteps = 50, TraceMode = :silent))
+            fit(w) = calibrate(SCalibrate, data; opts..., weight = w)[:SCalibrate][:a]
+            @test fit([3, 1]) < 5 < fit([1, 3])
+        end
     end
 
     @testset "unit" begin

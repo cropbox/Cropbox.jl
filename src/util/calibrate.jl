@@ -118,7 +118,7 @@ calibrate(S::Type{<:System}, obs::AbstractDataFrame, configs::Vector; index=noth
     end
     range = map((p, u) -> Float64.(Tuple(deunitfy(p, u))), V, U)
     method = if multi
-        agg = isnothing(weight) ? mean : let w = StatsBase.weights(weight); f -> mean(f, w) end
+        agg = isnothing(weight) ? mean : let w = StatsBase.weights(weight); x -> mean(collect(x), w) end
         (Method=:borg_moea, FitnessScheme=BlackBoxOptim.ParetoFitnessScheme{n}(aggregator=agg))
     else
         ()
