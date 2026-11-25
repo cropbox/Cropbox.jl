@@ -851,8 +851,18 @@ Two-dimensional plots support these `kind` values:
 
 ### Step plots
 
-`step` automatically treats Boolean values and other repeated categories as
-ordered levels. Supply `ycat` when their display order must be explicit.
+Numeric step plots keep the distances between values, including quantities
+with units. A step from 3 to 20 °C is taller than a step from 2 to 3 °C,
+and a line can share the same axis:
+
+```@example visref
+temps = DataFrame(hour = 0:4, held = [2, 3, 3, 20, 20]u"°C", air = [2, 8, 11, 17, 20]u"°C")
+p = visualize(temps, :hour, :held; kind = :step, ylab = "Temperature")
+visualize!(p, temps, :hour, :air; kind = :line)
+```
+
+Boolean values and stages such as `:sown` still use ordered categories.
+Supply `ycat` to set their order or to treat numeric codes as categories.
 For Makie step plots, appending new categories keeps the existing order and
 adds the new levels at the end.
 

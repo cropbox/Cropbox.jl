@@ -20,12 +20,14 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
         plot! = UnicodePlots.scatterplot!
     elseif kind == :step
         plot! = UnicodePlots.stairs!
-        ycat = something(getplotopt(p, :ycat), ycat)
-        all(in(ycat), Iterators.flatten(Ys)) || throw(ArgumentError("set ycat in the initial terminal plot to include every category"))
-        #HACK: convert symbol array to integer index array
-        ylim = (1, length(ycat))
-        Ys = indexin.(Ys, Ref(ycat))
-        height = length(ycat)
+        if !isnothing(ycat)
+            ycat = something(getplotopt(p, :ycat), ycat)
+            all(in(ycat), Iterators.flatten(Ys)) || throw(ArgumentError("set ycat in the initial terminal plot to include every category"))
+            #HACK: convert symbol array to integer index array
+            ylim = (1, length(ycat))
+            Ys = indexin.(Ys, Ref(ycat))
+            height = length(ycat)
+        end
     elseif kind == :hline
         plot! = UnicodePlots.hline!
         #HACK: no clipping on x axis
@@ -61,7 +63,7 @@ plot2!(::Val{:UnicodePlots}, p::Union{Plot,Nothing}, X, Ys; kind, linestyle, tit
     end
 
     annotate_y_axis!(obj) = begin
-        if kind == :step
+        if kind == :step && !isnothing(ycat)
             #HACK: show original string of symbol instead of index number
             for (i, y) in zip(height:-1:1, ycat)
                 UnicodePlots.label!(obj, :l, i, string(y), color=:dark_gray)
