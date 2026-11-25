@@ -25,7 +25,9 @@ Obtain a set of parameters for the given system `S` that simulates provided obse
 ## Calibration
 - `parameters`: parameters with a range of boundary values to be calibrated within.
 - `seed=0`: start the optimizer once and each candidate's simulation with this seed. Use `nothing` to draw fresh model seeds from the caller's random stream.
-- `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
+- `metric=nothing`: objective to minimize (default `:rmse`; other error metrics: `:nrmse`, `:rmspe`, `:mae`, `:mape`).
+  Do not minimize `:ef` or `:dr` directly: larger values are better. For a higher-is-better
+  function `score`, pass a loss such as `(E, O) -> 1 - score(E, O)` instead.
 - `warn=true`: warn once per search about partial observation matching.
 
 ## Multi-objective
