@@ -1,0 +1,21 @@
+diff --git a/src/precompilation.jl b/src/precompilation.jl
+index 29cdf6f..c40a390 100644
+--- a/src/precompilation.jl
++++ b/src/precompilation.jl
+@@ -15,6 +15,8 @@ import PrecompileTools: @compile_workload, @setup_workload
+     _precompile_p_range = [(_precompile_lb[i], _precompile_ub[i]) for i in 1:3]
+
+     @compile_workload begin
++        #HACK: re-enable the Sobol workload when SciML/GlobalSensitivity.jl#166 is fixed
++        #=
+         # Precompile Sobol method (most common)
+         # Use small sample size to keep precompilation time reasonable
+         _A, _B = generate_design_matrices(
+@@ -22,6 +24,7 @@ import PrecompileTools: @compile_workload, @setup_workload
+             QuasiMonteCarlo.SobolSample(), 2
+         )
+         _sobol_result = gsa(_precompile_f, Sobol(order = [0, 1]), _A, _B)
++        =#
+
+         # Precompile Morris method
+         _morris_result = gsa(
