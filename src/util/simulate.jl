@@ -45,6 +45,7 @@ parsesimulation(::Missing, s) = parsesimulation([], s)
 parsesimulation(a, s) = parsesimulation([a], s)
 
 parseindex(::Nothing, s) = parsesimulation(:time => "context.clock.time", s)
+parseindex(::Nothing, df::AbstractDataFrame) = parsesimulation(:time, df)
 parseindex(I, s) = parsesimulation(I, s)
 
 parsetarget(::Nothing, s) = parsesimulation("*", s)

@@ -282,7 +282,7 @@ condition is true, so the stage boundary can appear in both tables.
 
 ```julia
 evaluate(observations, estimates;
-    index,
+    index = nothing,
     target,
     metric = :rmse,
     warn = true,
@@ -298,6 +298,9 @@ evaluate(SystemType, observations;
 )
 ```
 
+Omit `index` or pass `index = nothing` to match the observations' `time`
+column to the estimates' `time` column or, for a live model, to `context.clock.time`.
+On a model, an explicit `index = :time` selects a variable named `time`, not the clock path.
 For two tables, `target=:observed => :estimated` maps different column names.
 For a score per model, evaluate each estimate group separately:
 `[evaluate(obs, g; index = :year, target = :y) for g in groupby(est, :model)]`.
