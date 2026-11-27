@@ -77,6 +77,17 @@ makegrid(X, Y, Z) = begin
     x, y, M
 end
 
+stepcategories(Ys, cats = nothing) = begin
+    values = Iterators.flatten(Ys)
+    if all(isequal(Bool), eltype.(Ys))
+        [false, true]
+    elseif isnothing(cats) && all(y -> y isa Real && !(y isa Bool), skipmissing(values))
+        nothing
+    else
+        unique(values)
+    end
+end
+
 groupplotlimits(p, data, x, ys;
     backend = nothing, xunit = nothing, yunit = nothing, xlim = nothing, ylim = nothing,
     kind = nothing, ycat = nothing, kw...
@@ -91,7 +102,7 @@ groupplotlimits(p, data, x, ys;
     isnothing(xlim) && (xlim = findlim(deunitfy(X, xunit)))
     isnothing(ylim) && (ylim = findlim(vcat(Ys...)))
     if kind == :step
-        isnothing(ycat) && (ycat = all(isequal(Bool), eltype.(Ys)) ? [false, true] : unique(Iterators.flatten(Ys)))
+        isnothing(ycat) && (ycat = stepcategories(Ys))
         return (; xlim, ylim, ycat)
     end
     (; xlim, ylim)
@@ -268,12 +279,7 @@ plot!(p::Union{Plot,Nothing}, X::Vector, Ys::Vector{<:Vector};
     isnothing(ylim) && (ylim = getplotopt(p, :ylim))
 
     if kind == :step && isnothing(ycat)
-        if all(isequal(Bool), eltype.(Ys))
-            ycat = [false, true]
-        else
-            l = unique.(Ys)
-            ycat = unique(Iterators.flatten(l))
-        end
+        ycat = stepcategories(Ys, getplotopt(p, :ycat))
     end
 
     xlab = label(xlab, xunit)

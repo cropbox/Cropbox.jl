@@ -122,6 +122,18 @@ end
         end
     end
 
+    @testset "numeric steps" for backend in (:Makie, :UnicodePlots)
+        x = [0, 1, 2]
+        series = (([2, 3, 20]u"°C", :step), ([2, 8, 20]u"°C", :line))
+        for ((y, kind), (z, overlay)) in (series, reverse(series))
+            p = visualize(x, y; kind, backend)
+            @test visualize!(p, x, z; kind = overlay) === p
+            @test isnothing(p.opt[:ycat]) && last(plotbounds(p))[2] >= 20
+        end
+        p = visualize(x, [2, 3, 20]; kind = :step, ycat = [2, 3, 20], backend)
+        @test p.opt[:ycat] == [2, 3, 20]
+    end
+
     @testset "UnicodePlots categories" begin
         p = visualize([0, 1], [:a, :b]; backend = :UnicodePlots, kind = :step, ycat = [:a, :b, :c])
         @test visualize!(p, [0, 1], [:b, :c]; kind = :step) === p
@@ -136,6 +148,8 @@ end
         @test q.opt[:Ys] == [[1, 2], [2, 3]]
         @test occursin("c", repr(MIME"text/plain"(), q[]))
         @test visualize([0, 1], [false, false]; backend = :UnicodePlots, kind = :step).opt[:ycat] == [false, true]
+        df.y = [2, 3, 8, 20]
+        @test isnothing(visualize(df, :x, :y; backend = :UnicodePlots, kind = :step, group = :run).opt[:ycat])
     end
 
     @testset "UnicodePlots dates" for T in (Cropbox.Dates.Date, Cropbox.Dates.DateTime)
