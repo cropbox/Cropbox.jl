@@ -14,6 +14,7 @@ using DataFrames
         end
         @test evaluate(obs, est; index=:time, target=:mass, metric) == 4.0
         @test evaluate(obs, est; target = :mass, metric) == 4.0
+        @test evaluate(obs, est; index = nothing, target = :mass, metric) == 4.0
         @test_throws MethodError evaluate(obs, est; target = :mass, group = :model)
 
         # Symmetric errors do not reveal a reversal; these denominators do.
@@ -30,8 +31,9 @@ using DataFrames
             @test evaluate(obs, est; index=:time, target=:mass, metric) ≈ score
         end
 
-        mapped = rename(est, :mass => :predicted)
-        @test evaluate(obs, mapped; index=:time, target=:mass=>:predicted,
+        mapped = rename(est, :time => Symbol("context.clock.time"), :mass => :predicted)
+        @test_throws ArgumentError evaluate(obs, mapped; target = :mass => :predicted)
+        @test evaluate(obs, mapped; index = :time => "context.clock.time", target = :mass => :predicted,
             metric=(E, O) -> sum(E .- O)) == 4.0
 
         obs_multi = DataFrame(time=1:3, mass=observed, other=observed)

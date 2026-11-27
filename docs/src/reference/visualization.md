@@ -31,10 +31,10 @@ a scalar or vector of reference values.
 | `visualize([S1, S2], x, y; configs)` | [several systems on the same axes](#Compare-systems) | yes |
 | `visualize!(p, S, x, y; stop)` | [another simulated series on an existing plot](#append-simulations) | yes |
 | `visualize(obs, S, x, y; stop)` | [observed points over a model trajectory](#Overlay-trajectories) | yes |
-| `visualize(obs, S, y; index)` | [observed x versus estimated y, with a 1:1 line](#Observation-versus-estimate) | yes |
-| `visualize(obs, est, y; index)` | [the same comparison using saved estimates](#Saved-estimates) | no |
-| `visualize(obs, est, y; index, group)` | [one observation–estimate series per group](#Grouped-estimates) | no |
-| `visualize(obs, models, y; index)` | [several model specifications against observations](#Several-model-specifications) | yes |
+| `visualize(obs, S, y; stop)` | [observed x versus estimated y, with a 1:1 line](#Observation-versus-estimate) | yes |
+| `visualize(obs, est, y)` | [the same comparison using saved estimates](#Saved-estimates) | no |
+| `visualize(obs, est, y; group)` | [one observation–estimate series per group](#Grouped-estimates) | no |
+| `visualize(obs, models, y; stop)` | [several model specifications against observations](#Several-model-specifications) | yes |
 | `visualize(S, x, y, z; xstep, ystep)` | [a two-factor heatmap or contour plot](#Heatmaps-and-contours) | yes |
 | `visualize(df, x, y, z)` | [a heatmap or contours from a saved grid](#Gridded-DataFrames) | no |
 | `visualize(V; kind = :hline)` or `:vline` | [horizontal or vertical reference lines](#Reference-lines) | no |
@@ -526,8 +526,9 @@ models on the same observations.
 
 ### Observation versus estimate
 
-Omit the x argument and supply `index`. Cropbox joins observations and estimates
-at matching indices, draws points, and adds the 1:1 line.
+Omit the x argument to plot observations against estimates with a 1:1 line.
+By default, Cropbox matches the observations' `time` column to the model clock
+(`context.clock.time`). Here the observations use `hour`, so supply the mapping:
 
 ```@example visref
 visualize(observations,
@@ -592,11 +593,13 @@ ans[] # hide
 Here pairs map observation column names to estimate column names, including
 the `index` columns: the observation at 3 hours matches the estimate at
 180 minutes. Both axes use grams, so the 2000 mg estimate appears at 2 g.
-A point on the diagonal is an exact match in mass. Use a single name when
-the names match, for example
-`visualize(obs, est, :mass; index = :time)`. Both tables may contain unrelated
-columns with the same names. Compatible index units such as hours and minutes
-are converted before matching; rows are matched by index, not by their order.
+A point on the diagonal is an exact match in mass. With a `time` column in both
+tables, use `visualize(obs, est, :mass)`: like `evaluate`, it matches the two
+`time` columns. Passing `index = nothing` also uses this default. A name such
+as `"context.clock.time"` refers to a literal column in a saved table, not a
+model path. Both tables may contain unrelated columns with the same names.
+Rows are matched by index, not by position; compatible index units such as
+hours and minutes are converted first.
 Multiple index columns are supported, for example `index = [:site, :time]`.
 Only matched rows are plotted, and an empty match is an error. Duplicate keys
 follow DataFrames' inner-join semantics: every matching pair is included.

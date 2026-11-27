@@ -247,7 +247,7 @@ visualize(obs::AbstractDataFrame, est::AbstractDataFrame, y; kw...) = visualize!
 visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y; name = "", group = nothing, kw...) =
     visualize!(p, obs, est, [y]; group, names = !isnothing(group) && name == "" ? nothing : [name], kw...)
 visualize!(p, obs::AbstractDataFrame, est::AbstractDataFrame, y::Vector;
-    index, group = nothing, names = nothing, colors = nothing, legend = nothing, plotopts...
+    index = nothing, group = nothing, names = nothing, colors = nothing, legend = nothing, plotopts...
 ) = begin
     targets = [string(o) == string(e) ? "$o" : "$o ⇒ $e" for (o, e) in parsetarget(y, obs)]
     if isnothing(group)
@@ -267,7 +267,7 @@ end
 
 visualize(obs::DataFrame, S::Type{<:System}, y::Vector; kw...) = visualize!(nothing, obs, S, y; kw...)
 visualize!(p, obs::DataFrame, S::Type{<:System}, y::Vector;
-    index,
+    index = nothing,
     config=(), configs=[],
     base=nothing,
     stop=nothing, snap=nothing,
@@ -283,7 +283,7 @@ visualize(obs::DataFrame, S::Type{<:System}, y; kw...) = visualize!(nothing, obs
 visualize!(p, obs::DataFrame, S::Type{<:System}, y; config=(), configs=[], name="", kw...) = visualize!(p, obs, [(; system=S, config, configs)], y; names=[name], kw...)
 visualize(obs::DataFrame, maps::Vector{<:NamedTuple}, y; kw...) = visualize!(nothing, obs, maps, y; kw...)
 visualize!(p, obs::DataFrame, maps::Vector{<:NamedTuple}, y;
-    index,
+    index = nothing,
     config=(), configs=[],
     base=nothing,
     stop=nothing, snap=nothing,

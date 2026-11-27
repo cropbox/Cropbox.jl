@@ -186,7 +186,7 @@ Compare observation data `obs` and estimation data `est` with a choice of evalua
 
 # Keyword Arguments
 ## Layout
-- `index=nothing`: index columns, defaulting to `:time`; pairs map observation columns to estimate columns.
+- `index=nothing`: match the `time` columns in both tables by default. Use a pair for different column names.
 - `target`: variables referring to non-index columns of the output.
 
 ## Evaluation
@@ -213,7 +213,6 @@ julia> evaluate(obs, est; index = :time, target = :b => :c)
 ```
 """
 evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index = nothing, target, metric = nothing, warn = true) = begin
-    isnothing(index) && (index = :time)
     obs = filterobservations(obs, collect(keys(parsetarget(target, obs))))
     rows = warn ? Int[] : nothing
     Xs, Ys = aligndata(obs, est, target; index, rows)

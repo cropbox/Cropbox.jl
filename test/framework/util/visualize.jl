@@ -306,11 +306,14 @@ end
 
     @testset "stored estimates" begin
         @system VisualizeComparison(Controller) begin
+            time => -1 ~ preserve(u"hr")
+
             rate => 1 ~ preserve(parameter, u"g/hr")
             a(rate) ~ accumulate(u"g")
             b(a) => 2a ~ track(u"g")
         end
         est = simulate(VisualizeComparison; target = [:a, :b], stop = 3, verbose = false)
+        @test only(simulate(VisualizeComparison; index = :time, target = :a, verbose = false).time) == -1u"hr"
         obs = est[[4, 2, 1], :]
         obs.time = [180, 60, 0]u"minute"
         obs.a .+= 0.1u"g"
@@ -321,21 +324,21 @@ end
         points(p, i = 1) = sort(collect(zip(p.opt[:Xs][i], p.opt[:Ys][i])))
 
         @testset "$backend" for backend in (:Makie, :UnicodePlots)
-            p = visualize(obs, est, :a; index = :time, name = "saved", colors = [:red], backend)
+            p = visualize(obs, est, :a; name = "saved", colors = [:red], backend)
             @test points(p) == [(0.1, 0), (1.1, 1), (3.1, 3)]
             @test p.opt[:kinds] == [:scatter, :line]
             @test p.opt[:colors][1] == :red
             @test p.opt[:xlim] == p.opt[:ylim] == (0, 4)
             @test p.opt[:Xs][end] == p.opt[:Ys][end] == [0, 4]
-            q = visualize(obs, VisualizeComparison, :a; index = :time => "context.clock.time", stop = 3, backend)
+            q = visualize(obs, VisualizeComparison, :a; stop = 3, backend)
             @test points(q) == points(p)
-            @test visualize!(p, obs, est, :a; index = :time) === p
+            @test visualize!(p, obs, est, :a; index = nothing) === p
             @test points(p, 3) == points(p)
             q = visualize(view(obs, :, :), view(est, :, :), :a; index = :time, backend)
             @test points(q) == points(p)
 
             for source in (est, VisualizeComparison)
-                opts = source isa DataFrame ? (; index = :time) : (; index = :time => "context.clock.time", stop = 3)
+                opts = source isa DataFrame ? (; index = :time) : (; stop = 3)
                 q = visualize(obs, source, [:a, :b]; colors = [:red, :blue], backend, opts...)
                 @test points(q) == points(p)
                 @test points(q, 2) == [(0.2, 0), (2.2, 2), (6.2, 6)]
