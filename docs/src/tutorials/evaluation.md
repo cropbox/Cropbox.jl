@@ -272,12 +272,13 @@ calibrate(Field, obs2; config, stop = 3u"d", layout..., seed = 42,
 Pass `configs` when one biological parameter set should fit several site-years.
 Each entry must already contain its shared base settings as well as its
 environment-specific patch; unlike `simulate`, `calibrate` does not accept a
-nonempty `config` and `configs` together.
+nonempty `config` and `configs` together. Here each config labels its
+experiment, for example `:Trial => (site = :north, year = 2025)`.
 
 ```julia
 fitted = calibrate(Model, observations;
-    configs = environment_configs,
-    index = [:year, :date],
+    configs = environment_configs, match = :Trial => [:site, :year],
+    index = :date,
     target = [:emergence, :maturity],
     parameters = Phenology => (
         Tb = (-5, 15),
@@ -291,9 +292,22 @@ Calibration calculates each environment's metric separately, then sums those
 scores for each target. In contrast, `evaluate(...; configs)` pools the matching
 rows before calculating a metric. These objectives are not interchangeable: a
 sum of site-year RMSE values gives each site-year one score, while pooled RMSE
-also reflects how many observations each site-year contains. Ensure observation
-indices uniquely identify rows across environments and choose the objective
-deliberately.
+also reflects how many observations each site-year contains.
+
+`match` selects each config's observations before fitting; `index = :date`
+then matches dates within that site-year. For validation, `meta = :Trial`
+copies the site and year into each prediction row without selecting any
+observations. With one maturity observation per held-out site-year:
+
+```julia
+configs = [@config(c + fitted) for c in validation_configs]
+pred = simulate(Model; configs, meta = :Trial, target = :maturity, stop = :finished, snap = :finished)
+evaluate(validation, pred; index = [:site, :year], target = :maturity)
+```
+
+Matching on `:year` alone would also pair observations with predictions from
+other sites in the same year. For repeated measurements, save the sampling
+dates too and evaluate with `index = [:site, :year, :date]`.
 
 To avoid repeated messages during optimization, `calibrate` warns only for the
 first finite candidate with partial coverage. Those counts describe that

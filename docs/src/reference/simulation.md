@@ -346,9 +346,8 @@ distinct.
 
 ```julia
 calibrate(SystemType, observations;
-    config = (), configs = nothing,
-    base = nothing, index = nothing,
-    target,
+    config = (), configs = nothing, match = nothing,
+    base = nothing, index = nothing, target, meta = nothing,
     parameters,
     metric = :rmse,
     weight = nothing,
@@ -414,8 +413,32 @@ p = calibrate(Model, [obs1, obs2]; configs = [c1, c2], target = :height, stop = 
 Each run matches only its own table: sampling times may overlap or differ,
 and no experiment ID is needed in the model or in `index`. Use `config = c`
 instead of `configs` for repeated experiments with the same setup, or omit it
-to use model defaults. A single table with `configs` still shares that table
-across runs.
+to use model defaults. Without `match`, a single table with a vector of
+`configs` is still shared across runs.
+
+If observations from several sites are stacked in one table, keep the same
+configuration vector and label each experiment in its configuration:
+
+```julia
+north = @config (c1, :Trial => (site = "north", year = 2025))
+south = @config (c2, :Trial => (site = "south", year = 2025))
+configs = [north, south]
+p = calibrate(Model, obs; configs, match = :Trial => [:site, :year],
+    target = :height, stop = 60, parameters)
+```
+
+`match` pairs experiments: it reads the named columns from the observations
+and their values from the named config section. Rows for `("south", 2025)` go
+only to `south`, even if both sites were sampled on the same dates. `index`
+then matches rows *within* that experiment. The labels do not have to be
+model variables. They are not added to the simulated output; use `meta`
+separately if you want extra output columns.
+
+Use `match = :Trial => :site` for one column. If the input is already
+`groupby(obs, [:site, :year])`, the columns are known: pass `match = :Trial`
+with `configs`, or omit `match` to use one shared `config` or model defaults.
+Missing labels, duplicate configuration keys and groups without a counterpart
+are errors before the search starts.
 
 Rows missing any requested observation target are omitted before the search.
 Candidates with no matching output receive an infinite penalty. If no finite
@@ -440,8 +463,8 @@ pass it to an optimization package such as
 [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl).
 
 Do not pass nonempty `config` and `configs` together to `evaluate` or
-`calibrate`. For several environments, make each entry of `configs` complete
-and include environment-identifying columns in `index`. See [Evaluate and
+`calibrate`. Make each entry of `configs` complete. When sharing an ungrouped
+table, include environment-identifying columns in `index`. See [Evaluate and
 Calibrate Models](@ref evaluation-tutorial) for validation splits, residual
 checks, and reporting practice.
 
