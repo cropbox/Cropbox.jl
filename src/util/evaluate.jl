@@ -67,10 +67,23 @@ filterobservations(obs, target) = begin
     obs
 end
 
-warnmatching(obs, rows; kw...) = warnmatching(length(unique(rows)), nrow(obs); kw...)
-warnmatching(matched::Int, total::Int; context = "evaluation") = begin
-    0 < matched < total || return false
-    @warn "partial observation matching in $context: $matched of $total complete observations matched; check index, stop, and snap"
+countmatches(runs) = begin
+    ids = map(Set, runs)
+    pairs = sum(length, runs)
+    # the same observation may legitimately match once in each configuration
+    extra = pairs - sum(length, ids)
+    (; matched = length(reduce(union!, ids)), pairs, extra)
+end
+
+warnmatching(matched::Int, total::Int; context = "evaluation", pairs = nothing, extra = 0) = begin
+    (0 < matched < total || extra > 0) || return false
+    summary = "$matched of $total complete observations matched"
+    isnothing(pairs) || (summary *= " (scored pairs: $pairs)")
+    if extra > 0
+        @warn "multiple estimates per observation in $context: $summary; extra pairs at the same index: $extra; check the index or compare estimate groups separately"
+    else
+        @warn "partial observation matching in $context: $summary; check index, stop, and snap"
+    end
     true
 end
 
@@ -109,12 +122,12 @@ Compare output of simulation results for the given system `S` and observation da
 
 ## Evaluation
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
-- `warn=true`: warn when only part of the complete observations match.
+- `warn=true`: warn if some complete observations have no match, or if one observation matches multiple estimates within a configuration.
 
 Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
 Rows missing any requested observation target are omitted. An `ArgumentError`
 is raised if no complete observations or no matching output remain.
-Partial matches warn with the number of matched and complete observations.
+The warning reports coverage and the number of scored pairs. Matches across configurations are pooled intentionally.
 
 See also: [`simulate`](@ref), [`calibrate`](@ref), [`@config`](@ref)
 
@@ -155,13 +168,13 @@ evaluate(S::Type{<:System}, obs, configs; base = nothing, index = nothing, targe
     cost() = begin
         l = length(configs)
         R = Vector(undef, l)
-        rows = warn ? Int[] : nothing
         Threads.@threads for i in 1:l
             R[i] = simulate(S; config = configs[i], base, index, target, snap, verbose = false, kwargs...)
         end
         filter!(!isempty, R)
-        R = map(R) do est
-            O, E = aligndata(obs, est, T; index = I, allowempty = true, rows)
+        rows = [warn ? Int[] : nothing for _ in R]
+        R = map(R, rows) do est, rs
+            O, E = aligndata(obs, est, T; index = I, allowempty = true, rows = rs)
             collect(zip(E, O))
         end
         e = map(getindex.(R, i) for i in 1:n) do r
@@ -169,7 +182,10 @@ evaluate(S::Type{<:System}, obs, configs; base = nothing, index = nothing, targe
             isempty(E) && throw(ArgumentError("no matching indices between observations and estimates"))
             metric(E, O)
         end
-        warn && warnmatching(obs, rows)
+        if warn
+            (; matched, pairs, extra) = countmatches(rows)
+            warnmatching(matched, nrow(obs); pairs, extra)
+        end
         multi ? Tuple(e) : only(e)
     end
     cost()
@@ -191,13 +207,13 @@ Compare observation data `obs` and estimation data `est` with a choice of evalua
 
 ## Evaluation
 - `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
-- `warn=true`: warn when only part of the complete observations match.
+- `warn=true`: warn if some complete observations have no match, or if one observation matches multiple complete estimates.
 
 See also: [`evaluate`](@ref)
 
 Neither input table is modified. Rows missing any requested target are omitted.
 An `ArgumentError` is raised if no complete matching rows remain.
-Partial matches warn with the number of matched and complete observations.
+The warning reports coverage and the number of scored pairs. Repeated observations may share one estimate without a warning.
 
 # Examples
 ```julia-repl
@@ -221,7 +237,10 @@ evaluate(obs::AbstractDataFrame, est::AbstractDataFrame; index = nothing, target
     keep = map((v...) -> all(!ismissing, v), Xs..., Ys...)
     any(keep) || throw(ArgumentError("no complete matching rows for the requested targets"))
     e = [metric(Y[keep], X[keep]) for (X, Y) in zip(Xs, Ys)]
-    warn && warnmatching(obs, rows[keep])
+    if warn
+        (; matched, pairs, extra) = countmatches((rows[keep],))
+        warnmatching(matched, nrow(obs); pairs, extra)
+    end
     length(e) == 1 ? only(e) : Tuple(e)
 end
 

@@ -46,6 +46,32 @@ Unmatched rows are excluded, as are rows missing any of the requested targets.
 If no complete matching rows remain, evaluation raises an `ArgumentError`
 instead of returning a score. Non-finite values such as `NaN` are not dropped.
 
+### [Evaluate individual plants or daily means](@id evaluation-repeated-observations)
+
+With one prediction per site and day, each measured plant contributes one
+pair to the score. This is appropriate for individual plants, but a day with
+five plants has five times the weight of a day with one in the mean squared
+error. To evaluate **daily means** instead, average within each site and day first:
+
+```@example evaluation
+using Statistics: mean
+
+plants = DataFrame(site = fill("north", 3), time = [1, 1, 2]u"d", mass = [8, 12, 20]u"g")
+pred = DataFrame(site = ["north", "north"], time = [1, 2]u"d", mass = [10, 22]u"g")
+
+index = [:site, :time]
+daily = combine(groupby(plants, index), :mass => mean => :mass)
+
+(per_plant = evaluate(plants, pred; index, target = :mass),
+ per_day = evaluate(daily, pred; index, target = :mass))
+```
+
+The first day contributes two plants (8 and 12 g) to the first RMSE, but
+only their mean (10 g) to the second. Use the same averaged table with
+`calibrate` if the daily means are what you want to fit. Keep other experiment
+labels such as treatment in the grouping keys when needed; for missing
+measurements, group `dropmissing(plants, :mass)` instead of `plants`.
+
 ## Choose a metric
 
 RMSE and MAE are convenient starting points. Both the two-table and system
@@ -104,9 +130,11 @@ that every observation was compared. A warning reports how many complete
 observations matched, for example `2 of 3 complete observations matched`.
 Rows missing any requested observation target are excluded from this total;
 for two tables, a match must also have complete estimates. Each observation row
-is counted once for the warning, even if several estimates match it. All
-matching pairs still contribute to the score. With `configs`, matches are
-pooled: if only site B has observations, evaluating sites A and B gives the
+counts once toward coverage. The warning also reports how many pairs were
+scored and flags extra pairs when one observation matches multiple estimates
+within a run. Repeated plant measurements sharing one estimate do not trigger
+a warning. With `configs`, matches are pooled: if only site B has
+observations, evaluating sites A and B gives the
 same score as B alone. If neither site matches, evaluation raises an `ArgumentError`.
 Use `warn = false` to suppress only this matching warning; it does not change
 the selected rows, metric, or errors for unusable observations.
