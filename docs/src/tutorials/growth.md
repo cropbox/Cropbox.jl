@@ -145,8 +145,7 @@ The graph below exposes scheduling details. It is useful for investigating
 dependencies, but reading its generated stages is not a prerequisite for
 building the model above. [Inspection](@ref Inspection1) and
 [Inspect and Visualize Models](@ref inspection-workflow) provide the related
-lookup tools. If you installed Cropbox v0.4.2, skip this optional section:
-the structure-plot forms of `visualize` were added after that release.
+lookup tools.
 
 ```@raw html
 <details><summary>Show the generated dependency graph</summary>

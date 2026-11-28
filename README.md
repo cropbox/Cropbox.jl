@@ -16,9 +16,9 @@ Cropbox is a declarative modeling framework specifically designed for developing
 
 - 🍃 [LeafGasExchange.jl](https://github.com/cropbox/LeafGasExchange.jl) / [plants2020](https://github.com/cropbox/plants2020): coupled leaf gas-exchange model
 - 🧄 [Garlic.jl](https://github.com/cropbox/Garlic.jl): garlic growth simulation model
-- 🥬 [Cabbage.jl](https://github.com/cropbox/Cabbage.jl): port of pycabbage model
 - 🌱 [SimpleCrop.jl](https://github.com/cropbox/SimpleCrop.jl): example of DSSAT-like crop model written in Cropbox
 - 🪴 [CropRootBox.jl](https://github.com/cropbox/CropRootBox.jl): example of root system architecture simulation like CRootBox
+- 🍂 [LegacyCropModels.jl](https://github.com/cropbox/LegacyCropModels.jl): LINTUL crop models
 
 ## Tutorials
 

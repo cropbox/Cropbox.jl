@@ -127,11 +127,6 @@ soil-water-transport-tutorial).
 biomass, and below-ground water balance advance together, while diagnostic
 variables expose the resulting state.*
 
-The structure-plot forms of `visualize` below were added after Cropbox v0.4.2.
-If you are using that release, you can skip them: none of the crop output
-above requires a structure plot. See [Installation](@ref Installation) if
-you want to try the development version.
-
 Start with the system hierarchy:
 
 ```@example simplecrop
