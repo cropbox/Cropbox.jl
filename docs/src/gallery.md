@@ -64,6 +64,7 @@ with growth limited by water or by both water and nitrogen.
 
 - [Cabbage.jl](https://github.com/cropbox/Cabbage.jl): a Cropbox port of the pycabbage model.
 - [Radish.jl](https://github.com/cropbox/Radish.jl): a radish growth model.
+- [Phenology.jl](https://github.com/cropbox/Phenology.jl): plant phenology models (in development).
 
 Access to these repositories may be restricted.
 

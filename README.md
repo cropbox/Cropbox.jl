@@ -18,6 +18,7 @@ Cropbox is a declarative modeling framework specifically designed for developing
 - 🧄 [Garlic.jl](https://github.com/cropbox/Garlic.jl): garlic growth simulation model
 - 🥬 [Cabbage.jl](https://github.com/cropbox/Cabbage.jl): port of the pycabbage model
 - 🌿 [Radish.jl](https://github.com/cropbox/Radish.jl): radish growth model
+- 🌸 [Phenology.jl](https://github.com/cropbox/Phenology.jl): plant phenology models (in development)
 - 🌱 [SimpleCrop.jl](https://github.com/cropbox/SimpleCrop.jl): example of DSSAT-like crop model written in Cropbox
 - 🪴 [CropRootBox.jl](https://github.com/cropbox/CropRootBox.jl): example of root system architecture simulation like CRootBox
 - 🍂 [LegacyCropModels.jl](https://github.com/cropbox/LegacyCropModels.jl): LINTUL crop models
