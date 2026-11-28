@@ -60,6 +60,13 @@ croprootbox-tutorial).
 Cropbox implementations of the LINTUL crop models. Compare potential production
 with growth limited by water or by both water and nitrogen.
 
+## Other crop models
+
+- [Cabbage.jl](https://github.com/cropbox/Cabbage.jl): a Cropbox port of the pycabbage model.
+- [Radish.jl](https://github.com/cropbox/Radish.jl): a radish growth model.
+
+Access to these repositories may be restricted.
+
 ## Talks
 
 - [JuliaCon 2022: “Cropbox.jl: A Declarative Crop Modeling Framework”](https://youtu.be/l43ldy_L35A)
