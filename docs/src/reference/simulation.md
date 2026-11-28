@@ -170,7 +170,9 @@ for those objects.
 `meta=:Treatment` copies every configured entry under that system name.
 `meta=(:Treatment, :replicate => 1)` combines configured values with an
 explicit constant column. Metadata comes from configuration, not from the
-current state of a changing model variable.
+current state of a changing model variable. Use names distinct from `index`
+and `target`: metadata is written last, so `meta = :time => 1` would replace
+the clock times in every output row. Use `:replicate => 1` for a run label instead.
 
 ### Several layouts in one run
 
