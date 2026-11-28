@@ -55,14 +55,18 @@ stochastic parameters, dynamic production, geometry, custom output collection,
 and VTK/STL export. Start with [Root System Architecture](@ref
 croprootbox-tutorial).
 
-## Additional historical model
+## [LegacyCropModels.jl](https://github.com/cropbox/LegacyCropModels.jl)
 
-[Cabbage.jl](https://github.com/cropbox/Cabbage.jl) is a Cropbox port of the
-pycabbage model.
+Cropbox implementations of the LINTUL crop models. Compare potential production
+with growth limited by water or by both water and nitrogen.
 
-This repository is retained because it documents how Cropbox has been used,
-but its code may target an older Cropbox or Julia release. Check its project
-files before reusing an example in a new environment.
+## Other crop models
+
+- [Cabbage.jl](https://github.com/cropbox/Cabbage.jl): a Cropbox port of the pycabbage model.
+- [Radish.jl](https://github.com/cropbox/Radish.jl): a radish growth model.
+- [Phenology.jl](https://github.com/cropbox/Phenology.jl): plant phenology models (in development).
+
+Access to these repositories may be restricted.
 
 ## Talks
 

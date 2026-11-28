@@ -121,7 +121,7 @@ Compare output of simulation results for the given system `S` and observation da
 - `target`: variables to construct non-index columns of the output.
 
 ## Evaluation
-- `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
+- `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:rmspe`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
 - `warn=true`: warn if some complete observations have no match, or if one observation matches multiple estimates within a configuration.
 
 Remaining keyword arguments are passed down to `simulate` with regard to running system `S`.
@@ -206,7 +206,7 @@ Compare observation data `obs` and estimation data `est` with a choice of evalua
 - `target`: variables referring to non-index columns of the output.
 
 ## Evaluation
-- `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
+- `metric=nothing`: evaluation metric (`:rmse`, `:nrmse`, `:rmspe`, `:mae`, `:mape`, `:ef`, `:dr`); default is RMSE.
 - `warn=true`: warn if some complete observations have no match, or if one observation matches multiple complete estimates.
 
 See also: [`evaluate`](@ref)

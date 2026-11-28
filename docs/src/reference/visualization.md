@@ -1142,7 +1142,7 @@ The CJK font is © 2014-2021 Adobe, licensed under the
 [SIL Open Font License 1.1](https://openfontlicense.org/open-font-license-official-text/).
 Its original copyright and license metadata is preserved in the unmodified font file.
 
-This adapter supports lines, scatter, scatterlines, categorical steps,
+This adapter supports lines, scatter, scatterlines, numeric and categorical steps,
 horizontal/vertical lines, heatmaps, and contours (including labels).
 It retains units and explicit limits; in particular `zlim` is the exact color
 range, not Gadfly's sometimes expanded tick range. Grid rows may be unordered;
@@ -1161,9 +1161,8 @@ fields or uses `Cropbox.Gadfly.SVG` or `PDF` must also change: use public
 for saving figures. For example, replace `p[] |> Cropbox.Gadfly.PDF("figure.pdf")`
 with `Cropbox.writeimage("figure.pdf", p)`.
 
-The positional `visualize!(p, x, y, "text")` method introduced in Cropbox 0.4.0
-is no longer supported. Use `name` on a series or reference line to identify it
-in the legend; this does not place text at a coordinate.
+Use `name` on a series or reference line to identify it in the legend.
+The old positional `visualize!(p, x, y, "text")` annotation is not supported.
 
 Archived workshop and course notebooks may continue to use their original
 versioned environments or Docker image digests. Updating those materials is
@@ -1174,8 +1173,8 @@ Interact widget.
 ## Display and save formats
 
 Graphical output defaults to SVG in notebooks, documentation, and `manipulate`.
-Lines and text stay sharp when the page is zoomed. The Classic style and the
-480 × 320 display size are unchanged; narrow pages shrink the figure to fit.
+Lines and text stay sharp when the page is zoomed; narrow pages shrink the
+figure to fit.
 
 To save a graphical result, use `Cropbox.writeimage`. Display and export formats
 are independent:
@@ -1197,8 +1196,8 @@ installation or import. The filename extension selects PNG, SVG, or PDF;
 `Cropbox.writeimage("observed", p; format = :pdf)` appends the extension.
 Additional options are passed to CairoMakie's `save`. For a higher-resolution
 PNG, use `Cropbox.writeimage("observed.png", p; px_per_unit = 3)`.
-The default `px_per_unit = 2` gives a 960 × 640 PNG for a 480 × 320 figure;
-this changes pixel resolution, not the font sizes or layout.
+The default `px_per_unit = 2` gives two pixels per layout unit in each
+dimension. Changing it affects resolution, not font sizes or layout.
 Image export requires `backend = :Makie`; UnicodePlots terminal output is not
 converted automatically.
 

@@ -301,7 +301,9 @@ Pass `configs` when one biological parameter set should fit several site-years.
 Each entry must already contain its shared base settings as well as its
 environment-specific patch; unlike `simulate`, `calibrate` does not accept a
 nonempty `config` and `configs` together. Here each config labels its
-experiment, for example `:Trial => (site = :north, year = 2025)`.
+experiment, for example `:Trial => (site = "north", year = 2025)`. Use the
+values from the observation columns: the string `"north"` and the symbol
+`:north` are different group labels.
 
 ```julia
 fitted = calibrate(Model, observations;

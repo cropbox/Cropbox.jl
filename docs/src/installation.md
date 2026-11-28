@@ -7,7 +7,7 @@ when a model becomes a maintained project.
 
 ## Install Cropbox locally
 
-Install Julia using the
+Install the current stable Julia release using the
 [official Juliaup-based instructions](https://docs.julialang.org/en/v1/manual/installation/),
 then start Julia and add Cropbox:
 
@@ -18,14 +18,17 @@ Pkg.add("Cropbox")
 using Cropbox
 ```
 
-This installs the current registered Cropbox release in Julia's active
-environment. It is enough for the [Quick Start](@ref quick-start); no document
-builder, editor extension, or notebook package is required.
+Pkg installs a Cropbox release compatible with your active environment. On an
+older Julia it may select an older Cropbox. The `julia` entries in the
+[General registry](https://github.com/JuliaRegistries/General/blob/master/C/Cropbox/Compat.toml)
+list the supported Julia versions for each Cropbox release.
+No editor extension or notebook package is needed for the [Quick Start](@ref quick-start).
 
 The first `using Cropbox` may take longer while Julia compiles packages. Later
 sessions reuse the compilation cache.
 
-Use `Pkg.status("Cropbox")` to check the installed version. The
+Use `Pkg.status("Cropbox")` to check the installed version and choose the
+matching manual in the documentation's version selector. The
 [stable documentation](https://cropbox.github.io/Cropbox.jl/stable/) describes
 the registered release; the
 [development documentation](https://cropbox.github.io/Cropbox.jl/dev/) follows
