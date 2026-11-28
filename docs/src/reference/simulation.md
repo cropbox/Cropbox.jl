@@ -314,12 +314,14 @@ targets return a tuple in target order. For observations of a subsystem,
 Cropbox normalizes compatible index units and inner-joins rows on the index.
 Rows missing any requested observation target are omitted; the two-table form
 also omits missing estimates. An `ArgumentError` is raised if no complete matching rows remain.
-Rows are not compared merely because they have the same position. Partial
-matches warn with the number of matched and complete observations. The score
-still uses the matching subset, so check index coverage when interpreting
-a score; an explicit `snap` may intentionally select fewer observations.
-Set `warn = false` to suppress this warning without changing the score or
-empty-match errors.
+Rows are matched by index, not by position. With `warn = true`, one warning
+reports how many complete observations matched and how many pairs were scored
+if observations are missing from the comparison or one observation matches
+multiple estimates in the same table or run. Each pair still contributes to
+the score. Matching the same observation once in each configuration is intentional;
+so is comparing several plants to one prediction. To give every sampling day
+equal weight instead, [average the observations first](@ref evaluation-repeated-observations).
+Set `warn = false` to silence the warning without changing the score or empty-match errors.
 
 Both evaluation forms support the following metrics:
 

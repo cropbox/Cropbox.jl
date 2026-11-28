@@ -91,12 +91,14 @@ using DataFrames
         @test_throws ArgumentError evaluate(obs[2:2, :], est; target = :b)
     end
 
-    @testset "partial matching warning" begin
+    @testset "observation matching warning" begin
         obs = DataFrame(time = [1, 1, 2, 3], mass = [1, 2, 3, missing])
         est = DataFrame(time = [1, 1, 2], mass = [1, 2, missing])
-        @test_logs (:warn, r"2 of 3 complete observations matched") @test evaluate(obs, est; target = :mass, metric = :mae) == 0.5
-        @test_logs @test evaluate(obs, est; target = :mass, metric = :mae, warn = false) == 0.5
-        @test_logs evaluate(obs, obs; target = :mass)
+        kw = (; target = :mass, metric = :mae)
+        @test_logs (:warn, r"2 of 3 .*scored pairs: 4.*extra pairs .*: 2") @test evaluate(obs, est; kw...) == 0.5
+        @test_logs @test evaluate(obs, est; kw..., warn = false) == 0.5
+        @test_logs (:warn, r"1 of 1 .*scored pairs: 2.*extra pairs .*: 1") @test evaluate(first(obs, 1), est; kw...) == 0.5
+        @test_logs @test evaluate(first(obs, 2), first(est, 1); kw...) == 0.5
 
         @system SEvaluateMatching(Controller) begin
             a => 1 ~ preserve(parameter)
@@ -106,6 +108,7 @@ using DataFrames
         configs = [:SEvaluateMatching => :a => a for a in 1:2]
         index = [:time => "context.clock.time", :a]
         @test_logs evaluate(SEvaluateMatching, obs; configs, index, target = :b, stop = 1)
+        @test_logs @test evaluate(SEvaluateMatching, obs; configs, target = :b, stop = 1) == sqrt(0.5)
         @test_logs (:warn, r"1 of 2 complete observations matched") @test evaluate(SEvaluateMatching, obs;
             index, target = :b, stop = 1) == 0
         @test_logs @test evaluate(SEvaluateMatching, obs; index, target = :b, stop = 1, warn = false) == 0
@@ -114,6 +117,7 @@ using DataFrames
 
         obs = DataFrame(a = [2], b = [5])
         layout = (; index = :a, target = :b)
+        @test_logs (:warn, r"scored pairs: 2.*extra pairs at the same index: 1") evaluate(SEvaluateMatching, obs; configs, layout..., stop = 1)
         est = simulate(SEvaluateMatching; configs, layout..., verbose = false)
         score = evaluate(obs, est; layout...)
         for cs in (configs, reverse(configs))
