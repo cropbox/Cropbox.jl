@@ -34,6 +34,14 @@ import Dates
         end
         @test s.time' == t1
         @test s.stop' == true
+
+        clock(; kw...) = instance(SCalendarStop; config = (o, :Clock => (; kw...)))
+        for dt in (0u"hr", -1u"hr")
+            @test_throws ArgumentError clock(step = dt)
+        end
+        @test clock(init = 6u"hr").count' == 18
+        @test clock(step = 10u"hr").count' == 2
+        @test clock(init = 24u"hr", step = 0u"hr").count' == 0
     end
     
     @testset "count" begin
@@ -75,16 +83,23 @@ import Dates
     @testset "subhourly clock" begin
         @system SCalendarSubhourly(Calendar, Controller)
         t0 = ZonedDateTime(2011, 10, 29, tz"Asia/Seoul")
-        o = (
-            :Calendar => (init=t0,),
-            :Clock => (step=10u"minute",),
-        )
-        s = instance(SCalendarSubhourly; config=o)
+        clock(; kw...) = instance(SCalendarSubhourly; config = (Calendar => :init => t0, :Clock => (; kw...)))
+        s = clock(step = 10u"minute")
         for _ in 1:6
             update!(s)
         end
         @test s.context.clock.time' === (1//1)u"hr"
         @test s.time' == t0 + Dates.Hour(1)
         @test s.date' == Dates.Date(t0)
+
+        s = clock(step = 500u"ms")
+        update!(s)
+        @test s.time' == t0 + Dates.Millisecond(500)
+        @test_throws ArgumentError clock(step = (1//2)u"ms")
+        @test_throws ArgumentError clock(init = (1//2)u"ms")
+
+        s = clock(step = -1u"hr")
+        update!(s)
+        @test s.time' == t0 - Dates.Hour(1)
     end
 end
