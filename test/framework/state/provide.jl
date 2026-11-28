@@ -68,6 +68,7 @@ using TimeZones
         @system SProvideCalendar(Controller) begin
             calendar(context) ~ ::Calendar
             a ~ provide(init=calendar.time, parameter)
+            b(a) ~ provide(init=calendar.time, step=calendar.step)
         end
         t0 = ZonedDateTime(2011, 10, 29, 0, tz"Asia/Seoul")
         t1 = ZonedDateTime(2011, 10, 29, 1, tz"Asia/Seoul")
@@ -78,6 +79,11 @@ using TimeZones
         s = instance(SProvideCalendar; config=c)
         @test s.a'.index == t1:Δt:t2
         @test s.a'.value == 1:3
+
+        df = DataFrame(index = t0:Dates.Minute(20):t2, value = 0:9)
+        s = instance(SProvideCalendar; config = (Calendar => :init => t0, :Clock => :step => 20u"minute", :0 => :a => df))
+        @test s.calendar.step' === (1//3)u"hr"
+        @test s.a' == s.b' == df
     end
 
     @testset "parameter" begin

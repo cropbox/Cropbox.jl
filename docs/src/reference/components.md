@@ -175,10 +175,12 @@ This is why ordinary components should not add their own controller or clock.
 | `time` | current elapsed time | starts at `init` |
 | `tick` | number of completed update advances | starts at `0` |
 
-The default clock unit is hours. A plain configured number therefore means
-hours; write an explicit quantity such as `1u"d"` when another unit is
-intended. Both `time` and `tick` advance once per update. Output `snap` rules
-only select states after this update schedule has been defined.
+The default clock unit is hours. With `:Clock => :step => 2`, a plain number
+uses the active clock's unit: two hours by default, two days in a daily context.
+Using the type `Clock` instead of the symbol `:Clock` gives the number the
+unit declared by that type (hours). Use an explicit quantity such as `2u"d"`
+for the same duration in either context. Both `time` and `tick` advance once
+per update. Output `snap` rules only select states after this schedule is defined.
 
 `init`, `step`, and `time` store rational quantities (`Rational{Int64}` with a
 time unit); `tick` is an integer. This keeps intervals such as ten minutes exact
@@ -201,12 +203,18 @@ mixin when a model needs civil time:
 | `init` | required starting `ZonedDateTime` |
 | `last` | optional ending `ZonedDateTime` |
 | `time` | `init` plus the elapsed clock time |
+| `step` | exact clock step expressed in hours |
 | `date` | `Date(time)` |
 | `stop` | whether `time` has reached `last`; always false without `last` |
-| `count` | rounded update count from `init` to `last`; `nothing` without `last` |
+| `count` | rounded update count from the initial `time` to `last`; zero if already reached, `nothing` without `last` |
 
-Configure compatible `Clock.step`, `Calendar.init`, and `Calendar.last` values
-when `count` is used as a stopping condition. A duration that is not an exact
+Calendar timestamps have millisecond resolution. Clock offsets and steps must
+be whole multiples of a millisecond; finer values are rejected, not rounded.
+With a 20-minute clock, `calendar.step` is exactly `(1//3)u"hr"`.
+A time-indexed `provide` can use it or keep its default `context.clock.step`.
+
+Reaching a future `last` requires a positive step. Without `last`, a clock
+can still stand still or run backwards. A duration that is not an exact
 multiple of the step makes the rounding convention part of the experiment;
 prefer an explicit Boolean or duration stop when that ambiguity matters.
 
